@@ -33,7 +33,15 @@ namespace Lambda
 	private:
 		static std::unique_ptr<Input> s_Instance;
 
+	protected:
+		static Input& GetInstance();
+
 	private:
 		static Input* Create();
 	};
+
+	inline Input& Input::GetInstance()
+	{
+		return *s_Instance;
+	}
 }

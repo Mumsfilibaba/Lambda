@@ -16,6 +16,7 @@ namespace Lambda
 
 		virtual void SetEventCallback(EventCallback callback) override;
 		virtual void OnUpdate() const override;
+		virtual void* GetNativeHandle() const override;
 
 	private:
 		void Init(const WindowDesc& desc);

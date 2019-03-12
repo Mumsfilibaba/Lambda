@@ -1,5 +1,4 @@
 #pragma once
-#include <LambdaPch.h>
 #include <System/Log.h>
 
 #if defined(LAMBDA_PLAT_WINDOWS)

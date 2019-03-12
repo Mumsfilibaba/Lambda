@@ -1,5 +1,5 @@
 #pragma once
-#include <LambdaPch.h>
+#include <string>
 
 namespace Lambda
 {

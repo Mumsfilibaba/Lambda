@@ -1,5 +1,4 @@
 #pragma once
-#include <LambdaPch.h>
 #include "EventDispatcher.h"
 
 namespace Lambda
@@ -21,6 +20,8 @@ namespace Lambda
 
 		virtual void SetEventCallback(EventCallback callback) = 0;
 		virtual void OnUpdate() const = 0;
+
+		virtual void* GetNativeHandle() const = 0;
 
 	public:
 		static IWindow* Create(const WindowDesc& desc);

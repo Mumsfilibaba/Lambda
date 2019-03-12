@@ -1,5 +1,6 @@
 #pragma once
-#include <LambdaPch.h>
+#include "Defines.h"
+#include <memory>
 
 #if defined(LAMBDA_DEBUG)
 #define LOG_DEBUG_INFO(...) Log::GetDebugLog().Print(LOG_SEVERITY_INFO, __VA_ARGS__);
@@ -34,7 +35,7 @@ namespace Lambda
 		LOG_SEVERITY_ERROR,
 	};
 
-	class ILog
+	class LAMBDA_API ILog
 	{
 	public:
 		LAMBDA_INTERFACE(ILog);
@@ -48,7 +49,8 @@ namespace Lambda
 		static ILog* Create();
 	};
 
-	class Log
+
+	class LAMBDA_API Log
 	{
 	public:
 		LAMBDA_STATIC_CLASS(Log);

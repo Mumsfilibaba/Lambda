@@ -32,11 +32,14 @@ namespace Lambda
 			clock.Tick();
 			InternalOnUpdate(clock.GetDeltaTime());
 
-			Input::IsKeyUp(KEY_A);
+			if (Input::IsKeyDown(KEY_A))
+			{
+				LOG_SYSTEM_PRINT("You'll never get this (BORAT VOICE)\n");
+			}
 		}
 
 		InternalOnRelease();
-		return 0;
+		return m_ExitCode;
 	}
 
 	void Application::Init()
@@ -59,27 +62,16 @@ namespace Lambda
 		}
 	}
 
-	void Application::Quit()
+	void Application::Quit(int32 exitCode)
 	{
 		m_Running = false;
+		m_ExitCode = exitCode;
 	}
 
 	Application& Application::GetInstance()
 	{
 		assert(s_pInstance != nullptr);
 		return *s_pInstance;
-	}
-
-	bool Application::OnEvent(const Event& event)
-	{
-		if (event.Type == EVENT_TYPE_WINDOW_CLOSED)
-		{
-			Application::GetInstance().Quit();
-			LOG_DEBUG_INFO("Window closed");
-			return true;
-		}
-
-		return false;
 	}
 	
 	void Application::InternalOnLoad()
@@ -99,5 +91,25 @@ namespace Lambda
 		OnRelease();
 
 		DeleteSafe(m_pWindow);
+	}
+
+	bool Application::OnEvent(const Event& event)
+	{
+		if (event.Type == EVENT_TYPE_WINDOW_CLOSED)
+		{
+			Application::GetInstance().Quit(0);
+			LOG_DEBUG_INFO("Window closed");
+			return true;
+		}
+		else if (event.Type == EVENT_TYPE_KEY)
+		{
+			if (event.KeyEvent.Down && event.KeyEvent.KeyCode == KEY_ESCAPE)
+			{
+				Application::GetInstance().Quit(0);
+				return true;
+			}
+		}
+
+		return false;
 	}
 }

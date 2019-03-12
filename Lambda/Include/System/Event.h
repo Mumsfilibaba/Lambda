@@ -1,5 +1,6 @@
 #pragma once
-#include <LambdaPch.h>
+#include "../Defines.h"
+#include "../Types.h"
 
 namespace Lambda
 {
@@ -29,14 +30,14 @@ namespace Lambda
 
 			struct
 			{
-				uint32 Character;
+				uint32	Character;
 			} TextEvent;
 
 			struct
 			{
 				uint16	PosX;
 				uint16	PosY;
-			} MouseEvent;
+			} MouseMoveEvent;
 
 			struct
 			{

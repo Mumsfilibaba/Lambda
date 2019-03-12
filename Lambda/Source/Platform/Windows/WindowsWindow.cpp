@@ -4,6 +4,7 @@
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include "WindowsWindow.h"
 	#include "WindowClass.h"
+	#include "WindowsInput.h"
 
 	#define	NAME_APPWINDOW L"AppWindow"
 
@@ -47,6 +48,11 @@ namespace Lambda
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
+	}
+
+	void* WindowsWindow::GetNativeHandle() const
+	{
+		return (void*)m_Wnd;
 	}
 
 	void WindowsWindow::Init(const WindowDesc& desc)
@@ -124,7 +130,7 @@ namespace Lambda
 			event.KeyEvent.Down = true;
 		case WM_KEYUP:
 			event.Type = EVENT_TYPE_KEY;
-			event.KeyEvent.KeyCode = Key(wParam);
+			event.KeyEvent.KeyCode = WindowsInput::ConvertWindowsKey(wParam);
 			event.KeyEvent.RepeatCount = LOWORD(lParam);
 			break;
 
@@ -135,8 +141,8 @@ namespace Lambda
 
 		case WM_MOUSEMOVE:
 			event.Type = EVENT_TYPE_MOUSE_MOVED;
-			event.MouseEvent.PosX = GET_X_LPARAM(lParam);
-			event.MouseEvent.PosY = GET_Y_LPARAM(lParam);
+			event.MouseMoveEvent.PosX = GET_X_LPARAM(lParam);
+			event.MouseMoveEvent.PosY = GET_Y_LPARAM(lParam);
 			break;
 		
 		default:

@@ -1,16 +1,18 @@
 #pragma once
-#include <LambdaPch.h>
 #include "Event.h"
+#include <vector>
 
 namespace Lambda
 {
 	typedef bool(*EventCallback)(const Event& event);
+
 
 	struct EventLayer
 	{
 		EventCallback OnEvent;
 		const char* pName;
 	};
+
 
 	class LAMBDA_API EventDispatcher
 	{

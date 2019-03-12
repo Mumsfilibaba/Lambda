@@ -1,5 +1,7 @@
 #include <System/Application.h>
+#include <System/Log.h>
 #include <crtdbg.h>
+#include <string>
 
 bool OnEvent(const Lambda::Event& event)
 {
@@ -7,8 +9,17 @@ bool OnEvent(const Lambda::Event& event)
 
 	if (event.Type == EVENT_TYPE_KEY)
 	{
-		std::cout << "Key event. Repeat: " << event.KeyEvent.RepeatCount << std::endl;
-		sizeof(event.KeyEvent);
+		LOG_SYSTEM_PRINT("Key event. Repeat: %d\n", event.KeyEvent.KeyCode);
+		return true;
+	}
+	else if (event.Type == EVENT_TYPE_TEXT)
+	{
+		LOG_SYSTEM_PRINT("Text event. Repeat: %c\n", (char)event.TextEvent.Character);
+		return true;
+	}
+	else if (event.Type == EVENT_TYPE_MOUSE_MOVED)
+	{
+		LOG_SYSTEM_PRINT("Mouse moved. x: %d, y: %d\n", event.MouseMoveEvent.PosX, event.MouseMoveEvent.PosY);
 		return true;
 	}
 

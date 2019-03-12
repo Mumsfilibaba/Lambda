@@ -1,7 +1,10 @@
 #pragma once
-#include <LambdaPch.h>
+#include "Defines.h"
 
 #if defined(LAMBDA_PLAT_WINDOWS)
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+
 namespace Lambda
 {
 	class WindowClass final
