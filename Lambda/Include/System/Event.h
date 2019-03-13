@@ -6,13 +6,17 @@ namespace Lambda
 {
 	enum EventType : uint32
 	{
-		EVENT_TYPE_UNKNOWN,
+		EVENT_TYPE_UNKNOWN = 0,
 		EVENT_TYPE_WINDOW_CLOSED,
 		EVENT_TYPE_WINDOW_RESIZE,
 		EVENT_TYPE_WINDOW_MOVE,
-		EVENT_TYPE_KEY,
+		EVENT_TYPE_KEYDOWN,
+		EVENT_TYPE_KEYUP,
 		EVENT_TYPE_TEXT,
+		EVENT_TYPE_MOUSE_BUTTONDOWN,
+		EVENT_TYPE_MOUSE_BUTTONUP,
 		EVENT_TYPE_MOUSE_MOVED,
+		EVENT_TYPE_MOUSE_SCROLLED,
 		EVENT_TYPE_FOCUS_CHANGED
 	};
 
@@ -24,7 +28,6 @@ namespace Lambda
 			struct
 			{
 				Key		KeyCode;
-				bool	Down;
 				uint16	RepeatCount;
 			} KeyEvent;
 
@@ -41,6 +44,17 @@ namespace Lambda
 
 			struct
 			{
+				MouseButton	Button;
+			} MouseButtonEvent;
+
+			struct
+			{
+				float Value;
+				bool Vertical;
+			} MouseScrollEvent;
+
+			struct
+			{
 				uint16	PosX;
 				uint16	PosY;
 			} WindowMove;
@@ -50,6 +64,11 @@ namespace Lambda
 				uint16	Width;
 				uint16	Height;
 			} WindowResize;
+
+			struct
+			{
+				bool HasFocus;
+			} FocusChanged;
 		};
 	};
 }

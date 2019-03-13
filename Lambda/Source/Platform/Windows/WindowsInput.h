@@ -14,6 +14,8 @@ namespace Lambda
 
 		Key WindowsKeyToLambda(uint32 keycode) const;
 		uint32 LambdaKeyToWindows(Key keycode) const;
+		MouseButton WindowsButtonToLambda(uint32 keycode) const;
+		uint32 LambdaButtonToWindows(MouseButton keycode) const;
 
 		virtual bool InternalIsKeyUp(Key keycode) const override final;
 		virtual bool InternalIsKeyDown(Key keycode) const override final;
@@ -30,6 +32,8 @@ namespace Lambda
 	public:
 		static Key ConvertWindowsKey(uint32 keycode);
 		static uint32 ConvertLambdaKey(Key keycode);
+		static MouseButton ConvertWindowsButton(uint32 keycode);
+		static uint32 ConvertLambdaButton(MouseButton keycode);
 	};
 
 	inline Key WindowsInput::ConvertWindowsKey(uint32 keycode)
@@ -40,6 +44,16 @@ namespace Lambda
 	inline uint32 WindowsInput::ConvertLambdaKey(Key keycode)
 	{
 		return ((WindowsInput&)Input::GetInstance()).LambdaKeyToWindows(keycode);
+	}
+
+	inline MouseButton WindowsInput::ConvertWindowsButton(uint32 keycode)
+	{
+		return ((WindowsInput&)Input::GetInstance()).WindowsButtonToLambda(keycode);
+	}
+
+	inline uint32 WindowsInput::ConvertLambdaButton(MouseButton keycode)
+	{
+		return ((WindowsInput&)Input::GetInstance()).LambdaButtonToWindows(keycode);
 	}
 }
 #endif

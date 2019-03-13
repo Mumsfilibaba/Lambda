@@ -106,45 +106,100 @@ namespace Lambda
 	{
 		Event event = {};
 		event.Type = EVENT_TYPE_UNKNOWN;
-		event.KeyEvent.Down = false;
+		event.MouseScrollEvent.Vertical = false;
 
 		switch (msg)
 		{
 		case WM_DESTROY:
+		{
 			event.Type = EVENT_TYPE_WINDOW_CLOSED;
 			break;
+		}
 		
 		case WM_SIZE:
+		{
 			event.Type = EVENT_TYPE_WINDOW_RESIZE;
 			event.WindowResize.Width = LOWORD(lParam);
 			event.WindowResize.Height = HIWORD(lParam);
 			break;
+		}
 
 		case WM_MOVE:
+		{
 			event.Type = EVENT_TYPE_WINDOW_MOVE;
 			event.WindowMove.PosX = LOWORD(lParam);
 			event.WindowMove.PosY = HIWORD(lParam);
 			break;
+		}
 		
 		case WM_KEYDOWN:
-			event.KeyEvent.Down = true;
 		case WM_KEYUP:
-			event.Type = EVENT_TYPE_KEY;
+		{
+			event.Type = msg == WM_KEYDOWN ? EVENT_TYPE_KEYDOWN : EVENT_TYPE_KEYUP;
 			event.KeyEvent.KeyCode = WindowsInput::ConvertWindowsKey(wParam);
 			event.KeyEvent.RepeatCount = LOWORD(lParam);
 			break;
+		}
 
 		case WM_CHAR:
+		{
 			event.Type = EVENT_TYPE_TEXT;
 			event.TextEvent.Character = wchar_t(wParam);
 			break;
+		}
 
 		case WM_MOUSEMOVE:
+		{
 			event.Type = EVENT_TYPE_MOUSE_MOVED;
 			event.MouseMoveEvent.PosX = GET_X_LPARAM(lParam);
 			event.MouseMoveEvent.PosY = GET_Y_LPARAM(lParam);
 			break;
+		}
+
+		case WM_LBUTTONDOWN:
+		case WM_MBUTTONDOWN:
+		case WM_RBUTTONDOWN:
+		case WM_XBUTTONDOWN:
+		{
+			event.Type = EVENT_TYPE_MOUSE_BUTTONUP;
+			event.MouseButtonEvent.Button = WindowsInput::ConvertWindowsButton(wParam);
+			break;
+		}
+
+		case WM_LBUTTONUP:
+		case WM_MBUTTONUP:
+		case WM_RBUTTONUP:
+		case WM_XBUTTONUP:
+		{
+			event.Type = EVENT_TYPE_MOUSE_BUTTONDOWN;
+			event.MouseButtonEvent.Button = WindowsInput::ConvertWindowsButton(wParam);
+			break;
+		}
 		
+		case WM_MOUSEWHEEL:
+		{
+			event.MouseScrollEvent.Vertical = true;
+		case WM_MOUSEHWHEEL: 
+			event.Type = EVENT_TYPE_MOUSE_SCROLLED;
+			event.MouseScrollEvent.Vertical = true;
+			event.MouseScrollEvent.Value = GET_WHEEL_DELTA_WPARAM(wParam) / (float)WHEEL_DELTA;
+			break;
+		}
+
+		case WM_SETFOCUS:
+		{
+			event.Type = EVENT_TYPE_FOCUS_CHANGED;
+			event.FocusChanged.HasFocus = true;
+			break;
+		}
+
+		case WM_KILLFOCUS:
+		{
+			event.Type = EVENT_TYPE_FOCUS_CHANGED;
+			event.FocusChanged.HasFocus = false;
+			break;
+		}
+
 		default:
 			return DefWindowProc(m_Wnd, msg, wParam, lParam);
 		}

@@ -7,9 +7,9 @@ bool OnEvent(const Lambda::Event& event)
 {
 	using namespace Lambda;
 
-	if (event.Type == EVENT_TYPE_KEY)
+	if (event.Type == EVENT_TYPE_KEYDOWN)
 	{
-		LOG_SYSTEM_PRINT("Key event. Repeat: %d\n", event.KeyEvent.KeyCode);
+		LOG_SYSTEM_PRINT("Key down. Repeat: %d\n", event.KeyEvent.KeyCode);
 		return true;
 	}
 	else if (event.Type == EVENT_TYPE_TEXT)

@@ -31,11 +31,6 @@ namespace Lambda
 		{
 			clock.Tick();
 			InternalOnUpdate(clock.GetDeltaTime());
-
-			if (Input::IsKeyDown(KEY_A))
-			{
-				LOG_SYSTEM_PRINT("You'll never get this (BORAT VOICE)\n");
-			}
 		}
 
 		InternalOnRelease();
@@ -58,7 +53,7 @@ namespace Lambda
 			desc.Height = 900;
 
 			m_pWindow = IWindow::Create(desc);
-			m_pWindow->SetEventCallback(EventDispatcher::OnEvent);
+			m_pWindow->SetEventCallback(EventDispatcher::SendEvent);
 		}
 	}
 
@@ -83,6 +78,7 @@ namespace Lambda
 	{
 		m_pWindow->OnUpdate();
 
+
 		OnUpdate(dt);
 	}
 
@@ -101,9 +97,9 @@ namespace Lambda
 			LOG_DEBUG_INFO("Window closed");
 			return true;
 		}
-		else if (event.Type == EVENT_TYPE_KEY)
+		else if (event.Type == EVENT_TYPE_KEYDOWN)
 		{
-			if (event.KeyEvent.Down && event.KeyEvent.KeyCode == KEY_ESCAPE)
+			if (event.KeyEvent.KeyCode == KEY_ESCAPE)
 			{
 				Application::GetInstance().Quit(0);
 				return true;

@@ -6,7 +6,7 @@ namespace Lambda
 {
 	std::vector<EventLayer> EventDispatcher::s_LayerStack;
 
-	bool EventDispatcher::OnEvent(const Event& event)
+	bool EventDispatcher::SendEvent(const Event& event)
 	{
 		for (auto iter = s_LayerStack.begin(); iter < s_LayerStack.end(); iter++)
 		{

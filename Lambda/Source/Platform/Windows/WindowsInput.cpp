@@ -277,6 +277,32 @@ namespace Lambda
 		return m_LambdaToWindowsKeyTable[keycode];
 	}
 
+	MouseButton WindowsInput::WindowsButtonToLambda(uint32 keycode) const
+	{
+		switch(keycode)
+		{
+		case MK_LBUTTON: return MOUSEBUTTON_LEFT;
+		case MK_MBUTTON: return MOUSEBUTTON_MIDDLE;
+		case MK_RBUTTON: return MOUSEBUTTON_RIGHT;
+		case MK_XBUTTON1: return MOUSEBUTTON_FORWARD;
+		case MK_XBUTTON2: return MOUSEBUTTON_BACKWARD;
+		default: return MOUSEBUTTON_UNKNOWN;
+		}
+	}
+
+	uint32 WindowsInput::LambdaButtonToWindows(MouseButton keycode) const
+	{
+		switch (keycode)
+		{
+		case MOUSEBUTTON_LEFT: return MK_LBUTTON;
+		case MOUSEBUTTON_MIDDLE: return MK_MBUTTON;
+		case MOUSEBUTTON_RIGHT: return MK_RBUTTON;
+		case MOUSEBUTTON_FORWARD: return MK_XBUTTON1;
+		case MOUSEBUTTON_BACKWARD: return MK_XBUTTON2;
+		default: return 0;
+		}
+	}
+
 	bool WindowsInput::InternalIsKeyUp(Key keycode) const
 	{
 		return !(GetAsyncKeyState(LambdaKeyToWindows(keycode)) & 0x8000);
