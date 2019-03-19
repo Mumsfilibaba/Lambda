@@ -14,7 +14,6 @@ namespace Lambda
 	enum Key : uint8
 	{
 		KEY_UNKNOWN					= 0,
-		/* Printable keys */
 		KEY_SPACE					= 1,
 		KEY_APOSTROPHE				= 2,	/* ' */
 		KEY_COMMA					= 3,	/* , */
@@ -65,7 +64,6 @@ namespace Lambda
 		KEY_GRAVE_ACCENT			= 48,	/* ` */
 		KEY_WORLD_1					= 49,	/* Non-US #1 */
 		KEY_WORLD_2					= 50,	/* Non-US #2 */
-		//Function keys
 		KEY_ESCAPE					= 51,
 		KEY_ENTER					= 52,
 		KEY_TAB						= 53,

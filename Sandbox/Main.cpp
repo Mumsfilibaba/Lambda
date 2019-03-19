@@ -22,6 +22,14 @@ bool OnEvent(const Lambda::Event& event)
 		LOG_SYSTEM_PRINT("Mouse moved. x: %d, y: %d\n", event.MouseMoveEvent.PosX, event.MouseMoveEvent.PosY);
 		return true;
 	}
+	else if (event.Type == EVENT_TYPE_JOYSTICK_CHANGED)
+	{
+		LOG_SYSTEM_PRINT("Joystick Changed:\nID: %d\nLeftTrigger: %d, RightTrigger: %d\nLeft Thumb x: %d, y: %d\nRight Thumb x: %d, y: %d\n",
+			event.JoystickChanged.ControllerID, 
+			event.JoystickChanged.LeftTrigger, event.JoystickChanged.RightTrigger,
+			event.JoystickChanged.LeftX, event.JoystickChanged.LeftY, event.JoystickChanged.RightX, event.JoystickChanged.RightY);
+		return true;
+	}
 
 	return false;
 }
@@ -36,7 +44,7 @@ int main(int argc, const char* argv[])
 
 	EventLayer uiLayer = { OnEvent, "UILayer" };
 	EventDispatcher::PushEventLayer(uiLayer);
-	
+
 	int32 result = pApp->Run();
 	delete pApp;
 

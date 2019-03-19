@@ -17,7 +17,8 @@ namespace Lambda
 		EVENT_TYPE_MOUSE_BUTTONUP,
 		EVENT_TYPE_MOUSE_MOVED,
 		EVENT_TYPE_MOUSE_SCROLLED,
-		EVENT_TYPE_FOCUS_CHANGED
+		EVENT_TYPE_FOCUS_CHANGED,
+		EVENT_TYPE_JOYSTICK_CHANGED
 	};
 
 	struct Event
@@ -69,6 +70,17 @@ namespace Lambda
 			{
 				bool HasFocus;
 			} FocusChanged;
+
+			struct
+			{
+				uint8 ControllerID;
+				uint8 LeftTrigger;
+				uint8 RightTrigger;
+				int16 LeftX;
+				int16 LeftY;
+				int16 RightX;
+				int16 RightY;
+			} JoystickChanged;
 		};
 	};
 }

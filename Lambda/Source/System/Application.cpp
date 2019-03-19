@@ -3,6 +3,7 @@
 #include <System/Clock.h>
 #include <System/Log.h>
 #include <System/Input.h>
+#include <System/JoystickManager.h>
 
 namespace Lambda
 {
@@ -77,8 +78,7 @@ namespace Lambda
 	void Application::InternalOnUpdate(Time dt)
 	{
 		m_pWindow->OnUpdate();
-
-
+		JoystickManager::OnUpdate();
 		OnUpdate(dt);
 	}
 
