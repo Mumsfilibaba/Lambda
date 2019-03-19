@@ -136,7 +136,7 @@ namespace Lambda
 		case WM_KEYUP:
 		{
 			event.Type = msg == WM_KEYDOWN ? EVENT_TYPE_KEYDOWN : EVENT_TYPE_KEYUP;
-			event.KeyEvent.KeyCode = WindowsInput::ConvertWindowsKey(wParam);
+			event.KeyEvent.KeyCode = WindowsInput::ConvertWindowsKey(uint32(wParam));
 			event.KeyEvent.RepeatCount = LOWORD(lParam);
 			break;
 		}
@@ -162,7 +162,7 @@ namespace Lambda
 		case WM_XBUTTONDOWN:
 		{
 			event.Type = EVENT_TYPE_MOUSE_BUTTONUP;
-			event.MouseButtonEvent.Button = WindowsInput::ConvertWindowsButton(wParam);
+			event.MouseButtonEvent.Button = WindowsInput::ConvertWindowsButton(uint32(wParam));
 			break;
 		}
 
@@ -172,7 +172,7 @@ namespace Lambda
 		case WM_XBUTTONUP:
 		{
 			event.Type = EVENT_TYPE_MOUSE_BUTTONDOWN;
-			event.MouseButtonEvent.Button = WindowsInput::ConvertWindowsButton(wParam);
+			event.MouseButtonEvent.Button = WindowsInput::ConvertWindowsButton(uint32(wParam));
 			break;
 		}
 		

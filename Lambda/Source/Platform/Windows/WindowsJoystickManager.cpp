@@ -37,7 +37,7 @@ namespace Lambda
 					memset(&event, 0, sizeof(Event));
 
 					event.Type = EVENT_TYPE_JOYSTICK_CHANGED;
-					event.JoystickChanged.ControllerID = i;
+					event.JoystickChanged.ControllerID = uint8(i);
 
 					//Check triggers
 					if (state.Gamepad.bLeftTrigger != m_ControllerState[i].Gamepad.bLeftTrigger)

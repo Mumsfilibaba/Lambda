@@ -332,7 +332,7 @@ namespace Lambda
 		if (!pRelativeTo)
 			return;
 
-		POINT p = { x, y };
+		POINT p = { LONG(x), LONG(y) };
 		ClientToScreen((HWND)pRelativeTo->GetNativeHandle(), &p);
 
 		SetCursorPos(p.x, p.y);

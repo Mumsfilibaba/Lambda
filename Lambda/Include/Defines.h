@@ -32,3 +32,8 @@
 #if !defined(DeleteSafe)
 	#define DeleteSafe(x) if (x != nullptr) { Delete(x); }
 #endif
+
+#if defined(LAMBDA_VISUAL_STUDIO)
+	#pragma warning(disable : 4251) //Disable DLL-linkage warning
+	#pragma warning(error : 4456) //Redefinition is an error
+#endif

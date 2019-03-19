@@ -1,8 +1,13 @@
 workspace "Lambda"
 	architecture "x64"
 	startproject "Sandbox"
-	configurations { "Debug", "Release" }	
-	
+	warnings "Extra"
+	configurations 
+	{ 
+		"Debug", 
+		"Release" 
+	}	
+
 	outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 	
 	files 
@@ -13,6 +18,13 @@ workspace "Lambda"
 		"%{prj.name}/**.c"
 	}
 	
+	filter "action:vs*"
+		defines
+		{
+			"LAMBDA_VISUAL_STUDIO",
+			"_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING"
+		}
+
 	filter "system:windows"
 		defines 
 		{ 

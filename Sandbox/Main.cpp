@@ -34,7 +34,7 @@ bool OnEvent(const Lambda::Event& event)
 	return false;
 }
 
-int main(int argc, const char* argv[])
+int main()
 {
 	using namespace Lambda;
 
