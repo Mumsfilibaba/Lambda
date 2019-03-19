@@ -25,9 +25,15 @@ workspace "Lambda"
 			"_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING"
 		}
 
+	filter { "action:vs*", "configurations:Debug" }
+		defines
+		{
+			"_CRTDBG_MAP_ALLOC"
+		}
+
 	filter "system:windows"
-		defines 
-		{ 
+		defines
+		{
 			"LAMBDA_PLAT_WINDOWS" 
 		}
 	
