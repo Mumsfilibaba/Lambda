@@ -116,8 +116,6 @@ namespace Math
 	const Color Color::PURPLE(128, 0, 128, 255);
 	const Color Color::PINK(255, 192, 203, 255);
 
-
-	
 	Color::Color(uint8 r, uint8 g, uint8 b, uint8 a)
 		: r(r),
 		g(g),
@@ -126,29 +124,21 @@ namespace Math
 	{
 	}
 
-
-	
 	Color::Color(const Color& other)
 	{
 		*this = other;
 	}
 
-
-	
 	Color::Color(const ColorF& colorf)
 	{
 		*this = colorf;
 	}
 
-
-	
 	Color::Color(const Vector4& vector4)
 	{
 		*this = vector4;
 	}
 
-
-	
 	Color& Color::Add(const Color& other)
 	{
 		r += other.r;
@@ -159,8 +149,6 @@ namespace Math
 		return *this;
 	}
 
-
-	
 	Color& Color::Add(uint8 scalar)
 	{
 		r += scalar;
@@ -171,8 +159,6 @@ namespace Math
 		return *this;
 	}
 
-
-	
 	Color& Color::Subtract(const Color& other)
 	{
 		r -= other.r;
@@ -183,8 +169,6 @@ namespace Math
 		return *this;
 	}
 
-
-	
 	Color& Color::Subtract(uint8 scalar)
 	{
 		r -= scalar;
@@ -195,8 +179,6 @@ namespace Math
 		return *this;
 	}
 
-
-	
 	Color& Color::Multiply(const Color& other)
 	{
 		r *= other.r;
@@ -207,8 +189,6 @@ namespace Math
 		return *this;
 	}
 
-
-	
 	Color& Color::Multiply(uint8 scalar)
 	{
 		r *= scalar;
@@ -219,8 +199,6 @@ namespace Math
 		return *this;
 	}
 
-
-	
 	Color& Color::Divide(const Color& other)
 	{
 		r /= other.r;
@@ -231,8 +209,6 @@ namespace Math
 		return *this;
 	}
 
-
-	
 	Color& Color::Divide(uint8 scalar)
 	{
 		r /= scalar;
@@ -243,36 +219,26 @@ namespace Math
 		return *this;
 	}
 
-
-	
 	bool Color::Equals(const Color& other) const
 	{
 		return (color == other.color);
 	}
 
-
-	
 	std::string Color::ToString() const
 	{
 		using namespace std;
 		return string("[Color][" + to_string(r) + ", " + to_string(g) + ", " + to_string(b) + ", " + to_string(a) + ']');
 	}
 
-
-	
 	bool Color::operator==(const Color& other) const
 	{
 		return Equals(other);
 	}
 
-
-	
 	bool Color::operator!=(const Color& other) const
 	{
 		return !Equals(other);
 	}
-
-
 	
 	Color& Color::operator=(const Math::Vector4& other)
 	{
@@ -284,8 +250,6 @@ namespace Math
 		return *this;
 	}
 
-
-	
 	Color& Color::operator=(const ColorF& other)
 	{
 		r = (uint8)(other.r * 255);
@@ -296,8 +260,6 @@ namespace Math
 		return *this;
 	}
 
-
-	
 	Color& Color::operator=(const Color& other)
 	{
 		if (this != &other)
@@ -306,64 +268,46 @@ namespace Math
 		return *this;
 	}
 
-
-	
 	Color& Color::operator+=(const Color& other)
 	{
 		return Add(other);
 	}
 
-
-	
 	Color& Color::operator-=(const Color& other)
 	{
 		return Subtract(other);
 	}
-
-
 	
 	Color& Color::operator*=(const Color& other)
 	{
 		return Multiply(other);
 	}
 
-
-	
 	Color& Color::operator/=(const Color& other)
 	{
 		return Divide(other);
 	}
 
-
-	
 	Color& Color::operator+=(uint8 scalar)
 	{
 		return Add(scalar);
 	}
 
-
-	
 	Color& Color::operator-=(uint8 scalar)
 	{
 		return Subtract(scalar);
 	}
-
-
 	
 	Color& Color::operator*=(uint8 scalar)
 	{
 		return Multiply(scalar);
 	}
-
-
 	
 	Color& Color::operator/=(uint8 scalar)
 	{
 		return Divide(scalar);
 	}
 
-
-	
 	Color::operator ColorF()
 	{
 		ColorF result;
@@ -376,63 +320,45 @@ namespace Math
 		return result;
 	}
 
-
-	
 	Color operator-(Color left, const Color& right)
 	{
 		return left.Subtract(right);
 	}
 
-
-	
 	Color operator+(Color left, const Color& right)
 	{
 		return left.Add(right);
 	}
 
-
-	
 	Color operator*(Color left, const Color& right)
 	{
 		return left.Multiply(right);
 	}
 
-
-	
 	Color operator/(Color left, const Color& right)
 	{
 		return left.Divide(right);
 	}
 
-
-	
 	Color operator-(Color left, uint8 right)
 	{
 		return left.Subtract(right);
 	}
 
-
-	
 	Color operator+(Color left, uint8 right)
 	{
 		return left.Add(right);
 	}
-
-
 	
 	Color operator*(Color left, uint8 right)
 	{
 		return left.Multiply(right);
 	}
 
-
-	
 	Color operator/(Color left, uint8 right)
 	{
 		return left.Divide(right);
 	}
-
-
 	
 	Color operator*(uint8 left, Color right)
 	{

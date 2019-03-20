@@ -24,7 +24,7 @@ failure and or malfunction of any kind.
 
 namespace Math
 {
-	class RAYENGINE_API Point
+	class Point
 	{
 	public:
 		Point(int x = 0, int y = 0);
