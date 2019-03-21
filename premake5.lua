@@ -28,7 +28,14 @@ workspace "Lambda"
 	filter { "action:vs*", "configurations:Debug" }
 		defines
 		{
+			"_DEBUG",
 			"_CRTDBG_MAP_ALLOC"
+		}
+		
+	filter { "action:vs*", "configurations:Release" }
+		defines
+		{
+			"NDEBUG"
 		}
 
 	filter "system:windows"

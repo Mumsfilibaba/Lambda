@@ -3,9 +3,12 @@
 
 namespace Math
 {
-	class VECTORALIGN Matrix2
+	struct MATRIXALIGN Matrix2
 	{
 	public:
+#if defined(SSE_INTRIN)
+		Matrix2(__m128 xmm);
+#endif
 		Matrix2();
 		Matrix2(float value);
 		Matrix2(const Vector2& r1, const Vector2& r2);
@@ -72,109 +75,117 @@ namespace Math
 		friend Matrix2 operator*(float left, Matrix2 right);
 		friend Matrix2 operator/(float left, Matrix2 right);
 
+	private:
+		union
+		{
+			float m[4];
+			Vector2 Rows[2];
+			SSE_VARIABLE(Xmm);
+		};
+
 	public:
 		static Matrix2 Nan();
 		static Matrix2 Scale(const Vector2& scale);
 		static Matrix2 Scale(float scale);
 		static Matrix2 Identity();
 		static Matrix2 Rotation(float angleRad);
-
-	private:
-		union
-		{
-			float m[4];
-			Vector2 rows[2];
-#if defined(SSE_INTRIN)
-			__m128 sse128;
-#endif
-		};
 	};
 
-	Matrix2::Matrix2()
+#if defined(SSE_INTRIN)
+	inline Matrix2::Matrix2(__m128 xmm)
+		: Xmm(xmm)
+	{
+	}
+#endif
+
+	inline Matrix2::Matrix2()
 	{
 		memset(m, 0, sizeof(float) * 4);
 	}
 
-	Matrix2::Matrix2(float diagonal)
+	inline Matrix2::Matrix2(float diagonal)
 	{
 		memset(m, 0, sizeof(float) * 4);
 
-		rows[0].v[0] = diagonal;
-		rows[1].v[1] = diagonal;
+		Rows[0][0] = diagonal;
+		Rows[1][1] = diagonal;
 	}
 
-	Matrix2::Matrix2(const Vector2& r1, const Vector2& r2)
+	inline Matrix2::Matrix2(const Vector2& r1, const Vector2& r2)
 	{
-		rows[0] = r1;
-		rows[1] = r2;
+		Rows[0] = r1;
+		Rows[1] = r2;
 	}
 
-	Matrix2::Matrix2(const Matrix2& other)
+	inline Matrix2::Matrix2(const Matrix2& other)
 	{
 		*this = other;
 	}
 
-	Vector2 Matrix2::Multiply(const Vector2& vector) const
+	inline Vector2 Matrix2::Multiply(const Vector2& vector) const
 	{
 		float t[2];
 
-		t[0] = (vector.v[0] * rows[0].v[0]) + (vector.v[1] * rows[1].v[0]);
+		t[0] = (vector[0] * Rows[0][0]) + (vector[1] * Rows[1][0]);
 
-		t[1] = (vector.v[0] * rows[0].v[1]) + (vector.v[1] * rows[1].v[1]);
+		t[1] = (vector[0] * Rows[0][1]) + (vector[1] * Rows[1][1]);
 
 		return Vector2(t[0], t[1]);
 	}
 
-	Matrix2& Matrix2::Multiply(const Matrix2& other)
+	inline Matrix2& Matrix2::Multiply(const Matrix2& other)
 	{
 #if defined(SSE_INTRIN)
-		__m128 m1 = _mm_shuffle_ps(sse128, sse128, _MM_SHUFFLE(2, 2, 0, 0));
-		m1 = _mm_mul_ps(m1, _mm_shuffle_ps(other.sse128, other.sse128, _MM_SHUFFLE(1, 0, 1, 0)));
+		__m128 m1 = _mm_shuffle_ps(Xmm, Xmm, _MM_SHUFFLE(2, 2, 0, 0));
+		m1 = _mm_mul_ps(m1, _mm_shuffle_ps(other.Xmm, other.Xmm, _MM_SHUFFLE(1, 0, 1, 0)));
 
-		__m128 m2 = _mm_shuffle_ps(sse128, sse128, _MM_SHUFFLE(3, 3, 1, 1));
-		m2 = _mm_mul_ps(m2, _mm_shuffle_ps(other.sse128, other.sse128, _MM_SHUFFLE(3, 2, 3, 2)));
+		__m128 m2 = _mm_shuffle_ps(Xmm, Xmm, _MM_SHUFFLE(3, 3, 1, 1));
+		m2 = _mm_mul_ps(m2, _mm_shuffle_ps(other.Xmm, other.Xmm, _MM_SHUFFLE(3, 2, 3, 2)));
 
-		sse128 = _mm_add_ps(m1, m2);
+		Xmm = _mm_add_ps(m1, m2);
+		return *this;
 #else
 		float t[4];
 
-		t[0] = (rows[0].v[0] * other.rows[0].v[0]) + (rows[0].v[1] * other.rows[1].v[0]);
-		t[1] = (rows[0].v[0] * other.rows[0].v[1]) + (rows[0].v[1] * other.rows[1].v[1]);
+		t[0] = (Rows[0][0] * other.Rows[0][0]) + (Rows[0][1] * other.Rows[1][0]);
+		t[1] = (Rows[0][0] * other.Rows[0][1]) + (Rows[0][1] * other.Rows[1][1]);
 
-		t[2] = (rows[1].v[0] * other.rows[0].v[0]) + (rows[1].v[1] * other.rows[1].v[0]);
-		t[3] = (rows[1].v[0] * other.rows[0].v[1]) + (rows[1].v[1] * other.rows[1].v[1]);
+		t[2] = (Rows[1][0] * other.Rows[0][0]) + (Rows[1][1] * other.Rows[1][0]);
+		t[3] = (Rows[1][0] * other.Rows[0][1]) + (Rows[1][1] * other.Rows[1][1]);
 
 		memcpy(m, t, sizeof(float) * 4);
-#endif
 		return *this;
+#endif
 	}
 
-	Matrix2& Matrix2::Multiply(float scalar)
+	inline Matrix2& Matrix2::Multiply(float scalar)
 	{
 #if defined(SSE_INTRIN)
-		sse128 = _mm_mul_ps(sse128, _mm_set_ps1(scalar));
+		Xmm = _mm_mul_ps(Xmm, _mm_set_ps1(scalar));
+		return *this;
 #else
 		for (int i = 0; i < 4; i++)
 			m[i] *= scalar;
-#endif
 		return *this;
+#endif
 	}
 
-	Matrix2& Matrix2::Add(const Matrix2& other)
+	inline Matrix2& Matrix2::Add(const Matrix2& other)
 	{
 #if defined(SSE_INTRIN)
-		sse128 = _mm_add_ps(sse128, other.sse128);
+		Xmm = _mm_add_ps(Xmm, other.Xmm);
+		return *this;
 #else
 		for (int i = 0; i < 4; i++)
 			m[i] += other.m[i];
-#endif
 		return *this;
+#endif
 	}
 
-	Matrix2& Matrix2::Add(float scalar)
+	inline Matrix2& Matrix2::Add(float scalar)
 	{
 #if defined(SSE_INTRIN)
-		sse128 = _mm_add_ps(sse128, _mm_set_ps1(scalar));
+		Xmm = _mm_add_ps(Xmm, _mm_set_ps1(scalar));
 #else
 		for (int i = 0; i < 4; i++)
 			m[i] += scalar;
@@ -182,40 +193,43 @@ namespace Math
 		return *this;
 	}
 
-	Matrix2& Matrix2::Subtract(const Matrix2& other)
+	inline Matrix2& Matrix2::Subtract(const Matrix2& other)
 	{
 #if defined(SSE_INTRIN)
-		sse128 = _mm_sub_ps(sse128, other.sse128);
+		Xmm = _mm_sub_ps(Xmm, other.Xmm);
+		return *this;
 #else
 		for (int i = 0; i < 4; i++)
 			m[i] -= other.m[i];
-#endif
 		return *this;
+#endif
 	}
 
-	Matrix2& Matrix2::Subtract(float scalar)
+	inline Matrix2& Matrix2::Subtract(float scalar)
 	{
 #if defined(SSE_INTRIN)
-		sse128 = _mm_sub_ps(sse128, _mm_set_ps1(scalar));
+		Xmm = _mm_sub_ps(Xmm, _mm_set_ps1(scalar));
+		return *this;
 #else
 		for (int i = 0; i < 4; i++)
 			m[i] -= scalar;
-#endif
 		return *this;
+#endif
 	}
 
-	Matrix2& Matrix2::Divide(float scalar)
+	inline Matrix2& Matrix2::Divide(float scalar)
 	{
 #if defined(SSE_INTRIN)
-		sse128 = _mm_div_ps(sse128, _mm_set_ps1(scalar));
+		Xmm = _mm_div_ps(Xmm, _mm_set_ps1(scalar));
+		return *this;
 #else
 		for (int i = 0; i < 4; i++)
 			m[i] /= scalar;
-#endif
 		return *this;
+#endif
 	}
 
-	bool Matrix2::Equals(const Matrix2& other) const
+	inline bool Matrix2::Equals(const Matrix2& other) const
 	{
 		for (int i = 0; i < 4; i++)
 		{
@@ -226,37 +240,39 @@ namespace Math
 		return true;
 	}
 
-	Matrix2& Matrix2::Transpose()
+	inline Matrix2& Matrix2::Transpose()
 	{
 #if defined(SSE_INTRIN)
-		sse128 = _mm_shuffle_ps(sse128, sse128, _MM_SHUFFLE(3, 1, 2, 0));
+		Xmm = _mm_shuffle_ps(Xmm, Xmm, _MM_SHUFFLE(3, 1, 2, 0));
+		return *this;
 #else
 		float temp[4];
 
-		temp[0] = rows[0].v[0];
-		temp[1] = rows[1].v[0];
+		temp[0] = Rows[0][0];
+		temp[1] = Rows[1][0];
 
-		temp[2] = rows[0].v[1];
-		temp[3] = rows[1].v[1];
+		temp[2] = Rows[0][1];
+		temp[3] = Rows[1][1];
 
 		memcpy(m, temp, sizeof(float) * 4);
-#endif
 		return *this;
+#endif
 	}
 
-	Matrix2 Matrix2::TransposeOf() const
+	inline Matrix2 Matrix2::TransposeOf() const
 	{
 		return Matrix2(*this).Transpose();
 	}
 
-	Matrix2& Matrix2::Invert()
+	inline Matrix2& Matrix2::Invert()
 	{
 #if defined(SSE_INTRIN)
-		__m128 det = _mm_set_ps1((rows[0].v[0] * rows[1].v[1]) - (rows[0].v[1] * rows[1].v[0]));
+		__m128 det = _mm_set_ps1((Rows[0][0] * Rows[1][1]) - (Rows[0][1] * Rows[1][0]));
 		det = _mm_div_ps(_mm_set_ps(1.0f, -1.0f, -1.0f, 1.0f), det);
 
-		sse128 = _mm_shuffle_ps(sse128, sse128, _MM_SHUFFLE(0, 2, 1, 3));
-		sse128 = _mm_mul_ps(sse128, det);
+		Xmm = _mm_shuffle_ps(Xmm, Xmm, _MM_SHUFFLE(0, 2, 1, 3));
+		Xmm = _mm_mul_ps(Xmm, det);
+		return *this;
 #else
 		float det = Determinant();
 
@@ -264,171 +280,168 @@ namespace Math
 			*this = Matrix2::Nan();
 		else
 			*this = Adjugate().Divide(det);
-#endif
 		return *this;
+#endif
 	}
 
-	Matrix2 Matrix2::InverseOf() const
+	inline Matrix2 Matrix2::InverseOf() const
 	{
 		return Matrix2(*this).Invert();
 	}
 
-	Matrix2 Matrix2::Cofactor() const
+	inline Matrix2 Matrix2::Cofactor() const
 	{
 		return Adjugate().Transpose();
 	}
 
-	Matrix2 Matrix2::Adjugate() const
+	inline Matrix2 Matrix2::Adjugate() const
 	{
-		Matrix2 a;
 #if defined(SSE_INTRIN)
-		a.sse128 = _mm_shuffle_ps(sse128, sse128, _MM_SHUFFLE(0, 2, 1, 3));
-		a.sse128 = _mm_mul_ps(a.sse128, _mm_set_ps(1.0f, -1.0f, -1.0f, 1.0f));
+		Matrix2 a;
+		a.Xmm = _mm_shuffle_ps(Xmm, Xmm, _MM_SHUFFLE(0, 2, 1, 3));
+		a.Xmm = _mm_mul_ps(a.Xmm, _mm_set_ps(1.0f, -1.0f, -1.0f, 1.0f));
+		return *this;
 #else
-		a.rows[0].v[0] = rows[1].v[1];
-		a.rows[1].v[0] = -rows[1].v[0];
-		a.rows[0].v[1] = -rows[0].v[1];
-		a.rows[1].v[1] = rows[0].v[0];
-#endif
+		a.Rows[0][0] = Rows[1][1];
+		a.Rows[1][0] = -Rows[1][0];
+		a.Rows[0][1] = -Rows[0][1];
+		a.Rows[1][1] = Rows[0][0];
 		return a;
+#endif
 	}
 
-	float Matrix2::Determinant() const
+	inline float Matrix2::Determinant() const
 	{
-		return (rows[0].v[0] * rows[1].v[1]) - (rows[0].v[1] * rows[1].v[0]);
+		return (Rows[0][0] * Rows[1][1]) - (Rows[0][1] * Rows[1][0]);
 	}
 
-	float* Matrix2::GetArray()
-	{
-		return m;
-	}
-
-	const float* Matrix2::GetArray() const
+	inline float* Matrix2::GetArray()
 	{
 		return m;
 	}
 
-	float& Matrix2::GetElement(unsigned char r, unsigned char c)
+	inline const float* Matrix2::GetArray() const
+	{
+		return m;
+	}
+
+	inline float& Matrix2::GetElement(unsigned char r, unsigned char c)
 	{
 		assert(r < 2);
 		assert(c < 2);
-
-		return rows[r].v[c];
+		return Rows[r][c];
 	}
 
-	float Matrix2::GetElement(unsigned char r, unsigned char c) const
+	inline float Matrix2::GetElement(unsigned char r, unsigned char c) const
 	{
 		assert(r < 2);
 		assert(c < 2);
-
-		return rows[r].v[c];
+		return Rows[r][c];
 	}
 
-	Vector2& Matrix2::GetRow(unsigned char r)
+	inline Vector2& Matrix2::GetRow(unsigned char r)
 	{
 		assert(r < 2);
-
-		return rows[r];
+		return Rows[r];
 	}
 
-	Vector2 Matrix2::GetRow(unsigned char r) const
+	inline Vector2 Matrix2::GetRow(unsigned char r) const
 	{
 		assert(r < 2);
-
-		return rows[r];
+		return Rows[r];
 	}
 
-	std::string Matrix2::ToString() const
+	inline std::string Matrix2::ToString() const
 	{
-		return std::string(rows[0].ToString() + '\n' + rows[1].ToString());
+		return std::string(Rows[0].ToString() + '\n' + Rows[1].ToString());
 	}
 
-	bool Matrix2::operator==(const Matrix2& other) const
+	inline bool Matrix2::operator==(const Matrix2& other) const
 	{
 		return Equals(other);
 	}
 
-	bool Matrix2::operator!=(const Matrix2& other) const
+	inline bool Matrix2::operator!=(const Matrix2& other) const
 	{
 		return !Equals(other);
 	}
 
-	float Matrix2::operator()(unsigned char r, unsigned char c) const
+	inline float Matrix2::operator()(unsigned char r, unsigned char c) const
 	{
 		return GetElement(r, c);
 	}
 
-	float& Matrix2::operator()(unsigned char r, unsigned char c)
+	inline float& Matrix2::operator()(unsigned char r, unsigned char c)
 	{
 		return GetElement(r, c);
 	}
 
-	Vector2 Matrix2::operator()(unsigned char r) const
+	inline Vector2 Matrix2::operator()(unsigned char r) const
 	{
 		return GetRow(r);
 	}
 
-	Vector2& Matrix2::operator()(unsigned char r)
+	inline Vector2& Matrix2::operator()(unsigned char r)
 	{
 		return GetRow(r);
 	}
 
-	Vector2 operator*(Vector2 left, const Matrix2& right)
+	inline Vector2 operator*(Vector2 left, const Matrix2& right)
 	{
 		return right.Multiply(left);
 	}
 
-	Vector2& operator*=(Vector2& left, const Matrix2& right)
+	inline Vector2& operator*=(Vector2& left, const Matrix2& right)
 	{
 		return left = right.Multiply(left);
 	}
 
-	Matrix2 operator+(Matrix2 left, const Matrix2& right)
+	inline Matrix2 operator+(Matrix2 left, const Matrix2& right)
 	{
 		return left.Add(right);
 	}
 
-	Matrix2 operator-(Matrix2 left, const Matrix2& right)
+	inline Matrix2 operator-(Matrix2 left, const Matrix2& right)
 	{
 		return left.Subtract(right);
 	}
 
-	Matrix2 operator*(Matrix2 left, const Matrix2& right)
+	inline Matrix2 operator*(Matrix2 left, const Matrix2& right)
 	{
 		return left.Multiply(right);
 	}
 
-	Matrix2 operator+(Matrix2 left, float right)
+	inline Matrix2 operator+(Matrix2 left, float right)
 	{
 		return left.Add(right);
 	}
 
-	Matrix2 operator-(Matrix2 left, float right)
+	inline Matrix2 operator-(Matrix2 left, float right)
 	{
 		return left.Subtract(right);
 	}
 
-	Matrix2 operator*(Matrix2 left, float right)
+	inline Matrix2 operator*(Matrix2 left, float right)
 	{
 		return left.Multiply(right);
 	}
 
-	Matrix2 operator/(Matrix2 left, float right)
+	inline Matrix2 operator/(Matrix2 left, float right)
 	{
 		return left.Divide(right);
 	}
 
-	Matrix2 operator*(float left, Matrix2 right)
+	inline Matrix2 operator*(float left, Matrix2 right)
 	{
 		return right.Multiply(left);
 	}
 
-	Matrix2 operator/(float left, Matrix2 right)
+	inline Matrix2 operator/(float left, Matrix2 right)
 	{
 		return right.Divide(left);
 	}
 
-	Matrix2& Matrix2::operator=(const Matrix2& other)
+	inline Matrix2& Matrix2::operator=(const Matrix2& other)
 	{
 		if (this != &other)
 			memcpy(m, other.m, sizeof(float) * 4);
@@ -436,52 +449,52 @@ namespace Math
 		return *this;
 	}
 
-	Matrix2& Matrix2::operator+=(const Matrix2& right)
+	inline Matrix2& Matrix2::operator+=(const Matrix2& right)
 	{
 		return Add(right);
 	}
 
-	Matrix2& Matrix2::operator-=(const Matrix2& right)
+	inline Matrix2& Matrix2::operator-=(const Matrix2& right)
 	{
 		return Subtract(right);
 	}
 
-	Matrix2& Matrix2::operator*=(const Matrix2& right)
+	inline Matrix2& Matrix2::operator*=(const Matrix2& right)
 	{
 		return Multiply(right);
 	}
 
-	Matrix2& Matrix2::operator+=(float right)
+	inline Matrix2& Matrix2::operator+=(float right)
 	{
 		return Add(right);
 	}
 
-	Matrix2& Matrix2::operator-=(float right)
+	inline Matrix2& Matrix2::operator-=(float right)
 	{
 		return Subtract(right);
 	}
 
-	Matrix2& Matrix2::operator*=(float right)
+	inline Matrix2& Matrix2::operator*=(float right)
 	{
 		return Multiply(right);
 	}
 
-	Matrix2& Matrix2::operator/=(float right)
+	inline Matrix2& Matrix2::operator/=(float right)
 	{
 		return Divide(right);
 	}
 
-	Matrix2 Matrix2::Nan()
+	inline Matrix2 Matrix2::Nan()
 	{
 		return Matrix2(Vector2::Nan(), Vector2::Nan());
 	}
 
-	Matrix2 Matrix2::Identity()
+	inline Matrix2 Matrix2::Identity()
 	{
 		return Matrix2(1.0f);
 	}
 
-	Matrix2 Matrix2::Rotation(float angleRad)
+	inline Matrix2 Matrix2::Rotation(float angleRad)
 	{
 		Matrix2 rot(1.0f);
 
@@ -496,7 +509,7 @@ namespace Math
 		return rot;
 	}
 
-	Matrix2 Matrix2::Scale(const Vector2& scale)
+	inline Matrix2 Matrix2::Scale(const Vector2& scale)
 	{
 		Matrix2 s(1.0f);
 
@@ -506,7 +519,7 @@ namespace Math
 		return s;
 	}
 
-	Matrix2 Matrix2::Scale(float scale)
+	inline Matrix2 Matrix2::Scale(float scale)
 	{
 		return Matrix2(scale);
 	}

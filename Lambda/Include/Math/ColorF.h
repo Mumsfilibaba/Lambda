@@ -3,7 +3,7 @@
 
 namespace Math
 {
-	class ColorF
+	struct ColorF
 	{
 	public:
 		ColorF(float r = 0.0f, float g = 0.0f, float b = 0.0f, float a = 1.0f);
@@ -66,33 +66,32 @@ namespace Math
 				float a;
 			};
 
-			float rgba[4];
 			Vector4 vector;
 		};
 
 	public:
-		const static ColorF BLACK;
-		const static ColorF WHITE;
-		const static ColorF WARMWHITE;
-		const static ColorF GRAY;
-		const static ColorF DARKGRAY;
-		const static ColorF SOFTGRAY;
-		const static ColorF RED;
-		const static ColorF DARKRED;
-		const static ColorF SOFTRED;
-		const static ColorF GREEN;
-		const static ColorF DARKGREEN;
-		const static ColorF SOFTGREEN;
-		const static ColorF BLUE;
-		const static ColorF DARKBLUE;
-		const static ColorF SOFTBLUE;
-		const static ColorF CORNFLOWERBLUE;
-		const static ColorF YELLOW;
-		const static ColorF DARKYELLOW;
-		const static ColorF SOFTYELLOW;
-		const static ColorF MAGENTA;
-		const static ColorF PURPLE;
-		const static ColorF PINK;
+		static const ColorF BLACK;
+		static const ColorF WHITE;
+		static const ColorF WARMWHITE;
+		static const ColorF GRAY;
+		static const ColorF DARKGRAY;
+		static const ColorF SOFTGRAY;
+		static const ColorF RED;
+		static const ColorF DARKRED;
+		static const ColorF SOFTRED;
+		static const ColorF GREEN;
+		static const ColorF DARKGREEN;
+		static const ColorF SOFTGREEN;
+		static const ColorF BLUE;
+		static const ColorF DARKBLUE;
+		static const ColorF SOFTBLUE;
+		static const ColorF CORNFLOWERBLUE;
+		static const ColorF YELLOW;
+		static const ColorF DARKYELLOW;
+		static const ColorF SOFTYELLOW;
+		static const ColorF MAGENTA;
+		static const ColorF PURPLE;
+		static const ColorF PINK;
 	};
 
 	const ColorF ColorF::BLACK(0.0f, 0.0f, 0.0f, 1.0f);
