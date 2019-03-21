@@ -1,5 +1,6 @@
 #include <System/Application.h>
 #include <System/Log.h>
+#include <Math/Math.h>
 #include <crtdbg.h>
 #include <string>
 
@@ -44,6 +45,8 @@ int main()
 
 	EventLayer uiLayer = { OnEvent, "UILayer" };
 	EventDispatcher::PushEventLayer(uiLayer);
+
+	Math::Matrix4 mat = Math::Matrix4(1.0f);
 
 	int32 result = pApp->Run();
 	delete pApp;

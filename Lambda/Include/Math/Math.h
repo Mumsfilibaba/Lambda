@@ -8,11 +8,11 @@
 #include "Vector3.h"
 #include "Vector4.h"
 
+#include "Point.h"
+
 #include "Color.h"
-#include "ColorF.h"
 
 #include "RandomGenerator.h"
 
-#include "Point.h"
 #include "Rectangle.h"
 #include "Ray.h"

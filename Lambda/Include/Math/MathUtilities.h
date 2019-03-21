@@ -2,7 +2,7 @@
 
 constexpr double PI = 3.1415926535898;
 constexpr double E = 2.7182818284590;
-constexpr double TWO_PI_F = PI * 2.0;
+constexpr double TWO_PI = PI * 2.0;
 constexpr float PI_F = 3.141592f;
 constexpr float E_F = 2.718281f;
 constexpr float TWO_PI_F = 2.0f * PI_F;

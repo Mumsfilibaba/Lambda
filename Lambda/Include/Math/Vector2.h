@@ -33,6 +33,9 @@ namespace Math
 		bool operator==(const Vector2& other) const;
 		bool operator!=(const Vector2& other) const;
 
+		float& operator[](uint32 index);
+		const float& operator[](uint32 index) const;
+
 		Vector2 operator-() const;
 		Vector2& operator=(const Vector2& other);
 		Vector2& operator-=(const Vector2& other);
@@ -225,6 +228,16 @@ namespace Math
 	inline bool Vector2::operator!=(const Vector2& other) const
 	{
 		return !Equals(other);
+	}
+
+	inline float& Vector2::operator[](uint32 index)
+	{
+		return reinterpret_cast<float*>(this)[index];
+	}
+
+	inline const float& Vector2::operator[](uint32 index) const
+	{
+		return reinterpret_cast<const float*>(this)[index];
 	}
 
 	inline Vector2 Vector2::operator-() const

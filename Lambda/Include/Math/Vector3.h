@@ -42,6 +42,9 @@ namespace Math
 		bool operator==(const Vector3& other) const;
 		bool operator!=(const Vector3& other) const;
 
+		float& operator[](uint32 index);
+		const float& operator[](uint32 index) const;
+
 		friend Vector3 operator-(Vector3 left, const Vector3& right);
 		friend Vector3 operator+(Vector3 left, const Vector3& right);
 		friend Vector3 operator-(Vector3 left, float right);
@@ -324,6 +327,16 @@ namespace Math
 	inline bool Vector3::operator!=(const Vector3& other) const
 	{
 		return !Equals(other);
+	}
+
+	inline float& Vector3::operator[](uint32 index)
+	{
+		return reinterpret_cast<float*>(this)[index];
+	}
+
+	inline const float& Vector3::operator[](uint32 index) const
+	{
+		return reinterpret_cast<const float*>(this)[index];
 	}
 
 	inline Vector3 Vector3::Nan()
