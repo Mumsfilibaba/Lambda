@@ -2,6 +2,7 @@
 #include "MathUtilities.h"
 #include <string>
 #include <cassert>
+#include <ctime>
 
 #if defined(_WIN32) && defined(__ANDROID__)
 	#undef _WIN32

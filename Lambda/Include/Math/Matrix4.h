@@ -26,10 +26,10 @@ namespace Math
 
 		float* GetArray();
 		const float* GetArray() const;
-		float GetElement(unsigned char r, unsigned char c) const;
-		float& GetElement(unsigned char r, unsigned char c);
-		Vector4 GetRow(unsigned char r) const;
-		Vector4& GetRow(unsigned char r);
+		float GetElement(uint32 r, uint32 c) const;
+		float& GetElement(uint32 r, uint32 c);
+		Vector4 GetRow(uint32 r) const;
+		Vector4& GetRow(uint32 r);
 
 		Matrix4& Transpose();
 		Matrix4& Invert();
@@ -46,10 +46,10 @@ namespace Math
 		bool operator==(const Matrix4& other) const;
 		bool operator!=(const Matrix4& other) const;
 
-		float operator()(unsigned int r, unsigned int c) const;
-		float& operator()(unsigned int r, unsigned int c);
-		Vector4 operator()(unsigned int r) const;
-		Vector4& operator()(unsigned int r);
+		float operator()(uint32 r, uint32 c) const;
+		float& operator()(uint32 r, uint32 c);
+		Vector4 operator()(uint32 r) const;
+		Vector4& operator()(uint32 r);
 
 		Matrix4& operator=(const Matrix4& other);
 		Matrix4& operator+=(const Matrix4& right);
@@ -92,8 +92,8 @@ namespace Math
 
 		static Matrix4 Translation(const Vector3& translation);
 
+		static Matrix4 RotationYawPitchRoll(float angleRadX, float angleRadY, float angleRadZ);
 		static Matrix4 Rotation(const Vector3& axis, float angleRad);
-		static Matrix4 Rotation(float angleRadX, float angleRadY, float angleRadZ);
 		static Matrix4 RotationX(float angleRad);
 		static Matrix4 RotationY(float angleRad);
 		static Matrix4 RotationZ(float angleRad);
@@ -321,27 +321,27 @@ namespace Math
 		return m;
 	}
 
-	inline float Matrix4::GetElement(unsigned char r, unsigned char c) const
+	inline float Matrix4::GetElement(uint32 r, uint32 c) const
 	{
 		assert(r < 4);
 		assert(c < 4);
 		return Rows[r][c];
 	}
 
-	inline float& Matrix4::GetElement(unsigned char r, unsigned char c)
+	inline float& Matrix4::GetElement(uint32 r, uint32 c)
 	{
 		assert(r < 4);
 		assert(c < 4);
 		return Rows[r][c];
 	}
 
-	inline Vector4 Matrix4::GetRow(unsigned char r) const
+	inline Vector4 Matrix4::GetRow(uint32 r) const
 	{
 		assert(r < 4);
 		return Rows[r];
 	}
 
-	inline Vector4& Matrix4::GetRow(unsigned char r)
+	inline Vector4& Matrix4::GetRow(uint32 r)
 	{
 		assert(r < 4);
 		return Rows[r];
@@ -619,22 +619,22 @@ namespace Math
 		return !Equals(other);
 	}
 
-	inline float Matrix4::operator()(unsigned int r, unsigned int c) const
+	inline float Matrix4::operator()(uint32 r, uint32 c) const
 	{
 		return GetElement(r, c);
 	}
 
-	inline float& Matrix4::operator()(unsigned int r, unsigned int c)
+	inline float& Matrix4::operator()(uint32 r, uint32 c)
 	{
 		return GetElement(r, c);
 	}
 
-	inline Vector4 Matrix4::operator()(unsigned int r) const
+	inline Vector4 Matrix4::operator()(uint32 r) const
 	{
 		return GetRow(r);
 	}
 
-	inline Vector4& Matrix4::operator()(unsigned int r)
+	inline Vector4& Matrix4::operator()(uint32 r)
 	{
 		return GetRow(r);
 	}
@@ -911,7 +911,7 @@ namespace Math
 		return r;
 	}
 
-	inline Matrix4 Matrix4::Rotation(float angleRadX, float angleRadY, float angleRadZ)
+	inline Matrix4 Matrix4::RotationYawPitchRoll(float angleRadX, float angleRadY, float angleRadZ)
 	{
 		Matrix4 rot(1.0f);
 

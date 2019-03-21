@@ -3,7 +3,7 @@
 
 namespace Lambda
 {
-	class LAMBDA_API Time
+	class Time
 	{
 	public:
 		Time(float ns = 0.0f);

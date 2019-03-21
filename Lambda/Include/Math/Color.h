@@ -1,6 +1,5 @@
 #pragma once
 #include "MathCommon.h"
-#include "ColorF.h"
 
 namespace Math
 {
@@ -9,7 +8,6 @@ namespace Math
 	public:
 		Color(uint8 r = 0, uint8 g = 0, uint8 b = 0, uint8 a = 0);
 		Color(const Color& other);
-		explicit Color(const ColorF& colorf);
 		explicit Color(const Vector4& vector4);
 
 		Color& Add(const Color& other);
@@ -29,7 +27,6 @@ namespace Math
 		bool operator!=(const Color& other) const;
 
 		Color& operator=(const Vector4& other);
-		Color& operator=(const ColorF& other);
 		Color& operator=(const Color& other);
 		Color& operator+=(const Color& other);
 		Color& operator-=(const Color& other);
@@ -39,8 +36,6 @@ namespace Math
 		Color& operator-=(uint8 scalar);
 		Color& operator*=(uint8 scalar);
 		Color& operator/=(uint8 scalar);
-
-		explicit operator ColorF();
 
 		friend Color operator-(Color left, const Color& right);
 		friend Color operator+(Color left, const Color& right);
@@ -125,11 +120,6 @@ namespace Math
 	inline Color::Color(const Color& other)
 	{
 		*this = other;
-	}
-
-	inline Color::Color(const ColorF& colorf)
-	{
-		*this = colorf;
 	}
 
 	inline Color::Color(const Vector4& vector4)
@@ -248,16 +238,6 @@ namespace Math
 		return *this;
 	}
 
-	inline Color& Color::operator=(const ColorF& other)
-	{
-		r = (uint8)(other.r * 255);
-		g = (uint8)(other.g * 255);
-		b = (uint8)(other.b * 255);
-		a = (uint8)(other.a * 255);
-
-		return *this;
-	}
-
 	inline Color& Color::operator=(const Color& other)
 	{
 		if (this != &other)
@@ -304,18 +284,6 @@ namespace Math
 	inline Color& Color::operator/=(uint8 scalar)
 	{
 		return Divide(scalar);
-	}
-
-	inline Color::operator ColorF()
-	{
-		ColorF result;
-
-		result.r = r / 255.0f;
-		result.g = g / 255.0f;
-		result.b = b / 255.0f;
-		result.a = a / 255.0f;
-
-		return result;
 	}
 
 	inline Color operator-(Color left, const Color& right)

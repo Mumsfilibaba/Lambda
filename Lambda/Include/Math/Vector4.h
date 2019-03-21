@@ -87,6 +87,21 @@ namespace Math
 		static Vector4 Nan();
 	};
 
+	//ColorF& ColorF::Lerp(const ColorF& src, float delta)
+	//{
+	//	r = r + (src.r - r) * delta;
+	//	g = g + (src.g - g) * delta;
+	//	b = b + (src.b - b) * delta;
+	//	a = a + (src.a - a) * delta;
+
+	//	return *this;
+	//}
+
+	//ColorF ColorF::Lerp(const ColorF& src, float delta) const
+	//{
+	//	return ColorF(*this).Lerp(src, delta);
+	//}
+
 #if defined(SSE_INTRIN)
 	inline Vector4::Vector4(__m128 xmm)
 		: Xmm(xmm)

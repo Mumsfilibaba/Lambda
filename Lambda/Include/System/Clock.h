@@ -1,5 +1,6 @@
 #pragma once
 #include "Time.hpp"
+#include <chrono>
 
 namespace Lambda
 {

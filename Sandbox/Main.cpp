@@ -1,5 +1,6 @@
 #include <System/Application.h>
 #include <System/Log.h>
+#include <System/Clock.h>
 #include <Math/Math.h>
 #include <crtdbg.h>
 #include <string>
@@ -38,6 +39,7 @@ bool OnEvent(const Lambda::Event& event)
 int main()
 {
 	using namespace Lambda;
+	using namespace Math;
 
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
@@ -45,8 +47,6 @@ int main()
 
 	EventLayer uiLayer = { OnEvent, "UILayer" };
 	EventDispatcher::PushEventLayer(uiLayer);
-
-	Math::Matrix4 mat = Math::Matrix4(1.0f);
 
 	int32 result = pApp->Run();
 	delete pApp;
