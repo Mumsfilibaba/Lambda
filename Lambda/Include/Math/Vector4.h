@@ -10,11 +10,14 @@ namespace Math
 #if defined(SSE_INTRIN)
 		Vector4(__m128 xmm);
 #endif
-		Vector4(float x = 0.0f, float y = 0.0f, float z = 0.0f, float w = 0.0f);
 		Vector4(const Vector4& other);
+		explicit Vector4(const Vector2& xy, float z, float w);
+		explicit Vector4(const Vector2& xy, const Vector2& zw);
+		explicit Vector4(const Vector3& xyz, float w);
+		explicit Vector4(float x = 0.0f, float y = 0.0f, float z = 0.0f, float w = 0.0f);
 		explicit Vector4(const Vector3& other);
 
-		Vector4& Add(const Vector4& other);
+		Vector4& vectorcall Add(const Vector4& other);
 		Vector4& Add(float scalar);
 		Vector4& Subtract(const Vector4& other);
 		Vector4& Subtract(float scalar);
@@ -40,26 +43,27 @@ namespace Math
 		float& operator[](uint32 index);
 		const float& operator[](uint32 index) const;
 
-		Vector4 operator-() const;
 		Vector4& operator=(const Vector4& other);
 		Vector4& operator=(const Vector3& vector3);
-		Vector4& operator-=(const Vector4& other);
-		Vector4& operator+=(const Vector4& other);
-		Vector4& operator-=(float scalar);
-		Vector4& operator+=(float scalar);
-		Vector4& operator*=(float scalar);
-		Vector4& operator/=(float scalar);
+		
+		forceinline Vector4 vectorcall operator-() const;
+		forceinline Vector4& vectorcall operator-=(const Vector4& other);
+		forceinline Vector4& vectorcall operator+=(const Vector4& other);
+		forceinline Vector4& vectorcall operator-=(float scalar);
+		forceinline Vector4& vectorcall operator+=(float scalar);
+		forceinline Vector4& vectorcall operator*=(float scalar);
+		forceinline Vector4& vectorcall operator/=(float scalar);
 
 		explicit operator Vector3&();
 		explicit operator const Vector3&() const;
 
-		friend Vector4 operator-(Vector4 left, const Vector4& right);
-		friend Vector4 operator+(Vector4 left, const Vector4& right);
-		friend Vector4 operator-(Vector4 left, float right);
-		friend Vector4 operator+(Vector4 left, float right);
-		friend Vector4 operator*(Vector4 left, float right);
-		friend Vector4 operator/(Vector4 left, float right);
-		friend Vector4 operator*(float left, Vector4 right);
+		friend forceinline Vector4 vectorcall operator-(Vector4 left, const Vector4& right);
+		friend forceinline Vector4 vectorcall operator+(Vector4 left, const Vector4& right);
+		friend forceinline Vector4 vectorcall operator-(Vector4 left, float right);
+		friend forceinline Vector4 vectorcall operator+(Vector4 left, float right);
+		friend forceinline Vector4 vectorcall operator*(Vector4 left, float right);
+		friend forceinline Vector4 vectorcall operator/(Vector4 left, float right);
+		friend forceinline Vector4 vectorcall operator*(float left, Vector4 right);
 
 	public:
 		union
@@ -118,16 +122,60 @@ namespace Math
 	}
 
 	inline Vector4::Vector4(const Vector4& other)
+		: x(0.0f), 
+		y(0.0f), 
+		z(0.0f), 
+		w(0.0f)
 	{
 		*this = other;
 	}
 
+	inline Vector4::Vector4(const Vector2& xy, float z, float w)
+		: x(0.0f),
+		y(0.0f),
+		z(0.0f),
+		w(0.0f)
+	{
+		x = xy.x;
+		y = xy.y;
+		z = z;
+		w = w;
+	}
+
+	inline Vector4::Vector4(const Vector2& xy, const Vector2& zw)
+		: x(0.0f),
+		y(0.0f),
+		z(0.0f),
+		w(0.0f)
+	{
+		x = xy.x;
+		y = xy.y;
+		z = zw.x;
+		w = zw.y;
+	}
+
+	inline Vector4::Vector4(const Vector3& xyz, float w)
+		: x(0.0f),
+		y(0.0f),
+		z(0.0f),
+		w(0.0f)
+	{
+		x = xyz.x;
+		y = xyz.y;
+		z = xyz.z;
+		w = w;
+	}
+
 	inline Vector4::Vector4(const Vector3& vector3)
+		: x(0.0f),
+		y(0.0f),
+		z(0.0f),
+		w(0.0f)
 	{
 		*this = vector3;
 	}
 
-	inline Vector4& Vector4::Add(const Vector4& other)
+	inline Vector4& vectorcall Vector4::Add(const Vector4& other)
 	{
 #if defined(SSE_INTRIN)
 		Xmm = _mm_add_ps(Xmm, other.Xmm);
@@ -368,37 +416,37 @@ namespace Math
 		return reinterpret_cast<const float*>(this)[index];
 	}
 
-	inline Vector4 operator-(Vector4 left, const Vector4& right)
+	forceinline Vector4 vectorcall operator-(Vector4 left, const Vector4& right)
 	{
 		return left.Subtract(right);
 	}
 
-	inline Vector4 operator+(Vector4 left, const Vector4& right)
+	forceinline Vector4 vectorcall operator+(Vector4 left, const Vector4& right)
 	{
 		return left.Add(right);
 	}
 
-	inline Vector4 operator-(Vector4 left, float right)
+	forceinline Vector4 vectorcall operator-(Vector4 left, float right)
 	{
 		return left.Subtract(right);
 	}
 
-	inline Vector4 operator+(Vector4 left, float right)
+	forceinline Vector4 vectorcall operator+(Vector4 left, float right)
 	{
 		return left.Add(right);
 	}
 
-	inline Vector4 operator*(Vector4 left, float right)
+	forceinline Vector4 vectorcall operator*(Vector4 left, float right)
 	{
 		return left.Multiply(right);
 	}
 
-	inline Vector4 operator/(Vector4 left, float right)
+	forceinline Vector4 vectorcall operator/(Vector4 left, float right)
 	{
 		return left.Divide(right);
 	}
 
-	inline Vector4 operator*(float left, Vector4 right)
+	forceinline Vector4 vectorcall operator*(float left, Vector4 right)
 	{
 		return right.Multiply(left);
 	}
@@ -409,11 +457,6 @@ namespace Math
 		w = 1.0f;
 
 		return *this;
-	}
-
-	inline Vector4 Vector4::operator-() const
-	{
-		return Vector4(-x, -y, -z, -w);
 	}
 
 	inline Vector4& Vector4::operator=(const Vector4& other)
@@ -429,32 +472,37 @@ namespace Math
 		return *this;
 	}
 
-	inline Vector4& Vector4::operator-=(const Vector4& other)
+	forceinline Vector4 vectorcall Vector4::operator-() const
+	{
+		return Vector4(-x, -y, -z, -w);
+	}
+
+	forceinline Vector4& vectorcall Vector4::operator-=(const Vector4& other)
 	{
 		return Subtract(other);
 	}
 
-	inline Vector4& Vector4::operator+=(const Vector4& other)
+	forceinline Vector4& vectorcall Vector4::operator+=(const Vector4& other)
 	{
 		return Add(other);
 	}
 
-	inline Vector4& Vector4::operator-=(float scalar)
+	forceinline Vector4& vectorcall Vector4::operator-=(float scalar)
 	{
 		return Subtract(scalar);
 	}
 
-	inline Vector4& Vector4::operator+=(float scalar)
+	forceinline Vector4& vectorcall Vector4::operator+=(float scalar)
 	{
 		return Add(scalar);
 	}
 
-	inline Vector4& Vector4::operator*=(float scalar)
+	forceinline Vector4& vectorcall Vector4::operator*=(float scalar)
 	{
 		return Multiply(scalar);
 	}
 
-	inline Vector4& Vector4::operator/=(float scalar)
+	forceinline Vector4& vectorcall Vector4::operator/=(float scalar)
 	{
 		return Divide(scalar);
 	}

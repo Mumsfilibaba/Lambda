@@ -14,7 +14,7 @@ namespace Math
 
 		Vector4 Multiply(const Vector4& vector) const;
 
-		Matrix4& Multiply(const Matrix4& other);
+		Matrix4& vectorcall Multiply(const Matrix4& other);
 		Matrix4& Multiply(float scalar);
 		Matrix4& Add(const Matrix4& other);
 		Matrix4& Add(float scalar);
@@ -52,7 +52,7 @@ namespace Math
 		Vector4& operator()(uint32 r);
 
 		Matrix4& operator=(const Matrix4& other);
-		Matrix4& operator+=(const Matrix4& right);
+		forceinline Matrix4& vectorcall operator+=(const Matrix4& right);
 		Matrix4& operator-=(const Matrix4& right);
 		Matrix4& operator*=(const Matrix4& right);
 		Matrix4& operator+=(float right);
@@ -150,28 +150,28 @@ namespace Math
 #endif
 	}
 
-	inline Matrix4& Matrix4::Multiply(const Matrix4& other)
+	inline Matrix4& vectorcall Matrix4::Multiply(const Matrix4& other)
 	{
 #if defined(SSE_INTRIN)
 		__m128	r0 = _mm_mul_ps(_mm_shuffle_ps(Xmm[0], Xmm[0], 0), other.Xmm[0]);
-		r0 = _mm_add_ps(r0, _mm_mul_ps(_mm_shuffle_ps(Xmm[0], Xmm[0], 0x55), other.Xmm[1]));
-		r0 = _mm_add_ps(r0, _mm_mul_ps(_mm_shuffle_ps(Xmm[0], Xmm[0], 0xaa), other.Xmm[2]));
-		r0 = _mm_add_ps(r0, _mm_mul_ps(_mm_shuffle_ps(Xmm[0], Xmm[0], 0xff), other.Xmm[3]));
+				r0 = _mm_add_ps(r0, _mm_mul_ps(_mm_shuffle_ps(Xmm[0], Xmm[0], 0x55), other.Xmm[1]));
+				r0 = _mm_add_ps(r0, _mm_mul_ps(_mm_shuffle_ps(Xmm[0], Xmm[0], 0xaa), other.Xmm[2]));
+				r0 = _mm_add_ps(r0, _mm_mul_ps(_mm_shuffle_ps(Xmm[0], Xmm[0], 0xff), other.Xmm[3]));
 
 		__m128	r1 = _mm_mul_ps(_mm_shuffle_ps(Xmm[1], Xmm[1], 0), other.Xmm[0]);
-		r1 = _mm_add_ps(r1, _mm_mul_ps(_mm_shuffle_ps(Xmm[1], Xmm[1], 0x55), other.Xmm[1]));
-		r1 = _mm_add_ps(r1, _mm_mul_ps(_mm_shuffle_ps(Xmm[1], Xmm[1], 0xaa), other.Xmm[2]));
-		r1 = _mm_add_ps(r1, _mm_mul_ps(_mm_shuffle_ps(Xmm[1], Xmm[1], 0xff), other.Xmm[3]));
+				r1 = _mm_add_ps(r1, _mm_mul_ps(_mm_shuffle_ps(Xmm[1], Xmm[1], 0x55), other.Xmm[1]));
+				r1 = _mm_add_ps(r1, _mm_mul_ps(_mm_shuffle_ps(Xmm[1], Xmm[1], 0xaa), other.Xmm[2]));
+				r1 = _mm_add_ps(r1, _mm_mul_ps(_mm_shuffle_ps(Xmm[1], Xmm[1], 0xff), other.Xmm[3]));
 
 		__m128	r2 = _mm_mul_ps(_mm_shuffle_ps(Xmm[2], Xmm[2], 0), other.Xmm[0]);
-		r2 = _mm_add_ps(r2, _mm_mul_ps(_mm_shuffle_ps(Xmm[2], Xmm[2], 0x55), other.Xmm[1]));
-		r2 = _mm_add_ps(r2, _mm_mul_ps(_mm_shuffle_ps(Xmm[2], Xmm[2], 0xaa), other.Xmm[2]));
-		r2 = _mm_add_ps(r2, _mm_mul_ps(_mm_shuffle_ps(Xmm[2], Xmm[2], 0xff), other.Xmm[3]));
+				r2 = _mm_add_ps(r2, _mm_mul_ps(_mm_shuffle_ps(Xmm[2], Xmm[2], 0x55), other.Xmm[1]));
+				r2 = _mm_add_ps(r2, _mm_mul_ps(_mm_shuffle_ps(Xmm[2], Xmm[2], 0xaa), other.Xmm[2]));
+				r2 = _mm_add_ps(r2, _mm_mul_ps(_mm_shuffle_ps(Xmm[2], Xmm[2], 0xff), other.Xmm[3]));
 
 		__m128	r3 = _mm_mul_ps(_mm_shuffle_ps(Xmm[3], Xmm[3], 0), other.Xmm[0]);
-		r3 = _mm_add_ps(r3, _mm_mul_ps(_mm_shuffle_ps(Xmm[3], Xmm[3], 0x55), other.Xmm[1]));
-		r3 = _mm_add_ps(r3, _mm_mul_ps(_mm_shuffle_ps(Xmm[3], Xmm[3], 0xaa), other.Xmm[2]));
-		r3 = _mm_add_ps(r3, _mm_mul_ps(_mm_shuffle_ps(Xmm[3], Xmm[3], 0xff), other.Xmm[3]));
+				r3 = _mm_add_ps(r3, _mm_mul_ps(_mm_shuffle_ps(Xmm[3], Xmm[3], 0x55), other.Xmm[1]));
+				r3 = _mm_add_ps(r3, _mm_mul_ps(_mm_shuffle_ps(Xmm[3], Xmm[3], 0xaa), other.Xmm[2]));
+				r3 = _mm_add_ps(r3, _mm_mul_ps(_mm_shuffle_ps(Xmm[3], Xmm[3], 0xff), other.Xmm[3]));
 
 		Xmm[0] = r0;
 		Xmm[1] = r1;
@@ -697,7 +697,7 @@ namespace Math
 		return *this;
 	}
 
-	inline Matrix4& Matrix4::operator+=(const Matrix4& right)
+	inline forceinline Matrix4& vectorcall Matrix4::operator+=(const Matrix4& right)
 	{
 		return Add(right);
 	}

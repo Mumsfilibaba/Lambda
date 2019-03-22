@@ -9,11 +9,14 @@
 #endif
 
 #if defined(_WIN32)
-	#define forceinline _forceinline
+	#define forceinline __forceinline
+	#define vectorcall 
 #elif defined(__linux__)
 	#define forceinline __attribute__((always_inline)) inline
+	#define vectorcall
 #else
-	#define forceinline 
+	#define forceinline
+	#define vectorcall
 #endif
 
 #if defined(_WIN32) && !defined(NO_SIMD)
