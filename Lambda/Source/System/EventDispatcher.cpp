@@ -10,7 +10,7 @@ namespace Lambda
 	{
 		for (auto iter = s_LayerStack.begin(); iter < s_LayerStack.end(); iter++)
 		{
-			LOG_DEBUG_INFO("%s:\n", iter->pName);
+			//LOG_DEBUG_INFO("%s:\n", iter->pName);
 			
 			if (iter->OnEvent(event))
 				return true;

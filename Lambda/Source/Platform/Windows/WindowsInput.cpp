@@ -8,7 +8,7 @@ namespace Lambda
 {
 	Input* Input::Create()
 	{
-		return new WindowsInput();
+		return DBG_NEW WindowsInput();
 	}
 
 

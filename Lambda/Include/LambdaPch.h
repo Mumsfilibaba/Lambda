@@ -6,6 +6,11 @@
 		#define WIN32_LEAN_AND_MEAN
 		#include <Windows.h>
 		#include <Windowsx.h>
+
+		#include <wrl/client.h>
+		#include <dxgi1_6.h>
+		#include <d3dcompiler.h>
+		#include <d3d12.h>
 	#endif
 #endif
 

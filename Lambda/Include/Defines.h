@@ -1,3 +1,4 @@
+#pragma once
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#if defined(LAMBDA_EXPORT)
 		#define LAMBDA_API __declspec(dllexport)
@@ -25,12 +26,18 @@
 	LAMBDA_NO_COPY(name)
 #endif
 
-#if !defined(Delete)
-	#define Delete(x) delete x; x = nullptr
+#if !defined(SafeRelease)
+	#define SafeRelease(x) if (x != nullptr) { x->Release(); x = nullptr; }
 #endif
 
-#if !defined(DeleteSafe)
-	#define DeleteSafe(x) if (x != nullptr) { Delete(x); }
+#if !defined(SafeDelete)
+#define SafeDelete(x) if (x != nullptr) { delete x; x = nullptr; }
+#endif
+
+#if defined(LAMBDA_DEBUG)
+	#define DBG_NEW new ( _NORMAL_BLOCK , __FILE__ , __LINE__ )
+#else
+	#define DBG_NEW new
 #endif
 
 #if defined(LAMBDA_VISUAL_STUDIO)

@@ -10,13 +10,13 @@ namespace Lambda
 		uint32 Height = 540;
 	};
 
-	class IWindow
+	class LAMBDA_API IWindow
 	{
 	public:
 		LAMBDA_INTERFACE(IWindow);
 		
-		IWindow() {}
-		virtual ~IWindow() {};
+		IWindow() = default;
+		virtual ~IWindow() = default;
 
 		virtual void SetEventCallback(EventCallback callback) = 0;
 		virtual void OnUpdate() const = 0;

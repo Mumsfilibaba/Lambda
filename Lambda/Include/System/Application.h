@@ -1,6 +1,7 @@
 #pragma once
 #include "IWindow.h"
 #include "Time.hpp"
+#include <Graphics/IGraphicsContext.h>
 
 namespace Lambda
 {
@@ -25,6 +26,7 @@ namespace Lambda
 
 	private:
 		IWindow* m_pWindow;
+		IGraphicsContext* m_pGraphicsContext;
 		int32 m_ExitCode;
 		bool m_Running;
 

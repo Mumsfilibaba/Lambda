@@ -40,8 +40,8 @@ namespace Lambda
 	public:
 		LAMBDA_INTERFACE(ILog);
 
-		ILog() {}
-		~ILog() {}
+		ILog() = default;
+		~ILog() = default;
 
 		virtual void Print(LogSeverity severity, const char* pFormat, ...) = 0;
 

@@ -4,13 +4,13 @@
 
 namespace Lambda
 {
-	class JoystickManager
+	class LAMBDA_API JoystickManager
 	{
 	public:
 		LAMBDA_NO_COPY(JoystickManager);
 
-		JoystickManager() {}
-		virtual ~JoystickManager() {}
+		JoystickManager() = default;
+		virtual ~JoystickManager() = default;
 
 	private:
 		virtual void UpdateJoystickState() = 0;

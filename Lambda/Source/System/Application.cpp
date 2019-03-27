@@ -11,6 +11,7 @@ namespace Lambda
 
 	Application::Application()
 		: m_pWindow(nullptr),
+		m_pGraphicsContext(nullptr),
 		m_Running(true)
 	{
 		assert(s_pInstance == nullptr);
@@ -56,6 +57,11 @@ namespace Lambda
 			m_pWindow = IWindow::Create(desc);
 			m_pWindow->SetEventCallback(EventDispatcher::SendEvent);
 		}
+
+		//Create graphics context
+		{
+			m_pGraphicsContext = IGraphicsContext::Create();
+		}
 	}
 
 	void Application::Quit(int32 exitCode)
@@ -86,7 +92,8 @@ namespace Lambda
 	{
 		OnRelease();
 
-		DeleteSafe(m_pWindow);
+		SafeDelete(m_pWindow);
+		SafeRelease(m_pGraphicsContext);
 	}
 
 	bool Application::OnEvent(const Event& event)

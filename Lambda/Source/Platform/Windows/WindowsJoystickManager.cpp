@@ -10,7 +10,7 @@ namespace Lambda
 {
 	JoystickManager* JoystickManager::Create()
 	{
-		return new WindowsJoystickManager();
+		return DBG_NEW WindowsJoystickManager();
 	}
 	
 	WindowsJoystickManager::WindowsJoystickManager()

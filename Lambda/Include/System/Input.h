@@ -10,8 +10,8 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(Input);
 
-		Input() {}
-		virtual ~Input() {}
+		Input() = default;
+		virtual ~Input() = default;
 
 	private:
 		virtual bool InternalIsKeyUp(Key keycode) const = 0;

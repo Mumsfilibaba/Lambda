@@ -1,4 +1,5 @@
 #include <LambdaPch.h>
+#include <System/Log.h>
 #include <Utilities/StringHelper.h>
 
 #if defined(LAMBDA_PLAT_WINDOWS)
@@ -14,7 +15,7 @@ namespace Lambda
 
 	IWindow* IWindow::Create(const WindowDesc& desc)
 	{
-		return new WindowsWindow(desc);
+		return DBG_NEW WindowsWindow(desc);
 	}
 
 	WindowsWindow::WindowsWindow(const WindowDesc& desc)
@@ -22,6 +23,8 @@ namespace Lambda
 		m_Wnd(0)
 	{
 		Init(desc);
+
+		LOG_SYSTEM_INFO("Creating window. w: %d, h: %d\n", desc.Width, desc.Height);
 	}
 	
 	WindowsWindow::~WindowsWindow()

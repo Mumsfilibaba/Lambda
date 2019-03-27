@@ -6,7 +6,7 @@ namespace Lambda
 {
 	ILog* ILog::Create()
 	{
-		return new WindowsLog();
+		return DBG_NEW WindowsLog();
 	}
 
 	WindowsLog::WindowsLog()
