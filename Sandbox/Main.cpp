@@ -46,6 +46,26 @@ int main()
 
 	Application* pApp = new Application();
 
+	Matrix4 m1 = Matrix4(0.1f);
+	Matrix4 m2 = Matrix4(1.1f);
+
+	Clock clock;
+	clock.Reset();
+
+	float dt = 0.0f;
+	for (uint32 i = 0; i < 100; i++)
+	{
+		clock.Tick();
+		for (uint32 j = 0; j < 10000; j++)
+		{
+			m1 += m2;
+		}
+		clock.Tick();
+		dt += clock.GetDeltaTime().AsNanoSeconds();
+	}
+
+	LOG_SYSTEM_PRINT("Vector: %s Time: %.9fns", m1.ToString().c_str(), dt / 100.0f);
+
 	EventLayer uiLayer = { OnEvent, "UILayer" };
 	EventDispatcher::PushEventLayer(uiLayer);
 
