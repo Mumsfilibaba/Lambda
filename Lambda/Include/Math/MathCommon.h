@@ -1,19 +1,10 @@
 #pragma once
-#include "MathUtilities.h"
 #include <string>
 #include <cassert>
 #include <ctime>
 
 #if defined(_WIN32) && defined(__ANDROID__)
 	#undef _WIN32
-#endif
-
-#if defined(_WIN32)
-	#define forceinline _forceinline
-#elif defined(__linux__)
-	#define forceinline __attribute__((always_inline)) inline
-#else
-	#define forceinline 
 #endif
 
 #if defined(_WIN32) && !defined(NO_SIMD)
@@ -33,6 +24,7 @@
 	#define MATRIXALIGN
 #endif
 
+#include "MathUtilities.h"
 #include "SIMD.h"
 
 namespace Math

@@ -1,14 +1,16 @@
 #pragma once
 #include "MathCommon.h"
+#include "Float4.h"
 
 namespace Math
 {
 	struct Color
 	{
 	public:
-		Color(uint8 r = 0, uint8 g = 0, uint8 b = 0, uint8 a = 0);
+		explicit Color(uint8 rgba = 255);
+		explicit Color(uint8 r, uint8 g, uint8 b, uint8 a);
+		explicit Color(const Vec4f& vector4);
 		Color(const Color& other);
-		explicit Color(const Vector4& vector4);
 
 		Color& Add(const Color& other);
 		Color& Add(uint8 scalar);
@@ -26,7 +28,7 @@ namespace Math
 		bool operator==(const Color& other) const;
 		bool operator!=(const Color& other) const;
 
-		Color& operator=(const Vector4& other);
+		Color& operator=(const Vec4f& other);
 		Color& operator=(const Color& other);
 		Color& operator+=(const Color& other);
 		Color& operator-=(const Color& other);
@@ -109,6 +111,14 @@ namespace Math
 	const Color Color::PURPLE(128, 0, 128, 255);
 	const Color Color::PINK(255, 192, 203, 255);
 
+	inline Color::Color(uint8 rgba)
+		: r(rgba),
+		g(rgba),
+		b(rgba),
+		a(rgba)
+	{
+	}
+
 	inline Color::Color(uint8 r, uint8 g, uint8 b, uint8 a)
 		: r(r),
 		g(g),
@@ -122,7 +132,7 @@ namespace Math
 		*this = other;
 	}
 
-	inline Color::Color(const Vector4& vector4)
+	inline Color::Color(const Vec4f& vector4)
 	{
 		*this = vector4;
 	}
@@ -228,12 +238,12 @@ namespace Math
 		return !Equals(other);
 	}
 	
-	inline Color& Color::operator=(const Math::Vector4& other)
+	inline Color& Color::operator=(const Math::Vec4f& other)
 	{
-		r = (uint8)(other.x * 255);
-		g = (uint8)(other.y * 255);
-		b = (uint8)(other.z * 255);
-		a = (uint8)(other.w * 255);
+		r = (uint8)(other.r * 255);
+		g = (uint8)(other.g * 255);
+		b = (uint8)(other.b * 255);
+		a = (uint8)(other.a * 255);
 
 		return *this;
 	}

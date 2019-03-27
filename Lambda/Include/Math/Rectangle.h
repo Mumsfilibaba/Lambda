@@ -1,5 +1,5 @@
 #pragma once
-#include "Vector2.h"
+#include "Float2.h"
 
 namespace Math
 {
@@ -7,11 +7,11 @@ namespace Math
 	{
 	public:
 		Rectangle();
-		Rectangle(const Math::Vector2& topLeft, const Math::Vector2& bottomRight);
+		Rectangle(const Math::Vec2f& topLeft, const Math::Vec2f& bottomRight);
 
 	public:
-		Math::Vector2 TopLeft;
-		Math::Vector2 BottomRight;
+		Math::Vec2f TopLeft;
+		Math::Vec2f BottomRight;
 	};
 
 	inline Rectangle::Rectangle()
@@ -20,7 +20,7 @@ namespace Math
 	{
 	}
 
-	inline Rectangle::Rectangle(const Math::Vector2& topLeft, const Math::Vector2& bottomRight)
+	inline Rectangle::Rectangle(const Math::Vec2f& topLeft, const Math::Vec2f& bottomRight)
 		: TopLeft(topLeft),
 		BottomRight(bottomRight)
 	{

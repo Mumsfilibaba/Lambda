@@ -1,5 +1,5 @@
 #pragma once
-#include "Vector2.h"
+#include "Float2.h"
 #include "Color.h"
 
 namespace Math
@@ -19,9 +19,9 @@ namespace Math
 		float GenerateFloat(float min, float max) const;
 		double GenerateDouble() const;
 		double GenerateDouble(double min, double max) const;
-		Vector2 GenerateVector2() const;
-		Vector3 GenerateVector3() const;
-		Vector4 GenerateVector4() const;
+		Vec2f GenerateVector2() const;
+		Vec3f GenerateVector3() const;
+		Vec4f GenerateVector4() const;
 		Color GenerateColor() const;
 
 	private:
@@ -86,25 +86,31 @@ namespace Math
 		return (min < max) ? min + GenerateDouble() * (max - min) : 0;
 	}
 
-	inline Math::Vector2 Random::GenerateVector2() const
+	inline Math::Vec2f Random::GenerateVector2() const
 	{
-		return Math::Vector2(static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-			static_cast<float>(rand()) / static_cast<float>(RAND_MAX));
+		return	Vec2f(
+					static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
+					static_cast<float>(rand()) / static_cast<float>(RAND_MAX) 
+				);
 	}
 	
-	inline Math::Vector3 Random::GenerateVector3() const
+	inline Math::Vec3f Random::GenerateVector3() const
 	{
-		return Math::Vector3(static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-			static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-			static_cast<float>(rand()) / static_cast<float>(RAND_MAX));
+		return	Vec3f(
+					static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
+					static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
+					static_cast<float>(rand()) / static_cast<float>(RAND_MAX)
+				);
 	}
 
-	inline Math::Vector4 Random::GenerateVector4() const
+	inline Math::Vec4f Random::GenerateVector4() const
 	{
-		return Math::Vector4(static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-			static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-			static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-			static_cast<float>(rand()) / static_cast<float>(RAND_MAX));
+		return	Vec4f(
+					static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
+					static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
+					static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
+					static_cast<float>(rand()) / static_cast<float>(RAND_MAX)
+				);
 	}
 	
 	inline Color Random::GenerateColor() const
