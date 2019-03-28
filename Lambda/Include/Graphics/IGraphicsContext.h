@@ -1,5 +1,5 @@
 #pragma once
-#include "../IObject.h"
+#include <IObject.h>
 #include <System/EventDispatcher.h>
 #include <System/IWindow.h>
 
@@ -12,6 +12,7 @@ namespace Lambda
 		GRAPHICS_CONTEXT_FLAG_ALLOW_SOFTWARE_ADAPTER = (1 << 1),
 	};
 
+
 	class LAMBDA_API IGraphicsContext : public IObject
 	{
 	public:
@@ -20,11 +21,14 @@ namespace Lambda
 		IGraphicsContext() = default;
 		~IGraphicsContext() = default;
 
+		virtual void* GetNativeHandle() const = 0;
+
 	private:
 		virtual bool InternalOnEvent(const Event& event) = 0;
 
 	public:
 		static IGraphicsContext* Create(IWindow* pWindow, GraphicsContextFlags flags);
+		static IGraphicsContext* GetInstance();
 		static bool OnEvent(const Event& event);
 
 	protected:

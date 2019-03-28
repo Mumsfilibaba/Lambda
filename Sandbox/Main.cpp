@@ -1,4 +1,4 @@
-#include <System/Application.h>
+#include "SandBox.h"
 #include <System/Log.h>
 #include <System/Clock.h>
 #include <Math/Math.h>
@@ -44,7 +44,7 @@ int main()
 
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
-	Application* pApp = DBG_NEW Application();
+	Application* pApp = DBG_NEW SandBox();
 
 	EventLayer uiLayer = { OnEvent, "UILayer" };
 	EventDispatcher::PushEventLayer(uiLayer);

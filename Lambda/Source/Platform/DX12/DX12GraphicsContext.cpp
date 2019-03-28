@@ -13,6 +13,11 @@ namespace Lambda
 		return DBG_NEW DX12GraphicsContext(pWindow, flags);
 	}
 
+	IGraphicsContext* IGraphicsContext::GetInstance()
+	{
+		return s_pInstance;
+	}
+
 	bool IGraphicsContext::OnEvent(const Event& event)
 	{
 		return (s_pInstance) ? s_pInstance->InternalOnEvent(event) : false;
@@ -20,19 +25,34 @@ namespace Lambda
 
 
 	DX12GraphicsContext::DX12GraphicsContext(IWindow* pWindow, GraphicsContextFlags flags)
-		: m_References(0)
+		: m_NumBackbuffers(0),
+		m_References(0)
 	{
 		assert(s_pInstance == nullptr);
 		s_pInstance = this;
 
+		LOG_SYSTEM_INFO("Creating DX12GraphicsDevice\n");
+
 		AddRef();
 		Init(pWindow, flags);
-
-		LOG_SYSTEM_INFO("Creating DX12GraphicsDevice\n");
 	}
 
 	DX12GraphicsContext::~DX12GraphicsContext()
 	{
+		if (m_SwapChain.Get())
+		{
+			m_SwapChain->SetFullscreenState(false, nullptr);
+		}
+
+		if (m_DebugDevice.Get())
+		{
+			m_DebugDevice->ReportLiveDeviceObjects(D3D12_RLDO_SUMMARY | D3D12_RLDO_DETAIL);
+		}
+	}
+
+	void* DX12GraphicsContext::GetNativeHandle() const
+	{
+		return m_Device.Get();
 	}
 
 	uint32 DX12GraphicsContext::Release()
@@ -55,6 +75,15 @@ namespace Lambda
 		if (!QueryAdaper(flags)) { return; }
 		if (!CreateDeviceAndCommandQueue(flags)) { return; }
 		if (!CreateSwapChain(pWindow)) { return; }
+		if (!InitBackBuffers()) { return; }
+	}
+
+	void DX12GraphicsContext::ReleaseBackBuffers()
+	{
+		using namespace Microsoft::WRL;
+
+		for (ComPtr<ID3D12Resource> resource : m_BackBuffers)
+			resource.Reset();
 	}
 
 	bool DX12GraphicsContext::CreateFactory(GraphicsContextFlags flags)
@@ -221,6 +250,8 @@ namespace Lambda
 
 	bool DX12GraphicsContext::CreateSwapChain(IWindow* pWindow)
 	{
+		using namespace Microsoft::WRL;
+
 		DXGI_SWAP_CHAIN_DESC1 desc = {};
 		memset(&desc, 0, sizeof(desc));
 		desc.BufferCount = 3;
@@ -234,14 +265,55 @@ namespace Lambda
 		//TODO: Tearing?
 		desc.Flags = 0;
 
-		return false;
+		HWND hWnd = (HWND)pWindow->GetNativeHandle();
+		ComPtr<IDXGISwapChain1> swapChain = nullptr;
+		HRESULT hr = m_Factory->CreateSwapChainForHwnd(m_Queue.Get(), hWnd, &desc, nullptr, nullptr, &swapChain);
+		if (FAILED(hr))
+		{
+			LOG_DEBUG_ERROR("DX12: Failed to create swapchain.\n");
+			return false;
+		}
+		else
+		{
+			if (FAILED(swapChain.As<IDXGISwapChain4>(&m_SwapChain)))
+			{
+				LOG_DEBUG_ERROR("DX12: Failed to retrive IDXGISwapChain4.\n");
+				return false;
+			}
+
+			LOG_DEBUG_INFO("DX12: Created swapchain\n");
+			m_NumBackbuffers = desc.BufferCount;
+		}
+
+		return true;
+	}
+
+	bool DX12GraphicsContext::InitBackBuffers()
+	{
+		using namespace Microsoft::WRL;
+
+		m_BackBuffers.resize(m_NumBackbuffers);
+		for (uint32 i = 0; i < m_NumBackbuffers; i++)
+		{
+			if (FAILED(m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&(m_BackBuffers[i])))))
+			{
+				LOG_DEBUG_ERROR("DX12: Failed to retrice backbuffer '%d'.", i);
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	bool DX12GraphicsContext::InternalOnEvent(const Event& event)
 	{
 		if (event.Type == EVENT_TYPE_WINDOW_RESIZE)
 		{
-			LOG_SYSTEM_INFO("Event\n");
+			LOG_SYSTEM_INFO("Resize\n");
+
+			ReleaseBackBuffers();
+			InitBackBuffers();
+
 			return true;
 		}
 

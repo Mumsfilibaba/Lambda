@@ -33,6 +33,7 @@ namespace Lambda
 		{
 			clock.Tick();
 			InternalOnUpdate(clock.GetDeltaTime());
+			InternalOnRender(clock.GetDeltaTime());
 		}
 
 		InternalOnRelease();
@@ -93,6 +94,11 @@ namespace Lambda
 		m_pWindow->OnUpdate();
 		JoystickManager::OnUpdate();
 		OnUpdate(dt);
+	}
+
+	void Application::InternalOnRender(Time dt)
+	{
+		OnRender(dt);
 	}
 
 	void Application::InternalOnRelease()

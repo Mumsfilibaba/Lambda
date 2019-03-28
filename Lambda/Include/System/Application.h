@@ -13,6 +13,7 @@ namespace Lambda
 
 		virtual void OnLoad() {}
 		virtual void OnUpdate(Time dt) {}
+		virtual void OnRender(Time dt) {}
 		virtual void OnRelease() {}
 
 		int32 Run();
@@ -22,6 +23,7 @@ namespace Lambda
 		void Quit(int32 exitCode = 0);
 		void InternalOnLoad();
 		void InternalOnUpdate(Time dt);
+		void InternalOnRender(Time dt);
 		void InternalOnRelease();
 
 	private:
