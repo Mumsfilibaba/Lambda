@@ -58,6 +58,16 @@ namespace Lambda
 		return (void*)m_Wnd;
 	}
 
+	uint32 WindowsWindow::GetHeight() const
+	{
+		return m_Height;
+	}
+
+	uint32 WindowsWindow::GetWidth() const
+	{
+		return m_Width;
+	}
+
 	void WindowsWindow::Init(const WindowDesc& desc)
 	{
 		//Should only be called once
@@ -97,6 +107,9 @@ namespace Lambda
 			}
 			else
 			{
+				m_Width = desc.Width;
+				m_Height = desc.Height;
+
 				//Set userdata so we can retrive this-pointer when handling events
 				SetWindowLongPtr(m_Wnd, GWLP_USERDATA, reinterpret_cast<uintptr_t>(this));
 

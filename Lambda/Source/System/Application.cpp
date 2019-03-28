@@ -60,7 +60,14 @@ namespace Lambda
 
 		//Create graphics context
 		{
-			m_pGraphicsContext = IGraphicsContext::Create();
+#if LAMBDA_DEBUG
+			m_pGraphicsContext = IGraphicsContext::Create(m_pWindow, GRAPHICS_CONTEXT_FLAG_DEBUG);
+#else
+			m_pGraphicsContext = IGraphicsContext::Create(m_pWindow, GRAPHICS_CONTEXT_FLAG_NONE);
+#endif
+
+			EventLayer graphicsLayer = { IGraphicsContext::OnEvent, "GraphicsLayer" };
+			EventDispatcher::PushEventLayer(graphicsLayer);
 		}
 	}
 

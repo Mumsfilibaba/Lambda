@@ -39,6 +39,12 @@ workspace "Lambda"
 		}
 
 	filter "system:windows"
+		links
+		{
+			"d3d12",
+			"dxgi"
+		}
+	
 		defines
 		{
 			"LAMBDA_PLAT_WINDOWS" 

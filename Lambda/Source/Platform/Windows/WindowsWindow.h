@@ -16,7 +16,10 @@ namespace Lambda
 
 		virtual void SetEventCallback(EventCallback callback) override;
 		virtual void OnUpdate() const override;
+
 		virtual void* GetNativeHandle() const override;
+		virtual uint32 GetHeight() const override;
+		virtual uint32 GetWidth() const override;
 
 	private:
 		void Init(const WindowDesc& desc);
@@ -25,6 +28,8 @@ namespace Lambda
 	private:
 		EventCallback m_OnEvent;
 		HWND m_Wnd;
+		uint32 m_Height;
+		uint32 m_Width;
 	};
 }
 #endif

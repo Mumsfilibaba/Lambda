@@ -21,6 +21,8 @@ namespace Lambda
 		virtual void SetEventCallback(EventCallback callback) = 0;
 		virtual void OnUpdate() const = 0;
 
+		virtual uint32 GetHeight() const = 0;
+		virtual uint32 GetWidth() const = 0;
 		virtual void* GetNativeHandle() const = 0;
 
 	public:
