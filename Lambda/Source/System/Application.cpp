@@ -40,6 +40,11 @@ namespace Lambda
 		return m_ExitCode;
 	}
 
+	IWindow* Application::GetWindow()
+	{
+		return m_pWindow;
+	}
+
 	void Application::Init()
 	{
 		//Setup application layer
@@ -62,12 +67,12 @@ namespace Lambda
 		//Create graphics context
 		{
 #if LAMBDA_DEBUG
-			m_pGraphicsContext = IGraphicsContext::Create(m_pWindow, GRAPHICS_CONTEXT_FLAG_DEBUG);
+			m_pGraphicsContext = IGraphicsDevice::Create(m_pWindow, GRAPHICS_CONTEXT_FLAG_DEBUG);
 #else
-			m_pGraphicsContext = IGraphicsContext::Create(m_pWindow, GRAPHICS_CONTEXT_FLAG_NONE);
+			m_pGraphicsContext = IGraphicsDevice::Create(m_pWindow, GRAPHICS_CONTEXT_FLAG_NONE);
 #endif
 
-			EventLayer graphicsLayer = { IGraphicsContext::OnEvent, "GraphicsLayer" };
+			EventLayer graphicsLayer = { IGraphicsDevice::OnEvent, "GraphicsLayer" };
 			EventDispatcher::PushEventLayer(graphicsLayer);
 		}
 	}

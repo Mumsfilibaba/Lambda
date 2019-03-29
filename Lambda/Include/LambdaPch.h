@@ -7,6 +7,7 @@
 		#include <Windows.h>
 		#include <Windowsx.h>
 
+		#include "..\Source\Platform\DX12\d3dx12.h"
 		#include <wrl/client.h>
 		#include <dxgi1_6.h>
 		#include <d3dcompiler.h>
@@ -14,12 +15,15 @@
 	#endif
 #endif
 
+#include <System/Log.h>
+
 #include <cassert>
 
 #include <chrono>
 #include <locale>
 #include <codecvt>
 #include <iostream>
+#include <fstream>
 
 #include <memory>
 #include <string>

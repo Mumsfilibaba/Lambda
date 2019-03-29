@@ -11,6 +11,7 @@ namespace Lambda
 	typedef unsigned int uint32;
 	typedef unsigned long long uint64;
 
+
 	enum Key : uint8
 	{
 		KEY_UNKNOWN					= 0,
@@ -136,6 +137,7 @@ namespace Lambda
 		KEY_MENU					= 129,
 	};
 
+
 	enum MouseButton : uint8
 	{
 		MOUSEBUTTON_UNKNOWN			= 0,
@@ -144,5 +146,13 @@ namespace Lambda
 		MOUSEBUTTON_RIGHT			= 3,
 		MOUSEBUTTON_FORWARD			= 4,
 		MOUSEBUTTON_BACKWARD		= 5,
+	};
+
+
+	enum PrimitiveTopology : uint32
+	{
+		PRIMITIVE_TOPOLOGY_UNKNOWN = 0,
+		PRIMITIVE_TOPOLOGY_TRIANGLELIST = 1,
+		PRIMITIVE_TOPOLOGY_TRIANGLESTRIP = 2,
 	};
 }

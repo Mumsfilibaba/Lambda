@@ -1,6 +1,8 @@
 #pragma once
 #include <System/Application.h>
 #include <Graphics/ICommandList.h>
+#include <Graphics/IShader.h>
+#include <Graphics/IPipelineState.h>
 
 namespace Lambda
 {
@@ -16,6 +18,10 @@ namespace Lambda
 		virtual void OnRelease() override final;
 
 	private:
-		ICommandList* m_pList;
+		ICommandList* m_pCurrentList;
+		ICommandList* m_pLists[3];
+		IShader* m_pVS;
+		IShader* m_pPS;
+		IGraphicsPipelineState* m_pPipelineState;
 	};
 }

@@ -9,12 +9,26 @@ namespace Lambda
 {
 	class DX12CommandList final : public ICommandList
 	{
+		friend class DX12GraphicsDevice;
+
 	public:
 		LAMBDA_NO_COPY(DX12CommandList);
 
 		DX12CommandList(ID3D12Device5* pDevice, CommandListType type);
 		~DX12CommandList();
 	
+		virtual void ClearRenderTargetView(IRenderTarget* pRenderTarget, float color[4]) override final;
+
+		virtual void SetRenderTarget(IRenderTarget* pRenderTarget) override final;
+		virtual void SetViewport(const Viewport& viewport) override final;
+		virtual void SetScissorRect(const Math::Rectangle& scissorRect) override final;
+		virtual void SetPrimtiveTopology(PrimitiveTopology topology) override final;
+		virtual void SetGraphicsPipelineState(IGraphicsPipelineState* pPSO) override final;
+
+		virtual void TransitionResource(IRenderTarget* pRenderTarget, ResourceState resourceState) override final;
+
+		virtual void DrawInstanced(uint32 vertexCountPerInstance, uint32 instanceCount, uint32 startVertexLocation, uint32 startInstanceLocation) override final;
+
 		virtual void Close() override final;
 		virtual void Reset() override final;
 		
@@ -23,11 +37,17 @@ namespace Lambda
 
 	private:
 		void Init(ID3D12Device5* pDevice, CommandListType type);
+		ID3D12CommandList* GetList() const;
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_Allocator;
 		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> m_List;
 		uint32 m_References;
 	};
+
+	inline ID3D12CommandList* DX12CommandList::GetList() const
+	{
+		return m_List.Get();
+	}
 }
 #endif

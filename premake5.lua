@@ -15,7 +15,8 @@ workspace "Lambda"
 		"%{prj.name}/**.hpp",
 		"%{prj.name}/**.h",
 		"%{prj.name}/**.cpp",
-		"%{prj.name}/**.c"
+		"%{prj.name}/**.c",
+		"%{prj.name}/**.hlsl"
 	}
 	
 	filter "action:vs*"
@@ -42,7 +43,8 @@ workspace "Lambda"
 		links
 		{
 			"d3d12",
-			"dxgi"
+			"dxgi",
+			"d3dcompiler"
 		}
 	
 		defines
