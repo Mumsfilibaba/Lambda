@@ -13,12 +13,14 @@ namespace Lambda
 	};
 
 	class IBuffer;
+	class ITexture2D;
 	class IShader;
 	class IGraphicsPipelineState;
 	class IRenderTarget;
 	class ICommandList;
 
 	struct BufferDesc;
+	struct Texture2DDesc;
 	struct ShaderDesc;
 	struct GraphicsPipelineStateDesc;
 
@@ -31,6 +33,7 @@ namespace Lambda
 		~IGraphicsDevice() = default;
 
 		virtual void CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) const = 0;
+		virtual void CreateTexture2D(ITexture2D** ppTexture, const ResourceData* pInitalData, const Texture2DDesc& desc) const = 0;
 		virtual void CreateShader(IShader** ppShader, const ShaderDesc& desc) const = 0;
 		virtual void CreateShaderFromFile(IShader** ppShader, const char* pFilename, const ShaderDesc& desc) const = 0;
 		virtual void CreateGraphicsPipelineState(IGraphicsPipelineState** ppPSO, const GraphicsPipelineStateDesc& desc) const = 0;

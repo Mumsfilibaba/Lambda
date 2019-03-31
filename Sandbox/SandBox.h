@@ -4,6 +4,7 @@
 #include <Graphics/IShader.h>
 #include <Graphics/IPipelineState.h>
 #include <Graphics/IBuffer.h>
+#include <Graphics/ITexture2D.h>
 
 namespace Lambda
 {
@@ -24,6 +25,7 @@ namespace Lambda
 		IShader* m_pVS;
 		IShader* m_pPS;
 		IBuffer* m_pVertexBuffer;
+		ITexture2D* m_pDepthBuffer;
 		IGraphicsPipelineState* m_pPipelineState;
 	};
 }

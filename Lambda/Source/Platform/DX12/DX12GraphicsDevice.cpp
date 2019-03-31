@@ -7,6 +7,7 @@
 	#include "DX12PipelineState.h"
 	#include "DX12Shader.h"
 	#include "DX12Buffer.h"
+	#include "DX12Texture2D.h"
 
 namespace Lambda
 {
@@ -46,6 +47,7 @@ namespace Lambda
 		Init(pWindow, flags);
 	}
 
+
 	DX12GraphicsDevice::~DX12GraphicsDevice()
 	{
 		WaitForGPU();
@@ -68,10 +70,11 @@ namespace Lambda
 
 	}
 
+
 	void DX12GraphicsDevice::CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) const
 	{
-		//Create a dynamic resource
-		if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
+		//Create a dynamic resource, or default if there is no inital data
+		if (desc.Usage == RESOURCE_USAGE_DYNAMIC || pInitalData == nullptr)
 		{
 			(*ppBuffer = new DX12Buffer(m_Device.Get(), desc));
 		}
@@ -110,10 +113,18 @@ namespace Lambda
 		}
 	}
 
+
+	void DX12GraphicsDevice::CreateTexture2D(ITexture2D** ppTexture, const ResourceData* pInitalData, const Texture2DDesc& desc) const
+	{
+		(*ppTexture = new DX12Texture2D(m_Device.Get(), desc));
+	}
+
+
 	void DX12GraphicsDevice::CreateShader(IShader** ppShader, const ShaderDesc& desc) const
 	{
 		(*ppShader) = new DX12Shader(desc);
 	}
+
 
 	void DX12GraphicsDevice::CreateShaderFromFile(IShader** ppShader, const char* pFilename, const ShaderDesc& desc) const
 	{
@@ -139,10 +150,12 @@ namespace Lambda
 		CreateShader(ppShader, tempDesc);
 	}
 
+
 	void DX12GraphicsDevice::CreateGraphicsPipelineState(IGraphicsPipelineState** ppPSO, const GraphicsPipelineStateDesc& desc) const
 	{
 		(*ppPSO) = new DX12GraphicsPipelineState(m_Device.Get(), desc);
 	}
+
 
 	void DX12GraphicsDevice::ExecuteCommandList(ICommandList * const * ppLists, uint32 numLists) const
 	{
@@ -153,10 +166,12 @@ namespace Lambda
 		m_Queue->ExecuteCommandLists(numLists, ppCommandLists);
 	}
 
+
 	void DX12GraphicsDevice::Present(uint32 verticalSync) const
 	{
 		m_SwapChain->Present(verticalSync, 0);
 	}
+
 
 	void DX12GraphicsDevice::GPUWaitForFrame() const
 	{
@@ -178,10 +193,11 @@ namespace Lambda
 		m_FenceValues[m_CurrentBackBuffer] = fenceValue + 1;
 	}
 
+
 	void DX12GraphicsDevice::WaitForGPU() const
 	{
 		//Increment the fencecalue on the GPU (signal) for the current frame
-		uint64 fenceValue = m_FenceValues[m_CurrentBackBuffer];
+		uint64 fenceValue = m_FenceValues[m_CurrentBackBuffer] + 1;
 		m_Queue->Signal(m_Fence.Get(), fenceValue);
 
 		//Wait for value
@@ -192,15 +208,18 @@ namespace Lambda
 		m_FenceValues[m_CurrentBackBuffer]++;
 	}
 
+
 	IRenderTarget* DX12GraphicsDevice::GetCurrentRenderTarget()
 	{
 		return m_BackBuffers[m_SwapChain->GetCurrentBackBufferIndex()];
 	}
 
+
 	uint32 DX12GraphicsDevice::GetCurrentBackBufferIndex() const
 	{
 		return m_SwapChain->GetCurrentBackBufferIndex();
 	}
+
 
 	void* DX12GraphicsDevice::GetNativeHandle() const
 	{
@@ -208,15 +227,18 @@ namespace Lambda
 		return m_Device.Get();
 	}
 
+
 	uint32 DX12GraphicsDevice::Release()
 	{
 		IOBJECT_IMPLEMENT_RELEASE(m_References);
 	}
 
+
 	uint32 DX12GraphicsDevice::AddRef()
 	{
 		return ++m_References;
 	}
+
 
 	void DX12GraphicsDevice::Init(IWindow* pWindow, GraphicsContextFlags flags)
 	{
@@ -229,6 +251,7 @@ namespace Lambda
 		if (!InitBackBuffers()) { return; }
 	}
 
+
 	void DX12GraphicsDevice::ReleaseBackBuffers()
 	{
 		using namespace Microsoft::WRL;
@@ -236,6 +259,7 @@ namespace Lambda
 		for (DX12RenderTarget* pTarget : m_BackBuffers)
 			pTarget->SetResource(nullptr);
 	}
+
 
 	bool DX12GraphicsDevice::CreateFactory(GraphicsContextFlags flags)
 	{
@@ -268,6 +292,7 @@ namespace Lambda
 
 		return true;
 	}
+
 
 	bool DX12GraphicsDevice::QueryAdaper(GraphicsContextFlags flags)
 	{
@@ -326,7 +351,7 @@ namespace Lambda
 				//Get newer interface
 				if (FAILED(adapter.As<IDXGIAdapter4>(&m_Adapter)))
 				{
-					LOG_DEBUG_WARNING("DX12: Failed to query IDXGIAdapter3\n");
+					LOG_DEBUG_WARNING("DX12: Failed to query IDXGIAdapter4\n");
 					return false;
 				}
 				else
@@ -343,6 +368,7 @@ namespace Lambda
 		}
 		return true;
 	}
+
 
 	bool DX12GraphicsDevice::CreateDeviceAndCommandQueue(GraphicsContextFlags flags)
 	{
@@ -408,12 +434,14 @@ namespace Lambda
 		return true;
 	}
 
+
 	bool DX12GraphicsDevice::CreateCommandList()
 	{
 		m_pCommandList = new DX12CommandList(m_Device.Get(), COMMAND_LIST_TYPE_GRAPHICS);
 		m_pCommandList->Reset();
 		return true;
 	}
+
 
 	bool DX12GraphicsDevice::CreateSwapChain(IWindow* pWindow)
 	{
@@ -467,6 +495,7 @@ namespace Lambda
 		return true;
 	}
 
+
 	bool DX12GraphicsDevice::CreateDescriptorHeaps()
 	{
 		//Create descriptor heap for RenderTargets
@@ -490,6 +519,7 @@ namespace Lambda
 
 		return true;
 	}
+
 
 	bool DX12GraphicsDevice::InitBackBuffers()
 	{
@@ -529,6 +559,7 @@ namespace Lambda
 		LOG_DEBUG_INFO("DX12: Created textures and descriptors for backbuffers\n");
 		return true;
 	}
+
 
 	bool DX12GraphicsDevice::InternalOnEvent(const Event& event)
 	{

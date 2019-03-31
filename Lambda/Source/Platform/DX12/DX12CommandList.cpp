@@ -41,15 +41,18 @@ namespace Lambda
 		Init(pDevice, type);
 	}
 
+
 	DX12CommandList::~DX12CommandList()
 	{
 	}
+
 
 	void DX12CommandList::ClearRenderTargetView(IRenderTarget* pRenderTarget, float color[4])
 	{
 		DX12RenderTarget* pTarget = reinterpret_cast<DX12RenderTarget*>(pRenderTarget);
 		m_List->ClearRenderTargetView(pTarget->GetDescriptorHandle(), color, 0, nullptr);
 	}
+
 
 	void DX12CommandList::SetRenderTarget(IRenderTarget* pRenderTarget)
 	{
@@ -58,17 +61,20 @@ namespace Lambda
 		m_List->OMSetRenderTargets(1, &rtv, false, nullptr);
 	}
 
+
 	void DX12CommandList::SetViewport(const Viewport& viewport)
 	{
 		D3D12_VIEWPORT port = { viewport.TopX, viewport.TopY, viewport.Width, viewport.Height, viewport.MinDepth, viewport.MaxDepth };
 		m_List->RSSetViewports(1, &port);
 	}
 
+
 	void DX12CommandList::SetScissorRect(const Math::Rectangle& scissorRect)
 	{
 		D3D12_RECT rect = { (LONG)scissorRect.TopLeft.x, (LONG)scissorRect.TopLeft.y, (LONG)scissorRect.BottomRight.x, (LONG)scissorRect.BottomRight.y };
 		m_List->RSSetScissorRects(1, &rect);
 	}
+
 
 	void DX12CommandList::SetPrimtiveTopology(PrimitiveTopology topology)
 	{
@@ -81,6 +87,7 @@ namespace Lambda
 		m_List->IASetPrimitiveTopology(top);
 	}
 
+
 	void DX12CommandList::SetGraphicsPipelineState(IGraphicsPipelineState* pPSO)
 	{
 		DX12GraphicsPipelineState* pDXState = reinterpret_cast<DX12GraphicsPipelineState*>(pPSO);
@@ -88,11 +95,13 @@ namespace Lambda
 		m_List->SetGraphicsRootSignature(pDXState->GetRootSignature());
 	}
 
+
 	void DX12CommandList::SetVertexBuffer(IBuffer* pBuffer, uint32 slot)
 	{
 		D3D12_VERTEX_BUFFER_VIEW view = reinterpret_cast<DX12Buffer*>(pBuffer)->GetVertexBufferView();
 		m_List->IASetVertexBuffers(slot, 1, &view);
 	}
+
 
 	void DX12CommandList::TransitionResource(IBuffer* pResource, ResourceState resourceState)
 	{
@@ -101,6 +110,7 @@ namespace Lambda
 		InternalTransitionResource(pBuffer->GetResource(), pBuffer->GetResourceState(), after);
 		pBuffer->SetResourceState(after);
 	}
+
 
 	void DX12CommandList::TransitionResource(IRenderTarget* pRenderTarget, ResourceState resourceState)
 	{
@@ -111,20 +121,24 @@ namespace Lambda
 		pTarget->SetResourceState(after);
 	}
 
+
 	void DX12CommandList::CopyBuffer(IBuffer* pDst, IBuffer* pSrc)
 	{
 		m_List->CopyResource(reinterpret_cast<DX12Buffer*>(pDst)->GetResource(), reinterpret_cast<DX12Buffer*>(pSrc)->GetResource());
 	}
+
 
 	void DX12CommandList::DrawInstanced(uint32 vertexCountPerInstance, uint32 instanceCount, uint32 startVertexLocation, uint32 startInstanceLocation)
 	{
 		m_List->DrawInstanced(vertexCountPerInstance, instanceCount, startVertexLocation, startInstanceLocation);
 	}
 
+
 	void DX12CommandList::Close()
 	{
 		m_List->Close();
 	}
+
 
 	void DX12CommandList::Reset()
 	{
@@ -132,15 +146,18 @@ namespace Lambda
 		m_List->Reset(m_Allocator.Get(), nullptr);
 	}
 
+
 	uint32 DX12CommandList::Release()
 	{
 		IOBJECT_IMPLEMENT_RELEASE(m_References);
 	}
 
+
 	uint32 DX12CommandList::AddRef()
 	{
 		return ++m_References;
 	}
+
 
 	void DX12CommandList::Init(ID3D12Device5* pDevice, CommandListType type)
 	{
@@ -168,6 +185,7 @@ namespace Lambda
 			LOG_DEBUG_INFO("DX12: Created CommandList\n");
 		}
 	}
+
 
 	void DX12CommandList::InternalTransitionResource(ID3D12Resource* pResource, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after)
 	{

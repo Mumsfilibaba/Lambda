@@ -9,6 +9,7 @@ namespace Lambda
 		m_pPS(nullptr),
 		m_pVertexBuffer(nullptr),
 		m_pPipelineState(nullptr),
+		m_pDepthBuffer(nullptr),
 		m_pLists()
 	{
 		for (uint32 i = 0; i < 3; i++)
@@ -86,6 +87,21 @@ namespace Lambda
 
 			pDevice->CreateBuffer(&m_pVertexBuffer, &data, desc);
 		}
+
+		//Create depthbuffer
+		{
+			Texture2DDesc desc = {};
+			desc.Usage = RESOURCE_USAGE_DEFAULT;
+			desc.Flags = TEXTURE_FLAGS_DEPTH_STENCIL;
+			desc.ArraySize = 1;
+			desc.Width = GetWindow()->GetWidth();
+			desc.Height = GetWindow()->GetHeight();
+			desc.Format = FORMAT_D24_UNORM_S8_UINT;
+			desc.Samples = 1;
+			desc.MipMaps = 0;
+
+			pDevice->CreateTexture2D(&m_pDepthBuffer, nullptr, desc);
+		}
 	}
 
 	void SandBox::OnUpdate(Time dt)
@@ -153,5 +169,6 @@ namespace Lambda
 		SafeRelease(m_pPS);
 		SafeRelease(m_pPipelineState);
 		SafeRelease(m_pVertexBuffer);
+		SafeRelease(m_pDepthBuffer);
 	}
 }

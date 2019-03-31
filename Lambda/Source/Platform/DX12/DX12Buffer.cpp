@@ -74,12 +74,13 @@ namespace Lambda
 			HRESULT hr = pDevice->CreateCommittedResource(&heapProp, D3D12_HEAP_FLAG_NONE, &rDesc, m_State, nullptr, IID_PPV_ARGS(&m_Buffer));
 			if (FAILED(hr))
 			{
-				LOG_DEBUG_ERROR("DX12: Failed to create buffer.\n");
+				LOG_DEBUG_ERROR("DX12: Failed to create Buffer.\n");
 				return;
 			}
 			else
 			{
-				LOG_DEBUG_INFO("DX12: Created buffer.\n");
+				LOG_DEBUG_INFO("DX12: Created Buffer.\n");
+				m_Desc = desc;
 			}
 		}
 
