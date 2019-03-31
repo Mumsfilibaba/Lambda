@@ -1,8 +1,9 @@
 #include <LambdaPch.h>
-#include "DX12GraphicsContext.h"
+#include "DX12GraphicsDevice.h"
 #include "DX12CommandList.h"
 #include "DX12RenderTarget.h"
 #include "DX12PipelineState.h"
+#include "DX12Buffer.h"
 
 #if defined(LAMBDA_PLAT_WINDOWS)
 namespace Lambda
@@ -15,6 +16,21 @@ namespace Lambda
 		ID3D12Device5* pDevice = reinterpret_cast<ID3D12Device5*>(pContext->GetNativeHandle());
 		return DBG_NEW DX12CommandList(pDevice, type);
 	}
+
+	inline D3D12_RESOURCE_STATES ParseResourceState(ResourceState state)
+	{
+		switch (state)
+		{
+			break;
+		case RESOURCE_STATE_RENDERTARGET: return D3D12_RESOURCE_STATE_RENDER_TARGET;
+		case RESOURCE_STATE_PRESENT_COMMON: return D3D12_RESOURCE_STATE_COMMON;
+		case RESOURCE_STATE_COPY_DEST: return D3D12_RESOURCE_STATE_COPY_DEST;
+		case RESOURCE_STATE_COPY_SRC: return D3D12_RESOURCE_STATE_COPY_SOURCE;
+		case RESOURCE_STATE_UNKNOWN:
+		default: return D3D12_RESOURCE_STATE_COMMON;
+		}
+	}
+
 
 	DX12CommandList::DX12CommandList(ID3D12Device5* pDevice, CommandListType type)
 		: m_References(0)
@@ -50,7 +66,7 @@ namespace Lambda
 
 	void DX12CommandList::SetScissorRect(const Math::Rectangle& scissorRect)
 	{
-		D3D12_RECT rect = { scissorRect.TopLeft.x, scissorRect.TopLeft.y, scissorRect.BottomRight.x, scissorRect.BottomRight.y };
+		D3D12_RECT rect = { (LONG)scissorRect.TopLeft.x, (LONG)scissorRect.TopLeft.y, (LONG)scissorRect.BottomRight.x, (LONG)scissorRect.BottomRight.y };
 		m_List->RSSetScissorRects(1, &rect);
 	}
 
@@ -72,25 +88,32 @@ namespace Lambda
 		m_List->SetGraphicsRootSignature(pDXState->GetRootSignature());
 	}
 
-	void DX12CommandList::TransitionResource(IRenderTarget * pRenderTarget, ResourceState resourceState)
+	void DX12CommandList::SetVertexBuffer(IBuffer* pBuffer, uint32 slot)
 	{
+		D3D12_VERTEX_BUFFER_VIEW view = reinterpret_cast<DX12Buffer*>(pBuffer)->GetVertexBufferView();
+		m_List->IASetVertexBuffers(slot, 1, &view);
+	}
+
+	void DX12CommandList::TransitionResource(IBuffer* pResource, ResourceState resourceState)
+	{
+		D3D12_RESOURCE_STATES after = ParseResourceState(resourceState);
+		DX12Buffer* pBuffer = reinterpret_cast<DX12Buffer*>(pResource);
+		InternalTransitionResource(pBuffer->GetResource(), pBuffer->GetResourceState(), after);
+		pBuffer->SetResourceState(after);
+	}
+
+	void DX12CommandList::TransitionResource(IRenderTarget* pRenderTarget, ResourceState resourceState)
+	{
+		D3D12_RESOURCE_STATES after = ParseResourceState(resourceState);
 		DX12RenderTarget* pTarget = reinterpret_cast<DX12RenderTarget*>(pRenderTarget);
-
-		D3D12_RESOURCE_BARRIER barrier = {};
-		barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-		barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-		barrier.Transition.pResource = pTarget->GetResource();
-		barrier.Transition.Subresource = 0;
-		barrier.Transition.StateBefore = pTarget->GetResourceState();
+		InternalTransitionResource(pTarget->GetResource(), pTarget->GetResourceState(), after);
 		
-		if (resourceState == RESOURCE_STATE_PRESENT_COMMON)
-			barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_COMMON;
-		else if (resourceState == RESOURCE_STATE_RENDERTARGET)
-			barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+		pTarget->SetResourceState(after);
+	}
 
-		pTarget->SetResourceState(barrier.Transition.StateAfter);
-
-		m_List->ResourceBarrier(1, &barrier);
+	void DX12CommandList::CopyBuffer(IBuffer* pDst, IBuffer* pSrc)
+	{
+		m_List->CopyResource(reinterpret_cast<DX12Buffer*>(pDst)->GetResource(), reinterpret_cast<DX12Buffer*>(pSrc)->GetResource());
 	}
 
 	void DX12CommandList::DrawInstanced(uint32 vertexCountPerInstance, uint32 instanceCount, uint32 startVertexLocation, uint32 startInstanceLocation)
@@ -128,7 +151,7 @@ namespace Lambda
 		else if (type == COMMAND_LIST_TYPE_COMPUTE)
 			cType = D3D12_COMMAND_LIST_TYPE_COMPUTE;
 
-		HRESULT hr = pDevice->CreateCommandList1(0, cType, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&m_List));
+		HRESULT hr = pDevice->CreateCommandList1(1, cType, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&m_List));
 		if (FAILED(hr))
 		{
 			LOG_DEBUG_ERROR("DX12: Failed to create CommandList\n");
@@ -144,6 +167,19 @@ namespace Lambda
 		{
 			LOG_DEBUG_INFO("DX12: Created CommandList\n");
 		}
+	}
+
+	void DX12CommandList::InternalTransitionResource(ID3D12Resource* pResource, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after)
+	{
+		D3D12_RESOURCE_BARRIER barrier = {};
+		barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+		barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+		barrier.Transition.pResource = pResource;
+		barrier.Transition.Subresource = 0;
+		barrier.Transition.StateBefore = before;
+		barrier.Transition.StateAfter = after;
+
+		m_List->ResourceBarrier(1, &barrier);
 	}
 }
 #endif

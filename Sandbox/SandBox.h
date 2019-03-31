@@ -3,6 +3,7 @@
 #include <Graphics/ICommandList.h>
 #include <Graphics/IShader.h>
 #include <Graphics/IPipelineState.h>
+#include <Graphics/IBuffer.h>
 
 namespace Lambda
 {
@@ -22,6 +23,7 @@ namespace Lambda
 		ICommandList* m_pLists[3];
 		IShader* m_pVS;
 		IShader* m_pPS;
+		IBuffer* m_pVertexBuffer;
 		IGraphicsPipelineState* m_pPipelineState;
 	};
 }

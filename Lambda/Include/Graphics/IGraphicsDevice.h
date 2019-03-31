@@ -12,11 +12,13 @@ namespace Lambda
 		GRAPHICS_CONTEXT_FLAG_ALLOW_SOFTWARE_ADAPTER = (1 << 1),
 	};
 
+	class IBuffer;
 	class IShader;
 	class IGraphicsPipelineState;
 	class IRenderTarget;
 	class ICommandList;
 
+	struct BufferDesc;
 	struct ShaderDesc;
 	struct GraphicsPipelineStateDesc;
 
@@ -28,6 +30,7 @@ namespace Lambda
 		IGraphicsDevice() = default;
 		~IGraphicsDevice() = default;
 
+		virtual void CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) const = 0;
 		virtual void CreateShader(IShader** ppShader, const ShaderDesc& desc) const = 0;
 		virtual void CreateShaderFromFile(IShader** ppShader, const char* pFilename, const ShaderDesc& desc) const = 0;
 		virtual void CreateGraphicsPipelineState(IGraphicsPipelineState** ppPSO, const GraphicsPipelineStateDesc& desc) const = 0;

@@ -1,16 +1,12 @@
 struct VS_OUT
 {
 	float4 Position : SV_Position;
-	float2 TexCoord : TEXCOORD0;
 };
 
-VS_OUT VSMain(uint VertexID: SV_VertexID)
+VS_OUT VSMain(float3 position : POSITION)
 {
 	VS_OUT output;
-
-	output.TexCoord = float2((VertexID << 1) & 2, VertexID & 2);
-	output.Position = float4(output.TexCoord * float2(0.5f, -0.5f) + float2(-0.5f, 0.5f), 0.0f, 1.0f);
-
+	output.Position = float4(position, 1.0f);
 	return output;
 }
 

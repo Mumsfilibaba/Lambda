@@ -16,6 +16,8 @@ namespace Lambda
 		RESOURCE_STATE_UNKNOWN = 0,
 		RESOURCE_STATE_RENDERTARGET = 1,
 		RESOURCE_STATE_PRESENT_COMMON = 2,
+		RESOURCE_STATE_COPY_DEST = 3,
+		RESOURCE_STATE_COPY_SRC = 4,
 	};
 
 
@@ -29,6 +31,10 @@ namespace Lambda
 		float MaxDepth;
 	};
 
+
+	class IBuffer;
+	class IRenderTarget;
+	class IGraphicsPipelineState;
 
 	class LAMBDA_API ICommandList : public IObject
 	{
@@ -45,7 +51,11 @@ namespace Lambda
 		virtual void SetScissorRect(const Math::Rectangle& scissorRect) = 0;
 		virtual void SetPrimtiveTopology(PrimitiveTopology topology) = 0;
 		virtual void SetGraphicsPipelineState(IGraphicsPipelineState* pPSO) = 0;
+		virtual void SetVertexBuffer(IBuffer* pBuffer, uint32 slot) = 0;
 
+		virtual void CopyBuffer(IBuffer* pDst, IBuffer* pSrc) = 0;
+
+		virtual void TransitionResource(IBuffer* pResource, ResourceState resourceState) = 0;
 		virtual void TransitionResource(IRenderTarget* pRenderTarget, ResourceState resourceState) = 0;
 
 		virtual void DrawInstanced(uint32 vertexCountPerInstance, uint32 instanceCount, uint32 startVertexLocation, uint32 startInstanceLocation) = 0;

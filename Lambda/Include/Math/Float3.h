@@ -33,16 +33,14 @@ namespace Math
 				float b;
 			};
 		};
-
-	public:
-		static const Vec3f UP;
-		static const Vec3f FORWARD;
-		static const Vec3f RIGHT;
 	};
 
-	const Vec3f Vec3f::UP = Vec3f(0.0f, 1.0f, 0.0f);
-	const Vec3f Vec3f::FORWARD = Vec3f(0.0f, 0.0f, 1.0f);
-	const Vec3f Vec3f::RIGHT = Vec3f(1.0f, 0.0f, 0.0f);
+	namespace Vec3Constants
+	{
+		const Vec3f UP = Vec3f(0.0f, 1.0f, 0.0f);
+		const Vec3f FORWARD = Vec3f(0.0f, 0.0f, 1.0f);
+		const Vec3f RIGHT = Vec3f(1.0f, 0.0f, 0.0f);
+	}
 
 	forceinline Vec3f::Vec3f(float xyz)
 	{

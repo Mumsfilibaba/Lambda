@@ -62,54 +62,33 @@ namespace Math
 
 			uint32 Col;
 		};
-
-	public:
-		static const Color BLACK;
-		static const Color WHITE;
-		static const Color WARMWHITE;
-		static const Color GRAY;
-		static const Color DARKGRAY;
-		static const Color SOFTGRAY;
-		static const Color RED;
-		static const Color DARKRED;
-		static const Color SOFTRED;
-		static const Color GREEN;
-		static const Color DARKGREEN;
-		static const Color SOFTGREEN;
-		static const Color BLUE;
-		static const Color DARKBLUE;
-		static const Color SOFTBLUE;
-		static const Color CORNFLOWERBLUE;
-		static const Color YELLOW;
-		static const Color DARKYELLOW;
-		static const Color SOFTYELLOW;
-		static const Color MAGENTA;
-		static const Color PURPLE;
-		static const Color PINK;
 	};
 
-	const Color Color::BLACK(0, 0, 0, 255);
-	const Color Color::WHITE(255, 255, 255, 255);
-	const Color Color::WARMWHITE(255, 240, 224, 255);
-	const Color Color::GRAY(128, 128, 128, 255);
-	const Color Color::DARKGRAY(64, 64, 64, 255);
-	const Color Color::SOFTGRAY(192, 192, 192, 255);
-	const Color Color::RED(255, 0, 0, 255);
-	const Color Color::DARKRED(128, 0, 0, 255);
-	const Color Color::SOFTRED(255, 64, 64, 255);
-	const Color Color::GREEN(0, 255, 0, 255);
-	const Color Color::SOFTGREEN(64, 255, 64, 255);
-	const Color Color::DARKGREEN(0, 128, 0, 255);
-	const Color Color::BLUE(0, 0, 255, 255);
-	const Color Color::DARKBLUE(0, 0, 128, 255);
-	const Color Color::SOFTBLUE(83, 83, 255, 255);
-	const Color Color::CORNFLOWERBLUE(100, 149, 237, 255);
-	const Color Color::YELLOW(255, 255, 0, 255);
-	const Color Color::SOFTYELLOW(255, 255, 64, 255);
-	const Color Color::DARKYELLOW(128, 128, 0, 255);
-	const Color Color::MAGENTA(255, 0, 255, 255);
-	const Color Color::PURPLE(128, 0, 128, 255);
-	const Color Color::PINK(255, 192, 203, 255);
+	namespace Colors
+	{
+		const Color BLACK = Color(0, 0, 0, 255);
+		const Color WHITE = Color(255, 255, 255, 255);
+		const Color WARMWHITE = Color(255, 240, 224, 255);
+		const Color GRAY = Color(128, 128, 128, 255);
+		const Color DARKGRAY = Color(64, 64, 64, 255);
+		const Color SOFTGRAY = Color(192, 192, 192, 255);
+		const Color RED = Color(255, 0, 0, 255);
+		const Color DARKRED = Color(128, 0, 0, 255);
+		const Color SOFTRED = Color(255, 64, 64, 255);
+		const Color GREEN = Color(0, 255, 0, 255);
+		const Color SOFTGREEN = Color(64, 255, 64, 255);
+		const Color DARKGREEN = Color(0, 128, 0, 255);
+		const Color BLUE = Color(0, 0, 255, 255);
+		const Color DARKBLUE = Color(0, 0, 128, 255);
+		const Color SOFTBLUE = Color(83, 83, 255, 255);
+		const Color CORNFLOWERBLUE = Color(100, 149, 237, 255);
+		const Color YELLOW = Color(255, 255, 0, 255);
+		const Color SOFTYELLOW = Color(255, 255, 64, 255);
+		const Color DARKYELLOW = Color(128, 128, 0, 255);
+		const Color MAGENTA = Color(255, 0, 255, 255);
+		const Color PURPLE = Color(128, 0, 128, 255);
+		const Color PINK = Color(255, 192, 203, 255);
+	}
 
 	inline Color::Color(uint8 rgba)
 		: r(rgba),

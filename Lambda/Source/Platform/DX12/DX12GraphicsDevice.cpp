@@ -1,11 +1,12 @@
 #include <LambdaPch.h>
 #include <Utilities/StringHelper.h>
 #if defined(LAMBDA_PLAT_WINDOWS)
-	#include "DX12GraphicsContext.h"
+	#include "DX12GraphicsDevice.h"
 	#include "DX12CommandList.h"
 	#include "DX12RenderTarget.h"
 	#include "DX12PipelineState.h"
 	#include "DX12Shader.h"
+	#include "DX12Buffer.h"
 
 namespace Lambda
 {
@@ -59,10 +60,54 @@ namespace Lambda
 			m_DebugDevice->ReportLiveDeviceObjects(D3D12_RLDO_SUMMARY | D3D12_RLDO_DETAIL);
 		}
 
+		SafeRelease(m_pCommandList);
 		for (uint32 i = 0; i < m_NumBackbuffers; i++)
 			SafeRelease(m_BackBuffers[i]);
 
 		CloseHandle(m_GPUWaitEvent);
+
+	}
+
+	void DX12GraphicsDevice::CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) const
+	{
+		//Create a dynamic resource
+		if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
+		{
+			(*ppBuffer = new DX12Buffer(m_Device.Get(), desc));
+		}
+		//Create a normal resource
+		else if(desc.Usage == RESOURCE_USAGE_DEFAULT)
+		{
+			//Create an uploadbuffer
+			BufferDesc uDesc = desc;
+			uDesc.Usage = RESOURCE_USAGE_DYNAMIC;
+			DX12Buffer* pUploadBuffer = new DX12Buffer(m_Device.Get(), uDesc);
+
+			//Create actual buffer
+			DX12Buffer* pBuffer = new DX12Buffer(m_Device.Get(), desc);
+
+			//Upload data
+			void* pData = nullptr;
+			pUploadBuffer->Map(&pData);
+			memcpy(pData, pInitalData->pData, pInitalData->SizeInBytes);
+			pUploadBuffer->Unmap();
+
+			//Copy data
+			m_pCommandList->TransitionResource(pBuffer, RESOURCE_STATE_COPY_DEST);
+			m_pCommandList->CopyBuffer(pBuffer, pUploadBuffer);
+
+			//Execute and wait for GPU before creating
+			m_pCommandList->Close();
+
+			ICommandList* pList = m_pCommandList;
+			ExecuteCommandList(&pList, 1);
+
+			WaitForGPU();
+			m_pCommandList->Reset();
+
+			(*ppBuffer) = pBuffer;
+			SafeRelease(pUploadBuffer);
+		}
 	}
 
 	void DX12GraphicsDevice::CreateShader(IShader** ppShader, const ShaderDesc& desc) const
@@ -102,9 +147,10 @@ namespace Lambda
 	void DX12GraphicsDevice::ExecuteCommandList(ICommandList * const * ppLists, uint32 numLists) const
 	{
 		DX12CommandList* pList = reinterpret_cast<DX12CommandList*>(ppLists[0]);
+		//TODO: execute multiple commandlists
 		ID3D12CommandList* ppCommandLists[] = { pList->GetList() };
 
-		m_Queue->ExecuteCommandLists(1, ppCommandLists);
+		m_Queue->ExecuteCommandLists(numLists, ppCommandLists);
 	}
 
 	void DX12GraphicsDevice::Present(uint32 verticalSync) const
@@ -138,12 +184,9 @@ namespace Lambda
 		uint64 fenceValue = m_FenceValues[m_CurrentBackBuffer];
 		m_Queue->Signal(m_Fence.Get(), fenceValue);
 
-		//Wait if value is lower than current frame
-		if (m_Fence->GetCompletedValue() < m_FenceValues[m_CurrentBackBuffer])
-		{
-			m_Fence->SetEventOnCompletion(m_FenceValues[m_CurrentBackBuffer], m_GPUWaitEvent);
-			WaitForSingleObjectEx(m_GPUWaitEvent, INFINITE, FALSE);
-		}
+		//Wait for value
+		m_Fence->SetEventOnCompletion(fenceValue, m_GPUWaitEvent);
+		WaitForSingleObjectEx(m_GPUWaitEvent, INFINITE, FALSE);
 
 		//Increment fencevalue
 		m_FenceValues[m_CurrentBackBuffer]++;
@@ -181,6 +224,7 @@ namespace Lambda
 		if (!QueryAdaper(flags)) { return; }
 		if (!CreateDeviceAndCommandQueue(flags)) { return; }
 		if (!CreateSwapChain(pWindow)) { return; }
+		if (!CreateCommandList()) { return; }
 		if (!CreateDescriptorHeaps()) { return; }
 		if (!InitBackBuffers()) { return; }
 	}
@@ -361,6 +405,13 @@ namespace Lambda
 			LOG_DEBUG_INFO("DX12: Created Fence.\n");
 		}
 
+		return true;
+	}
+
+	bool DX12GraphicsDevice::CreateCommandList()
+	{
+		m_pCommandList = new DX12CommandList(m_Device.Get(), COMMAND_LIST_TYPE_GRAPHICS);
+		m_pCommandList->Reset();
 		return true;
 	}
 

@@ -1,9 +1,14 @@
 #include "SandBox.h"
+#include <Math/Math.h>
 
 namespace Lambda
 {
 	SandBox::SandBox()
 		: m_pCurrentList(nullptr),
+		m_pVS(nullptr),
+		m_pPS(nullptr),
+		m_pVertexBuffer(nullptr),
+		m_pPipelineState(nullptr),
 		m_pLists()
 	{
 		for (uint32 i = 0; i < 3; i++)
@@ -16,6 +21,8 @@ namespace Lambda
 
 	void SandBox::OnLoad()
 	{
+		using namespace Math;
+
 		//Create commandlist
 		{
 			for (uint32 i = 0; i < 3; i++)
@@ -57,6 +64,28 @@ namespace Lambda
 
 			pDevice->CreateGraphicsPipelineState(&m_pPipelineState, desc);
 		}
+
+		//Create vertexbuffer
+		{
+			Vec3f vertices[] = 
+			{
+				Vec3f(0.0f, 0.5f, 0.0f),
+				Vec3f(0.5f, -0.5f, 0.0f),
+				Vec3f(-0.5f, -0.5f, 0.0f),
+			};
+
+			BufferDesc desc = {};
+			desc.Usage = RESOURCE_USAGE_DEFAULT;
+			desc.Flags = BUFFER_FLAGS_VERTEX_BUFFER;
+			desc.SizeInBytes = sizeof(Vec3f) * 3;
+			desc.StrideInBytes = sizeof(Vec3f);
+
+			ResourceData data = {};
+			data.pData = &vertices;
+			data.SizeInBytes = desc.SizeInBytes;
+
+			pDevice->CreateBuffer(&m_pVertexBuffer, &data, desc);
+		}
 	}
 
 	void SandBox::OnUpdate(Time dt)
@@ -81,8 +110,8 @@ namespace Lambda
 		Math::Rectangle scissorrect;
 		scissorrect.TopLeft.x = 0.0f;
 		scissorrect.TopLeft.y = 0.0f;
-		scissorrect.BottomRight.x = GetWindow()->GetWidth();
-		scissorrect.BottomRight.y = GetWindow()->GetHeight();
+		scissorrect.BottomRight.x = (float)GetWindow()->GetWidth();
+		scissorrect.BottomRight.y = (float)GetWindow()->GetHeight();
 
 		Viewport viewport;
 		viewport.Width = scissorrect.BottomRight.x;
@@ -98,6 +127,9 @@ namespace Lambda
 		//Set pipelinestate and topology
 		m_pCurrentList->SetPrimtiveTopology(PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		m_pCurrentList->SetGraphicsPipelineState(m_pPipelineState);
+
+		//Set vertexbuffer
+		m_pCurrentList->SetVertexBuffer(m_pVertexBuffer, 0);
 		m_pCurrentList->DrawInstanced(3, 1, 0, 0);
 
 		m_pCurrentList->TransitionResource(pRenderTarget, RESOURCE_STATE_PRESENT_COMMON);
@@ -120,5 +152,6 @@ namespace Lambda
 		SafeRelease(m_pVS);
 		SafeRelease(m_pPS);
 		SafeRelease(m_pPipelineState);
+		SafeRelease(m_pVertexBuffer);
 	}
 }

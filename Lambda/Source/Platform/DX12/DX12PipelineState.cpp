@@ -74,7 +74,7 @@ namespace Lambda
 
 			//Define pipelinestate
 			D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-			psoDesc.InputLayout = { nullptr, 0 };
+			psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
 			psoDesc.pRootSignature = m_RootSignature.Get();
 			psoDesc.VS = CD3DX12_SHADER_BYTECODE(pVS->GetShaderBlob());
 			psoDesc.PS = CD3DX12_SHADER_BYTECODE(pPS->GetShaderBlob());

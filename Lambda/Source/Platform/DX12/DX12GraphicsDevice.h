@@ -3,9 +3,8 @@
 #include <System/IWindow.h>
 
 #if defined(LAMBDA_PLAT_WINDOWS)
-	#include <wrl/client.h>
+	#include "DX12CommandList.h"
 	#include <dxgi1_6.h>
-	#include <d3d12.h>
 	#include <vector>
 
 namespace Lambda
@@ -20,6 +19,7 @@ namespace Lambda
 		DX12GraphicsDevice(IWindow* pWindow, GraphicsContextFlags flags);
 		~DX12GraphicsDevice();
 
+		virtual void CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) const override final;
 		virtual void CreateShader(IShader** ppShader, const ShaderDesc& desc) const override final;
 		virtual void CreateShaderFromFile(IShader** ppShader, const char* pFilename, const ShaderDesc& desc) const override final;
 		virtual void CreateGraphicsPipelineState(IGraphicsPipelineState** ppPSO, const GraphicsPipelineStateDesc& desc) const override final;
@@ -43,6 +43,7 @@ namespace Lambda
 		bool CreateFactory(GraphicsContextFlags flags);
 		bool QueryAdaper(GraphicsContextFlags flags);
 		bool CreateDeviceAndCommandQueue(GraphicsContextFlags flags);
+		bool CreateCommandList();
 		bool CreateSwapChain(IWindow* pWindow);
 		bool CreateDescriptorHeaps();
 		bool InitBackBuffers();
@@ -60,6 +61,7 @@ namespace Lambda
 		Microsoft::WRL::ComPtr<ID3D12CommandQueue> m_Queue;
 		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_RtvHeap;
 		
+		DX12CommandList* m_pCommandList;
 		std::vector<DX12RenderTarget*> m_BackBuffers;
 		mutable std::vector<uint64> m_FenceValues;
 

@@ -24,8 +24,12 @@ namespace Lambda
 		virtual void SetScissorRect(const Math::Rectangle& scissorRect) override final;
 		virtual void SetPrimtiveTopology(PrimitiveTopology topology) override final;
 		virtual void SetGraphicsPipelineState(IGraphicsPipelineState* pPSO) override final;
+		virtual void SetVertexBuffer(IBuffer* pBuffer, uint32 slot) override final; 
 
+		virtual void TransitionResource(IBuffer* pResource, ResourceState resourceState) override final;
 		virtual void TransitionResource(IRenderTarget* pRenderTarget, ResourceState resourceState) override final;
+
+		virtual void CopyBuffer(IBuffer* pDst, IBuffer* pSrc) override final;
 
 		virtual void DrawInstanced(uint32 vertexCountPerInstance, uint32 instanceCount, uint32 startVertexLocation, uint32 startInstanceLocation) override final;
 
@@ -38,6 +42,8 @@ namespace Lambda
 	private:
 		void Init(ID3D12Device5* pDevice, CommandListType type);
 		ID3D12CommandList* GetList() const;
+
+		void InternalTransitionResource(ID3D12Resource* pResource, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after);
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_Allocator;
