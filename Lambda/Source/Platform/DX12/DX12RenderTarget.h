@@ -27,21 +27,29 @@ namespace Lambda
 		void SetResource(ID3D12Resource* pResource);
 		void SetDescriptorHandle(D3D12_CPU_DESCRIPTOR_HANDLE descriptor);
 		void SetResourceState(D3D12_RESOURCE_STATES state);
+		void SetDescriptorIndex(uint32 index);
 
 		D3D12_CPU_DESCRIPTOR_HANDLE GetDescriptorHandle() const;
 		D3D12_RESOURCE_STATES GetResourceState() const;
 		ID3D12Resource* GetResource() const;
+		uint32 GetDescriptorIndex() const;
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_Texture;
 		D3D12_CPU_DESCRIPTOR_HANDLE m_Descriptor;
 		D3D12_RESOURCE_STATES m_ResourceState;
+		uint32 m_DescriptorIndex;
 		uint32 m_References;
 	};
 
 	inline ID3D12Resource* DX12RenderTarget::GetResource() const
 	{
 		return m_Texture.Get();
+	}
+
+	inline uint32 DX12RenderTarget::GetDescriptorIndex() const
+	{
+		return m_DescriptorIndex;
 	}
 
 	inline D3D12_CPU_DESCRIPTOR_HANDLE DX12RenderTarget::GetDescriptorHandle() const

@@ -68,6 +68,8 @@ namespace Lambda
 
 		CloseHandle(m_GPUWaitEvent);
 
+		SafeDelete(m_pRTVHeap);
+		SafeDelete(m_pDSVHeap);
 	}
 
 
@@ -116,7 +118,28 @@ namespace Lambda
 
 	void DX12GraphicsDevice::CreateTexture2D(ITexture2D** ppTexture, const ResourceData* pInitalData, const Texture2DDesc& desc) const
 	{
-		(*ppTexture = new DX12Texture2D(m_Device.Get(), desc));
+		DX12Texture2D* pTexture = new DX12Texture2D(m_Device.Get(), desc);
+		//DepthStencil
+		if (desc.Flags & TEXTURE_FLAGS_DEPTH_STENCIL)
+		{
+			//Allocate depth stencil descriptor
+			uint32 index = m_pDSVHeap->Allocate();
+			DX12DescriptorHandle hDescriptor; 
+			hDescriptor.CPU = m_pDSVHeap->GetCPUHandle(index);
+
+			//Create view
+			D3D12_DEPTH_STENCIL_VIEW_DESC vDesc = {};
+			vDesc.Flags = D3D12_DSV_FLAG_NONE;
+			vDesc.Format = ConvertFormat(desc.Format);
+			vDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+			vDesc.Texture2D.MipSlice = 0;
+
+			m_Device->CreateDepthStencilView(pTexture->GetResource(), &vDesc, hDescriptor.CPU);
+
+			pTexture->SetDescriptor(hDescriptor);
+		}
+		
+		(*ppTexture) = pTexture;
 	}
 
 
@@ -257,7 +280,12 @@ namespace Lambda
 		using namespace Microsoft::WRL;
 
 		for (DX12RenderTarget* pTarget : m_BackBuffers)
+		{
+			m_pRTVHeap->Free(pTarget->GetDescriptorIndex());
+
+			pTarget->SetDescriptorIndex(0);
 			pTarget->SetResource(nullptr);
+		}
 	}
 
 
@@ -498,25 +526,8 @@ namespace Lambda
 
 	bool DX12GraphicsDevice::CreateDescriptorHeaps()
 	{
-		//Create descriptor heap for RenderTargets
-		D3D12_DESCRIPTOR_HEAP_DESC desc = {};
-		memset(&desc, 0, sizeof(desc));
-
-		desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-		desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-		desc.NumDescriptors = 32;
-		desc.NodeMask = 0;
-
-		if (FAILED(m_Device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&m_RtvHeap))))
-		{
-			LOG_DEBUG_ERROR("DX12: Failed to create DescriptorHeap\n");
-			return false;
-		}
-		else
-		{
-			LOG_DEBUG_INFO("DX12: Created DescriptorHeap\n");
-		}
-
+		m_pRTVHeap = new DX12DescriptorAllocator(m_Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 32, false);
+		m_pDSVHeap = new DX12DescriptorAllocator(m_Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 16, false);
 		return true;
 	}
 
@@ -525,9 +536,6 @@ namespace Lambda
 	{
 		using namespace Microsoft::WRL;
 
-		//Get desciptor stride
-		uint32 descriptorSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-		
 		//Create rendertarget desc
 		D3D12_RENDER_TARGET_VIEW_DESC desc = {};
 		memset(&desc, 0, sizeof(desc));
@@ -547,11 +555,11 @@ namespace Lambda
 				return false;
 			}
 
-			D3D12_CPU_DESCRIPTOR_HANDLE descriptor = m_RtvHeap->GetCPUDescriptorHandleForHeapStart();
-			descriptor.ptr += descriptorSize * i;
-
+			uint32 index = m_pRTVHeap->Allocate();
+			D3D12_CPU_DESCRIPTOR_HANDLE descriptor = m_pRTVHeap->GetCPUHandle(index);
 			m_Device->CreateRenderTargetView(backBuffer.Get(), &desc, descriptor);
 
+			m_BackBuffers[i]->SetDescriptorIndex(index);
 			m_BackBuffers[i]->SetResource(backBuffer.Get());
 			m_BackBuffers[i]->SetDescriptorHandle(descriptor);
 		}

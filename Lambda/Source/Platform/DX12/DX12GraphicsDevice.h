@@ -4,6 +4,7 @@
 
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include "DX12CommandList.h"
+	#include "DX12DescriptorAllocator.h"
 	#include <dxgi1_6.h>
 	#include <vector>
 
@@ -60,8 +61,9 @@ namespace Lambda
 		Microsoft::WRL::ComPtr<ID3D12DebugDevice2> m_DebugDevice;
 		Microsoft::WRL::ComPtr<ID3D12Fence> m_Fence;
 		Microsoft::WRL::ComPtr<ID3D12CommandQueue> m_Queue;
-		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_RtvHeap;
 		
+		DX12DescriptorAllocator* m_pRTVHeap;
+		DX12DescriptorAllocator* m_pDSVHeap;
 		DX12CommandList* m_pCommandList;
 		std::vector<DX12RenderTarget*> m_BackBuffers;
 		mutable std::vector<uint64> m_FenceValues;

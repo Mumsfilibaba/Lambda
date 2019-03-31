@@ -15,10 +15,7 @@ namespace Lambda
 		//Init Desc
 		memset(&m_Desc, 0, sizeof(m_Desc));
 
-		//Init descriptors
-		m_GPUDescriptor.ptr = 0;
-		m_CPUDescriptor.ptr = 0;
-
+		//Init
 		AddRef();
 		Init(pDevice, desc);
 	}
@@ -109,6 +106,11 @@ namespace Lambda
 	void DX12Buffer::SetResourceState(D3D12_RESOURCE_STATES state) const
 	{
 		m_State = state;
+	}
+
+	void DX12Buffer::SetDescriporHandle(const DX12DescriptorHandle& hDescriptor)
+	{
+		m_hDescriptor = hDescriptor;
 	}
 }
 #endif

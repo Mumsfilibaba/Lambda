@@ -33,6 +33,7 @@ namespace Lambda
 
 
 	class IBuffer;
+	class ITexture2D;
 	class IRenderTarget;
 	class IGraphicsPipelineState;
 
@@ -44,9 +45,10 @@ namespace Lambda
 		ICommandList() = default;
 		~ICommandList() = default;
 
-		virtual void ClearRenderTargetView(IRenderTarget* pRenderTarget, float color[4]) = 0;
+		virtual void ClearRenderTarget(IRenderTarget* pRenderTarget, float color[4]) = 0;
+		virtual void ClearDepthStencil(ITexture2D* pDepthStencil, float depth, uint8 stencil) = 0;
 
-		virtual void SetRenderTarget(IRenderTarget* pRenderTarget) = 0;
+		virtual void SetRenderTarget(IRenderTarget* pRenderTarget, ITexture2D* pDepthStencil) = 0;
 		virtual void SetViewport(const Viewport& viewport) = 0;
 		virtual void SetScissorRect(const Math::Rectangle& scissorRect) = 0;
 		virtual void SetPrimtiveTopology(PrimitiveTopology topology) = 0;

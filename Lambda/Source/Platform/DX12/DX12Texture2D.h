@@ -2,13 +2,16 @@
 #include <Graphics/ITexture2D.h>
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include <wrl/client.h>
-	#include <d3d12.h>
+	#include "DX12DescriptorHandle.h"
 	#include "DX12Conversions.inl"
 
 namespace Lambda
 {
 	class DX12Texture2D final : public ITexture2D
 	{
+		friend class DX12CommandList;
+		friend class DX12GraphicsDevice;
+
 	public:
 		LAMBDA_NO_COPY(DX12Texture2D);
 
@@ -22,18 +25,17 @@ namespace Lambda
 		void Init(ID3D12Device5* pDevice, const Texture2DDesc& desc);
 
 		void SetResourceState(D3D12_RESOURCE_STATES state) const;
+		void SetDescriptor(const DX12DescriptorHandle& hDescriptor);
 
 		ID3D12Resource* GetResource() const;
 		D3D12_RESOURCE_STATES GetResourceState() const;
-		D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptor() const;
-		D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptor() const;
+		DX12DescriptorHandle GetDescriptorHandle() const;
 		D3D12_GPU_VIRTUAL_ADDRESS GetVirtualAdress() const;
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_Texture;
 		mutable D3D12_RESOURCE_STATES m_State;
-		D3D12_GPU_DESCRIPTOR_HANDLE m_GPUDescriptor;
-		D3D12_CPU_DESCRIPTOR_HANDLE m_CPUDescriptor;
+		DX12DescriptorHandle m_hDescriptor;
 		D3D12_GPU_VIRTUAL_ADDRESS m_Adress;
 
 		Texture2DDesc m_Desc;
@@ -50,14 +52,9 @@ namespace Lambda
 		return m_State;
 	}
 	
-	inline D3D12_GPU_DESCRIPTOR_HANDLE DX12Texture2D::GetGPUDescriptor() const
+	inline DX12DescriptorHandle DX12Texture2D::GetDescriptorHandle() const
 	{
-		return m_GPUDescriptor;
-	}
-
-	inline D3D12_CPU_DESCRIPTOR_HANDLE DX12Texture2D::GetCPUDescriptor() const
-	{
-		return m_CPUDescriptor;
+		return m_hDescriptor;
 	}
 
 	inline D3D12_GPU_VIRTUAL_ADDRESS DX12Texture2D::GetVirtualAdress() const

@@ -13,9 +13,8 @@ namespace Lambda
 	{
 		assert(pDevice != nullptr);
 
-		//Init descriptors
-		m_CPUDescriptor.ptr = 0;
-		m_GPUDescriptor.ptr = 0;
+		//Init Desc
+		memset(&m_Desc, 0, sizeof(m_Desc));
 
 		//Init
 		AddRef();
@@ -68,7 +67,7 @@ namespace Lambda
 			}
 
 			//Create resource
-			CD3DX12_RESOURCE_DESC rDesc = CD3DX12_RESOURCE_DESC::Tex2D(ConvertFormat(desc.Format), desc.Width, desc.Height, desc.ArraySize, desc.MipMaps, desc.Samples, 0, flags);
+			CD3DX12_RESOURCE_DESC rDesc = CD3DX12_RESOURCE_DESC::Tex2D(ConvertFormat(desc.Format), desc.Width, desc.Height, (UINT16)desc.ArraySize, (UINT16)desc.MipMaps, (UINT16)desc.Samples, 0, flags);
 			HRESULT hr = pDevice->CreateCommittedResource(&heapProp, D3D12_HEAP_FLAG_NONE, &rDesc, m_State, nullptr, IID_PPV_ARGS(&m_Texture));
 			if (FAILED(hr))
 			{
@@ -89,6 +88,11 @@ namespace Lambda
 	void DX12Texture2D::SetResourceState(D3D12_RESOURCE_STATES state) const
 	{
 		m_State = state;
+	}
+
+	void DX12Texture2D::SetDescriptor(const DX12DescriptorHandle& hDescriptor)
+	{
+		m_hDescriptor = hDescriptor;
 	}
 }
 #endif

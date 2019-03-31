@@ -17,9 +17,10 @@ namespace Lambda
 		DX12CommandList(ID3D12Device5* pDevice, CommandListType type);
 		~DX12CommandList();
 	
-		virtual void ClearRenderTargetView(IRenderTarget* pRenderTarget, float color[4]) override final;
+		virtual void ClearRenderTarget(IRenderTarget* pRenderTarget, float color[4]) override final;
+		virtual void ClearDepthStencil(ITexture2D* pDepthStencil, float depth, uint8 stencil) override final;
 
-		virtual void SetRenderTarget(IRenderTarget* pRenderTarget) override final;
+		virtual void SetRenderTarget(IRenderTarget* pRenderTarget, ITexture2D* pDepthStencil) override final;
 		virtual void SetViewport(const Viewport& viewport) override final;
 		virtual void SetScissorRect(const Math::Rectangle& scissorRect) override final;
 		virtual void SetPrimtiveTopology(PrimitiveTopology topology) override final;

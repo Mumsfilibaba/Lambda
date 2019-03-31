@@ -4,6 +4,7 @@
 #include "DX12RenderTarget.h"
 #include "DX12PipelineState.h"
 #include "DX12Buffer.h"
+#include "DX12Texture2D.h"
 
 #if defined(LAMBDA_PLAT_WINDOWS)
 namespace Lambda
@@ -47,18 +48,35 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::ClearRenderTargetView(IRenderTarget* pRenderTarget, float color[4])
+	void DX12CommandList::ClearRenderTarget(IRenderTarget* pRenderTarget, float color[4])
 	{
 		DX12RenderTarget* pTarget = reinterpret_cast<DX12RenderTarget*>(pRenderTarget);
 		m_List->ClearRenderTargetView(pTarget->GetDescriptorHandle(), color, 0, nullptr);
 	}
 
 
-	void DX12CommandList::SetRenderTarget(IRenderTarget* pRenderTarget)
+	void DX12CommandList::ClearDepthStencil(ITexture2D * pDepthStencil, float depth, uint8 stencil)
+	{
+		DX12Texture2D* pDSV = reinterpret_cast<DX12Texture2D*>(pDepthStencil);
+		m_List->ClearDepthStencilView(pDSV->GetDescriptorHandle().CPU, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, depth, stencil, 0, nullptr);
+	}
+
+
+	void DX12CommandList::SetRenderTarget(IRenderTarget* pRenderTarget, ITexture2D* pDepthStencil)
 	{
 		DX12RenderTarget* pTarget = reinterpret_cast<DX12RenderTarget*>(pRenderTarget);
 		D3D12_CPU_DESCRIPTOR_HANDLE rtv = pTarget->GetDescriptorHandle();
-		m_List->OMSetRenderTargets(1, &rtv, false, nullptr);
+
+		DX12Texture2D* pDsv = reinterpret_cast<DX12Texture2D*>(pDepthStencil);
+		if (pDsv != nullptr)
+		{
+			m_List->OMSetRenderTargets(1, &rtv, false, nullptr);
+		}
+		else
+		{
+			D3D12_CPU_DESCRIPTOR_HANDLE dsv = pDsv->GetDescriptorHandle().CPU;
+			m_List->OMSetRenderTargets(1, &rtv, false, &dsv);
+		}
 	}
 
 

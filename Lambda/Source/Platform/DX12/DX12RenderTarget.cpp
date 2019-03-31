@@ -49,5 +49,10 @@ namespace Lambda
 	{
 		m_ResourceState = state;
 	}
+
+	void DX12RenderTarget::SetDescriptorIndex(uint32 index)
+	{
+		m_DescriptorIndex = index;
+	}
 }
 #endif

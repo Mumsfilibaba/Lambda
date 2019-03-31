@@ -119,8 +119,9 @@ namespace Lambda
 		float color[] = { 0.392f, 0.584f, 0.929f, 1.0f };
 		IRenderTarget* pRenderTarget = pDevice->GetCurrentRenderTarget();
 		m_pCurrentList->TransitionResource(pRenderTarget, RESOURCE_STATE_RENDERTARGET);
-		m_pCurrentList->ClearRenderTargetView(pRenderTarget, color);
-		m_pCurrentList->SetRenderTarget(pRenderTarget);
+		m_pCurrentList->ClearRenderTarget(pRenderTarget, color);
+		m_pCurrentList->ClearDepthStencil(m_pDepthBuffer, 1.0f, 0);
+		m_pCurrentList->SetRenderTarget(pRenderTarget, m_pDepthBuffer);
 
 		//Set scissor and 
 		Math::Rectangle scissorrect;

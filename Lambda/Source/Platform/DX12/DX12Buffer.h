@@ -1,9 +1,8 @@
 #pragma once
 #include <Graphics/IBuffer.h>
-
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include <wrl/client.h>
-	#include <d3d12.h>
+	#include "DX12DescriptorHandle.h"
 
 namespace Lambda
 {
@@ -27,13 +26,13 @@ namespace Lambda
 		void Init(ID3D12Device5* pDevice, const BufferDesc& desc);
 		
 		void SetResourceState(D3D12_RESOURCE_STATES state) const;
+		void SetDescriporHandle(const DX12DescriptorHandle& hDescriptor);
 
+		DX12DescriptorHandle GetGPUDescriptor() const;
 		ID3D12Resource* GetResource() const;
 		D3D12_RESOURCE_STATES GetResourceState() const;
 		D3D12_VERTEX_BUFFER_VIEW GetVertexBufferView() const;
 		D3D12_INDEX_BUFFER_VIEW GetIndexBufferView() const;
-		D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptor() const;
-		D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptor() const;
 		D3D12_GPU_VIRTUAL_ADDRESS GetVirtualAdress() const;
 
 	private:
@@ -41,9 +40,8 @@ namespace Lambda
 		mutable D3D12_RESOURCE_STATES m_State;
 		D3D12_VERTEX_BUFFER_VIEW m_VBV;
 		D3D12_INDEX_BUFFER_VIEW m_IBV;
-		D3D12_GPU_DESCRIPTOR_HANDLE m_GPUDescriptor;
-		D3D12_CPU_DESCRIPTOR_HANDLE m_CPUDescriptor;
 		D3D12_GPU_VIRTUAL_ADDRESS m_Adress;
+		DX12DescriptorHandle m_hDescriptor;
 		
 		BufferDesc m_Desc;
 		uint32 m_References;
@@ -69,14 +67,9 @@ namespace Lambda
 		return m_IBV;
 	}
 
-	inline D3D12_GPU_DESCRIPTOR_HANDLE DX12Buffer::GetGPUDescriptor() const
+	inline DX12DescriptorHandle DX12Buffer::GetGPUDescriptor() const
 	{
-		return m_GPUDescriptor;
-	}
-
-	inline D3D12_CPU_DESCRIPTOR_HANDLE DX12Buffer::GetCPUDescriptor() const
-	{
-		return m_CPUDescriptor;
+		return m_hDescriptor;
 	}
 
 	inline D3D12_GPU_VIRTUAL_ADDRESS DX12Buffer::GetVirtualAdress() const
