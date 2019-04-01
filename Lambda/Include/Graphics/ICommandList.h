@@ -15,9 +15,10 @@ namespace Lambda
 	{
 		RESOURCE_STATE_UNKNOWN = 0,
 		RESOURCE_STATE_RENDERTARGET = 1,
-		RESOURCE_STATE_PRESENT_COMMON = 2,
-		RESOURCE_STATE_COPY_DEST = 3,
-		RESOURCE_STATE_COPY_SRC = 4,
+		RESOURCE_STATE_DEPTH_WRITE = 2,
+		RESOURCE_STATE_PRESENT_COMMON = 3,
+		RESOURCE_STATE_COPY_DEST = 4,
+		RESOURCE_STATE_COPY_SRC = 5,
 	};
 
 
@@ -45,10 +46,10 @@ namespace Lambda
 		ICommandList() = default;
 		~ICommandList() = default;
 
-		virtual void ClearRenderTarget(IRenderTarget* pRenderTarget, float color[4]) = 0;
+		virtual void ClearRenderTarget(ITexture2D* pRenderTarget, float color[4]) = 0;
 		virtual void ClearDepthStencil(ITexture2D* pDepthStencil, float depth, uint8 stencil) = 0;
 
-		virtual void SetRenderTarget(IRenderTarget* pRenderTarget, ITexture2D* pDepthStencil) = 0;
+		virtual void SetRenderTarget(ITexture2D* pRenderTarget, ITexture2D* pDepthStencil) = 0;
 		virtual void SetViewport(const Viewport& viewport) = 0;
 		virtual void SetScissorRect(const Math::Rectangle& scissorRect) = 0;
 		virtual void SetPrimtiveTopology(PrimitiveTopology topology) = 0;
@@ -58,7 +59,7 @@ namespace Lambda
 		virtual void CopyBuffer(IBuffer* pDst, IBuffer* pSrc) = 0;
 
 		virtual void TransitionResource(IBuffer* pResource, ResourceState resourceState) = 0;
-		virtual void TransitionResource(IRenderTarget* pRenderTarget, ResourceState resourceState) = 0;
+		virtual void TransitionResource(ITexture2D* pResource, ResourceState resourceState) = 0;
 
 		virtual void DrawInstanced(uint32 vertexCountPerInstance, uint32 instanceCount, uint32 startVertexLocation, uint32 startInstanceLocation) = 0;
 

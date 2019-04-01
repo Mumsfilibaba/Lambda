@@ -3,7 +3,6 @@
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include "DX12GraphicsDevice.h"
 	#include "DX12CommandList.h"
-	#include "DX12RenderTarget.h"
 	#include "DX12PipelineState.h"
 	#include "DX12Shader.h"
 	#include "DX12Buffer.h"
@@ -123,9 +122,8 @@ namespace Lambda
 		if (desc.Flags & TEXTURE_FLAGS_DEPTH_STENCIL)
 		{
 			//Allocate depth stencil descriptor
-			uint32 index = m_pDSVHeap->Allocate();
-			DX12DescriptorHandle hDescriptor; 
-			hDescriptor.CPU = m_pDSVHeap->GetCPUHandle(index);
+			DX12DescriptorHandle hDescriptor = m_pDSVHeap->Allocate();
+			pTexture->SetDescriptorHandle(hDescriptor);
 
 			//Create view
 			D3D12_DEPTH_STENCIL_VIEW_DESC vDesc = {};
@@ -133,10 +131,7 @@ namespace Lambda
 			vDesc.Format = ConvertFormat(desc.Format);
 			vDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
 			vDesc.Texture2D.MipSlice = 0;
-
 			m_Device->CreateDepthStencilView(pTexture->GetResource(), &vDesc, hDescriptor.CPU);
-
-			pTexture->SetDescriptor(hDescriptor);
 		}
 		
 		(*ppTexture) = pTexture;
@@ -232,7 +227,7 @@ namespace Lambda
 	}
 
 
-	IRenderTarget* DX12GraphicsDevice::GetCurrentRenderTarget()
+	ITexture2D* DX12GraphicsDevice::GetCurrentRenderTarget()
 	{
 		return m_BackBuffers[m_SwapChain->GetCurrentBackBufferIndex()];
 	}
@@ -279,11 +274,9 @@ namespace Lambda
 	{
 		using namespace Microsoft::WRL;
 
-		for (DX12RenderTarget* pTarget : m_BackBuffers)
+		for (DX12Texture2D* pTarget : m_BackBuffers)
 		{
-			m_pRTVHeap->Free(pTarget->GetDescriptorIndex());
-
-			pTarget->SetDescriptorIndex(0);
+			m_pRTVHeap->Free(pTarget->GetDescriptorHandle());
 			pTarget->SetResource(nullptr);
 		}
 	}
@@ -515,7 +508,7 @@ namespace Lambda
 			//Create the rendertarget-objects
 			m_BackBuffers.resize(m_NumBackbuffers);
 			for (uint32 i = 0; i < m_NumBackbuffers; i++)
-				m_BackBuffers[i] = new DX12RenderTarget();
+				m_BackBuffers[i] = new DX12Texture2D(nullptr);
 
 			LOG_DEBUG_INFO("DX12: Created swapchain\n");
 		}
@@ -555,11 +548,9 @@ namespace Lambda
 				return false;
 			}
 
-			uint32 index = m_pRTVHeap->Allocate();
-			D3D12_CPU_DESCRIPTOR_HANDLE descriptor = m_pRTVHeap->GetCPUHandle(index);
-			m_Device->CreateRenderTargetView(backBuffer.Get(), &desc, descriptor);
+			DX12DescriptorHandle descriptor = m_pRTVHeap->Allocate();
+			m_Device->CreateRenderTargetView(backBuffer.Get(), &desc, descriptor.CPU);
 
-			m_BackBuffers[i]->SetDescriptorIndex(index);
 			m_BackBuffers[i]->SetResource(backBuffer.Get());
 			m_BackBuffers[i]->SetDescriptorHandle(descriptor);
 		}

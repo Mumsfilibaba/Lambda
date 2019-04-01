@@ -19,37 +19,34 @@ namespace Lambda
 	{
 	}
 	
-	void DX12DescriptorAllocator::Free(uint32 id)
+	void DX12DescriptorAllocator::Free(const DX12DescriptorHandle& hDescriptor)
 	{
-		m_FreeList.push_back(id);
+		m_FreeList.push_back(hDescriptor.Index);
 	}
 
-	uint32 DX12DescriptorAllocator::Allocate()
+	DX12DescriptorHandle DX12DescriptorAllocator::Allocate()
 	{
+		DX12DescriptorHandle descriptor;
 		if (m_FreeList.empty())
 		{
+			descriptor.CPU.ptr = (SIZE_T)-1;
+			descriptor.GPU.ptr = (SIZE_T)-1;
+			descriptor.Index= (uint32)-1;
+
 			LOG_DEBUG_ERROR("DX12: No more free descriptors.\n");
-			return (uint32)-1;
+		}
+		else
+		{
+			uint32 id = m_FreeList.front();
+			m_FreeList.front() = m_FreeList.back();
+			m_FreeList.pop_back();
+
+			descriptor.CPU.ptr = m_CPUStart.ptr + (m_DescriptorSize * id);
+			descriptor.GPU.ptr = m_GPUStart.ptr + (m_DescriptorSize * id);
+			descriptor.Index = id;
 		}
 
-		uint32 id = m_FreeList.front();
-		m_FreeList.front() = m_FreeList.back();
-		m_FreeList.pop_back();
-		return id;
-	}
-	
-	D3D12_CPU_DESCRIPTOR_HANDLE DX12DescriptorAllocator::GetCPUHandle(uint32 index)
-	{
-		D3D12_CPU_DESCRIPTOR_HANDLE handle = m_CPUStart;
-		handle.ptr += m_DescriptorSize * index;
-		return handle;
-	}
-	
-	D3D12_GPU_DESCRIPTOR_HANDLE DX12DescriptorAllocator::GetGPUHandle(uint32 index)
-	{
-		D3D12_GPU_DESCRIPTOR_HANDLE handle = m_GPUStart;
-		handle.ptr += m_DescriptorSize * index;
-		return handle;
+		return descriptor;
 	}
 
 	void DX12DescriptorAllocator::Init(ID3D12Device5* pDevice, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32 count, bool isShaderVisible)

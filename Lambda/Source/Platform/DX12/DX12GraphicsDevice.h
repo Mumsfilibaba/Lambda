@@ -10,7 +10,7 @@
 
 namespace Lambda
 {
-	class DX12RenderTarget;
+	class DX12Texture2D;
 
 	class DX12GraphicsDevice final : public IGraphicsDevice
 	{
@@ -31,7 +31,7 @@ namespace Lambda
 		virtual void GPUWaitForFrame() const override final;
 		virtual void WaitForGPU() const override final;
 
-		virtual IRenderTarget* GetCurrentRenderTarget() override final;
+		virtual ITexture2D* GetCurrentRenderTarget() override final;
 		virtual uint32 GetCurrentBackBufferIndex() const override final;
 		virtual void* GetNativeHandle() const override final;
 
@@ -65,7 +65,7 @@ namespace Lambda
 		DX12DescriptorAllocator* m_pRTVHeap;
 		DX12DescriptorAllocator* m_pDSVHeap;
 		DX12CommandList* m_pCommandList;
-		std::vector<DX12RenderTarget*> m_BackBuffers;
+		std::vector<DX12Texture2D*> m_BackBuffers;
 		mutable std::vector<uint64> m_FenceValues;
 
 		HANDLE m_GPUWaitEvent;

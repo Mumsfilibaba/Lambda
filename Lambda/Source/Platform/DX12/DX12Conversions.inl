@@ -51,9 +51,8 @@ namespace Lambda
 		case FORMAT_R8_SINT:				return DXGI_FORMAT_R8_SINT;
 		case FORMAT_B8G8R8A8_UNORM:			return DXGI_FORMAT_B8G8R8A8_UNORM;
 		case FORMAT_B8G8R8A8_UNORM_SRGB:	return DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+		default:							return DXGI_FORMAT_UNKNOWN;
 		}
-
-		return DXGI_FORMAT_UNKNOWN;
 	}
 
 
@@ -109,7 +108,5 @@ namespace Lambda
 		case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:		return FORMAT_B8G8R8A8_UNORM_SRGB;
 		default:									return FORMAT_UNKNOWN;
 		}
-
-		return FORMAT_UNKNOWN;
 	}
 }

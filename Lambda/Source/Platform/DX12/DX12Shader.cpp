@@ -46,7 +46,9 @@ namespace Lambda
 		HRESULT hr = D3DCompile2(desc.pSource, strlen(desc.pSource), nullptr, nullptr, nullptr, desc.pEntryPoint, GetTarget(desc.Type), flags, 0, 0, 0, 0, &m_ShaderBlob, &error);
 		if (FAILED(hr))
 		{
+#if defined(LAMBDA_DEBUG)
 			const char* pMessage = reinterpret_cast<const char*>(error->GetBufferPointer());
+#endif
 			LOG_DEBUG_ERROR("DX12: Failed to compile shader. Error-message:\n%s", pMessage);
 		}
 		else

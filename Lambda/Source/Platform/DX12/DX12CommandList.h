@@ -17,10 +17,10 @@ namespace Lambda
 		DX12CommandList(ID3D12Device5* pDevice, CommandListType type);
 		~DX12CommandList();
 	
-		virtual void ClearRenderTarget(IRenderTarget* pRenderTarget, float color[4]) override final;
+		virtual void ClearRenderTarget(ITexture2D* pRenderTarget, float color[4]) override final;
 		virtual void ClearDepthStencil(ITexture2D* pDepthStencil, float depth, uint8 stencil) override final;
 
-		virtual void SetRenderTarget(IRenderTarget* pRenderTarget, ITexture2D* pDepthStencil) override final;
+		virtual void SetRenderTarget(ITexture2D* pRenderTarget, ITexture2D* pDepthStencil) override final;
 		virtual void SetViewport(const Viewport& viewport) override final;
 		virtual void SetScissorRect(const Math::Rectangle& scissorRect) override final;
 		virtual void SetPrimtiveTopology(PrimitiveTopology topology) override final;
@@ -28,7 +28,7 @@ namespace Lambda
 		virtual void SetVertexBuffer(IBuffer* pBuffer, uint32 slot) override final; 
 
 		virtual void TransitionResource(IBuffer* pResource, ResourceState resourceState) override final;
-		virtual void TransitionResource(IRenderTarget* pRenderTarget, ResourceState resourceState) override final;
+		virtual void TransitionResource(ITexture2D* pResource, ResourceState resourceState) override final;
 
 		virtual void CopyBuffer(IBuffer* pDst, IBuffer* pSrc) override final;
 
@@ -44,7 +44,7 @@ namespace Lambda
 		void Init(ID3D12Device5* pDevice, CommandListType type);
 		ID3D12CommandList* GetList() const;
 
-		void InternalTransitionResource(ID3D12Resource* pResource, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after);
+		void InternalTransitionResource(ID3D12Resource* pResource, uint32 subresource, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after);
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_Allocator;

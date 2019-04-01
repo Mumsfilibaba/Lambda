@@ -15,6 +15,7 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(DX12Texture2D);
 
+		DX12Texture2D(ID3D12Resource* pResource);
 		DX12Texture2D(ID3D12Device5* pDevice, const Texture2DDesc& desc);
 		~DX12Texture2D();
 
@@ -23,9 +24,11 @@ namespace Lambda
 
 	private:
 		void Init(ID3D12Device5* pDevice, const Texture2DDesc& desc);
+		void InitFromResource(ID3D12Resource* pResource);
 
+		void SetResource(ID3D12Resource* pResource);
 		void SetResourceState(D3D12_RESOURCE_STATES state) const;
-		void SetDescriptor(const DX12DescriptorHandle& hDescriptor);
+		void SetDescriptorHandle(const DX12DescriptorHandle& hDescriptor);
 
 		ID3D12Resource* GetResource() const;
 		D3D12_RESOURCE_STATES GetResourceState() const;

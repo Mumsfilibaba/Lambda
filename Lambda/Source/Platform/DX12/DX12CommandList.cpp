@@ -1,7 +1,6 @@
 #include <LambdaPch.h>
 #include "DX12GraphicsDevice.h"
 #include "DX12CommandList.h"
-#include "DX12RenderTarget.h"
 #include "DX12PipelineState.h"
 #include "DX12Buffer.h"
 #include "DX12Texture2D.h"
@@ -18,7 +17,7 @@ namespace Lambda
 		return DBG_NEW DX12CommandList(pDevice, type);
 	}
 
-	inline D3D12_RESOURCE_STATES ParseResourceState(ResourceState state)
+	inline D3D12_RESOURCE_STATES ConvertResourceState(ResourceState state)
 	{
 		switch (state)
 		{
@@ -27,6 +26,7 @@ namespace Lambda
 		case RESOURCE_STATE_PRESENT_COMMON: return D3D12_RESOURCE_STATE_COMMON;
 		case RESOURCE_STATE_COPY_DEST: return D3D12_RESOURCE_STATE_COPY_DEST;
 		case RESOURCE_STATE_COPY_SRC: return D3D12_RESOURCE_STATE_COPY_SOURCE;
+		case RESOURCE_STATE_DEPTH_WRITE: return D3D12_RESOURCE_STATE_DEPTH_WRITE;
 		case RESOURCE_STATE_UNKNOWN:
 		default: return D3D12_RESOURCE_STATE_COMMON;
 		}
@@ -48,10 +48,10 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::ClearRenderTarget(IRenderTarget* pRenderTarget, float color[4])
+	void DX12CommandList::ClearRenderTarget(ITexture2D* pRenderTarget, float color[4])
 	{
-		DX12RenderTarget* pTarget = reinterpret_cast<DX12RenderTarget*>(pRenderTarget);
-		m_List->ClearRenderTargetView(pTarget->GetDescriptorHandle(), color, 0, nullptr);
+		DX12Texture2D* pTarget = reinterpret_cast<DX12Texture2D*>(pRenderTarget);
+		m_List->ClearRenderTargetView(pTarget->GetDescriptorHandle().CPU, color, 0, nullptr);
 	}
 
 
@@ -62,10 +62,10 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::SetRenderTarget(IRenderTarget* pRenderTarget, ITexture2D* pDepthStencil)
+	void DX12CommandList::SetRenderTarget(ITexture2D* pRenderTarget, ITexture2D* pDepthStencil)
 	{
-		DX12RenderTarget* pTarget = reinterpret_cast<DX12RenderTarget*>(pRenderTarget);
-		D3D12_CPU_DESCRIPTOR_HANDLE rtv = pTarget->GetDescriptorHandle();
+		DX12Texture2D* pTarget = reinterpret_cast<DX12Texture2D*>(pRenderTarget);
+		D3D12_CPU_DESCRIPTOR_HANDLE rtv = pTarget->GetDescriptorHandle().CPU;
 
 		DX12Texture2D* pDsv = reinterpret_cast<DX12Texture2D*>(pDepthStencil);
 		if (pDsv != nullptr)
@@ -123,20 +123,20 @@ namespace Lambda
 
 	void DX12CommandList::TransitionResource(IBuffer* pResource, ResourceState resourceState)
 	{
-		D3D12_RESOURCE_STATES after = ParseResourceState(resourceState);
+		D3D12_RESOURCE_STATES after = ConvertResourceState(resourceState);
 		DX12Buffer* pBuffer = reinterpret_cast<DX12Buffer*>(pResource);
-		InternalTransitionResource(pBuffer->GetResource(), pBuffer->GetResourceState(), after);
+		InternalTransitionResource(pBuffer->GetResource(), D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, pBuffer->GetResourceState(), after);
 		pBuffer->SetResourceState(after);
 	}
 
 
-	void DX12CommandList::TransitionResource(IRenderTarget* pRenderTarget, ResourceState resourceState)
+	void DX12CommandList::TransitionResource(ITexture2D* pResource, ResourceState resourceState)
 	{
-		D3D12_RESOURCE_STATES after = ParseResourceState(resourceState);
-		DX12RenderTarget* pTarget = reinterpret_cast<DX12RenderTarget*>(pRenderTarget);
-		InternalTransitionResource(pTarget->GetResource(), pTarget->GetResourceState(), after);
-		
-		pTarget->SetResourceState(after);
+		D3D12_RESOURCE_STATES after = ConvertResourceState(resourceState);
+		DX12Texture2D* pTexture = reinterpret_cast<DX12Texture2D*>(pResource);
+		InternalTransitionResource(pTexture->GetResource(), D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, pTexture->GetResourceState(), after);
+
+		pTexture->SetResourceState(after);
 	}
 
 
@@ -205,13 +205,16 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::InternalTransitionResource(ID3D12Resource* pResource, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after)
+	void DX12CommandList::InternalTransitionResource(ID3D12Resource* pResource, uint32 subresource, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after)
 	{
+		if (before == after)
+			return;
+
 		D3D12_RESOURCE_BARRIER barrier = {};
 		barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 		barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
 		barrier.Transition.pResource = pResource;
-		barrier.Transition.Subresource = 0;
+		barrier.Transition.Subresource = subresource;
 		barrier.Transition.StateBefore = before;
 		barrier.Transition.StateAfter = after;
 

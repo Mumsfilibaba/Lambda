@@ -2,9 +2,9 @@
 #include <Defines.h>
 #include <Types.h>
 #if defined(LAMBDA_PLAT_WINDOWS)
-	#include <vector>
+	#include "DX12DescriptorHandle.h"
 	#include <wrl/client.h>
-	#include <d3d12.h>
+	#include <vector>
 
 namespace Lambda
 {
@@ -16,10 +16,8 @@ namespace Lambda
 		DX12DescriptorAllocator(ID3D12Device5* pDevice, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32 count, bool isShaderVisible);
 		~DX12DescriptorAllocator();
 
-		void Free(uint32 id);
-		uint32 Allocate();
-		D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandle(uint32 id);
-		D3D12_GPU_DESCRIPTOR_HANDLE GetGPUHandle(uint32 id);
+		void Free(const DX12DescriptorHandle& hDescriptor);
+		DX12DescriptorHandle Allocate();
 
 	private:
 		void Init(ID3D12Device5* pDevice, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32 count, bool isShaderVisible);
