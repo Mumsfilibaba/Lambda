@@ -24,9 +24,6 @@
 	#define MATRIXALIGN
 #endif
 
-#include "MathUtilities.h"
-#include "SIMD.h"
-
 namespace Math
 {
 	typedef char int8;
@@ -38,3 +35,6 @@ namespace Math
 	typedef unsigned int uint32;
 	typedef unsigned long long uint64;
 }
+
+#include "MathUtilities.h"
+#include "SIMD.h"

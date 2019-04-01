@@ -45,6 +45,7 @@ namespace Lambda
 
 	DX12CommandList::~DX12CommandList()
 	{
+		SafeDelete(m_pBufferAllocator);
 	}
 
 
@@ -140,6 +141,14 @@ namespace Lambda
 	}
 
 
+	void DX12CommandList::UpdateBuffer(IBuffer* pResource, const ResourceData* pData)
+	{
+		DX12Allocation allocation = m_pBufferAllocator->Allocate(pData->SizeInBytes, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
+		memcpy(allocation.pCPU, pData->pData, pData->SizeInBytes);
+		m_List->CopyBufferRegion(reinterpret_cast<DX12Buffer*>(pResource)->GetResource(), 0, allocation.pPageResource, allocation.Offset, pData->SizeInBytes);
+	}
+
+
 	void DX12CommandList::CopyBuffer(IBuffer* pDst, IBuffer* pSrc)
 	{
 		m_List->CopyResource(reinterpret_cast<DX12Buffer*>(pDst)->GetResource(), reinterpret_cast<DX12Buffer*>(pSrc)->GetResource());
@@ -162,6 +171,7 @@ namespace Lambda
 	{
 		m_Allocator->Reset();
 		m_List->Reset(m_Allocator.Get(), nullptr);
+		m_pBufferAllocator->Reset();
 	}
 
 
@@ -189,19 +199,24 @@ namespace Lambda
 		HRESULT hr = pDevice->CreateCommandList1(1, cType, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&m_List));
 		if (FAILED(hr))
 		{
-			LOG_DEBUG_ERROR("DX12: Failed to create CommandList\n");
+			LOG_DEBUG_ERROR("DX12: Failed to create CommandList.\n");
 			return;
 		}
 
+		//Create commandallocator
 		hr = pDevice->CreateCommandAllocator(cType, IID_PPV_ARGS(&m_Allocator));
 		if (FAILED(hr))
 		{
-			LOG_DEBUG_ERROR("DX12: Failed to create CommandAllocator\n");
+			LOG_DEBUG_ERROR("DX12: Failed to create CommandAllocator.\n");
+			return;
 		}
 		else
 		{
-			LOG_DEBUG_INFO("DX12: Created CommandList\n");
+			LOG_DEBUG_INFO("DX12: Created CommandList.\n");
 		}
+
+		//Create uploadallocators
+		m_pBufferAllocator = new DX12LinearAllocator(pDevice);
 	}
 
 

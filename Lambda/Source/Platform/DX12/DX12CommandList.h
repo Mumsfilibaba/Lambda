@@ -1,9 +1,7 @@
 #pragma once
 #include <Graphics/ICommandList.h>
-
 #if defined(LAMBDA_PLAT_WINDOWS)
-	#include <wrl/client.h>
-	#include <d3d12.h>
+	#include "DX12LinearAllocator.h"
 
 namespace Lambda
 {
@@ -30,6 +28,8 @@ namespace Lambda
 		virtual void TransitionResource(IBuffer* pResource, ResourceState resourceState) override final;
 		virtual void TransitionResource(ITexture2D* pResource, ResourceState resourceState) override final;
 
+		virtual void UpdateBuffer(IBuffer* pResource, const ResourceData* pData) override final;
+
 		virtual void CopyBuffer(IBuffer* pDst, IBuffer* pSrc) override final;
 
 		virtual void DrawInstanced(uint32 vertexCountPerInstance, uint32 instanceCount, uint32 startVertexLocation, uint32 startInstanceLocation) override final;
@@ -49,6 +49,7 @@ namespace Lambda
 	private:
 		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_Allocator;
 		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> m_List;
+		DX12LinearAllocator* m_pBufferAllocator;
 		uint32 m_References;
 	};
 

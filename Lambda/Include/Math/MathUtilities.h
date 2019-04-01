@@ -24,43 +24,49 @@ constexpr float TWO_PI_F = 2.0f * PI_F;
 
 namespace Math
 {
-	forceinline double vectorcall ToDegrees(double radians)
+	forceinline double ToDegrees(double radians)
 	{
 		return (180.0 * radians) / PI;
 	}
 
-	forceinline double vectorcall ToRadians(double degrees)
+	forceinline double ToRadians(double degrees)
 	{
 		return (PI * degrees) / 180.0;
 	}
 
-	forceinline float vectorcall ToDegreesF(float radians)
+	forceinline float ToDegreesF(float radians)
 	{
 		return (180.0f * radians) / PI_F;
 	}
 
-	forceinline float vectorcall ToRadiansF(float degrees)
+	forceinline float ToRadiansF(float degrees)
 	{
 		return (PI_F * degrees) / 180.0f;
 	}
 
-	forceinline float vectorcall MaxF(float f1, float f2)
+	template<typename type>
+	forceinline type Max(type f1, type f2)
 	{
 		return (f1 > f2) ? f1 : f2;
 	}
 
-	forceinline float vectorcall MinF(float f1, float f2)
+	template<typename type>
+	forceinline type Min(type f1, type f2)
 	{
 		return (f1 < f2) ? f1 : f2;
 	}
 
-	forceinline double vectorcall Max(double d1, double d2)
+	template<typename type>
+	forceinline type AlignUp(type value, uint64 alignment)
 	{
-		return (d1 > d2) ? d1 : d2;
+		uint64 mask = alignment - 1;
+		return (type)(((uint32)value + mask) & ~mask);
 	}
 
-	forceinline double vectorcallMin(double d1, double d2)
+	template<typename type>
+	forceinline type AlignDown(type value, uint64 alignment)
 	{
-		return (d1 < d2) ? d1 : d2;
+		uint64 mask = alignment - 1;
+		return (type)((uint32)value & ~mask);
 	}
 }

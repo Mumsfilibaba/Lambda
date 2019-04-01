@@ -82,23 +82,13 @@ namespace Lambda
 		//Create a normal resource
 		else if(desc.Usage == RESOURCE_USAGE_DEFAULT)
 		{
-			//Create an uploadbuffer
-			BufferDesc uDesc = desc;
-			uDesc.Usage = RESOURCE_USAGE_DYNAMIC;
-			DX12Buffer* pUploadBuffer = new DX12Buffer(m_Device.Get(), uDesc);
-
 			//Create actual buffer
 			DX12Buffer* pBuffer = new DX12Buffer(m_Device.Get(), desc);
 
-			//Upload data
-			void* pData = nullptr;
-			pUploadBuffer->Map(&pData);
-			memcpy(pData, pInitalData->pData, pInitalData->SizeInBytes);
-			pUploadBuffer->Unmap();
-
 			//Copy data
 			m_pCommandList->TransitionResource(pBuffer, RESOURCE_STATE_COPY_DEST);
-			m_pCommandList->CopyBuffer(pBuffer, pUploadBuffer);
+			m_pCommandList->UpdateBuffer(pBuffer, pInitalData);
+			m_pCommandList->TransitionResource(pBuffer, RESOURCE_STATE_PRESENT_COMMON);
 
 			//Execute and wait for GPU before creating
 			m_pCommandList->Close();
@@ -110,7 +100,6 @@ namespace Lambda
 			m_pCommandList->Reset();
 
 			(*ppBuffer) = pBuffer;
-			SafeRelease(pUploadBuffer);
 		}
 	}
 

@@ -46,3 +46,5 @@
 	#pragma warning(error : 4005) //Redefinition is an error
 	#pragma warning(disable : 4201) //Anonomys unions and structs are allowed
 #endif
+
+#define MB(num) num * 1024 * 1024
