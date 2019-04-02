@@ -1,6 +1,6 @@
 #pragma once
 #include "IWindow.h"
-#include "Time.hpp"
+#include "Clock.h"
 #include <Graphics/IGraphicsDevice.h>
 
 namespace Lambda
@@ -33,6 +33,7 @@ namespace Lambda
 		IWindow* m_pWindow;
 		IGraphicsDevice* m_pGraphicsContext;
 		int32 m_ExitCode;
+		Clock m_JoystickPollTimer;
 		bool m_Running;
 
 	public:

@@ -56,6 +56,12 @@ namespace Lambda
 		virtual void SetGraphicsPipelineState(IGraphicsPipelineState* pPSO) = 0;
 		virtual void SetVertexBuffer(IBuffer* pBuffer, uint32 slot) = 0;
 
+		virtual void VSSetConstantBuffers(const IBuffer* const * ppBuffers, uint32 numBuffers, uint32 startSlot) = 0;
+		virtual void HSSetConstantBuffers(const IBuffer* const * ppBuffers, uint32 numBuffers, uint32 startSlot) = 0;
+		virtual void DSSetConstantBuffers(const IBuffer* const * ppBuffers, uint32 numBuffers, uint32 startSlot) = 0;
+		virtual void GSSetConstantBuffers(const IBuffer* const * ppBuffers, uint32 numBuffers, uint32 startSlot) = 0;
+		virtual void PSSetConstantBuffers(const IBuffer* const * ppBuffers, uint32 numBuffers, uint32 startSlot) = 0;
+
 		virtual void UpdateBuffer(IBuffer* pResource, const ResourceData* pData) = 0;
 
 		virtual void CopyBuffer(IBuffer* pDst, IBuffer* pSrc) = 0;

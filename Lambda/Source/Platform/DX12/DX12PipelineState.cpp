@@ -34,17 +34,107 @@ namespace Lambda
 	{
 		using namespace Microsoft::WRL;
 
-		//Create rootsignature
+		//Create default rootsignature
 		{
-			CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-			rootSignatureDesc.Init(0, nullptr, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+			//Default is descriptors per stage 
+			constexpr uint32 descriptorCount = 8;
+
+			//Samplers
+			D3D12_DESCRIPTOR_RANGE samplerRange = {};
+			samplerRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
+			samplerRange.BaseShaderRegister = 0;
+			samplerRange.RegisterSpace = 0;
+			samplerRange.NumDescriptors = descriptorCount;
+			samplerRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+			constexpr uint32 descriptorRangeCount = 3;
+			D3D12_DESCRIPTOR_RANGE descriptorRanges[descriptorRangeCount];
+			descriptorRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+			descriptorRanges[0].BaseShaderRegister = 0;
+			descriptorRanges[0].RegisterSpace = 0;
+			descriptorRanges[0].NumDescriptors = descriptorCount;
+			descriptorRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+			descriptorRanges[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+			descriptorRanges[1].BaseShaderRegister = 0;
+			descriptorRanges[1].RegisterSpace = 0;
+			descriptorRanges[1].NumDescriptors = descriptorCount;
+			descriptorRanges[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+			descriptorRanges[2].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+			descriptorRanges[2].BaseShaderRegister = 0;
+			descriptorRanges[2].RegisterSpace = 0;
+			descriptorRanges[2].NumDescriptors = descriptorCount;
+			descriptorRanges[2].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+
+			constexpr uint32 paramCount = 2 * 5; // 2: resources and sampler, 5: all shaderstages except compute
+			D3D12_ROOT_PARAMETER params[paramCount];
+			params[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+			params[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+			params[0].DescriptorTable.NumDescriptorRanges = descriptorRangeCount;
+			params[0].DescriptorTable.pDescriptorRanges = descriptorRanges;
+
+			params[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+			params[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+			params[1].DescriptorTable.NumDescriptorRanges = 1;
+			params[1].DescriptorTable.pDescriptorRanges = &samplerRange;
+
+			params[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+			params[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_HULL;
+			params[2].DescriptorTable.NumDescriptorRanges = descriptorRangeCount;
+			params[2].DescriptorTable.pDescriptorRanges = descriptorRanges;
+
+			params[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+			params[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_HULL;
+			params[3].DescriptorTable.NumDescriptorRanges = 1;
+			params[3].DescriptorTable.pDescriptorRanges = &samplerRange;
+
+			params[4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+			params[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_DOMAIN;
+			params[4].DescriptorTable.NumDescriptorRanges = descriptorRangeCount;
+			params[4].DescriptorTable.pDescriptorRanges = descriptorRanges;
+
+			params[5].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+			params[5].ShaderVisibility = D3D12_SHADER_VISIBILITY_DOMAIN;
+			params[5].DescriptorTable.NumDescriptorRanges = 1;
+			params[5].DescriptorTable.pDescriptorRanges = &samplerRange;
+
+			params[6].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+			params[6].ShaderVisibility = D3D12_SHADER_VISIBILITY_GEOMETRY;
+			params[6].DescriptorTable.NumDescriptorRanges = descriptorRangeCount;
+			params[6].DescriptorTable.pDescriptorRanges = descriptorRanges;
+
+			params[7].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+			params[7].ShaderVisibility = D3D12_SHADER_VISIBILITY_GEOMETRY;
+			params[7].DescriptorTable.NumDescriptorRanges = 1;
+			params[7].DescriptorTable.pDescriptorRanges = &samplerRange;
+
+			params[8].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+			params[8].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+			params[8].DescriptorTable.NumDescriptorRanges = descriptorRangeCount;
+			params[8].DescriptorTable.pDescriptorRanges = descriptorRanges;
+
+			params[9].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+			params[9].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+			params[9].DescriptorTable.NumDescriptorRanges = 1;
+			params[9].DescriptorTable.pDescriptorRanges = &samplerRange;
+
+			D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc = {};
+			rootSignatureDesc.NumStaticSamplers = 0;
+			rootSignatureDesc.NumParameters = paramCount;
+			rootSignatureDesc.pParameters = params;
+			rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
 			ComPtr<ID3DBlob> signature;
 			ComPtr<ID3DBlob> error;
 			HRESULT hr = D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error);
 			if (FAILED(hr))
 			{
-				LOG_DEBUG_ERROR("DX12: Failed to serialize RootSignature\n");
+#if defined(LAMBDA_DEBUG)
+				const char* pMessage = reinterpret_cast<const char*>(error->GetBufferPointer());
+#endif
+				LOG_DEBUG_ERROR("DX12: Failed to serialize RootSignature. Error-message:\n%s\n", pMessage);
 				return;
 			}
 

@@ -57,8 +57,8 @@ namespace Lambda
 		{
 			WindowDesc desc = {};
 			desc.pTitle = "Lambda Engine";
-			desc.Width = 1600;
-			desc.Height = 900;
+			desc.Width = 1920;
+			desc.Height = 1080;
 
 			m_pWindow = IWindow::Create(desc);
 			m_pWindow->SetEventCallback(EventDispatcher::SendEvent);
@@ -97,7 +97,14 @@ namespace Lambda
 	void Application::InternalOnUpdate(Time dt)
 	{
 		m_pWindow->OnUpdate();
-		JoystickManager::OnUpdate();
+
+		m_JoystickPollTimer.Tick();
+		if (m_JoystickPollTimer.GetTotalTime().AsSeconds() >= (1.0f / 60.0f))
+		{
+			JoystickManager::OnUpdate();
+			m_JoystickPollTimer.Reset();
+		}
+
 		OnUpdate(dt);
 	}
 

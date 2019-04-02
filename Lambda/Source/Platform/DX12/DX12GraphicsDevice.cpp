@@ -29,7 +29,11 @@ namespace Lambda
 
 
 	DX12GraphicsDevice::DX12GraphicsDevice(IWindow* pWindow, GraphicsContextFlags flags)
-		: m_GPUWaitEvent(0),
+		: m_pRTAllocator(nullptr),
+		m_pDSAllocator(nullptr),
+		m_pResourceAllocator(nullptr),
+		m_pSamplerAllocator(nullptr),
+		m_GPUWaitEvent(0),
 		m_NumBackbuffers(0),
 		m_CurrentBackBuffer(0),
 		m_References(0)
@@ -67,23 +71,26 @@ namespace Lambda
 
 		CloseHandle(m_GPUWaitEvent);
 
-		SafeDelete(m_pRTVHeap);
-		SafeDelete(m_pDSVHeap);
+		SafeDelete(m_pRTAllocator);
+		SafeDelete(m_pDSAllocator);
+		SafeDelete(m_pResourceAllocator);
+		SafeDelete(m_pSamplerAllocator);
 	}
 
 
 	void DX12GraphicsDevice::CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) const
 	{
+		DX12Buffer* pBuffer = nullptr;
 		//Create a dynamic resource, or default if there is no inital data
 		if (desc.Usage == RESOURCE_USAGE_DYNAMIC || pInitalData == nullptr)
 		{
-			(*ppBuffer = new DX12Buffer(m_Device.Get(), desc));
+			pBuffer = DBG_NEW DX12Buffer(m_Device.Get(), desc);
 		}
 		//Create a normal resource
 		else if(desc.Usage == RESOURCE_USAGE_DEFAULT)
 		{
 			//Create actual buffer
-			DX12Buffer* pBuffer = new DX12Buffer(m_Device.Get(), desc);
+			pBuffer = DBG_NEW DX12Buffer(m_Device.Get(), desc);
 
 			//Copy data
 			m_pCommandList->TransitionResource(pBuffer, RESOURCE_STATE_COPY_DEST);
@@ -98,20 +105,34 @@ namespace Lambda
 
 			WaitForGPU();
 			m_pCommandList->Reset();
-
-			(*ppBuffer) = pBuffer;
 		}
+
+		//Create constantbuffer
+		if (desc.Flags & BUFFER_FLAGS_CONSTANT_BUFFER)
+		{
+			//Allocate and set descriptor
+			DX12DescriptorHandle hDescriptor = m_pResourceAllocator->Allocate();
+			pBuffer->SetDescriporHandle(hDescriptor);
+
+			//Create view
+			D3D12_CONSTANT_BUFFER_VIEW_DESC vDesc = {};
+			vDesc.BufferLocation = pBuffer->GetGPUVirtualAdress();
+			vDesc.SizeInBytes = desc.SizeInBytes;
+			m_Device->CreateConstantBufferView(&vDesc, hDescriptor.CPU);
+		}
+
+		(*ppBuffer) = pBuffer;
 	}
 
 
 	void DX12GraphicsDevice::CreateTexture2D(ITexture2D** ppTexture, const ResourceData* pInitalData, const Texture2DDesc& desc) const
 	{
-		DX12Texture2D* pTexture = new DX12Texture2D(m_Device.Get(), desc);
+		DX12Texture2D* pTexture = DBG_NEW DX12Texture2D(m_Device.Get(), desc);
 		//DepthStencil
 		if (desc.Flags & TEXTURE_FLAGS_DEPTH_STENCIL)
 		{
 			//Allocate depth stencil descriptor
-			DX12DescriptorHandle hDescriptor = m_pDSVHeap->Allocate();
+			DX12DescriptorHandle hDescriptor = m_pDSAllocator->Allocate();
 			pTexture->SetDescriptorHandle(hDescriptor);
 
 			//Create view
@@ -129,7 +150,7 @@ namespace Lambda
 
 	void DX12GraphicsDevice::CreateShader(IShader** ppShader, const ShaderDesc& desc) const
 	{
-		(*ppShader) = new DX12Shader(desc);
+		(*ppShader) = DBG_NEW DX12Shader(desc);
 	}
 
 
@@ -160,11 +181,11 @@ namespace Lambda
 
 	void DX12GraphicsDevice::CreateGraphicsPipelineState(IGraphicsPipelineState** ppPSO, const GraphicsPipelineStateDesc& desc) const
 	{
-		(*ppPSO) = new DX12GraphicsPipelineState(m_Device.Get(), desc);
+		(*ppPSO) = DBG_NEW DX12GraphicsPipelineState(m_Device.Get(), desc);
 	}
 
 
-	void DX12GraphicsDevice::ExecuteCommandList(ICommandList * const * ppLists, uint32 numLists) const
+	void DX12GraphicsDevice::ExecuteCommandList(ICommandList* const * ppLists, uint32 numLists) const
 	{
 		DX12CommandList* pList = reinterpret_cast<DX12CommandList*>(ppLists[0]);
 		//TODO: execute multiple commandlists
@@ -265,7 +286,7 @@ namespace Lambda
 
 		for (DX12Texture2D* pTarget : m_BackBuffers)
 		{
-			m_pRTVHeap->Free(pTarget->GetDescriptorHandle());
+			m_pRTAllocator->Free(pTarget->GetDescriptorHandle());
 			pTarget->SetResource(nullptr);
 		}
 	}
@@ -281,23 +302,41 @@ namespace Lambda
 		{
 			factoryFlags = DXGI_CREATE_FACTORY_DEBUG;
 
-			if (FAILED(D3D12GetDebugInterface(IID_PPV_ARGS(&m_Debug))))
+			ComPtr<ID3D12Debug> debugController = nullptr;
+			if (FAILED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController))))
 			{
 				LOG_DEBUG_ERROR("DX12: Failed to get debug interface\n");
 				return false;
 			}
 			else
 			{
-				m_Debug->EnableDebugLayer();
+				if (SUCCEEDED(debugController.As<ID3D12Debug3>(&m_Debug)))
+				{
+					m_Debug->EnableDebugLayer();
+				}
+				else
+				{
+					LOG_DEBUG_ERROR("DX12: Failed to retrive ID3D12Debug3\n");
+					return false;
+				}
 			}
 		}
 
 		//Create factory
-		HRESULT hr = CreateDXGIFactory2(flags, IID_PPV_ARGS(&m_Factory));
+		ComPtr<IDXGIFactory2> factory = nullptr;
+		HRESULT hr = CreateDXGIFactory2(flags, IID_PPV_ARGS(&factory));
 		if (FAILED(hr))
 		{
 			LOG_DEBUG_ERROR("DX12: Failed to create factory\n");
 			return false;
+		}
+		else
+		{
+			if (FAILED(factory.As<IDXGIFactory7>(&m_Factory)))
+			{
+				LOG_DEBUG_ERROR("DX12: Failed to retrive IDXGIFactory7\n");
+				return false;
+			}
 		}
 
 		return true;
@@ -361,7 +400,7 @@ namespace Lambda
 				//Get newer interface
 				if (FAILED(adapter.As<IDXGIAdapter4>(&m_Adapter)))
 				{
-					LOG_DEBUG_WARNING("DX12: Failed to query IDXGIAdapter4\n");
+					LOG_DEBUG_ERROR("DX12: Failed to query IDXGIAdapter4\n");
 					return false;
 				}
 				else
@@ -382,15 +421,26 @@ namespace Lambda
 
 	bool DX12GraphicsDevice::CreateDeviceAndCommandQueue(GraphicsContextFlags flags)
 	{
+		using namespace Microsoft::WRL;
+
 		//Create device
-		HRESULT hr = D3D12CreateDevice(m_Adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&m_Device));
+		ComPtr<ID3D12Device> device = nullptr;
+		HRESULT hr = D3D12CreateDevice(m_Adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&device));
 		if (SUCCEEDED(hr))
 		{
 			LOG_DEBUG_INFO("DX12: Created device.\n");
 
+			hr = device.As<ID3D12Device5>(&m_Device);
+			if (FAILED(hr))
+			{
+				LOG_DEBUG_ERROR("DX12: Failed to retrive ID3D12Device5\n");
+				return false;
+			}
+
+			//Create debug interface
 			if (flags & GRAPHICS_CONTEXT_FLAG_DEBUG)
 			{
-				hr = m_Device->QueryInterface<ID3D12DebugDevice2>(&m_DebugDevice);
+				hr = m_Device->QueryInterface<ID3D12DebugDevice1>(&m_DebugDevice);
 				if (FAILED(hr))
 				{
 					LOG_DEBUG_ERROR("DX12: Could not create DebugDevice.\n");
@@ -404,13 +454,13 @@ namespace Lambda
 			return false;
 		}
 
+		//Create commandqueue
 		D3D12_COMMAND_QUEUE_DESC qDesc = {};
 		qDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
 		qDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
 		qDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
 		qDesc.NodeMask = 0;
 
-		//Create commandqueue
 		hr = m_Device->CreateCommandQueue(&qDesc, IID_PPV_ARGS(&m_Queue));
 		if (FAILED(hr))
 		{
@@ -447,7 +497,7 @@ namespace Lambda
 
 	bool DX12GraphicsDevice::CreateCommandList()
 	{
-		m_pCommandList = new DX12CommandList(m_Device.Get(), COMMAND_LIST_TYPE_GRAPHICS);
+		m_pCommandList = DBG_NEW DX12CommandList(m_Device.Get(), COMMAND_LIST_TYPE_GRAPHICS);
 		m_pCommandList->Reset();
 		return true;
 	}
@@ -487,6 +537,13 @@ namespace Lambda
 				return false;
 			}
 
+			//No fullscreen with ALT+ENTER
+			if (FAILED(m_Factory->MakeWindowAssociation(hWnd, DXGI_MWA_NO_ALT_ENTER)))
+			{
+				LOG_DEBUG_ERROR("DX12: Failed to retrive disable ALT+ENTER fullscreen.\n");
+				return false;
+			}
+
 			m_CurrentBackBuffer = m_SwapChain->GetCurrentBackBufferIndex();
 
 			//Init fencevalues
@@ -497,7 +554,7 @@ namespace Lambda
 			//Create the rendertarget-objects
 			m_BackBuffers.resize(m_NumBackbuffers);
 			for (uint32 i = 0; i < m_NumBackbuffers; i++)
-				m_BackBuffers[i] = new DX12Texture2D(nullptr);
+				m_BackBuffers[i] = DBG_NEW DX12Texture2D(nullptr);
 
 			LOG_DEBUG_INFO("DX12: Created swapchain\n");
 		}
@@ -508,8 +565,42 @@ namespace Lambda
 
 	bool DX12GraphicsDevice::CreateDescriptorHeaps()
 	{
-		m_pRTVHeap = new DX12DescriptorAllocator(m_Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 32, false);
-		m_pDSVHeap = new DX12DescriptorAllocator(m_Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 16, false);
+		//Create descriptor-allocator
+		m_pRTAllocator =			DBG_NEW DX12DescriptorAllocator(m_Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 32, false);
+		m_pDSAllocator =			DBG_NEW DX12DescriptorAllocator(m_Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 16, false);
+		m_pResourceAllocator =		DBG_NEW DX12DescriptorAllocator(m_Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 128, false);
+		m_pSamplerAllocator =		DBG_NEW DX12DescriptorAllocator(m_Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, 128, false);
+
+		// Create null descriptors
+		{
+			//Null sampler
+			D3D12_SAMPLER_DESC desc = {};
+			desc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+			desc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+			desc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+			desc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+			desc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+			m_NullSampler = m_pSamplerAllocator->Allocate();
+			m_Device->CreateSampler(&desc, m_NullSampler.CPU);
+		}
+
+		{
+			//Null constantbuffer
+			D3D12_CONSTANT_BUFFER_VIEW_DESC desc = {};
+			m_NullCBV = m_pResourceAllocator->Allocate();
+			m_Device->CreateConstantBufferView(&desc, m_NullCBV.CPU);
+		}
+
+		{
+			//Null shaderresource
+			D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
+			desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+			desc.Format = DXGI_FORMAT_R32_UINT;
+			desc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+			m_NullSRV = m_pResourceAllocator->Allocate();
+			m_Device->CreateShaderResourceView(nullptr, &desc, m_NullSRV.CPU);
+		}
+
 		return true;
 	}
 
@@ -537,7 +628,7 @@ namespace Lambda
 				return false;
 			}
 
-			DX12DescriptorHandle descriptor = m_pRTVHeap->Allocate();
+			DX12DescriptorHandle descriptor = m_pRTAllocator->Allocate();
 			m_Device->CreateRenderTargetView(backBuffer.Get(), &desc, descriptor.CPU);
 
 			m_BackBuffers[i]->SetResource(backBuffer.Get());
@@ -560,6 +651,9 @@ namespace Lambda
 
 			//Resize the swapchain on resize
 			ReleaseBackBuffers();
+
+			//TODO: Actual resize
+
 			InitBackBuffers();
 
 			return true;

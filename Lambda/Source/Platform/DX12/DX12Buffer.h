@@ -9,6 +9,7 @@ namespace Lambda
 	class DX12Buffer final : public IBuffer
 	{
 		friend class DX12CommandList;
+		friend class DX12GraphicsDevice;
 
 	public:
 		LAMBDA_NO_COPY(DX12Buffer);
@@ -28,12 +29,12 @@ namespace Lambda
 		void SetResourceState(D3D12_RESOURCE_STATES state) const;
 		void SetDescriporHandle(const DX12DescriptorHandle& hDescriptor);
 
-		DX12DescriptorHandle GetGPUDescriptor() const;
+		DX12DescriptorHandle GetDescriptorHandle() const;
 		ID3D12Resource* GetResource() const;
 		D3D12_RESOURCE_STATES GetResourceState() const;
 		D3D12_VERTEX_BUFFER_VIEW GetVertexBufferView() const;
 		D3D12_INDEX_BUFFER_VIEW GetIndexBufferView() const;
-		D3D12_GPU_VIRTUAL_ADDRESS GetVirtualAdress() const;
+		D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAdress() const;
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_Buffer;
@@ -67,12 +68,12 @@ namespace Lambda
 		return m_IBV;
 	}
 
-	inline DX12DescriptorHandle DX12Buffer::GetGPUDescriptor() const
+	inline DX12DescriptorHandle DX12Buffer::GetDescriptorHandle() const
 	{
 		return m_hDescriptor;
 	}
 
-	inline D3D12_GPU_VIRTUAL_ADDRESS DX12Buffer::GetVirtualAdress() const
+	inline D3D12_GPU_VIRTUAL_ADDRESS DX12Buffer::GetGPUVirtualAdress() const
 	{
 		return m_Adress;
 	}

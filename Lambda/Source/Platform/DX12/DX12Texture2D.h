@@ -33,7 +33,7 @@ namespace Lambda
 		ID3D12Resource* GetResource() const;
 		D3D12_RESOURCE_STATES GetResourceState() const;
 		DX12DescriptorHandle GetDescriptorHandle() const;
-		D3D12_GPU_VIRTUAL_ADDRESS GetVirtualAdress() const;
+		D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAdress() const;
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_Texture;
@@ -60,7 +60,7 @@ namespace Lambda
 		return m_hDescriptor;
 	}
 
-	inline D3D12_GPU_VIRTUAL_ADDRESS DX12Texture2D::GetVirtualAdress() const
+	inline D3D12_GPU_VIRTUAL_ADDRESS DX12Texture2D::GetGPUVirtualAdress() const
 	{
 		return m_Adress;
 	}

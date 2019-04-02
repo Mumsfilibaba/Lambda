@@ -16,13 +16,19 @@ namespace Lambda
 			m_pLists[i] = nullptr;
 	}
 	
+
 	SandBox::~SandBox()
 	{
 	}
 
+
 	void SandBox::OnLoad()
 	{
 		using namespace Math;
+
+		//Add Sandbox-level eventlayer
+		EventLayer sandboxLayer = { SandBox::OnEvent, "SandBox" };
+		EventDispatcher::PushEventLayer(sandboxLayer);
 
 		//Create commandlist
 		{
@@ -88,6 +94,23 @@ namespace Lambda
 			pDevice->CreateBuffer(&m_pVertexBuffer, &data, desc);
 		}
 
+		//Create colorbuffer
+		{
+			Vec4f color = Vec4f(0.0f, 1.0f, 0.0f, 1.0f);
+
+			BufferDesc desc = {};
+			desc.Usage = RESOURCE_USAGE_DEFAULT;
+			desc.Flags = BUFFER_FLAGS_CONSTANT_BUFFER;
+			desc.SizeInBytes = (uint32)Math::AlignUp(sizeof(Vec4f), 256);
+			desc.StrideInBytes = sizeof(Vec4f);
+
+			ResourceData data = {};
+			data.pData = &color;
+			data.SizeInBytes = desc.SizeInBytes;
+
+			pDevice->CreateBuffer(&m_pColorBuffer, &data, desc);
+		}
+
 		//Create depthbuffer
 		{
 			Texture2DDesc desc = {};
@@ -106,9 +129,11 @@ namespace Lambda
 		}
 	}
 
+
 	void SandBox::OnUpdate(Time dt)
 	{
 	}
+
 
 	void SandBox::OnRender(Time dt)
 	{
@@ -148,6 +173,9 @@ namespace Lambda
 		m_pCurrentList->SetPrimtiveTopology(PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		m_pCurrentList->SetGraphicsPipelineState(m_pPipelineState);
 
+		//Set constantbuffers
+		m_pCurrentList->PSSetConstantBuffers(&m_pColorBuffer, 1, 0);
+
 		//Set vertexbuffer
 		m_pCurrentList->SetVertexBuffer(m_pVertexBuffer, 0);
 		m_pCurrentList->DrawInstanced(3, 1, 0, 0);
@@ -161,6 +189,7 @@ namespace Lambda
 		pDevice->GPUWaitForFrame();
 	}
 
+
 	void SandBox::OnRelease()
 	{
 		IGraphicsDevice* pDevice = IGraphicsDevice::GetInstance();
@@ -173,6 +202,17 @@ namespace Lambda
 		SafeRelease(m_pPS);
 		SafeRelease(m_pPipelineState);
 		SafeRelease(m_pVertexBuffer);
+		SafeRelease(m_pColorBuffer);
 		SafeRelease(m_pDepthBuffer);
+	}
+
+
+	bool SandBox::OnEvent(const Event& event)
+	{
+		if (event.Type == EVENT_TYPE_WINDOW_RESIZE)
+		{
+		}
+
+		return false;
 	}
 }

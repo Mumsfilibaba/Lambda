@@ -22,6 +22,7 @@ namespace Lambda
 	void EventDispatcher::PushEventLayer(const EventLayer& layer)
 	{
 		s_LayerStack.push_back(layer);
+		LOG_DEBUG_INFO("Lambda Engine: Added eventlayer %d '%s'.\n", s_LayerStack.size(), layer.pName);
 	}
 
 	void EventDispatcher::PopEventLayer()

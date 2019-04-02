@@ -25,7 +25,11 @@ namespace Lambda
 		IShader* m_pVS;
 		IShader* m_pPS;
 		IBuffer* m_pVertexBuffer;
+		IBuffer* m_pColorBuffer;
 		ITexture2D* m_pDepthBuffer;
 		IGraphicsPipelineState* m_pPipelineState;
+
+	public:
+		static bool OnEvent(const Event& event);
 	};
 }

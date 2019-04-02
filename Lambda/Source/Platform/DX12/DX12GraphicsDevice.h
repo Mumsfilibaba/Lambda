@@ -58,13 +58,18 @@ namespace Lambda
 		Microsoft::WRL::ComPtr<IDXGISwapChain4> m_SwapChain;
 		Microsoft::WRL::ComPtr<ID3D12Device5> m_Device;
 		Microsoft::WRL::ComPtr<ID3D12Debug3> m_Debug;
-		Microsoft::WRL::ComPtr<ID3D12DebugDevice2> m_DebugDevice;
+		Microsoft::WRL::ComPtr<ID3D12DebugDevice1> m_DebugDevice;
 		Microsoft::WRL::ComPtr<ID3D12Fence> m_Fence;
 		Microsoft::WRL::ComPtr<ID3D12CommandQueue> m_Queue;
 		
-		DX12DescriptorAllocator* m_pRTVHeap;
-		DX12DescriptorAllocator* m_pDSVHeap;
 		DX12CommandList* m_pCommandList;
+		DX12DescriptorAllocator* m_pRTAllocator;
+		DX12DescriptorAllocator* m_pDSAllocator;
+		DX12DescriptorAllocator* m_pResourceAllocator;
+		DX12DescriptorAllocator* m_pSamplerAllocator;
+		DX12DescriptorHandle m_NullSampler;
+		DX12DescriptorHandle m_NullSRV;
+		DX12DescriptorHandle m_NullCBV;
 		std::vector<DX12Texture2D*> m_BackBuffers;
 		mutable std::vector<uint64> m_FenceValues;
 

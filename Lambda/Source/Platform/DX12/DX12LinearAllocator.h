@@ -18,14 +18,14 @@ namespace Lambda
 	};
 
 
-	//Page for the linear allocator
-	class DX12LinearAllocatorPage final
+	//Block for the linear allocator
+	class DX12LinearAllocatorBlock final
 	{
 	public:
-		LAMBDA_NO_COPY(DX12LinearAllocatorPage);
+		LAMBDA_NO_COPY(DX12LinearAllocatorBlock);
 
-		DX12LinearAllocatorPage(ID3D12Device5* pDevice, uint64 size);
-		~DX12LinearAllocatorPage();
+		DX12LinearAllocatorBlock(ID3D12Device5* pDevice, uint64 size);
+		~DX12LinearAllocatorBlock();
 
 		DX12Allocation Allocate(uint64 size, uint64 alignment);
 		bool HasSpace(uint64 size, uint64 alignment) const;
@@ -57,12 +57,12 @@ namespace Lambda
 
 	private:
 		void Init(ID3D12Device5* pDevice);
-		DX12LinearAllocatorPage* AllocatePage();
+		DX12LinearAllocatorBlock* AllocatePage();
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D12Device5> m_Device;
-		std::vector<std::unique_ptr<DX12LinearAllocatorPage>> m_Pages;
-		DX12LinearAllocatorPage* m_CurrentPage;
+		std::vector<std::unique_ptr<DX12LinearAllocatorBlock>> m_Pages;
+		DX12LinearAllocatorBlock* m_CurrentPage;
 		uint32 m_CurrentPageIndex;
 		uint64 m_PageSize;
 	};

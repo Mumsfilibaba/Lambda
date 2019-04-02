@@ -21,7 +21,6 @@ namespace Lambda
 	{
 		switch (state)
 		{
-			break;
 		case RESOURCE_STATE_RENDERTARGET: return D3D12_RESOURCE_STATE_RENDER_TARGET;
 		case RESOURCE_STATE_PRESENT_COMMON: return D3D12_RESOURCE_STATE_COMMON;
 		case RESOURCE_STATE_COPY_DEST: return D3D12_RESOURCE_STATE_COPY_DEST;
@@ -46,6 +45,7 @@ namespace Lambda
 	DX12CommandList::~DX12CommandList()
 	{
 		SafeDelete(m_pBufferAllocator);
+		SafeDelete(m_pResourceAllocator);
 	}
 
 
@@ -109,9 +109,9 @@ namespace Lambda
 
 	void DX12CommandList::SetGraphicsPipelineState(IGraphicsPipelineState* pPSO)
 	{
-		DX12GraphicsPipelineState* pDXState = reinterpret_cast<DX12GraphicsPipelineState*>(pPSO);
-		m_List->SetPipelineState(pDXState->GetPipelineState());
-		m_List->SetGraphicsRootSignature(pDXState->GetRootSignature());
+		DX12GraphicsPipelineState* pState = reinterpret_cast<DX12GraphicsPipelineState*>(pPSO);
+		m_List->SetPipelineState(pState->GetPipelineState());
+		m_List->SetGraphicsRootSignature(pState->GetRootSignature());
 	}
 
 
@@ -141,6 +141,96 @@ namespace Lambda
 	}
 
 
+	void DX12CommandList::VSSetConstantBuffers(const IBuffer * const * ppBuffers, uint32 numBuffers, uint32 startSlot)
+	{
+		//Cache size for resources
+		uint32 size = m_pResourceAllocator->GetDescriptorSize();
+		for (uint32 i = 0; i < numBuffers; i++)
+		{
+			//Get dest descriptor for vertex shaders
+			D3D12_CPU_DESCRIPTOR_HANDLE hDest = m_hVSDescriptorStart.CPU;
+			hDest.ptr += size * (startSlot + i);
+			m_DstDescriptorRanges.push_back(hDest);
+
+			//Set src descriptor and count in range
+			m_SrcDescriptorRanges.push_back(reinterpret_cast<const DX12Buffer*>(ppBuffers[i])->GetDescriptorHandle().CPU);
+			m_DescriptorRangeCounts.push_back(1);
+		}
+	}
+
+
+	void DX12CommandList::HSSetConstantBuffers(const IBuffer * const * ppBuffers, uint32 numBuffers, uint32 startSlot)
+	{
+		//Cache size for resources
+		uint32 size = m_pResourceAllocator->GetDescriptorSize();
+		for (uint32 i = 0; i < numBuffers; i++)
+		{
+			//Get dest descriptor for hull shaders
+			D3D12_CPU_DESCRIPTOR_HANDLE hDest = m_hHSDescriptorStart.CPU;
+			hDest.ptr += size * (startSlot + i);
+			m_DstDescriptorRanges.push_back(hDest);
+
+			//Set src descriptor and count in range
+			m_SrcDescriptorRanges.push_back(reinterpret_cast<const DX12Buffer*>(ppBuffers[i])->GetDescriptorHandle().CPU);
+			m_DescriptorRangeCounts.push_back(1);
+		}
+	}
+
+
+	void DX12CommandList::DSSetConstantBuffers(const IBuffer * const * ppBuffers, uint32 numBuffers, uint32 startSlot)
+	{
+		//Cache size for resources
+		uint32 size = m_pResourceAllocator->GetDescriptorSize();
+		for (uint32 i = 0; i < numBuffers; i++)
+		{
+			//Get dest descriptor for domain shaders
+			D3D12_CPU_DESCRIPTOR_HANDLE hDest = m_hDSDescriptorStart.CPU;
+			hDest.ptr += size * (startSlot + i);
+			m_DstDescriptorRanges.push_back(hDest);
+
+			//Set src descriptor and count in range
+			m_SrcDescriptorRanges.push_back(reinterpret_cast<const DX12Buffer*>(ppBuffers[i])->GetDescriptorHandle().CPU);
+			m_DescriptorRangeCounts.push_back(1);
+		}
+	}
+
+
+	void DX12CommandList::GSSetConstantBuffers(const IBuffer * const * ppBuffers, uint32 numBuffers, uint32 startSlot)
+	{
+		//Cache size for resources
+		uint32 size = m_pResourceAllocator->GetDescriptorSize();
+		for (uint32 i = 0; i < numBuffers; i++)
+		{
+			//Get dest descriptor for geometry shaders
+			D3D12_CPU_DESCRIPTOR_HANDLE hDest = m_hGSDescriptorStart.CPU;
+			hDest.ptr += size * (startSlot + i);
+			m_DstDescriptorRanges.push_back(hDest);
+
+			//Set src descriptor and count in range
+			m_SrcDescriptorRanges.push_back(reinterpret_cast<const DX12Buffer*>(ppBuffers[i])->GetDescriptorHandle().CPU);
+			m_DescriptorRangeCounts.push_back(1);
+		}
+	}
+
+
+	void DX12CommandList::PSSetConstantBuffers(const IBuffer * const * ppBuffers, uint32 numBuffers, uint32 startSlot)
+	{
+		//Cache size for resources
+		uint32 size = m_pResourceAllocator->GetDescriptorSize();
+		for (uint32 i = 0; i < numBuffers; i++)
+		{
+			//Get dest descriptor for pixel shaders
+			D3D12_CPU_DESCRIPTOR_HANDLE hDest = m_hPSDescriptorStart.CPU;
+			hDest.ptr += size * (startSlot + i);
+			m_DstDescriptorRanges.push_back(hDest);
+
+			//Set src descriptor and count in range
+			m_SrcDescriptorRanges.push_back(reinterpret_cast<const DX12Buffer*>(ppBuffers[i])->GetDescriptorHandle().CPU);
+			m_DescriptorRangeCounts.push_back(1);
+		}
+	}
+
+
 	void DX12CommandList::UpdateBuffer(IBuffer* pResource, const ResourceData* pData)
 	{
 		DX12Allocation allocation = m_pBufferAllocator->Allocate(pData->SizeInBytes, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
@@ -157,6 +247,7 @@ namespace Lambda
 
 	void DX12CommandList::DrawInstanced(uint32 vertexCountPerInstance, uint32 instanceCount, uint32 startVertexLocation, uint32 startInstanceLocation)
 	{
+		InternalCopyAndSetDescriptors();
 		m_List->DrawInstanced(vertexCountPerInstance, instanceCount, startVertexLocation, startInstanceLocation);
 	}
 
@@ -169,9 +260,20 @@ namespace Lambda
 
 	void DX12CommandList::Reset()
 	{
+		//Reset commandallocator and commandlist
 		m_Allocator->Reset();
 		m_List->Reset(m_Allocator.Get(), nullptr);
+		
+		//Reset allocators
 		m_pBufferAllocator->Reset();
+		m_pResourceAllocator->Reset();
+
+		//Allocate new descriptors after reset
+		m_hVSDescriptorStart = m_pResourceAllocator->Allocate(8);
+		m_hHSDescriptorStart = m_pResourceAllocator->Allocate(8);
+		m_hDSDescriptorStart = m_pResourceAllocator->Allocate(8);
+		m_hGSDescriptorStart = m_pResourceAllocator->Allocate(8);
+		m_hPSDescriptorStart = m_pResourceAllocator->Allocate(8);
 	}
 
 
@@ -189,22 +291,16 @@ namespace Lambda
 
 	void DX12CommandList::Init(ID3D12Device5* pDevice, CommandListType type)
 	{
-		//Create commandlist
+		using namespace Microsoft::WRL;
+
+		//Create commandallocator
 		D3D12_COMMAND_LIST_TYPE cType = D3D12_COMMAND_LIST_TYPE_DIRECT;
 		if (type == COMMAND_LIST_TYPE_GRAPHICS)
 			cType = D3D12_COMMAND_LIST_TYPE_DIRECT;
 		else if (type == COMMAND_LIST_TYPE_COMPUTE)
 			cType = D3D12_COMMAND_LIST_TYPE_COMPUTE;
 
-		HRESULT hr = pDevice->CreateCommandList1(1, cType, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&m_List));
-		if (FAILED(hr))
-		{
-			LOG_DEBUG_ERROR("DX12: Failed to create CommandList.\n");
-			return;
-		}
-
-		//Create commandallocator
-		hr = pDevice->CreateCommandAllocator(cType, IID_PPV_ARGS(&m_Allocator));
+		HRESULT hr = pDevice->CreateCommandAllocator(cType, IID_PPV_ARGS(&m_Allocator));
 		if (FAILED(hr))
 		{
 			LOG_DEBUG_ERROR("DX12: Failed to create CommandAllocator.\n");
@@ -215,8 +311,75 @@ namespace Lambda
 			LOG_DEBUG_INFO("DX12: Created CommandList.\n");
 		}
 
-		//Create uploadallocators
-		m_pBufferAllocator = new DX12LinearAllocator(pDevice);
+		//Create commandlist
+		ComPtr<ID3D12GraphicsCommandList> commandList = nullptr;
+		hr = pDevice->CreateCommandList(1, cType, m_Allocator.Get(), nullptr, IID_PPV_ARGS(&commandList));
+		if (FAILED(hr))
+		{
+			LOG_DEBUG_ERROR("DX12: Failed to create CommandList.\n");
+			return;
+		}
+		else
+		{
+			hr = commandList.As<ID3D12GraphicsCommandList4>(&m_List);
+			if (FAILED(hr))
+			{
+				LOG_DEBUG_ERROR("DX12: Failed to retrive ID3D12GraphicsCommandList4.\n");
+				return;
+			}
+			else
+			{
+				//Set device
+				m_Device = pDevice;
+
+				//Start list in a closed state
+				m_List->Close();
+
+				//Create uploadallocators
+				m_pBufferAllocator = DBG_NEW DX12LinearAllocator(pDevice);
+
+				//Create frame descriptor allocators
+				m_pResourceAllocator = DBG_NEW DX12LinearDescriptorAllocator(pDevice, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 256, true);
+
+				//Allocate descriptors for different stages
+				m_hVSDescriptorStart = m_pResourceAllocator->Allocate(8);
+				m_hHSDescriptorStart = m_pResourceAllocator->Allocate(8);
+				m_hDSDescriptorStart = m_pResourceAllocator->Allocate(8);
+				m_hGSDescriptorStart = m_pResourceAllocator->Allocate(8);
+				m_hPSDescriptorStart = m_pResourceAllocator->Allocate(8);
+			}
+		}
+	}
+
+
+	void DX12CommandList::InternalCopyAndSetDescriptors()
+	{
+		//Perform copy of descriptors
+		UINT numRanges = (UINT)m_DescriptorRangeCounts.size();
+		UINT* pRangeSizes = m_DescriptorRangeCounts.data();
+		D3D12_CPU_DESCRIPTOR_HANDLE* pDstRangeStart = m_DstDescriptorRanges.data();
+		D3D12_CPU_DESCRIPTOR_HANDLE* pSrcRangeStart = m_SrcDescriptorRanges.data();
+		m_Device->CopyDescriptors(numRanges, pDstRangeStart, pRangeSizes, numRanges, pSrcRangeStart, pRangeSizes, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+		//Set heap and descriptortables at predefine slots. (See default rootsignature in DX12PipelineState)
+		ID3D12DescriptorHeap* pHeap = m_pResourceAllocator->GetHeap();
+		m_List->SetDescriptorHeaps(1, &pHeap);
+		m_List->SetGraphicsRootDescriptorTable(0, m_hVSDescriptorStart.GPU);
+		m_List->SetGraphicsRootDescriptorTable(2, m_hHSDescriptorStart.GPU);
+		m_List->SetGraphicsRootDescriptorTable(4, m_hDSDescriptorStart.GPU);
+		m_List->SetGraphicsRootDescriptorTable(6, m_hGSDescriptorStart.GPU);
+		m_List->SetGraphicsRootDescriptorTable(8, m_hPSDescriptorStart.GPU);
+
+		//Clear ranges
+		m_DstDescriptorRanges.clear();
+		m_SrcDescriptorRanges.clear();
+		m_DescriptorRangeCounts.clear();
+
+		m_hVSDescriptorStart = m_pResourceAllocator->Allocate(8);
+		m_hHSDescriptorStart = m_pResourceAllocator->Allocate(8);
+		m_hDSDescriptorStart = m_pResourceAllocator->Allocate(8);
+		m_hGSDescriptorStart = m_pResourceAllocator->Allocate(8);
+		m_hPSDescriptorStart = m_pResourceAllocator->Allocate(8);
 	}
 
 

@@ -30,12 +30,12 @@ namespace Lambda
 		uint32 m_References;
 	};
 
-	inline ID3D12PipelineState* Lambda::DX12GraphicsPipelineState::GetPipelineState() const
+	inline ID3D12PipelineState* DX12GraphicsPipelineState::GetPipelineState() const
 	{
 		return m_State.Get();
 	}
 
-	inline ID3D12RootSignature* Lambda::DX12GraphicsPipelineState::GetRootSignature() const
+	inline ID3D12RootSignature* DX12GraphicsPipelineState::GetRootSignature() const
 	{
 		return m_RootSignature.Get();
 	}
