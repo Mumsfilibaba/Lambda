@@ -61,7 +61,8 @@ namespace Lambda
 		Microsoft::WRL::ComPtr<ID3D12DebugDevice1> m_DebugDevice;
 		Microsoft::WRL::ComPtr<ID3D12Fence> m_Fence;
 		Microsoft::WRL::ComPtr<ID3D12CommandQueue> m_Queue;
-		
+		mutable std::vector<ID3D12CommandList*> m_PendingLists;
+
 		DX12CommandList* m_pCommandList;
 		DX12DescriptorAllocator* m_pRTAllocator;
 		DX12DescriptorAllocator* m_pDSAllocator;

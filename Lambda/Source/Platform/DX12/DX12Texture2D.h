@@ -27,17 +27,14 @@ namespace Lambda
 		void InitFromResource(ID3D12Resource* pResource);
 
 		void SetResource(ID3D12Resource* pResource);
-		void SetResourceState(D3D12_RESOURCE_STATES state) const;
 		void SetDescriptorHandle(const DX12DescriptorHandle& hDescriptor);
 
 		ID3D12Resource* GetResource() const;
-		D3D12_RESOURCE_STATES GetResourceState() const;
 		DX12DescriptorHandle GetDescriptorHandle() const;
 		D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAdress() const;
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_Texture;
-		mutable D3D12_RESOURCE_STATES m_State;
 		DX12DescriptorHandle m_hDescriptor;
 		D3D12_GPU_VIRTUAL_ADDRESS m_Adress;
 
@@ -48,11 +45,6 @@ namespace Lambda
 	inline ID3D12Resource* Lambda::DX12Texture2D::GetResource() const
 	{
 		return m_Texture.Get();
-	}
-
-	inline D3D12_RESOURCE_STATES DX12Texture2D::GetResourceState() const
-	{
-		return m_State;
 	}
 	
 	inline DX12DescriptorHandle DX12Texture2D::GetDescriptorHandle() const

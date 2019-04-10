@@ -3,6 +3,7 @@
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include "DX12LinearAllocator.h"
 	#include "DX12LinearDescriptorAllocator.h"
+	#include "DX12ResourceStateTracker.h"
 
 namespace Lambda
 {
@@ -49,10 +50,9 @@ namespace Lambda
 
 	private:
 		void Init(ID3D12Device5* pDevice, CommandListType type);
-		ID3D12CommandList* GetList() const;
-
 		void InternalCopyAndSetDescriptors();
-		void InternalTransitionResource(ID3D12Resource* pResource, uint32 subresource, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after);
+
+		ID3D12CommandList* GetList() const;
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D12Device5> m_Device;
@@ -64,6 +64,8 @@ namespace Lambda
 		DX12DescriptorHandle m_hDSDescriptorStart;
 		DX12DescriptorHandle m_hGSDescriptorStart;
 		DX12DescriptorHandle m_hPSDescriptorStart;
+
+		DX12ResourceStateTracker m_ResourceTracker;
 
 		DX12LinearAllocator* m_pBufferAllocator;
 		DX12LinearDescriptorAllocator* m_pResourceAllocator;

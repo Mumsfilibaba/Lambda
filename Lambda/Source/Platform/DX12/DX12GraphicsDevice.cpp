@@ -187,11 +187,16 @@ namespace Lambda
 
 	void DX12GraphicsDevice::ExecuteCommandList(ICommandList* const * ppLists, uint32 numLists) const
 	{
-		DX12CommandList* pList = reinterpret_cast<DX12CommandList*>(ppLists[0]);
-		//TODO: execute multiple commandlists
-		ID3D12CommandList* ppCommandLists[] = { pList->GetList() };
+		//Convert lists
+		for (uint32 i = 0; i < numLists; i++)
+		{
+			DX12CommandList* pList = reinterpret_cast<DX12CommandList*>(ppLists[i]);
+			m_PendingLists.push_back(pList->GetList());
+		}
 
-		m_Queue->ExecuteCommandLists(numLists, ppCommandLists);
+		//Execute
+		m_Queue->ExecuteCommandLists(numLists, m_PendingLists.data());
+		m_PendingLists.clear();
 	}
 
 

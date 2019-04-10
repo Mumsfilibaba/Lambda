@@ -6,7 +6,6 @@ namespace Lambda
 {
 	DX12Buffer::DX12Buffer(ID3D12Device5* pDevice, const BufferDesc& desc)
 		: m_Buffer(nullptr),
-		m_State(D3D12_RESOURCE_STATE_COMMON),
 		m_Adress(0),
 		m_References(0)
 	{
@@ -53,22 +52,22 @@ namespace Lambda
 		//Create buffer resource
 		{
 			CD3DX12_HEAP_PROPERTIES heapProp;
-		
+			D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COMMON;
+
 			//We want a default heap
 			if (desc.Usage == RESOURCE_USAGE_DEFAULT)
 			{
 				heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-				m_State = D3D12_RESOURCE_STATE_COMMON;
 			}
 			//We want a uploadheap
 			else if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
 			{
 				heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-				m_State = D3D12_RESOURCE_STATE_GENERIC_READ;
+				state = D3D12_RESOURCE_STATE_GENERIC_READ;
 			}
 
 			CD3DX12_RESOURCE_DESC rDesc = CD3DX12_RESOURCE_DESC::Buffer(desc.SizeInBytes);
-			HRESULT hr = pDevice->CreateCommittedResource(&heapProp, D3D12_HEAP_FLAG_NONE, &rDesc, m_State, nullptr, IID_PPV_ARGS(&m_Buffer));
+			HRESULT hr = pDevice->CreateCommittedResource(&heapProp, D3D12_HEAP_FLAG_NONE, &rDesc, state, nullptr, IID_PPV_ARGS(&m_Buffer));
 			if (FAILED(hr))
 			{
 				LOG_DEBUG_ERROR("DX12: Failed to create Buffer.\n");
@@ -101,11 +100,6 @@ namespace Lambda
 				//TODO: Format?
 			}
 		}
-	}
-
-	void DX12Buffer::SetResourceState(D3D12_RESOURCE_STATES state) const
-	{
-		m_State = state;
 	}
 
 	void DX12Buffer::SetDescriporHandle(const DX12DescriptorHandle& hDescriptor)

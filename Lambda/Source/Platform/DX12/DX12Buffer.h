@@ -24,21 +24,17 @@ namespace Lambda
 		virtual uint32 AddRef() override final;
 
 	private:
-		void Init(ID3D12Device5* pDevice, const BufferDesc& desc);
-		
-		void SetResourceState(D3D12_RESOURCE_STATES state) const;
+		void Init(ID3D12Device5* pDevice, const BufferDesc& desc);		
 		void SetDescriporHandle(const DX12DescriptorHandle& hDescriptor);
 
 		DX12DescriptorHandle GetDescriptorHandle() const;
 		ID3D12Resource* GetResource() const;
-		D3D12_RESOURCE_STATES GetResourceState() const;
 		D3D12_VERTEX_BUFFER_VIEW GetVertexBufferView() const;
 		D3D12_INDEX_BUFFER_VIEW GetIndexBufferView() const;
 		D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAdress() const;
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_Buffer;
-		mutable D3D12_RESOURCE_STATES m_State;
 		D3D12_VERTEX_BUFFER_VIEW m_VBV;
 		D3D12_INDEX_BUFFER_VIEW m_IBV;
 		D3D12_GPU_VIRTUAL_ADDRESS m_Adress;
@@ -51,11 +47,6 @@ namespace Lambda
 	inline ID3D12Resource* Lambda::DX12Buffer::GetResource() const
 	{
 		return m_Buffer.Get();
-	}
-
-	inline D3D12_RESOURCE_STATES DX12Buffer::GetResourceState() const
-	{
-		return m_State;
 	}
 
 	inline D3D12_VERTEX_BUFFER_VIEW DX12Buffer::GetVertexBufferView() const

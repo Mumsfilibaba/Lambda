@@ -25,6 +25,8 @@
 #include <iostream>
 #include <fstream>
 
+#include <vector>
+#include <mutex>
 #include <memory>
 #include <string>
 #include <sstream>

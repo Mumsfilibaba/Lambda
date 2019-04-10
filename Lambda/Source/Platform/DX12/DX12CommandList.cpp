@@ -51,6 +51,10 @@ namespace Lambda
 
 	void DX12CommandList::ClearRenderTarget(ITexture2D* pRenderTarget, float color[4])
 	{
+		//Flush barriers - needs to be transitioned outside function
+		m_ResourceTracker.FlushBarriers(m_List.Get());
+
+		//Clear rendertarget
 		DX12Texture2D* pTarget = reinterpret_cast<DX12Texture2D*>(pRenderTarget);
 		m_List->ClearRenderTargetView(pTarget->GetDescriptorHandle().CPU, color, 0, nullptr);
 	}
@@ -58,6 +62,10 @@ namespace Lambda
 
 	void DX12CommandList::ClearDepthStencil(ITexture2D * pDepthStencil, float depth, uint8 stencil)
 	{
+		//Flush barriers - needs to be transitioned outside function
+		m_ResourceTracker.FlushBarriers(m_List.Get());
+
+		//Clear depthstencil
 		DX12Texture2D* pDSV = reinterpret_cast<DX12Texture2D*>(pDepthStencil);
 		m_List->ClearDepthStencilView(pDSV->GetDescriptorHandle().CPU, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, depth, stencil, 0, nullptr);
 	}
@@ -65,6 +73,10 @@ namespace Lambda
 
 	void DX12CommandList::SetRenderTarget(ITexture2D* pRenderTarget, ITexture2D* pDepthStencil)
 	{
+		//Flush barriers - needs to be transitioned outside function
+		m_ResourceTracker.FlushBarriers(m_List.Get());
+
+		//Set rendertargets
 		DX12Texture2D* pTarget = reinterpret_cast<DX12Texture2D*>(pRenderTarget);
 		D3D12_CPU_DESCRIPTOR_HANDLE rtv = pTarget->GetDescriptorHandle().CPU;
 
@@ -124,20 +136,15 @@ namespace Lambda
 
 	void DX12CommandList::TransitionResource(IBuffer* pResource, ResourceState resourceState)
 	{
-		D3D12_RESOURCE_STATES after = ConvertResourceState(resourceState);
 		DX12Buffer* pBuffer = reinterpret_cast<DX12Buffer*>(pResource);
-		InternalTransitionResource(pBuffer->GetResource(), D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, pBuffer->GetResourceState(), after);
-		pBuffer->SetResourceState(after);
+		m_ResourceTracker.TransitionResource(pBuffer->GetResource(), D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, ConvertResourceState(resourceState));
 	}
 
 
 	void DX12CommandList::TransitionResource(ITexture2D* pResource, ResourceState resourceState)
 	{
-		D3D12_RESOURCE_STATES after = ConvertResourceState(resourceState);
-		DX12Texture2D* pTexture = reinterpret_cast<DX12Texture2D*>(pResource);
-		InternalTransitionResource(pTexture->GetResource(), D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, pTexture->GetResourceState(), after);
-
-		pTexture->SetResourceState(after);
+		DX12Buffer* pBuffer = reinterpret_cast<DX12Buffer*>(pResource);
+		m_ResourceTracker.TransitionResource(pBuffer->GetResource(), D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, ConvertResourceState(resourceState));
 	}
 
 
@@ -233,6 +240,8 @@ namespace Lambda
 
 	void DX12CommandList::UpdateBuffer(IBuffer* pResource, const ResourceData* pData)
 	{
+		m_ResourceTracker.FlushBarriers(m_List.Get());
+
 		DX12Allocation allocation = m_pBufferAllocator->Allocate(pData->SizeInBytes, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
 		memcpy(allocation.pCPU, pData->pData, pData->SizeInBytes);
 		m_List->CopyBufferRegion(reinterpret_cast<DX12Buffer*>(pResource)->GetResource(), 0, allocation.pPageResource, allocation.Offset, pData->SizeInBytes);
@@ -247,6 +256,8 @@ namespace Lambda
 
 	void DX12CommandList::DrawInstanced(uint32 vertexCountPerInstance, uint32 instanceCount, uint32 startVertexLocation, uint32 startInstanceLocation)
 	{
+		m_ResourceTracker.FlushBarriers(m_List.Get());
+
 		InternalCopyAndSetDescriptors();
 		m_List->DrawInstanced(vertexCountPerInstance, instanceCount, startVertexLocation, startInstanceLocation);
 	}
@@ -254,6 +265,7 @@ namespace Lambda
 
 	void DX12CommandList::Close()
 	{
+		m_ResourceTracker.FlushBarriers(m_List.Get());
 		m_List->Close();
 	}
 
@@ -380,23 +392,6 @@ namespace Lambda
 		m_hDSDescriptorStart = m_pResourceAllocator->Allocate(8);
 		m_hGSDescriptorStart = m_pResourceAllocator->Allocate(8);
 		m_hPSDescriptorStart = m_pResourceAllocator->Allocate(8);
-	}
-
-
-	void DX12CommandList::InternalTransitionResource(ID3D12Resource* pResource, uint32 subresource, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after)
-	{
-		if (before == after)
-			return;
-
-		D3D12_RESOURCE_BARRIER barrier = {};
-		barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-		barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-		barrier.Transition.pResource = pResource;
-		barrier.Transition.Subresource = subresource;
-		barrier.Transition.StateBefore = before;
-		barrier.Transition.StateAfter = after;
-
-		m_List->ResourceBarrier(1, &barrier);
 	}
 }
 #endif
