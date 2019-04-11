@@ -89,12 +89,6 @@ namespace Lambda
 		assert(pCommandList != nullptr);
 		std::lock_guard<std::mutex> lock(s_GlobalMutex);
 
-		//Return if no barriers
-		if (m_DefferedBarriers.empty())
-		{
-			return;
-		}
-
 		//Make sure the states are still valid
 		for (int32 i = 0; i < m_DefferedBarriers.size(); i++)
 		{
@@ -125,11 +119,14 @@ namespace Lambda
 				}
 			}
 		}
-			
-		pCommandList->ResourceBarrier((uint32)m_DefferedBarriers.size(), m_DefferedBarriers.data());
-		m_DefferedBarriers.clear();
-
-		SyncGlobalStates();
+		
+		//Dont do if no barriers
+		if (!m_DefferedBarriers.empty())
+		{
+			pCommandList->ResourceBarrier((uint32)m_DefferedBarriers.size(), m_DefferedBarriers.data());
+			m_DefferedBarriers.clear();
+			SyncGlobalStates();
+		}
 	}
 
 

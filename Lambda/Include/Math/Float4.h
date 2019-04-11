@@ -8,8 +8,9 @@ namespace Math
 	struct Vec4f
 	{
 	public:
-		forceinline explicit Vec4f::Vec4f(float xyzw = 0.0f);
-		forceinline explicit Vec4f::Vec4f(float x, float y, float z, float w);
+		forceinline Vec4f();
+		forceinline explicit Vec4f(float xyzw);
+		forceinline explicit Vec4f(float x, float y, float z, float w);
 
 		forceinline bool vectorcall operator==(Vec4f other) const;
 		forceinline bool vectorcall operator!=(Vec4f other) const;
@@ -36,6 +37,37 @@ namespace Math
 			};
 		};
 	};
+
+	namespace Vec4Const
+	{
+		const Vec4f BLACK = Vec4f(0.0f, 0.0f, 0.0f, 1.0f);
+		const Vec4f WHITE = Vec4f(1.0f, 1.0f, 1.0f, 1.0f);
+		const Vec4f WARMWHITE = Vec4f(1.0f, 0.945f, 0.88f, 1.0f);
+		const Vec4f GRAY = Vec4f(0.502f, 0.502f, 0.502f, 1.0f);
+		const Vec4f DARKGRAY = Vec4f(0.251f, 0.251f, 0.251f, 1.0f);
+		const Vec4f SOFTGRAY = Vec4f(0.753f, 0.753f, 0.753f, 1.0f);
+		const Vec4f RED = Vec4f(1.0f, 0.0f, 0.0f, 1.0f);
+		const Vec4f DARKRED = Vec4f(0.502f, 0.0f, 0.0f, 1.0f);
+		const Vec4f SOFTRED = Vec4f(1.0f, 0.251f, 0.251f, 1.0f);
+		const Vec4f GREEN = Vec4f(0.0f, 1.0f, 0.0f, 1.0f);
+		const Vec4f SOFTGREEN = Vec4f(0.251f, 1.0f, 0.251f, 1.0f);
+		const Vec4f DARKGREEN = Vec4f(0.0f, 0.502f, 0.0f, 1.0f);
+		const Vec4f BLUE = Vec4f(0.0f, 0.0f, 1.0f, 1.0f);
+		const Vec4f DARKBLUE = Vec4f(0.0f, 0.0f, 0.502f, 1.0f);
+		const Vec4f SOFTBLUE = Vec4f(0.325f, 0.325f, 1.0f, 1.0f);
+		const Vec4f CORNFLOWERBLUE = Vec4f(0.392f, 0.584f, 0.929f, 1.0f);
+		const Vec4f YELLOW = Vec4f(1.0f, 1.0f, 0.0f, 1.0f);
+		const Vec4f SOFTYELLOW = Vec4f(1.0f, 1.0f, 0.251f, 1.0f);
+		const Vec4f DARKYELLOW = Vec4f(0.502f, 0.502f, 0.0f, 1.0f);
+		const Vec4f MAGENTA = Vec4f(1.0f, 0.0f, 1.0f, 1.0f);
+		const Vec4f PURPLE = Vec4f(0.502f, 0.0f, 0.502f, 1.0f);
+		const Vec4f PINK = Vec4f(1.0f, 0.753f, 0.796f, 1.0f);
+	}
+
+	forceinline Vec4f::Vec4f()
+	{
+		x = y = z = w = 0;
+	}
 
 	forceinline Vec4f::Vec4f(float xyzw)
 	{

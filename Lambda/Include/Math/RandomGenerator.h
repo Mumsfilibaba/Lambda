@@ -25,25 +25,26 @@ namespace Math
 		Color GenerateColor() const;
 
 	private:
-		int32 m_Seed;
-
-	public:
-		static const Random& Default();
+		int32 Rand() const;
 
 	private:
-		static const Random s_Default;
+		int32 m_Seed;
 	};
-
-	static const Random s_Default = Random();
 
 	inline Random::Random()
 		: m_Seed(static_cast<int32>(time(0)))
 	{
+		srand(m_Seed);
 	}
 
 	inline Random::Random(int32 seed)
 		: m_Seed(seed)
 	{
+	}
+
+	inline int32 Random::Rand() const
+	{
+		return rand();
 	}
 
 	inline void Random::SetSeed(int32 seed)
@@ -58,7 +59,7 @@ namespace Math
 
 	inline int32 Random::GenerateInt() const
 	{
-		return rand();
+		return Rand();
 	}
 	
 	inline int32 Random::GenerateInt(int32 min, int32 max) const
@@ -68,7 +69,7 @@ namespace Math
 
 	inline float Random::GenerateFloat() const
 	{
-		return static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+		return static_cast<float>(Rand()) / static_cast<float>(RAND_MAX);
 	}
 
 	inline float Random::GenerateFloat(float min, float max) const
@@ -78,7 +79,7 @@ namespace Math
 
 	inline double Random::GenerateDouble() const
 	{
-		return static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
+		return static_cast<double>(Rand()) / static_cast<double>(RAND_MAX);
 	}
 
 	inline double Random::GenerateDouble(double min, double max) const
@@ -89,37 +90,32 @@ namespace Math
 	inline Math::Vec2f Random::GenerateVector2() const
 	{
 		return	Vec2f(
-					static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-					static_cast<float>(rand()) / static_cast<float>(RAND_MAX) 
+					GenerateFloat(),
+					GenerateFloat()
 				);
 	}
 	
 	inline Math::Vec3f Random::GenerateVector3() const
 	{
 		return	Vec3f(
-					static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-					static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-					static_cast<float>(rand()) / static_cast<float>(RAND_MAX)
+					GenerateFloat(),
+					GenerateFloat(),
+					GenerateFloat()
 				);
 	}
 
 	inline Math::Vec4f Random::GenerateVector4() const
 	{
 		return	Vec4f(
-					static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-					static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-					static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-					static_cast<float>(rand()) / static_cast<float>(RAND_MAX)
+					GenerateFloat(),
+					GenerateFloat(),
+					GenerateFloat(),
+					GenerateFloat()
 				);
 	}
 	
 	inline Color Random::GenerateColor() const
 	{
-		return Color(rand() % 256, rand() % 256, rand() % 256, rand() % 256);
-	}
-
-	inline const Random& Random::Default()
-	{
-		return s_Default;
+		return Color(Rand() % 256, Rand() % 256, Rand() % 256, Rand() % 256);
 	}
 }

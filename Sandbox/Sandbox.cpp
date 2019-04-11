@@ -31,10 +31,17 @@ namespace Lambda
 		EventLayer sandboxLayer = { SandBox::OnEvent, "SandBox" };
 		EventDispatcher::PushEventLayer(sandboxLayer);
 
+		//Init size
+		m_Width = (float)GetWindow()->GetWidth();
+		m_Height = (float)GetWindow()->GetHeight();
+
 		//Create commandlist
 		{
 			for (uint32 i = 0; i < 3; i++)
 				m_pLists[i] = ICommandList::Create(COMMAND_LIST_TYPE_GRAPHICS);
+
+			m_pCurrentList = m_pLists[0];
+			m_pCurrentList->Reset();
 		}
 
 		IGraphicsDevice* pDevice = IGraphicsDevice::GetInstance();
@@ -93,6 +100,7 @@ namespace Lambda
 			data.SizeInBytes = desc.SizeInBytes;
 
 			pDevice->CreateBuffer(&m_pVertexBuffer, &data, desc);
+			m_pCurrentList->TransitionResource(m_pVertexBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 		}
 
 		//Create colorbuffer
@@ -112,6 +120,24 @@ namespace Lambda
 			pDevice->CreateBuffer(&m_pColorBuffer, &data, desc);
 		}
 
+		//Create camerabuffer
+		{
+			CreateCamera(m_Width, m_Height);
+
+			BufferDesc desc = {};
+			desc.Usage = RESOURCE_USAGE_DEFAULT;
+			desc.Flags = BUFFER_FLAGS_CONSTANT_BUFFER;
+			desc.SizeInBytes = (uint32)Math::AlignUp(sizeof(CameraBuffer), 256);
+			desc.StrideInBytes = sizeof(CameraBuffer);
+
+			ResourceData data = {};
+			data.pData = &m_Camera;
+			data.SizeInBytes = desc.SizeInBytes;
+
+			pDevice->CreateBuffer(&m_pCameraBuffer, &data, desc);
+			m_pCurrentList->TransitionResource(m_pCameraBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+		}
+
 		//Create depthbuffer
 		{
 			Texture2DDesc desc = {};
@@ -129,9 +155,8 @@ namespace Lambda
 			pDevice->CreateTexture2D(&m_pDepthBuffer, nullptr, desc);
 		}
 
-		//Init size
-		m_Width = (float)GetWindow()->GetWidth();
-		m_Height = (float)GetWindow()->GetHeight();
+		m_pCurrentList->Close();
+		pDevice->ExecuteCommandList(&m_pCurrentList, 1);
 	}
 
 
@@ -142,6 +167,8 @@ namespace Lambda
 
 	void SandBox::OnRender(Time dt)
 	{
+		using namespace Math;
+
 		IGraphicsDevice* pDevice = IGraphicsDevice::GetInstance();
 		//Set commandlist for frame
 		m_pCurrentList = m_pLists[pDevice->GetCurrentBackBufferIndex()];
@@ -156,8 +183,7 @@ namespace Lambda
 
 		m_pCurrentList->ClearRenderTarget(pRenderTarget, color);
 		m_pCurrentList->ClearDepthStencil(m_pDepthBuffer, 1.0f, 0);
-		//m_pCurrentList->SetRenderTarget(pRenderTarget, m_pDepthBuffer);
-		m_pCurrentList->SetRenderTarget(pRenderTarget, nullptr);
+		m_pCurrentList->SetRenderTarget(pRenderTarget, m_pDepthBuffer);
 
 		//Set scissor and viewport
 		Math::Rectangle scissorrect;
@@ -182,6 +208,28 @@ namespace Lambda
 		m_pCurrentList->SetGraphicsPipelineState(m_pPipelineState);
 
 		//Set constantbuffers
+		static Random random;
+		static Vec4f colorBuff = random.GenerateVector4();
+		static float timer = 0.0f;
+		timer += dt.AsSeconds();
+
+		if (timer >= 1.0f)
+		{
+			colorBuff = random.GenerateVector4();
+			timer = 0.0f;
+
+			LOG_DEBUG_INFO("%s\n", ToString(colorBuff).c_str());
+		}
+
+		ResourceData data = {};
+		data.pData = &colorBuff;
+		data.SizeInBytes = sizeof(Vec4f);
+
+		m_pCurrentList->TransitionResource(m_pColorBuffer, RESOURCE_STATE_COPY_DEST);
+		m_pCurrentList->UpdateBuffer(m_pColorBuffer, &data);
+		m_pCurrentList->TransitionResource(m_pColorBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+		
+		m_pCurrentList->VSSetConstantBuffers(&m_pCameraBuffer, 1, 0);
 		m_pCurrentList->PSSetConstantBuffers(&m_pColorBuffer, 1, 0);
 
 		//Set vertexbuffer
@@ -216,6 +264,15 @@ namespace Lambda
 	}
 
 
+	void SandBox::CreateCamera(uint32 width, uint32 height)
+	{
+		using namespace Math;
+
+		m_Camera.View = Store(Float4x4::LookAt(Vec3Const::UP, Vec3f(0.0f), Vec3f(0.0f, 0.0f, -1.0f)).Transpose());
+		m_Camera.Proj = Store(Float4x4::Perspective(ToRadiansF(90.0f), (float)width / height, 10.0f, 0.01f).Transpose());
+	}
+
+
 	bool SandBox::OnEvent(const Event& event)
 	{
 		if (event.Type == EVENT_TYPE_WINDOW_RESIZE)
@@ -244,6 +301,22 @@ namespace Lambda
 			//Set size variable
 			instance.m_Width = (float)event.WindowResize.Width;
 			instance.m_Height = (float)event.WindowResize.Height;
+
+			//Update camera
+			instance.CreateCamera(event.WindowResize.Width, event.WindowResize.Height);
+
+			ResourceData data = {};
+			data.pData = &instance.m_Camera;
+			data.SizeInBytes = sizeof(CameraBuffer);
+			
+			instance.m_pCurrentList->Reset();
+
+			instance.m_pCurrentList->TransitionResource(instance.m_pCameraBuffer, RESOURCE_STATE_COPY_DEST);
+			instance.m_pCurrentList->UpdateBuffer(instance.m_pCameraBuffer, &data);
+			instance.m_pCurrentList->TransitionResource(instance.m_pCameraBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+
+			instance.m_pCurrentList->Close();
+			pDevice->ExecuteCommandList(&instance.m_pCurrentList, 1);
 		}
 
 		return false;

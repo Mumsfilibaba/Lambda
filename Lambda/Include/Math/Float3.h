@@ -35,7 +35,7 @@ namespace Math
 		};
 	};
 
-	namespace Vec3Constants
+	namespace Vec3Const
 	{
 		const Vec3f UP = Vec3f(0.0f, 1.0f, 0.0f);
 		const Vec3f FORWARD = Vec3f(0.0f, 0.0f, 1.0f);
