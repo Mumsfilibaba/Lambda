@@ -21,6 +21,13 @@ namespace Lambda
 
 	DX12DescriptorHandle DX12LinearDescriptorAllocator::Allocate(uint32 num)
 	{
+		//Since only one heap can be used at a time we only use one heap, only return error here
+		if (m_Used + num >= m_Count)
+		{
+			LOG_DEBUG_ERROR("DX12: No room for allocating '%d' descriptors in linearallocator\n", num);
+			return DX12DescriptorHandle();
+		}
+
 		DX12DescriptorHandle hDescriptor = m_First;
 		hDescriptor.Index = m_Used;
 		hDescriptor.CPU.ptr += m_Used * m_DescriptorSize;

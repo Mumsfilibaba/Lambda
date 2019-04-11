@@ -28,6 +28,8 @@ namespace Lambda
 		IBuffer* m_pColorBuffer;
 		ITexture2D* m_pDepthBuffer;
 		IGraphicsPipelineState* m_pPipelineState;
+		float m_Width;
+		float m_Height;
 
 	public:
 		static bool OnEvent(const Event& event);

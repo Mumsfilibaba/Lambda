@@ -76,6 +76,7 @@ namespace Lambda
 
 		HANDLE m_GPUWaitEvent;
 		DXGI_FORMAT m_BackBufferFormat;
+		uint32 m_BackBufferFlags;
 		mutable uint32 m_CurrentBackBuffer;
 		uint32 m_NumBackbuffers;
 		uint32 m_References;

@@ -8,7 +8,7 @@ namespace Lambda
 	{
 		D3D12_CPU_DESCRIPTOR_HANDLE CPU = { 0 };
 		D3D12_GPU_DESCRIPTOR_HANDLE GPU = { 0 };
-		uint32 Index = 0;
+		uint32 Index = (uint32)-1;
 	};
 }
 #endif

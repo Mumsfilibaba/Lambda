@@ -1,4 +1,5 @@
 #include "SandBox.h"
+#include <System/Log.h>
 #include <Math/Math.h>
 
 namespace Lambda
@@ -127,6 +128,10 @@ namespace Lambda
 
 			pDevice->CreateTexture2D(&m_pDepthBuffer, nullptr, desc);
 		}
+
+		//Init size
+		m_Width = (float)GetWindow()->GetWidth();
+		m_Height = (float)GetWindow()->GetHeight();
 	}
 
 
@@ -151,14 +156,15 @@ namespace Lambda
 
 		m_pCurrentList->ClearRenderTarget(pRenderTarget, color);
 		m_pCurrentList->ClearDepthStencil(m_pDepthBuffer, 1.0f, 0);
-		m_pCurrentList->SetRenderTarget(pRenderTarget, m_pDepthBuffer);
+		//m_pCurrentList->SetRenderTarget(pRenderTarget, m_pDepthBuffer);
+		m_pCurrentList->SetRenderTarget(pRenderTarget, nullptr);
 
 		//Set scissor and viewport
 		Math::Rectangle scissorrect;
 		scissorrect.TopLeft.x = 0.0f;
 		scissorrect.TopLeft.y = 0.0f;
-		scissorrect.BottomRight.x = (float)GetWindow()->GetWidth();
-		scissorrect.BottomRight.y = (float)GetWindow()->GetHeight();
+		scissorrect.BottomRight.x = m_Width;
+		scissorrect.BottomRight.y = m_Height;
 
 		Viewport viewport;
 		viewport.Width = scissorrect.BottomRight.x;
@@ -167,7 +173,7 @@ namespace Lambda
 		viewport.TopY = 0.0f;
 		viewport.MinDepth = 0.0f;
 		viewport.MaxDepth = 1.0f;
-
+		
 		m_pCurrentList->SetViewport(viewport);
 		m_pCurrentList->SetScissorRect(scissorrect);
 
@@ -214,6 +220,30 @@ namespace Lambda
 	{
 		if (event.Type == EVENT_TYPE_WINDOW_RESIZE)
 		{
+			SandBox& instance = (SandBox&)GetInstance();
+			SafeRelease(instance.m_pDepthBuffer);
+
+			Texture2DDesc desc = {};
+			desc.Usage = RESOURCE_USAGE_DEFAULT;
+			desc.Flags = TEXTURE_FLAGS_DEPTH_STENCIL;
+			desc.ArraySize = 1;
+			desc.Width = event.WindowResize.Width;
+			desc.Height = event.WindowResize.Height;
+			desc.Format = FORMAT_D24_UNORM_S8_UINT;
+			desc.SampleCount = 1;
+			desc.MipLevels = 0;
+			desc.ClearDepth = 1.0f;
+			desc.ClearStencil = 0;
+
+			//TODO: needs to release the descriptor in DX12-backend
+			IGraphicsDevice* pDevice = IGraphicsDevice::GetInstance();
+			pDevice->CreateTexture2D(&instance.m_pDepthBuffer, nullptr, desc);
+
+			LOG_DEBUG_INFO("Resized depthbuffer");
+
+			//Set size variable
+			instance.m_Width = (float)event.WindowResize.Width;
+			instance.m_Height = (float)event.WindowResize.Height;
 		}
 
 		return false;

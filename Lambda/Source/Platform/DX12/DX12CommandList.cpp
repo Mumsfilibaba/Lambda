@@ -17,20 +17,6 @@ namespace Lambda
 		return DBG_NEW DX12CommandList(pDevice, type);
 	}
 
-	inline D3D12_RESOURCE_STATES ConvertResourceState(ResourceState state)
-	{
-		switch (state)
-		{
-		case RESOURCE_STATE_RENDERTARGET: return D3D12_RESOURCE_STATE_RENDER_TARGET;
-		case RESOURCE_STATE_PRESENT_COMMON: return D3D12_RESOURCE_STATE_COMMON;
-		case RESOURCE_STATE_COPY_DEST: return D3D12_RESOURCE_STATE_COPY_DEST;
-		case RESOURCE_STATE_COPY_SRC: return D3D12_RESOURCE_STATE_COPY_SOURCE;
-		case RESOURCE_STATE_DEPTH_WRITE: return D3D12_RESOURCE_STATE_DEPTH_WRITE;
-		case RESOURCE_STATE_UNKNOWN:
-		default: return D3D12_RESOURCE_STATE_COMMON;
-		}
-	}
-
 
 	DX12CommandList::DX12CommandList(ID3D12Device5* pDevice, CommandListType type)
 		: m_References(0)
@@ -73,6 +59,8 @@ namespace Lambda
 
 	void DX12CommandList::SetRenderTarget(ITexture2D* pRenderTarget, ITexture2D* pDepthStencil)
 	{
+		//TODO: Multiple rendertargets
+
 		//Flush barriers - needs to be transitioned outside function
 		m_ResourceTracker.FlushBarriers(m_List.Get());
 
@@ -81,7 +69,7 @@ namespace Lambda
 		D3D12_CPU_DESCRIPTOR_HANDLE rtv = pTarget->GetDescriptorHandle().CPU;
 
 		DX12Texture2D* pDsv = reinterpret_cast<DX12Texture2D*>(pDepthStencil);
-		if (pDsv != nullptr)
+		if (pDsv == nullptr)
 		{
 			m_List->OMSetRenderTargets(1, &rtv, false, nullptr);
 		}

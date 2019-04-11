@@ -183,6 +183,7 @@ namespace Lambda
 		TEXTURE_FLAGS_TEXTURE_CUBE = (1 << 4),
 	};
 
+
 	enum ResourceFormat : uint32
 	{
 		FORMAT_UNKNOWN = 0,
@@ -235,6 +236,16 @@ namespace Lambda
 		FORMAT_B8G8R8A8_UNORM_SRGB = 50,
 	};
 
+
+	enum ResourceState
+	{
+		RESOURCE_STATE_UNKNOWN = 0,
+		RESOURCE_STATE_RENDERTARGET = 1,
+		RESOURCE_STATE_DEPTH_WRITE = 2,
+		RESOURCE_STATE_PRESENT_COMMON = 3,
+		RESOURCE_STATE_COPY_DEST = 4,
+		RESOURCE_STATE_COPY_SRC = 5,
+	};
 
 
 	struct ResourceData

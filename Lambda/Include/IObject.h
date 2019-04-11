@@ -25,5 +25,4 @@ namespace Lambda
 		virtual uint32 Release() = 0;
 		virtual uint32 AddRef() = 0; 
 	};
-
 }

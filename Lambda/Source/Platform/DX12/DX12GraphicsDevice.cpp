@@ -33,6 +33,7 @@ namespace Lambda
 		m_pDSAllocator(nullptr),
 		m_pResourceAllocator(nullptr),
 		m_pSamplerAllocator(nullptr),
+		m_BackBufferFlags(0),
 		m_GPUWaitEvent(0),
 		m_NumBackbuffers(0),
 		m_CurrentBackBuffer(0),
@@ -43,6 +44,8 @@ namespace Lambda
 
 		LOG_SYSTEM_INFO("Creating DX12GraphicsDevice\n");
 		
+		//TODO: Allow tearing?
+		m_BackBufferFlags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 		m_BackBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 		m_NumBackbuffers = 3;
 
@@ -522,7 +525,6 @@ namespace Lambda
 		desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 		desc.SampleDesc.Count = 1;
 		desc.SampleDesc.Quality = 0;
-		//TODO: Tearing?
 		desc.Flags = 0;
 
 		HWND hWnd = (HWND)pWindow->GetNativeHandle();
@@ -572,7 +574,7 @@ namespace Lambda
 	{
 		//Create descriptor-allocator
 		m_pRTAllocator =			DBG_NEW DX12DescriptorAllocator(m_Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 32, false);
-		m_pDSAllocator =			DBG_NEW DX12DescriptorAllocator(m_Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 16, false);
+		m_pDSAllocator =			DBG_NEW DX12DescriptorAllocator(m_Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1024, false);
 		m_pResourceAllocator =		DBG_NEW DX12DescriptorAllocator(m_Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 128, false);
 		m_pSamplerAllocator =		DBG_NEW DX12DescriptorAllocator(m_Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, 128, false);
 
@@ -656,12 +658,13 @@ namespace Lambda
 
 			//Resize the swapchain on resize
 			ReleaseBackBuffers();
-
-			//TODO: Actual resize
+			HRESULT hr = m_SwapChain->ResizeBuffers(0, event.WindowResize.Width, event.WindowResize.Height, DXGI_FORMAT_UNKNOWN, m_BackBufferFlags);
+			if (FAILED(hr))
+			{
+				LOG_DEBUG_ERROR("DX12: Failed to resize window\n");
+			}
 
 			InitBackBuffers();
-
-			return true;
 		}
 
 		return false;
