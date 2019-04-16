@@ -83,7 +83,8 @@ project "Lambda"
 	
 	includedirs 
 	{ 
-		"%{prj.name}/Include"
+		"%{prj.name}/Include",
+		"Dependencies"
 	}
 
 	defines 

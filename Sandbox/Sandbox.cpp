@@ -45,31 +45,10 @@ namespace Lambda
 		}
 
 		IGraphicsDevice* pDevice = IGraphicsDevice::GetInstance();
-		//Create vertexshader
-		{
-			ShaderDesc desc = {};
-			desc.Type = SHADER_TYPE_VERTEX;
-#if defined(LAMBDA_DEBUG)
-			desc.Flags = SHADER_FLAG_COMPILE_DEBUG;
-#else
-			desc.Flags = SHADER_FLAG_NONE;
-#endif
-			desc.pEntryPoint = "VSMain";
-			pDevice->CreateShaderFromFile(&m_pVS, "Triangle.hlsl", desc);
-		}
 
-		//Create pixelshader
-		{
-			ShaderDesc desc = {};
-			desc.Type = SHADER_TYPE_PIXEL;
-#if defined(LAMBDA_DEBUG)
-			desc.Flags = SHADER_FLAG_COMPILE_DEBUG;
-#else
-			desc.Flags = SHADER_FLAG_NONE;
-#endif
-			desc.pEntryPoint = "PSMain";
-			pDevice->CreateShaderFromFile(&m_pPS, "Triangle.hlsl", desc);
-		}
+		//Create shaders
+		m_pVS = IShader::CreateShaderFromFile(pDevice, "Triangle.hlsl", "VSMain", SHADER_TYPE_VERTEX);
+		m_pPS = IShader::CreateShaderFromFile(pDevice, "Triangle.hlsl", "PSMain", SHADER_TYPE_PIXEL);
 
 		//Create pipelinestate
 		{
@@ -209,18 +188,22 @@ namespace Lambda
 
 		//Set constantbuffers
 		static Random random;
-		static Vec4f colorBuff = random.GenerateVector4();
-		static float timer = 0.0f;
+		static Vec4f colorBuff	= random.GenerateVector4();
+		static Vec4f beginBuff	= random.GenerateVector4();
+		static Vec4f endBuff	= random.GenerateVector4();
+		static float timer		= 0.0f;
 		timer += dt.AsSeconds();
 
+		//Lerp color
+		colorBuff = Store(Lerp(timer, Load(beginBuff), Load(endBuff)));
 		if (timer >= 1.0f)
 		{
-			colorBuff = random.GenerateVector4();
-			timer = 0.0f;
-
-			LOG_DEBUG_INFO("%s\n", ToString(colorBuff).c_str());
+			beginBuff = endBuff;
+			endBuff = random.GenerateVector4();
+			timer = 0.0f;	
 		}
 
+		//Update data
 		ResourceData data = {};
 		data.pData = &colorBuff;
 		data.SizeInBytes = sizeof(Vec4f);
@@ -260,6 +243,7 @@ namespace Lambda
 		SafeRelease(m_pPipelineState);
 		SafeRelease(m_pVertexBuffer);
 		SafeRelease(m_pColorBuffer);
+		SafeRelease(m_pCameraBuffer);
 		SafeRelease(m_pDepthBuffer);
 	}
 

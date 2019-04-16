@@ -29,6 +29,7 @@ namespace Lambda
 		const char* pSource = nullptr;
 	};
 
+	class IGraphicsDevice;
 
 	class LAMBDA_API IShader : public IObject
 	{
@@ -39,5 +40,8 @@ namespace Lambda
 		~IShader() = default;
 
 		virtual ShaderType GetType() const = 0;
+
+	public:
+		static IShader* CreateShaderFromFile(const IGraphicsDevice* pDevice, const char* pFilename, const char* pEntryPoint, ShaderType type);
 	};
 }

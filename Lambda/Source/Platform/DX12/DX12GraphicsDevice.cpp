@@ -157,31 +157,6 @@ namespace Lambda
 	}
 
 
-	void DX12GraphicsDevice::CreateShaderFromFile(IShader** ppShader, const char* pFilename, const ShaderDesc& desc) const
-	{
-		ShaderDesc tempDesc = desc;
-		
-		std::ifstream file(pFilename, std::ios::in);
-		std::string source;
-
-		if (file.is_open())
-		{
-			std::stringstream buf;
-			buf << file.rdbuf();
-			source = buf.str();
-			file.close();
-		}
-		else
-		{
-			LOG_DEBUG_ERROR("DX12: Failed to read shaderfile '%s'\n", pFilename);
-			return;
-		}
-		
-		tempDesc.pSource = source.c_str();
-		CreateShader(ppShader, tempDesc);
-	}
-
-
 	void DX12GraphicsDevice::CreateGraphicsPipelineState(IGraphicsPipelineState** ppPSO, const GraphicsPipelineStateDesc& desc) const
 	{
 		(*ppPSO) = DBG_NEW DX12GraphicsPipelineState(m_Device.Get(), desc);

@@ -35,7 +35,6 @@ namespace Lambda
 		virtual void CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) const = 0;
 		virtual void CreateTexture2D(ITexture2D** ppTexture, const ResourceData* pInitalData, const Texture2DDesc& desc) const = 0;
 		virtual void CreateShader(IShader** ppShader, const ShaderDesc& desc) const = 0;
-		virtual void CreateShaderFromFile(IShader** ppShader, const char* pFilename, const ShaderDesc& desc) const = 0;
 		virtual void CreateGraphicsPipelineState(IGraphicsPipelineState** ppPSO, const GraphicsPipelineStateDesc& desc) const = 0;
 
 		virtual void ExecuteCommandList(ICommandList* const * ppLists, uint32 numLists) const = 0;
