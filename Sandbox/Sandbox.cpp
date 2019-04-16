@@ -134,6 +134,10 @@ namespace Lambda
 			pDevice->CreateTexture2D(&m_pDepthBuffer, nullptr, desc);
 		}
 
+		//Create texture
+		m_pTexture = ITexture2D::CreateTextureFromFile(pDevice, "texture.jpg", TEXTURE_FLAGS_SHADER_RESOURCE, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
+
+		//Close and execute commandlist
 		m_pCurrentList->Close();
 		pDevice->ExecuteCommandList(&m_pCurrentList, 1);
 	}
@@ -245,6 +249,7 @@ namespace Lambda
 		SafeRelease(m_pColorBuffer);
 		SafeRelease(m_pCameraBuffer);
 		SafeRelease(m_pDepthBuffer);
+		SafeRelease(m_pTexture);
 	}
 
 
@@ -262,45 +267,53 @@ namespace Lambda
 		if (event.Type == EVENT_TYPE_WINDOW_RESIZE)
 		{
 			SandBox& instance = (SandBox&)GetInstance();
-			SafeRelease(instance.m_pDepthBuffer);
-
-			Texture2DDesc desc = {};
-			desc.Usage = RESOURCE_USAGE_DEFAULT;
-			desc.Flags = TEXTURE_FLAGS_DEPTH_STENCIL;
-			desc.ArraySize = 1;
-			desc.Width = event.WindowResize.Width;
-			desc.Height = event.WindowResize.Height;
-			desc.Format = FORMAT_D24_UNORM_S8_UINT;
-			desc.SampleCount = 1;
-			desc.MipLevels = 0;
-			desc.ClearDepth = 1.0f;
-			desc.ClearStencil = 0;
-
-			//TODO: needs to release the descriptor in DX12-backend
-			IGraphicsDevice* pDevice = IGraphicsDevice::GetInstance();
-			pDevice->CreateTexture2D(&instance.m_pDepthBuffer, nullptr, desc);
-
-			LOG_DEBUG_INFO("Resized depthbuffer");
 
 			//Set size variable
 			instance.m_Width = (float)event.WindowResize.Width;
 			instance.m_Height = (float)event.WindowResize.Height;
 
-			//Update camera
-			instance.CreateCamera(event.WindowResize.Width, event.WindowResize.Height);
+			//if size is zero then do not resize
+			if (event.WindowResize.Width > 0 && event.WindowResize.Height > 0)
+			{
+				//Release depthbuffer
+				SafeRelease(instance.m_pDepthBuffer);
 
-			ResourceData data = {};
-			data.pData = &instance.m_Camera;
-			data.SizeInBytes = sizeof(CameraBuffer);
-			
-			instance.m_pCurrentList->Reset();
+				//Create depthbuffer
+				Texture2DDesc desc = {};
+				desc.Usage = RESOURCE_USAGE_DEFAULT;
+				desc.Flags = TEXTURE_FLAGS_DEPTH_STENCIL;
+				desc.ArraySize = 1;
+				desc.Width = event.WindowResize.Width;
+				desc.Height = event.WindowResize.Height;
+				desc.Format = FORMAT_D24_UNORM_S8_UINT;
+				desc.SampleCount = 1;
+				desc.MipLevels = 0;
+				desc.ClearDepth = 1.0f;
+				desc.ClearStencil = 0;
 
-			instance.m_pCurrentList->TransitionResource(instance.m_pCameraBuffer, RESOURCE_STATE_COPY_DEST);
-			instance.m_pCurrentList->UpdateBuffer(instance.m_pCameraBuffer, &data);
-			instance.m_pCurrentList->TransitionResource(instance.m_pCameraBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+				//TODO: needs to release the descriptor in DX12-backend
+				IGraphicsDevice* pDevice = IGraphicsDevice::GetInstance();
+				pDevice->CreateTexture2D(&instance.m_pDepthBuffer, nullptr, desc);
 
-			instance.m_pCurrentList->Close();
-			pDevice->ExecuteCommandList(&instance.m_pCurrentList, 1);
+				LOG_DEBUG_INFO("Resized depthbuffer");
+
+				//Update camera
+				instance.CreateCamera(event.WindowResize.Width, event.WindowResize.Height);
+
+				ResourceData data = {};
+				data.pData = &instance.m_Camera;
+				data.SizeInBytes = sizeof(CameraBuffer);
+
+				instance.m_pCurrentList->Reset();
+
+				instance.m_pCurrentList->TransitionResource(instance.m_pCameraBuffer, RESOURCE_STATE_COPY_DEST);
+				instance.m_pCurrentList->UpdateBuffer(instance.m_pCameraBuffer, &data);
+				instance.m_pCurrentList->TransitionResource(instance.m_pCameraBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+
+				//Copy new camera
+				instance.m_pCurrentList->Close();
+				pDevice->ExecuteCommandList(&instance.m_pCurrentList, 1);
+			}
 		}
 
 		return false;

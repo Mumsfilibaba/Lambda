@@ -38,6 +38,7 @@ namespace Lambda
 		IBuffer* m_pColorBuffer;
 		IBuffer* m_pCameraBuffer;
 		ITexture2D* m_pDepthBuffer;
+		ITexture2D* m_pTexture;
 		IGraphicsPipelineState* m_pPipelineState;
 		float m_Width;
 		float m_Height;

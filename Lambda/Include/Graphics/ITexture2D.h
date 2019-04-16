@@ -20,7 +20,8 @@ namespace Lambda
 
 
 	class IGraphicsDevice;
-	class ITexture2D : public IObject
+
+	class LAMBDA_API ITexture2D : public IObject
 	{
 	public:
 		LAMBDA_INTERFACE(ITexture2D);
@@ -28,7 +29,7 @@ namespace Lambda
 		ITexture2D() = default;
 		~ITexture2D() = default;
 
-	private:
+	public:
 		static ITexture2D* CreateTextureFromFile(const IGraphicsDevice* pDevice, const char* pFileName, TextureFlags flags, ResourceUsage Usage, ResourceFormat Format);
 	};
 }

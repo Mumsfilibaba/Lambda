@@ -14,11 +14,17 @@ workspace "Lambda"
 	{ 
 		"%{prj.name}/**.hpp",
 		"%{prj.name}/**.h",
+		"%{prj.name}/**.inl",
 		"%{prj.name}/**.cpp",
 		"%{prj.name}/**.c",
 		"%{prj.name}/**.hlsl"
 	}
 	
+	excludes 
+	{	
+		"**.hlsl"
+	}
+
 	filter "action:vs*"
 		defines
 		{

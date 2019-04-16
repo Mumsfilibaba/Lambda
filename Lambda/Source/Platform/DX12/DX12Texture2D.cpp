@@ -85,6 +85,7 @@ namespace Lambda
 			DXGI_FORMAT format = ConvertFormat(desc.Format);
 
 			//Optimized clearvalue
+			D3D12_CLEAR_VALUE* pClearValue = nullptr;
 			D3D12_CLEAR_VALUE clearValue = {};
 			clearValue.Format = format;
 			clearValue.Color[0] = desc.ClearColor[0];
@@ -94,9 +95,15 @@ namespace Lambda
 			clearValue.DepthStencil.Depth = desc.ClearDepth;
 			clearValue.DepthStencil.Stencil = desc.ClearStencil;
 
+			//only if we support rendertargets or depthstencil
+			if (flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET || flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL)
+			{
+				pClearValue = &clearValue;
+			}
+
 			//Create resource
 			CD3DX12_RESOURCE_DESC rDesc = CD3DX12_RESOURCE_DESC::Tex2D(format, desc.Width, desc.Height, (UINT16)desc.ArraySize, (UINT16)desc.MipLevels, (UINT16)desc.SampleCount, 0, flags);
-			HRESULT hr = pDevice->CreateCommittedResource(&heapProp, D3D12_HEAP_FLAG_NONE, &rDesc, state, &clearValue, IID_PPV_ARGS(&m_Texture));
+			HRESULT hr = pDevice->CreateCommittedResource(&heapProp, D3D12_HEAP_FLAG_NONE, &rDesc, state, pClearValue, IID_PPV_ARGS(&m_Texture));
 			if (FAILED(hr))
 			{
 				LOG_DEBUG_ERROR("DX12: Failed to create Texture2D.\n");

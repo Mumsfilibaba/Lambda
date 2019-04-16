@@ -83,34 +83,42 @@ namespace Lambda
 
 	void DX12GraphicsDevice::CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) const
 	{
-		DX12Buffer* pBuffer = nullptr;
-		//Create a dynamic resource, or default if there is no inital data
-		if (desc.Usage == RESOURCE_USAGE_DYNAMIC || pInitalData == nullptr)
+		//Create resource
+		DX12Buffer* pBuffer = DBG_NEW DX12Buffer(m_Device.Get(), desc);
+
+		//Set initaldata if there are any
+		if (pInitalData != nullptr)
 		{
-			pBuffer = DBG_NEW DX12Buffer(m_Device.Get(), desc);
+			if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
+			{
+				//Set initial data
+				if (pInitalData != nullptr)
+				{
+					void* pCPU = nullptr;
+					pBuffer->Map(&pCPU);
+					memcpy(pCPU, pInitalData->pData, pInitalData->SizeInBytes);
+					pBuffer->Unmap();
+				}
+			}
+			else if(desc.Usage == RESOURCE_USAGE_DEFAULT)
+			{
+				//Copy data
+				m_pCommandList->TransitionResource(pBuffer, RESOURCE_STATE_COPY_DEST);
+				m_pCommandList->UpdateBuffer(pBuffer, pInitalData);
+				m_pCommandList->TransitionResource(pBuffer, RESOURCE_STATE_PRESENT_COMMON);
+
+				//Execute and wait for GPU before creating
+				m_pCommandList->Close();
+
+				ICommandList* pList = m_pCommandList;
+				ExecuteCommandList(&pList, 1);
+
+				WaitForGPU();
+				m_pCommandList->Reset();
+			}
 		}
-		//Create a normal resource
-		else if(desc.Usage == RESOURCE_USAGE_DEFAULT)
-		{
-			//Create actual buffer
-			pBuffer = DBG_NEW DX12Buffer(m_Device.Get(), desc);
 
-			//Copy data
-			m_pCommandList->TransitionResource(pBuffer, RESOURCE_STATE_COPY_DEST);
-			m_pCommandList->UpdateBuffer(pBuffer, pInitalData);
-			m_pCommandList->TransitionResource(pBuffer, RESOURCE_STATE_PRESENT_COMMON);
-
-			//Execute and wait for GPU before creating
-			m_pCommandList->Close();
-
-			ICommandList* pList = m_pCommandList;
-			ExecuteCommandList(&pList, 1);
-
-			WaitForGPU();
-			m_pCommandList->Reset();
-		}
-
-		//Create constantbuffer
+		//Create constantbufferview
 		if (desc.Flags & BUFFER_FLAGS_CONSTANT_BUFFER)
 		{
 			//Allocate and set descriptor
@@ -130,7 +138,28 @@ namespace Lambda
 
 	void DX12GraphicsDevice::CreateTexture2D(ITexture2D** ppTexture, const ResourceData* pInitalData, const Texture2DDesc& desc) const
 	{
+		//Create resource
 		DX12Texture2D* pTexture = DBG_NEW DX12Texture2D(m_Device.Get(), desc);
+		
+		//Set initaldata if there are any
+		if (pInitalData != nullptr)
+		{
+			if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
+			{
+				//Set initial data
+				if (pInitalData != nullptr)
+				{
+					void* pCPU = nullptr;
+					//pTexture->Map(&pCPU);
+					memcpy(pCPU, pInitalData->pData, pInitalData->SizeInBytes);
+					//pTexture->Unmap();
+				}
+			}
+			else if (desc.Usage == RESOURCE_USAGE_DEFAULT)
+			{
+			}
+		}
+		
 		//DepthStencil
 		if (desc.Flags & TEXTURE_FLAGS_DEPTH_STENCIL)
 		{
@@ -626,20 +655,24 @@ namespace Lambda
 	{
 		if (event.Type == EVENT_TYPE_WINDOW_RESIZE)
 		{
-			//Make sure frames are finished
-			WaitForGPU();
-
-			LOG_SYSTEM_INFO("Resize - w: %d, h: %d\n", event.WindowResize.Width, event.WindowResize.Height);
-
-			//Resize the swapchain on resize
-			ReleaseBackBuffers();
-			HRESULT hr = m_SwapChain->ResizeBuffers(0, event.WindowResize.Width, event.WindowResize.Height, DXGI_FORMAT_UNKNOWN, m_BackBufferFlags);
-			if (FAILED(hr))
+			//if size is zero then do not resize
+			if (event.WindowResize.Width > 0 && event.WindowResize.Height > 0)
 			{
-				LOG_DEBUG_ERROR("DX12: Failed to resize window\n");
-			}
+				//Make sure frames are finished
+				WaitForGPU();
 
-			InitBackBuffers();
+				LOG_SYSTEM_INFO("Resize - w: %d, h: %d\n", event.WindowResize.Width, event.WindowResize.Height);
+
+				//Resize the swapchain on resize
+				ReleaseBackBuffers();
+				HRESULT hr = m_SwapChain->ResizeBuffers(0, event.WindowResize.Width, event.WindowResize.Height, DXGI_FORMAT_UNKNOWN, m_BackBufferFlags);
+				if (FAILED(hr))
+				{
+					LOG_DEBUG_ERROR("DX12: Failed to resize window\n");
+				}
+
+				InitBackBuffers();
+			}
 		}
 
 		return false;

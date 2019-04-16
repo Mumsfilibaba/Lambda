@@ -19,7 +19,10 @@ namespace Lambda
 
 
 	DX12CommandList::DX12CommandList(ID3D12Device5* pDevice, CommandListType type)
-		: m_References(0)
+		: m_pBufferAllocator(nullptr),
+		m_pTextureAllocator(nullptr),
+		m_pResourceAllocator(nullptr),
+		m_References(0)
 	{
 		assert(pDevice != nullptr);
 
@@ -31,6 +34,7 @@ namespace Lambda
 	DX12CommandList::~DX12CommandList()
 	{
 		SafeDelete(m_pBufferAllocator);
+		SafeDelete(m_pTextureAllocator);
 		SafeDelete(m_pResourceAllocator);
 	}
 
@@ -131,8 +135,8 @@ namespace Lambda
 
 	void DX12CommandList::TransitionResource(ITexture2D* pResource, ResourceState resourceState)
 	{
-		DX12Buffer* pBuffer = reinterpret_cast<DX12Buffer*>(pResource);
-		m_ResourceTracker.TransitionResource(pBuffer->GetResource(), D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, ConvertResourceState(resourceState));
+		DX12Texture2D* pTexture = reinterpret_cast<DX12Texture2D*>(pResource);
+		m_ResourceTracker.TransitionResource(pTexture->GetResource(), D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, ConvertResourceState(resourceState));
 	}
 
 
@@ -337,6 +341,7 @@ namespace Lambda
 
 				//Create uploadallocators
 				m_pBufferAllocator = DBG_NEW DX12LinearAllocator(pDevice);
+				m_pTextureAllocator = DBG_NEW DX12LinearAllocator(pDevice);
 
 				//Create frame descriptor allocators
 				m_pResourceAllocator = DBG_NEW DX12LinearDescriptorAllocator(pDevice, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 256, true);

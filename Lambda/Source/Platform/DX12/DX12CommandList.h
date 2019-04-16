@@ -68,6 +68,7 @@ namespace Lambda
 		DX12ResourceStateTracker m_ResourceTracker;
 
 		DX12LinearAllocator* m_pBufferAllocator;
+		DX12LinearAllocator* m_pTextureAllocator;
 		DX12LinearDescriptorAllocator* m_pResourceAllocator;
 
 		std::vector<UINT> m_DescriptorRangeCounts;
