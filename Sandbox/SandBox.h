@@ -20,7 +20,7 @@ namespace Lambda
 	class SandBox final : public Application
 	{
 	public:
-		SandBox();
+		SandBox(const EngineParams& params = EngineParams());
 		~SandBox();
 
 		virtual void OnLoad() override final;

@@ -4,8 +4,9 @@
 
 namespace Lambda
 {
-	SandBox::SandBox()
-		: m_pCurrentList(nullptr),
+	SandBox::SandBox(const EngineParams& params)
+		: Application(params),
+		m_pCurrentList(nullptr),
 		m_pVS(nullptr),
 		m_pPS(nullptr),
 		m_pVertexBuffer(nullptr),
@@ -101,7 +102,7 @@ namespace Lambda
 
 		//Create camerabuffer
 		{
-			CreateCamera(m_Width, m_Height);
+			CreateCamera(GetWindow()->GetWidth(), GetWindow()->GetHeight());
 
 			BufferDesc desc = {};
 			desc.Usage = RESOURCE_USAGE_DEFAULT;
@@ -147,6 +148,9 @@ namespace Lambda
 		//Close and execute commandlist
 		m_pCurrentList->Close();
 		pDevice->ExecuteCommandList(&m_pCurrentList, 1);
+
+		//Wait for GPU
+		pDevice->WaitForGPU();
 	}
 
 
@@ -287,6 +291,9 @@ namespace Lambda
 			//if size is zero then do not resize
 			if (event.WindowResize.Width > 0 && event.WindowResize.Height > 0)
 			{
+				IGraphicsDevice* pDevice = IGraphicsDevice::GetInstance();
+				pDevice->WaitForGPU();
+
 				//Release depthbuffer
 				SafeRelease(instance.m_pDepthBuffer);
 
@@ -304,7 +311,6 @@ namespace Lambda
 				desc.ClearStencil = 0;
 
 				//TODO: needs to release the descriptor in DX12-backend
-				IGraphicsDevice* pDevice = IGraphicsDevice::GetInstance();
 				pDevice->CreateTexture2D(&instance.m_pDepthBuffer, nullptr, desc);
 
 				LOG_DEBUG_INFO("Resized depthbuffer");
@@ -325,6 +331,8 @@ namespace Lambda
 				//Copy new camera
 				instance.m_pCurrentList->Close();
 				pDevice->ExecuteCommandList(&instance.m_pCurrentList, 1);
+
+				pDevice->WaitForGPU();
 			}
 		}
 

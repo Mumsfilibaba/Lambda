@@ -5,10 +5,19 @@
 
 namespace Lambda
 {
+	struct EngineParams
+	{
+		const char* pTitle = nullptr;
+		uint32 WindowWidth = 1920;
+		uint32 WindowHeight = 1080;
+		bool Fullscreen = false;
+	};
+
+
 	class LAMBDA_API Application
 	{
 	public:
-		Application();
+		Application(const EngineParams& params);
 		~Application();
 
 		virtual void OnLoad() {}
@@ -22,7 +31,7 @@ namespace Lambda
 		IWindow* GetWindow();
 
 	private:
-		void Init();
+		void Init(const EngineParams& params);
 		void Quit(int32 exitCode = 0);
 		void InternalOnLoad();
 		void InternalOnUpdate(Time dt);

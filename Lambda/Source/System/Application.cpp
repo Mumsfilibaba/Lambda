@@ -9,7 +9,7 @@ namespace Lambda
 {
 	Application* Application::s_pInstance = nullptr;
 
-	Application::Application()
+	Application::Application(const EngineParams& params)
 		: m_pWindow(nullptr),
 		m_pGraphicsContext(nullptr),
 		m_Running(true)
@@ -17,12 +17,14 @@ namespace Lambda
 		assert(s_pInstance == nullptr);
 		s_pInstance = this;
 
-		Init();
+		Init(params);
 	}
+
 
 	Application::~Application()
 	{
 	}
+
 
 	int32 Application::Run()
 	{
@@ -40,12 +42,14 @@ namespace Lambda
 		return m_ExitCode;
 	}
 
+
 	IWindow* Application::GetWindow()
 	{
 		return m_pWindow;
 	}
 
-	void Application::Init()
+
+	void Application::Init(const EngineParams& params)
 	{
 		//Setup application layer
 		{
@@ -56,9 +60,9 @@ namespace Lambda
 		//Create window
 		{
 			WindowDesc desc = {};
-			desc.pTitle = "Lambda Engine";
-			desc.Width = 1920;
-			desc.Height = 1080;
+			desc.pTitle		= params.pTitle;
+			desc.Width		= params.WindowWidth;
+			desc.Height		= params.WindowHeight;
 
 			m_pWindow = IWindow::Create(desc);
 			m_pWindow->SetEventCallback(EventDispatcher::SendEvent);
@@ -77,11 +81,13 @@ namespace Lambda
 		}
 	}
 
+
 	void Application::Quit(int32 exitCode)
 	{
 		m_Running = false;
 		m_ExitCode = exitCode;
 	}
+
 
 	Application& Application::GetInstance()
 	{
@@ -89,11 +95,13 @@ namespace Lambda
 		return *s_pInstance;
 	}
 	
+
 	void Application::InternalOnLoad()
 	{
 		OnLoad();
 	}
 	
+
 	void Application::InternalOnUpdate(Time dt)
 	{
 		m_pWindow->OnUpdate();
@@ -108,10 +116,12 @@ namespace Lambda
 		OnUpdate(dt);
 	}
 
+
 	void Application::InternalOnRender(Time dt)
 	{
 		OnRender(dt);
 	}
+
 
 	void Application::InternalOnRelease()
 	{
@@ -120,6 +130,7 @@ namespace Lambda
 		SafeDelete(m_pWindow);
 		SafeRelease(m_pGraphicsContext);
 	}
+
 
 	bool Application::OnEvent(const Event& event)
 	{
