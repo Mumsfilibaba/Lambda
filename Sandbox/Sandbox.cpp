@@ -136,6 +136,13 @@ namespace Lambda
 
 		//Create texture
 		m_pTexture = ITexture2D::CreateTextureFromFile(pDevice, "texture.jpg", TEXTURE_FLAGS_SHADER_RESOURCE, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
+		m_pCurrentList->TransitionResource(m_pTexture, RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
+		//Create samplerstate
+		{
+			SamplerDesc desc = {};
+			pDevice->CreateSamplerState(&m_pSampler, desc);
+		}
 
 		//Close and execute commandlist
 		m_pCurrentList->Close();
@@ -219,6 +226,10 @@ namespace Lambda
 		m_pCurrentList->VSSetConstantBuffers(&m_pCameraBuffer, 1, 0);
 		m_pCurrentList->PSSetConstantBuffers(&m_pColorBuffer, 1, 0);
 
+		//Set texture and samplers
+		m_pCurrentList->PSSetTextures(&m_pTexture, 1, 0);
+		m_pCurrentList->PSSetSamplers(&m_pSampler, 1, 0);
+
 		//Set vertexbuffer
 		m_pCurrentList->SetVertexBuffer(m_pVertexBuffer, 0);
 		m_pCurrentList->DrawInstanced(3, 1, 0, 0);
@@ -250,6 +261,7 @@ namespace Lambda
 		SafeRelease(m_pCameraBuffer);
 		SafeRelease(m_pDepthBuffer);
 		SafeRelease(m_pTexture);
+		SafeRelease(m_pSampler);
 	}
 
 

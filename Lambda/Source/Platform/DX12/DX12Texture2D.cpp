@@ -7,7 +7,6 @@ namespace Lambda
 {
 	DX12Texture2D::DX12Texture2D(ID3D12Resource* pResource)
 		: m_Texture(nullptr),
-		m_Adress(0),
 		m_References(0)
 	{
 		//Init Desc
@@ -21,7 +20,6 @@ namespace Lambda
 
 	DX12Texture2D::DX12Texture2D(ID3D12Device5* pDevice, const Texture2DDesc& desc)
 		: m_Texture(nullptr),
-		m_Adress(0),
 		m_References(0)
 	{
 		assert(pDevice != nullptr);
@@ -38,7 +36,13 @@ namespace Lambda
 	DX12Texture2D::~DX12Texture2D()
 	{
 	}
-	
+
+
+	Texture2DDesc DX12Texture2D::GetDesc() const
+	{
+		return m_Desc;
+	}
+
 
 	uint32 DX12Texture2D::Release()
 	{
@@ -56,21 +60,16 @@ namespace Lambda
 	{
 		//Create texture2d resource
 		{
-			//Chose heap
+			//Choose heap
 			CD3DX12_HEAP_PROPERTIES heapProp;
 			D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COMMON;
 
+			//We want a default heap
 			if (desc.Usage == RESOURCE_USAGE_DEFAULT)
 			{
-				//We want a default heap
 				heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 			}
-			else if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
-			{
-				//We want a uploadheap
-				heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-				state = D3D12_RESOURCE_STATE_GENERIC_READ;
-			}
+
 
 			//Set flags
 			D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE;
@@ -80,6 +79,7 @@ namespace Lambda
 				flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 			if (!(desc.Flags & TEXTURE_FLAGS_SHADER_RESOURCE))
 				flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
+
 
 			//Get format
 			DXGI_FORMAT format = ConvertFormat(desc.Format);
@@ -101,6 +101,7 @@ namespace Lambda
 				pClearValue = &clearValue;
 			}
 
+
 			//Create resource
 			CD3DX12_RESOURCE_DESC rDesc = CD3DX12_RESOURCE_DESC::Tex2D(format, desc.Width, desc.Height, (UINT16)desc.ArraySize, (UINT16)desc.MipLevels, (UINT16)desc.SampleCount, 0, flags);
 			HRESULT hr = pDevice->CreateCommittedResource(&heapProp, D3D12_HEAP_FLAG_NONE, &rDesc, state, pClearValue, IID_PPV_ARGS(&m_Texture));
@@ -114,8 +115,6 @@ namespace Lambda
 				LOG_DEBUG_INFO("DX12: Created Texture2D.\n");
 				
 				m_Desc = desc;
-				if (desc.Flags & TEXTURE_FLAGS_SHADER_RESOURCE)
-					m_Adress = m_Texture->GetGPUVirtualAddress();
 			}
 		}
 	}

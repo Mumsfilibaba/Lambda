@@ -30,13 +30,28 @@ namespace Lambda
 		virtual void TransitionResource(IBuffer* pResource, ResourceState resourceState) override final;
 		virtual void TransitionResource(ITexture2D* pResource, ResourceState resourceState) override final;
 
-		virtual void VSSetConstantBuffers(const IBuffer* const * ppBuffers, uint32 numBuffers, uint32 startSlot) override final;
-		virtual void HSSetConstantBuffers(const IBuffer* const * ppBuffers, uint32 numBuffers, uint32 startSlot) override final;
-		virtual void DSSetConstantBuffers(const IBuffer* const * ppBuffers, uint32 numBuffers, uint32 startSlot) override final;
-		virtual void GSSetConstantBuffers(const IBuffer* const * ppBuffers, uint32 numBuffers, uint32 startSlot) override final;
-		virtual void PSSetConstantBuffers(const IBuffer* const * ppBuffers, uint32 numBuffers, uint32 startSlot) override final;
+		virtual void VSSetConstantBuffers(const IBuffer* const* ppBuffers, uint32 numBuffers, uint32 startSlot) override final;
+		virtual void VSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot) override final;
+		virtual void VSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot) override final;
+
+		virtual void HSSetConstantBuffers(const IBuffer* const* ppBuffers, uint32 numBuffers, uint32 startSlot) override final;
+		virtual void HSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot) override final;
+		virtual void HSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot) override final;
+
+		virtual void DSSetConstantBuffers(const IBuffer* const* ppBuffers, uint32 numBuffers, uint32 startSlot) override final;
+		virtual void DSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot) override final;
+		virtual void DSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot) override final;
+
+		virtual void GSSetConstantBuffers(const IBuffer* const* ppBuffers, uint32 numBuffers, uint32 startSlot) override final;
+		virtual void GSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot) override final;
+		virtual void GSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot) override final;
+
+		virtual void PSSetConstantBuffers(const IBuffer* const* ppBuffers, uint32 numBuffers, uint32 startSlot) override final;
+		virtual void PSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot) override final;
+		virtual void PSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot) override final;
 
 		virtual void UpdateBuffer(IBuffer* pResource, const ResourceData* pData) override final;
+		virtual void UpdateTexture(ITexture2D* pResource, const ResourceData* pData, uint32 subresource) override final;
 
 		virtual void CopyBuffer(IBuffer* pDst, IBuffer* pSrc) override final;
 
@@ -51,6 +66,8 @@ namespace Lambda
 	private:
 		void Init(ID3D12Device5* pDevice, CommandListType type);
 		void InternalCopyAndSetDescriptors();
+		void InternalSetResourceDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE hDest, D3D12_CPU_DESCRIPTOR_HANDLE hSrc, uint32 slot, uint32 range);
+		void InternalSetSamplerDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE hDest, D3D12_CPU_DESCRIPTOR_HANDLE hSrc, uint32 slot);
 
 		ID3D12CommandList* GetList() const;
 
@@ -59,24 +76,28 @@ namespace Lambda
 		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_Allocator;
 		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> m_List;
 		
-		DX12DescriptorHandle m_hVSDescriptorStart;
-		DX12DescriptorHandle m_hHSDescriptorStart;
-		DX12DescriptorHandle m_hDSDescriptorStart;
-		DX12DescriptorHandle m_hGSDescriptorStart;
-		DX12DescriptorHandle m_hPSDescriptorStart;
+		DX12DescriptorHandle m_hResourceDescriptorStarts[5];
+		DX12DescriptorHandle m_hSamplerDescriptorStarts[5];
 
 		DX12ResourceStateTracker m_ResourceTracker;
 
 		DX12LinearAllocator* m_pBufferAllocator;
 		DX12LinearAllocator* m_pTextureAllocator;
 		DX12LinearDescriptorAllocator* m_pResourceAllocator;
+		DX12LinearDescriptorAllocator* m_pSamplerAllocator;
 
 		std::vector<UINT> m_DescriptorRangeCounts;
 		std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> m_SrcDescriptorRanges;
 		std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> m_DstDescriptorRanges;
+		std::vector<UINT> m_SamplerDescriptorRangeCounts;
+		std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> m_SamplerSrcDescriptorRanges;
+		std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> m_SamplerDstDescriptorRanges;
 		
+		uint32 m_SamplerDescriptorSize;
+		uint32 m_ResourceDescriptorSize;
 		uint32 m_References;
 	};
+
 
 	inline ID3D12CommandList* DX12CommandList::GetList() const
 	{

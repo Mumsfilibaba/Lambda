@@ -45,6 +45,10 @@
 	#pragma warning(error : 4456) //Redefinition is an error
 	#pragma warning(error : 4005) //Redefinition is an error
 	#pragma warning(disable : 4201) //Anonomys unions and structs are allowed
+
+	#define DEBUG_BREAK __debugbreak
+#else
+	#define DEBUG_BREAK
 #endif
 
 #define MB(num) num * 1024 * 1024

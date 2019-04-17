@@ -50,6 +50,8 @@ namespace Lambda
 			const char* pMessage = reinterpret_cast<const char*>(error->GetBufferPointer());
 #endif
 			LOG_DEBUG_ERROR("DX12: Failed to compile shader. Error-message:\n%s", pMessage);
+			
+			DEBUG_BREAK();
 		}
 		else
 		{

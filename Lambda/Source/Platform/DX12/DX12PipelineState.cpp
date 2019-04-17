@@ -16,19 +16,23 @@ namespace Lambda
 		Init(pDevice, desc);
 	}
 
+
 	DX12GraphicsPipelineState::~DX12GraphicsPipelineState()
 	{
 	}
+
 
 	uint32 DX12GraphicsPipelineState::Release()
 	{
 		IOBJECT_IMPLEMENT_RELEASE(m_References);
 	}
 
+
 	uint32 DX12GraphicsPipelineState::AddRef()
 	{
 		return ++m_References;
 	}
+
 
 	void DX12GraphicsPipelineState::Init(ID3D12Device5* pDevice, const GraphicsPipelineStateDesc& desc)
 	{

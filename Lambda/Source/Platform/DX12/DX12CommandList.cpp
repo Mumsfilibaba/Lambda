@@ -4,6 +4,8 @@
 #include "DX12PipelineState.h"
 #include "DX12Buffer.h"
 #include "DX12Texture2D.h"
+#include "DX12SamplerState.h"
+#include <Utilities/TextureHelper.h>
 
 #if defined(LAMBDA_PLAT_WINDOWS)
 namespace Lambda
@@ -22,6 +24,8 @@ namespace Lambda
 		: m_pBufferAllocator(nullptr),
 		m_pTextureAllocator(nullptr),
 		m_pResourceAllocator(nullptr),
+		m_SamplerDescriptorSize(0),
+		m_ResourceDescriptorSize(0),
 		m_References(0)
 	{
 		assert(pDevice != nullptr);
@@ -36,6 +40,7 @@ namespace Lambda
 		SafeDelete(m_pBufferAllocator);
 		SafeDelete(m_pTextureAllocator);
 		SafeDelete(m_pResourceAllocator);
+		SafeDelete(m_pSamplerAllocator);
 	}
 
 
@@ -140,92 +145,137 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::VSSetConstantBuffers(const IBuffer * const * ppBuffers, uint32 numBuffers, uint32 startSlot)
+	void DX12CommandList::VSSetConstantBuffers(const IBuffer* const * ppBuffers, uint32 numBuffers, uint32 startSlot)
 	{
-		//Cache size for resources
-		uint32 size = m_pResourceAllocator->GetDescriptorSize();
 		for (uint32 i = 0; i < numBuffers; i++)
 		{
-			//Get dest descriptor for vertex shaders
-			D3D12_CPU_DESCRIPTOR_HANDLE hDest = m_hVSDescriptorStart.CPU;
-			hDest.ptr += size * (startSlot + i);
-			m_DstDescriptorRanges.push_back(hDest);
-
-			//Set src descriptor and count in range
-			m_SrcDescriptorRanges.push_back(reinterpret_cast<const DX12Buffer*>(ppBuffers[i])->GetDescriptorHandle().CPU);
-			m_DescriptorRangeCounts.push_back(1);
+			InternalSetResourceDescriptor(m_hResourceDescriptorStarts[0].CPU, reinterpret_cast<const DX12Buffer*>(ppBuffers[i])->GetDescriptorHandle().CPU, startSlot + i, 0);
 		}
 	}
 
 
-	void DX12CommandList::HSSetConstantBuffers(const IBuffer * const * ppBuffers, uint32 numBuffers, uint32 startSlot)
+	void DX12CommandList::VSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot)
 	{
-		//Cache size for resources
-		uint32 size = m_pResourceAllocator->GetDescriptorSize();
-		for (uint32 i = 0; i < numBuffers; i++)
+		for (uint32 i = 0; i < numTextures; i++)
 		{
-			//Get dest descriptor for hull shaders
-			D3D12_CPU_DESCRIPTOR_HANDLE hDest = m_hHSDescriptorStart.CPU;
-			hDest.ptr += size * (startSlot + i);
-			m_DstDescriptorRanges.push_back(hDest);
-
-			//Set src descriptor and count in range
-			m_SrcDescriptorRanges.push_back(reinterpret_cast<const DX12Buffer*>(ppBuffers[i])->GetDescriptorHandle().CPU);
-			m_DescriptorRangeCounts.push_back(1);
+			InternalSetResourceDescriptor(m_hResourceDescriptorStarts[0].CPU, reinterpret_cast<const DX12Texture2D*>(ppTextures[i])->GetDescriptorHandle().CPU, startSlot + i, 1);
 		}
 	}
 
 
-	void DX12CommandList::DSSetConstantBuffers(const IBuffer * const * ppBuffers, uint32 numBuffers, uint32 startSlot)
+	void DX12CommandList::VSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot)
 	{
-		//Cache size for resources
-		uint32 size = m_pResourceAllocator->GetDescriptorSize();
-		for (uint32 i = 0; i < numBuffers; i++)
+		for (uint32 i = 0; i < numSamplers; i++)
 		{
-			//Get dest descriptor for domain shaders
-			D3D12_CPU_DESCRIPTOR_HANDLE hDest = m_hDSDescriptorStart.CPU;
-			hDest.ptr += size * (startSlot + i);
-			m_DstDescriptorRanges.push_back(hDest);
-
-			//Set src descriptor and count in range
-			m_SrcDescriptorRanges.push_back(reinterpret_cast<const DX12Buffer*>(ppBuffers[i])->GetDescriptorHandle().CPU);
-			m_DescriptorRangeCounts.push_back(1);
+			InternalSetSamplerDescriptor(m_hSamplerDescriptorStarts[0].CPU, reinterpret_cast<const DX12SamplerState*>(ppSamplerStates[i])->GetDescriptorHandle(), startSlot + i);
 		}
 	}
 
 
-	void DX12CommandList::GSSetConstantBuffers(const IBuffer * const * ppBuffers, uint32 numBuffers, uint32 startSlot)
+	void DX12CommandList::HSSetConstantBuffers(const IBuffer* const * ppBuffers, uint32 numBuffers, uint32 startSlot)
 	{
-		//Cache size for resources
-		uint32 size = m_pResourceAllocator->GetDescriptorSize();
 		for (uint32 i = 0; i < numBuffers; i++)
 		{
-			//Get dest descriptor for geometry shaders
-			D3D12_CPU_DESCRIPTOR_HANDLE hDest = m_hGSDescriptorStart.CPU;
-			hDest.ptr += size * (startSlot + i);
-			m_DstDescriptorRanges.push_back(hDest);
-
-			//Set src descriptor and count in range
-			m_SrcDescriptorRanges.push_back(reinterpret_cast<const DX12Buffer*>(ppBuffers[i])->GetDescriptorHandle().CPU);
-			m_DescriptorRangeCounts.push_back(1);
+			InternalSetResourceDescriptor(m_hResourceDescriptorStarts[1].CPU, reinterpret_cast<const DX12Buffer*>(ppBuffers[i])->GetDescriptorHandle().CPU, startSlot + i, 0);
 		}
 	}
 
 
-	void DX12CommandList::PSSetConstantBuffers(const IBuffer * const * ppBuffers, uint32 numBuffers, uint32 startSlot)
+	void DX12CommandList::HSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot)
 	{
-		//Cache size for resources
-		uint32 size = m_pResourceAllocator->GetDescriptorSize();
+		for (uint32 i = 0; i < numTextures; i++)
+		{
+			InternalSetResourceDescriptor(m_hResourceDescriptorStarts[1].CPU, reinterpret_cast<const DX12Texture2D*>(ppTextures[i])->GetDescriptorHandle().CPU, startSlot + i, 1);
+		}
+	}
+
+
+	void DX12CommandList::HSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot)
+	{
+		for (uint32 i = 0; i < numSamplers; i++)
+		{
+			InternalSetSamplerDescriptor(m_hSamplerDescriptorStarts[1].CPU, reinterpret_cast<const DX12SamplerState*>(ppSamplerStates[i])->GetDescriptorHandle(), startSlot + i);
+		}
+	}
+
+
+	void DX12CommandList::DSSetConstantBuffers(const IBuffer* const * ppBuffers, uint32 numBuffers, uint32 startSlot)
+	{
 		for (uint32 i = 0; i < numBuffers; i++)
 		{
-			//Get dest descriptor for pixel shaders
-			D3D12_CPU_DESCRIPTOR_HANDLE hDest = m_hPSDescriptorStart.CPU;
-			hDest.ptr += size * (startSlot + i);
-			m_DstDescriptorRanges.push_back(hDest);
+			InternalSetResourceDescriptor(m_hResourceDescriptorStarts[2].CPU, reinterpret_cast<const DX12Buffer*>(ppBuffers[i])->GetDescriptorHandle().CPU, startSlot + i, 0);
+		}
+	}
 
-			//Set src descriptor and count in range
-			m_SrcDescriptorRanges.push_back(reinterpret_cast<const DX12Buffer*>(ppBuffers[i])->GetDescriptorHandle().CPU);
-			m_DescriptorRangeCounts.push_back(1);
+
+	void DX12CommandList::DSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot)
+	{
+		for (uint32 i = 0; i < numTextures; i++)
+		{
+			InternalSetResourceDescriptor(m_hResourceDescriptorStarts[2].CPU, reinterpret_cast<const DX12Texture2D*>(ppTextures[i])->GetDescriptorHandle().CPU, startSlot + i, 1);
+		}
+	}
+
+
+	void DX12CommandList::DSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot)
+	{
+		for (uint32 i = 0; i < numSamplers; i++)
+		{
+			InternalSetSamplerDescriptor(m_hSamplerDescriptorStarts[2].CPU, reinterpret_cast<const DX12SamplerState*>(ppSamplerStates[i])->GetDescriptorHandle(), startSlot + i);
+		}
+	}
+
+
+	void DX12CommandList::GSSetConstantBuffers(const IBuffer* const * ppBuffers, uint32 numBuffers, uint32 startSlot)
+	{
+		for (uint32 i = 0; i < numBuffers; i++)
+		{
+			InternalSetResourceDescriptor(m_hResourceDescriptorStarts[3].CPU, reinterpret_cast<const DX12Buffer*>(ppBuffers[i])->GetDescriptorHandle().CPU, startSlot + i, 0);
+		}
+	}
+
+
+	void DX12CommandList::GSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot)
+	{
+		for (uint32 i = 0; i < numTextures; i++)
+		{
+			InternalSetResourceDescriptor(m_hResourceDescriptorStarts[3].CPU, reinterpret_cast<const DX12Texture2D*>(ppTextures[i])->GetDescriptorHandle().CPU, startSlot + i, 1);
+		}
+	}
+
+
+	void DX12CommandList::GSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot)
+	{
+		for (uint32 i = 0; i < numSamplers; i++)
+		{
+			InternalSetSamplerDescriptor(m_hSamplerDescriptorStarts[3].CPU, reinterpret_cast<const DX12SamplerState*>(ppSamplerStates[i])->GetDescriptorHandle(), startSlot + i);
+		}
+	}
+
+
+	void DX12CommandList::PSSetConstantBuffers(const IBuffer* const * ppBuffers, uint32 numBuffers, uint32 startSlot)
+	{
+		for (uint32 i = 0; i < numBuffers; i++)
+		{
+			InternalSetResourceDescriptor(m_hResourceDescriptorStarts[4].CPU, reinterpret_cast<const DX12Buffer*>(ppBuffers[i])->GetDescriptorHandle().CPU, startSlot + i, 0);
+		}
+	}
+
+
+	void DX12CommandList::PSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot)
+	{
+		for (uint32 i = 0; i < numTextures; i++)
+		{
+			InternalSetResourceDescriptor(m_hResourceDescriptorStarts[4].CPU, reinterpret_cast<const DX12Texture2D*>(ppTextures[i])->GetDescriptorHandle().CPU, startSlot + i, 1);
+		}
+	}
+
+
+	void DX12CommandList::PSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot)
+	{
+		for (uint32 i = 0; i < numSamplers; i++)
+		{
+			InternalSetSamplerDescriptor(m_hSamplerDescriptorStarts[4].CPU, reinterpret_cast<const DX12SamplerState*>(ppSamplerStates[i])->GetDescriptorHandle(), startSlot + i);
 		}
 	}
 
@@ -234,9 +284,52 @@ namespace Lambda
 	{
 		m_ResourceTracker.FlushBarriers(m_List.Get());
 
+		//Upload bufferdata to GPU
 		DX12Allocation allocation = m_pBufferAllocator->Allocate(pData->SizeInBytes, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
 		memcpy(allocation.pCPU, pData->pData, pData->SizeInBytes);
+		
+		//Perform GPU copy
 		m_List->CopyBufferRegion(reinterpret_cast<DX12Buffer*>(pResource)->GetResource(), 0, allocation.pPageResource, allocation.Offset, pData->SizeInBytes);
+	}
+
+
+	void DX12CommandList::UpdateTexture(ITexture2D* pResource, const ResourceData* pData, uint32 subresource)
+	{
+		m_ResourceTracker.FlushBarriers(m_List.Get());
+
+		//Upload texturedata to GPU
+		DX12Allocation allocation = m_pTextureAllocator->Allocate(pData->SizeInBytes, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
+		memcpy(allocation.pCPU, pData->pData, pData->SizeInBytes);
+		
+		//Setup texture copy info
+		DX12Texture2D* pDX12Texture = reinterpret_cast<DX12Texture2D*>(pResource);
+		Texture2DDesc desc = pDX12Texture->GetDesc();
+
+		//Setup dst
+		D3D12_TEXTURE_COPY_LOCATION dst = {};
+		dst.pResource = pDX12Texture->GetResource();
+		dst.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+		dst.SubresourceIndex = subresource;
+
+		//Setup src
+		D3D12_SUBRESOURCE_FOOTPRINT srcPitchedDesc = { };
+		srcPitchedDesc.Format = ConvertFormat(desc.Format);
+		srcPitchedDesc.Width = desc.Width;
+		srcPitchedDesc.Height = desc.Height;
+		srcPitchedDesc.Depth = 1;
+		srcPitchedDesc.RowPitch = Math::AlignUp(srcPitchedDesc.Width * StrideInBytesFromResourceFormat(desc.Format), D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
+
+		D3D12_PLACED_SUBRESOURCE_FOOTPRINT placedTexture2D = { 0 };
+		placedTexture2D.Offset = allocation.Offset;
+		placedTexture2D.Footprint = srcPitchedDesc;
+
+		D3D12_TEXTURE_COPY_LOCATION src = {};
+		src.pResource = allocation.pPageResource;
+		src.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+		src.PlacedFootprint = placedTexture2D;
+		
+		//Perform GPU copy
+		m_List->CopyTextureRegion(&dst, 0, 0, 0, &src, nullptr);
 	}
 
 
@@ -270,14 +363,16 @@ namespace Lambda
 		
 		//Reset allocators
 		m_pBufferAllocator->Reset();
+		m_pTextureAllocator->Reset();
 		m_pResourceAllocator->Reset();
+		m_pSamplerAllocator->Reset();
 
 		//Allocate new descriptors after reset
-		m_hVSDescriptorStart = m_pResourceAllocator->Allocate(8);
-		m_hHSDescriptorStart = m_pResourceAllocator->Allocate(8);
-		m_hDSDescriptorStart = m_pResourceAllocator->Allocate(8);
-		m_hGSDescriptorStart = m_pResourceAllocator->Allocate(8);
-		m_hPSDescriptorStart = m_pResourceAllocator->Allocate(8);
+		for (uint32 i = 0; i < 5; i++)
+		{
+			m_hResourceDescriptorStarts[i] = m_pResourceAllocator->Allocate(24);
+			m_hSamplerDescriptorStarts[i] = m_pSamplerAllocator->Allocate(8);
+		}
 	}
 
 
@@ -341,17 +436,22 @@ namespace Lambda
 
 				//Create uploadallocators
 				m_pBufferAllocator = DBG_NEW DX12LinearAllocator(pDevice);
-				m_pTextureAllocator = DBG_NEW DX12LinearAllocator(pDevice);
+				m_pTextureAllocator = DBG_NEW DX12LinearAllocator(pDevice, MB(16));
 
 				//Create frame descriptor allocators
 				m_pResourceAllocator = DBG_NEW DX12LinearDescriptorAllocator(pDevice, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 256, true);
+				m_pSamplerAllocator = DBG_NEW DX12LinearDescriptorAllocator(pDevice, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, 256, true);
 
-				//Allocate descriptors for different stages
-				m_hVSDescriptorStart = m_pResourceAllocator->Allocate(8);
-				m_hHSDescriptorStart = m_pResourceAllocator->Allocate(8);
-				m_hDSDescriptorStart = m_pResourceAllocator->Allocate(8);
-				m_hGSDescriptorStart = m_pResourceAllocator->Allocate(8);
-				m_hPSDescriptorStart = m_pResourceAllocator->Allocate(8);
+				//Cache descriptor size
+				m_ResourceDescriptorSize = m_pResourceAllocator->GetDescriptorSize();
+				m_SamplerDescriptorSize = m_pSamplerAllocator->GetDescriptorSize();
+
+				//Allocate new descriptors
+				for (uint32 i = 0; i < 5; i++)
+				{
+					m_hResourceDescriptorStarts[i] = m_pResourceAllocator->Allocate(24);
+					m_hSamplerDescriptorStarts[i] = m_pSamplerAllocator->Allocate(8);
+				}
 			}
 		}
 	}
@@ -359,32 +459,79 @@ namespace Lambda
 
 	void DX12CommandList::InternalCopyAndSetDescriptors()
 	{
-		//Perform copy of descriptors
+		//Perform copy of resourcedescriptors
 		UINT numRanges = (UINT)m_DescriptorRangeCounts.size();
 		UINT* pRangeSizes = m_DescriptorRangeCounts.data();
 		D3D12_CPU_DESCRIPTOR_HANDLE* pDstRangeStart = m_DstDescriptorRanges.data();
 		D3D12_CPU_DESCRIPTOR_HANDLE* pSrcRangeStart = m_SrcDescriptorRanges.data();
 		m_Device->CopyDescriptors(numRanges, pDstRangeStart, pRangeSizes, numRanges, pSrcRangeStart, pRangeSizes, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
+		//Perform copy of samplerdescriptors
+		numRanges = (UINT)m_SamplerDescriptorRangeCounts.size();
+		pRangeSizes = m_SamplerDescriptorRangeCounts.data();
+		pDstRangeStart = m_SamplerDstDescriptorRanges.data();
+		pSrcRangeStart = m_SamplerSrcDescriptorRanges.data();
+		m_Device->CopyDescriptors(numRanges, pDstRangeStart, pRangeSizes, numRanges, pSrcRangeStart, pRangeSizes, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+
 		//Set heap and descriptortables at predefine slots. (See default rootsignature in DX12PipelineState)
-		ID3D12DescriptorHeap* pHeap = m_pResourceAllocator->GetHeap();
-		m_List->SetDescriptorHeaps(1, &pHeap);
-		m_List->SetGraphicsRootDescriptorTable(0, m_hVSDescriptorStart.GPU);
-		m_List->SetGraphicsRootDescriptorTable(2, m_hHSDescriptorStart.GPU);
-		m_List->SetGraphicsRootDescriptorTable(4, m_hDSDescriptorStart.GPU);
-		m_List->SetGraphicsRootDescriptorTable(6, m_hGSDescriptorStart.GPU);
-		m_List->SetGraphicsRootDescriptorTable(8, m_hPSDescriptorStart.GPU);
+		ID3D12DescriptorHeap* ppHeaps[] = { m_pResourceAllocator->GetHeap(), m_pSamplerAllocator->GetHeap() };
+		m_List->SetDescriptorHeaps(2, ppHeaps);
+
+		//VS
+		m_List->SetGraphicsRootDescriptorTable(0, m_hResourceDescriptorStarts[0].GPU);
+		m_List->SetGraphicsRootDescriptorTable(1, m_hSamplerDescriptorStarts[0].GPU);
+
+		//HS
+		m_List->SetGraphicsRootDescriptorTable(2, m_hResourceDescriptorStarts[1].GPU);
+		m_List->SetGraphicsRootDescriptorTable(3, m_hSamplerDescriptorStarts[1].GPU);
+
+		//DS
+		m_List->SetGraphicsRootDescriptorTable(4, m_hResourceDescriptorStarts[2].GPU);
+		m_List->SetGraphicsRootDescriptorTable(5, m_hSamplerDescriptorStarts[2].GPU);
+
+		//GS
+		m_List->SetGraphicsRootDescriptorTable(6, m_hResourceDescriptorStarts[3].GPU);
+		m_List->SetGraphicsRootDescriptorTable(7, m_hSamplerDescriptorStarts[3].GPU);
+		
+		//PS
+		m_List->SetGraphicsRootDescriptorTable(8, m_hResourceDescriptorStarts[4].GPU);
+		m_List->SetGraphicsRootDescriptorTable(9, m_hSamplerDescriptorStarts[4].GPU);
 
 		//Clear ranges
 		m_DstDescriptorRanges.clear();
 		m_SrcDescriptorRanges.clear();
 		m_DescriptorRangeCounts.clear();
 
-		m_hVSDescriptorStart = m_pResourceAllocator->Allocate(8);
-		m_hHSDescriptorStart = m_pResourceAllocator->Allocate(8);
-		m_hDSDescriptorStart = m_pResourceAllocator->Allocate(8);
-		m_hGSDescriptorStart = m_pResourceAllocator->Allocate(8);
-		m_hPSDescriptorStart = m_pResourceAllocator->Allocate(8);
+		//Allocate new descriptors after reset
+		for (uint32 i = 0; i < 5; i++)
+		{
+			m_hResourceDescriptorStarts[i] = m_pResourceAllocator->Allocate(24);
+			m_hSamplerDescriptorStarts[i] = m_pSamplerAllocator->Allocate(8);
+		}
+	}
+	
+	
+	void DX12CommandList::InternalSetResourceDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE hDest, D3D12_CPU_DESCRIPTOR_HANDLE hSrc, uint32 slot, uint32 range)
+	{
+		//Get dest descriptor
+		hDest.ptr += m_ResourceDescriptorSize * ((range * 8) + slot);
+		m_DstDescriptorRanges.push_back(hDest);
+
+		//Set src descriptor and count in range
+		m_SrcDescriptorRanges.push_back(hSrc);
+		m_DescriptorRangeCounts.push_back(1);
+	}
+
+
+	void DX12CommandList::InternalSetSamplerDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE hDest, D3D12_CPU_DESCRIPTOR_HANDLE hSrc, uint32 slot)
+	{
+		//Get dest descriptor
+		hDest.ptr += m_SamplerDescriptorSize * slot;
+		m_SamplerDstDescriptorRanges.push_back(hDest);
+
+		//Set src descriptor and count in range
+		m_SamplerSrcDescriptorRanges.push_back(hSrc);
+		m_SamplerDescriptorRangeCounts.push_back(1);
 	}
 }
 #endif

@@ -19,9 +19,11 @@ namespace Lambda
 		Init(pDevice, desc);
 	}
 	
+
 	DX12Buffer::~DX12Buffer()
 	{
 	}
+
 
 	void DX12Buffer::Map(void** ppData)
 	{
@@ -32,20 +34,30 @@ namespace Lambda
 		}
 	}
 
+
 	void DX12Buffer::Unmap()
 	{
 		m_Buffer->Unmap(0, nullptr);
 	}
+
 
 	uint32 DX12Buffer::Release()
 	{
 		IOBJECT_IMPLEMENT_RELEASE(m_References);
 	}
 
+
 	uint32 DX12Buffer::AddRef()
 	{
 		return ++m_References;
 	}
+
+
+	BufferDesc DX12Buffer::GetDesc() const
+	{
+		return m_Desc;
+	}
+
 
 	void DX12Buffer::Init(ID3D12Device5* pDevice, const BufferDesc& desc)
 	{

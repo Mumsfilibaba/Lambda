@@ -246,12 +246,14 @@ namespace Lambda
 		RESOURCE_STATE_COPY_DEST = 4,
 		RESOURCE_STATE_COPY_SRC = 5,
 		RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER = 6,
+		RESOURCE_STATE_PIXEL_SHADER_RESOURCE = 7,
+		RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE = 8,
 	};
 
 
 	struct ResourceData
 	{
 		const void* pData = nullptr;
-		uint32 SizeInBytes = 0;
+		uint64 SizeInBytes = 0;
 	};
 }

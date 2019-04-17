@@ -5,6 +5,7 @@
 #include <Graphics/IPipelineState.h>
 #include <Graphics/IBuffer.h>
 #include <Graphics/ITexture2D.h>
+#include <Graphics/ISamplerState.h>
 #include <Math/Math.h>
 
 namespace Lambda
@@ -39,6 +40,7 @@ namespace Lambda
 		IBuffer* m_pCameraBuffer;
 		ITexture2D* m_pDepthBuffer;
 		ITexture2D* m_pTexture;
+		ISamplerState* m_pSampler;
 		IGraphicsPipelineState* m_pPipelineState;
 		float m_Width;
 		float m_Height;

@@ -22,5 +22,7 @@ namespace Lambda
 
 		virtual void Map(void** ppMem) = 0;
 		virtual void Unmap() = 0;
+
+		virtual BufferDesc GetDesc() const = 0;
 	};
 }

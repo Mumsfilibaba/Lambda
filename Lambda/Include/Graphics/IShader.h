@@ -24,7 +24,7 @@ namespace Lambda
 	struct ShaderDesc
 	{
 		ShaderType Type = SHADER_TYPE_UNKNOWN;
-		ShaderFlags Flags = SHADER_FLAG_NONE;
+		uint32 Flags = SHADER_FLAG_NONE;
 		const char* pEntryPoint = nullptr;
 		const char* pSource = nullptr;
 	};

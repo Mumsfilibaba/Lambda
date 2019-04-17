@@ -19,6 +19,8 @@ namespace Lambda
 		DX12Texture2D(ID3D12Device5* pDevice, const Texture2DDesc& desc);
 		~DX12Texture2D();
 
+		virtual Texture2DDesc GetDesc() const override final;
+
 		virtual uint32 Release() override final;
 		virtual uint32 AddRef() override final;
 
@@ -31,12 +33,10 @@ namespace Lambda
 
 		ID3D12Resource* GetResource() const;
 		DX12DescriptorHandle GetDescriptorHandle() const;
-		D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAdress() const;
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_Texture;
 		DX12DescriptorHandle m_hDescriptor;
-		D3D12_GPU_VIRTUAL_ADDRESS m_Adress;
 
 		Texture2DDesc m_Desc;
 		uint32 m_References;
@@ -50,11 +50,6 @@ namespace Lambda
 	inline DX12DescriptorHandle DX12Texture2D::GetDescriptorHandle() const
 	{
 		return m_hDescriptor;
-	}
-
-	inline D3D12_GPU_VIRTUAL_ADDRESS DX12Texture2D::GetGPUVirtualAdress() const
-	{
-		return m_Adress;
 	}
 }
 #endif

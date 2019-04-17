@@ -26,7 +26,7 @@ namespace Lambda
 			desc.Format = format;
 			desc.Height = height;
 			desc.Width = width;
-			desc.MipLevels = 0;
+			desc.MipLevels = 1;
 			desc.SampleCount = 1;
 			desc.Usage = usage;
 

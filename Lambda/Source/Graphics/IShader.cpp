@@ -26,7 +26,7 @@ namespace Lambda
 #if defined(LAMBDA_DEBUG)
 			desc.Flags = SHADER_FLAG_COMPILE_DEBUG;
 #else
-			desc.Flags = 0;
+			desc.Flags = SHADER_FLAG_NONE;
 #endif
 
 			//Create

@@ -23,6 +23,8 @@ namespace Lambda
 		virtual uint32 Release() override final;
 		virtual uint32 AddRef() override final;
 
+		virtual BufferDesc GetDesc() const override final;
+
 	private:
 		void Init(ID3D12Device5* pDevice, const BufferDesc& desc);		
 		void SetDescriporHandle(const DX12DescriptorHandle& hDescriptor);

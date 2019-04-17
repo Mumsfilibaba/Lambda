@@ -7,6 +7,7 @@
 	#include "DX12Shader.h"
 	#include "DX12Buffer.h"
 	#include "DX12Texture2D.h"
+	#include "DX12SamplerState.h"
 
 namespace Lambda
 {
@@ -138,32 +139,41 @@ namespace Lambda
 
 	void DX12GraphicsDevice::CreateTexture2D(ITexture2D** ppTexture, const ResourceData* pInitalData, const Texture2DDesc& desc) const
 	{
+		//Return early if errors
+		if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
+		{
+			LOG_DEBUG_ERROR("Lambda Engine: Texture2D cannot have resource usage dynamic\n");
+			(*ppTexture) = nullptr;
+			return;
+		}
+
 		//Create resource
 		DX12Texture2D* pTexture = DBG_NEW DX12Texture2D(m_Device.Get(), desc);
 		
 		//Set initaldata if there are any
 		if (pInitalData != nullptr)
 		{
-			if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
-			{
-				//Set initial data
-				if (pInitalData != nullptr)
-				{
-					void* pCPU = nullptr;
-					//pTexture->Map(&pCPU);
-					memcpy(pCPU, pInitalData->pData, pInitalData->SizeInBytes);
-					//pTexture->Unmap();
-				}
-			}
-			else if (desc.Usage == RESOURCE_USAGE_DEFAULT)
-			{
-			}
+			//Copy data
+			m_pCommandList->TransitionResource(pTexture, RESOURCE_STATE_COPY_DEST);
+			m_pCommandList->UpdateTexture(pTexture, pInitalData, 0);
+			m_pCommandList->TransitionResource(pTexture, RESOURCE_STATE_PRESENT_COMMON);
+
+			//Execute and wait for GPU before creating
+			m_pCommandList->Close();
+
+			ICommandList* pList = m_pCommandList;
+			ExecuteCommandList(&pList, 1);
+
+			WaitForGPU();
+			m_pCommandList->Reset();
 		}
 		
 		//DepthStencil
 		if (desc.Flags & TEXTURE_FLAGS_DEPTH_STENCIL)
 		{
 			//Allocate depth stencil descriptor
+
+			//TODO: Free when resource is freed
 			DX12DescriptorHandle hDescriptor = m_pDSAllocator->Allocate();
 			pTexture->SetDescriptorHandle(hDescriptor);
 
@@ -175,6 +185,28 @@ namespace Lambda
 			vDesc.Texture2D.MipSlice = 0;
 			m_Device->CreateDepthStencilView(pTexture->GetResource(), &vDesc, hDescriptor.CPU);
 		}
+
+		//Shader resource
+		if (desc.Flags & TEXTURE_FLAGS_SHADER_RESOURCE)
+		{
+			//Allocate depth stencil descriptor
+
+			//TODO: Free when resource is freed
+			DX12DescriptorHandle hDescriptor = m_pResourceAllocator->Allocate();
+			pTexture->SetDescriptorHandle(hDescriptor);
+
+			//Create view
+			D3D12_SHADER_RESOURCE_VIEW_DESC vDesc = {};
+			vDesc.Format = ConvertFormat(desc.Format);
+			vDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+			vDesc.Texture2D.MipLevels = desc.MipLevels;
+			vDesc.Texture2D.MostDetailedMip = 0;
+			vDesc.Texture2D.PlaneSlice = 0;
+			vDesc.Texture2D.ResourceMinLODClamp = 0;
+			vDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+			m_Device->CreateShaderResourceView(pTexture->GetResource(), &vDesc, hDescriptor.CPU);
+		}
 		
 		(*ppTexture) = pTexture;
 	}
@@ -183,6 +215,13 @@ namespace Lambda
 	void DX12GraphicsDevice::CreateShader(IShader** ppShader, const ShaderDesc& desc) const
 	{
 		(*ppShader) = DBG_NEW DX12Shader(desc);
+	}
+
+
+	void DX12GraphicsDevice::CreateSamplerState(ISamplerState** ppSamplerState, const SamplerDesc& desc) const
+	{
+		DX12DescriptorHandle hDescriptor = m_pSamplerAllocator->Allocate();
+		(*ppSamplerState) = DBG_NEW DX12SamplerState(m_Device.Get(), hDescriptor.CPU, desc);
 	}
 
 

@@ -29,6 +29,8 @@ namespace Lambda
 		ITexture2D() = default;
 		~ITexture2D() = default;
 
+		virtual Texture2DDesc GetDesc() const = 0;
+
 	public:
 		static ITexture2D* CreateTextureFromFile(const IGraphicsDevice* pDevice, const char* pFileName, TextureFlags flags, ResourceUsage Usage, ResourceFormat Format);
 	};
