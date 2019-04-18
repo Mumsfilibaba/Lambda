@@ -4,7 +4,7 @@
 
 namespace Lambda
 {
-	IShader* IShader::CreateShaderFromFile(const IGraphicsDevice* pDevice, const char* pFilename, const char* pEntryPoint, ShaderType type)
+	IShader* IShader::CreateShaderFromFile(const IGraphicsDevice* pDevice, const char* pFilename, const char* pEntryPoint, ShaderType type, ShaderLang languange)
 	{
 		IShader* pShader = nullptr;
 
@@ -22,6 +22,7 @@ namespace Lambda
 			ShaderDesc desc = {};
 			desc.pEntryPoint = pEntryPoint;
 			desc.Type = type;
+			desc.Languange = languange;
 			desc.pSource = source.c_str();
 #if defined(LAMBDA_DEBUG)
 			desc.Flags = SHADER_FLAG_COMPILE_DEBUG;

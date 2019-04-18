@@ -5,7 +5,6 @@ namespace Lambda
 {
 	class IShader;
 
-
 	struct GraphicsPipelineStateDesc
 	{
 		IShader* pVertexShader = nullptr;
@@ -20,5 +19,20 @@ namespace Lambda
 
 		IGraphicsPipelineState() = default;
 		~IGraphicsPipelineState() = default;
+	};
+
+
+	struct ComputePipelineStateDesc
+	{
+		IShader* pComputeShader = nullptr;
+	};
+
+	class LAMBDA_API IComputePipelineState : public IObject
+	{
+	public:
+		LAMBDA_INTERFACE(IComputePipelineState);
+
+		IComputePipelineState() = default;
+		~IComputePipelineState() = default;
 	};
 }

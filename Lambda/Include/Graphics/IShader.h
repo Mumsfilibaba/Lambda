@@ -20,10 +20,18 @@ namespace Lambda
 		SHADER_FLAG_COMPILE_DEBUG = 0,
 	};
 
+	enum ShaderLang
+	{
+		SHADER_LANG_UNKNOWN = 0,
+		SHADER_LANG_HLSL = 1,
+		SHADER_LANG_HLSL_COMPILED = 2,
+	};
+
 
 	struct ShaderDesc
 	{
 		ShaderType Type = SHADER_TYPE_UNKNOWN;
+		ShaderLang Languange = SHADER_LANG_UNKNOWN;
 		uint32 Flags = SHADER_FLAG_NONE;
 		const char* pEntryPoint = nullptr;
 		const char* pSource = nullptr;
@@ -42,6 +50,6 @@ namespace Lambda
 		virtual ShaderType GetType() const = 0;
 
 	public:
-		static IShader* CreateShaderFromFile(const IGraphicsDevice* pDevice, const char* pFilename, const char* pEntryPoint, ShaderType type);
+		static IShader* CreateShaderFromFile(const IGraphicsDevice* pDevice, const char* pFilename, const char* pEntryPoint, ShaderType type, ShaderLang languange = SHADER_LANG_HLSL);
 	};
 }

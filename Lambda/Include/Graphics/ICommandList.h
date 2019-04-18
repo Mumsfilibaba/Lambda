@@ -9,6 +9,7 @@ namespace Lambda
 		COMMAND_LIST_TYPE_UNKNOWN = 0,
 		COMMAND_LIST_TYPE_GRAPHICS = 1,
 		COMMAND_LIST_TYPE_COMPUTE = 2,
+		COMMAND_LIST_TYPE_COPY = 2,
 	};
 
 
@@ -46,6 +47,8 @@ namespace Lambda
 		virtual void SetPrimtiveTopology(PrimitiveTopology topology) = 0;
 		virtual void SetGraphicsPipelineState(IGraphicsPipelineState* pPSO) = 0;
 		virtual void SetVertexBuffer(IBuffer* pBuffer, uint32 slot) = 0;
+
+		virtual CommandListType GetType() const = 0;
 
 		virtual void VSSetConstantBuffers(const IBuffer* const * ppBuffers, uint32 numBuffers, uint32 startSlot) = 0;
 		virtual void VSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot) = 0;

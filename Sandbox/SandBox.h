@@ -35,6 +35,7 @@ namespace Lambda
 		ICommandList* m_pLists[3];
 		IShader* m_pVS;
 		IShader* m_pPS;
+		IShader* m_pCompute;
 		IBuffer* m_pVertexBuffer;
 		IBuffer* m_pColorBuffer;
 		IBuffer* m_pCameraBuffer;

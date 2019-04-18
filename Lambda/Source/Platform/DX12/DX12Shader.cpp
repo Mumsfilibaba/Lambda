@@ -5,7 +5,7 @@
 namespace Lambda
 {
 	DX12Shader::DX12Shader(const ShaderDesc& desc)
-		: m_ShaderBlob(nullptr),
+		: m_ShaderBlob(),
 		m_Type(SHADER_TYPE_UNKNOWN),
 		m_References(0)
 	{
@@ -36,26 +36,45 @@ namespace Lambda
 	{
 		using namespace Microsoft::WRL;
 
-		uint32 flags = D3DCOMPILE_WARNINGS_ARE_ERRORS;
-		if (desc.Flags & SHADER_FLAG_COMPILE_DEBUG)
-			flags |= D3DCOMPILE_SKIP_OPTIMIZATION | D3DCOMPILE_DEBUG;
-		else
-			flags |= D3DCOMPILE_OPTIMIZATION_LEVEL3;
+		//Copy compiled source into blob
+		if (desc.Languange == SHADER_LANG_HLSL_COMPILED)
+		{
+			uint64 len = strlen(desc.pSource);
 
-		ComPtr<ID3DBlob> error = nullptr;
-		HRESULT hr = D3DCompile2(desc.pSource, strlen(desc.pSource), nullptr, nullptr, nullptr, desc.pEntryPoint, GetTarget(desc.Type), flags, 0, 0, 0, 0, &m_ShaderBlob, &error);
-		if (FAILED(hr))
-		{
-#if defined(LAMBDA_DEBUG)
-			const char* pMessage = reinterpret_cast<const char*>(error->GetBufferPointer());
-#endif
-			LOG_DEBUG_ERROR("DX12: Failed to compile shader. Error-message:\n%s", pMessage);
-			
-			DEBUG_BREAK();
+			m_ShaderBlob.resize(len);
+			memcpy(m_ShaderBlob.data(), desc.pSource, len);
+
+			LOG_DEBUG_INFO("DX12: Loaded shader from compiled source.\n");
 		}
-		else
+		else if (desc.Languange == SHADER_LANG_HLSL)
 		{
-			LOG_DEBUG_INFO("DX12: Compiled shader.\n");
+			//Setup compile flags
+			uint32 flags = D3DCOMPILE_WARNINGS_ARE_ERRORS;
+			if (desc.Flags & SHADER_FLAG_COMPILE_DEBUG)
+				flags |= D3DCOMPILE_SKIP_OPTIMIZATION | D3DCOMPILE_DEBUG;
+			else
+				flags |= D3DCOMPILE_OPTIMIZATION_LEVEL3;
+
+			//Compile shader
+			ComPtr<ID3DBlob> error = nullptr;
+			ComPtr<ID3DBlob> shaderBlob = nullptr;
+			HRESULT hr = D3DCompile2(desc.pSource, strlen(desc.pSource), nullptr, nullptr, nullptr, desc.pEntryPoint, GetTarget(desc.Type), flags, 0, 0, 0, 0, &shaderBlob, &error);
+			if (FAILED(hr))
+			{
+	#if defined(LAMBDA_DEBUG)
+				const char* pMessage = reinterpret_cast<const char*>(error->GetBufferPointer());
+	#endif
+				LOG_DEBUG_ERROR("DX12: Failed to compile shader. Error-message:\n%s", pMessage);
+			
+				DEBUG_BREAK();
+			}
+			else
+			{
+				LOG_DEBUG_INFO("DX12: Compiled shader.\n");
+
+				m_ShaderBlob.resize(shaderBlob->GetBufferSize());
+				memcpy(m_ShaderBlob.data(), shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize());
+			}
 		}
 	}
 

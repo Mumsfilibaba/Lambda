@@ -27,6 +27,8 @@ namespace Lambda
 		virtual void SetGraphicsPipelineState(IGraphicsPipelineState* pPSO) override final;
 		virtual void SetVertexBuffer(IBuffer* pBuffer, uint32 slot) override final; 
 
+		virtual CommandListType GetType() const override final;
+
 		virtual void TransitionResource(IBuffer* pResource, ResourceState resourceState) override final;
 		virtual void TransitionResource(ITexture2D* pResource, ResourceState resourceState) override final;
 
@@ -93,6 +95,7 @@ namespace Lambda
 		std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> m_SamplerSrcDescriptorRanges;
 		std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> m_SamplerDstDescriptorRanges;
 		
+		CommandListType m_Type;
 		uint32 m_SamplerDescriptorSize;
 		uint32 m_ResourceDescriptorSize;
 		uint32 m_References;

@@ -166,12 +166,16 @@ namespace Lambda
 			DX12Shader* pVS = reinterpret_cast<DX12Shader*>(desc.pVertexShader);
 			DX12Shader* pPS = reinterpret_cast<DX12Shader*>(desc.pPixelShader);
 
+			//Create shader
+			D3D12_SHADER_BYTECODE vertexShader	= { pVS->GetShaderBlobData(), pVS->GetShaderBlobSize() };
+			D3D12_SHADER_BYTECODE pixelShader	= { pPS->GetShaderBlobData(), pPS->GetShaderBlobSize() };
+
 			//Define pipelinestate
 			D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
 			psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
 			psoDesc.pRootSignature = m_RootSignature.Get();
-			psoDesc.VS = CD3DX12_SHADER_BYTECODE(pVS->GetShaderBlob());
-			psoDesc.PS = CD3DX12_SHADER_BYTECODE(pPS->GetShaderBlob());
+			psoDesc.VS = vertexShader;
+			psoDesc.PS = pixelShader;
 			psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 			psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 			psoDesc.DepthStencilState.DepthEnable = false;

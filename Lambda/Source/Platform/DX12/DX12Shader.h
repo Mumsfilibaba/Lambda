@@ -24,10 +24,11 @@ namespace Lambda
 
 	private:
 		void Init(const ShaderDesc& desc);
-		ID3DBlob* GetShaderBlob() const;
+		const void* GetShaderBlobData() const;
+		uint64 GetShaderBlobSize() const;
 
 	private:
-		Microsoft::WRL::ComPtr<ID3DBlob> m_ShaderBlob;
+		std::vector<uint8> m_ShaderBlob;
 		ShaderType m_Type;
 		uint32 m_References;
 
@@ -35,9 +36,14 @@ namespace Lambda
 		static const char* GetTarget(ShaderType type);
 	};
 
-	inline ID3DBlob* DX12Shader::GetShaderBlob() const
+	inline const void* DX12Shader::GetShaderBlobData() const
 	{
-		return m_ShaderBlob.Get();
+		return (const void*)m_ShaderBlob.data();
+	}
+
+	inline uint64 DX12Shader::GetShaderBlobSize() const
+	{
+		return (uint64)m_ShaderBlob.size();
 	}
 }
 #endif

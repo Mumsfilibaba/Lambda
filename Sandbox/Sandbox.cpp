@@ -50,6 +50,7 @@ namespace Lambda
 		//Create shaders
 		m_pVS = IShader::CreateShaderFromFile(pDevice, "Triangle.hlsl", "VSMain", SHADER_TYPE_VERTEX);
 		m_pPS = IShader::CreateShaderFromFile(pDevice, "Triangle.hlsl", "PSMain", SHADER_TYPE_PIXEL);
+		m_pCompute = IShader::CreateShaderFromFile(pDevice, "Texture2DMipMapGen.cso", "main", SHADER_TYPE_COMPUTE, SHADER_LANG_HLSL_COMPILED);
 
 		//Create pipelinestate
 		{
@@ -266,6 +267,7 @@ namespace Lambda
 		SafeRelease(m_pDepthBuffer);
 		SafeRelease(m_pTexture);
 		SafeRelease(m_pSampler);
+		SafeRelease(m_pCompute);
 	}
 
 

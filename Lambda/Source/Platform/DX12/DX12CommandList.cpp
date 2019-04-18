@@ -131,6 +131,12 @@ namespace Lambda
 	}
 
 
+	CommandListType DX12CommandList::GetType() const
+	{
+		return m_Type;
+	}
+
+
 	void DX12CommandList::TransitionResource(IBuffer* pResource, ResourceState resourceState)
 	{
 		DX12Buffer* pBuffer = reinterpret_cast<DX12Buffer*>(pResource);
@@ -398,6 +404,8 @@ namespace Lambda
 			cType = D3D12_COMMAND_LIST_TYPE_DIRECT;
 		else if (type == COMMAND_LIST_TYPE_COMPUTE)
 			cType = D3D12_COMMAND_LIST_TYPE_COMPUTE;
+		else if (type == COMMAND_LIST_TYPE_COPY)
+			cType = D3D12_COMMAND_LIST_TYPE_COPY;
 
 		HRESULT hr = pDevice->CreateCommandAllocator(cType, IID_PPV_ARGS(&m_Allocator));
 		if (FAILED(hr))
@@ -430,6 +438,9 @@ namespace Lambda
 			{
 				//Set device
 				m_Device = pDevice;
+
+				//Set type
+				m_Type = type;
 
 				//Start list in a closed state
 				m_List->Close();
