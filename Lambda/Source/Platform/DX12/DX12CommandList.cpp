@@ -374,6 +374,9 @@ namespace Lambda
 		m_pSamplerAllocator->Reset();
 
 		//Allocate new descriptors after reset
+
+		//TODO: Allocate one big large array 
+
 		for (uint32 i = 0; i < 5; i++)
 		{
 			m_hResourceDescriptorStarts[i] = m_pResourceAllocator->Allocate(24);
@@ -512,6 +515,9 @@ namespace Lambda
 		m_DstDescriptorRanges.clear();
 		m_SrcDescriptorRanges.clear();
 		m_DescriptorRangeCounts.clear();
+		m_SamplerDstDescriptorRanges.clear();
+		m_SamplerSrcDescriptorRanges.clear();
+		m_SamplerDescriptorRangeCounts.clear();
 
 		//Allocate new descriptors after reset
 		for (uint32 i = 0; i < 5; i++)

@@ -31,11 +31,24 @@ namespace Lambda
 		InternalOnLoad();
 
 		Clock clock;
+		uint32 fps = 0;
+
+		clock.Reset();
 		while (m_Running)
 		{
 			clock.Tick();
+
 			InternalOnUpdate(clock.GetDeltaTime());
+			fps++;
+
 			InternalOnRender(clock.GetDeltaTime());
+			
+			if (clock.GetTotalTime().AsSeconds() >= 1.0f)
+			{
+				clock.Reset();
+				LOG_SYSTEM_PRINT("FPS: %d\n", fps);
+				fps = 0;
+			}
 		}
 
 		InternalOnRelease();

@@ -37,8 +37,9 @@ namespace Lambda
 #if defined(LAMBDA_PLAT_WINDOWS)
 		QueryPerformanceFrequency((LARGE_INTEGER*)&m_Frequency);
 #else
-#error Clock::Tick not defined
+#error Clock::Clock not defined
 #endif
+		Tick();
 	}
 
 	inline Clock::Clock(Clock&& other)
@@ -49,6 +50,7 @@ namespace Lambda
 	{
 	}
 
+
 	inline Clock::Clock(const Clock& other)
 		: m_Frequency(other.m_Frequency),
 		m_LastTime(other.m_LastTime),
@@ -57,17 +59,19 @@ namespace Lambda
 	{
 	}
 
+
 	inline Clock::~Clock()
 	{
 	}
+
 
 	inline void Clock::Tick()
 	{
 #if defined(LAMBDA_PLAT_WINDOWS)
 		uint64 now = 0;
 		QueryPerformanceCounter((LARGE_INTEGER*)&now);
+		Time currentTime = Time((now * 1000000000) / m_Frequency);
 
-		Time currentTime = Time(float((now * 1000000000) / m_Frequency));
 		m_DeltaTime = currentTime - m_LastTime;
 		m_LastTime = currentTime;
 		m_TotalTime += m_DeltaTime;
@@ -76,16 +80,19 @@ namespace Lambda
 #endif
 	}
 
+
 	inline void Clock::Reset()
 	{
 		m_DeltaTime = Time(0);
 		m_TotalTime = Time(0);
 	}
 
+
 	inline Time Clock::GetDeltaTime() const
 	{
 		return m_DeltaTime;
 	}
+
 
 	inline Time Clock::GetTotalTime() const
 	{

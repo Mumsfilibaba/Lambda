@@ -241,7 +241,8 @@ namespace Lambda
 		}
 
 		//Execute
-		m_Queue->ExecuteCommandLists(numLists, m_PendingLists.data());
+		ID3D12CommandList** ppDXLists = m_PendingLists.data();
+		m_Queue->ExecuteCommandLists(numLists, ppDXLists);
 		m_PendingLists.clear();
 	}
 
