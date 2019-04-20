@@ -13,14 +13,14 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(DX12DescriptorAllocator);
 
-		DX12DescriptorAllocator(ID3D12Device5* pDevice, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32 count, bool isShaderVisible);
+		DX12DescriptorAllocator(ID3D12Device* pDevice, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32 count, bool isShaderVisible);
 		~DX12DescriptorAllocator();
 
 		void Free(const DX12DescriptorHandle& hDescriptor);
 		DX12DescriptorHandle Allocate();
 
 	private:
-		void Init(ID3D12Device5* pDevice, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32 count, bool isShaderVisible);
+		void Init(ID3D12Device* pDevice, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32 count, bool isShaderVisible);
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_Heap;

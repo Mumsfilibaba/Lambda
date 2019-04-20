@@ -50,15 +50,18 @@ namespace Lambda
 		bool CreateDescriptorHeaps();
 		bool InitBackBuffers();
 
+		bool IsDXRSupported(ID3D12Device* pDevice);
+
 		virtual bool InternalOnEvent(const Event& event) override final;
 
 	private:
-		Microsoft::WRL::ComPtr<IDXGIFactory7> m_Factory;
-		Microsoft::WRL::ComPtr<IDXGIAdapter4> m_Adapter;
-		Microsoft::WRL::ComPtr<IDXGISwapChain4> m_SwapChain;
-		Microsoft::WRL::ComPtr<ID3D12Device5> m_Device;
-		Microsoft::WRL::ComPtr<ID3D12Debug3> m_Debug;
-		Microsoft::WRL::ComPtr<ID3D12DebugDevice1> m_DebugDevice;
+		Microsoft::WRL::ComPtr<IDXGIFactory5> m_Factory;
+		Microsoft::WRL::ComPtr<IDXGIAdapter3> m_Adapter;
+		Microsoft::WRL::ComPtr<IDXGISwapChain3> m_SwapChain;
+		Microsoft::WRL::ComPtr<ID3D12Device> m_Device;
+		Microsoft::WRL::ComPtr<ID3D12Device5> m_DXRDevice;
+		Microsoft::WRL::ComPtr<ID3D12Debug> m_Debug;
+		Microsoft::WRL::ComPtr<ID3D12DebugDevice> m_DebugDevice;
 		Microsoft::WRL::ComPtr<ID3D12Fence> m_Fence;
 		Microsoft::WRL::ComPtr<ID3D12CommandQueue> m_Queue;
 		mutable std::vector<ID3D12CommandList*> m_PendingLists;
@@ -80,6 +83,7 @@ namespace Lambda
 		mutable uint32 m_CurrentBackBuffer;
 		uint32 m_NumBackbuffers;
 		uint32 m_References;
+		bool m_DXRSupported;
 	};
 }
 #endif

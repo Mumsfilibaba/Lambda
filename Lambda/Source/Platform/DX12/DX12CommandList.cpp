@@ -20,7 +20,7 @@ namespace Lambda
 	}
 
 
-	DX12CommandList::DX12CommandList(ID3D12Device5* pDevice, CommandListType type)
+	DX12CommandList::DX12CommandList(ID3D12Device* pDevice, CommandListType type)
 		: m_pBufferAllocator(nullptr),
 		m_pTextureAllocator(nullptr),
 		m_pResourceAllocator(nullptr),
@@ -397,7 +397,7 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::Init(ID3D12Device5* pDevice, CommandListType type)
+	void DX12CommandList::Init(ID3D12Device* pDevice, CommandListType type)
 	{
 		using namespace Microsoft::WRL;
 

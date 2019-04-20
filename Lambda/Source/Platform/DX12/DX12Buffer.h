@@ -14,7 +14,7 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(DX12Buffer);
 
-		DX12Buffer(ID3D12Device5* pDevice, const BufferDesc& desc);
+		DX12Buffer(ID3D12Device* pDevice, const BufferDesc& desc);
 		~DX12Buffer();
 
 		virtual void Map(void** ppMem) override final;
@@ -26,7 +26,7 @@ namespace Lambda
 		virtual BufferDesc GetDesc() const override final;
 
 	private:
-		void Init(ID3D12Device5* pDevice, const BufferDesc& desc);		
+		void Init(ID3D12Device* pDevice, const BufferDesc& desc);
 		void SetDescriporHandle(const DX12DescriptorHandle& hDescriptor);
 
 		DX12DescriptorHandle GetDescriptorHandle() const;

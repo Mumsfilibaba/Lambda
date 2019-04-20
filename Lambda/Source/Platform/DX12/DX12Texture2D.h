@@ -16,7 +16,7 @@ namespace Lambda
 		LAMBDA_NO_COPY(DX12Texture2D);
 
 		DX12Texture2D(ID3D12Resource* pResource);
-		DX12Texture2D(ID3D12Device5* pDevice, const Texture2DDesc& desc);
+		DX12Texture2D(ID3D12Device* pDevice, const Texture2DDesc& desc);
 		~DX12Texture2D();
 
 		virtual Texture2DDesc GetDesc() const override final;
@@ -25,7 +25,7 @@ namespace Lambda
 		virtual uint32 AddRef() override final;
 
 	private:
-		void Init(ID3D12Device5* pDevice, const Texture2DDesc& desc);
+		void Init(ID3D12Device* pDevice, const Texture2DDesc& desc);
 		void InitFromResource(ID3D12Resource* pResource);
 
 		void SetResource(ID3D12Resource* pResource);

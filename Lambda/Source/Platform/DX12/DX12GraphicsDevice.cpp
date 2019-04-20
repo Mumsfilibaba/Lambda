@@ -30,10 +30,20 @@ namespace Lambda
 
 
 	DX12GraphicsDevice::DX12GraphicsDevice(IWindow* pWindow, GraphicsContextFlags flags)
-		: m_pRTAllocator(nullptr),
+		: m_Device(nullptr),
+		m_DXRDevice(nullptr),
+		m_Queue(nullptr),
+		m_Fence(nullptr),
+		m_Debug(nullptr),
+		m_DebugDevice(nullptr),
+		m_Adapter(nullptr),
+		m_SwapChain(nullptr),
+		m_Factory(nullptr),
+		m_pRTAllocator(nullptr),
 		m_pDSAllocator(nullptr),
 		m_pResourceAllocator(nullptr),
 		m_pSamplerAllocator(nullptr),
+		m_DXRSupported(false),
 		m_BackBufferFlags(0),
 		m_GPUWaitEvent(0),
 		m_NumBackbuffers(0),
@@ -354,23 +364,14 @@ namespace Lambda
 		{
 			factoryFlags = DXGI_CREATE_FACTORY_DEBUG;
 
-			ComPtr<ID3D12Debug> debugController = nullptr;
-			if (FAILED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController))))
+			if (FAILED(D3D12GetDebugInterface(IID_PPV_ARGS(&m_Debug))))
 			{
 				LOG_DEBUG_ERROR("DX12: Failed to get debug interface\n");
 				return false;
 			}
 			else
 			{
-				if (SUCCEEDED(debugController.As<ID3D12Debug3>(&m_Debug)))
-				{
-					m_Debug->EnableDebugLayer();
-				}
-				else
-				{
-					LOG_DEBUG_ERROR("DX12: Failed to retrive ID3D12Debug3\n");
-					return false;
-				}
+				m_Debug->EnableDebugLayer();
 			}
 		}
 
@@ -384,9 +385,9 @@ namespace Lambda
 		}
 		else
 		{
-			if (FAILED(factory.As<IDXGIFactory7>(&m_Factory)))
+			if (FAILED(factory.As<IDXGIFactory5>(&m_Factory)))
 			{
-				LOG_DEBUG_ERROR("DX12: Failed to retrive IDXGIFactory7\n");
+				LOG_DEBUG_ERROR("DX12: Failed to retrive IDXGIFactory5\n");
 				return false;
 			}
 		}
@@ -450,9 +451,9 @@ namespace Lambda
 			else
 			{
 				//Get newer interface
-				if (FAILED(adapter.As<IDXGIAdapter4>(&m_Adapter)))
+				if (FAILED(adapter.As<IDXGIAdapter3>(&m_Adapter)))
 				{
-					LOG_DEBUG_ERROR("DX12: Failed to query IDXGIAdapter4\n");
+					LOG_DEBUG_ERROR("DX12: Failed to query IDXGIAdapter3\n");
 					return false;
 				}
 				else
@@ -461,7 +462,7 @@ namespace Lambda
 					m_Adapter->GetDesc1(&desc);
 
 					std::string adaptername = WidestringToString(desc.Description);
-					LOG_DEBUG_INFO("DX12: Selected adapter: %s\n", adaptername.c_str());
+					LOG_DEBUG_PRINT("DX12: Selected adapter: %s\n", adaptername.c_str());
 
 					return true;
 				}
@@ -476,23 +477,35 @@ namespace Lambda
 		using namespace Microsoft::WRL;
 
 		//Create device
-		ComPtr<ID3D12Device> device = nullptr;
-		HRESULT hr = D3D12CreateDevice(m_Adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&device));
+		HRESULT hr = D3D12CreateDevice(m_Adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&m_Device));
 		if (SUCCEEDED(hr))
 		{
 			LOG_DEBUG_INFO("DX12: Created device.\n");
 
-			hr = device.As<ID3D12Device5>(&m_Device);
-			if (FAILED(hr))
+			//Check support for DXR
+			m_DXRSupported = IsDXRSupported(m_Device.Get());
+			if (m_DXRSupported)
 			{
-				LOG_DEBUG_ERROR("DX12: Failed to retrive ID3D12Device5\n");
-				return false;
+				hr = m_Device.As<ID3D12Device5>(&m_DXRDevice);
+				if (FAILED(hr))
+				{
+					LOG_DEBUG_ERROR("DX12: Failed to retrive ID3D12Device5\n");
+					return false;
+				}
+				else
+				{
+					LOG_DEBUG_PRINT("DX12: DXR is supported\n");
+				}
+			}
+			else
+			{
+				LOG_DEBUG_WARNING("DX12: DXR is not supported on this system\n");
 			}
 
 			//Create debug interface
 			if (flags & GRAPHICS_CONTEXT_FLAG_DEBUG)
 			{
-				hr = m_Device->QueryInterface<ID3D12DebugDevice1>(&m_DebugDevice);
+				hr = m_Device->QueryInterface<ID3D12DebugDevice>(&m_DebugDevice);
 				if (FAILED(hr))
 				{
 					LOG_DEBUG_ERROR("DX12: Could not create DebugDevice.\n");
@@ -582,9 +595,9 @@ namespace Lambda
 		else
 		{
 			//Retrive newer interface
-			if (FAILED(swapChain.As<IDXGISwapChain4>(&m_SwapChain)))
+			if (FAILED(swapChain.As<IDXGISwapChain3>(&m_SwapChain)))
 			{
-				LOG_DEBUG_ERROR("DX12: Failed to retrive IDXGISwapChain4.\n");
+				LOG_DEBUG_ERROR("DX12: Failed to retrive IDXGISwapChain3.\n");
 				return false;
 			}
 
@@ -688,6 +701,22 @@ namespace Lambda
 
 		LOG_DEBUG_INFO("DX12: Created textures and descriptors for backbuffers\n");
 		return true;
+	}
+
+
+	bool DX12GraphicsDevice::IsDXRSupported(ID3D12Device* pDevice)
+	{
+		//Check support for DXR
+		D3D12_FEATURE_DATA_D3D12_OPTIONS5 supportData = {};
+		HRESULT hr = pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &supportData, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS5));
+		if (SUCCEEDED(hr))
+		{
+			return supportData.RaytracingTier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
+		}
+		else
+		{
+			return false;
+		}
 	}
 
 

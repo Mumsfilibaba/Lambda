@@ -24,7 +24,7 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(DX12LinearAllocatorBlock);
 
-		DX12LinearAllocatorBlock(ID3D12Device5* pDevice, uint64 size);
+		DX12LinearAllocatorBlock(ID3D12Device* pDevice, uint64 size);
 		~DX12LinearAllocatorBlock();
 
 		DX12Allocation Allocate(uint64 size, uint64 alignment);
@@ -32,7 +32,7 @@ namespace Lambda
 		void Reset();
 
 	private:
-		void Init(ID3D12Device5* pDevice, uint64 size);
+		void Init(ID3D12Device* pDevice, uint64 size);
 
 	private:
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_Resource;
@@ -49,18 +49,18 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(DX12LinearAllocator);
 
-		DX12LinearAllocator(ID3D12Device5* pDevice, uint64 pageSize = MB(2));
+		DX12LinearAllocator(ID3D12Device* pDevice, uint64 pageSize = MB(2));
 		~DX12LinearAllocator();
 
 		DX12Allocation Allocate(uint64 size, uint64 alignment);
 		void Reset();
 
 	private:
-		void Init(ID3D12Device5* pDevice);
+		void Init(ID3D12Device* pDevice);
 		DX12LinearAllocatorBlock* AllocatePage();
 
 	private:
-		Microsoft::WRL::ComPtr<ID3D12Device5> m_Device;
+		Microsoft::WRL::ComPtr<ID3D12Device> m_Device;
 		std::vector<std::unique_ptr<DX12LinearAllocatorBlock>> m_Pages;
 		DX12LinearAllocatorBlock* m_CurrentPage;
 		uint32 m_CurrentPageIndex;

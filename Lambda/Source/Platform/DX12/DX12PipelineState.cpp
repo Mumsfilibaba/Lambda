@@ -5,7 +5,7 @@
 
 namespace Lambda
 {
-	DX12GraphicsPipelineState::DX12GraphicsPipelineState(ID3D12Device5* pDevice, const GraphicsPipelineStateDesc& desc)
+	DX12GraphicsPipelineState::DX12GraphicsPipelineState(ID3D12Device* pDevice, const GraphicsPipelineStateDesc& desc)
 		: m_State(nullptr),
 		m_RootSignature(nullptr),
 		m_References(0)
@@ -34,7 +34,7 @@ namespace Lambda
 	}
 
 
-	void DX12GraphicsPipelineState::Init(ID3D12Device5* pDevice, const GraphicsPipelineStateDesc& desc)
+	void DX12GraphicsPipelineState::Init(ID3D12Device* pDevice, const GraphicsPipelineStateDesc& desc)
 	{
 		using namespace Microsoft::WRL;
 

@@ -18,7 +18,7 @@ namespace Lambda
 	}
 
 
-	DX12Texture2D::DX12Texture2D(ID3D12Device5* pDevice, const Texture2DDesc& desc)
+	DX12Texture2D::DX12Texture2D(ID3D12Device* pDevice, const Texture2DDesc& desc)
 		: m_Texture(nullptr),
 		m_References(0)
 	{
@@ -56,7 +56,7 @@ namespace Lambda
 	}
 
 
-	void DX12Texture2D::Init(ID3D12Device5* pDevice, const Texture2DDesc& desc)
+	void DX12Texture2D::Init(ID3D12Device* pDevice, const Texture2DDesc& desc)
 	{
 		//Create texture2d resource
 		{

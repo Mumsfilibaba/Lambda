@@ -13,14 +13,14 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(DX12GraphicsPipelineState);
 
-		DX12GraphicsPipelineState(ID3D12Device5* pDevice, const GraphicsPipelineStateDesc& desc);
+		DX12GraphicsPipelineState(ID3D12Device* pDevice, const GraphicsPipelineStateDesc& desc);
 		~DX12GraphicsPipelineState();
 
 		virtual uint32 Release() override final;
 		virtual uint32 AddRef() override final;
 
 	private:
-		void Init(ID3D12Device5* pDevice, const GraphicsPipelineStateDesc& desc);
+		void Init(ID3D12Device* pDevice, const GraphicsPipelineStateDesc& desc);
 		ID3D12PipelineState* GetPipelineState() const;
 		ID3D12RootSignature* GetRootSignature() const;
 

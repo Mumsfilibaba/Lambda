@@ -4,7 +4,7 @@
 #if defined(LAMBDA_PLAT_WINDOWS)
 namespace Lambda
 {
-	DX12LinearDescriptorAllocator::DX12LinearDescriptorAllocator(ID3D12Device5 * pDevice, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32 count, bool isShaderVisible)
+	DX12LinearDescriptorAllocator::DX12LinearDescriptorAllocator(ID3D12Device* pDevice, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32 count, bool isShaderVisible)
 		: m_Device(nullptr),
 		m_Heap(nullptr),
 		m_First(),
@@ -15,9 +15,11 @@ namespace Lambda
 		Init(pDevice, type, count, isShaderVisible);
 	}
 
+
 	DX12LinearDescriptorAllocator::~DX12LinearDescriptorAllocator()
 	{
 	}
+
 
 	DX12DescriptorHandle DX12LinearDescriptorAllocator::Allocate(uint32 num)
 	{
@@ -37,12 +39,14 @@ namespace Lambda
 		return hDescriptor;
 	}
 
+
 	void DX12LinearDescriptorAllocator::Reset()
 	{
 		m_Used = 0;
 	}
 
-	void DX12LinearDescriptorAllocator::Init(ID3D12Device5* pDevice, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32 count, bool isShaderVisible)
+
+	void DX12LinearDescriptorAllocator::Init(ID3D12Device* pDevice, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32 count, bool isShaderVisible)
 	{
 		//Create heap
 		D3D12_DESCRIPTOR_HEAP_DESC desc = {};

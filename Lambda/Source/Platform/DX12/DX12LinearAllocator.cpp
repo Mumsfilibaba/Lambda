@@ -5,7 +5,7 @@
 namespace Lambda
 {
 	//Page
-	DX12LinearAllocatorBlock::DX12LinearAllocatorBlock(ID3D12Device5* pDevice, uint64 size)
+	DX12LinearAllocatorBlock::DX12LinearAllocatorBlock(ID3D12Device* pDevice, uint64 size)
 		: m_Resource(nullptr),
 		m_CPUPtr(nullptr),
 		m_GPUPtr(0),
@@ -58,7 +58,7 @@ namespace Lambda
 	}
 
 
-	void DX12LinearAllocatorBlock::Init(ID3D12Device5* pDevice, uint64 size)
+	void DX12LinearAllocatorBlock::Init(ID3D12Device* pDevice, uint64 size)
 	{
 		//Create page resource
 		CD3DX12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Buffer(size);
@@ -80,7 +80,7 @@ namespace Lambda
 
 
 	//Allocator
-	DX12LinearAllocator::DX12LinearAllocator(ID3D12Device5* pDevice, uint64 pageSize)
+	DX12LinearAllocator::DX12LinearAllocator(ID3D12Device* pDevice, uint64 pageSize)
 		: m_Device(nullptr),
 		m_CurrentPage(nullptr),
 		m_Pages(),
@@ -127,7 +127,7 @@ namespace Lambda
 	}
 
 
-	void DX12LinearAllocator::Init(ID3D12Device5* pDevice)
+	void DX12LinearAllocator::Init(ID3D12Device* pDevice)
 	{
 		m_Device = pDevice;
 		m_CurrentPage = AllocatePage();

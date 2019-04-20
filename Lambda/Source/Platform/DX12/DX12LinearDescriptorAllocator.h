@@ -13,7 +13,7 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(DX12LinearDescriptorAllocator);
 
-		DX12LinearDescriptorAllocator(ID3D12Device5* pDevice, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32 count, bool isShaderVisible);
+		DX12LinearDescriptorAllocator(ID3D12Device* pDevice, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32 count, bool isShaderVisible);
 		~DX12LinearDescriptorAllocator();
 
 		//Allocates the number of descriptorhandles specified in 'num' and returns the first handle
@@ -23,7 +23,7 @@ namespace Lambda
 		uint32 GetDescriptorSize() const;
 
 	private:
-		void Init(ID3D12Device5* pDevice, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32 count, bool isShaderVisible);
+		void Init(ID3D12Device* pDevice, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32 count, bool isShaderVisible);
 		ID3D12DescriptorHeap* GetHeap() const;
 
 	private:

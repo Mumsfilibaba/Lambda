@@ -3,7 +3,7 @@
 	#include "DX12DescriptorAllocator.h"
 namespace Lambda
 {
-	DX12DescriptorAllocator::DX12DescriptorAllocator(ID3D12Device5* pDevice, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32 count, bool isShaderVisible)
+	DX12DescriptorAllocator::DX12DescriptorAllocator(ID3D12Device* pDevice, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32 count, bool isShaderVisible)
 		: m_Heap(nullptr),
 		m_FreeList(),
 		m_CPUStart(),
@@ -49,7 +49,7 @@ namespace Lambda
 		return descriptor;
 	}
 
-	void DX12DescriptorAllocator::Init(ID3D12Device5* pDevice, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32 count, bool isShaderVisible)
+	void DX12DescriptorAllocator::Init(ID3D12Device* pDevice, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32 count, bool isShaderVisible)
 	{
 		//Create heap
 		D3D12_DESCRIPTOR_HEAP_DESC desc = {};

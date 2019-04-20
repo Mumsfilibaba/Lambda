@@ -4,7 +4,7 @@
 #if defined(LAMBDA_PLAT_WINDOWS)
 namespace Lambda
 {
-	DX12Buffer::DX12Buffer(ID3D12Device5* pDevice, const BufferDesc& desc)
+	DX12Buffer::DX12Buffer(ID3D12Device* pDevice, const BufferDesc& desc)
 		: m_Buffer(nullptr),
 		m_Adress(0),
 		m_References(0)
@@ -59,7 +59,7 @@ namespace Lambda
 	}
 
 
-	void DX12Buffer::Init(ID3D12Device5* pDevice, const BufferDesc& desc)
+	void DX12Buffer::Init(ID3D12Device* pDevice, const BufferDesc& desc)
 	{
 		//Create buffer resource
 		{

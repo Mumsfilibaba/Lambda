@@ -14,7 +14,7 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(DX12CommandList);
 
-		DX12CommandList(ID3D12Device5* pDevice, CommandListType type);
+		DX12CommandList(ID3D12Device* pDevice, CommandListType type);
 		~DX12CommandList();
 	
 		virtual void ClearRenderTarget(ITexture2D* pRenderTarget, float color[4]) override final;
@@ -66,7 +66,7 @@ namespace Lambda
 		virtual uint32 AddRef() override final;
 
 	private:
-		void Init(ID3D12Device5* pDevice, CommandListType type);
+		void Init(ID3D12Device* pDevice, CommandListType type);
 		void InternalCopyAndSetDescriptors();
 		void InternalSetResourceDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE hDest, D3D12_CPU_DESCRIPTOR_HANDLE hSrc, uint32 slot, uint32 range);
 		void InternalSetSamplerDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE hDest, D3D12_CPU_DESCRIPTOR_HANDLE hSrc, uint32 slot);
@@ -74,7 +74,7 @@ namespace Lambda
 		ID3D12CommandList* GetList() const;
 
 	private:
-		Microsoft::WRL::ComPtr<ID3D12Device5> m_Device;
+		Microsoft::WRL::ComPtr<ID3D12Device> m_Device;
 		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_Allocator;
 		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> m_List;
 		
