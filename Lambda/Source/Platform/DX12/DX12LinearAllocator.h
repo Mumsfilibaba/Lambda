@@ -43,20 +43,28 @@ namespace Lambda
 	};
 
 
+	inline void DX12LinearAllocatorBlock::Reset()
+	{
+		m_Offset = 0;
+	}
+
+
 	//Allocator itself
 	class DX12LinearAllocator final
 	{
 	public:
 		LAMBDA_NO_COPY(DX12LinearAllocator);
 
+		DX12LinearAllocator();
 		DX12LinearAllocator(ID3D12Device* pDevice, uint64 pageSize = MB(2));
 		~DX12LinearAllocator();
 
+		void Init(ID3D12Device* pDevice, uint64 pageSize = MB(2));
+		
 		DX12Allocation Allocate(uint64 size, uint64 alignment);
 		void Reset();
 
 	private:
-		void Init(ID3D12Device* pDevice);
 		DX12LinearAllocatorBlock* AllocatePage();
 
 	private:
@@ -66,5 +74,14 @@ namespace Lambda
 		uint32 m_CurrentPageIndex;
 		uint64 m_PageSize;
 	};
+
+
+	inline void DX12LinearAllocator::Reset()
+	{
+		//Reset allocator and all pages
+		m_CurrentPageIndex = 0;
+		for (auto page = m_Pages.begin(); page < m_Pages.end(); page++)
+			(*page)->Reset();
+	}
 }
 #endif

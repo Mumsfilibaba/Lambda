@@ -17,6 +17,6 @@ namespace Lambda
 
 	Time JoystickManager::GetPollrate()
 	{
-		return s_Instance->GetPollrate();
+		return s_Instance->InternalGetPollrate();
 	}
 }

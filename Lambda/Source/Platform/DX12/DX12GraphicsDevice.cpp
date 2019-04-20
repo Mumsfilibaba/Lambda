@@ -39,10 +39,10 @@ namespace Lambda
 		m_Adapter(nullptr),
 		m_SwapChain(nullptr),
 		m_Factory(nullptr),
-		m_pRTAllocator(nullptr),
-		m_pDSAllocator(nullptr),
-		m_pResourceAllocator(nullptr),
-		m_pSamplerAllocator(nullptr),
+		m_RTAllocator(),
+		m_DSAllocator(),
+		m_ResourceAllocator(),
+		m_SamplerAllocator(),
 		m_DXRSupported(false),
 		m_BackBufferFlags(0),
 		m_GPUWaitEvent(0),
@@ -84,11 +84,6 @@ namespace Lambda
 			SafeRelease(m_BackBuffers[i]);
 
 		CloseHandle(m_GPUWaitEvent);
-
-		SafeDelete(m_pRTAllocator);
-		SafeDelete(m_pDSAllocator);
-		SafeDelete(m_pResourceAllocator);
-		SafeDelete(m_pSamplerAllocator);
 	}
 
 
@@ -133,7 +128,7 @@ namespace Lambda
 		if (desc.Flags & BUFFER_FLAGS_CONSTANT_BUFFER)
 		{
 			//Allocate and set descriptor
-			DX12DescriptorHandle hDescriptor = m_pResourceAllocator->Allocate();
+			DX12DescriptorHandle hDescriptor = m_ResourceAllocator.Allocate();
 			pBuffer->SetDescriporHandle(hDescriptor);
 
 			//Create view
@@ -184,7 +179,7 @@ namespace Lambda
 			//Allocate depth stencil descriptor
 
 			//TODO: Free when resource is freed
-			DX12DescriptorHandle hDescriptor = m_pDSAllocator->Allocate();
+			DX12DescriptorHandle hDescriptor = m_DSAllocator.Allocate();
 			pTexture->SetDescriptorHandle(hDescriptor);
 
 			//Create view
@@ -202,7 +197,7 @@ namespace Lambda
 			//Allocate depth stencil descriptor
 
 			//TODO: Free when resource is freed
-			DX12DescriptorHandle hDescriptor = m_pResourceAllocator->Allocate();
+			DX12DescriptorHandle hDescriptor = m_ResourceAllocator.Allocate();
 			pTexture->SetDescriptorHandle(hDescriptor);
 
 			//Create view
@@ -230,7 +225,7 @@ namespace Lambda
 
 	void DX12GraphicsDevice::CreateSamplerState(ISamplerState** ppSamplerState, const SamplerDesc& desc) const
 	{
-		DX12DescriptorHandle hDescriptor = m_pSamplerAllocator->Allocate();
+		DX12DescriptorHandle hDescriptor = m_SamplerAllocator.Allocate();
 		(*ppSamplerState) = DBG_NEW DX12SamplerState(m_Device.Get(), hDescriptor.CPU, desc);
 	}
 
@@ -348,7 +343,7 @@ namespace Lambda
 
 		for (DX12Texture2D* pTarget : m_BackBuffers)
 		{
-			m_pRTAllocator->Free(pTarget->GetDescriptorHandle());
+			m_RTAllocator.Free(pTarget->GetDescriptorHandle());
 			pTarget->SetResource(nullptr);
 		}
 	}
@@ -630,10 +625,10 @@ namespace Lambda
 	bool DX12GraphicsDevice::CreateDescriptorHeaps()
 	{
 		//Create descriptor-allocator
-		m_pRTAllocator =			DBG_NEW DX12DescriptorAllocator(m_Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 32, false);
-		m_pDSAllocator =			DBG_NEW DX12DescriptorAllocator(m_Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1024, false);
-		m_pResourceAllocator =		DBG_NEW DX12DescriptorAllocator(m_Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 128, false);
-		m_pSamplerAllocator =		DBG_NEW DX12DescriptorAllocator(m_Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, 128, false);
+		m_RTAllocator.Init(m_Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 32, false);
+		m_DSAllocator.Init(m_Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1024, false);
+		m_ResourceAllocator.Init(m_Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 128, false);
+		m_SamplerAllocator.Init(m_Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, 128, false);
 
 		// Create null descriptors
 		{
@@ -644,14 +639,14 @@ namespace Lambda
 			desc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
 			desc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
 			desc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-			m_NullSampler = m_pSamplerAllocator->Allocate();
+			m_NullSampler = m_SamplerAllocator.Allocate();
 			m_Device->CreateSampler(&desc, m_NullSampler.CPU);
 		}
 
 		{
 			//Null constantbuffer
 			D3D12_CONSTANT_BUFFER_VIEW_DESC desc = {};
-			m_NullCBV = m_pResourceAllocator->Allocate();
+			m_NullCBV = m_ResourceAllocator.Allocate();
 			m_Device->CreateConstantBufferView(&desc, m_NullCBV.CPU);
 		}
 
@@ -661,7 +656,7 @@ namespace Lambda
 			desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 			desc.Format = DXGI_FORMAT_R32_UINT;
 			desc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
-			m_NullSRV = m_pResourceAllocator->Allocate();
+			m_NullSRV = m_ResourceAllocator.Allocate();
 			m_Device->CreateShaderResourceView(nullptr, &desc, m_NullSRV.CPU);
 		}
 
@@ -692,7 +687,7 @@ namespace Lambda
 				return false;
 			}
 
-			DX12DescriptorHandle descriptor = m_pRTAllocator->Allocate();
+			DX12DescriptorHandle descriptor = m_RTAllocator.Allocate();
 			m_Device->CreateRenderTargetView(backBuffer.Get(), &desc, descriptor.CPU);
 
 			m_BackBuffers[i]->SetResource(backBuffer.Get());

@@ -52,12 +52,6 @@ namespace Lambda
 	}
 
 
-	void DX12LinearAllocatorBlock::Reset()
-	{
-		m_Offset = 0;
-	}
-
-
 	void DX12LinearAllocatorBlock::Init(ID3D12Device* pDevice, uint64 size)
 	{
 		//Create page resource
@@ -80,20 +74,39 @@ namespace Lambda
 
 
 	//Allocator
+	DX12LinearAllocator::DX12LinearAllocator()
+		: m_Device(nullptr),
+		m_CurrentPage(nullptr),
+		m_Pages(),
+		m_PageSize(0),
+		m_CurrentPageIndex(0)
+	{
+	}
+
+
 	DX12LinearAllocator::DX12LinearAllocator(ID3D12Device* pDevice, uint64 pageSize)
 		: m_Device(nullptr),
 		m_CurrentPage(nullptr),
 		m_Pages(),
-		m_PageSize(pageSize),
+		m_PageSize(0),
 		m_CurrentPageIndex(0)
 	{
-		assert(pDevice != nullptr);
-		Init(pDevice);
+		Init(pDevice, pageSize);
 	}
 	
 	
 	DX12LinearAllocator::~DX12LinearAllocator()
 	{
+	}
+
+
+	void DX12LinearAllocator::Init(ID3D12Device* pDevice, uint64 pageSize)
+	{
+		assert(pDevice != nullptr);
+
+		m_PageSize = pageSize;
+		m_Device = pDevice;
+		m_CurrentPage = AllocatePage();
 	}
 	
 	
@@ -115,22 +128,6 @@ namespace Lambda
 		}
 
 		return allocation;
-	}
-
-
-	void DX12LinearAllocator::Reset()
-	{
-		//Reset allocator and all pages
-		m_CurrentPageIndex = 0;
-		for (auto page = m_Pages.begin(); page < m_Pages.end(); page++)
-			(*page)->Reset();
-	}
-
-
-	void DX12LinearAllocator::Init(ID3D12Device* pDevice)
-	{
-		m_Device = pDevice;
-		m_CurrentPage = AllocatePage();
 	}
 
 

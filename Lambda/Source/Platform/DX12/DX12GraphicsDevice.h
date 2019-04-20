@@ -67,10 +67,10 @@ namespace Lambda
 		mutable std::vector<ID3D12CommandList*> m_PendingLists;
 
 		DX12CommandList* m_pCommandList;
-		DX12DescriptorAllocator* m_pRTAllocator;
-		DX12DescriptorAllocator* m_pDSAllocator;
-		DX12DescriptorAllocator* m_pResourceAllocator;
-		DX12DescriptorAllocator* m_pSamplerAllocator;
+		mutable DX12DescriptorAllocator m_RTAllocator;
+		mutable DX12DescriptorAllocator m_DSAllocator;
+		mutable DX12DescriptorAllocator m_ResourceAllocator;
+		mutable DX12DescriptorAllocator m_SamplerAllocator;
 		DX12DescriptorHandle m_NullSampler;
 		DX12DescriptorHandle m_NullSRV;
 		DX12DescriptorHandle m_NullCBV;

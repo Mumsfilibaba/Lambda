@@ -3,26 +3,37 @@
 	#include "DX12DescriptorAllocator.h"
 namespace Lambda
 {
-	DX12DescriptorAllocator::DX12DescriptorAllocator(ID3D12Device* pDevice, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32 count, bool isShaderVisible)
+	DX12DescriptorAllocator::DX12DescriptorAllocator()
 		: m_Heap(nullptr),
 		m_FreeList(),
-		m_CPUStart(),
-		m_GPUStart(),
+		m_Start(),
 		m_DescriptorSize(0),
 		m_Count(0)
 	{
-		assert(pDevice != nullptr);
+	}
+
+
+	DX12DescriptorAllocator::DX12DescriptorAllocator(ID3D12Device* pDevice, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32 count, bool isShaderVisible)
+		: m_Heap(nullptr),
+		m_FreeList(),
+		m_Start(),
+		m_DescriptorSize(0),
+		m_Count(0)
+	{
 		Init(pDevice, type, count, isShaderVisible);
 	}
 	
+
 	DX12DescriptorAllocator::~DX12DescriptorAllocator()
 	{
 	}
 	
+
 	void DX12DescriptorAllocator::Free(const DX12DescriptorHandle& hDescriptor)
 	{
 		m_FreeList.push_back(hDescriptor.Index);
 	}
+
 
 	DX12DescriptorHandle DX12DescriptorAllocator::Allocate()
 	{
@@ -41,16 +52,18 @@ namespace Lambda
 			m_FreeList.front() = m_FreeList.back();
 			m_FreeList.pop_back();
 
-			descriptor.CPU.ptr = m_CPUStart.ptr + (m_DescriptorSize * id);
-			descriptor.GPU.ptr = m_GPUStart.ptr + (m_DescriptorSize * id);
+			descriptor = DX12DescriptorHandle(m_Start, (uint64)m_DescriptorSize * id);
 			descriptor.Index = id;
 		}
 
 		return descriptor;
 	}
 
+
 	void DX12DescriptorAllocator::Init(ID3D12Device* pDevice, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32 count, bool isShaderVisible)
 	{
+		assert(pDevice != nullptr);
+
 		//Create heap
 		D3D12_DESCRIPTOR_HEAP_DESC desc = {};
 		desc.Flags = isShaderVisible ? D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE : D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
@@ -72,8 +85,8 @@ namespace Lambda
 			m_DescriptorSize = pDevice->GetDescriptorHandleIncrementSize(type);
 			
 			//Get heap-startpoints
-			m_CPUStart = m_Heap->GetCPUDescriptorHandleForHeapStart();
-			m_GPUStart = m_Heap->GetGPUDescriptorHandleForHeapStart();
+			m_Start.CPU = m_Heap->GetCPUDescriptorHandleForHeapStart();
+			m_Start.GPU = m_Heap->GetGPUDescriptorHandleForHeapStart();
 
 			//Init freelist
 			m_FreeList.resize(m_Count);

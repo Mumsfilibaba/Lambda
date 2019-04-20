@@ -67,6 +67,7 @@ namespace Lambda
 
 	private:
 		void Init(ID3D12Device* pDevice, CommandListType type);
+		void AllocateDescriptors();
 		void InternalCopyAndSetDescriptors();
 		void InternalSetResourceDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE hDest, D3D12_CPU_DESCRIPTOR_HANDLE hSrc, uint32 slot, uint32 range);
 		void InternalSetSamplerDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE hDest, D3D12_CPU_DESCRIPTOR_HANDLE hSrc, uint32 slot);
@@ -78,15 +79,15 @@ namespace Lambda
 		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_Allocator;
 		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> m_List;
 		
-		DX12DescriptorHandle m_hResourceDescriptorStarts[5];
-		DX12DescriptorHandle m_hSamplerDescriptorStarts[5];
+		DX12DescriptorHandle m_hResourceDescriptorTables[5];
+		DX12DescriptorHandle m_hSamplerDescriptorTables[5];
 
 		DX12ResourceStateTracker m_ResourceTracker;
 
-		DX12LinearAllocator* m_pBufferAllocator;
-		DX12LinearAllocator* m_pTextureAllocator;
-		DX12LinearDescriptorAllocator* m_pResourceAllocator;
-		DX12LinearDescriptorAllocator* m_pSamplerAllocator;
+		DX12LinearAllocator m_BufferAllocator;
+		DX12LinearAllocator m_TextureAllocator;
+		DX12LinearDescriptorAllocator m_ResourceAllocator;
+		DX12LinearDescriptorAllocator m_SamplerAllocator;
 
 		std::vector<UINT> m_DescriptorRangeCounts;
 		std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> m_SrcDescriptorRanges;
