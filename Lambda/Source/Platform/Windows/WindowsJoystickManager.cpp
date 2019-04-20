@@ -13,17 +13,35 @@ namespace Lambda
 		return DBG_NEW WindowsJoystickManager();
 	}
 	
+
 	WindowsJoystickManager::WindowsJoystickManager()
 	{
 		memset(&m_ControllerState, 0, sizeof(XINPUT_STATE) * XUSER_MAX_COUNT);
+		m_PollRate = Time::Seconds(1.0f / 60.0f);
+		m_CurrentPollRate = m_PollRate;
 	}
 	
+
 	WindowsJoystickManager::~WindowsJoystickManager()
 	{
 	}
 
-	void WindowsJoystickManager::UpdateJoystickState()
+
+	void WindowsJoystickManager::InternalOnUpdate()
 	{
+		//Should we poll for input or return
+		m_PollingTimer.Tick();
+		if (m_PollingTimer.GetTotalTime() >= m_CurrentPollRate)
+		{
+			m_PollingTimer.Reset();
+		}
+		else
+		{
+			return;
+		}
+
+		//Update
+		bool isConnected = false;
 		for (uint32 i = 0; i < XUSER_MAX_COUNT; i++)
 		{
 			XINPUT_STATE state = {};
@@ -54,14 +72,38 @@ namespace Lambda
 					if (state.Gamepad.sThumbRY != m_ControllerState[i].Gamepad.sThumbRY)
 						event.JoystickChanged.RightY = state.Gamepad.sThumbRY;
 					//Buttons
-
+					//TODO: Fix buttons
 
 					EventDispatcher::SendEvent(event);
-
 					memcpy(&(m_ControllerState[i]), &state, sizeof(XINPUT_STATE));
+
+					//We found a controller
+					isConnected = true;
 				}
 			}
 		}
+
+		//Check again in two seconds if we have connnected
+		if (!isConnected)
+		{
+			m_CurrentPollRate = Time::Seconds(2.0f);
+		}
+		else
+		{
+			m_CurrentPollRate = m_PollRate;
+		}
+	}
+
+
+	void WindowsJoystickManager::InternalSetPollrate(const Time& time)
+	{
+		m_PollRate = time;
+	}
+
+
+	Time WindowsJoystickManager::InternalGetPollrate() const
+	{
+		return m_PollRate;
 	}
 }
 #endif

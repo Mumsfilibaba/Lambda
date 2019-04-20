@@ -42,7 +42,6 @@ namespace Lambda
 		IWindow* m_pWindow;
 		IGraphicsDevice* m_pGraphicsContext;
 		int32 m_ExitCode;
-		Clock m_JoystickPollTimer;
 		bool m_Running;
 
 	public:

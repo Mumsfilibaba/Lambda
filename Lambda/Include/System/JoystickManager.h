@@ -1,6 +1,7 @@
 #pragma once
 #include <Defines.h>
 #include <Types.h>
+#include "Time.hpp"
 
 namespace Lambda
 {
@@ -13,10 +14,14 @@ namespace Lambda
 		virtual ~JoystickManager() = default;
 
 	private:
-		virtual void UpdateJoystickState() = 0;
+		virtual void InternalOnUpdate() = 0;
+		virtual void InternalSetPollrate(const Time& time) = 0;
+		virtual Time InternalGetPollrate() const = 0;
 
 	public:
 		static void OnUpdate();
+		static void SetPollrate(const Time& time);
+		static Time GetPollrate();
 
 	private:
 		static JoystickManager* Create();

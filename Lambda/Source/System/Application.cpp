@@ -31,23 +31,37 @@ namespace Lambda
 		InternalOnLoad();
 
 		Clock clock;
+		Time accumulator;
+		const Time timestep = Time::Seconds(1.0f / 60.0f);
+
 		uint32 fps = 0;
+		uint32 ups = 0;
 
 		clock.Reset();
 		while (m_Running)
 		{
 			clock.Tick();
-
-			InternalOnUpdate(clock.GetDeltaTime());
-			fps++;
-
-			InternalOnRender(clock.GetDeltaTime());
 			
+			//Logic update
+			accumulator += clock.GetDeltaTime();
+			while (accumulator >= timestep)
+			{
+				InternalOnUpdate(timestep);
+				accumulator -= timestep;
+				ups++;
+			}
+
+			//Render
+			InternalOnRender(clock.GetDeltaTime());
+			fps++;
+			
+			//Print FPS and UPS to console
 			if (clock.GetTotalTime().AsSeconds() >= 1.0f)
 			{
 				clock.Reset();
-				LOG_SYSTEM_PRINT("FPS: %d\n", fps);
+				LOG_SYSTEM_PRINT("FPS: %d, UPS: %d\n", fps, ups);
 				fps = 0;
+				ups = 0;
 			}
 		}
 
@@ -92,6 +106,9 @@ namespace Lambda
 			EventLayer graphicsLayer = { IGraphicsDevice::OnEvent, "GraphicsLayer" };
 			EventDispatcher::PushEventLayer(graphicsLayer);
 		}
+
+		//Set joystick-pollingrate
+		JoystickManager::SetPollrate(Time::Seconds(1.0f / 60.0f));
 	}
 
 
@@ -118,14 +135,7 @@ namespace Lambda
 	void Application::InternalOnUpdate(Time dt)
 	{
 		m_pWindow->OnUpdate();
-
-		m_JoystickPollTimer.Tick();
-		if (m_JoystickPollTimer.GetTotalTime().AsSeconds() >= (1.0f / 60.0f))
-		{
-			JoystickManager::OnUpdate();
-			m_JoystickPollTimer.Reset();
-		}
-
+		JoystickManager::OnUpdate();
 		OnUpdate(dt);
 	}
 

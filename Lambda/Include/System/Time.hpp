@@ -30,6 +30,10 @@ namespace Lambda
 		friend Time operator-(const Time& left, const Time& right);
 		friend Time operator*(const Time& left, const Time& right);
 		friend Time operator/(const Time& left, const Time& right);
+		friend bool operator>(const Time& left, const Time& right);
+		friend bool operator<(const Time& left, const Time& right);
+		friend bool operator>=(const Time& left, const Time& right);
+		friend bool operator<=(const Time& left, const Time& right);
 
 	private:
 		uint64 m_Ns;
@@ -187,5 +191,29 @@ namespace Lambda
 	inline Time operator/(const Time& left, const Time& right)
 	{
 		return Time(left.m_Ns / right.m_Ns);
+	}
+
+
+	inline bool operator>(const Time& left, const Time& right)
+	{
+		return left.m_Ns > right.m_Ns;
+	}
+
+
+	inline bool operator<(const Time& left, const Time& right)
+	{
+		return left.m_Ns < right.m_Ns;
+	}
+
+
+	inline bool operator>=(const Time& left, const Time& right)
+	{
+		return (left.m_Ns >= right.m_Ns);
+	}
+
+
+	inline bool operator<=(const Time& left, const Time& right)
+	{
+		return (left.m_Ns <= right.m_Ns);
 	}
 }
