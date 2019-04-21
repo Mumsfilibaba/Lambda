@@ -32,20 +32,21 @@ namespace Lambda
 	DX12GraphicsDevice::DX12GraphicsDevice(IWindow* pWindow, GraphicsContextFlags flags)
 		: m_Device(nullptr),
 		m_DXRDevice(nullptr),
-		m_Queue(nullptr),
-		m_Fence(nullptr),
 		m_Debug(nullptr),
 		m_DebugDevice(nullptr),
 		m_Adapter(nullptr),
 		m_SwapChain(nullptr),
 		m_Factory(nullptr),
+		m_pCommandList(nullptr),
+		m_DirectQueue(),
+		m_ComputeQueue(),
+		m_CopyQueue(),
 		m_RTAllocator(),
 		m_DSAllocator(),
 		m_ResourceAllocator(),
 		m_SamplerAllocator(),
 		m_DXRSupported(false),
 		m_BackBufferFlags(0),
-		m_GPUWaitEvent(0),
 		m_NumBackbuffers(0),
 		m_CurrentBackBuffer(0),
 		m_References(0)
@@ -82,8 +83,6 @@ namespace Lambda
 		SafeRelease(m_pCommandList);
 		for (uint32 i = 0; i < m_NumBackbuffers; i++)
 			SafeRelease(m_BackBuffers[i]);
-
-		CloseHandle(m_GPUWaitEvent);
 	}
 
 
@@ -238,17 +237,7 @@ namespace Lambda
 
 	void DX12GraphicsDevice::ExecuteCommandList(ICommandList* const * ppLists, uint32 numLists) const
 	{
-		//Convert lists
-		for (uint32 i = 0; i < numLists; i++)
-		{
-			DX12CommandList* pList = reinterpret_cast<DX12CommandList*>(ppLists[i]);
-			m_PendingLists.push_back(pList->GetList());
-		}
-
-		//Execute
-		ID3D12CommandList** ppDXLists = m_PendingLists.data();
-		m_Queue->ExecuteCommandLists(numLists, ppDXLists);
-		m_PendingLists.clear();
+		m_DirectQueue.ExecuteCommandLists(reinterpret_cast<DX12CommandList* const *>(ppLists), numLists);
 	}
 
 
@@ -262,16 +251,15 @@ namespace Lambda
 	{
 		//Increment the fencecalue on the GPU (signal) for the current frame
 		uint64 fenceValue = m_FenceValues[m_CurrentBackBuffer];
-		m_Queue->Signal(m_Fence.Get(), fenceValue);
+		m_DirectQueue.Signal(fenceValue);
 
 		//Update current backbuffer
 		m_CurrentBackBuffer = m_SwapChain->GetCurrentBackBufferIndex();
 
 		//Wait if value is lower than current frame
-		if (m_Fence->GetCompletedValue() < m_FenceValues[m_CurrentBackBuffer])
+		if (m_DirectQueue.GetCompletedFenceValue() < m_FenceValues[m_CurrentBackBuffer])
 		{
-			m_Fence->SetEventOnCompletion(m_FenceValues[m_CurrentBackBuffer], m_GPUWaitEvent);
-			WaitForSingleObjectEx(m_GPUWaitEvent, INFINITE, FALSE);
+			m_DirectQueue.WaitForFenceValue(m_FenceValues[m_CurrentBackBuffer]);
 		}
 
 		//Increment fencevalue
@@ -283,11 +271,10 @@ namespace Lambda
 	{
 		//Increment the fencecalue on the GPU (signal) for the current frame
 		uint64 fenceValue = m_FenceValues[m_CurrentBackBuffer] + 1;
-		m_Queue->Signal(m_Fence.Get(), fenceValue);
+		m_DirectQueue.Signal(fenceValue);
 
 		//Wait for value
-		m_Fence->SetEventOnCompletion(fenceValue, m_GPUWaitEvent);
-		WaitForSingleObjectEx(m_GPUWaitEvent, INFINITE, FALSE);
+		m_DirectQueue.WaitForFenceValue(m_FenceValues[m_CurrentBackBuffer]);
 
 		//Increment fencevalue
 		m_FenceValues[m_CurrentBackBuffer]++;
@@ -514,44 +501,12 @@ namespace Lambda
 			return false;
 		}
 
-		//Create commandqueue
-		D3D12_COMMAND_QUEUE_DESC qDesc = {};
-		qDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-		qDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-		qDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
-		qDesc.NodeMask = 0;
+		//Create queues
+		bool result = m_DirectQueue.Init(m_Device.Get(), D3D12_COMMAND_LIST_TYPE_DIRECT);
+		m_ComputeQueue.Init(m_Device.Get(), D3D12_COMMAND_LIST_TYPE_COMPUTE);
+		m_CopyQueue.Init(m_Device.Get(), D3D12_COMMAND_LIST_TYPE_COPY);
 
-		hr = m_Device->CreateCommandQueue(&qDesc, IID_PPV_ARGS(&m_Queue));
-		if (FAILED(hr))
-		{
-			LOG_DEBUG_ERROR("DX12: Could not create CommandQueue.\n");
-			return false;
-		}
-		else
-		{
-			LOG_DEBUG_INFO("DX12: Created CommandQueue.\n");
-
-			m_GPUWaitEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-			if (m_GPUWaitEvent == 0)
-			{
-				LOG_DEBUG_INFO("DX12: Failed to create GPU-event handle.\n");
-				return false;
-			}
-		}
-
-		//Create fence
-		hr = m_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fence));
-		if (FAILED(hr))
-		{
-			LOG_DEBUG_ERROR("DX12: Could not create Fence.\n");
-			return false;
-		}
-		else
-		{
-			LOG_DEBUG_INFO("DX12: Created Fence.\n");
-		}
-
-		return true;
+		return result;
 	}
 
 
@@ -581,7 +536,7 @@ namespace Lambda
 
 		HWND hWnd = (HWND)pWindow->GetNativeHandle();
 		ComPtr<IDXGISwapChain1> swapChain = nullptr;
-		HRESULT hr = m_Factory->CreateSwapChainForHwnd(m_Queue.Get(), hWnd, &desc, nullptr, nullptr, &swapChain);
+		HRESULT hr = m_Factory->CreateSwapChainForHwnd(m_DirectQueue.GetQueue(), hWnd, &desc, nullptr, nullptr, &swapChain);
 		if (FAILED(hr))
 		{
 			LOG_DEBUG_ERROR("DX12: Failed to create swapchain.\n");

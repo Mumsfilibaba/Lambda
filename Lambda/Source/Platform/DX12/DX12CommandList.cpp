@@ -21,9 +21,22 @@ namespace Lambda
 
 
 	DX12CommandList::DX12CommandList(ID3D12Device* pDevice, CommandListType type)
-		: m_SamplerDescriptorSize(0),
+		: m_Allocator(nullptr),
+		m_List(nullptr),
+		m_Device(nullptr),
+		m_BufferAllocator(),
+		m_TextureAllocator(),
+		m_ResourceAllocator(),
+		m_SamplerAllocator(),
+		m_ResourceCache(),
+		m_SamplerCache(),
+		m_ResourceTracker(),
+		m_hResourceDescriptorTables(),
+		m_hSamplerDescriptorTables(),
+		m_SamplerDescriptorSize(0),
 		m_ResourceDescriptorSize(0),
-		m_References(0)
+		m_References(0),
+		m_Type(COMMAND_LIST_TYPE_UNKNOWN)
 	{
 		assert(pDevice != nullptr);
 
@@ -459,7 +472,7 @@ namespace Lambda
 		DX12DescriptorHandle hResource = m_ResourceAllocator.Allocate(120);
 		DX12DescriptorHandle hSampler = m_SamplerAllocator.Allocate(40);
 
-		for (uint32 i = 0; i < 5; i++)
+		for (uint64 i = 0; i < 5; i++)
 		{
 			//Set descriptor tables for resources
 			m_hResourceDescriptorTables[i] = DX12DescriptorHandle(hResource, (uint64)m_ResourceDescriptorSize * (i * 24));
@@ -472,18 +485,8 @@ namespace Lambda
 	void DX12CommandList::InternalCopyAndSetDescriptors()
 	{
 		//Perform copy of resourcedescriptors
-		UINT numRanges = (UINT)m_DescriptorRangeCounts.size();
-		UINT* pRangeSizes = m_DescriptorRangeCounts.data();
-		D3D12_CPU_DESCRIPTOR_HANDLE* pDstRangeStart = m_DstDescriptorRanges.data();
-		D3D12_CPU_DESCRIPTOR_HANDLE* pSrcRangeStart = m_SrcDescriptorRanges.data();
-		m_Device->CopyDescriptors(numRanges, pDstRangeStart, pRangeSizes, numRanges, pSrcRangeStart, pRangeSizes, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-		//Perform copy of samplerdescriptors
-		numRanges = (UINT)m_SamplerDescriptorRangeCounts.size();
-		pRangeSizes = m_SamplerDescriptorRangeCounts.data();
-		pDstRangeStart = m_SamplerDstDescriptorRanges.data();
-		pSrcRangeStart = m_SamplerSrcDescriptorRanges.data();
-		m_Device->CopyDescriptors(numRanges, pDstRangeStart, pRangeSizes, numRanges, pSrcRangeStart, pRangeSizes, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+		m_ResourceCache.CopyDescriptors(m_Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_SamplerCache.CopyDescriptors(m_Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 
 		//Set heap and descriptortables at predefine slots. (See default rootsignature in DX12PipelineState)
 		ID3D12DescriptorHeap* ppHeaps[] = { m_ResourceAllocator.GetHeap(), m_SamplerAllocator.GetHeap() };
@@ -509,40 +512,12 @@ namespace Lambda
 		m_List->SetGraphicsRootDescriptorTable(8, m_hResourceDescriptorTables[4].GPU);
 		m_List->SetGraphicsRootDescriptorTable(9, m_hSamplerDescriptorTables[4].GPU);
 
-		//Clear ranges
-		m_DstDescriptorRanges.clear();
-		m_SrcDescriptorRanges.clear();
-		m_DescriptorRangeCounts.clear();
-		m_SamplerDstDescriptorRanges.clear();
-		m_SamplerSrcDescriptorRanges.clear();
-		m_SamplerDescriptorRangeCounts.clear();
+		//Clear caches
+		m_ResourceCache.Clear();
+		m_SamplerCache.Clear();
 
 		//Allocate new descriptors after reset
 		AllocateDescriptors();
-	}
-	
-	
-	void DX12CommandList::InternalSetResourceDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE hDest, D3D12_CPU_DESCRIPTOR_HANDLE hSrc, uint32 slot, uint32 range)
-	{
-		//Get dest descriptor
-		hDest.ptr += (uint64)m_ResourceDescriptorSize * ((range * 8) + slot);
-		m_DstDescriptorRanges.push_back(hDest);
-
-		//Set src descriptor and count in range
-		m_SrcDescriptorRanges.push_back(hSrc);
-		m_DescriptorRangeCounts.push_back(1);
-	}
-
-
-	void DX12CommandList::InternalSetSamplerDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE hDest, D3D12_CPU_DESCRIPTOR_HANDLE hSrc, uint32 slot)
-	{
-		//Get dest descriptor
-		hDest.ptr += (uint64)m_SamplerDescriptorSize * slot;
-		m_SamplerDstDescriptorRanges.push_back(hDest);
-
-		//Set src descriptor and count in range
-		m_SamplerSrcDescriptorRanges.push_back(hSrc);
-		m_SamplerDescriptorRangeCounts.push_back(1);
 	}
 }
 #endif

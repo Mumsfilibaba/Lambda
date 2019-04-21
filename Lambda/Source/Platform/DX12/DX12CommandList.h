@@ -4,12 +4,14 @@
 	#include "DX12LinearAllocator.h"
 	#include "DX12LinearDescriptorAllocator.h"
 	#include "DX12ResourceStateTracker.h"
+	#include "DX12DescriptorCache.h"
 
 namespace Lambda
 {
 	class DX12CommandList final : public ICommandList
 	{
 		friend class DX12GraphicsDevice;
+		friend class DX12CommandQueue;
 
 	public:
 		LAMBDA_NO_COPY(DX12CommandList);
@@ -89,12 +91,8 @@ namespace Lambda
 		DX12LinearDescriptorAllocator m_ResourceAllocator;
 		DX12LinearDescriptorAllocator m_SamplerAllocator;
 
-		std::vector<UINT> m_DescriptorRangeCounts;
-		std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> m_SrcDescriptorRanges;
-		std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> m_DstDescriptorRanges;
-		std::vector<UINT> m_SamplerDescriptorRangeCounts;
-		std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> m_SamplerSrcDescriptorRanges;
-		std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> m_SamplerDstDescriptorRanges;
+		DX12DescriptorCache m_ResourceCache;
+		DX12DescriptorCache m_SamplerCache;
 		
 		CommandListType m_Type;
 		uint32 m_SamplerDescriptorSize;
@@ -106,6 +104,22 @@ namespace Lambda
 	inline ID3D12CommandList* DX12CommandList::GetList() const
 	{
 		return m_List.Get();
+	}
+
+
+	inline void DX12CommandList::InternalSetResourceDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE hDest, D3D12_CPU_DESCRIPTOR_HANDLE hSrc, uint32 slot, uint32 range)
+	{
+		//Get dest descriptor
+		hDest.ptr += (uint64)m_ResourceDescriptorSize * (((uint64)range * 8) + slot);
+		m_ResourceCache.PushDescriptor(hDest, hSrc);
+	}
+
+
+	inline void DX12CommandList::InternalSetSamplerDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE hDest, D3D12_CPU_DESCRIPTOR_HANDLE hSrc, uint32 slot)
+	{
+		//Get dest descriptor
+		hDest.ptr += (uint64)m_SamplerDescriptorSize * slot;
+		m_SamplerCache.PushDescriptor(hDest, hSrc);
 	}
 }
 #endif

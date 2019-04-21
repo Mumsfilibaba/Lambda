@@ -4,9 +4,9 @@
 
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include "DX12CommandList.h"
+	#include "DX12CommandQueue.h"
 	#include "DX12DescriptorAllocator.h"
 	#include <dxgi1_6.h>
-	#include <vector>
 
 namespace Lambda
 {
@@ -62,11 +62,13 @@ namespace Lambda
 		Microsoft::WRL::ComPtr<ID3D12Device5> m_DXRDevice;
 		Microsoft::WRL::ComPtr<ID3D12Debug> m_Debug;
 		Microsoft::WRL::ComPtr<ID3D12DebugDevice> m_DebugDevice;
-		Microsoft::WRL::ComPtr<ID3D12Fence> m_Fence;
-		Microsoft::WRL::ComPtr<ID3D12CommandQueue> m_Queue;
-		mutable std::vector<ID3D12CommandList*> m_PendingLists;
 
 		DX12CommandList* m_pCommandList;
+
+		DX12CommandQueue m_DirectQueue;
+		DX12CommandQueue m_ComputeQueue;
+		DX12CommandQueue m_CopyQueue;
+
 		mutable DX12DescriptorAllocator m_RTAllocator;
 		mutable DX12DescriptorAllocator m_DSAllocator;
 		mutable DX12DescriptorAllocator m_ResourceAllocator;
@@ -77,7 +79,6 @@ namespace Lambda
 		std::vector<DX12Texture2D*> m_BackBuffers;
 		mutable std::vector<uint64> m_FenceValues;
 
-		HANDLE m_GPUWaitEvent;
 		DXGI_FORMAT m_BackBufferFormat;
 		uint32 m_BackBufferFlags;
 		mutable uint32 m_CurrentBackBuffer;
