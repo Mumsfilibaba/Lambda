@@ -370,8 +370,15 @@ namespace Lambda
 	void DX12CommandList::Reset()
 	{
 		//Reset commandallocator and commandlist
-		m_Allocator->Reset();
-		m_List->Reset(m_Allocator.Get(), nullptr);
+		if (FAILED(m_Allocator->Reset()))
+		{
+			LOG_DEBUG_ERROR("DX12: Failed to reset commandallocator\n");
+		}
+
+		if (FAILED(m_List->Reset(m_Allocator.Get(), nullptr)))
+		{
+			LOG_DEBUG_ERROR("DX12: Failed to reset commandlist\n");
+		}
 		
 		//Reset allocators
 		m_BufferAllocator.Reset();

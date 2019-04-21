@@ -471,7 +471,7 @@ namespace Lambda
 				hr = m_Device.As<ID3D12Device5>(&m_DXRDevice);
 				if (FAILED(hr))
 				{
-					LOG_DEBUG_ERROR("DX12: Failed to retrive ID3D12Device5\n");
+					LOG_DEBUG_ERROR("DX12: Failed to retrive ID3D12Device5, no DXR support\n");
 					return false;
 				}
 				else
@@ -492,6 +492,20 @@ namespace Lambda
 				{
 					LOG_DEBUG_ERROR("DX12: Could not create DebugDevice.\n");
 					return false;
+				}
+				
+				//Retrive infoqueue
+				ComPtr<ID3D12InfoQueue> infoQueue = nullptr;
+				hr = m_Device.As<ID3D12InfoQueue>(&infoQueue);
+				if (FAILED(hr))
+				{
+					LOG_DEBUG_ERROR("DX12: Could not retrive infoqueue.\n");
+					return false;
+				}
+				else
+				{
+					//Enable break on error
+					infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
 				}
 			}
 		}
