@@ -12,7 +12,7 @@ namespace Lambda
 	};
 
 
-	class LAMBDA_API IGraphicsPipelineState : public IObject
+	class LAMBDA_API IGraphicsPipelineState
 	{
 	public:
 		LAMBDA_INTERFACE(IGraphicsPipelineState);
@@ -27,7 +27,7 @@ namespace Lambda
 		IShader* pComputeShader = nullptr;
 	};
 
-	class LAMBDA_API IComputePipelineState : public IObject
+	class LAMBDA_API IComputePipelineState
 	{
 	public:
 		LAMBDA_INTERFACE(IComputePipelineState);

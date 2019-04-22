@@ -9,7 +9,7 @@ namespace Lambda
 	};
 
 
-	class LAMBDA_API ISamplerState : public IObject
+	class LAMBDA_API ISamplerState
 	{
 	public:
 		LAMBDA_INTERFACE(ISamplerState);

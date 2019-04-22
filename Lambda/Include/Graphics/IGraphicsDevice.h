@@ -2,6 +2,7 @@
 #include <IObject.h>
 #include <System/EventDispatcher.h>
 #include <System/IWindow.h>
+#include "ICommandList.h"
 
 namespace Lambda
 {
@@ -18,7 +19,6 @@ namespace Lambda
 	class IShader;
 	class IGraphicsPipelineState;
 	class IRenderTarget;
-	class ICommandList;
 
 	struct SamplerDesc;
 	struct BufferDesc;
@@ -26,7 +26,7 @@ namespace Lambda
 	struct ShaderDesc;
 	struct GraphicsPipelineStateDesc;
 
-	class LAMBDA_API IGraphicsDevice : public IObject
+	class LAMBDA_API IGraphicsDevice
 	{
 	public:
 		LAMBDA_INTERFACE(IGraphicsDevice);
@@ -34,11 +34,20 @@ namespace Lambda
 		IGraphicsDevice() = default;
 		~IGraphicsDevice() = default;
 
+		virtual void CreateCommandList(ICommandList** ppList, CommandListType type) const = 0;
 		virtual void CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) const = 0;
 		virtual void CreateTexture2D(ITexture2D** ppTexture, const ResourceData* pInitalData, const Texture2DDesc& desc) const = 0;
 		virtual void CreateShader(IShader** ppShader, const ShaderDesc& desc) const = 0;
 		virtual void CreateSamplerState(ISamplerState** ppSamplerState, const SamplerDesc& desc) const = 0;
 		virtual void CreateGraphicsPipelineState(IGraphicsPipelineState** ppPSO, const GraphicsPipelineStateDesc& desc) const = 0;
+
+		virtual void DestroyCommandList(ICommandList** ppList) const = 0;
+		virtual void DestroyBuffer(IBuffer** ppBuffer) const = 0;
+		virtual void DestroyTexture2D(ITexture2D** ppTexture) const = 0;
+		virtual void DestroyShader(IShader** ppShader) const = 0;
+		virtual void DestroySamplerState(ISamplerState** ppSamplerState) const = 0;
+		virtual void DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPSO) const = 0;
+		virtual void Destroy() const = 0;
 
 		virtual void ExecuteCommandList(ICommandList* const * ppLists, uint32 numLists) const = 0;
 		virtual void Present(uint32 verticalSync) const = 0;

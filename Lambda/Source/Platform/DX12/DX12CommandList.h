@@ -63,9 +63,6 @@ namespace Lambda
 
 		virtual void Close() override final;
 		virtual void Reset() override final;
-		
-		virtual uint32 Release() override final;
-		virtual uint32 AddRef() override final;
 
 	private:
 		void Init(ID3D12Device* pDevice, CommandListType type);
@@ -97,7 +94,6 @@ namespace Lambda
 		CommandListType m_Type;
 		uint32 m_SamplerDescriptorSize;
 		uint32 m_ResourceDescriptorSize;
-		uint32 m_References;
 	};
 
 

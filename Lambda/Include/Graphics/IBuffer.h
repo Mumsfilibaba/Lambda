@@ -12,7 +12,7 @@ namespace Lambda
 	};
 
 
-	class IBuffer : public IObject
+	class LAMBDA_API IBuffer
 	{
 	public:
 		LAMBDA_INTERFACE(IBuffer);

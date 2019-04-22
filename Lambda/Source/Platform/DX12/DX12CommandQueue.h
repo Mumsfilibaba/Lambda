@@ -11,10 +11,10 @@ namespace Lambda
 		LAMBDA_NO_COPY(DX12CommandQueue);
 
 		DX12CommandQueue();
-		DX12CommandQueue(ID3D12Device* pDevice, D3D12_COMMAND_LIST_TYPE type);
+		DX12CommandQueue(ID3D12Device* pDevice, D3D12_COMMAND_LIST_TYPE type, uint64 initalFence);
 		~DX12CommandQueue();
 
-		bool Init(ID3D12Device* pDevice, D3D12_COMMAND_LIST_TYPE type);
+		bool Init(ID3D12Device* pDevice, D3D12_COMMAND_LIST_TYPE type, uint64 initalFence);
 		void Signal(uint64 fenceValue) const;
 		void WaitForFenceValue(uint64 fenceValue) const;
 		void ExecuteCommandLists(DX12CommandList* const* ppLists, uint32 numLists) const;

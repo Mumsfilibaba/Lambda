@@ -10,16 +10,6 @@
 #if defined(LAMBDA_PLAT_WINDOWS)
 namespace Lambda
 {
-	ICommandList* ICommandList::Create(CommandListType type)
-	{
-		IGraphicsDevice* pContext = IGraphicsDevice::GetInstance();
-		assert(pContext != nullptr);
-
-		ID3D12Device5* pDevice = reinterpret_cast<ID3D12Device5*>(pContext->GetNativeHandle());
-		return DBG_NEW DX12CommandList(pDevice, type);
-	}
-
-
 	DX12CommandList::DX12CommandList(ID3D12Device* pDevice, CommandListType type)
 		: m_Allocator(nullptr),
 		m_List(nullptr),
@@ -35,12 +25,10 @@ namespace Lambda
 		m_hSamplerDescriptorTables(),
 		m_SamplerDescriptorSize(0),
 		m_ResourceDescriptorSize(0),
-		m_References(0),
 		m_Type(COMMAND_LIST_TYPE_UNKNOWN)
 	{
 		assert(pDevice != nullptr);
 
-		AddRef();
 		Init(pDevice, type);
 	}
 
@@ -179,7 +167,7 @@ namespace Lambda
 	{
 		for (uint32 i = 0; i < numSamplers; i++)
 		{
-			InternalSetSamplerDescriptor(m_hSamplerDescriptorTables[0].CPU, reinterpret_cast<const DX12SamplerState*>(ppSamplerStates[i])->GetDescriptorHandle(), startSlot + i);
+			InternalSetSamplerDescriptor(m_hSamplerDescriptorTables[0].CPU, reinterpret_cast<const DX12SamplerState*>(ppSamplerStates[i])->GetDescriptorHandle().CPU, startSlot + i);
 		}
 	}
 
@@ -206,7 +194,7 @@ namespace Lambda
 	{
 		for (uint32 i = 0; i < numSamplers; i++)
 		{
-			InternalSetSamplerDescriptor(m_hSamplerDescriptorTables[1].CPU, reinterpret_cast<const DX12SamplerState*>(ppSamplerStates[i])->GetDescriptorHandle(), startSlot + i);
+			InternalSetSamplerDescriptor(m_hSamplerDescriptorTables[1].CPU, reinterpret_cast<const DX12SamplerState*>(ppSamplerStates[i])->GetDescriptorHandle().CPU, startSlot + i);
 		}
 	}
 
@@ -233,7 +221,7 @@ namespace Lambda
 	{
 		for (uint32 i = 0; i < numSamplers; i++)
 		{
-			InternalSetSamplerDescriptor(m_hSamplerDescriptorTables[2].CPU, reinterpret_cast<const DX12SamplerState*>(ppSamplerStates[i])->GetDescriptorHandle(), startSlot + i);
+			InternalSetSamplerDescriptor(m_hSamplerDescriptorTables[2].CPU, reinterpret_cast<const DX12SamplerState*>(ppSamplerStates[i])->GetDescriptorHandle().CPU, startSlot + i);
 		}
 	}
 
@@ -260,7 +248,7 @@ namespace Lambda
 	{
 		for (uint32 i = 0; i < numSamplers; i++)
 		{
-			InternalSetSamplerDescriptor(m_hSamplerDescriptorTables[3].CPU, reinterpret_cast<const DX12SamplerState*>(ppSamplerStates[i])->GetDescriptorHandle(), startSlot + i);
+			InternalSetSamplerDescriptor(m_hSamplerDescriptorTables[3].CPU, reinterpret_cast<const DX12SamplerState*>(ppSamplerStates[i])->GetDescriptorHandle().CPU, startSlot + i);
 		}
 	}
 
@@ -287,7 +275,7 @@ namespace Lambda
 	{
 		for (uint32 i = 0; i < numSamplers; i++)
 		{
-			InternalSetSamplerDescriptor(m_hSamplerDescriptorTables[4].CPU, reinterpret_cast<const DX12SamplerState*>(ppSamplerStates[i])->GetDescriptorHandle(), startSlot + i);
+			InternalSetSamplerDescriptor(m_hSamplerDescriptorTables[4].CPU, reinterpret_cast<const DX12SamplerState*>(ppSamplerStates[i])->GetDescriptorHandle().CPU, startSlot + i);
 		}
 	}
 
@@ -388,18 +376,6 @@ namespace Lambda
 
 		//Allocate new descriptors after reset
 		AllocateDescriptors();
-	}
-
-
-	uint32 DX12CommandList::Release()
-	{
-		IOBJECT_IMPLEMENT_RELEASE(m_References);
-	}
-
-
-	uint32 DX12CommandList::AddRef()
-	{
-		return ++m_References;
 	}
 
 

@@ -21,9 +21,6 @@ namespace Lambda
 
 		virtual Texture2DDesc GetDesc() const override final;
 
-		virtual uint32 Release() override final;
-		virtual uint32 AddRef() override final;
-
 	private:
 		void Init(ID3D12Device* pDevice, const Texture2DDesc& desc);
 		void InitFromResource(ID3D12Resource* pResource);
@@ -37,16 +34,16 @@ namespace Lambda
 	private:
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_Texture;
 		DX12DescriptorHandle m_hDescriptor;
-
 		Texture2DDesc m_Desc;
-		uint32 m_References;
 	};
+
 
 	inline ID3D12Resource* Lambda::DX12Texture2D::GetResource() const
 	{
 		return m_Texture.Get();
 	}
 	
+
 	inline DX12DescriptorHandle DX12Texture2D::GetDescriptorHandle() const
 	{
 		return m_hDescriptor;

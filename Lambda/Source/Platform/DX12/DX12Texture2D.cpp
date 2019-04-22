@@ -7,28 +7,24 @@ namespace Lambda
 {
 	DX12Texture2D::DX12Texture2D(ID3D12Resource* pResource)
 		: m_Texture(nullptr),
-		m_References(0)
+		m_hDescriptor(),
+		m_Desc()
 	{
-		//Init Desc
-		memset(&m_Desc, 0, sizeof(m_Desc));
-
 		//Init
-		AddRef();
+		memset(&m_Desc, 0, sizeof(m_Desc));
 		InitFromResource(pResource);
 	}
 
 
 	DX12Texture2D::DX12Texture2D(ID3D12Device* pDevice, const Texture2DDesc& desc)
 		: m_Texture(nullptr),
-		m_References(0)
+		m_hDescriptor(),
+		m_Desc()
 	{
 		assert(pDevice != nullptr);
 
-		//Init Desc
-		memset(&m_Desc, 0, sizeof(m_Desc));
-
 		//Init
-		AddRef();
+		memset(&m_Desc, 0, sizeof(m_Desc));
 		Init(pDevice, desc);
 	}
 	
@@ -44,24 +40,12 @@ namespace Lambda
 	}
 
 
-	uint32 DX12Texture2D::Release()
-	{
-		IOBJECT_IMPLEMENT_RELEASE(m_References);
-	}
-
-
-	uint32 DX12Texture2D::AddRef()
-	{
-		return ++m_References;
-	}
-
-
 	void DX12Texture2D::Init(ID3D12Device* pDevice, const Texture2DDesc& desc)
 	{
 		//Create texture2d resource
 		{
 			//Choose heap
-			CD3DX12_HEAP_PROPERTIES heapProp;
+			CD3DX12_HEAP_PROPERTIES heapProp = {};
 			D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COMMON;
 
 			//We want a default heap

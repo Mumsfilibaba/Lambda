@@ -36,16 +36,15 @@ namespace Lambda
 		m_Width = (float)GetWindow()->GetWidth();
 		m_Height = (float)GetWindow()->GetHeight();
 
+		IGraphicsDevice* pDevice = IGraphicsDevice::GetInstance();
 		//Create commandlist
 		{
 			for (uint32 i = 0; i < 3; i++)
-				m_pLists[i] = ICommandList::Create(COMMAND_LIST_TYPE_GRAPHICS);
+				pDevice->CreateCommandList(&m_pLists[i], COMMAND_LIST_TYPE_GRAPHICS);
 
 			m_pCurrentList = m_pLists[0];
 			m_pCurrentList->Reset();
 		}
-
-		IGraphicsDevice* pDevice = IGraphicsDevice::GetInstance();
 
 		//Create shaders
 		m_pVS = IShader::CreateShaderFromFile(pDevice, "Triangle.hlsl", "VSMain", SHADER_TYPE_VERTEX);
@@ -173,10 +172,10 @@ namespace Lambda
 		float color[] = { 0.392f, 0.584f, 0.929f, 1.0f };
 		ITexture2D* pRenderTarget = pDevice->GetCurrentRenderTarget();
 		
-		m_pCurrentList->TransitionResource(pRenderTarget, RESOURCE_STATE_RENDERTARGET);
-		m_pCurrentList->TransitionResource(m_pDepthBuffer, RESOURCE_STATE_DEPTH_WRITE);
 
+		m_pCurrentList->TransitionResource(pRenderTarget, RESOURCE_STATE_RENDERTARGET);
 		m_pCurrentList->ClearRenderTarget(pRenderTarget, color);
+		m_pCurrentList->TransitionResource(m_pDepthBuffer, RESOURCE_STATE_DEPTH_WRITE);
 		m_pCurrentList->ClearDepthStencil(m_pDepthBuffer, 1.0f, 0);
 		m_pCurrentList->SetRenderTarget(pRenderTarget, m_pDepthBuffer);
 
@@ -237,6 +236,7 @@ namespace Lambda
 
 		//Set vertexbuffer
 		m_pCurrentList->SetVertexBuffer(m_pVertexBuffer, 0);
+
 		m_pCurrentList->DrawInstanced(3, 1, 0, 0);
 
 		m_pCurrentList->TransitionResource(pRenderTarget, RESOURCE_STATE_PRESENT_COMMON);
@@ -256,18 +256,19 @@ namespace Lambda
 		pDevice->WaitForGPU();
 
 		for (uint32 i = 0; i < 3; i++)
-			SafeRelease(m_pLists[i]);
+			pDevice->DestroyCommandList(&(m_pLists[i]));
 
-		SafeRelease(m_pVS);
-		SafeRelease(m_pPS);
-		SafeRelease(m_pPipelineState);
-		SafeRelease(m_pVertexBuffer);
-		SafeRelease(m_pColorBuffer);
-		SafeRelease(m_pCameraBuffer);
-		SafeRelease(m_pDepthBuffer);
-		SafeRelease(m_pTexture);
-		SafeRelease(m_pSampler);
-		SafeRelease(m_pCompute);
+		pDevice->DestroyShader(&m_pVS);
+		pDevice->DestroyShader(&m_pPS);
+		pDevice->DestroyShader(&m_pCompute);
+
+		pDevice->DestroyGraphicsPipelineState(&m_pPipelineState);
+		pDevice->DestroyBuffer(&m_pVertexBuffer);
+		pDevice->DestroyBuffer(&m_pColorBuffer);
+		pDevice->DestroyBuffer(&m_pCameraBuffer);
+		pDevice->DestroyTexture2D(&m_pDepthBuffer);
+		pDevice->DestroyTexture2D(&m_pTexture);
+		pDevice->DestroySamplerState(&m_pSampler);
 	}
 
 
@@ -297,7 +298,7 @@ namespace Lambda
 				pDevice->WaitForGPU();
 
 				//Release depthbuffer
-				SafeRelease(instance.m_pDepthBuffer);
+				pDevice->DestroyTexture2D(&instance.m_pDepthBuffer);
 
 				//Create depthbuffer
 				Texture2DDesc desc = {};

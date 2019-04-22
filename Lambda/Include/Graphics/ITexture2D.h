@@ -21,7 +21,7 @@ namespace Lambda
 
 	class IGraphicsDevice;
 
-	class LAMBDA_API ITexture2D : public IObject
+	class LAMBDA_API ITexture2D
 	{
 	public:
 		LAMBDA_INTERFACE(ITexture2D);

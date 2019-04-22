@@ -20,17 +20,15 @@ namespace Lambda
 		virtual void Map(void** ppMem) override final;
 		virtual void Unmap() override final;
 
-		virtual uint32 Release() override final;
-		virtual uint32 AddRef() override final;
-
 		virtual BufferDesc GetDesc() const override final;
 
 	private:
 		void Init(ID3D12Device* pDevice, const BufferDesc& desc);
+		
 		void SetDescriporHandle(const DX12DescriptorHandle& hDescriptor);
 
-		DX12DescriptorHandle GetDescriptorHandle() const;
 		ID3D12Resource* GetResource() const;
+		DX12DescriptorHandle GetDescriptorHandle() const;
 		D3D12_VERTEX_BUFFER_VIEW GetVertexBufferView() const;
 		D3D12_INDEX_BUFFER_VIEW GetIndexBufferView() const;
 		D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAdress() const;
@@ -41,9 +39,7 @@ namespace Lambda
 		D3D12_INDEX_BUFFER_VIEW m_IBV;
 		D3D12_GPU_VIRTUAL_ADDRESS m_Adress;
 		DX12DescriptorHandle m_hDescriptor;
-		
 		BufferDesc m_Desc;
-		uint32 m_References;
 	};
 
 	inline ID3D12Resource* Lambda::DX12Buffer::GetResource() const

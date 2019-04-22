@@ -7,30 +7,15 @@ namespace Lambda
 {
 	DX12GraphicsPipelineState::DX12GraphicsPipelineState(ID3D12Device* pDevice, const GraphicsPipelineStateDesc& desc)
 		: m_State(nullptr),
-		m_RootSignature(nullptr),
-		m_References(0)
+		m_RootSignature(nullptr)
 	{
 		assert(pDevice != nullptr);
-
-		AddRef();
 		Init(pDevice, desc);
 	}
 
 
 	DX12GraphicsPipelineState::~DX12GraphicsPipelineState()
 	{
-	}
-
-
-	uint32 DX12GraphicsPipelineState::Release()
-	{
-		IOBJECT_IMPLEMENT_RELEASE(m_References);
-	}
-
-
-	uint32 DX12GraphicsPipelineState::AddRef()
-	{
-		return ++m_References;
 	}
 
 

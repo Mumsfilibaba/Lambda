@@ -8,18 +8,20 @@ namespace Lambda
 		: m_Fence(nullptr),
 		m_Queue(nullptr),
 		m_PendingLists(),
-		m_Type()
+		m_Type(),
+		m_GPUWaitEvent(0)
 	{
 	}
 	
 	
-	DX12CommandQueue::DX12CommandQueue(ID3D12Device* pDevice, D3D12_COMMAND_LIST_TYPE type)
+	DX12CommandQueue::DX12CommandQueue(ID3D12Device* pDevice, D3D12_COMMAND_LIST_TYPE type, uint64 initalFence)
 		: m_Fence(nullptr),
 		m_Queue(nullptr),
 		m_PendingLists(),
-		m_Type()
+		m_Type(),
+		m_GPUWaitEvent(0)
 	{
-		Init(pDevice, type);
+		Init(pDevice, type, initalFence);
 	}
 	
 	
@@ -29,7 +31,7 @@ namespace Lambda
 	}
 
 
-	bool DX12CommandQueue::Init(ID3D12Device* pDevice, D3D12_COMMAND_LIST_TYPE type)
+	bool DX12CommandQueue::Init(ID3D12Device* pDevice, D3D12_COMMAND_LIST_TYPE type, uint64 initalFence)
 	{
 		assert(pDevice != nullptr);
 
@@ -59,7 +61,7 @@ namespace Lambda
 		}
 
 		//Create fence
-		hr = pDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fence));
+		hr = pDevice->CreateFence(initalFence, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fence));
 		if (FAILED(hr))
 		{
 			LOG_DEBUG_ERROR("DX12: Could not create Fence.\n");

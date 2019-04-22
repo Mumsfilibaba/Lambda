@@ -9,6 +9,8 @@
 	#include "DX12Texture2D.h"
 	#include "DX12SamplerState.h"
 
+	#define INITAL_FENCE_VALUE 0
+
 namespace Lambda
 {
 	IGraphicsDevice* IGraphicsDevice::s_pInstance = nullptr;
@@ -48,8 +50,7 @@ namespace Lambda
 		m_DXRSupported(false),
 		m_BackBufferFlags(0),
 		m_NumBackbuffers(0),
-		m_CurrentBackBuffer(0),
-		m_References(0)
+		m_CurrentBackBuffer(0)
 	{
 		assert(s_pInstance == nullptr);
 		s_pInstance = this;
@@ -61,7 +62,6 @@ namespace Lambda
 		m_BackBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 		m_NumBackbuffers = 3;
 
-		AddRef();
 		Init(pWindow, flags);
 	}
 
@@ -80,9 +80,22 @@ namespace Lambda
 			m_DebugDevice->ReportLiveDeviceObjects(D3D12_RLDO_SUMMARY | D3D12_RLDO_DETAIL);
 		}
 
-		SafeRelease(m_pCommandList);
+		ICommandList* pList = m_pCommandList;
+		DestroyCommandList(&pList);
+		m_pCommandList = nullptr;
+
 		for (uint32 i = 0; i < m_NumBackbuffers; i++)
-			SafeRelease(m_BackBuffers[i]);
+		{
+			ITexture2D* pTexture = m_BackBuffers[i];
+			DestroyTexture2D(&pTexture);
+			m_BackBuffers[i] = nullptr;
+		}
+	}
+
+
+	void DX12GraphicsDevice::CreateCommandList(ICommandList** ppList, CommandListType type) const
+	{
+		*ppList = DBG_NEW DX12CommandList(m_Device.Get(), type);
 	}
 
 
@@ -114,9 +127,7 @@ namespace Lambda
 
 				//Execute and wait for GPU before creating
 				m_pCommandList->Close();
-
-				ICommandList* pList = m_pCommandList;
-				ExecuteCommandList(&pList, 1);
+				m_DirectQueue.ExecuteCommandLists(&m_pCommandList, 1);
 
 				WaitForGPU();
 				m_pCommandList->Reset();
@@ -225,13 +236,104 @@ namespace Lambda
 	void DX12GraphicsDevice::CreateSamplerState(ISamplerState** ppSamplerState, const SamplerDesc& desc) const
 	{
 		DX12DescriptorHandle hDescriptor = m_SamplerAllocator.Allocate();
-		(*ppSamplerState) = DBG_NEW DX12SamplerState(m_Device.Get(), hDescriptor.CPU, desc);
+		(*ppSamplerState) = DBG_NEW DX12SamplerState(m_Device.Get(), hDescriptor, desc);
 	}
 
 
 	void DX12GraphicsDevice::CreateGraphicsPipelineState(IGraphicsPipelineState** ppPSO, const GraphicsPipelineStateDesc& desc) const
 	{
 		(*ppPSO) = DBG_NEW DX12GraphicsPipelineState(m_Device.Get(), desc);
+	}
+
+
+	void DX12GraphicsDevice::DestroyCommandList(ICommandList** ppList) const
+	{
+		DX12CommandList* pList = reinterpret_cast<DX12CommandList*>(*ppList);
+		delete pList;
+		*ppList = nullptr;
+	}
+
+
+	void DX12GraphicsDevice::DestroyBuffer(IBuffer** ppBuffer) const
+	{
+		DX12Buffer* pBuffer = reinterpret_cast<DX12Buffer*>(*ppBuffer);
+		
+		//Check if constantbuffer and release descriptor
+		BufferDesc desc = pBuffer->GetDesc();
+		if (desc.Flags & BUFFER_FLAGS_CONSTANT_BUFFER)
+		{
+			DX12DescriptorHandle hDescriptor = pBuffer->GetDescriptorHandle();
+			m_ResourceAllocator.Free(hDescriptor);
+		}
+
+		//Remove state from global resourcetracker
+		DX12ResourceStateTracker::RemoveGlobalState(pBuffer->GetResource());
+
+		delete pBuffer;
+		*ppBuffer = nullptr;
+	}
+
+
+	void DX12GraphicsDevice::DestroyTexture2D(ITexture2D** ppTexture) const
+	{
+		DX12Texture2D* pTexture = reinterpret_cast<DX12Texture2D*>(*ppTexture);
+		Texture2DDesc desc = pTexture->GetDesc();
+
+		//Check what descriptor and free it
+		DX12DescriptorHandle hDescriptor = pTexture->GetDescriptorHandle();		
+		if (desc.Flags & TEXTURE_FLAGS_DEPTH_STENCIL)
+		{
+			m_DSAllocator.Free(hDescriptor);
+		}
+		else if (desc.Flags & TEXTURE_FLAGS_RENDER_TARGET)
+		{
+			m_RTAllocator.Free(hDescriptor);
+		}
+		else if (desc.Flags & TEXTURE_FLAGS_SHADER_RESOURCE)
+		{
+			m_ResourceAllocator.Free(hDescriptor);
+		}
+
+		//Remove state from global resourcetracker
+		DX12ResourceStateTracker::RemoveGlobalState(pTexture->GetResource());
+
+		delete pTexture;
+		*ppTexture = nullptr;
+	}
+
+
+	void DX12GraphicsDevice::DestroyShader(IShader** ppShader) const
+	{
+		DX12Shader* pShader = reinterpret_cast<DX12Shader*>(*ppShader);
+		delete pShader;
+		*ppShader = nullptr;
+	}
+
+
+	void DX12GraphicsDevice::DestroySamplerState(ISamplerState** ppSamplerState) const
+	{
+		DX12SamplerState* pSamplerState = reinterpret_cast<DX12SamplerState*>(*ppSamplerState);
+
+		//Release descriptor
+		DX12DescriptorHandle hDescriptor = pSamplerState->GetDescriptorHandle();
+		m_SamplerAllocator.Free(hDescriptor);
+
+		delete pSamplerState;
+		*ppSamplerState = nullptr;
+	}
+
+
+	void DX12GraphicsDevice::DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPSO) const
+	{
+		DX12GraphicsPipelineState* pPSO = reinterpret_cast<DX12GraphicsPipelineState*>(*ppPSO);
+		delete pPSO;
+		*ppPSO = nullptr;
+	}
+
+
+	void DX12GraphicsDevice::Destroy() const
+	{
+		delete this;
 	}
 
 
@@ -270,11 +372,11 @@ namespace Lambda
 	void DX12GraphicsDevice::WaitForGPU() const
 	{
 		//Increment the fencecalue on the GPU (signal) for the current frame
-		uint64 fenceValue = m_FenceValues[m_CurrentBackBuffer] + 1;
+		uint64 fenceValue = m_FenceValues[m_CurrentBackBuffer];
 		m_DirectQueue.Signal(fenceValue);
 
 		//Wait for value
-		m_DirectQueue.WaitForFenceValue(m_FenceValues[m_CurrentBackBuffer]);
+		m_DirectQueue.WaitForFenceValue(fenceValue);
 
 		//Increment fencevalue
 		m_FenceValues[m_CurrentBackBuffer]++;
@@ -300,23 +402,11 @@ namespace Lambda
 	}
 
 
-	uint32 DX12GraphicsDevice::Release()
-	{
-		IOBJECT_IMPLEMENT_RELEASE(m_References);
-	}
-
-
-	uint32 DX12GraphicsDevice::AddRef()
-	{
-		return ++m_References;
-	}
-
-
 	void DX12GraphicsDevice::Init(IWindow* pWindow, GraphicsContextFlags flags)
 	{
 		if (!CreateFactory(flags)) { return; }
 		if (!QueryAdaper(flags)) { return; }
-		if (!CreateDeviceAndCommandQueue(flags)) { return; }
+		if (!CreateDeviceAndCommandQueues(flags)) { return; }
 		if (!CreateSwapChain(pWindow)) { return; }
 		if (!CreateCommandList()) { return; }
 		if (!CreateDescriptorHeaps()) { return; }
@@ -330,7 +420,11 @@ namespace Lambda
 
 		for (DX12Texture2D* pTarget : m_BackBuffers)
 		{
+			//Free descriptor
 			m_RTAllocator.Free(pTarget->GetDescriptorHandle());
+			
+			//Remove resource state
+			DX12ResourceStateTracker::RemoveGlobalState(pTarget->GetResource());
 			pTarget->SetResource(nullptr);
 		}
 	}
@@ -454,7 +548,7 @@ namespace Lambda
 	}
 
 
-	bool DX12GraphicsDevice::CreateDeviceAndCommandQueue(GraphicsContextFlags flags)
+	bool DX12GraphicsDevice::CreateDeviceAndCommandQueues(GraphicsContextFlags flags)
 	{
 		using namespace Microsoft::WRL;
 
@@ -516,9 +610,9 @@ namespace Lambda
 		}
 
 		//Create queues
-		bool result = m_DirectQueue.Init(m_Device.Get(), D3D12_COMMAND_LIST_TYPE_DIRECT);
-		m_ComputeQueue.Init(m_Device.Get(), D3D12_COMMAND_LIST_TYPE_COMPUTE);
-		m_CopyQueue.Init(m_Device.Get(), D3D12_COMMAND_LIST_TYPE_COPY);
+		bool result = m_DirectQueue.Init(m_Device.Get(), D3D12_COMMAND_LIST_TYPE_DIRECT, INITAL_FENCE_VALUE);
+		m_ComputeQueue.Init(m_Device.Get(), D3D12_COMMAND_LIST_TYPE_COMPUTE, INITAL_FENCE_VALUE);
+		m_CopyQueue.Init(m_Device.Get(), D3D12_COMMAND_LIST_TYPE_COPY, INITAL_FENCE_VALUE);
 
 		return result;
 	}
@@ -577,7 +671,7 @@ namespace Lambda
 			//Init fencevalues
 			m_FenceValues.resize(m_NumBackbuffers);
 			for (uint32 i = 0; i < m_NumBackbuffers; i++)
-				m_FenceValues[i] = 0;
+				m_FenceValues[i] = INITAL_FENCE_VALUE + 1;
 
 			//Create the rendertarget-objects
 			m_BackBuffers.resize(m_NumBackbuffers);
@@ -595,7 +689,7 @@ namespace Lambda
 	{
 		//Create descriptor-allocator
 		m_RTAllocator.Init(m_Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 32, false);
-		m_DSAllocator.Init(m_Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1024, false);
+		m_DSAllocator.Init(m_Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 32, false);
 		m_ResourceAllocator.Init(m_Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 128, false);
 		m_SamplerAllocator.Init(m_Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, 128, false);
 

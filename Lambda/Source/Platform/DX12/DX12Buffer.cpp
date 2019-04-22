@@ -6,8 +6,11 @@ namespace Lambda
 {
 	DX12Buffer::DX12Buffer(ID3D12Device* pDevice, const BufferDesc& desc)
 		: m_Buffer(nullptr),
-		m_Adress(0),
-		m_References(0)
+		m_hDescriptor(),
+		m_IBV(),
+		m_VBV(),
+		m_Desc(),
+		m_Adress(0)
 	{
 		assert(pDevice != nullptr);
 
@@ -15,7 +18,6 @@ namespace Lambda
 		memset(&m_Desc, 0, sizeof(m_Desc));
 
 		//Init
-		AddRef();
 		Init(pDevice, desc);
 	}
 	
@@ -38,18 +40,6 @@ namespace Lambda
 	void DX12Buffer::Unmap()
 	{
 		m_Buffer->Unmap(0, nullptr);
-	}
-
-
-	uint32 DX12Buffer::Release()
-	{
-		IOBJECT_IMPLEMENT_RELEASE(m_References);
-	}
-
-
-	uint32 DX12Buffer::AddRef()
-	{
-		return ++m_References;
 	}
 
 
@@ -113,6 +103,7 @@ namespace Lambda
 			}
 		}
 	}
+
 
 	void DX12Buffer::SetDescriporHandle(const DX12DescriptorHandle& hDescriptor)
 	{

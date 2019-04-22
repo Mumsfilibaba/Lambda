@@ -19,6 +19,8 @@ namespace Lambda
 
 	class DX12ResourceStateTracker final
 	{
+		friend class DX12GraphicsDevice;
+
 	public:
 		using ResourceMap = std::unordered_map<ID3D12Resource*, DX12ResourceState>;
 
@@ -40,6 +42,8 @@ namespace Lambda
 		std::vector<D3D12_RESOURCE_BARRIER> m_DefferedBarriers;
 
 	private:
+		static DX12ResourceState& GetGlobalState(ID3D12Resource* pResource);
+		static bool HasGlobalState(ID3D12Resource* pResource);
 		static void AddGlobalState(ID3D12Resource* pResource, const DX12ResourceState& state);
 		static void RemoveGlobalState(ID3D12Resource* pResource);
 

@@ -160,6 +160,26 @@ namespace Lambda
 	}
 
 
+	DX12ResourceState& DX12ResourceStateTracker::GetGlobalState(ID3D12Resource* pResource)
+	{
+		assert(pResource != nullptr);
+
+		//Return the state
+		auto resourceState = s_GlobalResourceStates.find(pResource);
+		return resourceState->second;
+	}
+
+
+	bool DX12ResourceStateTracker::HasGlobalState(ID3D12Resource* pResource)
+	{
+		assert(pResource != nullptr);
+
+		//Does the resource have a state
+		auto resourceState = s_GlobalResourceStates.find(pResource);
+		return resourceState != s_GlobalResourceStates.end();
+	}
+
+
 	void DX12ResourceStateTracker::AddGlobalState(ID3D12Resource* pResource, const DX12ResourceState& state)
 	{
 		assert(pResource != nullptr);
@@ -167,7 +187,7 @@ namespace Lambda
 		//Add a new globalstate
 		auto resourceState = s_GlobalResourceStates.find(pResource);
 		if (resourceState == s_GlobalResourceStates.end())
-			s_GlobalResourceStates[pResource] = state;
+			resourceState->second = state;
 	}
 
 

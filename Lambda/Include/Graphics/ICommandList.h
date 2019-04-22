@@ -30,7 +30,7 @@ namespace Lambda
 	class ISamplerState;
 	class IGraphicsPipelineState;
 
-	class LAMBDA_API ICommandList : public IObject
+	class LAMBDA_API ICommandList
 	{
 	public:
 		LAMBDA_INTERFACE(ICommandList);
@@ -82,8 +82,5 @@ namespace Lambda
 
 		virtual void Close() = 0;
 		virtual void Reset() = 0;
-
-	public:
-		static ICommandList* Create(CommandListType type);
 	};
 }

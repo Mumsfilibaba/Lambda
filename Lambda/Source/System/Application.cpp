@@ -151,7 +151,7 @@ namespace Lambda
 		OnRelease();
 
 		SafeDelete(m_pWindow);
-		SafeRelease(m_pGraphicsContext);
+		m_pGraphicsContext->Destroy();
 	}
 
 
@@ -160,7 +160,7 @@ namespace Lambda
 		if (event.Type == EVENT_TYPE_WINDOW_CLOSED)
 		{
 			Application::GetInstance().Quit(0);
-			LOG_DEBUG_INFO("Window closed");
+			LOG_DEBUG_INFO("Window closed\n");
 			return true;
 		}
 		else if (event.Type == EVENT_TYPE_KEYDOWN)

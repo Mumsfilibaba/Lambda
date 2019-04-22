@@ -6,31 +6,22 @@ namespace Lambda
 {
 	DX12Shader::DX12Shader(const ShaderDesc& desc)
 		: m_ShaderBlob(),
-		m_Type(SHADER_TYPE_UNKNOWN),
-		m_References(0)
+		m_Type(SHADER_TYPE_UNKNOWN)
 	{
-		AddRef();
 		Init(desc);
 	}
+
 
 	DX12Shader::~DX12Shader()
 	{
 	}
-	
+
+
 	ShaderType DX12Shader::GetType() const
 	{
 		return m_Type;
 	}
 
-	uint32 DX12Shader::Release()
-	{
-		IOBJECT_IMPLEMENT_RELEASE(m_References);
-	}
-	
-	uint32 DX12Shader::AddRef()
-	{
-		return ++m_References;
-	}
 
 	void DX12Shader::Init(const ShaderDesc& desc)
 	{
@@ -65,8 +56,6 @@ namespace Lambda
 				const char* pMessage = reinterpret_cast<const char*>(error->GetBufferPointer());
 	#endif
 				LOG_DEBUG_ERROR("DX12: Failed to compile shader. Error-message:\n%s", pMessage);
-			
-				DEBUG_BREAK();
 			}
 			else
 			{
@@ -76,7 +65,11 @@ namespace Lambda
 				memcpy(m_ShaderBlob.data(), shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize());
 			}
 		}
+
+		//Init
+		m_Type = desc.Type;
 	}
+
 
 	const char* DX12Shader::GetTarget(ShaderType type)
 	{

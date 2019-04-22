@@ -19,27 +19,26 @@ namespace Lambda
 
 		virtual ShaderType GetType() const override final;
 
-		virtual uint32 Release() override final;
-		virtual uint32 AddRef() override final;
-
 	private:
 		void Init(const ShaderDesc& desc);
+
 		const void* GetShaderBlobData() const;
 		uint64 GetShaderBlobSize() const;
 
 	private:
 		std::vector<uint8> m_ShaderBlob;
 		ShaderType m_Type;
-		uint32 m_References;
 
 	private:
 		static const char* GetTarget(ShaderType type);
 	};
 
+
 	inline const void* DX12Shader::GetShaderBlobData() const
 	{
 		return (const void*)m_ShaderBlob.data();
 	}
+
 
 	inline uint64 DX12Shader::GetShaderBlobSize() const
 	{
