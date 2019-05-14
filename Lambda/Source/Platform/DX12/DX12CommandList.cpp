@@ -6,6 +6,7 @@
 #include "DX12Texture2D.h"
 #include "DX12SamplerState.h"
 #include <Utilities/TextureHelper.h>
+#include <Utilities/StringHelper.h>
 
 #if defined(LAMBDA_PLAT_WINDOWS)
 namespace Lambda
@@ -345,6 +346,12 @@ namespace Lambda
 
 		InternalCopyAndSetDescriptors();
 		m_List->DrawInstanced(vertexCountPerInstance, instanceCount, startVertexLocation, startInstanceLocation);
+	}
+
+
+	void DX12CommandList::SetName(const char* pName)
+	{
+		m_List->SetName(StringToWidestring(pName).c_str());
 	}
 
 

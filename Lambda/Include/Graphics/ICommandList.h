@@ -80,6 +80,8 @@ namespace Lambda
 
 		virtual void DrawInstanced(uint32 vertexCountPerInstance, uint32 instanceCount, uint32 startVertexLocation, uint32 startInstanceLocation) = 0;
 
+		virtual void SetName(const char* pName) = 0;
+
 		virtual void Close() = 0;
 		virtual void Reset() = 0;
 	};

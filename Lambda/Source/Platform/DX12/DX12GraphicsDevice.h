@@ -7,6 +7,7 @@
 	#include "DX12CommandQueue.h"
 	#include "DX12DescriptorAllocator.h"
 	#include <dxgi1_6.h>
+	#include <dxgidebug.h>
 
 namespace Lambda
 {
@@ -67,7 +68,6 @@ namespace Lambda
 		Microsoft::WRL::ComPtr<ID3D12Device> m_Device;
 		Microsoft::WRL::ComPtr<ID3D12Device5> m_DXRDevice;
 		Microsoft::WRL::ComPtr<ID3D12Debug> m_Debug;
-		Microsoft::WRL::ComPtr<ID3D12DebugDevice> m_DebugDevice;
 
 		DX12CommandList* m_pCommandList;
 

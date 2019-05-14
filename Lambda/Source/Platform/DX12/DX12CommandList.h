@@ -61,6 +61,8 @@ namespace Lambda
 
 		virtual void DrawInstanced(uint32 vertexCountPerInstance, uint32 instanceCount, uint32 startVertexLocation, uint32 startInstanceLocation) override final;
 
+		virtual void SetName(const char* pName) override final;
+
 		virtual void Close() override final;
 		virtual void Reset() override final;
 

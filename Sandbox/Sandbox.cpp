@@ -40,7 +40,12 @@ namespace Lambda
 		//Create commandlist
 		{
 			for (uint32 i = 0; i < 3; i++)
+			{
 				pDevice->CreateCommandList(&m_pLists[i], COMMAND_LIST_TYPE_GRAPHICS);
+				
+				std::string name = "CommandList [" + std::to_string(i) + "]";
+				m_pLists[i]->SetName(name.c_str());
+			}
 
 			m_pCurrentList = m_pLists[0];
 			m_pCurrentList->Reset();

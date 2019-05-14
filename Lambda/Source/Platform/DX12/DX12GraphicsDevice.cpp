@@ -1,6 +1,8 @@
 #include <LambdaPch.h>
 #include <Utilities/StringHelper.h>
 #if defined(LAMBDA_PLAT_WINDOWS)
+	#pragma comment(lib, "dxguid.lib")
+	
 	#include "DX12GraphicsDevice.h"
 	#include "DX12CommandList.h"
 	#include "DX12PipelineState.h"
@@ -35,7 +37,6 @@ namespace Lambda
 		: m_Device(nullptr),
 		m_DXRDevice(nullptr),
 		m_Debug(nullptr),
-		m_DebugDevice(nullptr),
 		m_Adapter(nullptr),
 		m_SwapChain(nullptr),
 		m_Factory(nullptr),
@@ -75,11 +76,6 @@ namespace Lambda
 			m_SwapChain->SetFullscreenState(false, nullptr);
 		}
 
-		if (m_DebugDevice.Get())
-		{
-			m_DebugDevice->ReportLiveDeviceObjects(D3D12_RLDO_SUMMARY | D3D12_RLDO_DETAIL);
-		}
-
 		ICommandList* pList = m_pCommandList;
 		DestroyCommandList(&pList);
 		m_pCommandList = nullptr;
@@ -89,6 +85,12 @@ namespace Lambda
 			ITexture2D* pTexture = m_BackBuffers[i];
 			DestroyTexture2D(&pTexture);
 			m_BackBuffers[i] = nullptr;
+		}
+
+		Microsoft::WRL::ComPtr<IDXGIDebug1> debugDevice;
+		if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&debugDevice))))
+		{
+			debugDevice->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_FLAGS(DXGI_DEBUG_RLO_DETAIL| DXGI_DEBUG_RLO_IGNORE_INTERNAL));
 		}
 	}
 
@@ -581,13 +583,6 @@ namespace Lambda
 			//Create debug interface
 			if (flags & GRAPHICS_CONTEXT_FLAG_DEBUG)
 			{
-				hr = m_Device->QueryInterface<ID3D12DebugDevice>(&m_DebugDevice);
-				if (FAILED(hr))
-				{
-					LOG_DEBUG_ERROR("DX12: Could not create DebugDevice.\n");
-					return false;
-				}
-				
 				//Retrive infoqueue
 				ComPtr<ID3D12InfoQueue> infoQueue = nullptr;
 				hr = m_Device.As<ID3D12InfoQueue>(&infoQueue);
@@ -599,7 +594,7 @@ namespace Lambda
 				else
 				{
 					//Enable break on error
-					infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
+					//infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
 				}
 			}
 		}
@@ -610,9 +605,10 @@ namespace Lambda
 		}
 
 		//Create queues
-		bool result = m_DirectQueue.Init(m_Device.Get(), D3D12_COMMAND_LIST_TYPE_DIRECT, INITAL_FENCE_VALUE);
-		m_ComputeQueue.Init(m_Device.Get(), D3D12_COMMAND_LIST_TYPE_COMPUTE, INITAL_FENCE_VALUE);
-		m_CopyQueue.Init(m_Device.Get(), D3D12_COMMAND_LIST_TYPE_COPY, INITAL_FENCE_VALUE);
+		bool result = false;
+		result = m_DirectQueue.Init(m_Device.Get(), D3D12_COMMAND_LIST_TYPE_DIRECT, INITAL_FENCE_VALUE);
+		result = m_ComputeQueue.Init(m_Device.Get(), D3D12_COMMAND_LIST_TYPE_COMPUTE, INITAL_FENCE_VALUE);
+		result = m_CopyQueue.Init(m_Device.Get(), D3D12_COMMAND_LIST_TYPE_COPY, INITAL_FENCE_VALUE);
 
 		return result;
 	}
@@ -621,6 +617,7 @@ namespace Lambda
 	bool DX12GraphicsDevice::CreateCommandList()
 	{
 		m_pCommandList = DBG_NEW DX12CommandList(m_Device.Get(), COMMAND_LIST_TYPE_GRAPHICS);
+		m_pCommandList->SetName("Device GraphicsCommandList");
 		m_pCommandList->Reset();
 		return true;
 	}

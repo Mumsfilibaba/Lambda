@@ -36,7 +36,7 @@ namespace Lambda
 		sDesc.BorderColor[2] = 0.0f;
 		sDesc.BorderColor[3] = 0.0f;
 		sDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
-		sDesc.Filter = D3D12_FILTER_MAXIMUM_ANISOTROPIC;
+		sDesc.Filter = D3D12_FILTER_MIN_LINEAR_MAG_MIP_POINT;
 		sDesc.MaxAnisotropy = 16;
 		sDesc.MinLOD = 0;
 		sDesc.MaxLOD = 1;
