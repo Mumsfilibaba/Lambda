@@ -82,6 +82,7 @@ namespace Lambda
 		DX12DescriptorHandle m_NullSampler;
 		DX12DescriptorHandle m_NullSRV;
 		DX12DescriptorHandle m_NullCBV;
+		DX12DescriptorHandle m_NullUAV;
 		std::vector<DX12Texture2D*> m_BackBuffers;
 		mutable std::vector<uint64> m_FenceValues;
 

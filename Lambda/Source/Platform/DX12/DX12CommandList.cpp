@@ -9,9 +9,14 @@
 #include <Utilities/StringHelper.h>
 
 #if defined(LAMBDA_PLAT_WINDOWS)
+#define SAMPLER_DESCRIPTOR_INDEX 0
+#define SRV_DESCRIPTOR_INDEX 1
+#define CBV_DESCRIPTOR_INDEX 2
+#define UAV_DESCRIPTOR_INDEX 3
+
 namespace Lambda
 {
-	DX12CommandList::DX12CommandList(ID3D12Device* pDevice, CommandListType type)
+	DX12CommandList::DX12CommandList(ID3D12Device* pDevice, CommandListType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV)
 		: m_Allocator(nullptr),
 		m_List(nullptr),
 		m_Device(nullptr),
@@ -30,7 +35,7 @@ namespace Lambda
 	{
 		assert(pDevice != nullptr);
 
-		Init(pDevice, type);
+		Init(pDevice, type, nullSampler, nullSRV, nullUAV, nullCBV);
 	}
 
 
@@ -386,7 +391,7 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::Init(ID3D12Device* pDevice, CommandListType type)
+	void DX12CommandList::Init(ID3D12Device* pDevice, CommandListType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV)
 	{
 		using namespace Microsoft::WRL;
 
@@ -449,6 +454,12 @@ namespace Lambda
 				m_ResourceDescriptorSize = m_ResourceAllocator.GetDescriptorSize();
 				m_SamplerDescriptorSize = m_SamplerAllocator.GetDescriptorSize();
 
+				//Set nulldescriptors
+				m_NullDescriptors[SAMPLER_DESCRIPTOR_INDEX] = nullSampler;
+				m_NullDescriptors[CBV_DESCRIPTOR_INDEX] = nullCBV;
+				m_NullDescriptors[SRV_DESCRIPTOR_INDEX] = nullSRV;
+				m_NullDescriptors[UAV_DESCRIPTOR_INDEX] = nullUAV;
+
 				//Allocate new descriptors
 				AllocateDescriptors();
 			}
@@ -468,6 +479,18 @@ namespace Lambda
 			m_hResourceDescriptorTables[i] = DX12DescriptorHandle(hResource, (uint64)m_ResourceDescriptorSize * (i * 24));
 			//Set descriptor tables for samplers
 			m_hSamplerDescriptorTables[i] = DX12DescriptorHandle(hSampler, (uint64)m_SamplerDescriptorSize * (i * 8));
+		}
+
+		//Set all new descriptors to nulldescriptors
+		for (uint64 shaderStage = 0; shaderStage < 5; shaderStage++)
+		{
+			for (uint64 slot = 0; slot < 8; slot++)
+			{
+				InternalSetSamplerDescriptor(m_hSamplerDescriptorTables[shaderStage].CPU, m_NullDescriptors[SAMPLER_DESCRIPTOR_INDEX].CPU, slot);
+				InternalSetResourceDescriptor(m_hResourceDescriptorTables[shaderStage].CPU, m_NullDescriptors[CBV_DESCRIPTOR_INDEX].CPU, slot, 0);
+				InternalSetResourceDescriptor(m_hResourceDescriptorTables[shaderStage].CPU, m_NullDescriptors[SRV_DESCRIPTOR_INDEX].CPU, slot, 1);
+				InternalSetResourceDescriptor(m_hResourceDescriptorTables[shaderStage].CPU, m_NullDescriptors[UAV_DESCRIPTOR_INDEX].CPU, slot, 2);
+			}
 		}
 	}
 

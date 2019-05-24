@@ -16,7 +16,7 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(DX12CommandList);
 
-		DX12CommandList(ID3D12Device* pDevice, CommandListType type);
+		DX12CommandList(ID3D12Device* pDevice, CommandListType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV);
 		~DX12CommandList();
 	
 		virtual void ClearRenderTarget(ITexture2D* pRenderTarget, float color[4]) override final;
@@ -67,7 +67,7 @@ namespace Lambda
 		virtual void Reset() override final;
 
 	private:
-		void Init(ID3D12Device* pDevice, CommandListType type);
+		void Init(ID3D12Device* pDevice, CommandListType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV);
 		void AllocateDescriptors();
 		void InternalCopyAndSetDescriptors();
 		void InternalSetResourceDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE hDest, D3D12_CPU_DESCRIPTOR_HANDLE hSrc, uint32 slot, uint32 range);
@@ -82,6 +82,7 @@ namespace Lambda
 		
 		DX12DescriptorHandle m_hResourceDescriptorTables[5];
 		DX12DescriptorHandle m_hSamplerDescriptorTables[5];
+		DX12DescriptorHandle m_NullDescriptors[4];
 
 		DX12ResourceStateTracker m_ResourceTracker;
 

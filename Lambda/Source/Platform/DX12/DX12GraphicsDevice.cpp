@@ -97,7 +97,7 @@ namespace Lambda
 
 	void DX12GraphicsDevice::CreateCommandList(ICommandList** ppList, CommandListType type) const
 	{
-		*ppList = DBG_NEW DX12CommandList(m_Device.Get(), type);
+		*ppList = DBG_NEW DX12CommandList(m_Device.Get(), type, m_NullSampler, m_NullSRV, m_NullUAV, m_NullCBV);
 	}
 
 
@@ -616,7 +616,8 @@ namespace Lambda
 
 	bool DX12GraphicsDevice::CreateCommandList()
 	{
-		m_pCommandList = DBG_NEW DX12CommandList(m_Device.Get(), COMMAND_LIST_TYPE_GRAPHICS);
+		CreateCommandList(reinterpret_cast<ICommandList**>(&m_pCommandList), COMMAND_LIST_TYPE_GRAPHICS);
+
 		m_pCommandList->SetName("Device GraphicsCommandList");
 		m_pCommandList->Reset();
 		return true;
@@ -718,6 +719,15 @@ namespace Lambda
 			desc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
 			m_NullSRV = m_ResourceAllocator.Allocate();
 			m_Device->CreateShaderResourceView(nullptr, &desc, m_NullSRV.CPU);
+		}
+
+		{
+			//Null unordered access
+			D3D12_UNORDERED_ACCESS_VIEW_DESC uav_desc = {};
+			uav_desc.Format = DXGI_FORMAT_R32_UINT;
+			uav_desc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+			m_NullUAV = m_ResourceAllocator.Allocate();
+			m_Device->CreateUnorderedAccessView(nullptr, nullptr, &uav_desc, m_NullUAV.CPU);
 		}
 
 		return true;
