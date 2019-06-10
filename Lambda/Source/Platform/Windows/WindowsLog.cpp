@@ -9,14 +9,17 @@ namespace Lambda
 		return DBG_NEW WindowsLog();
 	}
 
+    
 	WindowsLog::WindowsLog()
 	{
 	}
+    
 	
 	WindowsLog::~WindowsLog()
 	{
 	}
 
+    
 	void WindowsLog::Print(LogSeverity severity, const char* pFormat, ...)
 	{
 		WORD white = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY;

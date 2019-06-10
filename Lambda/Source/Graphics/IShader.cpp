@@ -7,7 +7,6 @@ namespace Lambda
 	IShader* IShader::CreateShaderFromFile(const IGraphicsDevice* pDevice, const char* pFilename, const char* pEntryPoint, ShaderType type, ShaderLang languange)
 	{
 		IShader* pShader = nullptr;
-
 		std::ifstream file(pFilename, std::ios::in);
 		if (file.is_open())
 		{
@@ -35,7 +34,7 @@ namespace Lambda
 		}
 		else
 		{
-			LOG_DEBUG_ERROR("DX12: Failed to read shaderfile '%s'\n", pFilename);
+			LOG_DEBUG_ERROR("Lambda Engine: Failed to read shaderfile '%s'\n", pFilename);
 		}
 
 		return pShader;

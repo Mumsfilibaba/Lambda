@@ -1,8 +1,8 @@
 #pragma once
 #include "Time.hpp"
-#if !defined(WIN32_LEAN_AND_MEAN)
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+#if defined(LAMBDA_PLAT_WINDOWS)
+    #define WIN32_LEAN_AND_MEAN
+    #include <windows.h>
 #endif
 
 namespace Lambda
@@ -28,6 +28,7 @@ namespace Lambda
 		Time m_DeltaTime;
 	};
 
+    
 	inline Clock::Clock()
 		: m_Frequency(0),
 		m_LastTime(0),
@@ -36,8 +37,10 @@ namespace Lambda
 	{
 #if defined(LAMBDA_PLAT_WINDOWS)
 		QueryPerformanceFrequency((LARGE_INTEGER*)&m_Frequency);
+#elif defined(LAMBDA_PLAT_MACOS)
+        //macOS definition here
 #else
-#error Clock::Clock not defined
+    #error Clock::Clock not defined
 #endif
 		Tick();
 	}
@@ -75,8 +78,10 @@ namespace Lambda
 		m_DeltaTime = currentTime - m_LastTime;
 		m_LastTime = currentTime;
 		m_TotalTime += m_DeltaTime;
+#elif defined(LAMBDA_PLAT_MACOS)
+        //macOS definition here
 #else
-#error Clock::Tick not defined
+    #error Clock::Tick not defined
 #endif
 	}
 

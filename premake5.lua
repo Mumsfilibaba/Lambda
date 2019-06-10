@@ -52,10 +52,15 @@ workspace "Lambda"
 			"dxgi",
 			"d3dcompiler"
 		}
-	
 		defines
 		{
 			"LAMBDA_PLAT_WINDOWS" 
+		}
+
+	filter "system:macosx"
+		defines
+		{
+			"LAMBDA_PLAT_MACOS" 
 		}
 	
 	filter "configurations:Debug"
@@ -64,8 +69,7 @@ workspace "Lambda"
 		defines 
 		{ 
 			"LAMBDA_DEBUG"
-		}
-		
+		}	
 		
 	filter "configurations:Release"
 		symbols "On"
@@ -79,10 +83,8 @@ workspace "Lambda"
 project "Lambda"
 	kind "SharedLib"
 	language "C++"
-	
-	pchheader "LambdaPch.h"
-	pchsource "Lambda/Source/LambdaPch.cpp"
-	
+	cppdialect "C++17"
+	systemversion "latest"
 	location "Lambda"
 	targetdir ("Build/bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("Build/bin-int/" .. outputdir .. "/%{prj.name}")
@@ -92,16 +94,14 @@ project "Lambda"
 		"%{prj.name}/Include",
 		"Dependencies"
 	}
-
-	defines 
-	{ 
-		"LAMBDA_EXPORT" 
-	}
 	
 	filter "system:windows"
-		cppdialect "C++17"
-		systemversion "latest"
-		
+		pchheader "LambdaPch.h"
+		pchsource "Lambda/Source/LambdaPch.cpp"
+		defines 
+		{ 
+			"LAMBDA_EXPORT" 
+		}
 		postbuildcommands
 		{
 			("{COPY} %{cfg.buildtarget.relpath} \"../Build/bin/" .. outputdir .. "/Sandbox/\"")
@@ -110,6 +110,8 @@ project "Lambda"
 project "Sandbox"
 	kind "ConsoleApp"
 	language "C++"
+	cppdialect "C++17"
+	systemversion "latest"
 	
 	location "Sandbox"
 	targetdir ("Build/bin/" .. outputdir .. "/%{prj.name}")
@@ -126,7 +128,3 @@ project "Sandbox"
 	{ 
 		"Lambda"
 	}
-	
-	filter "system:windows"
-		cppdialect "C++17"
-		systemversion "latest"

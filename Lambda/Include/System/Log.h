@@ -5,11 +5,11 @@
 #if defined(LAMBDA_DEBUG)
 #define LOG_DEBUG_INFO(...) Log::GetDebugLog().Print(LOG_SEVERITY_INFO, __VA_ARGS__)
 #define LOG_DEBUG_WARNING(...) Log::GetDebugLog().Print(LOG_SEVERITY_WARNING, __VA_ARGS__)
-#define LOG_DEBUG_ERROR(...) Log::GetDebugLog().Print(LOG_SEVERITY_ERROR, __VA_ARGS__); DEBUG_BREAK()
+#define LOG_DEBUG_ERROR(...) Log::GetDebugLog().Print(LOG_SEVERITY_ERROR, __VA_ARGS__); DEBUG_BREAK
 
 #define LOG_SYSTEM_INFO(...) Log::GetSystemLog().Print(LOG_SEVERITY_INFO, __VA_ARGS__)
 #define LOG_SYSTEM_WARNING(...) Log::GetSystemLog().Print(LOG_SEVERITY_WARNING, __VA_ARGS__)
-#define LOG_SYSTEM_ERROR(...) Log::GetSystemLog().Print(LOG_SEVERITY_ERROR, __VA_ARGS__); DEBUG_BREAK()
+#define LOG_SYSTEM_ERROR(...) Log::GetSystemLog().Print(LOG_SEVERITY_ERROR, __VA_ARGS__); DEBUG_BREAK
 #else
 #define LOG_DEBUG_INFO(...)
 #define LOG_DEBUG_WARNING(...)
@@ -35,13 +35,14 @@ namespace Lambda
 		LOG_SEVERITY_ERROR,
 	};
 
+    
 	class LAMBDA_API ILog
 	{
 	public:
 		LAMBDA_INTERFACE(ILog);
 
 		ILog() = default;
-		~ILog() = default;
+		virtual ~ILog() = default;
 
 		virtual void Print(LogSeverity severity, const char* pFormat, ...) = 0;
 

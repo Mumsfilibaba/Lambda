@@ -7,3 +7,7 @@ Build/
 *.vspx
 *.sln
 *.DS_Store
+*.plist
+*.xcworkspacedata
+*.xcuserstate
+*.pbxproj

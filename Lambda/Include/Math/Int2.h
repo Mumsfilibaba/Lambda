@@ -37,16 +37,19 @@ namespace Math
 		};
 	};
 
+    
 	forceinline std::string vectorcall ToString(Vec2i v)
 	{
 		return '(' + std::to_string(v.x) + ", " + std::to_string(v.y) + ')';
 	}
+    
 
 	forceinline bool vectorcall Math::Vec2i::operator==(Vec2i other) const
 	{
 		return (x == other.x) && (y == other.y);
 	}
 
+    
 	forceinline bool vectorcall Vec2i::operator!=(Vec2i other) const
 	{
 		return !(*this == other);

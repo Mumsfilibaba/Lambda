@@ -118,16 +118,19 @@ namespace Math
 	{
 		m_Xmm = xmm;
 	}
+    
 
 	forceinline Float2x2::Float2x2(float diagonal)
 	{
 		m_Xmm = _mm_set_ps(diagonal, 0.0f, 0.0f, diagonal);
 	}
+    
 
 	forceinline Float2x2::Float2x2(Float2 r0, Float2 r1)
 	{
 		m_Xmm = _mm_set_ps(r1.GetY(), r1.GetX(), r0.GetY(), r0.GetX());
 	}
+    
 
 	forceinline Float2x2& vectorcall Float2x2::Multiply(Float2x2 other)
 	{
@@ -140,18 +143,21 @@ namespace Math
 		m_Xmm = _mm_add_ps(m1, m2);
 		return *this;
 	}
+    
 
 	forceinline Float2x2& vectorcall Float2x2::Multiply(float scalar)
 	{
 		m_Xmm = _mm_mul_ps(m_Xmm, _mm_set_ps1(scalar));
 		return *this;
 	}
+    
 
 	forceinline Float2x2& vectorcall Float2x2::Add(Float2x2 other)
 	{
 		m_Xmm = _mm_add_ps(m_Xmm, other.m_Xmm);
 		return *this;
 	}
+    
 
 	forceinline Float2x2& vectorcall Float2x2::Add(float scalar)
 	{
@@ -159,11 +165,13 @@ namespace Math
 		return *this;
 	}
 
+    
 	forceinline Float2x2& vectorcall Float2x2::Subtract(Float2x2 other)
 	{
 		m_Xmm = _mm_sub_ps(m_Xmm, other.m_Xmm);
 		return *this;
 	}
+    
 
 	forceinline Float2x2& vectorcall Float2x2::Subtract(float scalar)
 	{
@@ -171,23 +179,27 @@ namespace Math
 		return *this;
 	}
 
+    
 	forceinline Float2x2& vectorcall Float2x2::Divide(float scalar)
 	{
 		m_Xmm = _mm_div_ps(m_Xmm, _mm_set_ps1(scalar));
 		return *this;
 	}
 
+    
 	forceinline bool vectorcall Float2x2::Equals(Float2x2 other) const
 	{
 		int32 mask = _mm_movemask_ps(_mm_cmpeq_ps(m_Xmm, other.m_Xmm));
 		return 0xf == (mask & 0xf);
 	}
 
+    
 	forceinline Float2x2& vectorcall Float2x2::Transpose()
 	{
 		m_Xmm = _mm_shuffle_ps(m_Xmm, m_Xmm, _MM_SHUFFLE(3, 1, 2, 0));
 		return *this;
 	}
+    
 
 	forceinline Float2x2& vectorcall Float2x2::Invert()
 	{
@@ -203,6 +215,7 @@ namespace Math
 		m_Xmm = _mm_mul_ps(m_Xmm, det);
 		return *this;
 	}
+    
 
 	forceinline float vectorcall Float2x2::Determinant() const
 	{
@@ -213,6 +226,7 @@ namespace Math
 		__m128 det = _mm_sub_ss(b, a);
 		return _mm_cvtss_f32(det);
 	}
+    
 
 	forceinline Float2x2 vectorcall Float2x2::Adjugate() const
 	{
@@ -221,6 +235,7 @@ namespace Math
 		a.m_Xmm = _mm_mul_ps(a.m_Xmm, _mm_set_ps(1.0f, -1.0f, -1.0f, 1.0f));
 		return a;
 	}
+    
 
 	forceinline void Float2x2::SetRow(uint32 r, float x, float y)
 	{
@@ -256,12 +271,14 @@ namespace Math
 		}
 	}
 
+    
 	forceinline Float2x2& vectorcall Float2x2::operator=(Float2x2 other)
 	{
 		m_Xmm = other.m_Xmm;
 		return *this;
 	}
 
+    
 	forceinline Mat2f vectorcall Store(Float2x2 f)
 	{
 		Mat2f result;
@@ -269,6 +286,7 @@ namespace Math
 		return result;
 	}
 
+    
 	forceinline Float2x2 vectorcall Load(Mat2f storage)
 	{
 		Float2x2 result;
@@ -276,6 +294,7 @@ namespace Math
 		return result;
 	}
 
+    
 	forceinline Float2 Float2x2::GetRow(uint32 r) const
 	{
 		assert(r < 2);
@@ -294,6 +313,7 @@ namespace Math
 		m_Xmm[3] = diagonal;
 	}
 	
+    
 	forceinline Float2x2::Float2x2(Float2 r0, Float2 r1)
 	{
 		m_Xmm[0] = r0.GetX();
@@ -302,10 +322,12 @@ namespace Math
 		m_Xmm[3] = r1.GetY();
 	}
 
+    
 	forceinline Float2x2::Float2x2(SSE_VARIABLE(xmm))
 	{
 		memcpy(m_Xmm, xmm, sizeof(m_Xmm));
 	}
+    
 
 	forceinline Float2x2& vectorcall Float2x2::Multiply(Float2x2 other)
 	{
@@ -321,12 +343,14 @@ namespace Math
 		return *this;
 	}
 
+    
 	forceinline Float2x2& vectorcall Float2x2::Multiply(float scalar)
 	{
 		for (int i = 0; i < 4; i++)
 			m_Xmm[i] *= scalar;
 		return *this;
 	}
+    
 
 	forceinline Float2x2& vectorcall Float2x2::Add(Float2x2 other)
 	{
@@ -335,6 +359,7 @@ namespace Math
 		return *this;
 	}
 
+    
 	forceinline Float2x2& vectorcall Float2x2::Add(float scalar)
 	{
 		for (int i = 0; i < 4; i++)
@@ -342,6 +367,7 @@ namespace Math
 		return *this;
 	}
 
+    
 	forceinline Float2x2& vectorcall Float2x2::Subtract(Float2x2 other)
 	{
 		for (int i = 0; i < 4; i++)
@@ -349,6 +375,7 @@ namespace Math
 		return *this;
 	}
 
+    
 	forceinline Float2x2& vectorcall Float2x2::Subtract(float scalar)
 	{
 		for (int i = 0; i < 4; i++)
@@ -356,12 +383,14 @@ namespace Math
 		return *this;
 	}
 
+    
 	forceinline Float2x2& vectorcall Float2x2::Divide(float scalar)
 	{
 		for (int i = 0; i < 4; i++)
 			m_Xmm[i] /= scalar;
 		return *this;
 	}
+    
 
 	forceinline bool vectorcall Float2x2::Equals(Float2x2 other) const
 	{
@@ -374,6 +403,7 @@ namespace Math
 		return true;
 	}
 
+    
 	forceinline Float2x2& vectorcall Float2x2::Transpose()
 	{
 		float temp[4];
@@ -388,6 +418,7 @@ namespace Math
 		return *this;
 	}
 
+    
 	forceinline Float2x2& vectorcall Float2x2::Invert()
 	{
 		float det = Determinant();
@@ -400,6 +431,7 @@ namespace Math
 		return *this;
 	}
 
+    
 	forceinline Float2x2 vectorcall Float2x2::Adjugate() const
 	{
 		Float2x2 adjugate;
@@ -410,17 +442,20 @@ namespace Math
 		return adjugate;
 	}
 
+    
 	forceinline void Float2x2::SetRow(uint32 r, float x, float y)
 	{
 		m_Xmm[(r * 2) + 0] = x;
 		m_Xmm[(r * 2) + 1] = y;
 	}
 
+    
 	forceinline Float2x2& vectorcall Float2x2::operator=(Float2x2 other)
 	{
 		memcpy(m_Xmm, other.m_Xmm, sizeof(m_Xmm));
 		return *this;
 	}
+    
 
 	forceinline Mat2f vectorcall Store(Float2x2 f)
 	{
@@ -428,6 +463,7 @@ namespace Math
 		memcpy(result.m, f.m_Xmm, sizeof(f.m_Xmm));
 		return result;
 	}
+    
 
 	forceinline Float2x2 vectorcall Load(Mat2f storage)
 	{
@@ -435,6 +471,7 @@ namespace Math
 		memcpy(result.m_Xmm, storage.m, sizeof(result.m_Xmm));
 		return result;
 	}
+    
 
 	forceinline Float2 Float2x2::GetRow(uint32 r) const
 	{
@@ -442,12 +479,14 @@ namespace Math
 		return Float2(m_Xmm[r * 2 + 0], m_Xmm[r * 2 + 1]);
 	}
 
+    
 	forceinline float vectorcall Float2x2::Determinant() const
 	{
 		return (m_Xmm[0] * m_Xmm[3]) - (m_Xmm[1] * m_Xmm[2]);
 	}
 #endif
 
+    
 	forceinline Float2 vectorcall Float2x2::Multiply(Float2 vector) const
 	{
 		float t[2];
@@ -456,6 +495,7 @@ namespace Math
 		return Float2(t[0], t[1]);
 	}
 
+    
 	forceinline Float2x2 vectorcall Float2x2::GetTranspose() const
 	{
 		Float2x2 transpose = *this;
@@ -463,6 +503,7 @@ namespace Math
 		return transpose;
 	}
 
+    
 	forceinline Float2x2 vectorcall Float2x2::GetInverse() const
 	{
 		Float2x2 inverse = *this;
@@ -470,17 +511,20 @@ namespace Math
 		return inverse;
 	}
 
+    
 	forceinline Float2x2 vectorcall Float2x2::Cofactor() const
 	{
 		return Adjugate().Transpose();
 	}
 
+    
 	forceinline float Float2x2::GetElement(uint32 r, uint32 c) const
 	{
 		assert(c < 2);
 		return GetRow(r)[c];
 	}
 
+    
 	forceinline std::string	vectorcall ToString(Float2x2 f)
 	{
 		return
@@ -488,120 +532,144 @@ namespace Math
 			'[' + std::to_string(f.GetElement(1, 0)) + ", " + std::to_string(f.GetElement(1, 1)) + "]\n";
 	}
 
+    
 	forceinline bool vectorcall Float2x2::operator==(Float2x2 other) const
 	{
 		return Equals(other);
 	}
 
+    
 	forceinline bool vectorcall Float2x2::operator!=(Float2x2 other) const
 	{
 		return !Equals(other);
 	}
 
+    
 	forceinline float vectorcall Float2x2::operator()(uint32 r, uint32 c) const
 	{
 		return GetElement(r, c);
 	}
 
+    
 	forceinline Float2 vectorcall Float2x2::operator()(uint32 r) const
 	{
 		return GetRow(r);
 	}
 
+    
 	forceinline Float2 vectorcall operator*(Float2 left, Float2x2 right)
 	{
 		return right.Multiply(left);
 	}
+    
 
 	forceinline Float2& vectorcall operator*=(Float2& left, Float2x2 right)
 	{
 		return left = right.Multiply(left);
 	}
+    
 
 	forceinline Float2x2 vectorcall operator+(Float2x2 left, Float2x2 right)
 	{
 		return left.Add(right);
 	}
 
+    
 	forceinline Float2x2 vectorcall operator-(Float2x2 left, Float2x2 right)
 	{
 		return left.Subtract(right);
 	}
 
+    
 	forceinline Float2x2 vectorcall operator*(Float2x2 left, Float2x2 right)
 	{
 		return left.Multiply(right);
 	}
 
+    
 	forceinline Float2x2 vectorcall operator+(Float2x2 left, float right)
 	{
 		return left.Add(right);
 	}
 
+    
 	forceinline Float2x2 vectorcall operator-(Float2x2 left, float right)
 	{
 		return left.Subtract(right);
 	}
 
+    
 	forceinline Float2x2 vectorcall operator*(Float2x2 left, float right)
 	{
 		return left.Multiply(right);
 	}
 
+    
 	forceinline Float2x2 vectorcall operator/(Float2x2 left, float right)
 	{
 		return left.Divide(right);
 	}
 
+    
 	forceinline Float2x2 vectorcall operator*(float left, Float2x2 right)
 	{
 		return right.Multiply(left);
 	}
+    
 
 	forceinline Float2x2 vectorcall operator/(float left, Float2x2 right)
 	{
 		return right.Divide(left);
 	}
 
+    
 	forceinline Float2x2& vectorcall Float2x2::operator+=(Float2x2 right)
 	{
 		return Add(right);
 	}
 
+    
 	forceinline Float2x2& vectorcall Float2x2::operator-=(Float2x2 right)
 	{
 		return Subtract(right);
 	}
 
+    
 	forceinline Float2x2& vectorcall Float2x2::operator*=(Float2x2 right)
 	{
 		return Multiply(right);
 	}
 
+    
 	forceinline Float2x2& vectorcall Float2x2::operator+=(float right)
 	{
 		return Add(right);
 	}
 
+    
 	forceinline Float2x2& vectorcall Float2x2::operator-=(float right)
 	{
 		return Subtract(right);
 	}
 
+    
 	forceinline Float2x2& vectorcall Float2x2::operator*=(float right)
 	{
 		return Multiply(right);
 	}
 
+    
 	forceinline Float2x2& vectorcall Float2x2::operator/=(float right)
 	{
 		return Divide(right);
 	}
+    
 
 	forceinline Float2x2 vectorcall Float2x2::Identity()
 	{
 		return Float2x2(1.0f);
 	}
+    
 
 	forceinline Float2x2 vectorcall Float2x2::Rotation(float angleRad)
 	{
@@ -614,6 +682,7 @@ namespace Math
 		rot.SetRow(1, -sine, cosine);
 		return rot;
 	}
+    
 
 	forceinline Float2x2 vectorcall Float2x2::Scale(Vec2f scale)
 	{
@@ -623,6 +692,7 @@ namespace Math
 		return s;
 	}
 
+    
 	forceinline Float2x2 vectorcall Float2x2::Scale(float scale)
 	{
 		return Float2x2(scale);

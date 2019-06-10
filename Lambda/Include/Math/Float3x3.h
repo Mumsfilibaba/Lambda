@@ -17,6 +17,7 @@ namespace Math
 		float m[9];
 	};
 
+    
 	forceinline bool vectorcall Mat3f::operator==(Mat3f other) const
 	{
 		for (int i = 0; i < 9; i++)
@@ -26,12 +27,14 @@ namespace Math
 		}
 		return true;
 	}
+    
 
 	forceinline bool vectorcall Mat3f::operator!=(Mat3f other) const
 	{
 		return !(*this == other);
 	}
 
+    
 	forceinline std::string vectorcall ToString(Mat3f f)
 	{
 		return
@@ -122,6 +125,7 @@ namespace Math
 		static Float3x3 vectorcall Scale(float scale);
 	};
 
+    
 	forceinline Float3x3::Float3x3(float diagonal)
 	{
 		memset(m_Xmm, 0, sizeof(m_Xmm));
@@ -131,6 +135,7 @@ namespace Math
 		m_Xmm[8] = diagonal;
 	}
 
+    
 	forceinline Float3x3::Float3x3(Float3 r0, Float3 r1, Float3 r2)
 	{
 		m_Xmm[0] = r0.GetX();
@@ -145,6 +150,7 @@ namespace Math
 		m_Xmm[7] = r2.GetY();
 		m_Xmm[8] = r2.GetZ();
 	}
+    
 
 	forceinline Float3 vectorcall Float3x3::Multiply(Float3 vector) const
 	{
@@ -155,6 +161,7 @@ namespace Math
 		return Float3(t[0], t[1], t[2]);
 	}
 
+    
 	forceinline Float3x3& vectorcall Float3x3::Multiply(const Float3x3& other)
 	{
 		float t[9];
@@ -177,6 +184,7 @@ namespace Math
 		return *this;
 	}
 
+    
 	forceinline Float3x3& vectorcall Float3x3::Multiply(float scalar)
 	{
 		for (int i = 0; i < 9; i++)
@@ -185,6 +193,7 @@ namespace Math
 		return *this;
 	}
 
+    
 	forceinline Float3x3& vectorcall Float3x3::Add(const Float3x3& other)
 	{
 		for (int i = 0; i < 9; i++)
@@ -193,6 +202,7 @@ namespace Math
 		return *this;
 	}
 
+    
 	forceinline Float3x3& vectorcall Float3x3::Add(float scalar)
 	{
 		for (int i = 0; i < 9; i++)
@@ -200,6 +210,7 @@ namespace Math
 
 		return *this;
 	}
+    
 
 	forceinline Float3x3& vectorcall Float3x3::Subtract(const Float3x3& other)
 	{
@@ -209,6 +220,7 @@ namespace Math
 		return *this;
 	}
 
+    
 	forceinline Float3x3& vectorcall Float3x3::Subtract(float scalar)
 	{
 		for (int i = 0; i < 9; i++)
@@ -217,6 +229,7 @@ namespace Math
 		return *this;
 	}
 
+    
 	forceinline Float3x3& vectorcall Float3x3::Divide(float scalar)
 	{
 		for (int i = 0; i < 9; i++)
@@ -225,6 +238,7 @@ namespace Math
 		return *this;
 	}
 
+    
 	forceinline bool vectorcall Float3x3::Equals(const Float3x3& other) const
 	{
 		for (int i = 0; i < 9; i++)
@@ -236,6 +250,7 @@ namespace Math
 		return true;
 	}
 	
+    
 	forceinline void Float3x3::SetRow(uint32 r, float x, float y, float z)
 	{
 		assert(r < 3);
@@ -243,6 +258,7 @@ namespace Math
 		m_Xmm[(r * 3) + 1] = y;
 		m_Xmm[(r * 3) + 2] = z;
 	}
+    
 
 	forceinline float Float3x3::GetElement(uint32 r, uint32 c) const
 	{
@@ -251,12 +267,14 @@ namespace Math
 		return m_Xmm[(3 * r) + c];
 	}
 
+    
 	forceinline Float3 Float3x3::GetRow(uint32 r) const
 	{
 		assert(r < 3);
 		return Float3(m_Xmm[(3 * r) + 0], m_Xmm[(3 * r) + 1], m_Xmm[(3 * r) + 2]);
 	}
 
+    
 	inline Float3x3& vectorcall Float3x3::Transpose()
 	{
 		float temp[9];
@@ -277,6 +295,7 @@ namespace Math
 
 		return *this;
 	}
+    
 
 	inline Float3x3 vectorcall Float3x3::GetTranspose() const
 	{
@@ -284,6 +303,7 @@ namespace Math
 		transpose.Transpose();
 		return transpose;
 	}
+    
 
 	inline Float3x3& vectorcall Float3x3::Invert()
 	{
@@ -296,6 +316,7 @@ namespace Math
 
 		return*this;
 	}
+    
 
 	inline Float3x3 vectorcall Float3x3::GetInverse() const
 	{
@@ -304,10 +325,12 @@ namespace Math
 		return inverse;
 	}
 
+    
 	inline Float3x3 vectorcall Float3x3::Cofactor() const
 	{
 		return Adjugate().Transpose();
 	}
+    
 
 	inline Float3x3 vectorcall Float3x3::Adjugate() const
 	{
@@ -331,6 +354,7 @@ namespace Math
 		return adjugate;
 	}
 
+    
 	inline float vectorcall Float3x3::Determinant() const
 	{
 		float det = 0;
@@ -342,6 +366,7 @@ namespace Math
 		return det;
 	}
 
+    
 	forceinline std::string	vectorcall ToString(Float3x3 f)
 	{
 		return
@@ -349,6 +374,7 @@ namespace Math
 			'[' + std::to_string(f.m_Xmm[3]) + ", " + std::to_string(f.m_Xmm[4]) + ", " + std::to_string(f.m_Xmm[5]) + "]\n" +
 			'[' + std::to_string(f.m_Xmm[6]) + ", " + std::to_string(f.m_Xmm[7]) + ", " + std::to_string(f.m_Xmm[8]) + "]\n";
 	}
+    
 
 	forceinline Mat3f vectorcall Store(Float3x3 f)
 	{
@@ -357,87 +383,104 @@ namespace Math
 		return result;
 	}
 
+    
 	forceinline Float3x3 vectorcall Load(Mat3f storage)
 	{
 		Float3x3 result;
 		memcpy(result.m_Xmm, storage.m, sizeof(result.m_Xmm));
 		return result;
 	}
+    
 
 	forceinline bool vectorcall Float3x3::operator==(const Float3x3& other) const
 	{
 		return Equals(other);
 	}
 
+    
 	forceinline bool vectorcall Float3x3::operator!=(const Float3x3& other) const
 	{
 		return !Equals(other);
 	}
 
+    
 	forceinline float vectorcall Float3x3::operator()(uint32 r, uint32 c) const
 	{
 		return GetElement(r, c);
 	}
 
+    
 	forceinline Float3 vectorcall Float3x3::operator()(uint32 r) const
 	{
 		return GetRow(r);
 	}
 
+    
 	forceinline Float3& vectorcall operator*=(Float3& left, const Float3x3& right)
 	{
 		return left = right.Multiply(left);
 	}
 
+    
 	forceinline Float3 vectorcall operator*(Float3 left, const Float3x3& right)
 	{
 		return right.Multiply(left);
 	}
 
+    
 	forceinline Float3x3 vectorcall operator+(Float3x3 left, const Float3x3& right)
 	{
 		return left.Add(right);
 	}
 
+    
 	forceinline Float3x3 vectorcall operator-(Float3x3 left, const Float3x3& right)
 	{
 		return left.Subtract(right);
 	}
+    
 
 	forceinline Float3x3 vectorcall operator*(Float3x3 left, const Float3x3& right)
 	{
 		return left.Multiply(right);
 	}
 
+    
 	forceinline Float3x3 vectorcall operator+(Float3x3 left, float right)
 	{
 		return left.Add(right);
 	}
+    
 
 	forceinline Float3x3 vectorcall operator-(Float3x3 left, float right)
 	{
 		return left.Subtract(right);
 	}
+    
 
 	forceinline Float3x3 vectorcall operator*(Float3x3 left, float right)
 	{
 		return left.Multiply(right);
 	}
+    
 
 	forceinline Float3x3 vectorcall operator/(Float3x3 left, float right)
 	{
 		return left.Divide(right);
 	}
+    
 
 	forceinline Float3x3 vectorcall operator*(float left, Float3x3 right)
 	{
 		return right.Multiply(left);
 	}
+    
 
 	forceinline Float3x3 vectorcall operator/(float left, Float3x3 right)
 	{
 		return right.Divide(left);
 	}
+    
 
 	forceinline Float3x3& vectorcall Float3x3::operator=(const Float3x3& other)
 	{
@@ -447,46 +490,55 @@ namespace Math
 		return *this;
 	}
 
+    
 	forceinline Float3x3& vectorcall Float3x3::operator+=(const Float3x3& right)
 	{
 		return Add(right);
 	}
+    
 
 	forceinline Float3x3& vectorcall Float3x3::operator-=(const Float3x3& right)
 	{
 		return Subtract(right);
 	}
+    
 
 	forceinline Float3x3& vectorcall Float3x3::operator*=(const Float3x3& right)
 	{
 		return Multiply(right);
 	}
 
+    
 	forceinline Float3x3& vectorcall Float3x3::operator+=(float right)
 	{
 		return Add(right);
 	}
 
+    
 	forceinline Float3x3& vectorcall Float3x3::operator-=(float right)
 	{
 		return Subtract(right);
 	}
+    
 
 	forceinline Float3x3& vectorcall Float3x3::operator*=(float right)
 	{
 		return Multiply(right);
 	}
+    
 
 	forceinline Float3x3& vectorcall Float3x3::operator/=(float right)
 	{
 		return Divide(right);
 	}
 
+    
 	forceinline Float3x3 vectorcall Float3x3::Identity()
 	{
 		return Float3x3(1.0f);
 	}
 
+    
 	forceinline Float3x3 vectorcall Float3x3::Translation(Vec2f translation)
 	{
 		Float3x3 t(1.0f);
@@ -495,6 +547,7 @@ namespace Math
 		return t;
 	}
 
+    
 	forceinline Float3x3 vectorcall Float3x3::Rotation(Vec3f axis, float angleRad)
 	{
 		Float3x3 r(1.0f);
@@ -520,6 +573,7 @@ namespace Math
 		return r;
 	}
 
+    
 	//Row major (Transpose of colummajor)
 	forceinline Float3x3 vectorcall Float3x3::RotationX(float angleRad)
 	{
@@ -537,6 +591,7 @@ namespace Math
 		return r;
 	}
 
+    
 	//Row major (Transpose of colummajor)
 	forceinline Float3x3 vectorcall Float3x3::RotationY(float angleRad)
 	{
@@ -552,6 +607,7 @@ namespace Math
 
 		return r;
 	}
+    
 
 	//Row major (Transpose of colummajor)
 	forceinline Float3x3 vectorcall Float3x3::RotationZ(float angleRad)
@@ -569,6 +625,7 @@ namespace Math
 		return r;
 	}
 
+    
 	forceinline Float3x3 vectorcall Float3x3::RotationRollPitchYaw(float angleRadZ, float angleRadX, float angleRadY)
 	{
 		Float3x3 rot(1.0f);
@@ -596,6 +653,7 @@ namespace Math
 		return rot;
 	}
 
+    
 	forceinline Float3x3 vectorcall Float3x3::Scale(Vec3f scale)
 	{
 		Float3x3 s(1.0f);
@@ -606,6 +664,7 @@ namespace Math
 
 		return s;
 	}
+    
 
 	forceinline Float3x3 vectorcall Float3x3::Scale(float scale)
 	{

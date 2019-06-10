@@ -17,6 +17,7 @@ namespace Math
 		float m[16];
 	};
 
+    
 	forceinline bool vectorcall Mat4f::operator==(Mat4f other) const
 	{
 		for (int i = 0; i < 16; i++)
@@ -27,11 +28,13 @@ namespace Math
 		return true;
 	}
 
+    
 	forceinline bool vectorcall Mat4f::operator!=(Mat4f other) const
 	{
 		return !(*this == other);
 	}
 
+    
 	forceinline std::string vectorcall ToString(Mat4f f)
 	{
 		return
@@ -40,6 +43,7 @@ namespace Math
 			'[' + std::to_string(f.m[ 8]) + ", " + std::to_string(f.m[ 9]) + ", " + std::to_string(f.m[10]) + ", " + std::to_string(f.m[11]) + ']' +
 			'[' + std::to_string(f.m[12]) + ", " + std::to_string(f.m[13]) + ", " + std::to_string(f.m[14]) + ", " + std::to_string(f.m[15]) + ']';
 	}
+    
 
 	///SIMD version
 	struct MATRIXALIGN Float4x4
@@ -127,6 +131,7 @@ namespace Math
 		static forceinline Float4x4 vectorcall Scale(float scale);
 	};
 
+    
 #if defined(SSE_INTRIN)
 	forceinline Float4x4::Float4x4(float diagonal)
 	{
@@ -135,7 +140,8 @@ namespace Math
 		m_Xmm[2] = _mm_set_ps(0.0f, diagonal, 0.0f, 0.0f);
 		m_Xmm[3] = _mm_set_ps(diagonal, 0.0f, 0.0f, 0.0f);
 	}
-
+    
+    
 	forceinline Float4x4::Float4x4(Float4 r0, Float4 r1, Float4 r2, Float4 r3)
 	{
 		m_Xmm[0] = r0.m_Xmm;
@@ -143,6 +149,7 @@ namespace Math
 		m_Xmm[2] = r2.m_Xmm;
 		m_Xmm[3] = r3.m_Xmm;
 	}
+    
 
 	forceinline Float4x4::Float4x4(SSE_VARIABLE(r0), SSE_VARIABLE(r1), SSE_VARIABLE(r2), SSE_VARIABLE(r3))
 	{
@@ -152,12 +159,14 @@ namespace Math
 		m_Xmm[3] = r3;
 	}
 
+    
 	forceinline Float4 vectorcall Float4x4::Multiply(Float4 vector) const
 	{
 		__m128 r0 = __m128RowAdd(m_Xmm, vector.m_Xmm);
 		return Float4(r0);
 	}
 
+    
 	forceinline Float4x4& vectorcall Float4x4::Multiply(Float4x4 other)
 	{
 		__m128 r0 = __m128RowAdd(other.m_Xmm, m_Xmm[0]);
@@ -173,6 +182,7 @@ namespace Math
 		return *this;
 	}
 
+    
 	forceinline Float4x4& vectorcall Float4x4::Multiply(float scalar)
 	{
 		__m128 scalars	= _mm_set_ps1(scalar);
@@ -189,6 +199,7 @@ namespace Math
 		return *this;
 	}
 
+    
 	forceinline Float4x4& vectorcall Float4x4::Add(Float4x4 other)
 	{
 		__m128 r0 = _mm_add_ps(m_Xmm[0], other.m_Xmm[0]);
@@ -204,6 +215,7 @@ namespace Math
 		return *this;
 	}
 
+    
 	forceinline Float4x4& vectorcall Float4x4::Add(float scalar)
 	{
 		__m128 scalars	= _mm_set_ps1(scalar);
@@ -220,6 +232,7 @@ namespace Math
 		return *this;
 	}
 
+    
 	forceinline Float4x4& vectorcall Float4x4::Subtract(Float4x4 other)
 	{
 		__m128 r0 = _mm_sub_ps(m_Xmm[0], other.m_Xmm[0]);
@@ -234,6 +247,7 @@ namespace Math
 
 		return *this;
 	}
+    
 
 	forceinline Float4x4& vectorcall Float4x4::Subtract(float scalar)
 	{
@@ -250,6 +264,7 @@ namespace Math
 
 		return *this;
 	}
+    
 
 	forceinline Float4x4& vectorcall Float4x4::Divide(float scalar)
 	{
@@ -267,6 +282,7 @@ namespace Math
 		return *this;
 	}
 
+    
 	forceinline bool vectorcall Float4x4::Equals(Float4x4 other) const
 	{
 		int32 m0 = _mm_movemask_ps(_mm_cmpeq_ps(m_Xmm[0], other.m_Xmm[0]));
@@ -279,17 +295,20 @@ namespace Math
 				(0xf == (m3 & 0xf));
 	}
 
+    
 	forceinline void vectorcall Float4x4::SetRow(uint32 r, float x, float y, float z, float w)
 	{
 		assert(r < 4);
 		m_Xmm[r] = _mm_set_ps(w, z, y, x);
 	}
 
+    
 	forceinline Float4 vectorcall Float4x4::GetRow(uint32 r) const
 	{
 		assert(r < 4);
 		return Float4(m_Xmm[r]);
 	}
+    
 
 	inline Float4x4& vectorcall Float4x4::Transpose()
 	{
@@ -297,6 +316,7 @@ namespace Math
 		return *this;
 	}
 
+    
 	inline Float4x4& vectorcall Float4x4::Invert()
 	{
 		__m128 a = _mm_movelh_ps(m_Xmm[0], m_Xmm[1]);
@@ -348,6 +368,7 @@ namespace Math
 		
 		return *this;
 	}
+    
 
 	inline Float4x4 vectorcall Float4x4::Adjugate() const
 	{
@@ -388,6 +409,7 @@ namespace Math
 		return Float4x4(r0, r1, r2, r3);
 	}
 
+    
 	inline float vectorcall Float4x4::Determinant() const
 	{
 		__m128 a = _mm_movelh_ps(m_Xmm[0], m_Xmm[1]);
@@ -414,6 +436,7 @@ namespace Math
 
 		return _mm_cvtss_f32(detM);
 	}
+    
 
 	forceinline Float4x4& vectorcall Float4x4::operator=(Float4x4 other)
 	{
@@ -424,6 +447,7 @@ namespace Math
 		return *this;
 	}
 
+    
 	forceinline Mat4f vectorcall Store(Float4x4 f)
 	{
 		Mat4f result;
@@ -434,6 +458,7 @@ namespace Math
 		return result;
 	}
 
+    
 	forceinline Float4x4 vectorcall Load(Mat4f storage)
 	{
 		Float4x4 result;
@@ -455,6 +480,7 @@ namespace Math
 		m_Xmm[15] = diagonal;
 	}
 
+    
 	forceinline Float4x4::Float4x4(Float4 r0, Float4 r1, Float4 r2, Float4 r3)
 	{
 		memcpy(m_Xmm,		r0.m_Xmm, sizeof(r0.m_Xmm));
@@ -462,6 +488,7 @@ namespace Math
 		memcpy(m_Xmm + 8,	r2.m_Xmm, sizeof(r2.m_Xmm));
 		memcpy(m_Xmm + 12,	r3.m_Xmm, sizeof(r3.m_Xmm));
 	}
+    
 
 	forceinline Float4x4::Float4x4(SSE_VARIABLE(r0), SSE_VARIABLE(r1), SSE_VARIABLE(r2), SSE_VARIABLE(r3))
 	{
@@ -471,6 +498,7 @@ namespace Math
 		memcpy(m_Xmm + 12,	r3, sizeof(r3));
 	}
 
+    
 	forceinline Float4 vectorcall Float4x4::Multiply(Float4 vector) const
 	{
 		float t[4];
@@ -483,6 +511,7 @@ namespace Math
 		return Float4(t[0], t[1], t[2], t[3]);
 	}
 
+    
 	forceinline Float4x4& vectorcall Float4x4::Multiply(Float4x4 other)
 	{
 		float t[16];
@@ -510,6 +539,7 @@ namespace Math
 		memcpy(m_Xmm, t, sizeof(m_Xmm));
 		return *this;
 	}
+    
 
 	forceinline Float4x4& vectorcall Float4x4::Multiply(float scalar)
 	{
@@ -517,6 +547,7 @@ namespace Math
 			m_Xmm[i] *= scalar;
 		return *this;
 	}
+    
 
 	forceinline Float4x4& vectorcall Float4x4::Add(Float4x4 other)
 	{
@@ -525,12 +556,14 @@ namespace Math
 		return *this;
 	}
 
+    
 	forceinline Float4x4& vectorcall Float4x4::Add(float scalar)
 	{
 		for (int i = 0; i < 16; i++)
 			m_Xmm[i] += scalar;
 		return *this;
 	}
+    
 
 	forceinline Float4x4& vectorcall Float4x4::Subtract(Float4x4 other)
 	{
@@ -539,6 +572,7 @@ namespace Math
 		return *this;
 	}
 
+    
 	forceinline Float4x4& vectorcall Float4x4::Subtract(float scalar)
 	{
 		for (int i = 0; i < 16; i++)
@@ -546,12 +580,14 @@ namespace Math
 		return *this;
 	}
 
+    
 	forceinline Float4x4& vectorcall Float4x4::Divide(float scalar)
 	{
 		for (int i = 0; i < 16; i++)
 			m_Xmm[i] /= scalar;
 		return *this;
 	}
+    
 
 	forceinline bool vectorcall Float4x4::Equals(Float4x4 other) const
 	{
@@ -563,6 +599,7 @@ namespace Math
 		return true;
 	}
 
+    
 	forceinline void vectorcall Float4x4::SetRow(uint32 r, float x, float y, float z, float w)
 	{
 		assert(r < 4);
@@ -572,11 +609,13 @@ namespace Math
 		m_Xmm[(r * 4) + 3] = w;
 	}
 
+    
 	forceinline Float4 vectorcall Float4x4::GetRow(uint32 r) const
 	{
 		assert(r < 4);
 		return Float4(m_Xmm[(r * 4) + 0], m_Xmm[(r * 4) + 1], m_Xmm[(r * 4) + 2], m_Xmm[(r * 4) + 3]);
 	}
+    
 
 	inline Float4x4& vectorcall Float4x4::Transpose()
 	{
@@ -606,6 +645,7 @@ namespace Math
 		return *this;
 	}
 
+    
 	inline Float4x4& vectorcall Float4x4::Invert()
 	{
 		float det = Determinant();
@@ -617,6 +657,7 @@ namespace Math
 		return *this;
 	}
 
+    
 	inline Float4x4 vectorcall Float4x4::Adjugate() const
 	{
 		Float4x4 adjugate;
@@ -698,6 +739,7 @@ namespace Math
 		return adjugate;
 	}
 
+    
 	inline float vectorcall Float4x4::Determinant() const
 	{
 		float det = 0.0f;
@@ -725,12 +767,14 @@ namespace Math
 
 		return det;
 	}
+    
 
 	forceinline Float4x4& vectorcall Float4x4::operator=(Float4x4 other)
 	{
 		memcpy(m_Xmm, other.m_Xmm, sizeof(m_Xmm));
 		return *this;
 	}
+    
 
 	forceinline Mat4f vectorcall Store(Float4x4 f)
 	{
@@ -739,6 +783,7 @@ namespace Math
 		return result;
 	}
 
+    
 	forceinline Float4x4 vectorcall Load(Mat4f storage)
 	{
 		Float4x4 result;
@@ -747,6 +792,7 @@ namespace Math
 	}
 #endif
 
+    
 	forceinline float vectorcall Float4x4::GetElement(uint32 r, uint32 c) const
 	{
 		assert(r < 4);
@@ -754,6 +800,7 @@ namespace Math
 		return GetRow(r)[c];
 	}
 
+    
 	inline Float4x4 vectorcall Float4x4::GetTranspose() const
 	{
 		Float4x4 transpose = *this;
@@ -761,6 +808,7 @@ namespace Math
 		return transpose;
 	}
 
+    
 	inline Float4x4 vectorcall Float4x4::GetInverse() const
 	{
 		Float4x4 inverse = *this;
@@ -768,66 +816,79 @@ namespace Math
 		return inverse;
 	}
 
+    
 	inline Float4x4 vectorcall Float4x4::Cofactor() const
 	{
 		return Adjugate().Transpose();
 	}
 
+    
 	forceinline bool vectorcall Float4x4::operator==(Float4x4 other) const
 	{
 		return Equals(other);
 	}
 
+    
 	forceinline bool vectorcall Float4x4::operator!=(Float4x4 other) const
 	{
 		return !Equals(other);
 	}
 
+    
 	forceinline float Float4x4::operator()(uint32 r, uint32 c) const
 	{
 		return GetElement(r, c);
 	}
+    
 
 	forceinline Float4 Float4x4::operator()(uint32 r) const
 	{
 		return GetRow(r);
 	}
+    
 
 	forceinline Float4x4& vectorcall Float4x4::operator+=(Float4x4 right)
 	{
 		return *this = *this + right;
 	}
-
+    
+    
 	forceinline Float4x4& vectorcall Float4x4::operator-=(Float4x4 right)
 	{
 		return *this = *this - right;
 	}
 
+    
 	forceinline Float4x4& vectorcall Float4x4::operator*=(Float4x4 right)
 	{
 		return *this = *this * right;
 	}
 
+    
 	forceinline Float4x4& vectorcall Float4x4::operator+=(float right)
 	{
 		return *this = *this + right;
 	}
 
+    
 	forceinline Float4x4& vectorcall Float4x4::operator-=(float right)
 	{
 		return *this = *this - right;
 	}
 
+    
 	forceinline Float4x4& vectorcall Float4x4::operator*=(float right)
 	{
 		return *this = *this * right;
 	}
 
+    
 	forceinline Float4x4& vectorcall Float4x4::operator/=(float right)
 	{
 		return *this = *this / right;
 	}
 
+    
 	forceinline std::string vectorcall ToString(Float4x4 f)
 	{
 		return
@@ -837,61 +898,73 @@ namespace Math
 			'[' + std::to_string(f(3, 0)) + ", " + std::to_string(f(3, 1)) + ", " + std::to_string(f(3, 2)) + ", " + std::to_string(f(3, 3)) + "]\n";
 	}
 
+    
 	forceinline Float4 vectorcall operator*(Float4 left, Float4x4 right)
 	{
 		return right.Multiply(left);
 	}
 
+    
 	forceinline Float4& vectorcall operator*=(Float4& left, Float4x4 right)
 	{
 		left = right.Multiply(left);
 		return left;
 	}
 
+    
 	forceinline Float4x4 vectorcall operator+(Float4x4 left, Float4x4 right)
 	{
 		return left.Add(right);
 	}
 
+    
 	forceinline Float4x4 vectorcall operator-(Float4x4 left, Float4x4 right)
 	{
 		return left.Subtract(right);
 	}
 
+    
 	forceinline Float4x4 vectorcall operator*(Float4x4 left, Float4x4 right)
 	{
 		return left.Multiply(right);
 	}
 
+    
 	forceinline Float4x4 vectorcall operator+(Float4x4 left, float right)
 	{
 		return left.Add(right);
 	}
+    
 
 	forceinline Float4x4 vectorcall operator-(Float4x4 left, float right)
 	{
 		return  left.Subtract(right);
 	}
 
+    
 	forceinline Float4x4 vectorcall operator*(Float4x4 left, float right)
 	{
 		return left.Multiply(right);
 	}
+    
 
 	forceinline Float4x4 vectorcall operator/(Float4x4 left, float right)
 	{
 		return left.Divide(right);
 	}
+    
 
 	forceinline Float4x4 vectorcall operator*(float left, Float4x4 right)
 	{
 		return right.Multiply(left);
 	}
+    
 
 	forceinline Float4x4 vectorcall Float4x4::Identity()
 	{
 		return Float4x4(1.0f);
 	}
+    
 
 	forceinline Float4x4 vectorcall Float4x4::Perspective(float fovRad, float aspectWiHe, float farZ, float nearZ)
 	{
@@ -911,6 +984,7 @@ namespace Math
 		return m;
 	}
 
+    
 	forceinline Float4x4 vectorcall Float4x4::Orthographic(float aspectWiHe, float farZ, float nearZ)
 	{
 		Float4x4 m(1.0f);
@@ -923,6 +997,7 @@ namespace Math
 		return m;
 	}
 
+    
 	forceinline Float4x4 vectorcall Float4x4::Orthographic(float width, float height, float farZ, float nearZ)
 	{
 		Float4x4 m(1.0f);
@@ -935,6 +1010,7 @@ namespace Math
 		return m;
 	}
 
+    
 	forceinline Float4x4 vectorcall Float4x4::Orthographic(float leftX, float rightX, float topY, float bottomY, float farZ, float nearZ)
 	{
 		Float4x4 m(1.0f);
@@ -947,6 +1023,7 @@ namespace Math
 		return m;
 	}
 
+    
 	forceinline Float4x4 vectorcall Float4x4::LookAt(Vec3f up, Vec3f at, Vec3f position)
 	{
 		Float4x4 m(1.0f);
@@ -968,6 +1045,7 @@ namespace Math
 		return m;
 	}
 
+    
 	forceinline Float4x4 vectorcall Float4x4::Translation(Vec3f translation)
 	{
 		Float4x4 m(1.0f);
@@ -975,6 +1053,7 @@ namespace Math
 		return m;
 	}
 
+    
 	forceinline Float4x4 vectorcall Float4x4::RotationRollPitchYaw(float angleRadZ, float angleRadX, float angleRadY)
 	{
 		Float4x4 m;
@@ -994,6 +1073,7 @@ namespace Math
 		return m;
 	}
 
+    
 	forceinline Float4x4 vectorcall Float4x4::Rotation(Vec3f axis, float angleRad)
 	{
 		Float4x4 m(1.0f);
@@ -1010,6 +1090,7 @@ namespace Math
 
 		return m;
 	}
+    
 
 	forceinline Float4x4 vectorcall Float4x4::RotationX(float angleRad)
 	{
@@ -1023,6 +1104,7 @@ namespace Math
 
 		return m;
 	}
+    
 
 	forceinline Float4x4 vectorcall Float4x4::RotationY(float angleRad)
 	{
@@ -1036,6 +1118,7 @@ namespace Math
 
 		return m;
 	}
+    
 
 	forceinline Float4x4 vectorcall Float4x4::RotationZ(float angleRad)
 	{
@@ -1049,6 +1132,7 @@ namespace Math
 
 		return m;
 	}
+    
 
 	forceinline Float4x4 vectorcall Float4x4::Scale(Vec3f scale)
 	{
@@ -1058,6 +1142,7 @@ namespace Math
 		m.SetRow(2, 0.0f,		0.0f,		scale.z,	0.0f);
 		return m;
 	}
+    
 
 	forceinline Float4x4 vectorcall Float4x4::Scale(float scale)
 	{

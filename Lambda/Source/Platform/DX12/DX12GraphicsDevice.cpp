@@ -19,11 +19,13 @@ namespace Lambda
 	{
 		return DBG_NEW DX12GraphicsDevice(pWindow, flags);
 	}
+    
 
 	IGraphicsDevice* IGraphicsDevice::GetInstance()
 	{
 		return s_pInstance;
 	}
+    
 
 	bool IGraphicsDevice::OnEvent(const Event& event)
 	{
