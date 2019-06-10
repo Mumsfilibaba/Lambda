@@ -1,6 +1,6 @@
-#include <LambdaPch.h>
-#include <Graphics/IShader.h>
-#include <Graphics/IGraphicsDevice.h>
+#include "LambdaPch.h"
+#include "Graphics/IShader.h"
+#include "Graphics/IGraphicsDevice.h"
 
 namespace Lambda
 {

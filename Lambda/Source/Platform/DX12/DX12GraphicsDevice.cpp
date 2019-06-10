@@ -1,8 +1,7 @@
-#include <LambdaPch.h>
-#include <Utilities/StringHelper.h>
+#include "LambdaPch.h"
+#include "Utilities/StringHelper.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#pragma comment(lib, "dxguid.lib")
-	
 	#include "DX12GraphicsDevice.h"
 	#include "DX12CommandList.h"
 	#include "DX12PipelineState.h"
@@ -10,7 +9,6 @@
 	#include "DX12Buffer.h"
 	#include "DX12Texture2D.h"
 	#include "DX12SamplerState.h"
-
 	#define INITAL_FENCE_VALUE 0
 
 namespace Lambda
@@ -594,7 +592,21 @@ namespace Lambda
 				else
 				{
 					//Enable break on error
+					infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
 					//infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
+					//infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
+
+					//Disable some messages
+					D3D12_MESSAGE_ID blockedIds[] = {
+						D3D12_MESSAGE_ID_COPY_DESCRIPTORS_INVALID_RANGES //Not a valid error message on RTX hardware
+					};
+
+					D3D12_INFO_QUEUE_FILTER filter = {};
+					filter.DenyList.pIDList = blockedIds;
+					filter.DenyList.NumIDs = 1;
+
+					infoQueue->AddRetrievalFilterEntries(&filter);
+					infoQueue->AddStorageFilterEntries(&filter);
 				}
 			}
 		}

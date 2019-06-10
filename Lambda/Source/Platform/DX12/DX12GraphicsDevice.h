@@ -1,7 +1,6 @@
 #pragma once
-#include <Graphics/IGraphicsDevice.h>
-#include <System/IWindow.h>
-
+#include "Graphics/IGraphicsDevice.h"
+#include "System/IWindow.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include "DX12CommandList.h"
 	#include "DX12CommandQueue.h"

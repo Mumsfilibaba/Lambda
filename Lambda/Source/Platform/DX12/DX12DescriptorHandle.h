@@ -1,5 +1,5 @@
 #pragma once
-#include <Types.h>
+#include "Types.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include <d3d12.h>
 namespace Lambda

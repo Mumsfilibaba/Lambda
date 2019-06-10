@@ -1,7 +1,7 @@
 #pragma once
 #include "IWindow.h"
 #include "Clock.h"
-#include <Graphics/IGraphicsDevice.h>
+#include "Graphics/IGraphicsDevice.h"
 
 namespace Lambda
 {

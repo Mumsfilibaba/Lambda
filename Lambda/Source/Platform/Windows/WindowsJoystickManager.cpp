@@ -1,9 +1,8 @@
-#include <LambdaPch.h>
-
+#include "LambdaPch.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
-	#include <System/EventDispatcher.h>
+	#include "System/EventDispatcher.h"
 	#include "WindowsJoystickManager.h"
-
+	
 	#pragma comment(lib, "Xinput.lib")
 
 namespace Lambda

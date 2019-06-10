@@ -5,6 +5,8 @@
 	#else
 		#define LAMBDA_API __declspec(dllimport)
 	#endif
+#else
+	#define LAMBDA_API
 #endif
 
 #if !defined(LAMBDA_NO_COPY)
@@ -34,10 +36,12 @@
 #define SafeDelete(x) if (x != nullptr) { delete x; x = nullptr; }
 #endif
 
-#if defined(LAMBDA_DEBUG)
-	#define DBG_NEW new ( _NORMAL_BLOCK , __FILE__ , __LINE__ )
+#if defined(LAMBDA_DEBUG) && defined(LAMBDA_PLAT_WINDOWS)
+	#define DBG_NEW new (_NORMAL_BLOCK, __FILE__, __LINE__)
+	#define DBG_MEMLEAK_CHECK() _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #else
 	#define DBG_NEW new
+	#define DBG_MEMLEAK_CHECK()
 #endif
 
 #if defined(LAMBDA_VISUAL_STUDIO)

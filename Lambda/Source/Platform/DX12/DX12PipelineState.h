@@ -1,5 +1,5 @@
 #pragma once
-#include <Graphics/IPipelineState.h>
+#include "Graphics/IPipelineState.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include <wrl/client.h>
 	#include <d3d12.h>

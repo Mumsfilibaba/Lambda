@@ -1,5 +1,4 @@
 #pragma once
-
 namespace Lambda
 {
 	inline DXGI_FORMAT ConvertFormat(ResourceFormat format)

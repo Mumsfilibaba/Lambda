@@ -1,6 +1,6 @@
 #pragma once
-#include <Defines.h>
-#include <Types.h>
+#include "Defines.h"
+#include "Types.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include "DX12DescriptorHandle.h"
 	#include <wrl/client.h>

@@ -1,9 +1,8 @@
 #pragma once
 #include "Defines.h"
-
 #if defined(LAMBDA_PLAT_WINDOWS)
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
+	#define WIN32_LEAN_AND_MEAN
+	#include <Windows.h>
 
 namespace Lambda
 {

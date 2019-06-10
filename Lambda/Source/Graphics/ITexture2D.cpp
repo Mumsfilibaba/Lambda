@@ -1,7 +1,7 @@
-#include <LambdaPch.h>
-#include <Graphics/ITexture2D.h>
-#include <Graphics/IGraphicsDevice.h>
-#include <Utilities/TextureHelper.h>
+#include "LambdaPch.h"
+#include "Graphics/ITexture2D.h"
+#include "Graphics/IGraphicsDevice.h"
+#include "Utilities/TextureHelper.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 

@@ -6,6 +6,7 @@
 		#define WIN32_LEAN_AND_MEAN
 		#include <Windows.h>
 		#include <Windowsx.h>
+		#include <crtdbg.h>
 
 		#include "..\Source\Platform\DX12\d3dx12.h"
 		#include <wrl/client.h>
@@ -15,7 +16,7 @@
 	#endif
 #endif
 
-#include <System/Log.h>
+#include "System/Log.h"
 
 #include <cassert>
 

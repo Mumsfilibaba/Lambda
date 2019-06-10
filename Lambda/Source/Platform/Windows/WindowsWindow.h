@@ -1,6 +1,5 @@
 #pragma once
-#include <System/IWindow.h>
-
+#include "System/IWindow.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 namespace Lambda
 {

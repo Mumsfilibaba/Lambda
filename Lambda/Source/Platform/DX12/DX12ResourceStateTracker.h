@@ -1,6 +1,6 @@
 #pragma once
-#include <Defines.h>
-#include <Types.h>
+#include "Defines.h"
+#include "Types.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include <vector>
 	#include <mutex>

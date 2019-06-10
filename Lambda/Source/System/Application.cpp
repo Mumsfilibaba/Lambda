@@ -1,9 +1,9 @@
-#include <LambdaPch.h>
-#include <System/Application.h>
-#include <System/Clock.h>
-#include <System/Log.h>
-#include <System/Input.h>
-#include <System/JoystickManager.h>
+#include "LambdaPch.h"
+#include "System/Application.h"
+#include "System/Clock.h"
+#include "System/Log.h"
+#include "System/Input.h"
+#include "System/JoystickManager.h"
 
 namespace Lambda
 {

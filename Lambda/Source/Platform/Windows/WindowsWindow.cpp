@@ -1,22 +1,22 @@
-#include <LambdaPch.h>
-#include <System/Log.h>
-#include <Utilities/StringHelper.h>
-
+#include "LambdaPch.h"
+#include "System/Log.h"
+#include "Utilities/StringHelper.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include "WindowsWindow.h"
 	#include "WindowClass.h"
 	#include "WindowsInput.h"
-
 	#define	NAME_APPWINDOW L"AppWindow"
 
 namespace Lambda
 {
 	LRESULT CALLBACK WindowEventCallback(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
+
 	IWindow* IWindow::Create(const WindowDesc& desc)
 	{
 		return DBG_NEW WindowsWindow(desc);
 	}
+
 
 	WindowsWindow::WindowsWindow(const WindowDesc& desc)
 		: m_OnEvent(nullptr),
@@ -27,6 +27,7 @@ namespace Lambda
 		LOG_SYSTEM_INFO("Creating window. w: %d, h: %d\n", desc.Width, desc.Height);
 	}
 	
+
 	WindowsWindow::~WindowsWindow()
 	{
 		if (IsWindow(m_Wnd))
@@ -38,10 +39,12 @@ namespace Lambda
 		}
 	}
 	
+
 	void WindowsWindow::SetEventCallback(EventCallback callback)
 	{
 		m_OnEvent = callback;
 	}
+
 
 	void WindowsWindow::OnUpdate() const
 	{
@@ -53,20 +56,24 @@ namespace Lambda
 		}
 	}
 
+
 	void* WindowsWindow::GetNativeHandle() const
 	{
 		return (void*)m_Wnd;
 	}
+
 
 	uint32 WindowsWindow::GetHeight() const
 	{
 		return m_Height;
 	}
 
+
 	uint32 WindowsWindow::GetWidth() const
 	{
 		return m_Width;
 	}
+
 
 	void WindowsWindow::Init(const WindowDesc& desc)
 	{
@@ -117,6 +124,7 @@ namespace Lambda
 			}
 		}
 	}
+
 
 	LRESULT WindowsWindow::OnEvent(uint32 msg, WPARAM wParam, LPARAM lParam)
 	{
@@ -227,6 +235,7 @@ namespace Lambda
 
 		return LRESULT(0);
 	}
+
 
 	LRESULT CALLBACK WindowEventCallback(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{

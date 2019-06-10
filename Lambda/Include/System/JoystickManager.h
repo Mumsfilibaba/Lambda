@@ -1,6 +1,6 @@
 #pragma once
-#include <Defines.h>
-#include <Types.h>
+#include "Defines.h"
+#include "Types.h"
 #include "Time.hpp"
 
 namespace Lambda

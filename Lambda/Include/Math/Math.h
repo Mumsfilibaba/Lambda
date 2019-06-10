@@ -14,9 +14,7 @@
 #include "Color.h"
 
 #include "RandomGenerator.h"
-
 #include "Rectangle.h"
-
 #include "MathUtilities.h"
 
 //LOG_SYSTEM_PRINT("--TESTING FLOAT2--");

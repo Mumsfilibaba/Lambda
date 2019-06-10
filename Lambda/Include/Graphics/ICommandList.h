@@ -1,6 +1,6 @@
 #pragma once
-#include <IObject.h>
-#include <Math/Rectangle.h>
+#include "IObject.h"
+#include "Math/Rectangle.h"
 
 namespace Lambda
 {

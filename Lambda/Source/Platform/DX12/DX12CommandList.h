@@ -1,5 +1,5 @@
 #pragma once
-#include <Graphics/ICommandList.h>
+#include "Graphics/ICommandList.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include "DX12LinearAllocator.h"
 	#include "DX12LinearDescriptorAllocator.h"

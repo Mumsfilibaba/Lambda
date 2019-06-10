@@ -1,5 +1,5 @@
-#include <LambdaPch.h>
-#include <System/Input.h>
+#include "LambdaPch.h"
+#include "System/Input.h"
 
 namespace Lambda
 {

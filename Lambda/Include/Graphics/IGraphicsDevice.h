@@ -1,7 +1,7 @@
 #pragma once
-#include <IObject.h>
-#include <System/EventDispatcher.h>
-#include <System/IWindow.h>
+#include "IObject.h"
+#include "System/EventDispatcher.h"
+#include "System/IWindow.h"
 #include "ICommandList.h"
 
 namespace Lambda

@@ -1,6 +1,6 @@
 #pragma once
-#include <System/JoystickManager.h>
-#include <System/Clock.h>
+#include "System/JoystickManager.h"
+#include "System/Clock.h"
 
 #if defined(LAMBDA_PLAT_WINDOWS)
 #include <Xinput.h>

@@ -1,6 +1,5 @@
 #pragma once
-#include <System/Log.h>
-
+#include "System/Log.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 namespace Lambda
 {

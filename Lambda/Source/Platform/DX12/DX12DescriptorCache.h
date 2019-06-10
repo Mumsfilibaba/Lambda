@@ -2,9 +2,9 @@
 #include "Defines.h"
 #include "Types.h"
 #include <vector>
-
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include "DX12DescriptorHandle.h"
+
 namespace Lambda
 {
 	class DX12DescriptorCache final

@@ -1,5 +1,5 @@
-#include <LambdaPch.h>
-#include <Graphics/ITexture2D.h>
+#include "LambdaPch.h"
+#include "Graphics/ITexture2D.h"
 #include "DX12Texture2D.h"
 
 #if defined(LAMBDA_PLAT_WINDOWS)

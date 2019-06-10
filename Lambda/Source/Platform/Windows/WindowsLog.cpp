@@ -1,4 +1,4 @@
-#include <LambdaPch.h>
+#include "LambdaPch.h"
 #include "WindowsLog.h"
 
 #if defined(LAMBDA_PLAT_WINDOWS)

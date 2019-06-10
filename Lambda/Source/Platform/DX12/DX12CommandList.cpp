@@ -1,12 +1,12 @@
-#include <LambdaPch.h>
+#include "LambdaPch.h"
 #include "DX12GraphicsDevice.h"
 #include "DX12CommandList.h"
 #include "DX12PipelineState.h"
 #include "DX12Buffer.h"
 #include "DX12Texture2D.h"
 #include "DX12SamplerState.h"
-#include <Utilities/TextureHelper.h>
-#include <Utilities/StringHelper.h>
+#include "Utilities/TextureHelper.h"
+#include "Utilities/StringHelper.h"
 
 #if defined(LAMBDA_PLAT_WINDOWS)
 #define SAMPLER_DESCRIPTOR_INDEX 0
@@ -482,14 +482,14 @@ namespace Lambda
 		}
 
 		//Set all new descriptors to nulldescriptors
-		for (uint64 shaderStage = 0; shaderStage < 5; shaderStage++)
+		for (uint32 shaderStage = 0; shaderStage < 5; shaderStage++)
 		{
-			for (uint64 slot = 0; slot < 8; slot++)
+			for (uint32 slot = 0; slot < 8; slot++)
 			{
-				InternalSetSamplerDescriptor(m_hSamplerDescriptorTables[shaderStage].CPU, m_NullDescriptors[SAMPLER_DESCRIPTOR_INDEX].CPU, slot);
-				InternalSetResourceDescriptor(m_hResourceDescriptorTables[shaderStage].CPU, m_NullDescriptors[CBV_DESCRIPTOR_INDEX].CPU, slot, 0);
-				InternalSetResourceDescriptor(m_hResourceDescriptorTables[shaderStage].CPU, m_NullDescriptors[SRV_DESCRIPTOR_INDEX].CPU, slot, 1);
-				InternalSetResourceDescriptor(m_hResourceDescriptorTables[shaderStage].CPU, m_NullDescriptors[UAV_DESCRIPTOR_INDEX].CPU, slot, 2);
+				InternalSetSamplerDescriptor(	m_hSamplerDescriptorTables[shaderStage].CPU,	m_NullDescriptors[SAMPLER_DESCRIPTOR_INDEX].CPU,	slot);
+				InternalSetResourceDescriptor(	m_hResourceDescriptorTables[shaderStage].CPU,	m_NullDescriptors[CBV_DESCRIPTOR_INDEX].CPU,	slot, 0);
+				InternalSetResourceDescriptor(	m_hResourceDescriptorTables[shaderStage].CPU,	m_NullDescriptors[SRV_DESCRIPTOR_INDEX].CPU,	slot, 1);
+				InternalSetResourceDescriptor(	m_hResourceDescriptorTables[shaderStage].CPU,	m_NullDescriptors[UAV_DESCRIPTOR_INDEX].CPU,	slot, 2);
 			}
 		}
 	}

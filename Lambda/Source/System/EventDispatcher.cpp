@@ -1,6 +1,6 @@
-#include <LambdaPch.h>
-#include <System/EventDispatcher.h>
-#include <System/Log.h>
+#include "LambdaPch.h"
+#include "System/EventDispatcher.h"
+#include "System/Log.h"
 
 namespace Lambda
 {
