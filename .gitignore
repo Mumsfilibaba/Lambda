@@ -6,3 +6,4 @@ Build/
 *.user
 *.vspx
 *.sln
+*.DS_Store
