@@ -8,10 +8,10 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(WindowsLog);
 
-		WindowsLog();
-		~WindowsLog();
+		WindowsLog() = default;
+		~WindowsLog() = default;
 
-		virtual void Print(LogSeverity severity, const char* pMessage, ...) override;
+		virtual void Print(LogSeverity severity, const char* pMessage, ...) override final;
 	};
 }
 #endif

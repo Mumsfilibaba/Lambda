@@ -2,6 +2,7 @@
 #include "Defines.h"
 #include "Types.h"
 #include "Time.hpp"
+#include <memory>
 
 namespace Lambda
 {

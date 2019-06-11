@@ -2,6 +2,7 @@
 #include <string>
 #include <cassert>
 #include <ctime>
+#include <cmath>
 
 #if defined(_WIN32) && defined(__ANDROID__)
 	#undef _WIN32

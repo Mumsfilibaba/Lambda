@@ -1,12 +1,12 @@
 #pragma once
-#include <System/Application.h>
-#include <Graphics/ICommandList.h>
-#include <Graphics/IShader.h>
-#include <Graphics/IPipelineState.h>
-#include <Graphics/IBuffer.h>
-#include <Graphics/ITexture2D.h>
-#include <Graphics/ISamplerState.h>
-#include <Math/Math.h>
+#include "System/Application.h"
+#include "Graphics/ICommandList.h"
+#include "Graphics/IShader.h"
+#include "Graphics/IPipelineState.h"
+#include "Graphics/IBuffer.h"
+#include "Graphics/ITexture2D.h"
+#include "Graphics/ISamplerState.h"
+#include "Math/Math.h"
 
 namespace Lambda
 {
@@ -31,8 +31,8 @@ namespace Lambda
 		void CreateCamera(uint32 width, uint32 height);
 
 	private:
-		ICommandList* m_pCurrentList;
 		ICommandList* m_pLists[3];
+        ICommandList* m_pCurrentList;
 		IShader* m_pVS;
 		IShader* m_pPS;
 		IShader* m_pCompute;

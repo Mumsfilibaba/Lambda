@@ -58,6 +58,18 @@ workspace "Lambda"
 		}
 
 	filter "system:macosx"
+		links
+		{
+			"glfw.3.3"
+		}
+		libdirs
+		{
+			"/usr/local/lib"
+		}
+		sysincludedirs
+		{
+			"/usr/local/include"
+		}
 		defines
 		{
 			"LAMBDA_PLAT_MACOS" 

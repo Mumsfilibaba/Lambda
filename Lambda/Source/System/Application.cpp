@@ -44,12 +44,12 @@ namespace Lambda
 			
 			//Logic update
 			accumulator += clock.GetDeltaTime();
-			while (accumulator >= timestep)
-			{
+			//while (accumulator >= timestep)
+			//{
 				InternalOnUpdate(timestep);
 				accumulator -= timestep;
 				ups++;
-			}
+			//}
 
 			//Render
 			InternalOnRender(clock.GetDeltaTime());

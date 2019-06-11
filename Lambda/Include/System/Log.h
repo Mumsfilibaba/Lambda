@@ -1,5 +1,6 @@
 #pragma once
 #include "Defines.h"
+#include "Types.h"
 #include <memory>
 
 #if defined(LAMBDA_DEBUG)

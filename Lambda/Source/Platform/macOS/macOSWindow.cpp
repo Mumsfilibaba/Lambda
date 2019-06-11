@@ -7,23 +7,9 @@
     #include "System/Log.h"
 
 namespace Lambda
-{
-    //Log
-    ILog* ILog::Create()
-    {
-        return nullptr;
-    }
-    
-    
+{  
     //Input
     Input* Input::Create()
-    {
-        return nullptr;
-    }
-    
-    
-    //Joystickmanager
-    JoystickManager* JoystickManager::Create()
     {
         return nullptr;
     }
@@ -53,19 +39,57 @@ namespace Lambda
     //Window
     IWindow* IWindow::Create(const WindowDesc& desc)
     {
-        return DBG_NEW MacOSWindow();
+        return DBG_NEW MacOSWindow(desc);
     }
     
     
-    MacOSWindow::MacOSWindow()
+    bool MacOSWindow::s_HasInitGLFW = false;
+    
+    MacOSWindow::MacOSWindow(const WindowDesc& desc)
     {
-        
+        Init(desc);
     }
     
     
     MacOSWindow::~MacOSWindow()
     {
+        //Destroy glfw
+        if (s_HasInitGLFW)
+        {
+            glfwTerminate();
+        }
+    }
+    
+    
+    void MacOSWindow::Init(const WindowDesc& desc)
+    {
+        //Init glfw
+        if (!s_HasInitGLFW)
+        {
+            if (glfwInit())
+            {
+                s_HasInitGLFW = true;
+                LOG_DEBUG_INFO("macOS: Initialized GLFW\n");
+            }
+            else
+            {
+                LOG_DEBUG_INFO("macOS: Failed to initialize GLFW\n");
+            }
+        }
         
+        //Create window
+        m_pWindow = glfwCreateWindow(desc.Width, desc.Height, desc.pTitle, nullptr, nullptr);
+        if (m_pWindow)
+        {
+            LOG_DEBUG_INFO("macOS: Created window\n");
+            
+            m_Width     = desc.Width;
+            m_Height    = desc.Height;
+        }
+        else
+        {
+            LOG_DEBUG_ERROR("macOS: Failed to create window");
+        }
     }
     
     
@@ -77,25 +101,26 @@ namespace Lambda
     
     void MacOSWindow::OnUpdate() const
     {
-        
+        glfwPollEvents();
+        glfwWindowShouldClose(m_pWindow);
     }
     
     
     uint32 MacOSWindow::GetHeight() const
     {
-        return 0;
+        return m_Height;
     }
     
     
     uint32 MacOSWindow::GetWidth() const
     {
-        return 0;
+        return m_Width;
     }
     
     
     void* MacOSWindow::GetNativeHandle() const
     {
-        return nullptr;
+        return m_pWindow;
     }
 }
 #endif

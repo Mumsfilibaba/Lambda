@@ -10,6 +10,9 @@
 #elif defined(__linux__)
 	#define forceinline __attribute__((always_inline)) inline
 	#define vectorcall
+#elif defined(__APPLE__)
+    #define forceinline inline
+    #define vectorcall
 #else
 	#define forceinline
 	#define vectorcall
