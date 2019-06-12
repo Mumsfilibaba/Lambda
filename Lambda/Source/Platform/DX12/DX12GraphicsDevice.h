@@ -17,7 +17,7 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(DX12GraphicsDevice);
 
-		DX12GraphicsDevice(IWindow* pWindow, GraphicsContextFlags flags);
+		DX12GraphicsDevice(IWindow* pWindow, const GraphicsDeviceDesc& desc);
 		~DX12GraphicsDevice();
 
 		virtual void CreateCommandList(ICommandList** ppList, CommandListType type) const override final;
@@ -45,12 +45,12 @@ namespace Lambda
 		virtual uint32 GetCurrentBackBufferIndex() const override final;
 
 	private:
-		void Init(IWindow* pWindow, GraphicsContextFlags flags);
+		void Init(IWindow* pWindow, const GraphicsDeviceDesc& desc);
 		void ReleaseBackBuffers();
 		
-		bool QueryAdaper(GraphicsContextFlags flags);
-		bool CreateFactory(GraphicsContextFlags flags);
-		bool CreateDeviceAndCommandQueues(GraphicsContextFlags flags);
+		bool QueryAdaper(uint32 flags);
+		bool CreateFactory(uint32 flags);
+		bool CreateDeviceAndCommandQueues(uint32 flags);
 		bool CreateCommandList();
 		bool CreateSwapChain(IWindow* pWindow);
 		bool CreateDescriptorHeaps();

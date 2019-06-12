@@ -45,7 +45,7 @@ namespace Lambda
 			while (accumulator >= timestep)
             {
 				InternalOnUpdate(timestep);
-				accumulator -= timestep.AsNanoSeconds();
+				accumulator -= timestep;
                 
                 LOG_DEBUG_INFO("Acc: %u\n", accumulator.AsNanoSeconds());
                 

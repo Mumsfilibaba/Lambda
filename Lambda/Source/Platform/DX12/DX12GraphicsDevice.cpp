@@ -19,9 +19,9 @@ namespace Lambda
 	{
         if (desc.Api == GRAPHICS_API_D3D12)
         {
-            return DBG_NEW DX12GraphicsDevice(pWindow, desc.Flags);
+            return DBG_NEW DX12GraphicsDevice(pWindow, desc);
         }
-        else if (desc.Api == GRAPHIC_API_VULKAN)
+        else if (desc.Api == GRAPHICS_API_VULKAN)
         {
             LOG_DEBUG_ERROR("Lambda Engine: Vulkan Api not supported on system\n");
             return nullptr;
@@ -43,7 +43,7 @@ namespace Lambda
 	}
 
 
-	DX12GraphicsDevice::DX12GraphicsDevice(IWindow* pWindow, GraphicsContextFlags flags)
+	DX12GraphicsDevice::DX12GraphicsDevice(IWindow* pWindow, const GraphicsDeviceDesc& desc)
 		: m_Device(nullptr),
 		m_DXRDevice(nullptr),
 		m_Debug(nullptr),
@@ -73,7 +73,7 @@ namespace Lambda
 		m_BackBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 		m_NumBackbuffers = 3;
 
-		Init(pWindow, flags);
+		Init(pWindow, desc);
 	}
 
 
@@ -414,11 +414,11 @@ namespace Lambda
 	}
 
 
-	void DX12GraphicsDevice::Init(IWindow* pWindow, GraphicsContextFlags flags)
+	void DX12GraphicsDevice::Init(IWindow* pWindow, const GraphicsDeviceDesc& desc)
 	{
-		if (!CreateFactory(flags)) { return; }
-		if (!QueryAdaper(flags)) { return; }
-		if (!CreateDeviceAndCommandQueues(flags)) { return; }
+		if (!CreateFactory(desc.Flags)) { return; }
+		if (!QueryAdaper(desc.Flags)) { return; }
+		if (!CreateDeviceAndCommandQueues(desc.Flags)) { return; }
 		if (!CreateSwapChain(pWindow)) { return; }
 		if (!CreateCommandList()) { return; }
 		if (!CreateDescriptorHeaps()) { return; }
@@ -442,7 +442,7 @@ namespace Lambda
 	}
 
 
-	bool DX12GraphicsDevice::CreateFactory(GraphicsContextFlags flags)
+	bool DX12GraphicsDevice::CreateFactory(uint32 flags)
 	{
 		using namespace Microsoft::WRL;
 
@@ -484,7 +484,7 @@ namespace Lambda
 	}
 
 
-	bool DX12GraphicsDevice::QueryAdaper(GraphicsContextFlags flags)
+	bool DX12GraphicsDevice::QueryAdaper(uint32 flags)
 	{
 		using namespace Microsoft::WRL;
 
@@ -560,7 +560,7 @@ namespace Lambda
 	}
 
 
-	bool DX12GraphicsDevice::CreateDeviceAndCommandQueues(GraphicsContextFlags flags)
+	bool DX12GraphicsDevice::CreateDeviceAndCommandQueues(uint32 flags)
 	{
 		using namespace Microsoft::WRL;
 

@@ -201,7 +201,8 @@ namespace Lambda
 		}
 		
 		case WM_MOUSEWHEEL:
-		case WM_MOUSEHWHEEL: 
+		case WM_MOUSEHWHEEL:
+		{
 			event.Type = EVENT_TYPE_MOUSE_SCROLLED;
             event.MouseScrollEvent.Vertical = (msg == WM_MOUSEHWHEEL) ? false : true;
 			event.MouseScrollEvent.Value = float(GET_WHEEL_DELTA_WPARAM(wParam)) / float(WHEEL_DELTA);
