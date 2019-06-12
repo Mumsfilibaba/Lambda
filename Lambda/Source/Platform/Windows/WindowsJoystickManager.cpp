@@ -19,11 +19,6 @@ namespace Lambda
 		m_PollRate = Time::Seconds(1.0f / 60.0f);
 		m_CurrentPollRate = m_PollRate;
 	}
-	
-
-	WindowsJoystickManager::~WindowsJoystickManager()
-	{
-	}
 
 
 	void WindowsJoystickManager::InternalOnUpdate()

@@ -14,11 +14,6 @@ namespace Lambda
 	}
 
 
-	DX12GraphicsPipelineState::~DX12GraphicsPipelineState()
-	{
-	}
-
-
 	void DX12GraphicsPipelineState::Init(ID3D12Device* pDevice, const GraphicsPipelineStateDesc& desc)
 	{
 		using namespace Microsoft::WRL;

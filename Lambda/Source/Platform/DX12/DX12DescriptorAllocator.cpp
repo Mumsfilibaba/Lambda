@@ -24,11 +24,6 @@ namespace Lambda
 	}
 	
 
-	DX12DescriptorAllocator::~DX12DescriptorAllocator()
-	{
-	}
-	
-
 	void DX12DescriptorAllocator::Free(const DX12DescriptorHandle& hDescriptor)
 	{
 		m_FreeList.push_back(hDescriptor.Index);

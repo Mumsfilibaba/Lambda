@@ -39,11 +39,6 @@ namespace Lambda
 	}
 
 
-	DX12CommandList::~DX12CommandList()
-	{
-	}
-
-
 	void DX12CommandList::ClearRenderTarget(ITexture2D* pRenderTarget, float color[4])
 	{
 		//Flush barriers - needs to be transitioned outside function

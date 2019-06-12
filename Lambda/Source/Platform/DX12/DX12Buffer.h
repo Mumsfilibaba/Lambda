@@ -15,7 +15,7 @@ namespace Lambda
 		LAMBDA_NO_COPY(DX12Buffer);
 
 		DX12Buffer(ID3D12Device* pDevice, const BufferDesc& desc);
-		~DX12Buffer();
+		~DX12Buffer() = default;
 
 		virtual void Map(void** ppMem) override final;
 		virtual void Unmap() override final;

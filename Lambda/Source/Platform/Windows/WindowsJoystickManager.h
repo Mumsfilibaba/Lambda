@@ -13,7 +13,7 @@ namespace Lambda
 		LAMBDA_NO_COPY(WindowsJoystickManager);
 
 		WindowsJoystickManager();
-		~WindowsJoystickManager();
+		~WindowsJoystickManager() = default;
 
 		virtual void InternalOnUpdate() override final;
 		virtual void InternalSetPollrate(const Time& time) override final;

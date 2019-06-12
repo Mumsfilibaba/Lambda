@@ -17,7 +17,7 @@ namespace Lambda
 		LAMBDA_NO_COPY(DX12CommandList);
 
 		DX12CommandList(ID3D12Device* pDevice, CommandListType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV);
-		~DX12CommandList();
+		~DX12CommandList() = default;
 	
 		virtual void ClearRenderTarget(ITexture2D* pRenderTarget, float color[4]) override final;
 		virtual void ClearDepthStencil(ITexture2D* pDepthStencil, float depth, uint8 stencil) override final;

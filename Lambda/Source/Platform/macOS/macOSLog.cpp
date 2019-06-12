@@ -26,6 +26,10 @@ namespace Lambda
         {
             message = "[ERROR]: ";
         }
+        else if (severity == LOG_SEVERITY_MESSAGE)
+        {
+            message = "[MESSAGE]: ";
+        }
         
         va_list args;
         va_start(args, pFormat);

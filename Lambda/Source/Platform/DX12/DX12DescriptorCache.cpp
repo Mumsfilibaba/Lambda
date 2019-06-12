@@ -10,10 +10,5 @@ namespace Lambda
 		m_RangeCounts()
 	{
 	}
-
-
-	DX12DescriptorCache::~DX12DescriptorCache()
-	{
-	}
 }
 #endif

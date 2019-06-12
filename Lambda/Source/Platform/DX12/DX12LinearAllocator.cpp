@@ -93,11 +93,6 @@ namespace Lambda
 	{
 		Init(pDevice, pageSize);
 	}
-	
-	
-	DX12LinearAllocator::~DX12LinearAllocator()
-	{
-	}
 
 
 	void DX12LinearAllocator::Init(ID3D12Device* pDevice, uint64 pageSize)

@@ -27,11 +27,6 @@ namespace Lambda
 	}
 
 
-	DX12LinearDescriptorAllocator::~DX12LinearDescriptorAllocator()
-	{
-	}
-
-
 	DX12DescriptorHandle DX12LinearDescriptorAllocator::Allocate(uint32 num)
 	{
 		//Since only one heap can be used at a time we only use one heap, only return error here

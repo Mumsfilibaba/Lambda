@@ -13,7 +13,7 @@ namespace Lambda
 		LAMBDA_NO_COPY(DX12DescriptorCache);
 
 		DX12DescriptorCache();
-		~DX12DescriptorCache();
+		~DX12DescriptorCache() = default;
 
 		void CopyDescriptors(ID3D12Device* pDevice, D3D12_DESCRIPTOR_HEAP_TYPE type);
 		void PushDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE hDest, D3D12_CPU_DESCRIPTOR_HANDLE hSrc);

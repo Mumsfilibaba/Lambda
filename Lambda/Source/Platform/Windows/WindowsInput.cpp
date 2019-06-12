@@ -263,20 +263,19 @@ namespace Lambda
 		m_LambdaToWindowsKeyTable[KEY_MENU]				= 0x5C;
 	}
 
-	WindowsInput::~WindowsInput()
-	{
-	}
-
+    
 	Key WindowsInput::WindowsKeyToLambda(uint32 keycode) const
 	{
 		return m_WindowsToLambdaKeyTable[keycode];
 	}
 
+    
 	uint32 WindowsInput::LambdaKeyToWindows(Key keycode) const
 	{
 		return m_LambdaToWindowsKeyTable[keycode];
 	}
 
+    
 	MouseButton WindowsInput::WindowsButtonToLambda(uint32 keycode) const
 	{
 		switch(keycode)
@@ -290,6 +289,7 @@ namespace Lambda
 		}
 	}
 
+    
 	uint32 WindowsInput::LambdaButtonToWindows(MouseButton keycode) const
 	{
 		switch (keycode)
@@ -303,21 +303,25 @@ namespace Lambda
 		}
 	}
 
+    
 	bool WindowsInput::InternalIsKeyUp(Key keycode) const
 	{
 		return !(GetAsyncKeyState(LambdaKeyToWindows(keycode)) & 0x8000);
 	}
 
+    
 	bool WindowsInput::InternalIsKeyDown(Key keycode) const
 	{
 		return GetAsyncKeyState(LambdaKeyToWindows(keycode)) & 0x8000;
 	}
 
+    
 	void WindowsInput::InternalSetMousePosition(uint32 x, uint32 y) const
 	{
 		SetCursorPos(x, y);
 	}
 
+    
 	void WindowsInput::InternalGetMousePosition(uint32& x, uint32& y) const
 	{
 		POINT p = {};
@@ -326,6 +330,7 @@ namespace Lambda
 		x = p.x;
 		y = p.y;
 	}
+    
 
 	void WindowsInput::InternalSetMousePosition(IWindow* pRelativeTo, uint32 x, uint32 y) const
 	{
@@ -337,6 +342,7 @@ namespace Lambda
 
 		SetCursorPos(p.x, p.y);
 	}
+    
 
 	void WindowsInput::InternalGetMousePosition(IWindow* pRelativeTo, uint32& x, uint32& y) const
 	{

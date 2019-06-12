@@ -264,22 +264,25 @@ namespace Lambda
 	void SandBox::OnRelease()
 	{
 		IGraphicsDevice* pDevice = IGraphicsDevice::GetInstance();
-		pDevice->WaitForGPU();
+        if (pDevice)
+        {
+            pDevice->WaitForGPU();
 
-		for (uint32 i = 0; i < 3; i++)
-			pDevice->DestroyCommandList(&(m_pLists[i]));
+            for (uint32 i = 0; i < 3; i++)
+                pDevice->DestroyCommandList(&(m_pLists[i]));
 
-		pDevice->DestroyShader(&m_pVS);
-		pDevice->DestroyShader(&m_pPS);
-		pDevice->DestroyShader(&m_pCompute);
+            pDevice->DestroyShader(&m_pVS);
+            pDevice->DestroyShader(&m_pPS);
+            pDevice->DestroyShader(&m_pCompute);
 
-		pDevice->DestroyGraphicsPipelineState(&m_pPipelineState);
-		pDevice->DestroyBuffer(&m_pVertexBuffer);
-		pDevice->DestroyBuffer(&m_pColorBuffer);
-		pDevice->DestroyBuffer(&m_pCameraBuffer);
-		pDevice->DestroyTexture2D(&m_pDepthBuffer);
-		pDevice->DestroyTexture2D(&m_pTexture);
-		pDevice->DestroySamplerState(&m_pSampler);
+            pDevice->DestroyGraphicsPipelineState(&m_pPipelineState);
+            pDevice->DestroyBuffer(&m_pVertexBuffer);
+            pDevice->DestroyBuffer(&m_pColorBuffer);
+            pDevice->DestroyBuffer(&m_pCameraBuffer);
+            pDevice->DestroyTexture2D(&m_pDepthBuffer);
+            pDevice->DestroyTexture2D(&m_pTexture);
+            pDevice->DestroySamplerState(&m_pSampler);
+        }
 	}
 
 
@@ -306,6 +309,11 @@ namespace Lambda
 			if (event.WindowResize.Width > 0 && event.WindowResize.Height > 0)
 			{
 				IGraphicsDevice* pDevice = IGraphicsDevice::GetInstance();
+                if (!pDevice)
+                {
+                    return false;
+                }
+                
 				pDevice->WaitForGPU();
 
 				//Release depthbuffer
@@ -349,6 +357,40 @@ namespace Lambda
 				pDevice->WaitForGPU();
 			}
 		}
+        else if (event.Type == EVENT_TYPE_KEYDOWN)
+        {
+            LOG_DEBUG_INFO("Key pressed\n");
+        }
+        else if (event.Type == EVENT_TYPE_MOUSE_MOVED)
+        {
+            LOG_DEBUG_INFO("Mouse moved (x: %d, y: %d)\n", event.MouseMoveEvent.PosX, event.MouseMoveEvent.PosY);
+        }
+        else if (event.Type == EVENT_TYPE_MOUSE_BUTTONDOWN)
+        {
+            LOG_DEBUG_INFO("Mouse pressed\n");
+        }
+        else if (event.Type == EVENT_TYPE_MOUSE_SCROLLED)
+        {
+            if (event.MouseScrollEvent.Vertical)
+            {
+                LOG_DEBUG_INFO("Vertical scroll\n");
+            }
+            else
+            {
+                LOG_DEBUG_INFO("Horizontal scroll\n");
+            }
+        }
+        else if (event.Type == EVENT_TYPE_FOCUS_CHANGED)
+        {
+            if (event.FocusChanged.HasFocus)
+            {
+                LOG_DEBUG_INFO("Window got focus\n");
+            }
+            else
+            {
+                LOG_DEBUG_INFO("Window lost focus\n");
+            }
+        }
 
 		return false;
 	}

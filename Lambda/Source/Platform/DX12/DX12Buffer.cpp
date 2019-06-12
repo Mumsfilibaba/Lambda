@@ -20,11 +20,6 @@ namespace Lambda
 		//Init
 		Init(pDevice, desc);
 	}
-	
-
-	DX12Buffer::~DX12Buffer()
-	{
-	}
 
 
 	void DX12Buffer::Map(void** ppData)

@@ -30,10 +30,11 @@ namespace Lambda
 {
 	enum LogSeverity : uint32
 	{
-		LOG_SEVERITY_UNKNOWN,
-		LOG_SEVERITY_INFO,
-		LOG_SEVERITY_WARNING,
-		LOG_SEVERITY_ERROR,
+		LOG_SEVERITY_UNKNOWN    = 0,
+		LOG_SEVERITY_INFO       = 1,
+		LOG_SEVERITY_WARNING    = 2,
+		LOG_SEVERITY_ERROR      = 3,
+        LOG_SEVERITY_MESSAGE    = 4,
 	};
 
     

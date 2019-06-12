@@ -10,12 +10,7 @@ namespace Lambda
 	{
 		Init(desc);
 	}
-
-
-	DX12Shader::~DX12Shader()
-	{
-	}
-
+    
 
 	ShaderType DX12Shader::GetType() const
 	{

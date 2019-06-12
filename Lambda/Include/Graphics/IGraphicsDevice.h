@@ -6,12 +6,21 @@
 
 namespace Lambda
 {
-	enum GraphicsContextFlags
+    enum GraphicsContextFlags : uint32
 	{
-		GRAPHICS_CONTEXT_FLAG_NONE = 0,
-		GRAPHICS_CONTEXT_FLAG_DEBUG = (1 << 0),
-		GRAPHICS_CONTEXT_FLAG_ALLOW_SOFTWARE_ADAPTER = (1 << 1),
+		GRAPHICS_CONTEXT_FLAG_NONE                      = 0,
+		GRAPHICS_CONTEXT_FLAG_DEBUG                     = (1 << 0),
+		GRAPHICS_CONTEXT_FLAG_ALLOW_SOFTWARE_ADAPTER    = (1 << 1),
 	};
+    
+    
+    enum GraphicsApi : uint32
+    {
+        GRAPHICS_API_UNKNOWN    = 0,
+        GRAPHICS_API_D3D12      = 1,
+        GRAPHICS_API_VULKAN     = 2
+    };
+    
 
 	class IBuffer;
 	class ISamplerState;
@@ -26,6 +35,14 @@ namespace Lambda
 	struct ShaderDesc;
 	struct GraphicsPipelineStateDesc;
 
+    
+    struct GraphicsDeviceDesc
+    {
+        uint32 Flags = GRAPHICS_CONTEXT_FLAG_NONE;
+        GraphicsApi Api = GRAPHICS_API_VULKAN;
+    };
+    
+    
 	class LAMBDA_API IGraphicsDevice
 	{
 	public:
@@ -62,7 +79,7 @@ namespace Lambda
 		virtual bool InternalOnEvent(const Event& event) = 0;
 
 	public:
-		static IGraphicsDevice* Create(IWindow* pWindow, GraphicsContextFlags flags);
+		static IGraphicsDevice* Create(IWindow* pWindow, const GraphicsDeviceDesc& desc);
 		static IGraphicsDevice* GetInstance();
 		static bool OnEvent(const Event& event);
 

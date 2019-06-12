@@ -11,11 +11,6 @@ namespace Lambda
 		assert(pDevice != nullptr);
 		Init(pDevice, hDescriptor, desc);
 	}
-	
-	
-	DX12SamplerState::~DX12SamplerState()
-	{
-	}
 
 
 	SamplerDesc DX12SamplerState::GetDesc() const

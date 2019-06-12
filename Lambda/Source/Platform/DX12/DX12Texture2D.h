@@ -17,7 +17,7 @@ namespace Lambda
 
 		DX12Texture2D(ID3D12Resource* pResource);
 		DX12Texture2D(ID3D12Device* pDevice, const Texture2DDesc& desc);
-		~DX12Texture2D();
+		~DX12Texture2D() = default;
 
 		virtual Texture2DDesc GetDesc() const override final;
 

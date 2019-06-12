@@ -1,6 +1,8 @@
 Build/
 .vs/
 
+*.ipch
+*.bin
 *.vcxproj
 *.filters
 *.user

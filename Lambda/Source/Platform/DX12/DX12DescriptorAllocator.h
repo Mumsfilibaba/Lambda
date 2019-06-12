@@ -15,7 +15,7 @@ namespace Lambda
 
 		DX12DescriptorAllocator();
 		DX12DescriptorAllocator(ID3D12Device* pDevice, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32 count, bool isShaderVisible);
-		~DX12DescriptorAllocator();
+		~DX12DescriptorAllocator() = default;
 
 		void Init(ID3D12Device* pDevice, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32 count, bool isShaderVisible);
 		

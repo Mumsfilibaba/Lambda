@@ -14,7 +14,7 @@ namespace Lambda
 		LAMBDA_NO_COPY(DX12GraphicsPipelineState);
 
 		DX12GraphicsPipelineState(ID3D12Device* pDevice, const GraphicsPipelineStateDesc& desc);
-		~DX12GraphicsPipelineState();
+		~DX12GraphicsPipelineState() = default;
 
 	private:
 		void Init(ID3D12Device* pDevice, const GraphicsPipelineStateDesc& desc);

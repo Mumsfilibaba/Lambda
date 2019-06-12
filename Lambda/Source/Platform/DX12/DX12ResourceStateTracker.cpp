@@ -12,11 +12,6 @@ namespace Lambda
 		m_DefferedBarriers()
 	{
 	}
-	
-
-	DX12ResourceStateTracker::~DX12ResourceStateTracker()
-	{
-	}
 
 
 	void DX12ResourceStateTracker::TransitionResource(ID3D12Resource* pResource, uint32 subresource, D3D12_RESOURCE_STATES toState)

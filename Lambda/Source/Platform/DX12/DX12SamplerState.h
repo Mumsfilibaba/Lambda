@@ -15,7 +15,7 @@ namespace Lambda
 		LAMBDA_NO_COPY(DX12SamplerState);
 
 		DX12SamplerState(ID3D12Device* pDevice, DX12DescriptorHandle hDescriptor, const SamplerDesc& desc);
-		~DX12SamplerState();
+		~DX12SamplerState() = default;
 
 		virtual SamplerDesc GetDesc() const override final;
 
@@ -30,6 +30,7 @@ namespace Lambda
 		SamplerDesc m_Desc;
 	};
 
+    
 	inline void DX12SamplerState::SetDescriptorHandle(DX12DescriptorHandle hDescriptor)
 	{
 		m_Descriptor = hDescriptor;

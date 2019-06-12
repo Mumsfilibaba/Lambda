@@ -12,7 +12,7 @@ int main()
 	DBG_MEMLEAK_CHECK();
 
 	EngineParams params;
-	params.pTitle = "Lambda Engine - Sandbox [DX12]";
+	params.pTitle = "Lambda Engine - Sandbox [Vulkan]";
 
 	Application* pApp = DBG_NEW SandBox(params);
 	int32 result = pApp->Run();

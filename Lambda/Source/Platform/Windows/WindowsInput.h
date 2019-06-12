@@ -9,7 +9,7 @@ namespace Lambda
 		LAMBDA_NO_COPY(WindowsInput);
 
 		WindowsInput();
-		~WindowsInput();
+		~WindowsInput() = default;
 
 		Key WindowsKeyToLambda(uint32 keycode) const;
 		uint32 LambdaKeyToWindows(Key keycode) const;
@@ -35,21 +35,25 @@ namespace Lambda
 		static uint32 ConvertLambdaButton(MouseButton keycode);
 	};
 
+    
 	inline Key WindowsInput::ConvertWindowsKey(uint32 keycode)
 	{
 		return ((WindowsInput&)Input::GetInstance()).WindowsKeyToLambda(keycode);
 	}
 
+    
 	inline uint32 WindowsInput::ConvertLambdaKey(Key keycode)
 	{
 		return ((WindowsInput&)Input::GetInstance()).LambdaKeyToWindows(keycode);
 	}
 
+    
 	inline MouseButton WindowsInput::ConvertWindowsButton(uint32 keycode)
 	{
 		return ((WindowsInput&)Input::GetInstance()).WindowsButtonToLambda(keycode);
 	}
 
+    
 	inline uint32 WindowsInput::ConvertLambdaButton(MouseButton keycode)
 	{
 		return ((WindowsInput&)Input::GetInstance()).LambdaButtonToWindows(keycode);

@@ -57,7 +57,7 @@ namespace Lambda
 
 		DX12LinearAllocator();
 		DX12LinearAllocator(ID3D12Device* pDevice, uint64 pageSize = MB(2));
-		~DX12LinearAllocator();
+		~DX12LinearAllocator() = default;
 
 		void Init(ID3D12Device* pDevice, uint64 pageSize = MB(2));
 		

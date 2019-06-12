@@ -15,7 +15,7 @@ namespace Lambda
 		LAMBDA_NO_COPY(DX12Shader);
 
 		DX12Shader(const ShaderDesc& desc);
-		~DX12Shader();
+		~DX12Shader() = default;
 
 		virtual ShaderType GetType() const override final;
 

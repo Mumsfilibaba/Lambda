@@ -27,11 +27,6 @@ namespace Lambda
 		memset(&m_Desc, 0, sizeof(m_Desc));
 		Init(pDevice, desc);
 	}
-	
-
-	DX12Texture2D::~DX12Texture2D()
-	{
-	}
 
 
 	Texture2DDesc DX12Texture2D::GetDesc() const

@@ -39,8 +39,8 @@ namespace Lambda
 
 			struct
 			{
-				uint16	PosX;
-				uint16	PosY;
+				int16	PosX;
+				int16	PosY;
 			} MouseMoveEvent;
 
 			struct
@@ -56,8 +56,8 @@ namespace Lambda
 
 			struct
 			{
-				uint16	PosX;
-				uint16	PosY;
+				int16	PosX;
+				int16	PosY;
 			} WindowMove;
 
 			struct

@@ -18,7 +18,7 @@ namespace Lambda
 	{
 	public:
 		Application(const EngineParams& params);
-		~Application();
+		~Application() = default;
 
 		virtual void OnLoad() {}
 		virtual void OnUpdate(Time dt) {}

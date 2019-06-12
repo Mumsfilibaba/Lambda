@@ -27,7 +27,7 @@ namespace Lambda
 		LAMBDA_NO_COPY(DX12ResourceStateTracker);
 
 		DX12ResourceStateTracker();
-		~DX12ResourceStateTracker();
+		~DX12ResourceStateTracker() = default;
 
 		void TransitionResource(ID3D12Resource* pResource, uint32 subresource, D3D12_RESOURCE_STATES toState);
 		void FlushBarriers(ID3D12GraphicsCommandList* pCommandList);
