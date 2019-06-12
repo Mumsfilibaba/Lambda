@@ -28,16 +28,12 @@ namespace Lambda
 		Clock clock;
 		Time accumulator;
 		const Time timestep = Time::Seconds(1.0f / 60.0f);
-        
-        LOG_DEBUG_INFO("Timestep: %u\n", timestep.AsNanoSeconds());
-
 		uint32 fps = 0;
 		uint32 ups = 0;
 
 		clock.Reset();
 		while (m_Running)
 		{
-            LOG_DEBUG_INFO("Ticking\n");
 			clock.Tick();
 			
 			//Logic update
@@ -45,15 +41,7 @@ namespace Lambda
 			while (accumulator >= timestep)
             {
 				InternalOnUpdate(timestep);
-				accumulator -= timestep;
-                
-                LOG_DEBUG_INFO("Acc: %u\n", accumulator.AsNanoSeconds());
-                
-                if (accumulator < timestep)
-                {
-                    LOG_DEBUG_INFO("LESSER\n");
-                }
-                
+				accumulator -= timestep;                
                 ups++;
 			}
 

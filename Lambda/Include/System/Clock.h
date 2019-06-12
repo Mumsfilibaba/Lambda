@@ -4,7 +4,7 @@
     #define WIN32_LEAN_AND_MEAN
     #include <windows.h>
 #else
-    #include <sys/time.h>
+    #include <chrono>
 #endif
 
 namespace Lambda
@@ -80,9 +80,10 @@ namespace Lambda
 		m_TotalTime += m_DeltaTime;
 #elif defined(LAMBDA_PLAT_MACOS)
         //Get current time
-        timeval val;
-        gettimeofday(&val, nullptr);
-        Time currentTime = Time::NanoSeconds(val.tv_usec * 1000);
+        auto now        = std::chrono::high_resolution_clock::now();
+        auto duration   = now.time_since_epoch();
+        auto nanos      = std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
+        Time currentTime = Time::NanoSeconds(nanos);
         
         //Update delta- and totaltime
         m_DeltaTime = currentTime - m_LastTime;
