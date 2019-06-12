@@ -28,6 +28,8 @@ namespace Lambda
 		Clock clock;
 		Time accumulator;
 		const Time timestep = Time::Seconds(1.0f / 60.0f);
+        
+        LOG_DEBUG_INFO("Timestep: %u\n", timestep.AsNanoSeconds());
 
 		uint32 fps = 0;
 		uint32 ups = 0;
@@ -35,16 +37,25 @@ namespace Lambda
 		clock.Reset();
 		while (m_Running)
 		{
+            LOG_DEBUG_INFO("Ticking\n");
 			clock.Tick();
 			
 			//Logic update
 			accumulator += clock.GetDeltaTime();
-			//while (accumulator >= timestep)
-			//{
+			while (accumulator >= timestep)
+            {
 				InternalOnUpdate(timestep);
-				accumulator -= timestep;
-				ups++;
-			//}
+				accumulator -= timestep.AsNanoSeconds();
+                
+                LOG_DEBUG_INFO("Acc: %u\n", accumulator.AsNanoSeconds());
+                
+                if (accumulator < timestep)
+                {
+                    LOG_DEBUG_INFO("LESSER\n");
+                }
+                
+                ups++;
+			}
 
 			//Render
 			InternalOnRender(clock.GetDeltaTime());
@@ -54,12 +65,14 @@ namespace Lambda
 			if (clock.GetTotalTime().AsSeconds() >= 1.0f)
 			{
 				clock.Reset();
-				LOG_SYSTEM_PRINT("FPS: %d, UPS: %d\n", fps, ups);
+				LOG_SYSTEM_PRINT("FPS: %u, UPS: %u\n", fps, ups);
 				fps = 0;
 				ups = 0;
 			}
 		}
 
+        LOG_DEBUG_INFO("Application exiting\n");
+        
 		InternalOnRelease();
 		return m_ExitCode;
 	}
@@ -114,6 +127,8 @@ namespace Lambda
 	{
 		m_Running = false;
 		m_ExitCode = exitCode;
+        
+        LOG_DEBUG_INFO("Quit called\n");
 	}
 
 
@@ -169,6 +184,7 @@ namespace Lambda
 			if (event.KeyEvent.KeyCode == KEY_ESCAPE)
 			{
 				Application::GetInstance().Quit(0);
+                LOG_DEBUG_INFO("Escape pressed, exiting\n");
 				return true;
 			}
 		}

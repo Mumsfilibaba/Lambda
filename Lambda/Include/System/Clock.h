@@ -3,6 +3,8 @@
 #if defined(LAMBDA_PLAT_WINDOWS)
     #define WIN32_LEAN_AND_MEAN
     #include <windows.h>
+#else
+    #include <sys/time.h>
 #endif
 
 namespace Lambda
@@ -13,7 +15,7 @@ namespace Lambda
 		Clock();
 		Clock(Clock&& other);
 		Clock(const Clock& other);
-		~Clock();
+		~Clock() = default;
 
 		void Tick();
 		void Reset();
@@ -38,10 +40,11 @@ namespace Lambda
 #if defined(LAMBDA_PLAT_WINDOWS)
 		QueryPerformanceFrequency((LARGE_INTEGER*)&m_Frequency);
 #elif defined(LAMBDA_PLAT_MACOS)
-        //macOS definition here
+        //Constructor is empty on macOS
 #else
     #error Clock::Clock not defined
 #endif
+        //Make first tick
 		Tick();
 	}
 
@@ -63,23 +66,28 @@ namespace Lambda
 	}
 
 
-	inline Clock::~Clock()
-	{
-	}
-
-
 	inline void Clock::Tick()
 	{
 #if defined(LAMBDA_PLAT_WINDOWS)
-		uint64 now = 0;
+		//Get current time
+        uint64 now = 0;
 		QueryPerformanceCounter((LARGE_INTEGER*)&now);
 		Time currentTime = Time((now * 1000000000) / m_Frequency);
 
+        //Update delta- and totaltime
 		m_DeltaTime = currentTime - m_LastTime;
 		m_LastTime = currentTime;
 		m_TotalTime += m_DeltaTime;
 #elif defined(LAMBDA_PLAT_MACOS)
-        //macOS definition here
+        //Get current time
+        timeval val;
+        gettimeofday(&val, nullptr);
+        Time currentTime = Time::NanoSeconds(val.tv_usec * 1000);
+        
+        //Update delta- and totaltime
+        m_DeltaTime = currentTime - m_LastTime;
+        m_LastTime = currentTime;
+        m_TotalTime += m_DeltaTime;
 #else
     #error Clock::Tick not defined
 #endif

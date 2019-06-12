@@ -9,7 +9,7 @@ namespace Lambda
 		Time(uint64 ns = 0);
 		Time(Time&& other);
 		Time(const Time& other);
-		~Time();
+		~Time() = default;
 
 		float AsSeconds() const;
 		float AsMilliSeconds() const;
@@ -41,7 +41,7 @@ namespace Lambda
 	public:
 		static Time Seconds(float s);
 		static Time MilliSeconds(float ms);
-		static Time MicroSeconds(float qs);
+		static Time MicroSeconds(float us);
 		static Time NanoSeconds(uint64 ns);
 	};
 
@@ -62,12 +62,7 @@ namespace Lambda
 		: m_Ns(other.m_Ns)
 	{
 	}
-
-
-	inline Time::~Time()
-	{
-	}
-
+    
 
 	inline float Time::AsSeconds() const
 	{

@@ -28,7 +28,7 @@ namespace Lambda
         }
         else if (desc.Api == GRAPHICS_API_VULKAN)
         {
-            LOG_DEBUG_ERROR("Lambda Engine: Createing GraphicsDevice\n");
+            LOG_DEBUG_ERROR("Lambda Engine: Creating GraphicsDevice\n");
             return nullptr;
         }
         
