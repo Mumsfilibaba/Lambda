@@ -1,6 +1,7 @@
 #include "SandBox.h"
 #include "System/Log.h"
 #include "Math/Math.h"
+#include "System/Input.h"
 
 namespace Lambda
 {
@@ -363,21 +364,21 @@ namespace Lambda
         }
         else if (event.Type == EVENT_TYPE_MOUSE_MOVED)
         {
-            LOG_DEBUG_INFO("Mouse moved (x: %d, y: %d)\n", event.MouseMoveEvent.PosX, event.MouseMoveEvent.PosY);
+            //LOG_DEBUG_INFO("Mouse moved (x: %d, y: %d)\n", event.MouseMoveEvent.PosX, event.MouseMoveEvent.PosY);
         }
         else if (event.Type == EVENT_TYPE_MOUSE_BUTTONDOWN)
         {
-            LOG_DEBUG_INFO("Mouse pressed\n");
+            //LOG_DEBUG_INFO("Mouse pressed\n");
         }
         else if (event.Type == EVENT_TYPE_MOUSE_SCROLLED)
         {
             if (event.MouseScrollEvent.Vertical)
             {
-                LOG_DEBUG_INFO("Vertical scroll\n");
+                //LOG_DEBUG_INFO("Vertical scroll\n");
             }
             else
             {
-                LOG_DEBUG_INFO("Horizontal scroll\n");
+                //LOG_DEBUG_INFO("Horizontal scroll\n");
             }
         }
         else if (event.Type == EVENT_TYPE_FOCUS_CHANGED)

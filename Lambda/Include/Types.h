@@ -135,6 +135,7 @@ namespace Lambda
 		KEY_RIGHT_ALT = 127,
 		KEY_RIGHT_SUPER = 128,
 		KEY_MENU = 129,
+        KEY_LAST = KEY_MENU
 	};
 
 

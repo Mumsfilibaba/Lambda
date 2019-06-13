@@ -18,7 +18,7 @@ namespace Lambda
 	{
 	public:
 		Application(const EngineParams& params);
-		~Application() = default;
+		virtual ~Application() = default;
 
 		virtual void OnLoad() {}
 		virtual void OnUpdate(Time dt) {}
@@ -26,8 +26,6 @@ namespace Lambda
 		virtual void OnRelease() {}
 
 		int32 Run();
-
-	protected:
 		IWindow* GetWindow();
 
 	private:

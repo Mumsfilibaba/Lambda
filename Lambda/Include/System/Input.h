@@ -17,19 +17,19 @@ namespace Lambda
 		virtual bool InternalIsKeyUp(Key keycode) const = 0;
 		virtual bool InternalIsKeyDown(Key keycode) const = 0;
 
-		virtual void InternalSetMousePosition(uint32 x, uint32 y) const = 0;
-		virtual void InternalGetMousePosition(uint32& x, uint32& y) const = 0;
-		virtual void InternalSetMousePosition(IWindow* pRelativeTo, uint32 x, uint32 y) const = 0;
-		virtual void InternalGetMousePosition(IWindow* pRelativeTo, uint32& x, uint32& y) const = 0;
+		virtual void InternalSetMousePosition(float x, float y) const = 0;
+		virtual void InternalGetMousePosition(float& x, float& y) const = 0;
+		virtual void InternalSetMousePosition(IWindow* pRelativeTo, float x, float y) const = 0;
+		virtual void InternalGetMousePosition(IWindow* pRelativeTo, float& x, float& y) const = 0;
 
 	public:
 		static bool IsKeyUp(Key keycode);
 		static bool IsKeyDown(Key keycode);
 		
-		static void SetMousePosition(uint32 x, uint32 y);
-		static void GetMousePosition(uint32& x, uint32& y);
-		static void SetMousePosition(IWindow* pRelativeTo, uint32 x, uint32 y);
-		static void GetMousePosition(IWindow* pRelativeTo, uint32& x, uint32& y);
+		static void SetMousePosition(float x, float y);
+		static void GetMousePosition(float& x, float& y);
+		static void SetMousePosition(IWindow* pRelativeTo, float x, float y);
+		static void GetMousePosition(IWindow* pRelativeTo, float& x, float& y);
 
 	protected:
 		static Input& GetInstance();

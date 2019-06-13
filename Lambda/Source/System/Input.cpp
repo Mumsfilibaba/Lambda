@@ -18,25 +18,25 @@ namespace Lambda
 	}
 	
     
-	void Input::SetMousePosition(uint32 x, uint32 y)
+	void Input::SetMousePosition(float x, float y)
 	{
 		s_Instance->InternalSetMousePosition(x, y);
 	}
 	
     
-	void Input::GetMousePosition(uint32& x, uint32& y)
+	void Input::GetMousePosition(float& x, float& y)
 	{
 		s_Instance->InternalGetMousePosition(x, y);
 	}
 	
     
-	void Input::SetMousePosition(IWindow* pRelativeTo, uint32 x, uint32 y)
+	void Input::SetMousePosition(IWindow* pRelativeTo, float x, float y)
 	{
 		s_Instance->InternalSetMousePosition(pRelativeTo, x, y);
 	}
     
 
-	void Input::GetMousePosition(IWindow* pRelativeTo, uint32& x, uint32& y)
+	void Input::GetMousePosition(IWindow* pRelativeTo, float& x, float& y)
 	{
 		s_Instance->InternalGetMousePosition(pRelativeTo, x, y);
 	}

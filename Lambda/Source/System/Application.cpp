@@ -41,7 +41,7 @@ namespace Lambda
 			while (accumulator >= timestep)
             {
 				InternalOnUpdate(timestep);
-				accumulator -= timestep;                
+				accumulator -= timestep;
                 ups++;
 			}
 
@@ -94,11 +94,11 @@ namespace Lambda
 		//Create graphics context
 		{
             GraphicsDeviceDesc desc;
-            desc.Api = GRAPHICS_API_VULKAN;
+            desc.Api    = GRAPHICS_API_VULKAN;
 #if LAMBDA_DEBUG
-            desc.Flags = GRAPHICS_CONTEXT_FLAG_DEBUG;
+            desc.Flags  = GRAPHICS_CONTEXT_FLAG_DEBUG;
 #else
-            desc.Flags = GRAPHICS_CONTEXT_FLAG_NONE;
+            desc.Flags  = GRAPHICS_CONTEXT_FLAG_NONE;
 #endif
 			m_pGraphicsContext = IGraphicsDevice::Create(m_pWindow, desc);
 
