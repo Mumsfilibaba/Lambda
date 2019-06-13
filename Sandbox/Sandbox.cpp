@@ -46,12 +46,18 @@ namespace Lambda
                 {
                     pDevice->CreateCommandList(&m_pLists[i], COMMAND_LIST_TYPE_GRAPHICS);
                     
-                    std::string name = "CommandList [" + std::to_string(i) + "]";
-                    m_pLists[i]->SetName(name.c_str());
+                    if (m_pLists[i])
+                    {
+                        std::string name = "CommandList [" + std::to_string(i) + "]";
+                        m_pLists[i]->SetName(name.c_str());
+                    }
                 }
 
                 m_pCurrentList = m_pLists[0];
-                m_pCurrentList->Reset();
+                if (m_pCurrentList)
+                {
+                    m_pCurrentList->Reset();
+                }
             }
 
             //Create shaders
@@ -88,7 +94,10 @@ namespace Lambda
                 data.SizeInBytes = desc.SizeInBytes;
 
                 pDevice->CreateBuffer(&m_pVertexBuffer, &data, desc);
-                m_pCurrentList->TransitionResource(m_pVertexBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+                if (m_pCurrentList)
+                {
+                    m_pCurrentList->TransitionResource(m_pVertexBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+                }
             }
 
             //Create colorbuffer
@@ -123,7 +132,10 @@ namespace Lambda
                 data.SizeInBytes = desc.SizeInBytes;
 
                 pDevice->CreateBuffer(&m_pCameraBuffer, &data, desc);
-                m_pCurrentList->TransitionResource(m_pCameraBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+                if (m_pCurrentList)
+                {
+                    m_pCurrentList->TransitionResource(m_pCameraBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+                }
             }
 
             //Create depthbuffer
@@ -145,7 +157,10 @@ namespace Lambda
 
             //Create texture
             m_pTexture = ITexture2D::CreateTextureFromFile(pDevice, "texture.jpg", TEXTURE_FLAGS_SHADER_RESOURCE, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
-            m_pCurrentList->TransitionResource(m_pTexture, RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+            if (m_pCurrentList)
+            {
+                m_pCurrentList->TransitionResource(m_pTexture, RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+            }
 
             //Create samplerstate
             {
@@ -154,8 +169,11 @@ namespace Lambda
             }
 
             //Close and execute commandlist
-            m_pCurrentList->Close();
-            pDevice->ExecuteCommandList(&m_pCurrentList, 1);
+            if (m_pCurrentList)
+            {
+                m_pCurrentList->Close();
+                pDevice->ExecuteCommandList(&m_pCurrentList, 1);
+            }
 
             //Wait for GPU
             pDevice->WaitForGPU();
@@ -177,87 +195,90 @@ namespace Lambda
         {
             //Set commandlist for frame
             m_pCurrentList = m_pLists[pDevice->GetCurrentBackBufferIndex()];
-            m_pCurrentList->Reset();
-
-            //Set and clear rendertarget
-            float color[] = { 0.392f, 0.584f, 0.929f, 1.0f };
-            ITexture2D* pRenderTarget = pDevice->GetCurrentRenderTarget();
-            
-
-            m_pCurrentList->TransitionResource(pRenderTarget, RESOURCE_STATE_RENDERTARGET);
-            m_pCurrentList->ClearRenderTarget(pRenderTarget, color);
-            m_pCurrentList->TransitionResource(m_pDepthBuffer, RESOURCE_STATE_DEPTH_WRITE);
-            m_pCurrentList->ClearDepthStencil(m_pDepthBuffer, 1.0f, 0);
-            m_pCurrentList->SetRenderTarget(pRenderTarget, m_pDepthBuffer);
-
-            //Set scissor and viewport
-            Math::Rectangle scissorrect;
-            scissorrect.TopLeft.x = 0.0f;
-            scissorrect.TopLeft.y = 0.0f;
-            scissorrect.BottomRight.x = m_Width;
-            scissorrect.BottomRight.y = m_Height;
-
-            Viewport viewport;
-            viewport.Width = scissorrect.BottomRight.x;
-            viewport.Height = scissorrect.BottomRight.y;
-            viewport.TopX = 0.0f;
-            viewport.TopY = 0.0f;
-            viewport.MinDepth = 0.0f;
-            viewport.MaxDepth = 1.0f;
-            
-            m_pCurrentList->SetViewport(viewport);
-            m_pCurrentList->SetScissorRect(scissorrect);
-
-            //Set pipelinestate and topology
-            m_pCurrentList->SetPrimtiveTopology(PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-            m_pCurrentList->SetGraphicsPipelineState(m_pPipelineState);
-
-            //Set constantbuffers
-            static Random random;
-            static Vec4f colorBuff	= random.GenerateVector4();
-            static Vec4f beginBuff	= random.GenerateVector4();
-            static Vec4f endBuff	= random.GenerateVector4();
-            static float timer		= 0.0f;
-            timer += dt.AsSeconds();
-
-            //Lerp color
-            colorBuff = Store(Lerp(timer, Load(beginBuff), Load(endBuff)));
-            if (timer >= 1.0f)
+            if (m_pCurrentList)
             {
-                beginBuff = endBuff;
-                endBuff = random.GenerateVector4();
-                timer = 0.0f;
+                m_pCurrentList->Reset();
+                
+                //Set and clear rendertarget
+                float color[] = { 0.392f, 0.584f, 0.929f, 1.0f };
+                ITexture2D* pRenderTarget = pDevice->GetCurrentRenderTarget();
+                
+                
+                m_pCurrentList->TransitionResource(pRenderTarget, RESOURCE_STATE_RENDERTARGET);
+                m_pCurrentList->ClearRenderTarget(pRenderTarget, color);
+                m_pCurrentList->TransitionResource(m_pDepthBuffer, RESOURCE_STATE_DEPTH_WRITE);
+                m_pCurrentList->ClearDepthStencil(m_pDepthBuffer, 1.0f, 0);
+                m_pCurrentList->SetRenderTarget(pRenderTarget, m_pDepthBuffer);
+                
+                //Set scissor and viewport
+                Math::Rectangle scissorrect;
+                scissorrect.TopLeft.x = 0.0f;
+                scissorrect.TopLeft.y = 0.0f;
+                scissorrect.BottomRight.x = m_Width;
+                scissorrect.BottomRight.y = m_Height;
+                
+                Viewport viewport;
+                viewport.Width = scissorrect.BottomRight.x;
+                viewport.Height = scissorrect.BottomRight.y;
+                viewport.TopX = 0.0f;
+                viewport.TopY = 0.0f;
+                viewport.MinDepth = 0.0f;
+                viewport.MaxDepth = 1.0f;
+                
+                m_pCurrentList->SetViewport(viewport);
+                m_pCurrentList->SetScissorRect(scissorrect);
+                
+                //Set pipelinestate and topology
+                m_pCurrentList->SetPrimtiveTopology(PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+                m_pCurrentList->SetGraphicsPipelineState(m_pPipelineState);
+                
+                //Set constantbuffers
+                static Random random;
+                static Vec4f colorBuff    = random.GenerateVector4();
+                static Vec4f beginBuff    = random.GenerateVector4();
+                static Vec4f endBuff    = random.GenerateVector4();
+                static float timer        = 0.0f;
+                timer += dt.AsSeconds();
+                
+                //Lerp color
+                colorBuff = Store(Lerp(timer, Load(beginBuff), Load(endBuff)));
+                if (timer >= 1.0f)
+                {
+                    beginBuff = endBuff;
+                    endBuff = random.GenerateVector4();
+                    timer = 0.0f;
+                }
+                
+                //Update data
+                ResourceData data = {};
+                data.pData = &colorBuff;
+                data.SizeInBytes = sizeof(Vec4f);
+                
+                m_pCurrentList->TransitionResource(m_pColorBuffer, RESOURCE_STATE_COPY_DEST);
+                m_pCurrentList->UpdateBuffer(m_pColorBuffer, &data);
+                m_pCurrentList->TransitionResource(m_pColorBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+                
+                m_pCurrentList->VSSetConstantBuffers(&m_pCameraBuffer, 1, 0);
+                m_pCurrentList->PSSetConstantBuffers(&m_pColorBuffer, 1, 0);
+                
+                //Set texture and samplers
+                m_pCurrentList->PSSetTextures(&m_pTexture, 1, 0);
+                m_pCurrentList->PSSetSamplers(&m_pSampler, 1, 0);
+                
+                //Set vertexbuffer
+                m_pCurrentList->SetVertexBuffer(m_pVertexBuffer, 0);
+                
+                m_pCurrentList->DrawInstanced(3, 1, 0, 0);
+                
+                m_pCurrentList->TransitionResource(pRenderTarget, RESOURCE_STATE_PRESENT_COMMON);
+                
+                m_pCurrentList->Close();
+                
+                //Present
+                pDevice->ExecuteCommandList(&m_pCurrentList, 1);
+                pDevice->Present(0);
+                pDevice->GPUWaitForFrame();
             }
-
-            //Update data
-            ResourceData data = {};
-            data.pData = &colorBuff;
-            data.SizeInBytes = sizeof(Vec4f);
-
-            m_pCurrentList->TransitionResource(m_pColorBuffer, RESOURCE_STATE_COPY_DEST);
-            m_pCurrentList->UpdateBuffer(m_pColorBuffer, &data);
-            m_pCurrentList->TransitionResource(m_pColorBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-            
-            m_pCurrentList->VSSetConstantBuffers(&m_pCameraBuffer, 1, 0);
-            m_pCurrentList->PSSetConstantBuffers(&m_pColorBuffer, 1, 0);
-
-            //Set texture and samplers
-            m_pCurrentList->PSSetTextures(&m_pTexture, 1, 0);
-            m_pCurrentList->PSSetSamplers(&m_pSampler, 1, 0);
-
-            //Set vertexbuffer
-            m_pCurrentList->SetVertexBuffer(m_pVertexBuffer, 0);
-
-            m_pCurrentList->DrawInstanced(3, 1, 0, 0);
-
-            m_pCurrentList->TransitionResource(pRenderTarget, RESOURCE_STATE_PRESENT_COMMON);
-
-            m_pCurrentList->Close();
-
-            //Present
-            pDevice->ExecuteCommandList(&m_pCurrentList, 1);
-            pDevice->Present(0);
-            pDevice->GPUWaitForFrame();
         }
 	}
 
@@ -335,8 +356,10 @@ namespace Lambda
 
 				//TODO: needs to release the descriptor in DX12-backend
 				pDevice->CreateTexture2D(&instance.m_pDepthBuffer, nullptr, desc);
-
-				LOG_DEBUG_INFO("Resized depthbuffer");
+                if (instance.m_pDepthBuffer)
+                {
+                    LOG_DEBUG_INFO("Resized depthbuffer\n");
+                }
 
 				//Update camera
 				instance.CreateCamera(event.WindowResize.Width, event.WindowResize.Height);
@@ -345,15 +368,19 @@ namespace Lambda
 				data.pData = &instance.m_Camera;
 				data.SizeInBytes = sizeof(CameraBuffer);
 
-				instance.m_pCurrentList->Reset();
-
-				instance.m_pCurrentList->TransitionResource(instance.m_pCameraBuffer, RESOURCE_STATE_COPY_DEST);
-				instance.m_pCurrentList->UpdateBuffer(instance.m_pCameraBuffer, &data);
-				instance.m_pCurrentList->TransitionResource(instance.m_pCameraBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-
-				//Copy new camera
-				instance.m_pCurrentList->Close();
-				pDevice->ExecuteCommandList(&instance.m_pCurrentList, 1);
+                //Update camerabuffer
+                if (instance.m_pCurrentList)
+                {
+                    instance.m_pCurrentList->Reset();
+                    
+                    instance.m_pCurrentList->TransitionResource(instance.m_pCameraBuffer, RESOURCE_STATE_COPY_DEST);
+                    instance.m_pCurrentList->UpdateBuffer(instance.m_pCameraBuffer, &data);
+                    instance.m_pCurrentList->TransitionResource(instance.m_pCameraBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+                    
+                    //Copy new camera
+                    instance.m_pCurrentList->Close();
+                    pDevice->ExecuteCommandList(&instance.m_pCurrentList, 1);
+                }
 
 				pDevice->WaitForGPU();
 			}

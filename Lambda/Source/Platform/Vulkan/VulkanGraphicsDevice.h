@@ -36,6 +36,7 @@ namespace Lambda
         virtual uint32 GetCurrentBackBufferIndex() const override final;
     
     private:
+        void Init(IWindow* pWindow, const GraphicsDeviceDesc& desc);
         virtual bool InternalOnEvent(const Event& event) override final;
     };
 }

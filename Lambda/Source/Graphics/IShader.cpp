@@ -6,6 +6,8 @@ namespace Lambda
 {
 	IShader* IShader::CreateShaderFromFile(const IGraphicsDevice* pDevice, const char* pFilename, const char* pEntryPoint, ShaderType type, ShaderLang languange)
 	{
+        assert(pDevice != nullptr);
+        
 		IShader* pShader = nullptr;
 		std::ifstream file(pFilename, std::ios::in);
 		if (file.is_open())

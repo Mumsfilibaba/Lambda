@@ -5,6 +5,16 @@ namespace Lambda
 {  
     VulkanGraphicsDevice::VulkanGraphicsDevice(IWindow* pWindow, const GraphicsDeviceDesc& desc)
     {
+        assert(s_pInstance == nullptr);
+        s_pInstance = this;
+        
+        Init(pWindow, desc);
+    }
+    
+    
+    void VulkanGraphicsDevice::Init(IWindow* pWindow, const GraphicsDeviceDesc& desc)
+    {
+        
     }
     
     
@@ -131,6 +141,12 @@ namespace Lambda
     
     bool VulkanGraphicsDevice::InternalOnEvent(const Event& event)
     {
+        if (event.Type == EVENT_TYPE_WINDOW_RESIZE)
+        {
+            //Resize swapchain etc. here
+            LOG_DEBUG_INFO("VulkanGraphicsDevice: Window resized w: %d h: %d\n", event.WindowResize.Width, event.WindowResize.Height);
+        }
+        
         return false;
     }
 }
