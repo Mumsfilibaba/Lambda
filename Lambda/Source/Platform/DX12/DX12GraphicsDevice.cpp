@@ -13,36 +13,6 @@
 
 namespace Lambda
 {
-	IGraphicsDevice* IGraphicsDevice::s_pInstance = nullptr;
-
-	IGraphicsDevice* IGraphicsDevice::Create(IWindow* pWindow, const GraphicsDeviceDesc& desc)
-	{
-        if (desc.Api == GRAPHICS_API_D3D12)
-        {
-            return DBG_NEW DX12GraphicsDevice(pWindow, desc);
-        }
-        else if (desc.Api == GRAPHICS_API_VULKAN)
-        {
-            LOG_DEBUG_ERROR("Lambda Engine: Vulkan Api not supported on system\n");
-            return nullptr;
-        }
-        
-        return nullptr;
-	}
-    
-
-	IGraphicsDevice* IGraphicsDevice::GetInstance()
-	{
-		return s_pInstance;
-	}
-    
-
-	bool IGraphicsDevice::OnEvent(const Event& event)
-	{
-		return (s_pInstance) ? s_pInstance->InternalOnEvent(event) : false;
-	}
-
-
 	DX12GraphicsDevice::DX12GraphicsDevice(IWindow* pWindow, const GraphicsDeviceDesc& desc)
 		: m_Device(nullptr),
 		m_DXRDevice(nullptr),

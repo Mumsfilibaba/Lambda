@@ -2,39 +2,7 @@
 #include "VulkanGraphicsDevice.h"
 
 namespace Lambda
-{
-    //Graphicsdevice
-    IGraphicsDevice* IGraphicsDevice::s_pInstance = nullptr;
-    
-    IGraphicsDevice* IGraphicsDevice::Create(IWindow* pWindow, const GraphicsDeviceDesc& desc)
-    {
-        if (desc.Api == GRAPHICS_API_D3D12)
-        {
-            LOG_DEBUG_ERROR("Lambda Engine: D3D12 is only supported on the Windows-Platform\n");
-            return nullptr;
-        }
-        else if (desc.Api == GRAPHICS_API_VULKAN)
-        {
-            LOG_DEBUG_ERROR("Lambda Engine: Creating GraphicsDevice\n");
-            return DBG_NEW VulkanGraphicsDevice(pWindow, desc);
-        }
-        
-        return nullptr;
-    }
-    
-    
-    IGraphicsDevice* IGraphicsDevice::GetInstance()
-    {
-        return s_pInstance;
-    }
-    
-    
-    bool IGraphicsDevice::OnEvent(const Event& event)
-    {
-        return (s_pInstance) ? s_pInstance->InternalOnEvent(event) : false;
-    }
-    
-    
+{  
     VulkanGraphicsDevice::VulkanGraphicsDevice(IWindow* pWindow, const GraphicsDeviceDesc& desc)
     {
     }
@@ -115,7 +83,7 @@ namespace Lambda
     
     void VulkanGraphicsDevice::Destroy() const
     {
-        
+		delete this;
     }
     
     

@@ -19,10 +19,10 @@ namespace Lambda
 		virtual bool InternalIsKeyUp(Key keycode) const override final;
 		virtual bool InternalIsKeyDown(Key keycode) const override final;
 
-		virtual void InternalSetMousePosition(uint32 x, uint32 y) const override final;
-		virtual void InternalGetMousePosition(uint32& x, uint32& y) const override final;
-		virtual void InternalSetMousePosition(IWindow* pRelativeTo, uint32 x, uint32 y) const override final;
-		virtual void InternalGetMousePosition(IWindow* pRelativeTo, uint32& x, uint32& y) const override final;
+		virtual void InternalSetMousePosition(float x, float y) const override final;
+		virtual void InternalGetMousePosition(float& x, float& y) const override final;
+		virtual void InternalSetMousePosition(IWindow* pRelativeTo, float x, float y) const override final;
+		virtual void InternalGetMousePosition(IWindow* pRelativeTo, float& x, float& y) const override final;
 
 	private:
 		Key m_WindowsToLambdaKeyTable[255];

@@ -316,26 +316,28 @@ namespace Lambda
 	}
 
     
-	void WindowsInput::InternalSetMousePosition(uint32 x, uint32 y) const
+	void WindowsInput::InternalSetMousePosition(float x, float y) const
 	{
-		SetCursorPos(x, y);
+		SetCursorPos(int(x), int(y));
 	}
 
     
-	void WindowsInput::InternalGetMousePosition(uint32& x, uint32& y) const
+	void WindowsInput::InternalGetMousePosition(float& x, float& y) const
 	{
 		POINT p = {};
 		GetCursorPos(&p);
 
-		x = p.x;
-		y = p.y;
+		x = float(p.x);
+		y = float(p.y);
 	}
     
 
-	void WindowsInput::InternalSetMousePosition(IWindow* pRelativeTo, uint32 x, uint32 y) const
+	void WindowsInput::InternalSetMousePosition(IWindow* pRelativeTo, float x, float y) const
 	{
 		if (!pRelativeTo)
+		{
 			return;
+		}
 
 		POINT p = { LONG(x), LONG(y) };
 		ClientToScreen((HWND)pRelativeTo->GetNativeHandle(), &p);
@@ -344,17 +346,19 @@ namespace Lambda
 	}
     
 
-	void WindowsInput::InternalGetMousePosition(IWindow* pRelativeTo, uint32& x, uint32& y) const
+	void WindowsInput::InternalGetMousePosition(IWindow* pRelativeTo, float& x, float& y) const
 	{
 		if (!pRelativeTo)
+		{
 			return;
+		}
 
 		POINT p = {};
 		GetCursorPos(&p);
 
 		ScreenToClient((HWND)pRelativeTo->GetNativeHandle(), &p);
-		x = p.x;
-		y = p.y;
+		x = float(p.x);
+		y = float(p.y);
 	}
 }
 #endif
