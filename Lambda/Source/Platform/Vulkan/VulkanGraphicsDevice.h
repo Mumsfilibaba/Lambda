@@ -1,15 +1,29 @@
 #pragma once
 #include "Graphics/IGraphicsDevice.h"
+#include <vulkan/vulkan.h>
 
 namespace Lambda
 {
+    //Helperstruct for when finding queuefamilies
+    struct QueueFamilyIndices
+    {
+        int32 GraphicsFamily    = -1;
+        int32 PresentFamily     = -1;
+        
+        inline bool Valid()
+        {
+            return (GraphicsFamily >= 0) && (PresentFamily >= 0);
+        }
+    };
+    
+    
     class VulkanGraphicsDevice final : public IGraphicsDevice
     {
     public:
         LAMBDA_NO_COPY(VulkanGraphicsDevice);
         
         VulkanGraphicsDevice(IWindow* pWindow, const GraphicsDeviceDesc& desc);
-        ~VulkanGraphicsDevice() = default;
+        ~VulkanGraphicsDevice();
         
         virtual void CreateCommandList(ICommandList** ppList, CommandListType type) const override final;
         virtual void CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) const override final;
@@ -37,6 +51,32 @@ namespace Lambda
     
     private:
         void Init(IWindow* pWindow, const GraphicsDeviceDesc& desc);
+        void InitDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo);
+        
+        bool CreateInstance(const GraphicsDeviceDesc& desc);
+        bool CreateDebugDebugMessenger(const GraphicsDeviceDesc& desc);
+        bool QueryAdapter(const GraphicsDeviceDesc& desc);
+        bool CreateDeviceAndQueues(const GraphicsDeviceDesc& desc);
+        bool CreateSurface(IWindow* pWindow);
+        
+        bool AdapterIsSuitable(VkPhysicalDevice adapter);
+        QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice adapter); //Returns -1 on failure, otherwise index of queuefamily
+        
+        std::vector<const char*> GetRequiredValidationLayers(bool debug);
+        
         virtual bool InternalOnEvent(const Event& event) override final;
+        
+    private:
+        VkInstance m_Instance;
+        VkDevice m_Device;
+        VkQueue m_GraphicsQueue;
+        VkQueue m_PresentationQueue;
+        VkPhysicalDevice m_Adapter;
+        VkSurfaceKHR m_Surface;
+        VkDebugUtilsMessengerEXT m_DebugMessenger;
+        
+    private:
+        static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+            VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
     };
 }

@@ -60,15 +60,19 @@ workspace "Lambda"
 	filter "system:macosx"
 		links
 		{
-			"glfw.3.3"
+			"glfw.3.3",
+			"vulkan.1",
+			"vulkan.1.1.106"
 		}
 		libdirs
 		{
-			"/usr/local/lib"
+			"/usr/local/lib",
+			"../vulkansdk-macos-1.1.106.0/macOS/lib"
 		}
 		sysincludedirs
 		{
-			"/usr/local/include"
+			"/usr/local/include",
+			"../vulkansdk-macos-1.1.106.0/macOS/include"
 		}
 		defines
 		{

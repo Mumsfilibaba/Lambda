@@ -1,6 +1,7 @@
 Build/
 .vs/
 
+*.xcscheme
 *.xcbkptlist
 *.ipch
 *.bin
