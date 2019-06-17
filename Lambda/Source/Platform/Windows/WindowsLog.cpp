@@ -33,7 +33,9 @@ namespace Lambda
 		}
 
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
-		va_list args;
+        printf(message.c_str());
+        
+        va_list args;
 		va_start(args, pFormat);
 		vprintf(pFormat, args);
 		va_end(args);

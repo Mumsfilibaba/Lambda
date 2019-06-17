@@ -1,5 +1,7 @@
 #include "LambdaPch.h"
 #include "VulkanGraphicsDevice.h"
+#include "VulkanShader.h"
+#include "VulkanPipelineState.h"
 #if defined(LAMBDA_PLAT_MACOS)
     #include <GLFW/glfw3.h>
 #endif
@@ -33,7 +35,12 @@ namespace Lambda
         m_PresentationQueue(VK_NULL_HANDLE),
         m_Adapter(VK_NULL_HANDLE),
         m_Surface(VK_NULL_HANDLE),
-        m_DebugMessenger(VK_NULL_HANDLE)    
+        m_SwapChain(VK_NULL_HANDLE),
+        m_DebugMessenger(VK_NULL_HANDLE),
+        m_SwapChainImages(),
+        m_SwapChainImageViews(),
+        m_SwapChainFormat(),
+        m_SwapChainSize()
     {       
         assert(s_pInstance == nullptr);
         s_pInstance = this;
@@ -44,11 +51,21 @@ namespace Lambda
     
     VulkanGraphicsDevice::~VulkanGraphicsDevice()
     {
-        //Destroy surface
-        if (m_Surface != VK_NULL_HANDLE)
+        //Destroy ImageViews
+        for (size_t i = 0; i < m_SwapChainImageViews.size(); i++)
         {
-            vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
-            m_Surface = VK_NULL_HANDLE;
+            if (m_SwapChainImageViews[i] != VK_NULL_HANDLE)
+            {
+                vkDestroyImageView(m_Device, m_SwapChainImageViews[i] , nullptr);
+                m_SwapChainImageViews[i] = VK_NULL_HANDLE;
+            }
+        }
+        
+        //Destroy Swapchain
+        if (m_SwapChain != VK_NULL_HANDLE)
+        {
+            vkDestroySwapchainKHR(m_Device, m_SwapChain, nullptr);
+            m_SwapChain = VK_NULL_HANDLE;
         }
         
         //Destroy device
@@ -56,6 +73,13 @@ namespace Lambda
         {
             vkDestroyDevice(m_Device, nullptr);
             m_Device = VK_NULL_HANDLE;
+        }
+
+        //Destroy surface
+        if (m_Surface != VK_NULL_HANDLE)
+        {
+            vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
+            m_Surface = VK_NULL_HANDLE;
         }
         
         //Destroy debugmessenger
@@ -89,6 +113,8 @@ namespace Lambda
         if (!CreateSurface(pWindow)) { return; }
         if (!QueryAdapter(desc)) { return; }
         if (!CreateDeviceAndQueues(desc)) { return; }
+        if (!CreateSwapChain(pWindow)) { return; }
+        if (!CreateImageViews()) { return; }
     }
     
     
@@ -238,6 +264,8 @@ namespace Lambda
         if (res != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create Vulkan Instance. Error %d\n", res);
+            
+            m_Instance = VK_NULL_HANDLE;
             return false;
         }
         else
@@ -285,6 +313,8 @@ namespace Lambda
             if (createDebugUtilsMessengerEXT(m_Instance, &info, nullptr, &m_DebugMessenger) != VK_SUCCESS)
             {
                 LOG_DEBUG_ERROR("Vulkan: Failed to create debugmessenger, maybe the extension is not present?\n");
+                
+                m_DebugMessenger = VK_NULL_HANDLE;
                 return false;
             }
             else
@@ -296,6 +326,8 @@ namespace Lambda
         else
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to find function 'vkCreateDebugUtilsMessengerEXT'\n");
+            
+            m_DebugMessenger = VK_NULL_HANDLE;
             return false;
         }
     }
@@ -319,7 +351,7 @@ namespace Lambda
         int i = 0;
         for (const auto& adapter : adapters)
         {
-            if (AdapterIsSuitable(adapter))
+            if (AdapterIsSuitable(adapter, desc))
             {
                 m_Adapter = adapter;
                 break;
@@ -345,7 +377,7 @@ namespace Lambda
     }
     
     
-    bool VulkanGraphicsDevice::AdapterIsSuitable(VkPhysicalDevice adapter)
+    bool VulkanGraphicsDevice::AdapterIsSuitable(VkPhysicalDevice adapter, const GraphicsDeviceDesc& desc)
     {
         VkPhysicalDeviceProperties adapterProperties;
         vkGetPhysicalDeviceProperties(adapter, &adapterProperties);
@@ -353,6 +385,7 @@ namespace Lambda
         VkPhysicalDeviceFeatures adapterFeatures;
         vkGetPhysicalDeviceFeatures(adapter, &adapterFeatures);
         
+        //Find indices for queuefamilies
         QueueFamilyIndices indices = FindQueueFamilies(adapter);
         if (!indices.Valid())
         {
@@ -362,8 +395,45 @@ namespace Lambda
         else
         {
             LOG_DEBUG_INFO("Vulkan: Using queueFamily-Index '%d' for graphics and '%d' for presentation\n", indices.GraphicsFamily, indices.PresentFamily);
-            return true;
         }
+        
+        //Check if required extension for device is supported
+        std::vector<const char*> deviceExtensions = GetRequiredDeviceExtensions(desc.Flags & GRAPHICS_CONTEXT_FLAG_DEBUG);
+      
+        uint32 extensionCount;
+        vkEnumerateDeviceExtensionProperties(adapter, nullptr, &extensionCount, nullptr);
+        
+        std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+        vkEnumerateDeviceExtensionProperties(adapter, nullptr, &extensionCount, availableExtensions.data());
+        
+        for (const auto& extensionName : deviceExtensions)
+        {
+            bool extensionFound = false;
+            for (const auto& extension : availableExtensions)
+            {
+                if (strcmp(extension.extensionName, extensionName) == 0)
+                {
+                    extensionFound = true;
+                    break;
+                }
+            }
+            
+            if (!extensionFound)
+            {
+                LOG_DEBUG_ERROR("Vulkan: Adapter '%s' does not support the device extension '%s'\n", adapterProperties.deviceName, extensionName);
+                return false;
+            }
+        }
+        
+        //Check if the swapchain supports whats required
+        SwapChainCapabilities swapChainInfo = QuerySwapChainSupport(adapter);
+        if (!swapChainInfo.Valid())
+        {
+            LOG_DEBUG_ERROR("Vulkan: Adapter does not have valid SwapChain support\n");
+            return false;
+        }
+        
+        return true;
     }
     
     
@@ -446,13 +516,32 @@ namespace Lambda
         //Get the required layers, assume that the layers exists because we could create the vulkaninstance
         std::vector<const char*> requiredLayers = GetRequiredValidationLayers(desc.Flags & GRAPHICS_CONTEXT_FLAG_DEBUG);
         
+        //Get the required extension for device
+        std::vector<const char*> deviceExtensions = GetRequiredDeviceExtensions(desc.Flags & GRAPHICS_CONTEXT_FLAG_DEBUG);
+        
+        //Print all the available extensions
+        uint32 extensionCount;
+        vkEnumerateDeviceExtensionProperties(m_Adapter, nullptr, &extensionCount, nullptr);
+        
+        std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+        vkEnumerateDeviceExtensionProperties(m_Adapter, nullptr, &extensionCount, availableExtensions.data());
+        
+        LOG_DEBUG_INFO("[Vulkan] Available Device-Extensions:\n");
+        for (const auto& extension : availableExtensions)
+            LOG_DEBUG_INFO("   Device-Extension '%s'\n", extension.extensionName);
+        
+        //Print all required extensions
+        LOG_DEBUG_INFO("[Vulkan] Required Device-Extensions:\n");
+        for (const auto& extension : deviceExtensions)
+            LOG_DEBUG_INFO("   Device-Extension '%s'\n", extension);
+        
         //Setup the device
         VkDeviceCreateInfo info = {};
         info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
         info.pNext = nullptr;
         info.flags = 0;
-        info.enabledExtensionCount = 0;
-        info.ppEnabledExtensionNames = nullptr;
+        info.enabledExtensionCount = uint32(deviceExtensions.size());
+        info.ppEnabledExtensionNames = deviceExtensions.data();
         info.enabledLayerCount = uint32(requiredLayers.size());
         info.ppEnabledLayerNames = requiredLayers.data();
         info.pEnabledFeatures = &deviceFeatures;
@@ -463,11 +552,13 @@ namespace Lambda
         if (vkCreateDevice(m_Adapter, &info, nullptr, &m_Device) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create device\n");
+            
+            m_Device = VK_NULL_HANDLE;
             return false;
         }
         else
         {
-            LOG_DEBUG_INFO("Vulkan: Created device and retrived queue\n");
+            LOG_DEBUG_INFO("Vulkan: Created device and retrived queues\n");
             
             //Get queues
             vkGetDeviceQueue(m_Device, indices.GraphicsFamily, 0, &m_GraphicsQueue);
@@ -491,6 +582,15 @@ namespace Lambda
     }
     
     
+    std::vector<const char*> VulkanGraphicsDevice::GetRequiredDeviceExtensions(bool debug)
+    {
+        std::vector<const char*> requiredExtensions;
+        //Pushback layers
+        requiredExtensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+        return requiredExtensions;
+    }
+    
+    
     bool VulkanGraphicsDevice::CreateSurface(IWindow* pWindow)
     {
 #if defined(LAMBDA_PLAT_MACOS)
@@ -498,6 +598,8 @@ namespace Lambda
         if (glfwCreateWindowSurface(m_Instance, pGLFWWindow, nullptr, &m_Surface) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create SurfaceKHR\n");
+            
+            m_Surface = VK_NULL_HANDLE;
             return false;
         }
         else
@@ -506,6 +608,196 @@ namespace Lambda
             return true;
         }
 #endif
+    }
+    
+    
+    SwapChainCapabilities VulkanGraphicsDevice::QuerySwapChainSupport(VkPhysicalDevice adapter)
+    {
+        SwapChainCapabilities info;
+        
+        //Get capabilities from the surface
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(adapter, m_Surface, &info.Capabilities);
+        
+        //Get supported surface formats
+        uint32 formatCount = 0;
+        vkGetPhysicalDeviceSurfaceFormatsKHR(adapter, m_Surface, &formatCount, nullptr);
+        
+        if (formatCount != 0)
+        {
+            info.Formats.resize(formatCount);
+            vkGetPhysicalDeviceSurfaceFormatsKHR(adapter, m_Surface, &formatCount, info.Formats.data());
+        }
+        
+        //Get presentation modes
+        uint32 presentModeCount = 0;
+        vkGetPhysicalDeviceSurfacePresentModesKHR(adapter, m_Surface, &presentModeCount, nullptr);
+        
+        if (presentModeCount != 0)
+        {
+            info.PresentModes.resize(presentModeCount);
+            vkGetPhysicalDeviceSurfacePresentModesKHR(adapter, m_Surface, &presentModeCount, info.PresentModes.data());
+        }
+        
+        return info;
+    }
+    
+    
+    bool VulkanGraphicsDevice::CreateSwapChain(IWindow* pWindow)
+    {
+        SwapChainCapabilities cap = QuerySwapChainSupport(m_Adapter);
+        
+        //Choose a swapchain format
+        VkSurfaceFormatKHR format = cap.Formats[0];
+        for (const auto& availableFormat : cap.Formats)
+        {
+            if (availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+            {
+                format = availableFormat;
+                break;
+            }
+        }
+        
+        LOG_DEBUG_INFO("Vulkan: Chosen SwapChain format '%d'\n", format.format);
+        
+        //Choose a presentationmode
+        VkPresentModeKHR presentationMode = VK_PRESENT_MODE_FIFO_KHR;
+        for (const auto& availablePresentMode : cap.PresentModes)
+        {
+            if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
+            {
+                presentationMode = availablePresentMode;
+                break;
+            }
+            else if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR)
+            {
+                presentationMode = availablePresentMode;
+            }
+        }
+        
+        LOG_DEBUG_INFO("Vulkan: Chosen SwapChain PresentationMode '%d'\n", presentationMode);
+        
+        //Choose swapchain extent (Size)
+        VkExtent2D extent;
+        if (cap.Capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
+        {
+            extent = cap.Capabilities.currentExtent;
+        }
+        else
+        {
+            VkExtent2D actualExtent = { pWindow->GetWidth(), pWindow->GetHeight() };
+            
+            actualExtent.width = std::max(cap.Capabilities.minImageExtent.width, std::min(cap.Capabilities.maxImageExtent.width, actualExtent.width));
+            actualExtent.height = std::max(cap.Capabilities.minImageExtent.height, std::min(cap.Capabilities.maxImageExtent.height, actualExtent.height));
+            
+            extent = actualExtent;
+        }
+        
+        LOG_DEBUG_INFO("Vulkan: Chosen SwapChain Extent w: %u h: %u\n", extent.width, extent.height);
+        
+        //Setup swapchain images
+        uint32 imageCount = cap.Capabilities.minImageCount + 1;
+        if (cap.Capabilities.maxImageCount > 0 && imageCount > cap.Capabilities.maxImageCount)
+            imageCount = cap.Capabilities.maxImageCount;
+        
+        LOG_DEBUG_INFO("Vulkan: Number of images in SwapChain '%u'\n", imageCount);
+        
+        
+        //Setup swapchain
+        VkSwapchainCreateInfoKHR info = {};
+        info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+        info.pNext = nullptr;
+        info.surface = m_Surface;
+        info.minImageCount = imageCount;
+        info.imageFormat = format.format;
+        info.imageColorSpace = format.colorSpace;
+        info.imageExtent = extent;
+        info.imageArrayLayers = 1;
+        info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+        info.preTransform = cap.Capabilities.currentTransform;
+        info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+        info.presentMode = presentationMode;
+        info.clipped = VK_TRUE;
+        info.oldSwapchain = VK_NULL_HANDLE;
+        
+        QueueFamilyIndices indices = FindQueueFamilies(m_Adapter);
+        uint32 queueFamilyIndices[] = { uint32(indices.GraphicsFamily), uint32(indices.PresentFamily) };
+        
+        if (indices.GraphicsFamily != indices.PresentFamily)
+        {
+            info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+            info.queueFamilyIndexCount = 2;
+            info.pQueueFamilyIndices = queueFamilyIndices;
+        }
+        else
+        {
+            info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+            info.queueFamilyIndexCount = 0; // Optional
+            info.pQueueFamilyIndices = nullptr; // Optional
+        }
+        
+        //Create swapchain
+        if (vkCreateSwapchainKHR(m_Device, &info, nullptr, &m_SwapChain) != VK_SUCCESS)
+        {
+            LOG_DEBUG_ERROR("Vulkan: Failed to create SwapChain\n");
+            
+            m_SwapChain = VK_NULL_HANDLE;
+            return false;
+        }
+        else
+        {
+            LOG_DEBUG_INFO("Vulkan: Created SwapChain\n");
+            
+            //Get SwapChain images
+            vkGetSwapchainImagesKHR(m_Device, m_SwapChain, &imageCount, nullptr);
+            m_SwapChainImages.resize(imageCount);
+            vkGetSwapchainImagesKHR(m_Device, m_SwapChain, &imageCount, m_SwapChainImages.data());
+            
+            //Save the extent and formats
+            m_SwapChainFormat = format.format;
+            m_SwapChainSize = extent;
+            
+            return true;
+        }
+    }
+    
+    
+    bool VulkanGraphicsDevice::CreateImageViews()
+    {
+        //Set the size
+        m_SwapChainImageViews.resize(m_SwapChainImages.size());
+        for (size_t i = 0; i < m_SwapChainImageViews.size(); i++)
+            m_SwapChainImageViews[i] = VK_NULL_HANDLE;
+        
+        for (size_t i = 0; i < m_SwapChainImageViews.size(); i++)
+        {
+            //Setup image views
+            VkImageViewCreateInfo info = {};
+            info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+            info.image = m_SwapChainImages[i];
+            info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+            info.format = m_SwapChainFormat;
+            info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+            info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+            info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+            info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+            info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            info.subresourceRange.baseMipLevel = 0;
+            info.subresourceRange.levelCount = 1;
+            info.subresourceRange.baseArrayLayer = 0;
+            info.subresourceRange.layerCount = 1;
+            
+            //Create image views
+            if (vkCreateImageView(m_Device, &info, nullptr, &(m_SwapChainImageViews[i])) != VK_SUCCESS)
+            {
+                LOG_DEBUG_ERROR("Vulkan: Failed to create ImageView '%u'\n", i);
+                
+                m_SwapChainImageViews[i] = VK_NULL_HANDLE;
+                return false;
+            }
+        }
+        
+        LOG_DEBUG_INFO("Vulkan: Created ImageViews\n");
+        return true;
     }
     
     
@@ -529,7 +821,8 @@ namespace Lambda
     
     void VulkanGraphicsDevice::CreateShader(IShader** ppShader, const ShaderDesc& desc) const
     {
-        
+        assert(ppShader != nullptr);
+        (*ppShader) = new VulkanShader(m_Device, desc);
     }
     
     
@@ -541,9 +834,9 @@ namespace Lambda
     
     void VulkanGraphicsDevice::CreateGraphicsPipelineState(IGraphicsPipelineState** ppPSO, const GraphicsPipelineStateDesc& desc) const
     {
-        
+        assert(ppPSO != nullptr);
+        (*ppPSO) = new VulkanGraphicsPipelineState(m_Device, desc);
     }
-    
     
     
     void VulkanGraphicsDevice::DestroyCommandList(ICommandList** ppList) const
@@ -566,7 +859,20 @@ namespace Lambda
     
     void VulkanGraphicsDevice::DestroyShader(IShader** ppShader) const
     {
+        assert(ppShader != nullptr);
         
+        //Delete shader
+        VulkanShader* pShader = reinterpret_cast<VulkanShader*>(*ppShader);
+        if (pShader != nullptr)
+        {
+            pShader->Destroy(m_Device);
+            delete pShader;
+            
+            //Set ptr to null
+            *ppShader = nullptr;
+            
+            LOG_DEBUG_INFO("Vulkan: Destroyed Shader\n");
+        }
     }
     
     
@@ -578,7 +884,20 @@ namespace Lambda
     
     void VulkanGraphicsDevice::DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPSO) const
     {
+        assert(ppPSO != nullptr);
         
+        //Delete shader
+        VulkanGraphicsPipelineState* pPSO = reinterpret_cast<VulkanGraphicsPipelineState*>(*ppPSO);
+        if (pPSO != nullptr)
+        {
+            pPSO->Destroy(m_Device);
+            delete pPSO;
+            
+            //Set ptr to null
+            *ppPSO = nullptr;
+            
+            LOG_DEBUG_INFO("Vulkan: Destroyed PipelineState\n");
+        }
     }
     
     

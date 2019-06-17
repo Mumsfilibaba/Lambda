@@ -17,6 +17,21 @@ namespace Lambda
     };
     
     
+    //SwapChain support helper struct
+    struct SwapChainCapabilities
+    {
+        VkSurfaceCapabilitiesKHR Capabilities;
+        std::vector<VkSurfaceFormatKHR> Formats;
+        std::vector<VkPresentModeKHR> PresentModes;
+        
+        inline bool Valid()
+        {
+            return !Formats.empty() && !PresentModes.empty();
+        }
+    };
+    
+    
+    //Vulkan implementation of graphics device
     class VulkanGraphicsDevice final : public IGraphicsDevice
     {
     public:
@@ -58,11 +73,15 @@ namespace Lambda
         bool QueryAdapter(const GraphicsDeviceDesc& desc);
         bool CreateDeviceAndQueues(const GraphicsDeviceDesc& desc);
         bool CreateSurface(IWindow* pWindow);
+        bool CreateSwapChain(IWindow* pWindow);
+        bool CreateImageViews();
         
-        bool AdapterIsSuitable(VkPhysicalDevice adapter);
+        bool AdapterIsSuitable(VkPhysicalDevice adapter, const GraphicsDeviceDesc& desc);
+        SwapChainCapabilities QuerySwapChainSupport(VkPhysicalDevice adapter);
         QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice adapter); //Returns -1 on failure, otherwise index of queuefamily
         
         std::vector<const char*> GetRequiredValidationLayers(bool debug);
+        std::vector<const char*> GetRequiredDeviceExtensions(bool debug);
         
         virtual bool InternalOnEvent(const Event& event) override final;
         
@@ -73,7 +92,12 @@ namespace Lambda
         VkQueue m_PresentationQueue;
         VkPhysicalDevice m_Adapter;
         VkSurfaceKHR m_Surface;
+        VkSwapchainKHR m_SwapChain;
         VkDebugUtilsMessengerEXT m_DebugMessenger;
+        std::vector<VkImage> m_SwapChainImages;
+        std::vector<VkImageView> m_SwapChainImageViews;
+        VkFormat m_SwapChainFormat;
+        VkExtent2D m_SwapChainSize;
         
     private:
         static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,

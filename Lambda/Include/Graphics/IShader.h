@@ -5,26 +5,29 @@ namespace Lambda
 {
 	enum ShaderType
 	{
-		SHADER_TYPE_UNKNOWN = 0,
-		SHADER_TYPE_VERTEX = 1,
-		SHADER_TYPE_HULL = 2,
-		SHADER_TYPE_DOMAIN = 3,
-		SHADER_TYPE_GEOMETRY = 4,
-		SHADER_TYPE_PIXEL = 5,
-		SHADER_TYPE_COMPUTE = 6,
+		SHADER_TYPE_UNKNOWN     = 0,
+		SHADER_TYPE_VERTEX      = 1,
+		SHADER_TYPE_HULL        = 2,
+		SHADER_TYPE_DOMAIN      = 3,
+		SHADER_TYPE_GEOMETRY    = 4,
+		SHADER_TYPE_PIXEL       = 5,
+		SHADER_TYPE_COMPUTE     = 6,
 	};
 
+    
 	enum ShaderFlags
 	{
-		SHADER_FLAG_NONE = 0,
-		SHADER_FLAG_COMPILE_DEBUG = 0,
+		SHADER_FLAG_NONE            = 0,
+		SHADER_FLAG_COMPILE_DEBUG   = 1,
 	};
 
+    
 	enum ShaderLang
 	{
-		SHADER_LANG_UNKNOWN = 0,
-		SHADER_LANG_HLSL = 1,
-		SHADER_LANG_HLSL_COMPILED = 2,
+		SHADER_LANG_UNKNOWN         = 0,
+		SHADER_LANG_HLSL            = 1,
+		SHADER_LANG_HLSL_COMPILED   = 2,
+        SHADER_LANG_SPIRV           = 3,
 	};
 
 
@@ -33,10 +36,12 @@ namespace Lambda
 		ShaderType Type = SHADER_TYPE_UNKNOWN;
 		ShaderLang Languange = SHADER_LANG_UNKNOWN;
 		uint32 Flags = SHADER_FLAG_NONE;
+        uint32 SourceLength = 0;
 		const char* pEntryPoint = nullptr;
 		const char* pSource = nullptr;
 	};
 
+    
 	class IGraphicsDevice;
 
 	class LAMBDA_API IShader
