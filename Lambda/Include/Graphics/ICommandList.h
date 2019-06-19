@@ -49,6 +49,7 @@ namespace Lambda
 		virtual void SetVertexBuffer(IBuffer* pBuffer, uint32 slot) = 0;
 
 		virtual CommandListType GetType() const = 0;
+        virtual void* GetNativeHandle() const = 0;
 
 		virtual void VSSetConstantBuffers(const IBuffer* const * ppBuffers, uint32 numBuffers, uint32 startSlot) = 0;
 		virtual void VSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot) = 0;

@@ -42,11 +42,12 @@ namespace Lambda
             
             //Set shader to null otherwise destroy may fail
             m_Shader = VK_NULL_HANDLE;
-            m_EntryPoint = std::string(desc.pEntryPoint);
+
         }
         else
         {
             LOG_DEBUG_INFO("Vulkan: Created shader\n");
+            m_EntryPoint = std::string(desc.pEntryPoint);
         }
     }
     
@@ -58,6 +59,9 @@ namespace Lambda
             vkDestroyShaderModule(device, m_Shader, nullptr);
             m_Shader = VK_NULL_HANDLE;
         }
+        
+        //Delete me
+        delete this;
     }
     
     

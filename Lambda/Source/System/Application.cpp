@@ -25,6 +25,8 @@ namespace Lambda
 	{
 		InternalOnLoad();
 
+        LOG_DEBUG_INFO("Lambda Engine: STARTING\n");
+        
 		Clock clock;
 		Time accumulator;
 		const Time timestep = Time::Seconds(1.0f / 60.0f);
@@ -59,7 +61,7 @@ namespace Lambda
 			}
 		}
 
-        LOG_DEBUG_INFO("Application exiting\n");
+        LOG_DEBUG_INFO("Lambda Engine: EXITING\n");
         
 		InternalOnRelease();
 		return m_ExitCode;

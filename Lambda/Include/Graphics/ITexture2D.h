@@ -3,6 +3,22 @@
 
 namespace Lambda
 {
+    //Helperstruct
+    struct OptimizedClearValue
+    {
+        union
+        {
+            float Color[4];
+            struct
+            {
+                float Depth;
+                uint8 Stencil;
+            };
+        };
+    };
+    
+    
+    //Texturedesc
 	struct Texture2DDesc
 	{
 		ResourceUsage Usage = RESOURCE_USAGE_UNKNOWN;
@@ -13,9 +29,7 @@ namespace Lambda
 		uint32 ArraySize = 1;
 		uint32 Width = 0;
 		uint32 Height = 0;
-		float ClearColor[4];
-		float ClearDepth = 1.0f;
-		uint8 ClearStencil = 0;
+        OptimizedClearValue ClearValue;
 	};
 
 

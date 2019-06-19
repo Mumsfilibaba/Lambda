@@ -31,6 +31,9 @@ namespace Lambda
     };
     
     
+    //Forward declarations
+    class VulkanTexture2D;
+    
     //Vulkan implementation of graphics device
     class VulkanGraphicsDevice final : public IGraphicsDevice
     {
@@ -64,6 +67,9 @@ namespace Lambda
         virtual ITexture2D* GetCurrentRenderTarget() override final;
         virtual uint32 GetCurrentBackBufferIndex() const override final;
     
+        VkFormat GetBackBufferFormat() const;
+        QueueFamilyIndices GetQueueFamilyIndices() const;
+        
     private:
         void Init(IWindow* pWindow, const GraphicsDeviceDesc& desc);
         void InitDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo);
@@ -74,7 +80,8 @@ namespace Lambda
         bool CreateDeviceAndQueues(const GraphicsDeviceDesc& desc);
         bool CreateSurface(IWindow* pWindow);
         bool CreateSwapChain(IWindow* pWindow);
-        bool CreateImageViews();
+        bool CreateTextures();
+        bool CreateSemaphores();
         
         bool AdapterIsSuitable(VkPhysicalDevice adapter, const GraphicsDeviceDesc& desc);
         SwapChainCapabilities QuerySwapChainSupport(VkPhysicalDevice adapter);
@@ -87,20 +94,39 @@ namespace Lambda
         
     private:
         VkInstance m_Instance;
+        VkDebugUtilsMessengerEXT m_DebugMessenger;
         VkDevice m_Device;
         VkQueue m_GraphicsQueue;
         VkQueue m_PresentationQueue;
+        VkSemaphore m_ImageSemaphore;
+        VkSemaphore m_RenderSemaphore;
+        QueueFamilyIndices m_FamiliyIndices;
+        
         VkPhysicalDevice m_Adapter;
+        VkPhysicalDeviceProperties m_AdapterProperties;
+        
         VkSurfaceKHR m_Surface;
         VkSwapchainKHR m_SwapChain;
-        VkDebugUtilsMessengerEXT m_DebugMessenger;
-        std::vector<VkImage> m_SwapChainImages;
-        std::vector<VkImageView> m_SwapChainImageViews;
         VkFormat m_SwapChainFormat;
         VkExtent2D m_SwapChainSize;
+        
+        mutable uint32 m_CurrentBackbufferIndex;
+        std::vector<VulkanTexture2D*> m_BackBuffers;
         
     private:
         static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
             VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
     };
+    
+    
+    inline VkFormat VulkanGraphicsDevice::GetBackBufferFormat() const
+    {
+        return m_SwapChainFormat;
+    }
+    
+    
+    inline QueueFamilyIndices VulkanGraphicsDevice::GetQueueFamilyIndices() const
+    {
+        return m_FamiliyIndices;
+    }
 }

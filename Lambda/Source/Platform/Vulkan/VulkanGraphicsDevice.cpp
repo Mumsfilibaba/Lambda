@@ -2,6 +2,8 @@
 #include "VulkanGraphicsDevice.h"
 #include "VulkanShader.h"
 #include "VulkanPipelineState.h"
+#include "VulkanTexture2D.h"
+#include "VulkanCommandList.h"
 #if defined(LAMBDA_PLAT_MACOS)
     #include <GLFW/glfw3.h>
 #endif
@@ -9,6 +11,7 @@
 
 namespace Lambda
 {
+    //Debugcallback
     VKAPI_ATTR VkBool32 VKAPI_CALL VulkanGraphicsDevice::VulkanDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
         VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
     {
@@ -28,19 +31,24 @@ namespace Lambda
     }
     
     
+    //Vulkan Graphics Context
     VulkanGraphicsDevice::VulkanGraphicsDevice(IWindow* pWindow, const GraphicsDeviceDesc& desc)
         : m_Instance(VK_NULL_HANDLE),
+        m_DebugMessenger(VK_NULL_HANDLE),
         m_Device(VK_NULL_HANDLE),
         m_GraphicsQueue(VK_NULL_HANDLE),
         m_PresentationQueue(VK_NULL_HANDLE),
+        m_ImageSemaphore(VK_NULL_HANDLE),
+        m_RenderSemaphore(VK_NULL_HANDLE),
+        m_FamiliyIndices(),
         m_Adapter(VK_NULL_HANDLE),
+        m_AdapterProperties(),
         m_Surface(VK_NULL_HANDLE),
         m_SwapChain(VK_NULL_HANDLE),
-        m_DebugMessenger(VK_NULL_HANDLE),
-        m_SwapChainImages(),
-        m_SwapChainImageViews(),
         m_SwapChainFormat(),
-        m_SwapChainSize()
+        m_SwapChainSize(),
+        m_CurrentBackbufferIndex(0),
+        m_BackBuffers()
     {       
         assert(s_pInstance == nullptr);
         s_pInstance = this;
@@ -51,21 +59,32 @@ namespace Lambda
     
     VulkanGraphicsDevice::~VulkanGraphicsDevice()
     {
-        //Destroy ImageViews
-        for (size_t i = 0; i < m_SwapChainImageViews.size(); i++)
+        //Destroy semaphores
+        if (m_ImageSemaphore != VK_NULL_HANDLE)
         {
-            if (m_SwapChainImageViews[i] != VK_NULL_HANDLE)
+            vkDestroySemaphore(m_Device, m_ImageSemaphore, nullptr);
+            m_ImageSemaphore = VK_NULL_HANDLE;
+        }
+        if (m_RenderSemaphore != VK_NULL_HANDLE)
+        {
+            vkDestroySemaphore(m_Device, m_RenderSemaphore, nullptr);
+            m_RenderSemaphore = VK_NULL_HANDLE;
+        }
+        
+        //Destroy ImageViews
+        for (size_t i = 0; i < m_BackBuffers.size(); i++)
+        {
+            if (m_BackBuffers[i])
             {
-                vkDestroyImageView(m_Device, m_SwapChainImageViews[i] , nullptr);
-                m_SwapChainImageViews[i] = VK_NULL_HANDLE;
+                m_BackBuffers[i]->Destroy(m_Device);
             }
         }
         
         //Destroy Swapchain
         if (m_SwapChain != VK_NULL_HANDLE)
         {
-            vkDestroySwapchainKHR(m_Device, m_SwapChain, nullptr);
-            m_SwapChain = VK_NULL_HANDLE;
+            //vkDestroySwapchainKHR(m_Device, m_SwapChain, nullptr);
+            //m_SwapChain = VK_NULL_HANDLE;
         }
         
         //Destroy device
@@ -113,8 +132,9 @@ namespace Lambda
         if (!CreateSurface(pWindow)) { return; }
         if (!QueryAdapter(desc)) { return; }
         if (!CreateDeviceAndQueues(desc)) { return; }
+        if (!CreateSemaphores()) { return; }
         if (!CreateSwapChain(pWindow)) { return; }
-        if (!CreateImageViews()) { return; }
+        if (!CreateTextures()) { return; }
     }
     
     
@@ -368,10 +388,13 @@ namespace Lambda
         }
         else
         {
-            VkPhysicalDeviceProperties adapterProperties;
-            vkGetPhysicalDeviceProperties(m_Adapter, &adapterProperties);
+            //Get adapterproperties
+            vkGetPhysicalDeviceProperties(m_Adapter, &m_AdapterProperties);
             
-            LOG_DEBUG_INFO("Vulkan: Selected GPU '%s'\n", adapterProperties.deviceName);
+            //Get familiy indices
+            m_FamiliyIndices = FindQueueFamilies(m_Adapter);
+            
+            LOG_DEBUG_INFO("Vulkan: Selected GPU '%s'\n", m_AdapterProperties.deviceName);
             return true;
         }
     }
@@ -486,12 +509,11 @@ namespace Lambda
         assert(m_Adapter != VK_NULL_HANDLE);
 
         //Find the queuefamily indices for the adapter that we have chosen, assume they are valid since queryadapter succeded.
-        QueueFamilyIndices indices = FindQueueFamilies(m_Adapter);
         std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
         std::set<int32> uniqueQueueFamilies =
         {
-            indices.GraphicsFamily,
-            indices.PresentFamily
+            m_FamiliyIndices.GraphicsFamily,
+            m_FamiliyIndices.PresentFamily
         };
         
         //Only one queue, we set it to have the highest priority
@@ -561,8 +583,8 @@ namespace Lambda
             LOG_DEBUG_INFO("Vulkan: Created device and retrived queues\n");
             
             //Get queues
-            vkGetDeviceQueue(m_Device, indices.GraphicsFamily, 0, &m_GraphicsQueue);
-            vkGetDeviceQueue(m_Device, indices.PresentFamily, 0, &m_PresentationQueue);
+            vkGetDeviceQueue(m_Device, m_FamiliyIndices.GraphicsFamily, 0, &m_GraphicsQueue);
+            vkGetDeviceQueue(m_Device, m_FamiliyIndices.PresentFamily, 0, &m_PresentationQueue);
             
             return true;
         }
@@ -747,11 +769,6 @@ namespace Lambda
         {
             LOG_DEBUG_INFO("Vulkan: Created SwapChain\n");
             
-            //Get SwapChain images
-            vkGetSwapchainImagesKHR(m_Device, m_SwapChain, &imageCount, nullptr);
-            m_SwapChainImages.resize(imageCount);
-            vkGetSwapchainImagesKHR(m_Device, m_SwapChain, &imageCount, m_SwapChainImages.data());
-            
             //Save the extent and formats
             m_SwapChainFormat = format.format;
             m_SwapChainSize = extent;
@@ -761,19 +778,35 @@ namespace Lambda
     }
     
     
-    bool VulkanGraphicsDevice::CreateImageViews()
+    bool VulkanGraphicsDevice::CreateTextures()
     {
-        //Set the size
-        m_SwapChainImageViews.resize(m_SwapChainImages.size());
-        for (size_t i = 0; i < m_SwapChainImageViews.size(); i++)
-            m_SwapChainImageViews[i] = VK_NULL_HANDLE;
-        
-        for (size_t i = 0; i < m_SwapChainImageViews.size(); i++)
+        //Get SwapChain images
+        uint32 imageCount = 0;
+        vkGetSwapchainImagesKHR(m_Device, m_SwapChain, &imageCount, nullptr);
+    
+        std::vector<VkImage> textures(imageCount);
+        vkGetSwapchainImagesKHR(m_Device, m_SwapChain, &imageCount, textures.data());
+    
+        //Init textures
+        for (uint32 i = 0; i < imageCount; i++)
         {
+            OptimizedClearValue clearValue = {};
+            clearValue.Color[0] = 0.0f;
+            clearValue.Color[1] = 0.0f;
+            clearValue.Color[2] = 0.0f;
+            clearValue.Color[3] = 0.0f;
+            
+            uint32 flags = TEXTURE_FLAGS_RENDER_TARGET;
+            
+            //Create texture
+            VulkanTexture2D* pTexture = new VulkanTexture2D(textures[i], m_SwapChainSize, FORMAT_B8G8R8A8_UNORM, clearValue, flags, 0, 1);
+            m_BackBuffers.push_back(pTexture);
+            
             //Setup image views
             VkImageViewCreateInfo info = {};
             info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-            info.image = m_SwapChainImages[i];
+            info.flags = 0;
+            info.image = pTexture->GetResource();
             info.viewType = VK_IMAGE_VIEW_TYPE_2D;
             info.format = m_SwapChainFormat;
             info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -787,35 +820,66 @@ namespace Lambda
             info.subresourceRange.layerCount = 1;
             
             //Create image views
-            if (vkCreateImageView(m_Device, &info, nullptr, &(m_SwapChainImageViews[i])) != VK_SUCCESS)
+            VkImageView view;
+            if (vkCreateImageView(m_Device, &info, nullptr, &view) != VK_SUCCESS)
             {
                 LOG_DEBUG_ERROR("Vulkan: Failed to create ImageView '%u'\n", i);
                 
-                m_SwapChainImageViews[i] = VK_NULL_HANDLE;
+                view = VK_NULL_HANDLE;
                 return false;
             }
+            else
+            {
+                //Set the imageview
+                pTexture->SetImageView(view);
+            }
         }
+        
+        //Aquire the first swapchain image
+        vkAcquireNextImageKHR(m_Device, m_SwapChain, std::numeric_limits<uint64>::max(), m_ImageSemaphore, VK_NULL_HANDLE, &m_CurrentBackbufferIndex);
         
         LOG_DEBUG_INFO("Vulkan: Created ImageViews\n");
         return true;
     }
     
     
+    bool VulkanGraphicsDevice::CreateSemaphores()
+    {
+        //Setup semaphore structure
+        VkSemaphoreCreateInfo info = {};
+        info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+        info.pNext = nullptr;
+        info.flags = 0;
+        
+        //Create semaphores
+        if (vkCreateSemaphore(m_Device, &info, nullptr, &m_ImageSemaphore) != VK_SUCCESS ||
+            vkCreateSemaphore(m_Device, &info, nullptr, &m_RenderSemaphore) != VK_SUCCESS)
+        {
+            LOG_DEBUG_ERROR("Vulkan: Failed to create Semaphores\n");
+            return false;
+        }
+        else
+        {
+            LOG_DEBUG_INFO("Vulkan: Created Semaphores\n");
+            return true;
+        }
+    }
+    
+    
     void VulkanGraphicsDevice::CreateCommandList(ICommandList** ppList, CommandListType type) const
     {
-        
+        assert(ppList != nullptr);
+        (*ppList) = new VulkanCommandList(m_Device, type);
     }
     
     
     void VulkanGraphicsDevice::CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) const
     {
-        
     }
     
     
     void VulkanGraphicsDevice::CreateTexture2D(ITexture2D** ppTexture, const ResourceData* pInitalData, const Texture2DDesc& desc) const
     {
-        
     }
     
     
@@ -828,7 +892,6 @@ namespace Lambda
     
     void VulkanGraphicsDevice::CreateSamplerState(ISamplerState** ppSamplerState, const SamplerDesc& desc) const
     {
-        
     }
     
     
@@ -841,19 +904,42 @@ namespace Lambda
     
     void VulkanGraphicsDevice::DestroyCommandList(ICommandList** ppList) const
     {
+        assert(ppList != nullptr);
         
+        //Delete list
+        VulkanCommandList* pList = reinterpret_cast<VulkanCommandList*>(*ppList);
+        if (pList != nullptr)
+        {
+            pList->Destroy(m_Device);
+            
+            //Set ptr to null
+            *ppList = nullptr;
+            
+            LOG_DEBUG_INFO("Vulkan: Destroyed CommandList\n");
+        }
     }
     
     
     void VulkanGraphicsDevice::DestroyBuffer(IBuffer** ppBuffer) const
     {
-        
     }
     
     
     void VulkanGraphicsDevice::DestroyTexture2D(ITexture2D** ppTexture) const
     {
+        assert(ppTexture != nullptr);
         
+        //Delete texture
+        VulkanTexture2D* pTexture = reinterpret_cast<VulkanTexture2D*>(*ppTexture);
+        if (pTexture != nullptr)
+        {
+            pTexture->Destroy(m_Device);
+            
+            //Set ptr to null
+            *ppTexture = nullptr;
+            
+            LOG_DEBUG_INFO("Vulkan: Destroyed Texture2D\n");
+        }
     }
     
     
@@ -866,8 +952,7 @@ namespace Lambda
         if (pShader != nullptr)
         {
             pShader->Destroy(m_Device);
-            delete pShader;
-            
+
             //Set ptr to null
             *ppShader = nullptr;
             
@@ -878,7 +963,6 @@ namespace Lambda
     
     void VulkanGraphicsDevice::DestroySamplerState(ISamplerState** ppSamplerState) const
     {
-        
     }
     
     
@@ -891,7 +975,6 @@ namespace Lambda
         if (pPSO != nullptr)
         {
             pPSO->Destroy(m_Device);
-            delete pPSO;
             
             //Set ptr to null
             *ppPSO = nullptr;
@@ -909,43 +992,87 @@ namespace Lambda
     
     void VulkanGraphicsDevice::ExecuteCommandList(ICommandList* const * ppLists, uint32 numLists) const
     {
+        //Retrive commandbuffers
+        std::vector<VkCommandBuffer> buffers;
+        for (uint32 i = 0; i < numLists; i++)
+            buffers.push_back(reinterpret_cast<VkCommandBuffer>(ppLists[i]->GetNativeHandle()));
         
+        //Setup submitinfo
+        VkSemaphore waitSemaphores[] = { m_ImageSemaphore };
+        VkSemaphore signalSemaphores[] = { m_RenderSemaphore };
+        VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+        
+        VkSubmitInfo submitInfo = {};
+        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submitInfo.pNext = nullptr;
+        submitInfo.waitSemaphoreCount = 1;
+        submitInfo.pWaitSemaphores = waitSemaphores;
+        submitInfo.pWaitDstStageMask = waitStages;
+        submitInfo.commandBufferCount = numLists;
+        submitInfo.pCommandBuffers = buffers.data();
+        submitInfo.signalSemaphoreCount = 1;
+        submitInfo.pSignalSemaphores = signalSemaphores;
+
+        //submit commandbuffers
+        if (vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS)
+        {
+            LOG_DEBUG_ERROR("Vulkan: Failed to submit CommandBuffers\n");
+        }
     }
     
     
     void VulkanGraphicsDevice::Present(uint32 verticalSync) const
     {
+        //Setup presentinfo
+        VkSemaphore signalSemaphores[] = { m_RenderSemaphore };
+        VkSwapchainKHR swapChains[] = { m_SwapChain };
         
+        VkPresentInfoKHR info = {};
+        info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+        info.pNext = nullptr;
+        info.waitSemaphoreCount = 1;
+        info.pWaitSemaphores = signalSemaphores;
+        info.swapchainCount = 1;
+        info.pSwapchains = swapChains;
+        info.pImageIndices = &m_CurrentBackbufferIndex;
+        info.pResults = nullptr;
+        
+        vkQueuePresentKHR(m_PresentationQueue, &info);
+        
+        LOG_DEBUG_INFO("Vulkan: Present\n");
     }
     
     
     void VulkanGraphicsDevice::GPUWaitForFrame() const
     {
-        
+        LOG_DEBUG_INFO("VulkanGraphicsDevice::GPUWaitForFrame\n");
+        //Aquire the first swapchain image
+        vkAcquireNextImageKHR(m_Device, m_SwapChain, std::numeric_limits<uint64>::max(), m_ImageSemaphore, VK_NULL_HANDLE, &m_CurrentBackbufferIndex);
     }
     
     
     void VulkanGraphicsDevice::WaitForGPU() const
     {
-        
+        LOG_DEBUG_INFO("VulkanGraphicsDevice::WaitForGPU\n");
+        vkDeviceWaitIdle(m_Device);
     }
 
     
     void* VulkanGraphicsDevice::GetNativeHandle() const
     {
-        return nullptr;
+        return (void*)m_Device;
     }
     
     
     ITexture2D* VulkanGraphicsDevice::GetCurrentRenderTarget()
     {
-        return nullptr;
+        return m_BackBuffers[GetCurrentBackBufferIndex()];
     }
     
     
     uint32 VulkanGraphicsDevice::GetCurrentBackBufferIndex() const
     {
-        return 0;
+        return m_CurrentBackbufferIndex;
     }
     
     

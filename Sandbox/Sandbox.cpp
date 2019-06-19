@@ -78,7 +78,7 @@ namespace Lambda
             }
 
             //Create vertexbuffer
-            {
+            /*{
                 Vec3f vertices[] =
                 {
                     Vec3f(0.0f, 0.5f, 0.0f),
@@ -101,10 +101,10 @@ namespace Lambda
                 {
                     m_pCurrentList->TransitionResource(m_pVertexBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
                 }
-            }
+            }*/
 
             //Create colorbuffer
-            {
+            /*{
                 Vec4f color = Vec4f(0.0f, 1.0f, 0.0f, 1.0f);
 
                 BufferDesc desc = {};
@@ -118,7 +118,7 @@ namespace Lambda
                 data.SizeInBytes = desc.SizeInBytes;
 
                 pDevice->CreateBuffer(&m_pColorBuffer, &data, desc);
-            }
+            }*/
 
             //Create camerabuffer
             {
@@ -152,8 +152,8 @@ namespace Lambda
                 desc.Format = FORMAT_D24_UNORM_S8_UINT;
                 desc.SampleCount = 1;
                 desc.MipLevels = 0;
-                desc.ClearDepth = 1.0f;
-                desc.ClearStencil = 0;
+                desc.ClearValue.Depth = 1.0f;
+                desc.ClearValue.Stencil = 0;
 
                 pDevice->CreateTexture2D(&m_pDepthBuffer, nullptr, desc);
             }
@@ -206,7 +206,6 @@ namespace Lambda
                 float color[] = { 0.392f, 0.584f, 0.929f, 1.0f };
                 ITexture2D* pRenderTarget = pDevice->GetCurrentRenderTarget();
                 
-                
                 m_pCurrentList->TransitionResource(pRenderTarget, RESOURCE_STATE_RENDERTARGET);
                 m_pCurrentList->ClearRenderTarget(pRenderTarget, color);
                 m_pCurrentList->TransitionResource(m_pDepthBuffer, RESOURCE_STATE_DEPTH_WRITE);
@@ -239,7 +238,7 @@ namespace Lambda
                 static Random random;
                 static Vec4f colorBuff    = random.GenerateVector4();
                 static Vec4f beginBuff    = random.GenerateVector4();
-                static Vec4f endBuff    = random.GenerateVector4();
+                static Vec4f endBuff      = random.GenerateVector4();
                 static float timer        = 0.0f;
                 timer += dt.AsSeconds();
                 
@@ -354,8 +353,8 @@ namespace Lambda
 				desc.Format = FORMAT_D24_UNORM_S8_UINT;
 				desc.SampleCount = 1;
 				desc.MipLevels = 0;
-				desc.ClearDepth = 1.0f;
-				desc.ClearStencil = 0;
+                desc.ClearValue.Depth = 1.0f;
+                desc.ClearValue.Stencil = 0;
 
 				//TODO: needs to release the descriptor in DX12-backend
 				pDevice->CreateTexture2D(&instance.m_pDepthBuffer, nullptr, desc);
