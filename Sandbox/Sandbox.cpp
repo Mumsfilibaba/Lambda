@@ -121,7 +121,7 @@ namespace Lambda
             }*/
 
             //Create camerabuffer
-            {
+            /*{
                 CreateCamera(GetWindow()->GetWidth(), GetWindow()->GetHeight());
 
                 BufferDesc desc = {};
@@ -139,10 +139,10 @@ namespace Lambda
                 {
                     m_pCurrentList->TransitionResource(m_pCameraBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
                 }
-            }
+            }*/
 
             //Create depthbuffer
-            {
+            /*{
                 Texture2DDesc desc = {};
                 desc.Usage = RESOURCE_USAGE_DEFAULT;
                 desc.Flags = TEXTURE_FLAGS_DEPTH_STENCIL;
@@ -156,27 +156,27 @@ namespace Lambda
                 desc.ClearValue.Stencil = 0;
 
                 pDevice->CreateTexture2D(&m_pDepthBuffer, nullptr, desc);
-            }
+            }*/
 
             //Create texture
-            m_pTexture = ITexture2D::CreateTextureFromFile(pDevice, "texture.jpg", TEXTURE_FLAGS_SHADER_RESOURCE, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
+            /*m_pTexture = ITexture2D::CreateTextureFromFile(pDevice, "texture.jpg", TEXTURE_FLAGS_SHADER_RESOURCE, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
             if (m_pCurrentList)
             {
                 m_pCurrentList->TransitionResource(m_pTexture, RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-            }
+            }*/
 
             //Create samplerstate
-            {
+            /*{
                 SamplerDesc desc = {};
                 pDevice->CreateSamplerState(&m_pSampler, desc);
-            }
+            }*/
 
             //Close and execute commandlist
-            if (m_pCurrentList)
+            /*if (m_pCurrentList)
             {
                 m_pCurrentList->Close();
                 pDevice->ExecuteCommandList(&m_pCurrentList, 1);
-            }
+            }*/
 
             //Wait for GPU
             pDevice->WaitForGPU();
@@ -219,13 +219,13 @@ namespace Lambda
                 scissorrect.BottomRight.x = m_Width;
                 scissorrect.BottomRight.y = m_Height;
                 
-                Viewport viewport;
-                viewport.Width = scissorrect.BottomRight.x;
-                viewport.Height = scissorrect.BottomRight.y;
-                viewport.TopX = 0.0f;
-                viewport.TopY = 0.0f;
-                viewport.MinDepth = 0.0f;
-                viewport.MaxDepth = 1.0f;
+                Viewport viewport = {};
+                viewport.Width      = scissorrect.BottomRight.x;
+                viewport.Height     = scissorrect.BottomRight.y;
+                viewport.TopX       = 0.0f;
+                viewport.TopY       = 0.0f;
+                viewport.MinDepth   = 0.0f;
+                viewport.MaxDepth   = 1.0f;
                 
                 m_pCurrentList->SetViewport(viewport);
                 m_pCurrentList->SetScissorRect(scissorrect);
@@ -297,15 +297,15 @@ namespace Lambda
 
             pDevice->DestroyShader(&m_pVS);
             pDevice->DestroyShader(&m_pPS);
-            pDevice->DestroyShader(&m_pCompute);
+            //pDevice->DestroyShader(&m_pCompute);
 
             pDevice->DestroyGraphicsPipelineState(&m_pPipelineState);
-            pDevice->DestroyBuffer(&m_pVertexBuffer);
-            pDevice->DestroyBuffer(&m_pColorBuffer);
-            pDevice->DestroyBuffer(&m_pCameraBuffer);
-            pDevice->DestroyTexture2D(&m_pDepthBuffer);
-            pDevice->DestroyTexture2D(&m_pTexture);
-            pDevice->DestroySamplerState(&m_pSampler);
+            //pDevice->DestroyBuffer(&m_pVertexBuffer);
+            //pDevice->DestroyBuffer(&m_pColorBuffer);
+            //pDevice->DestroyBuffer(&m_pCameraBuffer);
+            //pDevice->DestroyTexture2D(&m_pDepthBuffer);
+            //pDevice->DestroyTexture2D(&m_pTexture);
+            //pDevice->DestroySamplerState(&m_pSampler);
         }
 	}
 

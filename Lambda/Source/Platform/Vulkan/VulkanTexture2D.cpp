@@ -35,6 +35,9 @@ namespace Lambda
         m_Desc.Format       = format;
         m_Desc.ArraySize    = arraySize;
         m_Desc.ClearValue   = clearValue;
+        
+        //We are not owners of this image
+        m_IsOwner = false;
     }
     
     
@@ -54,16 +57,6 @@ namespace Lambda
     {
         assert(device != VK_NULL_HANDLE);
         
-        //Destroy if texture was created from init
-        if (m_IsOwner)
-        {
-            if (m_Texture != VK_NULL_HANDLE)
-            {
-                vkDestroyImage(device, m_Texture, nullptr);
-                m_Texture = VK_NULL_HANDLE;
-            }
-        }
-        
         //Destroy views
         for (auto& view : m_Views)
         {
@@ -71,6 +64,16 @@ namespace Lambda
             {
                 vkDestroyImageView(device, view, nullptr);
                 view = VK_NULL_HANDLE;
+            }
+        }
+        
+        //Destroy if texture was created from init
+        if (m_IsOwner)
+        {
+            if (m_Texture != VK_NULL_HANDLE)
+            {
+                vkDestroyImage(device, m_Texture, nullptr);
+                m_Texture = VK_NULL_HANDLE;
             }
         }
         

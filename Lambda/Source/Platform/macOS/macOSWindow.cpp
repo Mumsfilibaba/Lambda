@@ -56,9 +56,8 @@ namespace Lambda
             }
         }
         
-        //Setup window
+        //Setup window, we do not want any API since we are using vulkan
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE); //Resizeing disbled until we can handle it in vulkan
         
         //Create window
         m_pWindow = glfwCreateWindow(desc.Width, desc.Height, desc.pTitle, nullptr, nullptr);

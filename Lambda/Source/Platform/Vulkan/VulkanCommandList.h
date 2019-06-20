@@ -1,11 +1,11 @@
 #pragma once
 #include "Graphics/ICommandList.h"
 #include <vulkan/vulkan.h>
+#include <string>
 
 namespace Lambda
 {
     class VulkanTexture2D;
-    
     class VulkanCommandList final : public ICommandList
     {
         friend class VulkanGraphicsDevice;
@@ -73,8 +73,8 @@ namespace Lambda
         VkCommandPool m_CommandPool;
         VkCommandBuffer m_CommandBuffer;
         CommandListType m_Type;
-        VulkanTexture2D* m_pRT;
+        std::string m_Name;
+        const ITexture2D* m_pRT;
         VkRenderPass m_RenderPass;
-        VkFramebuffer m_Framebuffer;
     };
 }

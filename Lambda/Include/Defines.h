@@ -1,4 +1,5 @@
 #pragma once
+//DLL declaration
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#if defined(LAMBDA_EXPORT)
 		#define LAMBDA_API __declspec(dllexport)
@@ -9,6 +10,7 @@
 	#define LAMBDA_API
 #endif
 
+//Remove default functions
 #if !defined(LAMBDA_NO_COPY)
 	#define LAMBDA_NO_COPY(name)					\
 			name(name&&) = delete;					\
@@ -28,6 +30,7 @@
 	LAMBDA_NO_COPY(name)
 #endif
 
+//Saferelease and delete
 #if !defined(SafeRelease)
 	#define SafeRelease(x) if (x != nullptr) { x->Release(); x = nullptr; }
 #endif
@@ -36,6 +39,7 @@
 #define SafeDelete(x) if (x != nullptr) { delete x; x = nullptr; }
 #endif
 
+//Memleak debugging
 #if defined(LAMBDA_DEBUG) && defined(LAMBDA_PLAT_WINDOWS)
 	#define DBG_NEW new (_NORMAL_BLOCK, __FILE__, __LINE__)
 	#define DBG_MEMLEAK_CHECK() _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -44,6 +48,7 @@
 	#define DBG_MEMLEAK_CHECK()
 #endif
 
+//Disable warnings
 #if defined(LAMBDA_VISUAL_STUDIO)
 	#pragma warning(disable : 4251) //Disable DLL-linkage warning
 	#pragma warning(error : 4456) //Redefinition is an error

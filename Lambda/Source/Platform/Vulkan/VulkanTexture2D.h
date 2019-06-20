@@ -9,6 +9,7 @@ namespace Lambda
     {
         friend class VulkanGraphicsDevice;
         friend class VulkanCommandList;
+        friend class VulkanFramebufferCache;
         
     public:
         LAMBDA_NO_COPY(VulkanTexture2D);

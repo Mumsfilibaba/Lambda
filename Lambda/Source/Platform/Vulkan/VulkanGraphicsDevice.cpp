@@ -4,6 +4,7 @@
 #include "VulkanPipelineState.h"
 #include "VulkanTexture2D.h"
 #include "VulkanCommandList.h"
+#include "VulkanFramebufferCache.h"
 #if defined(LAMBDA_PLAT_MACOS)
     #include <GLFW/glfw3.h>
 #endif
@@ -71,20 +72,21 @@ namespace Lambda
             m_RenderSemaphore = VK_NULL_HANDLE;
         }
         
+        //Destroy all framebuffers
+        VulkanFramebufferCache::Release(m_Device);
+        
         //Destroy ImageViews
         for (size_t i = 0; i < m_BackBuffers.size(); i++)
         {
             if (m_BackBuffers[i])
-            {
                 m_BackBuffers[i]->Destroy(m_Device);
-            }
         }
         
         //Destroy Swapchain
         if (m_SwapChain != VK_NULL_HANDLE)
         {
-            //vkDestroySwapchainKHR(m_Device, m_SwapChain, nullptr);
-            //m_SwapChain = VK_NULL_HANDLE;
+            vkDestroySwapchainKHR(m_Device, m_SwapChain, nullptr);
+            m_SwapChain = VK_NULL_HANDLE;
         }
         
         //Destroy device
@@ -94,13 +96,6 @@ namespace Lambda
             m_Device = VK_NULL_HANDLE;
         }
 
-        //Destroy surface
-        if (m_Surface != VK_NULL_HANDLE)
-        {
-            vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
-            m_Surface = VK_NULL_HANDLE;
-        }
-        
         //Destroy debugmessenger
         if (m_DebugMessenger != VK_NULL_HANDLE)
         {
@@ -114,6 +109,13 @@ namespace Lambda
             {
                 LOG_DEBUG_ERROR("Vulkan: Failed to find the function 'vkDestroyDebugUtilsMessengerEXT'\n");
             }
+        }
+        
+        //Destroy surface
+        if (m_Surface != VK_NULL_HANDLE)
+        {
+            vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
+            m_Surface = VK_NULL_HANDLE;
         }
         
         //Destroy instance
@@ -866,6 +868,21 @@ namespace Lambda
     }
     
     
+    void VulkanGraphicsDevice::ReleaseSwapChain()
+    {
+        //Release backbuffers
+        for (size_t i = 0; i < m_BackBuffers.size(); i++)
+        {
+            if (m_BackBuffers[i])
+                m_BackBuffers[i]->Destroy(m_Device);
+        }
+        
+        //Release swapchain
+        vkDestroySwapchainKHR(m_Device, m_SwapChain, nullptr);
+        m_SwapChain = VK_NULL_HANDLE;
+    }
+    
+    
     void VulkanGraphicsDevice::CreateCommandList(ICommandList** ppList, CommandListType type) const
     {
         assert(ppList != nullptr);
@@ -914,8 +931,6 @@ namespace Lambda
             
             //Set ptr to null
             *ppList = nullptr;
-            
-            LOG_DEBUG_INFO("Vulkan: Destroyed CommandList\n");
         }
     }
     
@@ -1039,21 +1054,24 @@ namespace Lambda
         
         vkQueuePresentKHR(m_PresentationQueue, &info);
         
-        LOG_DEBUG_INFO("Vulkan: Present\n");
+        //LOG_DEBUG_INFO("Vulkan: Present\n");
     }
     
     
     void VulkanGraphicsDevice::GPUWaitForFrame() const
     {
-        LOG_DEBUG_INFO("VulkanGraphicsDevice::GPUWaitForFrame\n");
-        //Aquire the first swapchain image
+        //Wait for last frame
+        vkDeviceWaitIdle(m_Device);
+        
+        //LOG_DEBUG_INFO("VulkanGraphicsDevice::GPUWaitForFrame\n");
+        //Aquire the next swapchain image
         vkAcquireNextImageKHR(m_Device, m_SwapChain, std::numeric_limits<uint64>::max(), m_ImageSemaphore, VK_NULL_HANDLE, &m_CurrentBackbufferIndex);
     }
     
     
     void VulkanGraphicsDevice::WaitForGPU() const
     {
-        LOG_DEBUG_INFO("VulkanGraphicsDevice::WaitForGPU\n");
+        //LOG_DEBUG_INFO("VulkanGraphicsDevice::WaitForGPU\n");
         vkDeviceWaitIdle(m_Device);
     }
 
@@ -1078,8 +1096,15 @@ namespace Lambda
     
     bool VulkanGraphicsDevice::InternalOnEvent(const Event& event)
     {
+        //Handle resize event
         if (event.Type == EVENT_TYPE_WINDOW_RESIZE)
         {
+            //Syncronize the GPU so no operations are in flight when recreating swapchain
+            WaitForGPU();
+            
+            //Release the old SwapChain
+            ReleaseSwapChain();
+            
             //Resize swapchain etc. here
             LOG_DEBUG_INFO("VulkanGraphicsDevice: Window resized w: %d h: %d\n", event.WindowResize.Width, event.WindowResize.Height);
         }

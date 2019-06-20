@@ -3,13 +3,14 @@
 #include "VulkanGraphicsDevice.h"
 #include "VulkanPipelineState.h"
 #include "VulkanTexture2D.h"
+#include "VulkanFramebufferCache.h"
 
 namespace Lambda
 {
     VulkanCommandList::VulkanCommandList(VkDevice device, CommandListType type)
         : m_CommandPool(VK_NULL_HANDLE),
-        m_Type(COMMAND_LIST_TYPE_UNKNOWN),
-        m_Framebuffer(VK_NULL_HANDLE)
+        m_CommandBuffer(VK_NULL_HANDLE),
+        m_Type(COMMAND_LIST_TYPE_UNKNOWN)
     {
         Init(device, type);
     }
@@ -67,19 +68,14 @@ namespace Lambda
     {
         assert(device != VK_NULL_HANDLE);
         
-        //Destroy framebuffer
-        if (m_Framebuffer != VK_NULL_HANDLE)
-        {
-            vkDestroyFramebuffer(device, m_Framebuffer, nullptr);
-            m_Framebuffer = VK_NULL_HANDLE;
-        }
-        
         //Destroy commandpool
         if (m_CommandPool != VK_NULL_HANDLE)
         {
             vkDestroyCommandPool(device, m_CommandPool, nullptr);
             m_CommandPool = VK_NULL_HANDLE;
         }
+        
+        LOG_DEBUG_INFO("Vulkan: Destroyed CommandList '%s'\n", m_Name.c_str());
         
         //Delete me
         delete this;
@@ -98,17 +94,35 @@ namespace Lambda
     
     void VulkanCommandList::SetRenderTarget(ITexture2D* pRenderTarget, ITexture2D* pDepthStencil)
     {
-        m_pRT = reinterpret_cast<VulkanTexture2D*>(pRenderTarget);
+        m_pRT = pRenderTarget;
     }
     
     
     void VulkanCommandList::SetViewport(const Viewport& viewport)
     {
+        //Setup vulkan viewport
+        VkViewport view = {};
+        view.width      = viewport.Width;
+        view.height     = viewport.Height;
+        view.minDepth   = viewport.MinDepth;
+        view.maxDepth   = viewport.MaxDepth;
+        view.x          = viewport.TopX;
+        view.y          = viewport.TopY;
+        
+        vkCmdSetViewport(m_CommandBuffer, 0, 1, &view);
     }
     
     
     void VulkanCommandList::SetScissorRect(const Math::Rectangle& scissorRect)
     {
+        //Setup vulkan scissorrect
+        VkRect2D rect = {};
+        rect.extent.height  = scissorRect.BottomRight.y;
+        rect.extent.width   = scissorRect.BottomRight.x;
+        rect.offset.x       = 0;
+        rect.offset.y       = 0;
+        
+        vkCmdSetScissor(m_CommandBuffer, 0, 1, &rect);
     }
     
     
@@ -246,44 +260,19 @@ namespace Lambda
     void VulkanCommandList::DrawInstanced(uint32 vertexCountPerInstance, uint32 instanceCount, uint32 startVertexLocation, uint32 startInstanceLocation)
     {
         VkDevice device = reinterpret_cast<VkDevice>(IGraphicsDevice::GetInstance()->GetNativeHandle());
-        
-        if (m_Framebuffer != VK_NULL_HANDLE)
-        {
-            vkDestroyFramebuffer(device, m_Framebuffer, nullptr);
-            m_Framebuffer = VK_NULL_HANDLE;
-        }
-        
-        VkImageView attachments[] = {
-            m_pRT->GetImageView(0)
-        };
-        
-        VkFramebufferCreateInfo framebufferInfo = {};
-        framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        framebufferInfo.pNext = nullptr;
-        framebufferInfo.renderPass = m_RenderPass;
-        framebufferInfo.attachmentCount = 1;
-        framebufferInfo.pAttachments = attachments;
-        framebufferInfo.width = m_pRT->GetDesc().Width;
-        framebufferInfo.height = m_pRT->GetDesc().Height;
-        framebufferInfo.layers = 1;
-        
-        if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &m_Framebuffer) != VK_SUCCESS)
-        {
-            LOG_DEBUG_ERROR("Vulkan: Failed to create Framebuffer\n");
-        }
-        
-        VkRenderPassBeginInfo renderPassInfo = {};
-        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        renderPassInfo.renderPass = m_RenderPass;
-        renderPassInfo.framebuffer = m_Framebuffer;
-        renderPassInfo.renderArea.offset = {0, 0};
-        renderPassInfo.renderArea.extent.width = m_pRT->GetDesc().Width;
-        renderPassInfo.renderArea.extent.height = m_pRT->GetDesc().Height;
         VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
-        renderPassInfo.clearValueCount = 1;
-        renderPassInfo.pClearValues = &clearColor;
         
-        vkCmdBeginRenderPass(m_CommandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+        VkRenderPassBeginInfo info = {};
+        info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        info.renderPass = m_RenderPass;
+        info.framebuffer = VulkanFramebufferCache::GetFramebuffer(device, m_RenderPass, &m_pRT, 1, nullptr);
+        info.renderArea.offset = { 0, 0 };
+        info.renderArea.extent.width = m_pRT->GetDesc().Width;
+        info.renderArea.extent.height = m_pRT->GetDesc().Height;
+        info.clearValueCount = 1;
+        info.pClearValues = &clearColor;
+        
+        vkCmdBeginRenderPass(m_CommandBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
         vkCmdDraw(m_CommandBuffer, vertexCountPerInstance, instanceCount, startVertexLocation, startInstanceLocation);
         vkCmdEndRenderPass(m_CommandBuffer);
     }
@@ -291,6 +280,7 @@ namespace Lambda
     
     void VulkanCommandList::SetName(const char* pName)
     {
+        m_Name = std::string(pName);
     }
     
     

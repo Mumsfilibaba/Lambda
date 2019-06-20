@@ -83,6 +83,8 @@ namespace Lambda
         bool CreateTextures();
         bool CreateSemaphores();
         
+        void ReleaseSwapChain();
+        
         bool AdapterIsSuitable(VkPhysicalDevice adapter, const GraphicsDeviceDesc& desc);
         SwapChainCapabilities QuerySwapChainSupport(VkPhysicalDevice adapter);
         QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice adapter); //Returns -1 on failure, otherwise index of queuefamily
