@@ -15,6 +15,7 @@ namespace Lambda
         LAMBDA_STATIC_CLASS(VulkanFramebufferCache);
         
         static VkFramebuffer GetFramebuffer(VkDevice device, VkRenderPass renderpass, const ITexture2D* const * const ppRendertargets, uint32 numRenderTargets, const ITexture2D* const pDepthStencil);
+        static void ReleaseTexture(VkDevice device, const ITexture2D* pTexture);
         static void Release(VkDevice device);
         
     private:

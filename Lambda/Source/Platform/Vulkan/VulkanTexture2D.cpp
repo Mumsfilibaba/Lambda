@@ -1,4 +1,5 @@
 #include "VulkanTexture2D.h"
+#include "VulkanFramebufferCache.h"
 
 namespace Lambda
 {
@@ -56,6 +57,11 @@ namespace Lambda
     void VulkanTexture2D::Destroy(VkDevice device)
     {
         assert(device != VK_NULL_HANDLE);
+        
+        LOG_DEBUG_INFO("Vulkan: Destroying Texture2D '%p'\n", this);
+        
+        //Remove associated framebuffer if there is any
+        VulkanFramebufferCache::ReleaseTexture(device, this);
         
         //Destroy views
         for (auto& view : m_Views)

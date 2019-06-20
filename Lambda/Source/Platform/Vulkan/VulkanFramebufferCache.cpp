@@ -100,6 +100,25 @@ namespace Lambda
     }
     
     
+    void VulkanFramebufferCache::ReleaseTexture(VkDevice device, const ITexture2D* pTexture)
+    {
+        //Release framebuffer if it exists
+        auto value = s_Framebuffers.find(pTexture);
+        if (value != s_Framebuffers.end())
+        {
+            LOG_DEBUG_INFO("Vulkan: Deleting Framebuffer '%p'\n", value->second);
+            
+            //Destroy the framebuffer in vulkan
+            vkDestroyFramebuffer(device, value->second, nullptr);
+            value->second = VK_NULL_HANDLE;
+            
+            //Delete it from the framebuffers
+            s_Framebuffers.erase(value);
+        }
+
+    }
+    
+    
     void VulkanFramebufferCache::Release(VkDevice device)
     {
         LOG_DEBUG_INFO("Vulkan: Num framebuffers before '%u'\n", s_Framebuffers.size());

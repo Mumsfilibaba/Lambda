@@ -79,7 +79,7 @@ namespace Lambda
         bool QueryAdapter(const GraphicsDeviceDesc& desc);
         bool CreateDeviceAndQueues(const GraphicsDeviceDesc& desc);
         bool CreateSurface(IWindow* pWindow);
-        bool CreateSwapChain(IWindow* pWindow);
+        bool CreateSwapChain(uint16 width, uint16 height);
         bool CreateTextures();
         bool CreateSemaphores();
         

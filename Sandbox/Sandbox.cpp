@@ -323,7 +323,7 @@ namespace Lambda
 	{
 		if (event.Type == EVENT_TYPE_WINDOW_RESIZE)
 		{
-			SandBox& instance = (SandBox&)GetInstance();
+			/*SandBox& instance = (SandBox&)GetInstance();
 
 			//Set size variable
 			instance.m_Width = (float)event.WindowResize.Width;
@@ -385,7 +385,7 @@ namespace Lambda
                 }
 
 				pDevice->WaitForGPU();
-			}
+			}*/
 		}
         else if (event.Type == EVENT_TYPE_KEYDOWN)
         {

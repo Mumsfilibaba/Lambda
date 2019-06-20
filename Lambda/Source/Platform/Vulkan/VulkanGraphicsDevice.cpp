@@ -75,19 +75,8 @@ namespace Lambda
         //Destroy all framebuffers
         VulkanFramebufferCache::Release(m_Device);
         
-        //Destroy ImageViews
-        for (size_t i = 0; i < m_BackBuffers.size(); i++)
-        {
-            if (m_BackBuffers[i])
-                m_BackBuffers[i]->Destroy(m_Device);
-        }
-        
-        //Destroy Swapchain
-        if (m_SwapChain != VK_NULL_HANDLE)
-        {
-            vkDestroySwapchainKHR(m_Device, m_SwapChain, nullptr);
-            m_SwapChain = VK_NULL_HANDLE;
-        }
+        //Destroy swapchain and related resources
+        ReleaseSwapChain();
         
         //Destroy device
         if (m_Device != VK_NULL_HANDLE)
@@ -129,13 +118,15 @@ namespace Lambda
     
     void VulkanGraphicsDevice::Init(IWindow* pWindow, const GraphicsDeviceDesc& desc)
     {
+        assert(pWindow != nullptr);
+        
         if (!CreateInstance(desc)) { return; }
         if (!CreateDebugDebugMessenger(desc)) { return; }
         if (!CreateSurface(pWindow)) { return; }
         if (!QueryAdapter(desc)) { return; }
         if (!CreateDeviceAndQueues(desc)) { return; }
         if (!CreateSemaphores()) { return; }
-        if (!CreateSwapChain(pWindow)) { return; }
+        if (!CreateSwapChain(pWindow->GetWidth(), pWindow->GetHeight())) { return; }
         if (!CreateTextures()) { return; }
     }
     
@@ -666,7 +657,7 @@ namespace Lambda
     }
     
     
-    bool VulkanGraphicsDevice::CreateSwapChain(IWindow* pWindow)
+    bool VulkanGraphicsDevice::CreateSwapChain(uint16 width, uint16 height)
     {
         SwapChainCapabilities cap = QuerySwapChainSupport(m_Adapter);
         
@@ -708,7 +699,7 @@ namespace Lambda
         }
         else
         {
-            VkExtent2D actualExtent = { pWindow->GetWidth(), pWindow->GetHeight() };
+            VkExtent2D actualExtent = { width, height };
             
             actualExtent.width = std::max(cap.Capabilities.minImageExtent.width, std::min(cap.Capabilities.maxImageExtent.width, actualExtent.width));
             actualExtent.height = std::max(cap.Capabilities.minImageExtent.height, std::min(cap.Capabilities.maxImageExtent.height, actualExtent.height));
@@ -874,12 +865,21 @@ namespace Lambda
         for (size_t i = 0; i < m_BackBuffers.size(); i++)
         {
             if (m_BackBuffers[i])
+            {
                 m_BackBuffers[i]->Destroy(m_Device);
+                m_BackBuffers[i] = nullptr;
+            }
         }
         
+        //Clear backbuffer array
+        m_BackBuffers.clear();
+        
         //Release swapchain
-        vkDestroySwapchainKHR(m_Device, m_SwapChain, nullptr);
-        m_SwapChain = VK_NULL_HANDLE;
+        if (m_SwapChain != VK_NULL_HANDLE)
+        {
+            vkDestroySwapchainKHR(m_Device, m_SwapChain, nullptr);
+            m_SwapChain = VK_NULL_HANDLE;
+        }
     }
     
     
@@ -1062,6 +1062,7 @@ namespace Lambda
     {
         //Wait for last frame
         vkDeviceWaitIdle(m_Device);
+        vkQueueWaitIdle(m_GraphicsQueue);
         
         //LOG_DEBUG_INFO("VulkanGraphicsDevice::GPUWaitForFrame\n");
         //Aquire the next swapchain image
@@ -1073,6 +1074,7 @@ namespace Lambda
     {
         //LOG_DEBUG_INFO("VulkanGraphicsDevice::WaitForGPU\n");
         vkDeviceWaitIdle(m_Device);
+        vkQueueWaitIdle(m_GraphicsQueue);
     }
 
     
@@ -1099,11 +1101,30 @@ namespace Lambda
         //Handle resize event
         if (event.Type == EVENT_TYPE_WINDOW_RESIZE)
         {
+            //When we minimize or any other reason the size is zero
+            //Do not resize if the size is the same as the current one
+            if ((event.WindowResize.Width == 0 || event.WindowResize.Height == 0) || (event.WindowResize.Width == m_SwapChainSize.width && event.WindowResize.Height == m_SwapChainSize.height))
+            {
+                return false;
+            }
+            
+            else if (event.WindowResize.Width == m_SwapChainSize.width && event.WindowResize.Height == m_SwapChainSize.height)
+            
             //Syncronize the GPU so no operations are in flight when recreating swapchain
             WaitForGPU();
             
             //Release the old SwapChain
             ReleaseSwapChain();
+            
+            //Create new swapchain
+            if (!CreateSwapChain(event.WindowResize.Width, event.WindowResize.Height))
+            {
+                LOG_DEBUG_ERROR("Vulkan: Failed to create new SwapChain\n");
+                return false;
+            }
+            
+            //Create new backbuffer textures
+            CreateTextures();
             
             //Resize swapchain etc. here
             LOG_DEBUG_INFO("VulkanGraphicsDevice: Window resized w: %d h: %d\n", event.WindowResize.Width, event.WindowResize.Height);
