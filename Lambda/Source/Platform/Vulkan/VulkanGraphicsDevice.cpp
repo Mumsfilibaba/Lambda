@@ -5,6 +5,7 @@
 #include "VulkanTexture2D.h"
 #include "VulkanCommandList.h"
 #include "VulkanFramebufferCache.h"
+#include "VulkanBuffer.h"
 #if defined(LAMBDA_PLAT_MACOS)
     #include <GLFW/glfw3.h>
 #endif
@@ -892,6 +893,8 @@ namespace Lambda
     
     void VulkanGraphicsDevice::CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) const
     {
+        assert(ppBuffer != nullptr);
+        (*ppBuffer) = new VulkanBuffer(m_Device, m_Adapter, pInitalData, desc);
     }
     
     
@@ -937,6 +940,19 @@ namespace Lambda
     
     void VulkanGraphicsDevice::DestroyBuffer(IBuffer** ppBuffer) const
     {
+        assert(ppBuffer != nullptr);
+        
+        //Delete buffer
+        VulkanBuffer* pBuffer = reinterpret_cast<VulkanBuffer*>(*ppBuffer);
+        if (pBuffer != nullptr)
+        {
+            pBuffer->Destroy(m_Device);
+            
+            //Set ptr to null
+            *ppBuffer = nullptr;
+            
+            LOG_DEBUG_INFO("Vulkan: Destroyed Buffer\n");
+        }
     }
     
     
