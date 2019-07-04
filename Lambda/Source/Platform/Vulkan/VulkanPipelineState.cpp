@@ -1,14 +1,16 @@
 #include "VulkanPipelineState.h"
 #include "VulkanShader.h"
 #include "VulkanGraphicsDevice.h"
+#include "VulkanHelpers.inl"
+#include "VulkanConversions.inl"
 #include <vector>
+#include <set>
 
 namespace Lambda
 {
     VulkanGraphicsPipelineState::VulkanGraphicsPipelineState(VkDevice device, const GraphicsPipelineStateDesc& desc)
         : m_Pipeline(VK_NULL_HANDLE),
-        m_RenderPass(VK_NULL_HANDLE),
-        m_PipelineLayout(VK_NULL_HANDLE)
+        m_RenderPass(VK_NULL_HANDLE)
     {
         Init(device, desc);
     }
@@ -16,7 +18,7 @@ namespace Lambda
     
     void VulkanGraphicsPipelineState::Init(VkDevice device, const GraphicsPipelineStateDesc& desc)
     {
-        assert(IGraphicsDevice::GetInstance() != nullptr);
+        //RENDERPASS
         
         //Setup attachments
         VkAttachmentDescription colorAttachment = {};
@@ -35,7 +37,7 @@ namespace Lambda
         colorAttachmentRef.attachment   = 0;
         colorAttachmentRef.layout       = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
         
-        //Destribe subpass
+        //Describe subpass
         VkSubpassDescription subpass = {};
         subpass.flags                       = 0;
         subpass.pipelineBindPoint           = VK_PIPELINE_BIND_POINT_GRAPHICS;
@@ -70,6 +72,8 @@ namespace Lambda
             LOG_DEBUG_INFO("Vulkan: Created renderpass\n");
         }
         
+        //PIPELINESTATE
+        
         //Describe shaderstages
         std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
         
@@ -83,7 +87,7 @@ namespace Lambda
             info.flags                  = 0;
             info.stage                  = VK_SHADER_STAGE_VERTEX_BIT;
             info.pName                  = pVS->GetEntryPoint();
-            info.module                 = pVS->GetShaderModule();
+            info.module                 = reinterpret_cast<VkShaderModule>(pVS->GetNativeHandle());
             info.pSpecializationInfo    = nullptr;
             
             shaderStages.push_back(info);
@@ -99,26 +103,62 @@ namespace Lambda
             info.flags                  = 0;
             info.stage                  = VK_SHADER_STAGE_FRAGMENT_BIT;
             info.pName                  = pPS->GetEntryPoint();
-            info.module                 = pPS->GetShaderModule();
+            info.module                 = reinterpret_cast<VkShaderModule>(pPS->GetNativeHandle());
             info.pSpecializationInfo    = nullptr;
             
             shaderStages.push_back(info);
         }
         
         //InputLayout
+        std::vector<VkVertexInputBindingDescription> bindingDescriptions;
+        std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
+        for (uint32 i = 0; i < desc.InputElementCount; i++)
+        {
+            //Convert an input element to the corresponding AttributeDescription
+            VkVertexInputAttributeDescription attributeDescription = {};
+            attributeDescription.binding    = desc.pInputElements[i].BindingSlot;
+            attributeDescription.location   = desc.pInputElements[i].InputSlot;
+            attributeDescription.offset     = desc.pInputElements[i].StructureOffset;
+            attributeDescription.format     = ConvertResourceFormat(desc.pInputElements[i].Format);
+            attributeDescriptions.push_back(attributeDescription);
+            
+            //Check if binding is unique
+            bool found = false;
+            for (auto& bindDesc : bindingDescriptions)
+            {
+                if (bindDesc.binding == desc.pInputElements[i].BindingSlot)
+                {
+                    found = true;
+                    break;
+                }
+            }
+            
+            //Add a new bindingdescription
+            if (!found)
+            {
+                VkVertexInputBindingDescription bindingDescription = {};
+                bindingDescription.binding      = desc.pInputElements[i].BindingSlot;
+                bindingDescription.stride       = desc.pInputElements[i].Stride;
+                bindingDescription.inputRate    = desc.pInputElements[i].IsInstanced ? VK_VERTEX_INPUT_RATE_INSTANCE : VK_VERTEX_INPUT_RATE_VERTEX;
+                bindingDescriptions.push_back(bindingDescription);
+            }
+        }
+        
+        //Set inputlayout
         VkPipelineVertexInputStateCreateInfo inputLayout = {};
         inputLayout.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
         inputLayout.pNext = nullptr;
-        inputLayout.vertexBindingDescriptionCount = 0;
-        inputLayout.pVertexBindingDescriptions = nullptr; // Optional
-        inputLayout.vertexAttributeDescriptionCount = 0;
-        inputLayout.pVertexAttributeDescriptions = nullptr; // Optional
+        inputLayout.flags = 0;
+        inputLayout.vertexBindingDescriptionCount = uint32(bindingDescriptions.size());
+        inputLayout.pVertexBindingDescriptions = bindingDescriptions.data();
+        inputLayout.vertexAttributeDescriptionCount = uint32(attributeDescriptions.size());
+        inputLayout.pVertexAttributeDescriptions = attributeDescriptions.data();
         
         VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
         inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
         inputAssembly.pNext = nullptr;
         inputAssembly.flags = 0;
-        inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        inputAssembly.topology = ConvertPrimitiveTopology(desc.Topology);
         inputAssembly.primitiveRestartEnable = VK_FALSE;
         
         //Setup dynamic states
@@ -193,27 +233,6 @@ namespace Lambda
         colorBlending.blendConstants[2] = 0.0f;
         colorBlending.blendConstants[3] = 0.0f;
         
-        //Setup pipelinelayout
-        VkPipelineLayoutCreateInfo layoutInfo = {};
-        layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        layoutInfo.flags = 0;
-        layoutInfo.pNext = nullptr;
-        layoutInfo.setLayoutCount = 0;
-        layoutInfo.pSetLayouts = nullptr;
-        layoutInfo.pushConstantRangeCount = 0;
-        layoutInfo.pPushConstantRanges = nullptr;
-        
-        //Create pipelinelayout
-        if (vkCreatePipelineLayout(device, &layoutInfo, nullptr, &m_PipelineLayout) != VK_SUCCESS)
-        {
-            LOG_DEBUG_ERROR("Vulkan: Failed to create pipelinelayout\n");
-            return;
-        }
-        else
-        {
-            LOG_DEBUG_INFO("Vulkan: Created pipelinelayout\n");
-        }
-        
         //Setup pipelinestate
         VkGraphicsPipelineCreateInfo pipelineInfo = {};
         pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -229,7 +248,7 @@ namespace Lambda
         pipelineInfo.pDepthStencilState = nullptr;
         pipelineInfo.pColorBlendState = &colorBlending;
         pipelineInfo.pDynamicState = &dynamicState;
-        pipelineInfo.layout = m_PipelineLayout;
+        pipelineInfo.layout = VulkanGraphicsDevice::GetDefaultPipelineLayout();
         pipelineInfo.renderPass = m_RenderPass;
         pipelineInfo.subpass = 0;
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
@@ -246,10 +265,16 @@ namespace Lambda
     }
     
     
+    void* VulkanGraphicsPipelineState::GetNativeHandle() const
+    {
+        return m_Pipeline;
+    }
+    
+    
     void VulkanGraphicsPipelineState::Destroy(VkDevice device)
     {
         assert(device != VK_NULL_HANDLE);
-        
+               
         //Destroy renderpass
         if (m_RenderPass != VK_NULL_HANDLE)
         {
@@ -262,13 +287,6 @@ namespace Lambda
         {
             vkDestroyPipeline(device, m_Pipeline, nullptr);
             m_Pipeline = VK_NULL_HANDLE;
-        }
-        
-        //Destroy pipelinelayout
-        if (m_PipelineLayout != VK_NULL_HANDLE)
-        {
-            vkDestroyPipelineLayout(device, m_PipelineLayout, nullptr);
-            m_PipelineLayout = VK_NULL_HANDLE;
         }
         
         //Delete me

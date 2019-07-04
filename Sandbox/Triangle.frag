@@ -4,7 +4,12 @@
 layout(location = 0) in vec3 g_Color;
 layout(location = 0) out vec4 g_OutColor;
 
+layout(set = 4, binding = 0) uniform ColorBuffer
+{
+    vec4 Color;
+} material;
+
 void main()
 {
-    g_OutColor = vec4(g_Color, 1.0f);
+    g_OutColor = material.Color;
 }

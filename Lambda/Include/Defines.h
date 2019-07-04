@@ -1,4 +1,5 @@
 #pragma once
+
 //DLL declaration
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#if defined(LAMBDA_EXPORT)
@@ -9,6 +10,7 @@
 #else
 	#define LAMBDA_API
 #endif
+
 
 //Remove default functions
 #if !defined(LAMBDA_NO_COPY)
@@ -30,6 +32,7 @@
 	LAMBDA_NO_COPY(name)
 #endif
 
+
 //Saferelease and delete
 #if !defined(SafeRelease)
 	#define SafeRelease(x) if (x != nullptr) { x->Release(); x = nullptr; }
@@ -39,6 +42,7 @@
 #define SafeDelete(x) if (x != nullptr) { delete x; x = nullptr; }
 #endif
 
+
 //Memleak debugging
 #if defined(LAMBDA_DEBUG) && defined(LAMBDA_PLAT_WINDOWS)
 	#define DBG_NEW new (_NORMAL_BLOCK, __FILE__, __LINE__)
@@ -47,6 +51,7 @@
 	#define DBG_NEW new
 	#define DBG_MEMLEAK_CHECK()
 #endif
+
 
 //Disable warnings
 #if defined(LAMBDA_VISUAL_STUDIO)
@@ -60,4 +65,19 @@
 	#define DEBUG_BREAK
 #endif
 
+
+//Sizes
 #define MB(num) num * 1024 * 1024
+
+
+//Shaderstages
+#define LAMBDA_SHADERSTAGE_COUNT    5 //VS, HS, DS, GS, PS
+#define LAMBDA_SHADERSTAGE_VERTEX   0
+#define LAMBDA_SHADERSTAGE_HULL     1
+#define LAMBDA_SHADERSTAGE_DOMAIN   2
+#define LAMBDA_SHADERSTAGE_GEOMETRY 3
+#define LAMBDA_SHADERSTAGE_PIXEL    4
+
+
+//Count of resource binding slots per shaderstage
+#define LAMBDA_SHADERSTAGE_UNIFORM_COUNT 8

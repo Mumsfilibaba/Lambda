@@ -48,6 +48,12 @@ namespace Lambda
     }
     
     
+    void* VulkanTexture2D::GetNativeHandle() const
+    {
+        return (void*)m_Texture;
+    }
+    
+    
     Texture2DDesc VulkanTexture2D::GetDesc() const
     {
         return m_Desc;

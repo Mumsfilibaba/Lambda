@@ -10,48 +10,27 @@ namespace Lambda
     public:
         LAMBDA_NO_COPY(VulkanBuffer);
         
-        VulkanBuffer(VkDevice device, VkPhysicalDevice adapter, const ResourceData* pInitalData, const BufferDesc& desc);
+        VulkanBuffer();
+        VulkanBuffer(VkDevice device, VkPhysicalDevice adapter, const BufferDesc& desc);
         ~VulkanBuffer() = default;
         
         virtual void Map(void** ppMem) override final;
         virtual void Unmap() override final;
         
+        virtual void* GetNativeHandle() const override final;
+        virtual uint64 GetSizeInBytes() const override final;
         virtual BufferDesc GetDesc() const override final;
         
+        //Release releases vulkan resources while destroy also calls 'delete this'
+        void Release(VkDevice device);
         void Destroy(VkDevice device);
-        VkBuffer GetBuffer() const;
         
     private:
-        void Init(VkDevice device, VkPhysicalDevice adapter, const ResourceData* pInitalData, const BufferDesc& desc);
-        
-        VkBufferView GetBufferView(uint32 index) const;
-        void SetBufferView(VkBufferView view);
+        void Init(VkDevice device, VkPhysicalDevice adapter, const BufferDesc& desc);
         
     private:
         VkBuffer m_Buffer;
         VkDeviceMemory m_BufferMemory;
-        std::vector<VkBufferView> m_Views;
         BufferDesc m_Desc;
     };
-    
-    
-    inline VkBuffer VulkanBuffer::GetBuffer() const
-    {
-        return m_Buffer;
-    }
-    
-    
-    inline VkBufferView VulkanBuffer::GetBufferView(uint32 index) const
-    {
-        return m_Views[index];
-    }
-    
-    
-    inline void VulkanBuffer::SetBufferView(VkBufferView view)
-    {
-        if (m_Views.size() < 1)
-            m_Views.push_back(view);
-        else
-            m_Views[0] = view;
-    }
 }

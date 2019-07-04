@@ -1,11 +1,24 @@
 #pragma once
 #include "Graphics/ICommandList.h"
-#include <vulkan/vulkan.h>
+#include "VulkanUploadBuffer.h"
 #include <string>
+#include <vulkan/vulkan.h>
+#include "VulkanHelpers.inl"
 
 namespace Lambda
 {
+    //Helperstruct containing information about a shaderstage
+    struct VulkanShaderStageData
+    {
+        VkDescriptorBufferInfo UBInfos[LAMBDA_SHADERSTAGE_UNIFORM_COUNT];
+    };
+    
+    
+    //Forward declarations
     class VulkanTexture2D;
+    
+    
+    //Vulkan Implementation of CommandList
     class VulkanCommandList final : public ICommandList
     {
         friend class VulkanGraphicsDevice;
@@ -22,12 +35,9 @@ namespace Lambda
         virtual void SetRenderTarget(ITexture2D* pRenderTarget, ITexture2D* pDepthStencil) override final;
         virtual void SetViewport(const Viewport& viewport) override final;
         virtual void SetScissorRect(const Math::Rectangle& scissorRect) override final;
-        virtual void SetPrimtiveTopology(PrimitiveTopology topology) override final;
         virtual void SetGraphicsPipelineState(IGraphicsPipelineState* pPSO) override final;
         virtual void SetVertexBuffer(IBuffer* pBuffer, uint32 slot) override final;
-        
-        virtual CommandListType GetType() const override final;
-        virtual void* GetNativeHandle() const override final;
+        virtual void SetIndexBuffer(IBuffer* pBuffer) override final;
         
         virtual void TransitionResource(IBuffer* pResource, ResourceState resourceState) override final;
         virtual void TransitionResource(ITexture2D* pResource, ResourceState resourceState) override final;
@@ -58,11 +68,15 @@ namespace Lambda
         virtual void CopyBuffer(IBuffer* pDst, IBuffer* pSrc) override final;
         
         virtual void DrawInstanced(uint32 vertexCountPerInstance, uint32 instanceCount, uint32 startVertexLocation, uint32 startInstanceLocation) override final;
+        virtual void DrawIndexedInstanced(uint32 indexCountPerInstance, uint32 instanceCount, uint32 startIndexLocation, uint32 baseVertexLocation, uint32 startInstanceLocation) override final;
         
         virtual void SetName(const char* pName) override final;
         
         virtual void Close() override final;
         virtual void Reset() override final;
+        
+        virtual CommandListType GetType() const override final;
+        virtual void* GetNativeHandle() const override final;
         
         void Destroy(VkDevice device);
         
@@ -70,11 +84,25 @@ namespace Lambda
         void Init(VkDevice device, CommandListType type);
         
     private:
+        VkDevice m_Device; //Store the device that was used when creating device
         VkCommandPool m_CommandPool;
         VkCommandBuffer m_CommandBuffer;
+        
+        VulkanUploadBuffer m_BufferUpload;
+        
+        VkClearColorValue m_ClearColor;
+        
         CommandListType m_Type;
         std::string m_Name;
-        const ITexture2D* m_pRT;
+        
+        VkDescriptorSet m_DescriptorSets[LAMBDA_SHADERSTAGE_COUNT];
+        VkDescriptorPool m_DescriptorPool;
+        VulkanShaderStageData m_ShaderSages[LAMBDA_SHADERSTAGE_COUNT];
+        
+        //Temp?
         VkRenderPass m_RenderPass;
+        VkPipelineLayout m_PipelineLayout;
+        const ITexture2D* m_pRT;
+        const ITexture2D* m_pDS;
     };
 }

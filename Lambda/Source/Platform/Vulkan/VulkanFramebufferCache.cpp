@@ -10,6 +10,8 @@ namespace Lambda
     //VulkanFramebufferCache
     VkFramebuffer VulkanFramebufferCache::GetFramebuffer(VkDevice device, VkRenderPass renderpass, const ITexture2D* const * const ppRendertargets, uint32 numRenderTargets, const ITexture2D* const pDepthStencil)
     {
+        assert(device != VK_NULL_HANDLE);
+        
         //Use first texture as key
         const ITexture2D* pKey = ppRendertargets[0];
         

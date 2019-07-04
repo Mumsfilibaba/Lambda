@@ -13,6 +13,7 @@ namespace Lambda
 		m_pPS(nullptr),
         m_pCompute(nullptr),
 		m_pVertexBuffer(nullptr),
+        m_pIndexBuffer(nullptr),
 		m_pDepthBuffer(nullptr),
         m_pPipelineState(nullptr)
 	{
@@ -70,27 +71,43 @@ namespace Lambda
 
             //Create pipelinestate
             {
+                InputElement elements[]
+                {
+                    { "POSITION",   FORMAT_R32G32B32_FLOAT, 0, 0, sizeof(Vec3f) * 2, 0, false },
+                    { "COLOR",      FORMAT_R32G32B32_FLOAT, 0, 1, sizeof(Vec3f) * 2, sizeof(Vec3f), false }
+                };
+                
                 GraphicsPipelineStateDesc desc = {};
-                desc.pVertexShader = m_pVS;
-                desc.pPixelShader = m_pPS;
+                desc.pVertexShader      = m_pVS;
+                desc.pPixelShader       = m_pPS;
+                desc.pInputElements     = elements;
+                desc.InputElementCount  = sizeof(elements) / sizeof(InputElement);
+                desc.Topology           = PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
                 pDevice->CreateGraphicsPipelineState(&m_pPipelineState, desc);
             }
 
             //Create vertexbuffer
             {
-                Vec3f vertices[] =
+                struct Vertex
                 {
-                    Vec3f(0.0f, 0.5f, 0.0f),
-                    Vec3f(0.5f, -0.5f, 0.0f),
-                    Vec3f(-0.5f, -0.5f, 0.0f),
+                    Vec3f Position;
+                    Vec3f Color;
+                };
+                
+                Vertex vertices[] =
+                {
+                    { Vec3f(-0.5f, -0.5f, 0.0f),    Vec3f(1.0f, 0.0f, 0.0f) },
+                    { Vec3f(0.5f, -0.5f, 0.0f),     Vec3f(1.0f, 0.0f, 0.0f) },
+                    { Vec3f(0.5f, 0.5f, 0.0f),      Vec3f(1.0f, 0.0f, 0.0f) },
+                    { Vec3f(-0.5f, 0.5f, 0.0f),     Vec3f(1.0f, 0.0f, 0.0f) }
                 };
 
                 BufferDesc desc = {};
                 desc.Usage = RESOURCE_USAGE_DEFAULT;
                 desc.Flags = BUFFER_FLAGS_VERTEX_BUFFER;
-                desc.SizeInBytes = sizeof(Vec3f) * 3;
-                desc.StrideInBytes = sizeof(Vec3f);
+                desc.SizeInBytes = sizeof(vertices);
+                desc.StrideInBytes = sizeof(Vertex);
 
                 ResourceData data = {};
                 data.pData = &vertices;
@@ -102,23 +119,44 @@ namespace Lambda
                     m_pCurrentList->TransitionResource(m_pVertexBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
                 }
             }
+            
+            //Create indexbuffer
+            {
+                uint32 indices[] =
+                {
+                    0, 1, 2,
+                    2, 3, 0
+                };
+                
+                BufferDesc desc = {};
+                desc.Usage = RESOURCE_USAGE_DEFAULT;
+                desc.Flags = BUFFER_FLAGS_INDEX_BUFFER;
+                desc.SizeInBytes = sizeof(indices);
+                desc.StrideInBytes = sizeof(uint32);
+                
+                ResourceData data = {};
+                data.pData = &indices;
+                data.SizeInBytes = desc.SizeInBytes;
+                
+                pDevice->CreateBuffer(&m_pIndexBuffer, &data, desc);
+            }
 
             //Create colorbuffer
-            /*{
+            {
                 Vec4f color = Vec4f(0.0f, 1.0f, 0.0f, 1.0f);
 
                 BufferDesc desc = {};
                 desc.Usage = RESOURCE_USAGE_DEFAULT;
                 desc.Flags = BUFFER_FLAGS_CONSTANT_BUFFER;
-                desc.SizeInBytes = (uint32)Math::AlignUp(sizeof(Vec4f), 256);
+                desc.SizeInBytes = sizeof(Vec4f);//(uint32)Math::AlignUp(sizeof(Vec4f), 256);
                 desc.StrideInBytes = sizeof(Vec4f);
 
                 ResourceData data = {};
                 data.pData = &color;
-                data.SizeInBytes = desc.SizeInBytes;
+                data.SizeInBytes = sizeof(color);
 
                 pDevice->CreateBuffer(&m_pColorBuffer, &data, desc);
-            }*/
+            }
 
             //Create camerabuffer
             /*{
@@ -214,10 +252,10 @@ namespace Lambda
                 
                 //Set scissor and viewport
                 Math::Rectangle scissorrect;
-                scissorrect.TopLeft.x = 0.0f;
-                scissorrect.TopLeft.y = 0.0f;
-                scissorrect.BottomRight.x = m_Width;
-                scissorrect.BottomRight.y = m_Height;
+                scissorrect.TopLeft.x       = 0.0f;
+                scissorrect.TopLeft.y       = 0.0f;
+                scissorrect.BottomRight.x   = m_Width;
+                scissorrect.BottomRight.y   = m_Height;
                 
                 Viewport viewport = {};
                 viewport.Width      = scissorrect.BottomRight.x;
@@ -231,11 +269,10 @@ namespace Lambda
                 m_pCurrentList->SetScissorRect(scissorrect);
                 
                 //Set pipelinestate and topology
-                m_pCurrentList->SetPrimtiveTopology(PRIMITIVE_TOPOLOGY_TRIANGLELIST);
                 m_pCurrentList->SetGraphicsPipelineState(m_pPipelineState);
                 
                 //Set constantbuffers
-                static Random random;
+                /*static Random random;
                 static Vec4f colorBuff    = random.GenerateVector4();
                 static Vec4f beginBuff    = random.GenerateVector4();
                 static Vec4f endBuff      = random.GenerateVector4();
@@ -249,9 +286,11 @@ namespace Lambda
                     beginBuff = endBuff;
                     endBuff = random.GenerateVector4();
                     timer = 0.0f;
-                }
+                }*/
                 
                 //Update data
+                Vec4f colorBuff = Vec4f(1.0f, 0.0f, 0.4f, 1.0f);
+                
                 ResourceData data = {};
                 data.pData = &colorBuff;
                 data.SizeInBytes = sizeof(Vec4f);
@@ -260,17 +299,18 @@ namespace Lambda
                 m_pCurrentList->UpdateBuffer(m_pColorBuffer, &data);
                 m_pCurrentList->TransitionResource(m_pColorBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
                 
-                m_pCurrentList->VSSetConstantBuffers(&m_pCameraBuffer, 1, 0);
+                //m_pCurrentList->VSSetConstantBuffers(&m_pCameraBuffer, 1, 0);
                 m_pCurrentList->PSSetConstantBuffers(&m_pColorBuffer, 1, 0);
                 
                 //Set texture and samplers
-                m_pCurrentList->PSSetTextures(&m_pTexture, 1, 0);
-                m_pCurrentList->PSSetSamplers(&m_pSampler, 1, 0);
+                //m_pCurrentList->PSSetTextures(&m_pTexture, 1, 0);
+                //m_pCurrentList->PSSetSamplers(&m_pSampler, 1, 0);
                 
-                //Set vertexbuffer
+                //Set vertex- and indexbuffer
                 m_pCurrentList->SetVertexBuffer(m_pVertexBuffer, 0);
+                m_pCurrentList->SetIndexBuffer(m_pIndexBuffer);
                 
-                m_pCurrentList->DrawInstanced(3, 1, 0, 0);
+                m_pCurrentList->DrawIndexedInstanced(6, 1, 0, 0, 0);
                 
                 m_pCurrentList->TransitionResource(pRenderTarget, RESOURCE_STATE_PRESENT_COMMON);
                 
@@ -293,7 +333,9 @@ namespace Lambda
             pDevice->WaitForGPU();
 
             for (uint32 i = 0; i < 3; i++)
+            {
                 pDevice->DestroyCommandList(&(m_pLists[i]));
+            }
 
             pDevice->DestroyShader(&m_pVS);
             pDevice->DestroyShader(&m_pPS);
@@ -301,7 +343,8 @@ namespace Lambda
 
             pDevice->DestroyGraphicsPipelineState(&m_pPipelineState);
             pDevice->DestroyBuffer(&m_pVertexBuffer);
-            //pDevice->DestroyBuffer(&m_pColorBuffer);
+            pDevice->DestroyBuffer(&m_pIndexBuffer);
+            pDevice->DestroyBuffer(&m_pColorBuffer);
             //pDevice->DestroyBuffer(&m_pCameraBuffer);
             //pDevice->DestroyTexture2D(&m_pDepthBuffer);
             //pDevice->DestroyTexture2D(&m_pTexture);

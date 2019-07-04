@@ -18,9 +18,9 @@ namespace Lambda
         VulkanTexture2D(VkDevice device, const Texture2DDesc& desc);
         VulkanTexture2D() = default;
         
+        virtual void* GetNativeHandle() const override final;
         virtual Texture2DDesc GetDesc() const override final;
         
-        VkImage GetResource() const;
         void Destroy(VkDevice device);
         
     private:
@@ -36,12 +36,6 @@ namespace Lambda
         Texture2DDesc m_Desc;
         bool m_IsOwner;
     };
-    
-    
-    inline VkImage VulkanTexture2D::GetResource() const
-    {
-        return m_Texture;
-    }
     
     
     inline VkImageView VulkanTexture2D::GetImageView(uint32 index) const

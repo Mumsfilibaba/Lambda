@@ -69,4 +69,16 @@ namespace Lambda
     {
         return m_Type;
     }
+    
+    
+    const char* VulkanShader::GetEntryPoint() const
+    {
+        return m_EntryPoint.c_str();
+    }
+    
+    
+    void* VulkanShader::GetNativeHandle() const
+    {
+        return (void*)m_Shader;
+    }
 }

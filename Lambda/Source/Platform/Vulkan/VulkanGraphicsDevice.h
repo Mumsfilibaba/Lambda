@@ -2,6 +2,8 @@
 #include "Graphics/IGraphicsDevice.h"
 #include <vulkan/vulkan.h>
 
+#define FRAMES_AHEAD 3
+
 namespace Lambda
 {
     //Helperstruct for when finding queuefamilies
@@ -26,13 +28,15 @@ namespace Lambda
         
         inline bool Valid()
         {
-            return !Formats.empty() && !PresentModes.empty();
+            return !Formats.empty() && !PresentModes.empty() && Capabilities.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_DST_BIT;
         }
     };
     
     
     //Forward declarations
+    class VulkanBuffer;
     class VulkanTexture2D;
+    class VulkanCommandList;
     
     //Vulkan implementation of graphics device
     class VulkanGraphicsDevice final : public IGraphicsDevice
@@ -68,6 +72,7 @@ namespace Lambda
         virtual uint32 GetCurrentBackBufferIndex() const override final;
     
         VkFormat GetBackBufferFormat() const;
+        VkPhysicalDevice GetAdapter() const;
         QueueFamilyIndices GetQueueFamilyIndices() const;
         
     private:
@@ -76,21 +81,24 @@ namespace Lambda
         
         bool CreateInstance(const GraphicsDeviceDesc& desc);
         bool CreateDebugDebugMessenger(const GraphicsDeviceDesc& desc);
-        bool QueryAdapter(const GraphicsDeviceDesc& desc);
+        bool QueryAdapter();
         bool CreateDeviceAndQueues(const GraphicsDeviceDesc& desc);
         bool CreateSurface(IWindow* pWindow);
         bool CreateSwapChain(uint16 width, uint16 height);
         bool CreateTextures();
-        bool CreateSemaphores();
+        bool CreateSemaphoresAndFences();
+        bool CreateDefaultLayouts();
         
         void ReleaseSwapChain();
         
-        bool AdapterIsSuitable(VkPhysicalDevice adapter, const GraphicsDeviceDesc& desc);
+        void GetNextFrame() const;
+        
+        bool AdapterIsSuitable(VkPhysicalDevice adapter);
         SwapChainCapabilities QuerySwapChainSupport(VkPhysicalDevice adapter);
         QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice adapter); //Returns -1 on failure, otherwise index of queuefamily
         
         std::vector<const char*> GetRequiredValidationLayers(bool debug);
-        std::vector<const char*> GetRequiredDeviceExtensions(bool debug);
+        std::vector<const char*> GetRequiredDeviceExtensions();
         
         virtual bool InternalOnEvent(const Event& event) override final;
         
@@ -100,8 +108,9 @@ namespace Lambda
         VkDevice m_Device;
         VkQueue m_GraphicsQueue;
         VkQueue m_PresentationQueue;
-        VkSemaphore m_ImageSemaphore;
-        VkSemaphore m_RenderSemaphore;
+        VkFence m_Fences[FRAMES_AHEAD];
+        VkSemaphore m_ImageSemaphores[FRAMES_AHEAD];
+        VkSemaphore m_RenderSemaphores[FRAMES_AHEAD];
         QueueFamilyIndices m_FamiliyIndices;
         
         VkPhysicalDevice m_Adapter;
@@ -112,12 +121,34 @@ namespace Lambda
         VkFormat m_SwapChainFormat;
         VkExtent2D m_SwapChainSize;
         
+        mutable uint64 m_CurrentFrame;
         mutable uint32 m_CurrentBackbufferIndex;
         std::vector<VulkanTexture2D*> m_BackBuffers;
         
+        VulkanCommandList* m_pCommandList;
+        
+        VkPipelineLayout m_DefaultPipelineLayout;
+        VkDescriptorSetLayout m_DefaultDescriptorSetLayouts[LAMBDA_SHADERSTAGE_COUNT];
+        
+        VulkanBuffer* m_pNullBuffer;
+        VkDescriptorBufferInfo m_NullBufferDescriptor;
+        
+    public:
+        static VkDevice GetCurrentDevice();
+        static VkPhysicalDevice GetCurrentAdapter();
+        static VkPipelineLayout GetDefaultPipelineLayout();
+        static VkDescriptorBufferInfo GetNullBufferDescriptor();
+        static VkDescriptorSetLayout* GetDefaultDescriptorSetLayouts();
+        static void SetVulkanObjectName(VkObjectType type, uint64 objectHandle, const std::string& name);
+        
     private:
         static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-            VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
+                                                                  VkDebugUtilsMessageTypeFlagsEXT messageType,
+                                                                  const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+                                                                  void* pUserData);
+        
+    private:
+        static PFN_vkSetDebugUtilsObjectNameEXT SetDebugUtilsObjectNameEXT;
     };
     
     
@@ -127,8 +158,49 @@ namespace Lambda
     }
     
     
+    inline VkPhysicalDevice VulkanGraphicsDevice::GetAdapter() const
+    {
+        return m_Adapter;
+    }
+    
+    
     inline QueueFamilyIndices VulkanGraphicsDevice::GetQueueFamilyIndices() const
     {
         return m_FamiliyIndices;
+    }
+
+    
+    inline VkDevice VulkanGraphicsDevice::GetCurrentDevice()
+    {
+        assert(IGraphicsDevice::GetInstance() != nullptr);
+        return reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance())->m_Device;
+    }
+    
+    
+    inline VkPhysicalDevice VulkanGraphicsDevice::GetCurrentAdapter()
+    {
+        assert(IGraphicsDevice::GetInstance() != nullptr);
+        return reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance())->m_Adapter;
+    }
+    
+    
+    inline VkPipelineLayout VulkanGraphicsDevice::GetDefaultPipelineLayout()
+    {
+        assert(IGraphicsDevice::GetInstance() != nullptr);
+        return reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance())->m_DefaultPipelineLayout;
+    }
+    
+    
+    inline VkDescriptorBufferInfo VulkanGraphicsDevice::GetNullBufferDescriptor()
+    {
+        assert(IGraphicsDevice::GetInstance() != nullptr);
+        return reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance())->m_NullBufferDescriptor;
+    }
+    
+    
+    inline VkDescriptorSetLayout* VulkanGraphicsDevice::GetDefaultDescriptorSetLayouts()
+    {
+        assert(IGraphicsDevice::GetInstance() != nullptr);
+        return reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance())->m_DefaultDescriptorSetLayouts;
     }
 }

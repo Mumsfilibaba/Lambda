@@ -153,11 +153,15 @@ namespace Lambda
 	{
 		OnRelease();
 
-		SafeDelete(m_pWindow);
+        //Destroy graphics context
         if (m_pGraphicsContext)
         {
             m_pGraphicsContext->Destroy();
+            m_pGraphicsContext = nullptr;
         }
+        
+        //Destroy window
+        SafeDelete(m_pWindow);
 	}
 
 

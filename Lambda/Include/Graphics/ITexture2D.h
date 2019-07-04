@@ -43,6 +43,7 @@ namespace Lambda
 		ITexture2D() = default;
 		~ITexture2D() = default;
 
+        virtual void* GetNativeHandle() const = 0;
 		virtual Texture2DDesc GetDesc() const = 0;
 
 	public:

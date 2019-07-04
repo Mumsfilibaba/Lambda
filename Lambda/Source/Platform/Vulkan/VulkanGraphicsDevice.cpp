@@ -6,6 +6,7 @@
 #include "VulkanCommandList.h"
 #include "VulkanFramebufferCache.h"
 #include "VulkanBuffer.h"
+#include "VulkanConversions.inl"
 #if defined(LAMBDA_PLAT_MACOS)
     #include <GLFW/glfw3.h>
 #endif
@@ -17,21 +18,37 @@ namespace Lambda
     VKAPI_ATTR VkBool32 VKAPI_CALL VulkanGraphicsDevice::VulkanDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
         VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
     {
-        switch (messageSeverity) {
-            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
-                LOG_DEBUG_INFO("[Vulkan Validation Layer] %s\n", pCallbackData->pMessage);
-                break;
-            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-                LOG_DEBUG_WARNING("[Vulkan Validation Layer] %s\n", pCallbackData->pMessage);
-                break;
-            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-                LOG_DEBUG_ERROR("[Vulkan Validation Layer] %s\n", pCallbackData->pMessage);
-                break;
+        //Check message type
+        LogSeverity severity = LOG_SEVERITY_UNKNOWN;
+        switch (messageSeverity)
+        {
+            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:      severity = LOG_SEVERITY_INFO; break;
+            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:   severity = LOG_SEVERITY_WARNING; break;
+            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:     severity = LOG_SEVERITY_ERROR; break;
+            default: return VK_FALSE;
         }
         
+        //Get type of message
+        const char* pTypeStr = nullptr;
+        if (messageType == VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT)
+            pTypeStr = "GENERAL";
+        else if (messageType == VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT)
+            pTypeStr = "VALIDATION";
+        else if (messageType == VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT)
+            pTypeStr = "PERFORMANCE";
+        
+        //Get objectinfo
+        uint64 object           = (pCallbackData->objectCount != 0) ? pCallbackData->pObjects->objectHandle : 0;
+        const char* pObjectName = (pCallbackData->objectCount != 0) ? pCallbackData->pObjects->pObjectName : "";
+        
+        //Print message
+        Log::GetDebugLog().Print(severity, "[Vulkan Validation Layer - type=%s, object=0x%llx, objectname=%s] %s\n", pTypeStr, object, pObjectName, pCallbackData->pMessage);
         return VK_FALSE;
     }
     
+    
+    //Vulkan device static members
+    PFN_vkSetDebugUtilsObjectNameEXT VulkanGraphicsDevice::SetDebugUtilsObjectNameEXT = nullptr;
     
     //Vulkan Graphics Context
     VulkanGraphicsDevice::VulkanGraphicsDevice(IWindow* pWindow, const GraphicsDeviceDesc& desc)
@@ -40,8 +57,8 @@ namespace Lambda
         m_Device(VK_NULL_HANDLE),
         m_GraphicsQueue(VK_NULL_HANDLE),
         m_PresentationQueue(VK_NULL_HANDLE),
-        m_ImageSemaphore(VK_NULL_HANDLE),
-        m_RenderSemaphore(VK_NULL_HANDLE),
+        m_ImageSemaphores(),
+        m_RenderSemaphores(),
         m_FamiliyIndices(),
         m_Adapter(VK_NULL_HANDLE),
         m_AdapterProperties(),
@@ -49,11 +66,24 @@ namespace Lambda
         m_SwapChain(VK_NULL_HANDLE),
         m_SwapChainFormat(),
         m_SwapChainSize(),
+        m_CurrentFrame(0),
         m_CurrentBackbufferIndex(0),
         m_BackBuffers()
     {       
         assert(s_pInstance == nullptr);
         s_pInstance = this;
+        
+        //Init default descriptorsetlayouts
+        for (uint32 i = 0; i < LAMBDA_SHADERSTAGE_COUNT; i++)
+            m_DefaultDescriptorSetLayouts[i] = VK_NULL_HANDLE;
+        
+        //Init semaphores and fences
+        for (uint32 i = 0; i < FRAMES_AHEAD; i++)
+        {
+            m_ImageSemaphores[i] = VK_NULL_HANDLE;
+            m_RenderSemaphores[i] = VK_NULL_HANDLE;
+            m_Fences[i] = VK_NULL_HANDLE;
+        }
         
         Init(pWindow, desc);
     }
@@ -61,17 +91,54 @@ namespace Lambda
     
     VulkanGraphicsDevice::~VulkanGraphicsDevice()
     {
-        //Destroy semaphores
-        if (m_ImageSemaphore != VK_NULL_HANDLE)
+        //Destroy nullbuffer
+        if (m_pNullBuffer)
         {
-            vkDestroySemaphore(m_Device, m_ImageSemaphore, nullptr);
-            m_ImageSemaphore = VK_NULL_HANDLE;
+            m_pNullBuffer->Destroy(m_Device);
+            m_pNullBuffer = nullptr;
         }
-        if (m_RenderSemaphore != VK_NULL_HANDLE)
+        
+        //Destroy the directcommandlist
+        ICommandList* pDirectCommandList = m_pCommandList;
+        DestroyCommandList(&pDirectCommandList);
+        
+        //Destroy default pipelinelayout
+        if (m_DefaultPipelineLayout != VK_NULL_HANDLE)
         {
-            vkDestroySemaphore(m_Device, m_RenderSemaphore, nullptr);
-            m_RenderSemaphore = VK_NULL_HANDLE;
+            vkDestroyPipelineLayout(m_Device, m_DefaultPipelineLayout, nullptr);
+            m_DefaultPipelineLayout = VK_NULL_HANDLE;
         }
+        
+        //Destroy default descriptorsetlayouts
+        for (uint32 i = 0; i < LAMBDA_SHADERSTAGE_COUNT; i++)
+        {
+            if (m_DefaultDescriptorSetLayouts[i] != VK_NULL_HANDLE)
+            {
+                vkDestroyDescriptorSetLayout(m_Device, m_DefaultDescriptorSetLayouts[i], nullptr);
+                m_DefaultDescriptorSetLayouts[i] = VK_NULL_HANDLE;
+            }
+        }
+        
+        //Destroy semaphores and fences
+        for (uint32 i = 0; i < FRAMES_AHEAD; i++)
+        {
+            if (m_ImageSemaphores[i] != VK_NULL_HANDLE)
+            {
+                vkDestroySemaphore(m_Device, m_ImageSemaphores[i], nullptr);
+                m_ImageSemaphores[i] = VK_NULL_HANDLE;
+            }
+            if (m_RenderSemaphores[i] != VK_NULL_HANDLE)
+            {
+                vkDestroySemaphore(m_Device, m_RenderSemaphores[i], nullptr);
+                m_RenderSemaphores[i] = VK_NULL_HANDLE;
+            }
+            if (m_Fences[i] != VK_NULL_HANDLE)
+            {
+                vkDestroyFence(m_Device, m_Fences[i], nullptr);
+                m_Fences[i] = VK_NULL_HANDLE;
+            }
+        }
+
         
         //Destroy all framebuffers
         VulkanFramebufferCache::Release(m_Device);
@@ -121,20 +188,46 @@ namespace Lambda
     {
         assert(pWindow != nullptr);
         
+        //Init GraphicsDevice
         if (!CreateInstance(desc)) { return; }
         if (!CreateDebugDebugMessenger(desc)) { return; }
         if (!CreateSurface(pWindow)) { return; }
-        if (!QueryAdapter(desc)) { return; }
+        if (!QueryAdapter()) { return; }
         if (!CreateDeviceAndQueues(desc)) { return; }
-        if (!CreateSemaphores()) { return; }
+        if (!CreateSemaphoresAndFences()) { return; }
         if (!CreateSwapChain(pWindow->GetWidth(), pWindow->GetHeight())) { return; }
         if (!CreateTextures()) { return; }
+        if (!CreateDefaultLayouts()) { return; }
+        
+        //Create nulldescriptor
+        {
+            //Create nullbuffer
+            BufferDesc desc = {};
+            desc.SizeInBytes    = 4;
+            desc.Flags          = BUFFER_FLAGS_CONSTANT_BUFFER | BUFFER_FLAGS_VERTEX_BUFFER;
+            desc.StrideInBytes  = 4;
+            desc.Usage          = RESOURCE_USAGE_DEFAULT;
+            
+            m_pNullBuffer = DBG_NEW VulkanBuffer(m_Device, m_Adapter, desc);
+            
+            //Fill in bufferdescriptpr
+            m_NullBufferDescriptor.buffer = reinterpret_cast<VkBuffer>(m_pNullBuffer->GetNativeHandle());
+            m_NullBufferDescriptor.offset = 0;
+            m_NullBufferDescriptor.range  = VK_WHOLE_SIZE;
+        }
+        
+        //Init GraphicsDevice dependent members
+        CreateCommandList(reinterpret_cast<ICommandList**>(&m_pCommandList), COMMAND_LIST_TYPE_GRAPHICS);
+        if (m_pCommandList)
+        {
+            m_pCommandList->SetName("Graphics Device Internal CommandList");
+        }
     }
     
     
     bool VulkanGraphicsDevice::CreateInstance(const GraphicsDeviceDesc& desc)
     {
-        //Aplicationinfo
+        //Applicationinfo
         VkApplicationInfo info = {};
         info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
         info.pNext = nullptr;
@@ -285,6 +378,14 @@ namespace Lambda
         else
         {
             LOG_DEBUG_INFO("Vulkan: Created Vulkan instance\n");
+            
+            //Get instance functions
+            SetDebugUtilsObjectNameEXT = (PFN_vkSetDebugUtilsObjectNameEXT)vkGetInstanceProcAddr(m_Instance, "vkSetDebugUtilsObjectNameEXT");
+            if (!SetDebugUtilsObjectNameEXT)
+            {
+                LOG_DEBUG_ERROR("Vulkan: Failed to retrive 'vkSetDebugUtilsObjectNameEXT'");
+            }
+            
             return true;
         }
     }
@@ -347,7 +448,7 @@ namespace Lambda
     }
     
     
-    bool VulkanGraphicsDevice::QueryAdapter(const GraphicsDeviceDesc& desc)
+    bool VulkanGraphicsDevice::QueryAdapter()
     {
         //Enumerate all adapters
         uint32 adapterCount = 0;
@@ -365,7 +466,7 @@ namespace Lambda
         int i = 0;
         for (const auto& adapter : adapters)
         {
-            if (AdapterIsSuitable(adapter, desc))
+            if (AdapterIsSuitable(adapter))
             {
                 m_Adapter = adapter;
                 break;
@@ -394,7 +495,7 @@ namespace Lambda
     }
     
     
-    bool VulkanGraphicsDevice::AdapterIsSuitable(VkPhysicalDevice adapter, const GraphicsDeviceDesc& desc)
+    bool VulkanGraphicsDevice::AdapterIsSuitable(VkPhysicalDevice adapter)
     {
         VkPhysicalDeviceProperties adapterProperties;
         vkGetPhysicalDeviceProperties(adapter, &adapterProperties);
@@ -415,7 +516,7 @@ namespace Lambda
         }
         
         //Check if required extension for device is supported
-        std::vector<const char*> deviceExtensions = GetRequiredDeviceExtensions(desc.Flags & GRAPHICS_CONTEXT_FLAG_DEBUG);
+        std::vector<const char*> deviceExtensions = GetRequiredDeviceExtensions();
       
         uint32 extensionCount;
         vkEnumerateDeviceExtensionProperties(adapter, nullptr, &extensionCount, nullptr);
@@ -533,7 +634,7 @@ namespace Lambda
         std::vector<const char*> requiredLayers = GetRequiredValidationLayers(desc.Flags & GRAPHICS_CONTEXT_FLAG_DEBUG);
         
         //Get the required extension for device
-        std::vector<const char*> deviceExtensions = GetRequiredDeviceExtensions(desc.Flags & GRAPHICS_CONTEXT_FLAG_DEBUG);
+        std::vector<const char*> deviceExtensions = GetRequiredDeviceExtensions();
         
         //Print all the available extensions
         uint32 extensionCount;
@@ -579,7 +680,7 @@ namespace Lambda
             //Get queues
             vkGetDeviceQueue(m_Device, m_FamiliyIndices.GraphicsFamily, 0, &m_GraphicsQueue);
             vkGetDeviceQueue(m_Device, m_FamiliyIndices.PresentFamily, 0, &m_PresentationQueue);
-            
+           
             return true;
         }
     }
@@ -598,7 +699,7 @@ namespace Lambda
     }
     
     
-    std::vector<const char*> VulkanGraphicsDevice::GetRequiredDeviceExtensions(bool debug)
+    std::vector<const char*> VulkanGraphicsDevice::GetRequiredDeviceExtensions()
     {
         std::vector<const char*> requiredExtensions;
         //Pushback layers
@@ -673,7 +774,7 @@ namespace Lambda
             }
         }
         
-        LOG_DEBUG_INFO("Vulkan: Chosen SwapChain format '%d'\n", format.format);
+        LOG_DEBUG_INFO("Vulkan: Chosen SwapChain format '%s'\n", VkFormatToString(format.format));
         
         //Choose a presentationmode
         VkPresentModeKHR presentationMode = VK_PRESENT_MODE_FIFO_KHR;
@@ -728,7 +829,7 @@ namespace Lambda
         info.imageColorSpace = format.colorSpace;
         info.imageExtent = extent;
         info.imageArrayLayers = 1;
-        info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+        info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT; //Use as color attachment and clear
         info.preTransform = cap.Capabilities.currentTransform;
         info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
         info.presentMode = presentationMode;
@@ -766,7 +867,6 @@ namespace Lambda
             //Save the extent and formats
             m_SwapChainFormat = format.format;
             m_SwapChainSize = extent;
-            
             return true;
         }
     }
@@ -793,14 +893,14 @@ namespace Lambda
             uint32 flags = TEXTURE_FLAGS_RENDER_TARGET;
             
             //Create texture
-            VulkanTexture2D* pTexture = new VulkanTexture2D(textures[i], m_SwapChainSize, FORMAT_B8G8R8A8_UNORM, clearValue, flags, 0, 1);
+            VulkanTexture2D* pTexture = DBG_NEW VulkanTexture2D(textures[i], m_SwapChainSize, ConvertVkFormat(m_SwapChainFormat), clearValue, flags, 0, 1);
             m_BackBuffers.push_back(pTexture);
             
             //Setup image views
             VkImageViewCreateInfo info = {};
             info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
             info.flags = 0;
-            info.image = pTexture->GetResource();
+            info.image = reinterpret_cast<VkImage>(pTexture->GetNativeHandle());
             info.viewType = VK_IMAGE_VIEW_TYPE_2D;
             info.format = m_SwapChainFormat;
             info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -830,33 +930,124 @@ namespace Lambda
         }
         
         //Aquire the first swapchain image
-        vkAcquireNextImageKHR(m_Device, m_SwapChain, std::numeric_limits<uint64>::max(), m_ImageSemaphore, VK_NULL_HANDLE, &m_CurrentBackbufferIndex);
+        m_CurrentFrame = 0;
+        GetNextFrame();
         
         LOG_DEBUG_INFO("Vulkan: Created ImageViews\n");
         return true;
     }
     
     
-    bool VulkanGraphicsDevice::CreateSemaphores()
-    {
+    bool VulkanGraphicsDevice::CreateSemaphoresAndFences()
+    {        
         //Setup semaphore structure
         VkSemaphoreCreateInfo info = {};
         info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
         info.pNext = nullptr;
         info.flags = 0;
         
-        //Create semaphores
-        if (vkCreateSemaphore(m_Device, &info, nullptr, &m_ImageSemaphore) != VK_SUCCESS ||
-            vkCreateSemaphore(m_Device, &info, nullptr, &m_RenderSemaphore) != VK_SUCCESS)
+        //Setup fence struct
+        VkFenceCreateInfo fenceInfo = {};
+        fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+
+        for (uint32 i = 0; i < FRAMES_AHEAD; i++)
         {
-            LOG_DEBUG_ERROR("Vulkan: Failed to create Semaphores\n");
+            //Create semaphores
+            if (vkCreateSemaphore(m_Device, &info, nullptr, &m_ImageSemaphores[i]) != VK_SUCCESS ||
+                vkCreateSemaphore(m_Device, &info, nullptr, &m_RenderSemaphores[i]) != VK_SUCCESS)
+            {
+                LOG_DEBUG_ERROR("Vulkan: Failed to create Semaphores\n");
+                return false;
+            }
+            else
+            {
+                //Set semaphorenames
+                VulkanGraphicsDevice::SetVulkanObjectName(VK_OBJECT_TYPE_SEMAPHORE, (uint64)m_ImageSemaphores[i], "ImageSemaphore[" +  std::to_string(i) + "]");
+                VulkanGraphicsDevice::SetVulkanObjectName(VK_OBJECT_TYPE_SEMAPHORE, (uint64)m_RenderSemaphores[i], "RenderSemaphore[" +  std::to_string(i) + "]");
+            }
+            
+            //Create fence
+            if (vkCreateFence(m_Device, &fenceInfo, nullptr, &m_Fences[i]) != VK_SUCCESS)
+            {
+                LOG_DEBUG_ERROR("Vulkan: Failed to create fence\n");
+                return false;
+            }
+            else
+            {
+                VulkanGraphicsDevice::SetVulkanObjectName(VK_OBJECT_TYPE_FENCE, (uint64)m_Fences[i], "Fence[" +  std::to_string(i) + "]");
+            }
+        }
+        
+        LOG_DEBUG_INFO("Vulkan: Created Semaphores and fences\n");
+        return true;
+    }
+    
+    
+    bool VulkanGraphicsDevice::CreateDefaultLayouts()
+    {
+        VkShaderStageFlagBits shaderStages[] =
+        {
+            VK_SHADER_STAGE_VERTEX_BIT,
+            VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT,
+            VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT,
+            VK_SHADER_STAGE_GEOMETRY_BIT,
+            VK_SHADER_STAGE_FRAGMENT_BIT,
+        };
+        
+        //Create descriptor layout
+        VkDescriptorSetLayoutBinding uboLayoutBinding = {};
+        uboLayoutBinding.descriptorType     = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        uboLayoutBinding.binding            = 0;
+        uboLayoutBinding.descriptorCount    = LAMBDA_SHADERSTAGE_UNIFORM_COUNT;
+        uboLayoutBinding.pImmutableSamplers = nullptr;
+        
+        VkDescriptorSetLayoutCreateInfo descriptorLayoutInfo = {};
+        descriptorLayoutInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        descriptorLayoutInfo.pNext        = nullptr;
+        descriptorLayoutInfo.flags        = 0;
+        descriptorLayoutInfo.bindingCount = 1;
+        descriptorLayoutInfo.pBindings    = &uboLayoutBinding;
+        
+        for (uint32 i = 0; i < LAMBDA_SHADERSTAGE_COUNT; i++)
+        {
+            //Set shaderstage
+            uboLayoutBinding.stageFlags = shaderStages[i];
+            
+            //Create layout for shaderstage
+            if (vkCreateDescriptorSetLayout(m_Device, &descriptorLayoutInfo, nullptr, &m_DefaultDescriptorSetLayouts[i]) != VK_SUCCESS)
+            {
+                LOG_DEBUG_ERROR("Vulkan: Failed to create default DescriptorSetLayout\n");
+                return false;
+            }
+            else
+            {
+                LOG_DEBUG_INFO("Vulkan: Created default DescriptorSetLayout\n");
+            }
+        }
+
+        
+        //Setup pipelinelayout
+        VkPipelineLayoutCreateInfo layoutInfo = {};
+        layoutInfo.sType                    = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+        layoutInfo.flags                    = 0;
+        layoutInfo.pNext                    = nullptr;
+        layoutInfo.setLayoutCount           = LAMBDA_SHADERSTAGE_COUNT;
+        layoutInfo.pSetLayouts              = m_DefaultDescriptorSetLayouts;
+        layoutInfo.pushConstantRangeCount   = 0;
+        layoutInfo.pPushConstantRanges      = nullptr;
+        
+        //Create pipelinelayout
+        if (vkCreatePipelineLayout(m_Device, &layoutInfo, nullptr, &m_DefaultPipelineLayout) != VK_SUCCESS)
+        {
+            LOG_DEBUG_ERROR("Vulkan: Failed to create default PipelineLayout\n");
             return false;
         }
         else
         {
-            LOG_DEBUG_INFO("Vulkan: Created Semaphores\n");
-            return true;
+            LOG_DEBUG_INFO("Vulkan: Created default PipelineLayout\n");
         }
+        
+        return true;
     }
     
     
@@ -884,17 +1075,72 @@ namespace Lambda
     }
     
     
+    void VulkanGraphicsDevice::GetNextFrame() const
+    {
+        //Advance current frame counter
+        m_CurrentFrame = (m_CurrentFrame + 1) % FRAMES_AHEAD;
+        
+        //Aquire the next swapchain image
+        vkAcquireNextImageKHR(m_Device, m_SwapChain, std::numeric_limits<uint64>::max(), m_ImageSemaphores[m_CurrentFrame], VK_NULL_HANDLE, &m_CurrentBackbufferIndex);
+    }
+    
+    
     void VulkanGraphicsDevice::CreateCommandList(ICommandList** ppList, CommandListType type) const
     {
         assert(ppList != nullptr);
-        (*ppList) = new VulkanCommandList(m_Device, type);
+        (*ppList) = DBG_NEW VulkanCommandList(m_Device, type);
     }
     
     
     void VulkanGraphicsDevice::CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) const
     {
         assert(ppBuffer != nullptr);
-        (*ppBuffer) = new VulkanBuffer(m_Device, m_Adapter, pInitalData, desc);
+        
+        //Create buffer
+        VulkanBuffer* pBuffer = DBG_NEW VulkanBuffer(m_Device, m_Adapter, desc);
+        
+        //Upload inital data
+        if (pInitalData)
+        {
+            if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
+            {
+                //Upload directly to buffer if it is dynamic
+                void* pData = nullptr;
+                pBuffer->Map(&pData);
+                memcpy(pData, pInitalData->pData, pInitalData->SizeInBytes);
+                pBuffer->Unmap();
+            }
+            else if (desc.Usage == RESOURCE_USAGE_DEFAULT)
+            {
+                //Prepare commandlist
+                m_pCommandList->Reset();
+                
+                //Update data with inital data
+                m_pCommandList->UpdateBuffer(pBuffer, pInitalData);
+                
+                //Execute commands
+                m_pCommandList->Close();
+                
+                VkCommandBuffer buffers[] =
+                {
+                    reinterpret_cast<VkCommandBuffer>(m_pCommandList->GetNativeHandle())
+                };
+                
+                VkSubmitInfo submitInfo = {};
+                submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+                submitInfo.pNext = nullptr;
+                submitInfo.commandBufferCount = 1;
+                submitInfo.pCommandBuffers = buffers;
+                
+                vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+                
+                //Wait until buffer is copied
+                WaitForGPU();
+            }
+        }
+        
+        //Set inputptr to the newly created buffer
+        (*ppBuffer) = pBuffer;
     }
     
     
@@ -906,7 +1152,7 @@ namespace Lambda
     void VulkanGraphicsDevice::CreateShader(IShader** ppShader, const ShaderDesc& desc) const
     {
         assert(ppShader != nullptr);
-        (*ppShader) = new VulkanShader(m_Device, desc);
+        (*ppShader) = DBG_NEW VulkanShader(m_Device, desc);
     }
     
     
@@ -918,7 +1164,7 @@ namespace Lambda
     void VulkanGraphicsDevice::CreateGraphicsPipelineState(IGraphicsPipelineState** ppPSO, const GraphicsPipelineStateDesc& desc) const
     {
         assert(ppPSO != nullptr);
-        (*ppPSO) = new VulkanGraphicsPipelineState(m_Device, desc);
+        (*ppPSO) = DBG_NEW VulkanGraphicsPipelineState(m_Device, desc);
     }
     
     
@@ -1023,15 +1269,17 @@ namespace Lambda
     
     void VulkanGraphicsDevice::ExecuteCommandList(ICommandList* const * ppLists, uint32 numLists) const
     {
+        //LOG_DEBUG_INFO("Vulkan: VulkanGraphicsDevice::ExecuteCommandList currentFrame=%u\n", m_CurrentFrame);
+        
         //Retrive commandbuffers
         std::vector<VkCommandBuffer> buffers;
         for (uint32 i = 0; i < numLists; i++)
             buffers.push_back(reinterpret_cast<VkCommandBuffer>(ppLists[i]->GetNativeHandle()));
         
         //Setup submitinfo
-        VkSemaphore waitSemaphores[] = { m_ImageSemaphore };
-        VkSemaphore signalSemaphores[] = { m_RenderSemaphore };
-        VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+        VkSemaphore waitSemaphores[]        = { m_ImageSemaphores[m_CurrentFrame] };
+        VkSemaphore signalSemaphores[]      = { m_RenderSemaphores[m_CurrentFrame] };
+        VkPipelineStageFlags waitStages[]   = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
         
         VkSubmitInfo submitInfo = {};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -1045,7 +1293,7 @@ namespace Lambda
         submitInfo.pSignalSemaphores = signalSemaphores;
 
         //submit commandbuffers
-        if (vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS)
+        if (vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, m_Fences[m_CurrentFrame]) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to submit CommandBuffers\n");
         }
@@ -1055,7 +1303,7 @@ namespace Lambda
     void VulkanGraphicsDevice::Present(uint32 verticalSync) const
     {
         //Setup presentinfo
-        VkSemaphore signalSemaphores[] = { m_RenderSemaphore };
+        VkSemaphore signalSemaphores[] = { m_RenderSemaphores[m_CurrentFrame] };
         VkSwapchainKHR swapChains[] = { m_SwapChain };
         
         VkPresentInfoKHR info = {};
@@ -1077,19 +1325,18 @@ namespace Lambda
     void VulkanGraphicsDevice::GPUWaitForFrame() const
     {
         //Wait for last frame
-        vkDeviceWaitIdle(m_Device);
-        vkQueueWaitIdle(m_GraphicsQueue);
+        vkWaitForFences(m_Device, 1, &m_Fences[m_CurrentFrame], VK_TRUE, std::numeric_limits<uint64_t>::max());
+        vkResetFences(m_Device, 1, &m_Fences[m_CurrentFrame]);
         
-        //LOG_DEBUG_INFO("VulkanGraphicsDevice::GPUWaitForFrame\n");
-        //Aquire the next swapchain image
-        vkAcquireNextImageKHR(m_Device, m_SwapChain, std::numeric_limits<uint64>::max(), m_ImageSemaphore, VK_NULL_HANDLE, &m_CurrentBackbufferIndex);
+        //LOG_DEBUG_INFO("VulkanGraphicsDevice::GPUWaitForFrame, currentframe=%u\n", m_CurrentFrame);
+        
+        GetNextFrame();
     }
     
     
     void VulkanGraphicsDevice::WaitForGPU() const
     {
         //LOG_DEBUG_INFO("VulkanGraphicsDevice::WaitForGPU\n");
-        vkDeviceWaitIdle(m_Device);
         vkQueueWaitIdle(m_GraphicsQueue);
     }
 
@@ -1124,10 +1371,8 @@ namespace Lambda
                 return false;
             }
             
-            else if (event.WindowResize.Width == m_SwapChainSize.width && event.WindowResize.Height == m_SwapChainSize.height)
-            
             //Syncronize the GPU so no operations are in flight when recreating swapchain
-            WaitForGPU();
+            vkDeviceWaitIdle(m_Device);
             
             //Release the old SwapChain
             ReleaseSwapChain();
@@ -1147,5 +1392,25 @@ namespace Lambda
         }
         
         return false;
+    }
+    
+    
+    void VulkanGraphicsDevice::SetVulkanObjectName(VkObjectType type, uint64 objectHandle, const std::string& name)
+    {
+        if (SetDebugUtilsObjectNameEXT)
+        {
+            //Set name on object
+            VkDebugUtilsObjectNameInfoEXT info = {};
+            info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+            info.pNext = nullptr;
+            info.objectType = type;
+            info.pObjectName = name.c_str();
+            info.objectHandle = objectHandle;
+            
+            if (SetDebugUtilsObjectNameEXT(VulkanGraphicsDevice::GetCurrentDevice(), &info) != VK_SUCCESS)
+            {
+                LOG_DEBUG_ERROR("Vulkan: Failed to set name '%s'\n", info.pObjectName);
+            }
+        }
     }
 }

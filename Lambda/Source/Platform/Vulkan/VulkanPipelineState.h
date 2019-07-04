@@ -4,6 +4,7 @@
 
 namespace Lambda
 {
+    //Vulkan implementation of GraphicsPipelineState
     class VulkanGraphicsPipelineState final : public IGraphicsPipelineState
     {
     public:
@@ -12,8 +13,9 @@ namespace Lambda
         VulkanGraphicsPipelineState(VkDevice device, const GraphicsPipelineStateDesc& desc);
         VulkanGraphicsPipelineState() = default;
         
+        virtual void* GetNativeHandle() const override final;
+        
         void Destroy(VkDevice device);
-        VkPipeline GetPipeline() const;
         VkRenderPass GetRenderPass() const;
         
     private:
@@ -22,14 +24,7 @@ namespace Lambda
     private:
         VkPipeline m_Pipeline;
         VkRenderPass m_RenderPass;
-        VkPipelineLayout m_PipelineLayout;
     };
-    
-    
-    inline VkPipeline VulkanGraphicsPipelineState::GetPipeline() const
-    {
-        return m_Pipeline;
-    }
     
     
     inline VkRenderPass VulkanGraphicsPipelineState::GetRenderPass() const

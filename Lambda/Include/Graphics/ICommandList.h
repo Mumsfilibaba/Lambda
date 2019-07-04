@@ -44,12 +44,9 @@ namespace Lambda
 		virtual void SetRenderTarget(ITexture2D* pRenderTarget, ITexture2D* pDepthStencil) = 0;
 		virtual void SetViewport(const Viewport& viewport) = 0;
 		virtual void SetScissorRect(const Math::Rectangle& scissorRect) = 0;
-		virtual void SetPrimtiveTopology(PrimitiveTopology topology) = 0;
 		virtual void SetGraphicsPipelineState(IGraphicsPipelineState* pPSO) = 0;
 		virtual void SetVertexBuffer(IBuffer* pBuffer, uint32 slot) = 0;
-
-		virtual CommandListType GetType() const = 0;
-        virtual void* GetNativeHandle() const = 0;
+        virtual void SetIndexBuffer(IBuffer* pBuffer) = 0;
 
 		virtual void VSSetConstantBuffers(const IBuffer* const * ppBuffers, uint32 numBuffers, uint32 startSlot) = 0;
 		virtual void VSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot) = 0;
@@ -80,10 +77,14 @@ namespace Lambda
 		virtual void TransitionResource(ITexture2D* pResource, ResourceState resourceState) = 0;
 
 		virtual void DrawInstanced(uint32 vertexCountPerInstance, uint32 instanceCount, uint32 startVertexLocation, uint32 startInstanceLocation) = 0;
+        virtual void DrawIndexedInstanced(uint32 indexCountPerInstance, uint32 instanceCount, uint32 startIndexLocation, uint32 baseVertexLocation, uint32 startInstanceLocation) = 0;
 
 		virtual void SetName(const char* pName) = 0;
 
 		virtual void Close() = 0;
 		virtual void Reset() = 0;
+        
+        virtual CommandListType GetType() const = 0;
+        virtual void* GetNativeHandle() const = 0;
 	};
 }

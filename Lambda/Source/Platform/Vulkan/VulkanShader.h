@@ -14,11 +14,11 @@ namespace Lambda
         VulkanShader(VkDevice device, const ShaderDesc& desc);
         ~VulkanShader() = default;
         
-        void Destroy(VkDevice device);
         virtual ShaderType GetType() const override final;
+        virtual void* GetNativeHandle() const override final;
+        virtual const char* GetEntryPoint() const override final;
         
-        const char* GetEntryPoint() const;
-        VkShaderModule GetShaderModule() const;
+        void Destroy(VkDevice device);
         
     private:
         void Init(VkDevice device, const ShaderDesc& desc);
@@ -29,16 +29,4 @@ namespace Lambda
         std::string m_EntryPoint;
         ShaderType m_Type;
     };
-    
-    
-    inline const char* VulkanShader::GetEntryPoint() const
-    {
-        return m_EntryPoint.c_str();
-    }
-    
-    
-    inline VkShaderModule VulkanShader::GetShaderModule() const
-    {
-        return m_Shader;
-    }
 }
