@@ -3,8 +3,11 @@
 
 #if defined(LAMBDA_EXPORT)
 	#if defined(LAMBDA_PLAT_WINDOWS)
-		#define WIN32_LEAN_AND_MEAN
-		#include <Windows.h>
+        //All headers specific for windows
+		#define WIN32_LEAN_AND_MEAN //Remove unneccesary stuff
+        #define NOMINMAX //Remove min max macros
+
+        #include <Windows.h>
 		#include <Windowsx.h>
 		#include <crtdbg.h>
 

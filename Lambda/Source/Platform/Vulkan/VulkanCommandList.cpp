@@ -5,6 +5,7 @@
 #include "VulkanTexture2D.h"
 #include "VulkanFramebufferCache.h"
 #include "VulkanBuffer.h"
+#include "VulkanConversions.inl"
 
 namespace Lambda
 {
@@ -71,20 +72,27 @@ namespace Lambda
             //Init upload buffers
             VkPhysicalDevice adapter = reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance())->GetAdapter();
             if (!m_BufferUpload.Init(device, adapter, MB(16))) { return; }
+            if (!m_TextureUpload.Init(device, adapter, MB(32))) { return; }
         }
         
         //Describe how many descriptors we want to create
-        VkDescriptorPoolSize poolSize = {};
-        poolSize.type               = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        poolSize.descriptorCount    = LAMBDA_SHADERSTAGE_COUNT * LAMBDA_SHADERSTAGE_UNIFORM_COUNT;
+        VkDescriptorPoolSize poolSizes[3] = {};
+        poolSizes[0].type               = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        poolSizes[0].descriptorCount    = LAMBDA_SHADERSTAGE_COUNT * LAMBDA_SHADERSTAGE_UNIFORM_COUNT;
+        
+        poolSizes[1].type               = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+        poolSizes[1].descriptorCount    = LAMBDA_SHADERSTAGE_COUNT * LAMBDA_SHADERSTAGE_TEXTURE_COUNT;
+        
+        poolSizes[2].type               = VK_DESCRIPTOR_TYPE_SAMPLER;
+        poolSizes[2].descriptorCount    = LAMBDA_SHADERSTAGE_COUNT * LAMBDA_SHADERSTAGE_SAMPLER_COUNT;
         
         //Setup descriptorpool
         VkDescriptorPoolCreateInfo descriptorPoolInfo = {};
         descriptorPoolInfo.sType          = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
         descriptorPoolInfo.flags          = 0;
         descriptorPoolInfo.pNext          = nullptr;
-        descriptorPoolInfo.poolSizeCount  = 1;
-        descriptorPoolInfo.pPoolSizes     = &poolSize;
+        descriptorPoolInfo.poolSizeCount  = 3;
+        descriptorPoolInfo.pPoolSizes     = poolSizes;
         descriptorPoolInfo.maxSets        = LAMBDA_SHADERSTAGE_COUNT;
         
         if (vkCreateDescriptorPool(m_Device, &descriptorPoolInfo, nullptr, &m_DescriptorPool) != VK_SUCCESS)
@@ -149,6 +157,7 @@ namespace Lambda
         
         //Destroy uploadbuffer
         m_BufferUpload.Destroy(device);
+        m_TextureUpload.Destroy(device);
         
         //Destroy descriptorpool
         if (m_DescriptorPool != VK_NULL_HANDLE)
@@ -267,18 +276,69 @@ namespace Lambda
     }
     
     
-    void VulkanCommandList::TransitionResource(IBuffer* pResource, ResourceState resourceState)
+    void VulkanCommandList::TransitionBuffer(IBuffer* pBuffer, ResourceState resourceState)
     {
     }
     
     
-    void VulkanCommandList::TransitionResource(ITexture2D* pResource, ResourceState resourceState)
+    void VulkanCommandList::TransitionTexture(ITexture2D* pTexture, ResourceState resourceState)
     {
+        //Get image
+        VkImage image = reinterpret_cast<VkImage>(pTexture->GetNativeHandle());
+        
+        //Setup barrier
+        VkImageMemoryBarrier barrier = {};
+        barrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        barrier.oldLayout                       = reinterpret_cast<VulkanTexture2D*>(pTexture)->GetCurrentResourceState();
+        barrier.newLayout                       = ConvertResourceStateToImageLayout(resourceState);
+        barrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+        barrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+        barrier.image                           = image;
+        barrier.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+        barrier.subresourceRange.baseMipLevel   = 0;
+        barrier.subresourceRange.levelCount     = 1;
+        barrier.subresourceRange.baseArrayLayer = 0;
+        barrier.subresourceRange.layerCount     = 1;
+        barrier.srcAccessMask                   = 0; // TODO
+        barrier.dstAccessMask                   = 0; // TODO
+        
+        //Set flags and stage
+        VkPipelineStageFlags sourceStage        = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        VkPipelineStageFlags destinationStage   = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        
+        if (barrier.oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && barrier.newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+        {
+            barrier.srcAccessMask = 0;
+            barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+            
+            sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+            destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+        }
+        else if (barrier.oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && barrier.newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+        {
+            barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+            barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+            
+            sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+            destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        }
+        else
+        {
+            LOG_DEBUG_ERROR("Vulkan: Unsupported layout transition\n");
+        }
+        
+        
+        //Move image to correct layout (Resource state)
+        vkCmdPipelineBarrier(m_CommandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+        
+        //Set the new state to the texture
+        reinterpret_cast<VulkanTexture2D*>(pTexture)->SetCurrentResourceState(barrier.newLayout);
     }
     
     
     void VulkanCommandList::VSSetConstantBuffers(const IBuffer* const* ppBuffers, uint32 numBuffers, uint32 startSlot)
     {
+        InternalWriteConstantBufferDescriptorsToStage(LAMBDA_SHADERSTAGE_VERTEX, startSlot, ppBuffers, numBuffers);
     }
     
     
@@ -294,6 +354,7 @@ namespace Lambda
     
     void VulkanCommandList::HSSetConstantBuffers(const IBuffer* const* ppBuffers, uint32 numBuffers, uint32 startSlot)
     {
+         InternalWriteConstantBufferDescriptorsToStage(LAMBDA_SHADERSTAGE_HULL, startSlot, ppBuffers, numBuffers);
     }
     
     
@@ -309,6 +370,7 @@ namespace Lambda
     
     void VulkanCommandList::DSSetConstantBuffers(const IBuffer* const* ppBuffers, uint32 numBuffers, uint32 startSlot)
     {
+         InternalWriteConstantBufferDescriptorsToStage(LAMBDA_SHADERSTAGE_DOMAIN, startSlot, ppBuffers, numBuffers);
     }
     
     
@@ -324,6 +386,7 @@ namespace Lambda
     
     void VulkanCommandList::GSSetConstantBuffers(const IBuffer* const* ppBuffers, uint32 numBuffers, uint32 startSlot)
     {
+         InternalWriteConstantBufferDescriptorsToStage(LAMBDA_SHADERSTAGE_GEOMETRY, startSlot, ppBuffers, numBuffers);
     }
     
     
@@ -339,28 +402,7 @@ namespace Lambda
     
     void VulkanCommandList::PSSetConstantBuffers(const IBuffer* const* ppBuffers, uint32 numBuffers, uint32 startSlot)
     {
-        //Set the buffers
-        for (uint32 i = 0; i < numBuffers; i++)
-        {
-            m_ShaderSages[LAMBDA_SHADERSTAGE_PIXEL].UBInfos[startSlot + i].buffer = reinterpret_cast<VkBuffer>(ppBuffers[i]->GetNativeHandle());
-            m_ShaderSages[LAMBDA_SHADERSTAGE_PIXEL].UBInfos[startSlot + i].offset = 0;
-            m_ShaderSages[LAMBDA_SHADERSTAGE_PIXEL].UBInfos[startSlot + i].range = ppBuffers[i]->GetSizeInBytes();
-        }
-        
-        //Setup write
-        VkWriteDescriptorSet descriptorWrite = {};
-        descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptorWrite.dstSet = m_DescriptorSets[LAMBDA_SHADERSTAGE_PIXEL];
-        descriptorWrite.dstBinding = 0;
-        descriptorWrite.dstArrayElement = 0;
-        descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        descriptorWrite.descriptorCount = numBuffers;
-        descriptorWrite.pBufferInfo = m_ShaderSages[LAMBDA_SHADERSTAGE_PIXEL].UBInfos + startSlot;
-        descriptorWrite.pImageInfo = nullptr;
-        descriptorWrite.pTexelBufferView = nullptr;
-        
-        //Update descriptors
-        vkUpdateDescriptorSets(m_Device, 1, &descriptorWrite, 0, nullptr);
+        InternalWriteConstantBufferDescriptorsToStage(LAMBDA_SHADERSTAGE_PIXEL, startSlot, ppBuffers, numBuffers);
     }
     
     
@@ -396,7 +438,34 @@ namespace Lambda
     
     
     void VulkanCommandList::UpdateTexture(ITexture2D* pResource, const ResourceData* pData, uint32 subresource)
-    {
+    {       
+        //Get offset before allocating
+        uint64 offset = m_TextureUpload.GetOffset();
+        
+        //Allocate memory in the uploadbuffer
+        void* pMem = m_TextureUpload.Allocate(pData->SizeInBytes);
+        
+        //Copy data to GPU
+        memcpy(pMem, pData->pData, pData->SizeInBytes);
+        
+        //Setup copy buffer
+        VkBufferImageCopy region = {};
+        region.bufferOffset                     = offset;
+        region.bufferRowLength                  = 0;
+        region.bufferImageHeight                = 0;
+        region.imageSubresource.aspectMask      = VK_IMAGE_ASPECT_COLOR_BIT;
+        region.imageSubresource.mipLevel        = 0;
+        region.imageSubresource.baseArrayLayer  = 0;
+        region.imageSubresource.layerCount      = 1;
+        region.imageOffset                      = { 0, 0, 0 };
+        region.imageExtent                      = { pResource->GetWidth(), pResource->GetHeight(), 1 };
+        
+        //Get native resources
+        VkBuffer buffer = m_TextureUpload.GetBuffer();
+        VkImage image = reinterpret_cast<VkImage>(pResource->GetNativeHandle());
+        
+        //Copy buffer to image
+        vkCmdCopyBufferToImage(m_CommandBuffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
     }
     
     
@@ -417,6 +486,7 @@ namespace Lambda
         VkClearValue clearColor;
         clearColor.color = m_ClearColor;
         
+        //Begin renderpass
         VkRenderPassBeginInfo info = {};
         info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
         info.renderPass = m_RenderPass;
@@ -429,9 +499,13 @@ namespace Lambda
         
         vkCmdBeginRenderPass(m_CommandBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
         
+        //Set descriptorsets
         vkCmdBindDescriptorSets(m_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, LAMBDA_SHADERSTAGE_COUNT, m_DescriptorSets, 0, nullptr);
+        
+        //Draw current vertexbuffer
         vkCmdDraw(m_CommandBuffer, vertexCountPerInstance, instanceCount, startVertexLocation, startInstanceLocation);
         
+        //End renderpass
         vkCmdEndRenderPass(m_CommandBuffer);
     }
     
@@ -441,6 +515,7 @@ namespace Lambda
         VkClearValue clearColor;
         clearColor.color = m_ClearColor;
         
+        //Begin renderpass
         VkRenderPassBeginInfo info = {};
         info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
         info.renderPass = m_RenderPass;
@@ -453,16 +528,24 @@ namespace Lambda
         
         vkCmdBeginRenderPass(m_CommandBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
         
+        //Bind descriptors
         vkCmdBindDescriptorSets(m_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, LAMBDA_SHADERSTAGE_COUNT, m_DescriptorSets, 0, nullptr);
+        
+        //Draw current vertex- and indexbuffer
         vkCmdDrawIndexed(m_CommandBuffer, indexCountPerInstance, instanceCount, startIndexLocation, baseVertexLocation, startInstanceLocation);
         
+        //End renderpass
         vkCmdEndRenderPass(m_CommandBuffer);
     }
     
     
     void VulkanCommandList::SetName(const char* pName)
     {
+        //Set internal name
         m_Name = std::string(pName);
+        
+        //Set name in vulkan
+        VulkanGraphicsDevice::SetVulkanObjectName(VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64)m_CommandBuffer, m_Name);
     }
     
     
@@ -498,5 +581,5 @@ namespace Lambda
         
         //Reset uploadbuffer
         m_BufferUpload.Reset();
-    }
+    }    
 }

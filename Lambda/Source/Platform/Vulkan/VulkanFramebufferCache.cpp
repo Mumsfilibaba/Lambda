@@ -31,7 +31,7 @@ namespace Lambda
         for (uint32 i = 0; i < numRenderTargets; i++)
         {
             //Add attachment
-            attachments.push_back(reinterpret_cast<const VulkanTexture2D*>(ppRendertargets[i])->GetImageView(0));
+            attachments.push_back(reinterpret_cast<const VulkanTexture2D*>(ppRendertargets[i])->GetImageView());
             
             //Check dimensions
             Texture2DDesc desc = ppRendertargets[i]->GetDesc();
@@ -54,7 +54,7 @@ namespace Lambda
         if (pDepthStencil)
         {
             //Add attachment
-            attachments.push_back(reinterpret_cast<const VulkanTexture2D*>(pDepthStencil)->GetImageView(0));
+            attachments.push_back(reinterpret_cast<const VulkanTexture2D*>(pDepthStencil)->GetImageView());
             
             //Check dimensions
             Texture2DDesc desc = pDepthStencil->GetDesc();

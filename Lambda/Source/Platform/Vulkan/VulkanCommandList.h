@@ -1,6 +1,7 @@
 #pragma once
 #include "Graphics/ICommandList.h"
 #include "VulkanUploadBuffer.h"
+#include "VulkanBuffer.h"
 #include <string>
 #include <vulkan/vulkan.h>
 #include "VulkanHelpers.inl"
@@ -39,8 +40,8 @@ namespace Lambda
         virtual void SetVertexBuffer(IBuffer* pBuffer, uint32 slot) override final;
         virtual void SetIndexBuffer(IBuffer* pBuffer) override final;
         
-        virtual void TransitionResource(IBuffer* pResource, ResourceState resourceState) override final;
-        virtual void TransitionResource(ITexture2D* pResource, ResourceState resourceState) override final;
+        virtual void TransitionBuffer(IBuffer* pBuffer, ResourceState resourceState) override final;
+        virtual void TransitionTexture(ITexture2D* pTexture, ResourceState resourceState) override final;
         
         virtual void VSSetConstantBuffers(const IBuffer* const* ppBuffers, uint32 numBuffers, uint32 startSlot) override final;
         virtual void VSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot) override final;
@@ -82,6 +83,7 @@ namespace Lambda
         
     private:
         void Init(VkDevice device, CommandListType type);
+        void InternalWriteConstantBufferDescriptorsToStage(uint32 shaderStage, uint32 startSlot, const IBuffer* const* ppBuffers, uint32 numBuffers);
         
     private:
         VkDevice m_Device; //Store the device that was used when creating device
@@ -89,15 +91,16 @@ namespace Lambda
         VkCommandBuffer m_CommandBuffer;
         
         VulkanUploadBuffer m_BufferUpload;
+        VulkanUploadBuffer m_TextureUpload;
         
         VkClearColorValue m_ClearColor;
-        
-        CommandListType m_Type;
-        std::string m_Name;
         
         VkDescriptorSet m_DescriptorSets[LAMBDA_SHADERSTAGE_COUNT];
         VkDescriptorPool m_DescriptorPool;
         VulkanShaderStageData m_ShaderSages[LAMBDA_SHADERSTAGE_COUNT];
+        
+        CommandListType m_Type;
+        std::string m_Name;
         
         //Temp?
         VkRenderPass m_RenderPass;
@@ -105,4 +108,31 @@ namespace Lambda
         const ITexture2D* m_pRT;
         const ITexture2D* m_pDS;
     };
+    
+    
+    inline void VulkanCommandList::InternalWriteConstantBufferDescriptorsToStage(uint32 shaderStage, uint32 startSlot, const IBuffer* const* ppBuffers, uint32 numBuffers)
+    {
+        //Set the buffers
+        for (uint32 i = 0; i < numBuffers; i++)
+        {
+            m_ShaderSages[shaderStage].UBInfos[startSlot + i].buffer   = reinterpret_cast<VkBuffer>(ppBuffers[i]->GetNativeHandle());
+            m_ShaderSages[shaderStage].UBInfos[startSlot + i].offset   = 0;
+            m_ShaderSages[shaderStage].UBInfos[startSlot + i].range    = ppBuffers[i]->GetSizeInBytes();
+        }
+        
+        //Setup write
+        VkWriteDescriptorSet descriptorWrite = {};
+        descriptorWrite.sType               = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrite.dstSet              = m_DescriptorSets[shaderStage];
+        descriptorWrite.dstBinding          = 0;
+        descriptorWrite.dstArrayElement     = 0;
+        descriptorWrite.descriptorType      = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        descriptorWrite.descriptorCount     = numBuffers;
+        descriptorWrite.pBufferInfo         = m_ShaderSages[shaderStage].UBInfos + startSlot;
+        descriptorWrite.pImageInfo          = nullptr;
+        descriptorWrite.pTexelBufferView    = nullptr;
+        
+        //Update descriptors
+        vkUpdateDescriptorSets(m_Device, 1, &descriptorWrite, 0, nullptr);
+    }
 }

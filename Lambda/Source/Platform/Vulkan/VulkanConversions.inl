@@ -132,4 +132,16 @@ namespace Lambda
             default: return PRIMITIVE_TOPOLOGY_UNKNOWN;
         }
     }
+    
+    
+    inline VkImageLayout ConvertResourceStateToImageLayout(ResourceState state)
+    {
+        switch (state)
+        {
+            case RESOURCE_STATE_PIXEL_SHADER_RESOURCE:  return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            case RESOURCE_STATE_COPY_DEST:              return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            case RESOURCE_STATE_UNKNOWN:
+            default: return VK_IMAGE_LAYOUT_UNDEFINED;
+        }
+    }
 }

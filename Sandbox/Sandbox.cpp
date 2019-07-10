@@ -73,7 +73,7 @@ namespace Lambda
             {
                 InputElement elements[]
                 {
-                    { "POSITION",   FORMAT_R32G32B32_FLOAT, 0, 0, sizeof(Vec3f) * 2, 0, false },
+                    { "POSITION",   FORMAT_R32G32B32_FLOAT, 0, 0, sizeof(Vec3f) * 2, 0,             false },
                     { "COLOR",      FORMAT_R32G32B32_FLOAT, 0, 1, sizeof(Vec3f) * 2, sizeof(Vec3f), false }
                 };
                 
@@ -116,7 +116,7 @@ namespace Lambda
                 pDevice->CreateBuffer(&m_pVertexBuffer, &data, desc);
                 if (m_pCurrentList)
                 {
-                    m_pCurrentList->TransitionResource(m_pVertexBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+                    m_pCurrentList->TransitionBuffer(m_pVertexBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
                 }
             }
             
@@ -197,17 +197,17 @@ namespace Lambda
             }*/
 
             //Create texture
-            /*m_pTexture = ITexture2D::CreateTextureFromFile(pDevice, "texture.jpg", TEXTURE_FLAGS_SHADER_RESOURCE, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
+            m_pTexture = ITexture2D::CreateTextureFromFile(pDevice, "texture.jpg", TEXTURE_FLAGS_SHADER_RESOURCE, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
             if (m_pCurrentList)
             {
-                m_pCurrentList->TransitionResource(m_pTexture, RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-            }*/
+                m_pCurrentList->TransitionTexture(m_pTexture, RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+            }
 
             //Create samplerstate
-            /*{
+            {
                 SamplerDesc desc = {};
                 pDevice->CreateSamplerState(&m_pSampler, desc);
-            }*/
+            }
 
             //Close and execute commandlist
             /*if (m_pCurrentList)
@@ -244,9 +244,9 @@ namespace Lambda
                 float color[] = { 0.392f, 0.584f, 0.929f, 1.0f };
                 ITexture2D* pRenderTarget = pDevice->GetCurrentRenderTarget();
                 
-                m_pCurrentList->TransitionResource(pRenderTarget, RESOURCE_STATE_RENDERTARGET);
+                //m_pCurrentList->TransitionTexture(pRenderTarget, RESOURCE_STATE_RENDERTARGET);
                 m_pCurrentList->ClearRenderTarget(pRenderTarget, color);
-                m_pCurrentList->TransitionResource(m_pDepthBuffer, RESOURCE_STATE_DEPTH_WRITE);
+                //m_pCurrentList->TransitionTexture(m_pDepthBuffer, RESOURCE_STATE_DEPTH_WRITE);
                 m_pCurrentList->ClearDepthStencil(m_pDepthBuffer, 1.0f, 0);
                 m_pCurrentList->SetRenderTarget(pRenderTarget, m_pDepthBuffer);
                 
@@ -295,9 +295,9 @@ namespace Lambda
                 data.pData = &colorBuff;
                 data.SizeInBytes = sizeof(Vec4f);
                 
-                m_pCurrentList->TransitionResource(m_pColorBuffer, RESOURCE_STATE_COPY_DEST);
+                m_pCurrentList->TransitionBuffer(m_pColorBuffer, RESOURCE_STATE_COPY_DEST);
                 m_pCurrentList->UpdateBuffer(m_pColorBuffer, &data);
-                m_pCurrentList->TransitionResource(m_pColorBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+                m_pCurrentList->TransitionBuffer(m_pColorBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
                 
                 //m_pCurrentList->VSSetConstantBuffers(&m_pCameraBuffer, 1, 0);
                 m_pCurrentList->PSSetConstantBuffers(&m_pColorBuffer, 1, 0);
@@ -312,7 +312,7 @@ namespace Lambda
                 
                 m_pCurrentList->DrawIndexedInstanced(6, 1, 0, 0, 0);
                 
-                m_pCurrentList->TransitionResource(pRenderTarget, RESOURCE_STATE_PRESENT_COMMON);
+                //m_pCurrentList->TransitionTexture(pRenderTarget, RESOURCE_STATE_PRESENT_COMMON);
                 
                 m_pCurrentList->Close();
                 
@@ -347,8 +347,8 @@ namespace Lambda
             pDevice->DestroyBuffer(&m_pColorBuffer);
             //pDevice->DestroyBuffer(&m_pCameraBuffer);
             //pDevice->DestroyTexture2D(&m_pDepthBuffer);
-            //pDevice->DestroyTexture2D(&m_pTexture);
-            //pDevice->DestroySamplerState(&m_pSampler);
+            pDevice->DestroyTexture2D(&m_pTexture);
+            pDevice->DestroySamplerState(&m_pSampler);
         }
 	}
 

@@ -9,6 +9,9 @@ layout(set = 4, binding = 0) uniform ColorBuffer
     vec4 Color;
 } material;
 
+layout(set = 4, binding = 8) uniform texture2D u_Texture;
+layout(set = 4, binding = 16) uniform sampler u_Sampler;
+
 void main()
 {
     g_OutColor = material.Color;

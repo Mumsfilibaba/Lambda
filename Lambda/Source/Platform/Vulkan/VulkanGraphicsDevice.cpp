@@ -3,6 +3,7 @@
 #include "VulkanShader.h"
 #include "VulkanPipelineState.h"
 #include "VulkanTexture2D.h"
+#include "VulkanSamplerState.h"
 #include "VulkanCommandList.h"
 #include "VulkanFramebufferCache.h"
 #include "VulkanBuffer.h"
@@ -22,9 +23,9 @@ namespace Lambda
         LogSeverity severity = LOG_SEVERITY_UNKNOWN;
         switch (messageSeverity)
         {
-            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:      severity = LOG_SEVERITY_INFO; break;
-            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:   severity = LOG_SEVERITY_WARNING; break;
-            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:     severity = LOG_SEVERITY_ERROR; break;
+            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:      severity = LOG_SEVERITY_INFO;       break;
+            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:   severity = LOG_SEVERITY_WARNING;    break;
+            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:     severity = LOG_SEVERITY_ERROR;      break;
             default: return VK_FALSE;
         }
         
@@ -97,6 +98,19 @@ namespace Lambda
             m_pNullBuffer->Destroy(m_Device);
             m_pNullBuffer = nullptr;
         }
+        //Destroy nulltexture
+        if (m_pNullTexture)
+        {
+            m_pNullTexture->Destroy(m_Device);
+            m_pNullTexture = nullptr;
+        }
+        //Destroy nullbuffer
+        if (m_pNullSampler)
+        {
+            m_pNullSampler->Destroy(m_Device);
+            m_pNullSampler = nullptr;
+        }
+        
         
         //Destroy the directcommandlist
         ICommandList* pDirectCommandList = m_pCommandList;
@@ -199,7 +213,7 @@ namespace Lambda
         if (!CreateTextures()) { return; }
         if (!CreateDefaultLayouts()) { return; }
         
-        //Create nulldescriptor
+        //Create nullbufferdescriptor
         {
             //Create nullbuffer
             BufferDesc desc = {};
@@ -216,6 +230,41 @@ namespace Lambda
             m_NullBufferDescriptor.range  = VK_WHOLE_SIZE;
         }
         
+        //Create nulltexturedescriptor
+        {
+            //Create nulltexture
+            Texture2DDesc desc = {};
+            desc.ArraySize      = 1;
+            desc.Flags          = TEXTURE_FLAGS_SHADER_RESOURCE;
+            desc.Width          = 2;
+            desc.Height         = 2;
+            desc.Format         = FORMAT_R8G8B8A8_UNORM;
+            desc.MipLevels      = 0;
+            desc.SampleCount    = 1;
+            desc.Usage          = RESOURCE_USAGE_DEFAULT;
+            
+            m_pNullTexture = DBG_NEW VulkanTexture2D(m_Device, m_Adapter, desc);
+            
+            //Fill in bufferdescriptpr
+            m_NullTextureDescriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            m_NullTextureDescriptor.imageView   = m_pNullTexture->GetImageView();
+            m_NullTextureDescriptor.sampler     = VK_NULL_HANDLE;
+        }
+        
+        //Create nullsamplerdescriptor
+        {
+            //Create nullsampler
+            SamplerDesc desc = {};
+
+            //Create sampler
+            m_pNullSampler = DBG_NEW VulkanSamplerState(m_Device, desc);
+            
+            //Fill in bufferdescriptpr
+            m_NullTextureDescriptor.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+            m_NullTextureDescriptor.imageView   = VK_NULL_HANDLE;
+            m_NullTextureDescriptor.sampler     = reinterpret_cast<VkSampler>(m_pNullSampler->GetNativeHandle());
+        }
+        
         //Init GraphicsDevice dependent members
         CreateCommandList(reinterpret_cast<ICommandList**>(&m_pCommandList), COMMAND_LIST_TYPE_GRAPHICS);
         if (m_pCommandList)
@@ -229,13 +278,13 @@ namespace Lambda
     {
         //Applicationinfo
         VkApplicationInfo info = {};
-        info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-        info.pNext = nullptr;
-        info.pApplicationName = "Lambda Engine";
+        info.sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+        info.pNext              = nullptr;
+        info.pApplicationName   = "Lambda Engine";
         info.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-        info.pEngineName = "Lambda Engine";
-        info.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-        info.apiVersion = VK_API_VERSION_1_0;
+        info.pEngineName        = "Lambda Engine";
+        info.engineVersion      = VK_MAKE_VERSION(1, 0, 0);
+        info.apiVersion         = VK_API_VERSION_1_0;
         
         //Get all the available extensions
         uint32 availableExtensionsCount = 0;
@@ -357,14 +406,14 @@ namespace Lambda
         
         //Setup instance info
         VkInstanceCreateInfo iInfo = {};
-        iInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-        iInfo.pNext = (desc.Flags & GRAPHICS_CONTEXT_FLAG_DEBUG) ? (VkDebugUtilsMessengerCreateInfoEXT*)&dInfo : nullptr;
-        iInfo.flags = 0;
-        iInfo.pApplicationInfo = &info;
-        iInfo.enabledExtensionCount = uint32(requiredExtensions.size());
-        iInfo.ppEnabledExtensionNames = requiredExtensions.data();
-        iInfo.enabledLayerCount = uint32(requiredLayers.size());
-        iInfo.ppEnabledLayerNames = requiredLayers.data();
+        iInfo.sType                     = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+        iInfo.pNext                     = (desc.Flags & GRAPHICS_CONTEXT_FLAG_DEBUG) ? (VkDebugUtilsMessengerCreateInfoEXT*)&dInfo : nullptr;
+        iInfo.flags                     = 0;
+        iInfo.pApplicationInfo          = &info;
+        iInfo.enabledExtensionCount     = uint32(requiredExtensions.size());
+        iInfo.ppEnabledExtensionNames   = requiredExtensions.data();
+        iInfo.enabledLayerCount         = uint32(requiredLayers.size());
+        iInfo.ppEnabledLayerNames       = requiredLayers.data();
         
         //Create instance
         VkResult res = vkCreateInstance(&iInfo, nullptr, &m_Instance);
@@ -503,6 +552,13 @@ namespace Lambda
         VkPhysicalDeviceFeatures adapterFeatures;
         vkGetPhysicalDeviceFeatures(adapter, &adapterFeatures);
         
+        //Check for adapter features
+        if (!adapterFeatures.samplerAnisotropy)
+        {
+            LOG_DEBUG_ERROR("Vulkan: Anisotropic filtering is not supported by adapter\n");
+            return false;
+        }
+        
         //Find indices for queuefamilies
         QueueFamilyIndices indices = FindQueueFamilies(adapter);
         if (!indices.Valid())
@@ -617,18 +673,19 @@ namespace Lambda
         {
             //Setup creation of a queue
             VkDeviceQueueCreateInfo qInfo = {};
-            qInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-            qInfo.pNext = nullptr;
-            qInfo.flags = 0;
-            qInfo.pQueuePriorities = &priority;
-            qInfo.queueFamilyIndex = queueFamiliy;
-            qInfo.queueCount = 1;
+            qInfo.sType             = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+            qInfo.pNext             = nullptr;
+            qInfo.flags             = 0;
+            qInfo.pQueuePriorities  = &priority;
+            qInfo.queueFamilyIndex  = queueFamiliy;
+            qInfo.queueCount        = 1;
             
             queueCreateInfos.push_back(qInfo);
         }
 
         //Device features we want to enable
         VkPhysicalDeviceFeatures deviceFeatures = {};
+        deviceFeatures.samplerAnisotropy = VK_TRUE;
         
         //Get the required layers, assume that the layers exists because we could create the vulkaninstance
         std::vector<const char*> requiredLayers = GetRequiredValidationLayers(desc.Flags & GRAPHICS_CONTEXT_FLAG_DEBUG);
@@ -654,16 +711,16 @@ namespace Lambda
         
         //Setup the device
         VkDeviceCreateInfo info = {};
-        info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-        info.pNext = nullptr;
-        info.flags = 0;
-        info.enabledExtensionCount = uint32(deviceExtensions.size());
-        info.ppEnabledExtensionNames = deviceExtensions.data();
-        info.enabledLayerCount = uint32(requiredLayers.size());
-        info.ppEnabledLayerNames = requiredLayers.data();
-        info.pEnabledFeatures = &deviceFeatures;
-        info.queueCreateInfoCount = uint32(queueCreateInfos.size());
-        info.pQueueCreateInfos = queueCreateInfos.data();
+        info.sType                      = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+        info.pNext                      = nullptr;
+        info.flags                      = 0;
+        info.enabledExtensionCount      = uint32(deviceExtensions.size());
+        info.ppEnabledExtensionNames    = deviceExtensions.data();
+        info.enabledLayerCount          = uint32(requiredLayers.size());
+        info.ppEnabledLayerNames        = requiredLayers.data();
+        info.pEnabledFeatures           = &deviceFeatures;
+        info.queueCreateInfoCount       = uint32(queueCreateInfos.size());
+        info.pQueueCreateInfos          = queueCreateInfos.data();
         
         //Create device
         if (vkCreateDevice(m_Adapter, &info, nullptr, &m_Device) != VK_SUCCESS)
@@ -821,20 +878,20 @@ namespace Lambda
         
         //Setup swapchain
         VkSwapchainCreateInfoKHR info = {};
-        info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-        info.pNext = nullptr;
-        info.surface = m_Surface;
-        info.minImageCount = imageCount;
-        info.imageFormat = format.format;
-        info.imageColorSpace = format.colorSpace;
-        info.imageExtent = extent;
-        info.imageArrayLayers = 1;
-        info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT; //Use as color attachment and clear
-        info.preTransform = cap.Capabilities.currentTransform;
-        info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-        info.presentMode = presentationMode;
-        info.clipped = VK_TRUE;
-        info.oldSwapchain = VK_NULL_HANDLE;
+        info.sType              = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+        info.pNext              = nullptr;
+        info.surface            = m_Surface;
+        info.minImageCount      = imageCount;
+        info.imageFormat        = format.format;
+        info.imageColorSpace    = format.colorSpace;
+        info.imageExtent        = extent;
+        info.imageArrayLayers   = 1;
+        info.imageUsage         = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT; //Use as color attachment and clear
+        info.preTransform       = cap.Capabilities.currentTransform;
+        info.compositeAlpha     = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+        info.presentMode        = presentationMode;
+        info.clipped            = VK_TRUE;
+        info.oldSwapchain       = VK_NULL_HANDLE;
         
         QueueFamilyIndices indices = FindQueueFamilies(m_Adapter);
         uint32 queueFamilyIndices[] = { uint32(indices.GraphicsFamily), uint32(indices.PresentFamily) };
@@ -898,20 +955,21 @@ namespace Lambda
             
             //Setup image views
             VkImageViewCreateInfo info = {};
-            info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-            info.flags = 0;
-            info.image = reinterpret_cast<VkImage>(pTexture->GetNativeHandle());
-            info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-            info.format = m_SwapChainFormat;
+            info.sType      = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+            info.pNext      = nullptr;
+            info.flags      = 0;
+            info.image      = reinterpret_cast<VkImage>(pTexture->GetNativeHandle());
+            info.viewType   = VK_IMAGE_VIEW_TYPE_2D;
+            info.format     = m_SwapChainFormat;
             info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
             info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
             info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
             info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-            info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-            info.subresourceRange.baseMipLevel = 0;
-            info.subresourceRange.levelCount = 1;
-            info.subresourceRange.baseArrayLayer = 0;
-            info.subresourceRange.layerCount = 1;
+            info.subresourceRange.aspectMask        = VK_IMAGE_ASPECT_COLOR_BIT;
+            info.subresourceRange.baseMipLevel      = 0;
+            info.subresourceRange.levelCount        = 1;
+            info.subresourceRange.baseArrayLayer    = 0;
+            info.subresourceRange.layerCount        = 1;
             
             //Create image views
             VkImageView view;
@@ -994,24 +1052,62 @@ namespace Lambda
             VK_SHADER_STAGE_FRAGMENT_BIT,
         };
         
-        //Create descriptor layout
+        //Vector for keeping all the bindins for a stage
+        std::vector<VkDescriptorSetLayoutBinding> layoutBindings;
+        uint32 bindingOffset = 0;
+        
+        //Create descriptor bindings for uniformbuffers
         VkDescriptorSetLayoutBinding uboLayoutBinding = {};
         uboLayoutBinding.descriptorType     = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        uboLayoutBinding.binding            = 0;
-        uboLayoutBinding.descriptorCount    = LAMBDA_SHADERSTAGE_UNIFORM_COUNT;
+        uboLayoutBinding.descriptorCount    = 1;
         uboLayoutBinding.pImmutableSamplers = nullptr;
+        for (uint32 i = 0; i < LAMBDA_SHADERSTAGE_UNIFORM_COUNT; i++)
+        {
+            uboLayoutBinding.binding = bindingOffset + i;
+            layoutBindings.push_back(uboLayoutBinding);
+        }
         
+        //Increment offset
+        bindingOffset = layoutBindings.size();
+
+        //Create descriptor bindings for textures
+        VkDescriptorSetLayoutBinding textureLayoutBinding = {};
+        textureLayoutBinding.descriptorType     = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+        textureLayoutBinding.descriptorCount    = 1;
+        textureLayoutBinding.pImmutableSamplers = nullptr;
+        for (uint32 i = 0; i < LAMBDA_SHADERSTAGE_TEXTURE_COUNT; i++)
+        {
+            textureLayoutBinding.binding = bindingOffset + i;
+            layoutBindings.push_back(textureLayoutBinding);
+        }
+        
+        //Increment offset
+        bindingOffset = layoutBindings.size();
+        
+        //Create descriptor bindings for samplers
+        VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
+        samplerLayoutBinding.descriptorType     = VK_DESCRIPTOR_TYPE_SAMPLER;
+        samplerLayoutBinding.descriptorCount    = 1;
+        samplerLayoutBinding.pImmutableSamplers = nullptr;
+        for (uint32 i = 0; i < LAMBDA_SHADERSTAGE_SAMPLER_COUNT; i++)
+        {
+            samplerLayoutBinding.binding = bindingOffset + i;
+            layoutBindings.push_back(samplerLayoutBinding);
+        }
+        
+        //Setup layout
         VkDescriptorSetLayoutCreateInfo descriptorLayoutInfo = {};
         descriptorLayoutInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
         descriptorLayoutInfo.pNext        = nullptr;
         descriptorLayoutInfo.flags        = 0;
-        descriptorLayoutInfo.bindingCount = 1;
-        descriptorLayoutInfo.pBindings    = &uboLayoutBinding;
+        descriptorLayoutInfo.bindingCount = uint32(layoutBindings.size());
+        descriptorLayoutInfo.pBindings    = layoutBindings.data();
         
         for (uint32 i = 0; i < LAMBDA_SHADERSTAGE_COUNT; i++)
         {
             //Set shaderstage
-            uboLayoutBinding.stageFlags = shaderStages[i];
+            for (auto& binding : layoutBindings)
+                binding.stageFlags = shaderStages[i];
             
             //Create layout for shaderstage
             if (vkCreateDescriptorSetLayout(m_Device, &descriptorLayoutInfo, nullptr, &m_DefaultDescriptorSetLayouts[i]) != VK_SUCCESS)
@@ -1146,6 +1242,44 @@ namespace Lambda
     
     void VulkanGraphicsDevice::CreateTexture2D(ITexture2D** ppTexture, const ResourceData* pInitalData, const Texture2DDesc& desc) const
     {
+        assert(ppTexture != nullptr);
+        
+        //Create texture object
+        VulkanTexture2D* pTexture = DBG_NEW VulkanTexture2D(m_Device, m_Adapter, desc);
+        
+        //Upload inital data
+        if (pInitalData)
+        {
+            //Reset internal commandlist
+            m_pCommandList->Reset();
+            
+            //Transition texture
+            m_pCommandList->TransitionTexture(pTexture, RESOURCE_STATE_COPY_DEST);
+            
+            //Update texture data
+            m_pCommandList->UpdateTexture(pTexture, pInitalData, 0);
+            
+            //Execute commands
+            m_pCommandList->Close();
+            VkCommandBuffer buffers[] =
+            {
+                reinterpret_cast<VkCommandBuffer>(m_pCommandList->GetNativeHandle())
+            };
+            
+            VkSubmitInfo submitInfo = {};
+            submitInfo.sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+            submitInfo.pNext                = nullptr;
+            submitInfo.commandBufferCount   = 1;
+            submitInfo.pCommandBuffers      = buffers;
+            
+            vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+            
+            //Wait until buffer is copied
+            WaitForGPU();
+        }
+        
+        //Return texture
+        (*ppTexture) = pTexture;
     }
     
     
@@ -1158,6 +1292,8 @@ namespace Lambda
     
     void VulkanGraphicsDevice::CreateSamplerState(ISamplerState** ppSamplerState, const SamplerDesc& desc) const
     {
+        assert(ppSamplerState != nullptr);
+        (*ppSamplerState) = DBG_NEW VulkanSamplerState(m_Device, desc);
     }
     
     
@@ -1240,6 +1376,19 @@ namespace Lambda
     
     void VulkanGraphicsDevice::DestroySamplerState(ISamplerState** ppSamplerState) const
     {
+        assert(ppSamplerState != nullptr);
+        
+        //Delete SamplerState
+        VulkanSamplerState* pSamplerState = reinterpret_cast<VulkanSamplerState*>(*ppSamplerState);
+        if (pSamplerState != nullptr)
+        {
+            pSamplerState->Destroy(m_Device);
+            
+            //Set ptr to null
+            *ppSamplerState = nullptr;
+            
+            LOG_DEBUG_INFO("Vulkan: Destroyed SamplerState\n");
+        }
     }
     
     

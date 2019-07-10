@@ -81,3 +81,5 @@
 
 //Count of resource binding slots per shaderstage
 #define LAMBDA_SHADERSTAGE_UNIFORM_COUNT 8
+#define LAMBDA_SHADERSTAGE_SAMPLER_COUNT 8
+#define LAMBDA_SHADERSTAGE_TEXTURE_COUNT 8

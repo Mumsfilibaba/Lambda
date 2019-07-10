@@ -18,5 +18,6 @@ namespace Lambda
 		~ISamplerState() = default;
 
 		virtual SamplerDesc GetDesc() const = 0;
+        virtual void* GetNativeHandle() const = 0;
 	};
 }
