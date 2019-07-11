@@ -1,9 +1,7 @@
 #pragma once
 #include "Graphics/ICommandList.h"
 #include "VulkanUploadBuffer.h"
-#include "VulkanBuffer.h"
 #include <string>
-#include <vulkan/vulkan.h>
 #include "VulkanHelpers.inl"
 
 namespace Lambda
@@ -11,7 +9,9 @@ namespace Lambda
     //Helperstruct containing information about a shaderstage
     struct VulkanShaderStageData
     {
-        VkDescriptorBufferInfo UBInfos[LAMBDA_SHADERSTAGE_UNIFORM_COUNT];
+        VkDescriptorBufferInfo  UBInfos[LAMBDA_SHADERSTAGE_UNIFORM_COUNT];
+        VkDescriptorImageInfo   TextureInfos[LAMBDA_SHADERSTAGE_TEXTURE_COUNT];
+        VkDescriptorImageInfo   SamplerInfos[LAMBDA_SHADERSTAGE_SAMPLER_COUNT];
     };
     
     
@@ -84,6 +84,8 @@ namespace Lambda
     private:
         void Init(VkDevice device, CommandListType type);
         void InternalWriteConstantBufferDescriptorsToStage(uint32 shaderStage, uint32 startSlot, const IBuffer* const* ppBuffers, uint32 numBuffers);
+        void InternalWriteTextureDescriptorsToStage(uint32 shaderStage, uint32 startSlot, const ITexture2D* const* ppTextures, uint32 numTextures);
+        void InternalWriteSamplerDescriptorsToStage(uint32 shaderStage, uint32 startSlot, const ISamplerState* const* ppSamplers, uint32 numSamplers);
         
     private:
         VkDevice m_Device; //Store the device that was used when creating device
@@ -108,31 +110,4 @@ namespace Lambda
         const ITexture2D* m_pRT;
         const ITexture2D* m_pDS;
     };
-    
-    
-    inline void VulkanCommandList::InternalWriteConstantBufferDescriptorsToStage(uint32 shaderStage, uint32 startSlot, const IBuffer* const* ppBuffers, uint32 numBuffers)
-    {
-        //Set the buffers
-        for (uint32 i = 0; i < numBuffers; i++)
-        {
-            m_ShaderSages[shaderStage].UBInfos[startSlot + i].buffer   = reinterpret_cast<VkBuffer>(ppBuffers[i]->GetNativeHandle());
-            m_ShaderSages[shaderStage].UBInfos[startSlot + i].offset   = 0;
-            m_ShaderSages[shaderStage].UBInfos[startSlot + i].range    = ppBuffers[i]->GetSizeInBytes();
-        }
-        
-        //Setup write
-        VkWriteDescriptorSet descriptorWrite = {};
-        descriptorWrite.sType               = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptorWrite.dstSet              = m_DescriptorSets[shaderStage];
-        descriptorWrite.dstBinding          = 0;
-        descriptorWrite.dstArrayElement     = 0;
-        descriptorWrite.descriptorType      = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        descriptorWrite.descriptorCount     = numBuffers;
-        descriptorWrite.pBufferInfo         = m_ShaderSages[shaderStage].UBInfos + startSlot;
-        descriptorWrite.pImageInfo          = nullptr;
-        descriptorWrite.pTexelBufferView    = nullptr;
-        
-        //Update descriptors
-        vkUpdateDescriptorSets(m_Device, 1, &descriptorWrite, 0, nullptr);
-    }
 }

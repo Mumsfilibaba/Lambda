@@ -69,12 +69,19 @@ namespace Lambda
             //m_pPS = IShader::CreateShaderFromFile(pDevice, "Triangle.hlsl", "PSMain", SHADER_TYPE_PIXEL);
             //m_pCompute = IShader::CreateShaderFromFile(pDevice, "Texture2DMipMapGen.cso", "main", SHADER_TYPE_COMPUTE, SHADER_LANG_HLSL_COMPILED);
 
+            //Declare vertex
+            struct Vertex
+            {
+                Vec3f Position;
+                Vec2f UV;
+            };
+            
             //Create pipelinestate
             {
                 InputElement elements[]
                 {
-                    { "POSITION",   FORMAT_R32G32B32_FLOAT, 0, 0, sizeof(Vec3f) * 2, 0,             false },
-                    { "COLOR",      FORMAT_R32G32B32_FLOAT, 0, 1, sizeof(Vec3f) * 2, sizeof(Vec3f), false }
+                    { "POSITION",   FORMAT_R32G32B32_FLOAT, 0, 0, sizeof(Vertex), 0,             false },
+                    { "TEXCOORD",   FORMAT_R32G32_FLOAT,    0, 1, sizeof(Vertex), sizeof(Vec3f), false }
                 };
                 
                 GraphicsPipelineStateDesc desc = {};
@@ -89,18 +96,12 @@ namespace Lambda
 
             //Create vertexbuffer
             {
-                struct Vertex
-                {
-                    Vec3f Position;
-                    Vec3f Color;
-                };
-                
                 Vertex vertices[] =
                 {
-                    { Vec3f(-0.5f, -0.5f, 0.0f),    Vec3f(1.0f, 0.0f, 0.0f) },
-                    { Vec3f(0.5f, -0.5f, 0.0f),     Vec3f(1.0f, 0.0f, 0.0f) },
-                    { Vec3f(0.5f, 0.5f, 0.0f),      Vec3f(1.0f, 0.0f, 0.0f) },
-                    { Vec3f(-0.5f, 0.5f, 0.0f),     Vec3f(1.0f, 0.0f, 0.0f) }
+                    { Vec3f(-0.5f, -0.5f, 0.0f),    Vec2f(0.0f, 0.0f) },
+                    { Vec3f(0.5f, -0.5f, 0.0f),     Vec2f(2.0f, 0.0f) },
+                    { Vec3f(0.5f, 0.5f, 0.0f),      Vec2f(2.0f, 2.0f) },
+                    { Vec3f(-0.5f, 0.5f, 0.0f),     Vec2f(0.0f, 2.0f) }
                 };
 
                 BufferDesc desc = {};
@@ -198,26 +199,25 @@ namespace Lambda
 
             //Create texture
             m_pTexture = ITexture2D::CreateTextureFromFile(pDevice, "texture.jpg", TEXTURE_FLAGS_SHADER_RESOURCE, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
-            if (m_pCurrentList)
-            {
-                m_pCurrentList->TransitionTexture(m_pTexture, RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-            }
+            m_pCurrentList->TransitionTexture(m_pTexture, RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
             //Create samplerstate
             {
                 SamplerDesc desc = {};
+                desc.AdressMode = SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+                
                 pDevice->CreateSamplerState(&m_pSampler, desc);
             }
 
             //Close and execute commandlist
-            /*if (m_pCurrentList)
+            if (m_pCurrentList)
             {
                 m_pCurrentList->Close();
                 pDevice->ExecuteCommandList(&m_pCurrentList, 1);
-            }*/
+            }
 
             //Wait for GPU
-            pDevice->WaitForGPU();
+            pDevice->GPUWaitForFrame();
         }
 	}
 
@@ -303,8 +303,8 @@ namespace Lambda
                 m_pCurrentList->PSSetConstantBuffers(&m_pColorBuffer, 1, 0);
                 
                 //Set texture and samplers
-                //m_pCurrentList->PSSetTextures(&m_pTexture, 1, 0);
-                //m_pCurrentList->PSSetSamplers(&m_pSampler, 1, 0);
+                m_pCurrentList->PSSetTextures(&m_pTexture, 1, 0);
+                m_pCurrentList->PSSetSamplers(&m_pSampler, 1, 0);
                 
                 //Set vertex- and indexbuffer
                 m_pCurrentList->SetVertexBuffer(m_pVertexBuffer, 0);

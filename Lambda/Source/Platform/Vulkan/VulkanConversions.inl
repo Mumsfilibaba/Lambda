@@ -144,4 +144,18 @@ namespace Lambda
             default: return VK_IMAGE_LAYOUT_UNDEFINED;
         }
     }
+    
+    
+    inline VkSamplerAddressMode ConvertSamplerAdressMode(SamplerAddressMode adressMode)
+    {
+        switch (adressMode) {
+            case SAMPLER_ADDRESS_MODE_REPEAT:               return VK_SAMPLER_ADDRESS_MODE_REPEAT;
+            case SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT:      return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+            case SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE:        return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+            case SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER:      return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+            case SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE: return VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE;
+            case SAMPLER_ADDRESS_MODE_UNKNOWN:
+            default: return VK_SAMPLER_ADDRESS_MODE_MAX_ENUM;
+        }
+    }
 }

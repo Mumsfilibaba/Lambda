@@ -2,6 +2,7 @@
 
 namespace Lambda
 {
+    //Integer types
 	typedef char int8;
 	typedef short int16;
 	typedef int int32;
@@ -12,6 +13,7 @@ namespace Lambda
 	typedef unsigned long long uint64;
 
 
+    //All keys
 	enum Key : uint8
 	{
 		KEY_UNKNOWN = 0,
@@ -139,6 +141,7 @@ namespace Lambda
 	};
 
 
+    //Mousebuttons
 	enum MouseButton : uint8
 	{
 		MOUSEBUTTON_UNKNOWN     = 0,
@@ -150,6 +153,7 @@ namespace Lambda
 	};
 
 
+    //Topology to use
 	enum PrimitiveTopology : uint32
 	{
 		PRIMITIVE_TOPOLOGY_UNKNOWN          = 0,
@@ -158,6 +162,7 @@ namespace Lambda
 	};
 
 
+    //Usage of a resource
 	enum ResourceUsage : uint32
 	{
 		RESOURCE_USAGE_UNKNOWN = 0,
@@ -166,6 +171,7 @@ namespace Lambda
 	};
 
 
+    //Capabilities of a buffer
 	enum BufferFlags : uint32
 	{
 		BUFFER_FLAGS_NONE               = 0,
@@ -175,6 +181,7 @@ namespace Lambda
 	};
 
 
+    //Capabilities of a texture
 	enum TextureFlags : uint32
 	{
 		TEXTURE_FLAGS_NONE              = 0,
@@ -185,6 +192,7 @@ namespace Lambda
 	};
 
 
+    //Format
 	enum ResourceFormat : uint32
 	{
 		FORMAT_UNKNOWN = 0,
@@ -238,6 +246,7 @@ namespace Lambda
 	};
 
 
+    //State of a buffer or a texture
 	enum ResourceState
 	{
 		RESOURCE_STATE_UNKNOWN = 0,
@@ -251,8 +260,21 @@ namespace Lambda
 		RESOURCE_STATE_PIXEL_SHADER_RESOURCE = 8,
 		RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE = 9,
 	};
+    
+    
+    //Adress mode for samplers
+    enum SamplerAddressMode : uint32
+    {
+        SAMPLER_ADDRESS_MODE_UNKNOWN = 0,
+        SAMPLER_ADDRESS_MODE_REPEAT  = 1,
+        SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT = 2,
+        SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE = 3,
+        SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER = 4,
+        SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE = 5
+    };
 
 
+    //Struct for updating data in a buffer or texture
 	struct ResourceData
 	{
 		const void* pData = nullptr;

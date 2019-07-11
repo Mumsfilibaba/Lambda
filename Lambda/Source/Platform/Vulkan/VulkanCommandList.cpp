@@ -2,6 +2,7 @@
 #include "VulkanCommandList.h"
 #include "VulkanGraphicsDevice.h"
 #include "VulkanPipelineState.h"
+#include "VulkanSamplerState.h"
 #include "VulkanTexture2D.h"
 #include "VulkanFramebufferCache.h"
 #include "VulkanBuffer.h"
@@ -17,6 +18,24 @@ namespace Lambda
         m_DescriptorPool(VK_NULL_HANDLE),
         m_Type(COMMAND_LIST_TYPE_UNKNOWN)
     {
+        //Init samplers in texturedescriptors to null
+        for (uint32 i = 0; i < LAMBDA_SHADERSTAGE_COUNT; i++)
+        {
+            for (uint32 j = 0; j < LAMBDA_SHADERSTAGE_TEXTURE_COUNT; j++)
+                m_ShaderSages[i].TextureInfos[j].sampler = VK_NULL_HANDLE;
+        }
+        
+        //Init imageview in samplerdescriptors to null
+        for (uint32 i = 0; i < LAMBDA_SHADERSTAGE_COUNT; i++)
+        {
+            for (uint32 j = 0; j < LAMBDA_SHADERSTAGE_SAMPLER_COUNT; j++)
+            {
+                m_ShaderSages[i].SamplerInfos[j].imageLayout    = VK_IMAGE_LAYOUT_UNDEFINED;
+                m_ShaderSages[i].SamplerInfos[j].imageView      = VK_NULL_HANDLE;
+            }
+        }
+
+        
         Init(device, type);
     }
 
@@ -126,28 +145,148 @@ namespace Lambda
             m_PipelineLayout = VulkanGraphicsDevice::GetDefaultPipelineLayout();
             
             //Init descriptors to nulldescriptors
-            VkDescriptorBufferInfo descriptors[LAMBDA_SHADERSTAGE_UNIFORM_COUNT];
+            VkDescriptorBufferInfo bufferDescriptors[LAMBDA_SHADERSTAGE_UNIFORM_COUNT];
             for (uint32 i = 0; i < LAMBDA_SHADERSTAGE_UNIFORM_COUNT; i++)
-                descriptors[i] =VulkanGraphicsDevice::GetNullBufferDescriptor();
+                bufferDescriptors[i] = VulkanGraphicsDevice::GetNullBufferDescriptor();
             
-            //Write descriptors
-            VkWriteDescriptorSet write = {};
-            write.sType             = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            write.pNext             = nullptr;
-            write.descriptorCount   = LAMBDA_SHADERSTAGE_UNIFORM_COUNT;
-            write.dstArrayElement   = 0;
-            write.dstBinding        = 0;
-            write.descriptorType    = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            write.pBufferInfo       = descriptors;
-            write.pImageInfo        = nullptr;
-            write.pTexelBufferView  = nullptr;
+            VkDescriptorImageInfo textureDescriptors[LAMBDA_SHADERSTAGE_TEXTURE_COUNT];
+            for (uint32 i = 0; i < LAMBDA_SHADERSTAGE_TEXTURE_COUNT; i++)
+                textureDescriptors[i] = VulkanGraphicsDevice::GetNullTextureDescriptor();
+            
+            VkDescriptorImageInfo samplerDescriptors[LAMBDA_SHADERSTAGE_SAMPLER_COUNT];
+            for (uint32 i = 0; i < LAMBDA_SHADERSTAGE_SAMPLER_COUNT; i++)
+                samplerDescriptors[i] = VulkanGraphicsDevice::GetNullSamplerDescriptor();
+            
+            //Vector for all writes
+            std::vector<VkWriteDescriptorSet> descriptorWrites;
+            
+            //Setup bufferdescriptors
+            VkWriteDescriptorSet bufferWrite = {};
+            bufferWrite.sType             = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            bufferWrite.pNext             = nullptr;
+            bufferWrite.descriptorCount   = LAMBDA_SHADERSTAGE_UNIFORM_COUNT;
+            bufferWrite.dstArrayElement   = 0;
+            bufferWrite.dstBinding        = VulkanGraphicsDevice::GetUniformBinding();
+            bufferWrite.descriptorType    = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            bufferWrite.pBufferInfo       = bufferDescriptors;
+            bufferWrite.pImageInfo        = nullptr;
+            bufferWrite.pTexelBufferView  = nullptr;
+            
+            //Setup texturedescriptors
+            VkWriteDescriptorSet textureWrite = {};
+            textureWrite.sType             = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            textureWrite.pNext             = nullptr;
+            textureWrite.descriptorCount   = LAMBDA_SHADERSTAGE_TEXTURE_COUNT;
+            textureWrite.dstArrayElement   = 0;
+            textureWrite.dstBinding        = VulkanGraphicsDevice::GetTextureBinding();
+            textureWrite.descriptorType    = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+            textureWrite.pBufferInfo       = nullptr;
+            textureWrite.pImageInfo        = textureDescriptors;
+            textureWrite.pTexelBufferView  = nullptr;
+            
+            //Setup samplerdescriptors
+            VkWriteDescriptorSet samplerWrite = {};
+            samplerWrite.sType             = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            samplerWrite.pNext             = nullptr;
+            samplerWrite.descriptorCount   = LAMBDA_SHADERSTAGE_SAMPLER_COUNT;
+            samplerWrite.dstArrayElement   = 0;
+            samplerWrite.dstBinding        = VulkanGraphicsDevice::GetSamplerBinding();
+            samplerWrite.descriptorType    = VK_DESCRIPTOR_TYPE_SAMPLER;
+            samplerWrite.pBufferInfo       = nullptr;
+            samplerWrite.pImageInfo        = samplerDescriptors;
+            samplerWrite.pTexelBufferView  = nullptr;
             
             for (uint32 i = 0; i < LAMBDA_SHADERSTAGE_COUNT; i++)
             {
-                write.dstSet = m_DescriptorSets[i];
-                vkUpdateDescriptorSets(device, 1, &write, 0, nullptr);
+                bufferWrite.dstSet = m_DescriptorSets[i];
+                descriptorWrites.push_back(bufferWrite);
+                
+                textureWrite.dstSet = m_DescriptorSets[i];
+                descriptorWrites.push_back(textureWrite);
+                
+                samplerWrite.dstSet = m_DescriptorSets[i];
+                descriptorWrites.push_back(samplerWrite);
             }
+            
+            //Write descriptors
+            vkUpdateDescriptorSets(device, uint32(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
         }
+    }
+    
+    
+    void VulkanCommandList::InternalWriteConstantBufferDescriptorsToStage(uint32 shaderStage, uint32 startSlot, const IBuffer* const* ppBuffers, uint32 numBuffers)
+    {
+        //Set the buffers
+        for (uint32 i = 0; i < numBuffers; i++)
+        {
+            m_ShaderSages[shaderStage].UBInfos[startSlot + i].buffer   = reinterpret_cast<VkBuffer>(ppBuffers[i]->GetNativeHandle());
+            m_ShaderSages[shaderStage].UBInfos[startSlot + i].offset   = 0;
+            m_ShaderSages[shaderStage].UBInfos[startSlot + i].range    = ppBuffers[i]->GetSizeInBytes();
+        }
+        
+        //Setup write
+        VkWriteDescriptorSet descriptorWrite = {};
+        descriptorWrite.sType               = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrite.dstSet              = m_DescriptorSets[shaderStage];
+        descriptorWrite.dstBinding          = VulkanGraphicsDevice::GetUniformBinding();
+        descriptorWrite.dstArrayElement     = 0;
+        descriptorWrite.descriptorType      = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        descriptorWrite.descriptorCount     = numBuffers;
+        descriptorWrite.pBufferInfo         = m_ShaderSages[shaderStage].UBInfos + startSlot;
+        descriptorWrite.pImageInfo          = nullptr;
+        descriptorWrite.pTexelBufferView    = nullptr;
+        
+        //Update descriptors
+        vkUpdateDescriptorSets(m_Device, 1, &descriptorWrite, 0, nullptr);
+    }
+    
+    
+    void VulkanCommandList::InternalWriteTextureDescriptorsToStage(uint32 shaderStage, uint32 startSlot, const ITexture2D* const* ppTextures, uint32 numTextures)
+    {
+        //Set the textures
+        for (uint32 i = 0; i < numTextures; i++)
+        {
+            m_ShaderSages[shaderStage].TextureInfos[startSlot + i].imageLayout  = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            m_ShaderSages[shaderStage].TextureInfos[startSlot + i].imageView    = reinterpret_cast<const VulkanTexture2D*>(ppTextures[i])->GetImageView();
+        }
+        
+        //Setup write
+        VkWriteDescriptorSet descriptorWrite = {};
+        descriptorWrite.sType               = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrite.dstSet              = m_DescriptorSets[shaderStage];
+        descriptorWrite.dstBinding          = VulkanGraphicsDevice::GetTextureBinding();
+        descriptorWrite.dstArrayElement     = 0;
+        descriptorWrite.descriptorType      = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+        descriptorWrite.descriptorCount     = numTextures;
+        descriptorWrite.pBufferInfo         = nullptr;
+        descriptorWrite.pImageInfo          = m_ShaderSages[shaderStage].TextureInfos + startSlot;
+        descriptorWrite.pTexelBufferView    = nullptr;
+        
+        //Update descriptors
+        vkUpdateDescriptorSets(m_Device, 1, &descriptorWrite, 0, nullptr);
+    }
+    
+    
+    void VulkanCommandList::InternalWriteSamplerDescriptorsToStage(uint32 shaderStage, uint32 startSlot, const ISamplerState* const* ppSamplers, uint32 numSamplers)
+    {
+        //Set the numSamplers
+        for (uint32 i = 0; i < numSamplers; i++)
+            m_ShaderSages[shaderStage].SamplerInfos[startSlot + i].sampler = reinterpret_cast<VkSampler>(ppSamplers[i]->GetNativeHandle());
+        
+        //Setup write
+        VkWriteDescriptorSet descriptorWrite = {};
+        descriptorWrite.sType               = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrite.dstSet              = m_DescriptorSets[shaderStage];
+        descriptorWrite.dstBinding          = VulkanGraphicsDevice::GetSamplerBinding();
+        descriptorWrite.dstArrayElement     = 0;
+        descriptorWrite.descriptorType      = VK_DESCRIPTOR_TYPE_SAMPLER;
+        descriptorWrite.descriptorCount     = numSamplers;
+        descriptorWrite.pBufferInfo         = nullptr;
+        descriptorWrite.pImageInfo          = m_ShaderSages[shaderStage].SamplerInfos + startSlot;
+        descriptorWrite.pTexelBufferView    = nullptr;
+        
+        //Update descriptors
+        vkUpdateDescriptorSets(m_Device, 1, &descriptorWrite, 0, nullptr);
     }
     
     
@@ -344,11 +483,13 @@ namespace Lambda
     
     void VulkanCommandList::VSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot)
     {
+         InternalWriteTextureDescriptorsToStage(LAMBDA_SHADERSTAGE_VERTEX, startSlot, ppTextures, numTextures);
     }
     
     
     void VulkanCommandList::VSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot)
     {
+        InternalWriteSamplerDescriptorsToStage(LAMBDA_SHADERSTAGE_VERTEX, startSlot, ppSamplerStates, numSamplers);
     }
     
     
@@ -360,11 +501,13 @@ namespace Lambda
     
     void VulkanCommandList::HSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot)
     {
+         InternalWriteTextureDescriptorsToStage(LAMBDA_SHADERSTAGE_HULL, startSlot, ppTextures, numTextures);
     }
     
     
     void VulkanCommandList::HSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot)
     {
+        InternalWriteSamplerDescriptorsToStage(LAMBDA_SHADERSTAGE_HULL, startSlot, ppSamplerStates, numSamplers);
     }
     
     
@@ -376,11 +519,13 @@ namespace Lambda
     
     void VulkanCommandList::DSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot)
     {
+         InternalWriteTextureDescriptorsToStage(LAMBDA_SHADERSTAGE_DOMAIN, startSlot, ppTextures, numTextures);
     }
     
     
     void VulkanCommandList::DSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot)
     {
+        InternalWriteSamplerDescriptorsToStage(LAMBDA_SHADERSTAGE_DOMAIN, startSlot, ppSamplerStates, numSamplers);
     }
     
     
@@ -392,11 +537,13 @@ namespace Lambda
     
     void VulkanCommandList::GSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot)
     {
+         InternalWriteTextureDescriptorsToStage(LAMBDA_SHADERSTAGE_GEOMETRY, startSlot, ppTextures, numTextures);
     }
     
     
     void VulkanCommandList::GSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot)
     {
+        InternalWriteSamplerDescriptorsToStage(LAMBDA_SHADERSTAGE_GEOMETRY, startSlot, ppSamplerStates, numSamplers);
     }
     
     
@@ -408,11 +555,13 @@ namespace Lambda
     
     void VulkanCommandList::PSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot)
     {
+        InternalWriteTextureDescriptorsToStage(LAMBDA_SHADERSTAGE_PIXEL, startSlot, ppTextures, numTextures);
     }
     
     
     void VulkanCommandList::PSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot)
     {
+        InternalWriteSamplerDescriptorsToStage(LAMBDA_SHADERSTAGE_PIXEL, startSlot, ppSamplerStates, numSamplers);
     }
     
     

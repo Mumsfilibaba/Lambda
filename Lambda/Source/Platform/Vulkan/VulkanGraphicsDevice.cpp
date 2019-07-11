@@ -245,7 +245,7 @@ namespace Lambda
             
             m_pNullTexture = DBG_NEW VulkanTexture2D(m_Device, m_Adapter, desc);
             
-            //Fill in bufferdescriptpr
+            //Fill in texturedescriptpr
             m_NullTextureDescriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
             m_NullTextureDescriptor.imageView   = m_pNullTexture->GetImageView();
             m_NullTextureDescriptor.sampler     = VK_NULL_HANDLE;
@@ -259,18 +259,15 @@ namespace Lambda
             //Create sampler
             m_pNullSampler = DBG_NEW VulkanSamplerState(m_Device, desc);
             
-            //Fill in bufferdescriptpr
-            m_NullTextureDescriptor.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-            m_NullTextureDescriptor.imageView   = VK_NULL_HANDLE;
-            m_NullTextureDescriptor.sampler     = reinterpret_cast<VkSampler>(m_pNullSampler->GetNativeHandle());
+            //Fill in samplerdescriptpr
+            m_NullSamplerDescriptor.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+            m_NullSamplerDescriptor.imageView   = VK_NULL_HANDLE;
+            m_NullSamplerDescriptor.sampler     = reinterpret_cast<VkSampler>(m_pNullSampler->GetNativeHandle());
         }
         
         //Init GraphicsDevice dependent members
         CreateCommandList(reinterpret_cast<ICommandList**>(&m_pCommandList), COMMAND_LIST_TYPE_GRAPHICS);
-        if (m_pCommandList)
-        {
-            m_pCommandList->SetName("Graphics Device Internal CommandList");
-        }
+        m_pCommandList->SetName("Graphics Device Internal CommandList");
     }
     
     
@@ -1054,7 +1051,7 @@ namespace Lambda
         
         //Vector for keeping all the bindins for a stage
         std::vector<VkDescriptorSetLayoutBinding> layoutBindings;
-        uint32 bindingOffset = 0;
+        m_UniformBinding = 0;
         
         //Create descriptor bindings for uniformbuffers
         VkDescriptorSetLayoutBinding uboLayoutBinding = {};
@@ -1063,12 +1060,12 @@ namespace Lambda
         uboLayoutBinding.pImmutableSamplers = nullptr;
         for (uint32 i = 0; i < LAMBDA_SHADERSTAGE_UNIFORM_COUNT; i++)
         {
-            uboLayoutBinding.binding = bindingOffset + i;
+            uboLayoutBinding.binding = m_UniformBinding + i;
             layoutBindings.push_back(uboLayoutBinding);
         }
         
         //Increment offset
-        bindingOffset = layoutBindings.size();
+        m_TextureBinding = layoutBindings.size();
 
         //Create descriptor bindings for textures
         VkDescriptorSetLayoutBinding textureLayoutBinding = {};
@@ -1077,12 +1074,12 @@ namespace Lambda
         textureLayoutBinding.pImmutableSamplers = nullptr;
         for (uint32 i = 0; i < LAMBDA_SHADERSTAGE_TEXTURE_COUNT; i++)
         {
-            textureLayoutBinding.binding = bindingOffset + i;
+            textureLayoutBinding.binding = m_TextureBinding + i;
             layoutBindings.push_back(textureLayoutBinding);
         }
         
         //Increment offset
-        bindingOffset = layoutBindings.size();
+        m_SamplerBinding = layoutBindings.size();
         
         //Create descriptor bindings for samplers
         VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
@@ -1091,7 +1088,7 @@ namespace Lambda
         samplerLayoutBinding.pImmutableSamplers = nullptr;
         for (uint32 i = 0; i < LAMBDA_SHADERSTAGE_SAMPLER_COUNT; i++)
         {
-            samplerLayoutBinding.binding = bindingOffset + i;
+            samplerLayoutBinding.binding = m_SamplerBinding + i;
             layoutBindings.push_back(samplerLayoutBinding);
         }
         

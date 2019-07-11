@@ -1,5 +1,6 @@
 #include "LambdaPch.h"
 #include "VulkanSamplerState.h"
+#include "VulkanConversions.inl"
 
 namespace Lambda
 {
@@ -25,6 +26,10 @@ namespace Lambda
     
     void VulkanSamplerState::Init(VkDevice device, const SamplerDesc& desc)
     {
+        //Get adress mode
+        VkSamplerAddressMode adressMode = ConvertSamplerAdressMode(desc.AdressMode);
+        
+        
         //Setup sampler
         VkSamplerCreateInfo info = {};
         info.sType                      = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -32,9 +37,9 @@ namespace Lambda
         info.flags                      = 0;
         info.magFilter                  = VK_FILTER_LINEAR;
         info.minFilter                  = VK_FILTER_LINEAR;
-        info.addressModeU               = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-        info.addressModeV               = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-        info.addressModeW               = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        info.addressModeU               = adressMode;
+        info.addressModeV               = adressMode;
+        info.addressModeW               = adressMode;
         info.anisotropyEnable           = VK_TRUE;
         info.maxAnisotropy              = 16;
         info.borderColor                = VK_BORDER_COLOR_INT_OPAQUE_BLACK;

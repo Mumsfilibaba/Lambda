@@ -139,6 +139,10 @@ namespace Lambda
         VulkanSamplerState* m_pNullSampler;
         VkDescriptorImageInfo m_NullSamplerDescriptor;
         
+        uint32 m_UniformBinding;
+        uint32 m_TextureBinding;
+        uint32 m_SamplerBinding;
+        
     public:
         static VkDevice GetCurrentDevice();
         static VkPhysicalDevice GetCurrentAdapter();
@@ -146,6 +150,9 @@ namespace Lambda
         static VkDescriptorBufferInfo GetNullBufferDescriptor();
         static VkDescriptorImageInfo GetNullTextureDescriptor();
         static VkDescriptorImageInfo GetNullSamplerDescriptor();
+        static uint32 GetUniformBinding();
+        static uint32 GetTextureBinding();
+        static uint32 GetSamplerBinding();
         static VkDescriptorSetLayout* GetDefaultDescriptorSetLayouts();
         static void SetVulkanObjectName(VkObjectType type, uint64 objectHandle, const std::string& name);
         
@@ -224,5 +231,26 @@ namespace Lambda
     {
         assert(IGraphicsDevice::GetInstance() != nullptr);
         return reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance())->m_DefaultDescriptorSetLayouts;
+    }
+    
+    
+    inline uint32 VulkanGraphicsDevice::GetUniformBinding()
+    {
+        assert(IGraphicsDevice::GetInstance() != nullptr);
+        return reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance())->m_UniformBinding;
+    }
+    
+    
+    inline uint32 VulkanGraphicsDevice::GetTextureBinding()
+    {
+        assert(IGraphicsDevice::GetInstance() != nullptr);
+        return reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance())->m_TextureBinding;
+    }
+    
+    
+    inline uint32 VulkanGraphicsDevice::GetSamplerBinding()
+    {
+        assert(IGraphicsDevice::GetInstance() != nullptr);
+        return reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance())->m_SamplerBinding;
     }
 }
