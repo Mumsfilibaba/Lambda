@@ -45,7 +45,6 @@ namespace Lambda
                 for (uint32 i = 0; i < 3; i++)
                 {
                     pDevice->CreateCommandList(&m_pLists[i], COMMAND_LIST_TYPE_GRAPHICS);
-                    
                     if (m_pLists[i])
                     {
                         std::string name = "CommandList [" + std::to_string(i) + "]";
@@ -113,10 +112,7 @@ namespace Lambda
                 data.SizeInBytes = desc.SizeInBytes;
 
                 pDevice->CreateBuffer(&m_pVertexBuffer, &data, desc);
-                if (m_pCurrentList)
-                {
-                    m_pCurrentList->TransitionBuffer(m_pVertexBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-                }
+                m_pCurrentList->TransitionBuffer(m_pVertexBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
             }
             
             //Create indexbuffer
@@ -205,11 +201,8 @@ namespace Lambda
             }
 
             //Close and execute commandlist
-            if (m_pCurrentList)
-            {
-                m_pCurrentList->Close();
-                pDevice->ExecuteCommandList(&m_pCurrentList, 1);
-            }
+            m_pCurrentList->Close();
+            pDevice->ExecuteCommandList(&m_pCurrentList, 1);
 
             //Wait for GPU
             pDevice->GPUWaitForFrame();
@@ -282,7 +275,7 @@ namespace Lambda
                 }*/
                 
                 //Update data
-                glm::vec4 colorBuff = glm::vec4(1.0f, 0.0f, 0.4f, 1.0f);
+                glm::vec4 colorBuff = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
                 
                 ResourceData data = {};
                 data.pData = &colorBuff;
