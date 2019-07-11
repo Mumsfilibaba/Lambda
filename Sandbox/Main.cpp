@@ -1,9 +1,4 @@
 #include "SandBox.h"
-#include "System/Log.h"
-#include "System/Clock.h"
-#include "Math/Math.h"
-#include "Math/Float3.h"
-#include <string>
 
 int main()
 {

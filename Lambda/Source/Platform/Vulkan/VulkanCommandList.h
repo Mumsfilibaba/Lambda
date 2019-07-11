@@ -35,7 +35,7 @@ namespace Lambda
         
         virtual void SetRenderTarget(ITexture2D* pRenderTarget, ITexture2D* pDepthStencil) override final;
         virtual void SetViewport(const Viewport& viewport) override final;
-        virtual void SetScissorRect(const Math::Rectangle& scissorRect) override final;
+        virtual void SetScissorRect(const Rectangle& scissorRect) override final;
         virtual void SetGraphicsPipelineState(IGraphicsPipelineState* pPSO) override final;
         virtual void SetVertexBuffer(IBuffer* pBuffer, uint32 slot) override final;
         virtual void SetIndexBuffer(IBuffer* pBuffer) override final;

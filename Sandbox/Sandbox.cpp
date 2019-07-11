@@ -1,8 +1,7 @@
 #include "SandBox.h"
 #include "System/Log.h"
-#include "Math/Math.h"
-#include "glm/glm.hpp"
 #include "System/Input.h"
+#include "glm/gtc/matrix_transform.hpp"
 
 namespace Lambda
 {
@@ -30,8 +29,6 @@ namespace Lambda
 
 	void SandBox::OnLoad()
 	{
-		using namespace Math;
-        
 		//Add Sandbox-level eventlayer
 		EventLayer sandboxLayer = { SandBox::OnEvent, "SandBox" };
 		EventDispatcher::PushEventLayer(sandboxLayer);
@@ -73,16 +70,16 @@ namespace Lambda
             //Declare vertex
             struct Vertex
             {
-                Vec3f Position;
-                Vec2f UV;
+                glm::vec3 Position;
+                glm::vec2 UV;
             };
             
             //Create pipelinestate
             {
                 InputElement elements[]
                 {
-                    { "POSITION",   FORMAT_R32G32B32_FLOAT, 0, 0, sizeof(Vertex), 0,             false },
-                    { "TEXCOORD",   FORMAT_R32G32_FLOAT,    0, 1, sizeof(Vertex), sizeof(Vec3f), false }
+                    { "POSITION",   FORMAT_R32G32B32_FLOAT, 0, 0, sizeof(Vertex), 0, false },
+                    { "TEXCOORD",   FORMAT_R32G32_FLOAT,    0, 1, sizeof(Vertex), sizeof(glm::vec3), false }
                 };
                 
                 GraphicsPipelineStateDesc desc = {};
@@ -99,10 +96,10 @@ namespace Lambda
             {
                 Vertex vertices[] =
                 {
-                    { Vec3f(-0.5f, -0.5f, 0.0f),    Vec2f(0.0f, 0.0f) },
-                    { Vec3f(0.5f, -0.5f, 0.0f),     Vec2f(2.0f, 0.0f) },
-                    { Vec3f(0.5f, 0.5f, 0.0f),      Vec2f(2.0f, 2.0f) },
-                    { Vec3f(-0.5f, 0.5f, 0.0f),     Vec2f(0.0f, 2.0f) }
+                    { glm::vec3(-0.5f, -0.5f, 0.0f),    glm::vec2(0.0f, 0.0f) },
+                    { glm::vec3(0.5f, -0.5f, 0.0f),     glm::vec2(1.0f, 0.0f) },
+                    { glm::vec3(0.5f, 0.5f, 0.0f),      glm::vec2(1.0f, 1.0f) },
+                    { glm::vec3(-0.5f, 0.5f, 0.0f),     glm::vec2(0.0f, 1.0f) }
                 };
 
                 BufferDesc desc = {};
@@ -145,13 +142,13 @@ namespace Lambda
 
             //Create colorbuffer
             {
-                Vec4f color = Vec4f(0.0f, 1.0f, 0.0f, 1.0f);
+                glm::vec4 color = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
 
                 BufferDesc desc = {};
                 desc.Usage = RESOURCE_USAGE_DEFAULT;
                 desc.Flags = BUFFER_FLAGS_CONSTANT_BUFFER;
-                desc.SizeInBytes = sizeof(Vec4f);//(uint32)Math::AlignUp(sizeof(Vec4f), 256);
-                desc.StrideInBytes = sizeof(Vec4f);
+                desc.SizeInBytes = sizeof(glm::vec4);//(uint32)Math::AlignUp(sizeof(Vec4f), 256);
+                desc.StrideInBytes = sizeof(glm::vec4);
 
                 ResourceData data = {};
                 data.pData = &color;
@@ -161,13 +158,13 @@ namespace Lambda
             }
 
             //Create camerabuffer
-            /*{
+            {
                 CreateCamera(GetWindow()->GetWidth(), GetWindow()->GetHeight());
 
                 BufferDesc desc = {};
                 desc.Usage = RESOURCE_USAGE_DEFAULT;
                 desc.Flags = BUFFER_FLAGS_CONSTANT_BUFFER;
-                desc.SizeInBytes = (uint32)Math::AlignUp(sizeof(CameraBuffer), 256);
+                desc.SizeInBytes = sizeof(CameraBuffer);
                 desc.StrideInBytes = sizeof(CameraBuffer);
 
                 ResourceData data = {};
@@ -175,11 +172,8 @@ namespace Lambda
                 data.SizeInBytes = desc.SizeInBytes;
 
                 pDevice->CreateBuffer(&m_pCameraBuffer, &data, desc);
-                if (m_pCurrentList)
-                {
-                    m_pCurrentList->TransitionResource(m_pCameraBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-                }
-            }*/
+                m_pCurrentList->TransitionBuffer(m_pCameraBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+            }
 
             //Create depthbuffer
             /*{
@@ -205,7 +199,7 @@ namespace Lambda
             //Create samplerstate
             {
                 SamplerDesc desc = {};
-                desc.AdressMode = SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+                desc.AdressMode = SAMPLER_ADDRESS_MODE_REPEAT;
                 
                 pDevice->CreateSamplerState(&m_pSampler, desc);
             }
@@ -230,8 +224,6 @@ namespace Lambda
 
 	void SandBox::OnRender(Time dt)
 	{
-		using namespace Math;
-
 		IGraphicsDevice* pDevice = IGraphicsDevice::GetInstance();
         if (pDevice)
         {
@@ -252,15 +244,15 @@ namespace Lambda
                 m_pCurrentList->SetRenderTarget(pRenderTarget, m_pDepthBuffer);
                 
                 //Set scissor and viewport
-                Math::Rectangle scissorrect;
-                scissorrect.TopLeft.x       = 0.0f;
-                scissorrect.TopLeft.y       = 0.0f;
-                scissorrect.BottomRight.x   = m_Width;
-                scissorrect.BottomRight.y   = m_Height;
+                Rectangle scissorrect;
+                scissorrect.X       = 0.0f;
+                scissorrect.Y       = 0.0f;
+                scissorrect.Width   = m_Width;
+                scissorrect.Height  = m_Height;
                 
                 Viewport viewport = {};
-                viewport.Width      = scissorrect.BottomRight.x;
-                viewport.Height     = scissorrect.BottomRight.y;
+                viewport.Width      = scissorrect.Width;
+                viewport.Height     = scissorrect.Height;
                 viewport.TopX       = 0.0f;
                 viewport.TopY       = 0.0f;
                 viewport.MinDepth   = 0.0f;
@@ -290,17 +282,17 @@ namespace Lambda
                 }*/
                 
                 //Update data
-                Vec4f colorBuff = Vec4f(1.0f, 0.0f, 0.4f, 1.0f);
+                glm::vec4 colorBuff = glm::vec4(1.0f, 0.0f, 0.4f, 1.0f);
                 
                 ResourceData data = {};
                 data.pData = &colorBuff;
-                data.SizeInBytes = sizeof(Vec4f);
+                data.SizeInBytes = sizeof(glm::vec4);
                 
                 m_pCurrentList->TransitionBuffer(m_pColorBuffer, RESOURCE_STATE_COPY_DEST);
                 m_pCurrentList->UpdateBuffer(m_pColorBuffer, &data);
                 m_pCurrentList->TransitionBuffer(m_pColorBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
                 
-                //m_pCurrentList->VSSetConstantBuffers(&m_pCameraBuffer, 1, 0);
+                m_pCurrentList->VSSetConstantBuffers(&m_pCameraBuffer, 1, 0);
                 m_pCurrentList->PSSetConstantBuffers(&m_pColorBuffer, 1, 0);
                 
                 //Set texture and samplers
@@ -346,7 +338,7 @@ namespace Lambda
             pDevice->DestroyBuffer(&m_pVertexBuffer);
             pDevice->DestroyBuffer(&m_pIndexBuffer);
             pDevice->DestroyBuffer(&m_pColorBuffer);
-            //pDevice->DestroyBuffer(&m_pCameraBuffer);
+            pDevice->DestroyBuffer(&m_pCameraBuffer);
             //pDevice->DestroyTexture2D(&m_pDepthBuffer);
             pDevice->DestroyTexture2D(&m_pTexture);
             pDevice->DestroySamplerState(&m_pSampler);
@@ -356,10 +348,8 @@ namespace Lambda
 
 	void SandBox::CreateCamera(uint32 width, uint32 height)
 	{
-		using namespace Math;
-
-		m_Camera.View = Store(Float4x4::LookAt(Vec3Const::UP, Vec3f(0.0f), Vec3f(0.0f, 0.0f, -1.0f)).Transpose());
-		m_Camera.Proj = Store(Float4x4::Perspective(ToRadiansF(90.0f), (float)width / height, 10.0f, 0.01f).Transpose());
+        m_Camera.View = glm::lookAt(glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        m_Camera.Proj = glm::perspective(glm::radians(90.0f), (float)width / (float)height, 0.1f, 100.0f);
 	}
 
 

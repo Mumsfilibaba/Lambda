@@ -280,4 +280,26 @@ namespace Lambda
 		const void* pData = nullptr;
 		uint64 SizeInBytes = 0;
 	};
+    
+    
+    //Viewport struct
+    struct Viewport
+    {
+        float TopX;
+        float TopY;
+        float Width;
+        float Height;
+        float MinDepth;
+        float MaxDepth;
+    };
+    
+    
+    //Rectangle struct
+    struct Rectangle
+    {
+        float X;
+        float Y;
+        float Width;
+        float Height;
+    };
 }

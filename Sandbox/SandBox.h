@@ -6,17 +6,19 @@
 #include "Graphics/IBuffer.h"
 #include "Graphics/ITexture2D.h"
 #include "Graphics/ISamplerState.h"
-#include "Math/Math.h"
+#include "glm/glm.hpp"
 
 namespace Lambda
 {
+    //Buffer for camera
 	struct CameraBuffer
 	{
-		Math::Mat4f View;
-		Math::Mat4f Proj;
+        glm::mat4 View;
+        glm::mat4 Proj;
 	};
 
 
+    //Sandbox application
 	class SandBox final : public Application
 	{
 	public:

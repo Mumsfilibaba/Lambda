@@ -365,14 +365,14 @@ namespace Lambda
     }
     
     
-    void VulkanCommandList::SetScissorRect(const Math::Rectangle& scissorRect)
+    void VulkanCommandList::SetScissorRect(const Rectangle& scissorRect)
     {
         //Setup vulkan scissorrect
         VkRect2D rect = {};
-        rect.extent.height  = scissorRect.BottomRight.y;
-        rect.extent.width   = scissorRect.BottomRight.x;
-        rect.offset.x       = 0;
-        rect.offset.y       = 0;
+        rect.extent.height  = scissorRect.Height;
+        rect.extent.width   = scissorRect.Width;
+        rect.offset.x       = scissorRect.X;
+        rect.offset.y       = scissorRect.Y;
         
         vkCmdSetScissor(m_CommandBuffer, 0, 1, &rect);
     }

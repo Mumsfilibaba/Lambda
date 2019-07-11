@@ -1,9 +1,9 @@
 #pragma once
 #include "IObject.h"
-#include "Math/Rectangle.h"
 
 namespace Lambda
 {
+    //Type of commandlist
 	enum CommandListType : uint32
 	{
 		COMMAND_LIST_TYPE_UNKNOWN = 0,
@@ -13,23 +13,15 @@ namespace Lambda
 	};
 
 
-	struct Viewport
-	{
-		float TopX;
-		float TopY;
-		float Width;
-		float Height;
-		float MinDepth;
-		float MaxDepth;
-	};
-
-
-	class IBuffer;
+    //Forward declarations
+    class IBuffer;
 	class ITexture2D;
 	class IRenderTarget;
 	class ISamplerState;
 	class IGraphicsPipelineState;
 
+    
+    //Commandlist
 	class LAMBDA_API ICommandList
 	{
 	public:
@@ -43,7 +35,7 @@ namespace Lambda
 
 		virtual void SetRenderTarget(ITexture2D* pRenderTarget, ITexture2D* pDepthStencil) = 0;
 		virtual void SetViewport(const Viewport& viewport) = 0;
-		virtual void SetScissorRect(const Math::Rectangle& scissorRect) = 0;
+		virtual void SetScissorRect(const Rectangle& scissorRect) = 0;
 		virtual void SetGraphicsPipelineState(IGraphicsPipelineState* pPSO) = 0;
 		virtual void SetVertexBuffer(IBuffer* pBuffer, uint32 slot) = 0;
         virtual void SetIndexBuffer(IBuffer* pBuffer) = 0;
