@@ -1,6 +1,7 @@
 #include "SandBox.h"
 #include "System/Log.h"
 #include "Math/Math.h"
+#include "glm/glm.hpp"
 #include "System/Input.h"
 
 namespace Lambda
@@ -30,7 +31,7 @@ namespace Lambda
 	void SandBox::OnLoad()
 	{
 		using namespace Math;
-
+        
 		//Add Sandbox-level eventlayer
 		EventLayer sandboxLayer = { SandBox::OnEvent, "SandBox" };
 		EventDispatcher::PushEventLayer(sandboxLayer);

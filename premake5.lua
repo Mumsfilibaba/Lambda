@@ -25,6 +25,23 @@ workspace "Lambda"
 		"**.hlsl"
 	}
 
+	filter "configurations:Debug"
+		symbols "On"
+		runtime "Debug"
+		defines 
+		{ 
+			"LAMBDA_DEBUG"
+		}	
+	
+	filter "configurations:Release"
+		symbols "On"
+		runtime "Release"
+		optimize "Full"
+		defines 
+		{ 
+			"LAMBDA_RELEASE" 
+		}
+
 	filter "action:vs*"
 		defines
 		{
@@ -78,23 +95,6 @@ workspace "Lambda"
 		{
 			"LAMBDA_PLAT_MACOS" 
 		}
-	
-	filter "configurations:Debug"
-		symbols "On"
-		runtime "Debug"
-		defines 
-		{ 
-			"LAMBDA_DEBUG"
-		}	
-		
-	filter "configurations:Release"
-		symbols "On"
-		runtime "Release"
-		optimize "Full"
-		defines 
-		{ 
-			"LAMBDA_RELEASE" 
-		}
 
 project "Lambda"
 	kind "SharedLib"
@@ -108,7 +108,8 @@ project "Lambda"
 	includedirs 
 	{ 
 		"%{prj.name}/Include",
-		"Dependencies"
+		"Dependencies/stb",
+		"Dependencies/glm"
 	}
 	
 	filter "system:windows"
@@ -135,7 +136,8 @@ project "Sandbox"
 	
 	includedirs 
 	{ 
-		"Lambda/Include"
+		"Lambda/Include",
+		"Dependencies/glm"
 	}
 	
 	dependson { "Lambda" }
