@@ -187,47 +187,54 @@ namespace Lambda
         
         //RasterizerState
         VkPipelineRasterizationStateCreateInfo rasterizerState = {};
-        rasterizerState.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-        rasterizerState.pNext = nullptr;
-        rasterizerState.flags = 0;
-        rasterizerState.depthClampEnable = VK_FALSE;
+        rasterizerState.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+        rasterizerState.pNext                   = nullptr;
+        rasterizerState.flags                   = 0;
+        rasterizerState.depthClampEnable        = VK_FALSE;
         rasterizerState.rasterizerDiscardEnable = VK_FALSE;
-        rasterizerState.polygonMode = VK_POLYGON_MODE_FILL;
-        rasterizerState.lineWidth = 1.0f;
-        rasterizerState.cullMode = VK_CULL_MODE_BACK_BIT;
-        rasterizerState.frontFace = VK_FRONT_FACE_CLOCKWISE;
-        rasterizerState.depthBiasEnable = VK_FALSE;
+        rasterizerState.polygonMode             = VK_POLYGON_MODE_FILL;
+        rasterizerState.lineWidth               = 1.0f;
+        rasterizerState.frontFace               = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+        rasterizerState.depthBiasEnable         = VK_FALSE;
         rasterizerState.depthBiasConstantFactor = 0.0f;
-        rasterizerState.depthBiasClamp = 0.0f;
-        rasterizerState.depthBiasSlopeFactor = 0.0f;
+        rasterizerState.depthBiasClamp          = 0.0f;
+        rasterizerState.depthBiasSlopeFactor    = 0.0f;
+        
+        //Set cullmode
+        if (desc.Cull == CULL_MODE_BACK)
+            rasterizerState.cullMode                = VK_CULL_MODE_BACK_BIT;
+        else if (desc.Cull == CULL_MODE_FRONT)
+            rasterizerState.cullMode                = VK_CULL_MODE_FRONT_BIT;
+        else if (desc.Cull == CULL_MODE_NONE)
+            rasterizerState.cullMode                = VK_CULL_MODE_NONE;
         
         //Multisampling
         VkPipelineMultisampleStateCreateInfo multisampling = {};
-        multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-        multisampling.sampleShadingEnable = VK_FALSE;
-        multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-        multisampling.minSampleShading = 1.0f;
-        multisampling.pSampleMask = nullptr;
+        multisampling.sType                 = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+        multisampling.sampleShadingEnable   = VK_FALSE;
+        multisampling.rasterizationSamples  = VK_SAMPLE_COUNT_1_BIT;
+        multisampling.minSampleShading      = 1.0f;
+        multisampling.pSampleMask           = nullptr;
         multisampling.alphaToCoverageEnable = VK_FALSE;
-        multisampling.alphaToOneEnable = VK_FALSE;
+        multisampling.alphaToOneEnable      = VK_FALSE;
         
         //Blendstate
         VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
-        colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-        colorBlendAttachment.blendEnable = VK_FALSE;
-        colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-        colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
-        colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-        colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-        colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-        colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+        colorBlendAttachment.colorWriteMask         = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+        colorBlendAttachment.blendEnable            = VK_FALSE;
+        colorBlendAttachment.srcColorBlendFactor    = VK_BLEND_FACTOR_ONE;
+        colorBlendAttachment.dstColorBlendFactor    = VK_BLEND_FACTOR_ZERO;
+        colorBlendAttachment.colorBlendOp           = VK_BLEND_OP_ADD;
+        colorBlendAttachment.srcAlphaBlendFactor    = VK_BLEND_FACTOR_ONE;
+        colorBlendAttachment.dstAlphaBlendFactor    = VK_BLEND_FACTOR_ZERO;
+        colorBlendAttachment.alphaBlendOp           = VK_BLEND_OP_ADD;
         
         VkPipelineColorBlendStateCreateInfo colorBlending = {};
-        colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-        colorBlending.logicOpEnable = VK_FALSE;
-        colorBlending.logicOp = VK_LOGIC_OP_COPY;
-        colorBlending.attachmentCount = 1;
-        colorBlending.pAttachments = &colorBlendAttachment;
+        colorBlending.sType             = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+        colorBlending.logicOpEnable     = VK_FALSE;
+        colorBlending.logicOp           = VK_LOGIC_OP_COPY;
+        colorBlending.attachmentCount   = 1;
+        colorBlending.pAttachments      = &colorBlendAttachment;
         colorBlending.blendConstants[0] = 0.0f;
         colorBlending.blendConstants[1] = 0.0f;
         colorBlending.blendConstants[2] = 0.0f;
@@ -235,24 +242,24 @@ namespace Lambda
         
         //Setup pipelinestate
         VkGraphicsPipelineCreateInfo pipelineInfo = {};
-        pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-        pipelineInfo.flags = 0;
-        pipelineInfo.pNext = nullptr;
-        pipelineInfo.stageCount = uint32(shaderStages.size());
-        pipelineInfo.pStages = shaderStages.data();
-        pipelineInfo.pVertexInputState = &inputLayout;
-        pipelineInfo.pInputAssemblyState = &inputAssembly;
-        pipelineInfo.pViewportState = &viewportState;
-        pipelineInfo.pRasterizationState = &rasterizerState;
-        pipelineInfo.pMultisampleState = &multisampling;
-        pipelineInfo.pDepthStencilState = nullptr;
-        pipelineInfo.pColorBlendState = &colorBlending;
-        pipelineInfo.pDynamicState = &dynamicState;
-        pipelineInfo.layout = VulkanGraphicsDevice::GetDefaultPipelineLayout();
-        pipelineInfo.renderPass = m_RenderPass;
-        pipelineInfo.subpass = 0;
-        pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
-        pipelineInfo.basePipelineIndex = -1;
+        pipelineInfo.sType                  = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+        pipelineInfo.flags                  = 0;
+        pipelineInfo.pNext                  = nullptr;
+        pipelineInfo.stageCount             = uint32(shaderStages.size());
+        pipelineInfo.pStages                = shaderStages.data();
+        pipelineInfo.pVertexInputState      = &inputLayout;
+        pipelineInfo.pInputAssemblyState    = &inputAssembly;
+        pipelineInfo.pViewportState         = &viewportState;
+        pipelineInfo.pRasterizationState    = &rasterizerState;
+        pipelineInfo.pMultisampleState      = &multisampling;
+        pipelineInfo.pDepthStencilState     = nullptr;
+        pipelineInfo.pColorBlendState       = &colorBlending;
+        pipelineInfo.pDynamicState          = &dynamicState;
+        pipelineInfo.layout                 = VulkanGraphicsDevice::GetDefaultPipelineLayout();
+        pipelineInfo.renderPass             = m_RenderPass;
+        pipelineInfo.subpass                = 0;
+        pipelineInfo.basePipelineHandle     = VK_NULL_HANDLE;
+        pipelineInfo.basePipelineIndex      = -1;
         
         if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_Pipeline) != VK_SUCCESS)
         {

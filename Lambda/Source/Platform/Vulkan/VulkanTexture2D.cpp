@@ -52,21 +52,23 @@ namespace Lambda
     {
         //Setup image
         VkImageCreateInfo info = {};
-        info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-        info.pNext = nullptr;
-        info.flags = 0;
-        info.imageType = VK_IMAGE_TYPE_2D;
-        info.extent.width = desc.Width;
-        info.extent.height = desc.Height;
-        info.extent.depth = 1;
-        info.mipLevels = 1;
-        info.arrayLayers = 1;
-        info.format = ConvertResourceFormat(desc.Format);
-        info.tiling = VK_IMAGE_TILING_OPTIMAL;
-        info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-        info.samples = VK_SAMPLE_COUNT_1_BIT;
-        info.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+        info.sType                  = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+        info.pNext                  = nullptr;
+        info.flags                  = 0;
+        info.imageType              = VK_IMAGE_TYPE_2D;
+        info.extent.width           = desc.Width;
+        info.extent.height          = desc.Height;
+        info.extent.depth           = 1;
+        info.mipLevels              = desc.MipLevels;
+        info.arrayLayers            = desc.ArraySize;
+        info.pQueueFamilyIndices    = nullptr;
+        info.queueFamilyIndexCount  = 0;
+        info.format                 = ConvertResourceFormat(desc.Format);
+        info.tiling                 = VK_IMAGE_TILING_OPTIMAL;
+        info.initialLayout          = VK_IMAGE_LAYOUT_UNDEFINED;
+        info.sharingMode            = VK_SHARING_MODE_EXCLUSIVE;
+        info.samples                = VK_SAMPLE_COUNT_1_BIT;
+        info.usage                  = VK_IMAGE_USAGE_TRANSFER_DST_BIT;
         
         //Set special usage
         if (desc.Flags & TEXTURE_FLAGS_SHADER_RESOURCE)

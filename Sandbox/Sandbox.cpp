@@ -5,6 +5,130 @@
 
 namespace Lambda
 {
+    //Declare vertex
+    struct Vertex
+    {
+        glm::vec3 Position;
+        glm::vec3 Normal;
+        glm::vec2 UV;
+    };
+    
+    
+    //Create cubeverts
+    std::vector<Vertex> CreateCubeVertices()
+    {
+        using namespace glm;
+        
+        std::vector<Vertex> vertices =
+        {
+            //FRONT FACE
+            { vec3(-0.5f,  0.5f, -0.5f), vec3( 0.0f,  0.0f, -1.0f), vec2(0.0f, 0.0f) },
+            { vec3( 0.5f,  0.5f, -0.5f), vec3( 0.0f,  0.0f, -1.0f), vec2(1.0f, 0.0f) },
+            { vec3(-0.5f, -0.5f, -0.5f), vec3( 0.0f,  0.0f, -1.0f), vec2(0.0f, 1.0f) },
+            { vec3( 0.5f, -0.5f, -0.5f), vec3( 0.0f,  0.0f, -1.0f), vec2(1.0f, 1.0f) },
+            
+            //BACK FACE
+            { vec3( 0.5f,  0.5f,  0.5f), vec3( 0.0f,  0.0f,  1.0f), vec2(0.0f, 0.0f) },
+            { vec3(-0.5f,  0.5f,  0.5f), vec3( 0.0f,  0.0f,  1.0f), vec2(1.0f, 0.0f) },
+            { vec3( 0.5f, -0.5f,  0.5f), vec3( 0.0f,  0.0f,  1.0f), vec2(0.0f, 1.0f) },
+            { vec3(-0.5f, -0.5f,  0.5f), vec3( 0.0f,  0.0f,  1.0f), vec2(1.0f, 1.0f) },
+            
+            //RIGHT FACE
+            { vec3( 0.5f,  0.5f, -0.5f), vec3( 1.0f,  0.0f,  0.0f), vec2(0.0f, 0.0f) },
+            { vec3( 0.5f,  0.5f,  0.5f), vec3( 1.0f,  0.0f,  0.0f), vec2(1.0f, 0.0f) },
+            { vec3( 0.5f, -0.5f, -0.5f), vec3( 1.0f,  0.0f,  0.0f), vec2(0.0f, 1.0f) },
+            { vec3( 0.5f, -0.5f,  0.5f), vec3( 1.0f,  0.0f,  0.0f), vec2(1.0f, 1.0f) },
+            
+            //LEFT FACE
+            { vec3(-0.5f,  0.5f, -0.5f), vec3(-1.0f,  0.0f,  0.0f), vec2(0.0f, 0.0f) },
+            { vec3(-0.5f,  0.5f,  0.5f), vec3(-1.0f,  0.0f,  0.0f), vec2(1.0f, 0.0f) },
+            { vec3(-0.5f, -0.5f, -0.5f), vec3(-1.0f,  0.0f,  0.0f), vec2(0.0f, 1.0f) },
+            { vec3(-0.5f, -0.5f,  0.5f), vec3(-1.0f,  0.0f,  0.0f), vec2(1.0f, 1.0f) },
+            
+            //ROOF FACE
+            { vec3(-0.5f,  0.5f,  0.5f), vec3( 0.0f,  1.0f,  0.0f), vec2(0.0f, 0.0f) },
+            { vec3( 0.5f,  0.5f,  0.5f), vec3( 0.0f,  1.0f,  0.0f), vec2(1.0f, 0.0f) },
+            { vec3(-0.5f,  0.5f, -0.5f), vec3( 0.0f,  1.0f,  0.0f), vec2(0.0f, 1.0f) },
+            { vec3( 0.5f,  0.5f, -0.5f), vec3( 0.0f,  1.0f,  0.0f), vec2(1.0f, 1.0f) },
+            
+            //FLOOR FACE
+            { vec3(-0.5f, -0.5f, -0.5f), vec3( 0.0f, -1.0f,  0.0f), vec2(0.0f, 0.0f) },
+            { vec3( 0.5f, -0.5f, -0.5f), vec3( 0.0f, -1.0f,  0.0f), vec2(1.0f, 0.0f) },
+            { vec3(-0.5f, -0.5f,  0.5f), vec3( 0.0f, -1.0f,  0.0f), vec2(0.0f, 1.0f) },
+            { vec3( 0.5f, -0.5f,  0.5f), vec3( 0.0f, -1.0f,  0.0f), vec2(1.0f, 1.0f) },
+        };
+        
+
+        return vertices;
+    }
+    
+    
+    //Create cube-indices
+    std::vector<uint32> CreateCubeIndices()
+    {
+        std::vector<uint32> indices =
+        {
+            //FRONT FACE
+            0, 1, 2,
+            1, 3, 2,
+            
+            //BACK FACE
+            4, 5, 6,
+            5, 7, 6,
+            
+            //RIGHT FACE
+            8, 9, 10,
+            9, 11, 10,
+            
+            //LEFT FACE
+            12, 13, 14,
+            13, 15, 14,
+            
+            //ROOF FACE
+            16, 17, 18,
+            17, 19, 18,
+            
+            //FLOOR FACE
+            20, 21, 22,
+            21, 23, 22
+        };
+        
+        return indices;
+    }
+    
+    
+    //Create planeverts
+    std::vector<Vertex> CreatePlaneVertices()
+    {
+        using namespace glm;
+        
+        std::vector<Vertex> vertices =
+        {
+            { vec3(-0.5f, -0.5f, 0.0f),    vec3(0.0f, 0.0f, 1.0f), vec2(0.0f, 0.0f) },
+            { vec3(0.5f, -0.5f, 0.0f),     vec3(0.0f, 0.0f, 1.0f), vec2(1.0f, 0.0f) },
+            { vec3(0.5f, 0.5f, 0.0f),      vec3(0.0f, 0.0f, 1.0f), vec2(1.0f, 1.0f) },
+            { vec3(-0.5f, 0.5f, 0.0f),     vec3(0.0f, 0.0f, 1.0f), vec2(0.0f, 1.0f) }
+        };
+        
+        
+        return vertices;
+    }
+    
+    
+    //Create plane-indices
+    std::vector<uint32> CreatePlaneIndices()
+    {
+        std::vector<uint32> indices =
+        {
+            0, 1, 2,
+            2, 3, 0
+        };
+        
+        return indices;
+    }
+    
+    
+    //Sandbox definitions
 	SandBox::SandBox(const EngineParams& params)
 		: Application(params),
 		m_pLists(),
@@ -65,20 +189,14 @@ namespace Lambda
             //m_pVS = IShader::CreateShaderFromFile(pDevice, "Triangle.hlsl", "VSMain", SHADER_TYPE_VERTEX);
             //m_pPS = IShader::CreateShaderFromFile(pDevice, "Triangle.hlsl", "PSMain", SHADER_TYPE_PIXEL);
             //m_pCompute = IShader::CreateShaderFromFile(pDevice, "Texture2DMipMapGen.cso", "main", SHADER_TYPE_COMPUTE, SHADER_LANG_HLSL_COMPILED);
-
-            //Declare vertex
-            struct Vertex
-            {
-                glm::vec3 Position;
-                glm::vec2 UV;
-            };
             
             //Create pipelinestate
             {
                 InputElement elements[]
                 {
-                    { "POSITION",   FORMAT_R32G32B32_FLOAT, 0, 0, sizeof(Vertex), 0, false },
-                    { "TEXCOORD",   FORMAT_R32G32_FLOAT,    0, 1, sizeof(Vertex), sizeof(glm::vec3), false }
+                    { "POSITION",   FORMAT_R32G32B32_FLOAT, 0, 0, sizeof(Vertex), 0,                     false },
+                    { "NORMAL",     FORMAT_R32G32B32_FLOAT, 0, 1, sizeof(Vertex), sizeof(glm::vec3),     false },
+                    { "TEXCOORD",   FORMAT_R32G32_FLOAT,    0, 2, sizeof(Vertex), sizeof(glm::vec3) * 2, false }
                 };
                 
                 GraphicsPipelineStateDesc desc = {};
@@ -87,29 +205,24 @@ namespace Lambda
                 desc.pInputElements     = elements;
                 desc.InputElementCount  = sizeof(elements) / sizeof(InputElement);
                 desc.Topology           = PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+                desc.Cull               = CULL_MODE_NONE;
 
                 pDevice->CreateGraphicsPipelineState(&m_pPipelineState, desc);
             }
 
             //Create vertexbuffer
             {
-                Vertex vertices[] =
-                {
-                    { glm::vec3(-0.5f, -0.5f, 0.0f),    glm::vec2(0.0f, 0.0f) },
-                    { glm::vec3(0.5f, -0.5f, 0.0f),     glm::vec2(1.0f, 0.0f) },
-                    { glm::vec3(0.5f, 0.5f, 0.0f),      glm::vec2(1.0f, 1.0f) },
-                    { glm::vec3(-0.5f, 0.5f, 0.0f),     glm::vec2(0.0f, 1.0f) }
-                };
+                std::vector<Vertex> vertices = CreateCubeVertices();
 
                 BufferDesc desc = {};
-                desc.Usage = RESOURCE_USAGE_DEFAULT;
-                desc.Flags = BUFFER_FLAGS_VERTEX_BUFFER;
-                desc.SizeInBytes = sizeof(vertices);
-                desc.StrideInBytes = sizeof(Vertex);
+                desc.Usage          = RESOURCE_USAGE_DEFAULT;
+                desc.Flags          = BUFFER_FLAGS_VERTEX_BUFFER;
+                desc.SizeInBytes    = sizeof(Vertex) * vertices.size();
+                desc.StrideInBytes  = sizeof(Vertex);
 
                 ResourceData data = {};
-                data.pData = &vertices;
-                data.SizeInBytes = desc.SizeInBytes;
+                data.pData          = vertices.data();
+                data.SizeInBytes    = desc.SizeInBytes;
 
                 pDevice->CreateBuffer(&m_pVertexBuffer, &data, desc);
                 m_pCurrentList->TransitionBuffer(m_pVertexBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
@@ -117,21 +230,17 @@ namespace Lambda
             
             //Create indexbuffer
             {
-                uint32 indices[] =
-                {
-                    0, 1, 2,
-                    2, 3, 0
-                };
+                std::vector<uint32> indices = CreateCubeIndices();
                 
                 BufferDesc desc = {};
-                desc.Usage = RESOURCE_USAGE_DEFAULT;
-                desc.Flags = BUFFER_FLAGS_INDEX_BUFFER;
-                desc.SizeInBytes = sizeof(indices);
-                desc.StrideInBytes = sizeof(uint32);
+                desc.Usage          = RESOURCE_USAGE_DEFAULT;
+                desc.Flags          = BUFFER_FLAGS_INDEX_BUFFER;
+                desc.SizeInBytes    = sizeof(uint32) * indices.size();
+                desc.StrideInBytes  = sizeof(uint32);
                 
                 ResourceData data = {};
-                data.pData = &indices;
-                data.SizeInBytes = desc.SizeInBytes;
+                data.pData          = indices.data();
+                data.SizeInBytes    = desc.SizeInBytes;
                 
                 pDevice->CreateBuffer(&m_pIndexBuffer, &data, desc);
             }
@@ -171,22 +280,40 @@ namespace Lambda
                 m_pCurrentList->TransitionBuffer(m_pCameraBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
             }
 
-            //Create depthbuffer
-            /*{
-                Texture2DDesc desc = {};
+            //Create TransformBuffer
+            {
+                m_Transform.Model = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+                
+                BufferDesc desc = {};
                 desc.Usage = RESOURCE_USAGE_DEFAULT;
-                desc.Flags = TEXTURE_FLAGS_DEPTH_STENCIL;
-                desc.ArraySize = 1;
-                desc.Width = GetWindow()->GetWidth();
-                desc.Height = GetWindow()->GetHeight();
-                desc.Format = FORMAT_D24_UNORM_S8_UINT;
-                desc.SampleCount = 1;
-                desc.MipLevels = 0;
-                desc.ClearValue.Depth = 1.0f;
+                desc.Flags = BUFFER_FLAGS_CONSTANT_BUFFER;
+                desc.SizeInBytes = sizeof(TransformBuffer);
+                desc.StrideInBytes = sizeof(TransformBuffer);
+                
+                ResourceData data = {};
+                data.pData = &m_Transform;
+                data.SizeInBytes = desc.SizeInBytes;
+                
+                pDevice->CreateBuffer(&m_pTransformBuffer, &data, desc);
+                m_pCurrentList->TransitionBuffer(m_pTransformBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+            }
+            
+            //Create depthbuffer
+            {
+                Texture2DDesc desc = {};
+                desc.Usage              = RESOURCE_USAGE_DEFAULT;
+                desc.Flags              = TEXTURE_FLAGS_DEPTH_STENCIL;
+                desc.ArraySize          = 1;
+                desc.Width              = GetWindow()->GetWidth();
+                desc.Height             = GetWindow()->GetHeight();
+                desc.Format             = FORMAT_D24_UNORM_S8_UINT;
+                desc.SampleCount        = 1;
+                desc.MipLevels          = 0;
+                desc.ClearValue.Depth   = 1.0f;
                 desc.ClearValue.Stencil = 0;
 
                 pDevice->CreateTexture2D(&m_pDepthBuffer, nullptr, desc);
-            }*/
+            }
 
             //Create texture
             m_pTexture = ITexture2D::CreateTextureFromFile(pDevice, "texture.jpg", TEXTURE_FLAGS_SHADER_RESOURCE, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
@@ -212,6 +339,8 @@ namespace Lambda
 
 	void SandBox::OnUpdate(Time dt)
 	{
+        //Rotate cube
+        m_Transform.Model = glm::rotate(m_Transform.Model, glm::radians(30.0f * dt.AsSeconds()), glm::vec3(0.0f, 1.0f, 0.0f));
 	}
 
 
@@ -285,7 +414,16 @@ namespace Lambda
                 m_pCurrentList->UpdateBuffer(m_pColorBuffer, &data);
                 m_pCurrentList->TransitionBuffer(m_pColorBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
                 
-                m_pCurrentList->VSSetConstantBuffers(&m_pCameraBuffer, 1, 0);
+                data.pData = &m_Transform;
+                data.SizeInBytes = sizeof(TransformBuffer);
+                
+                m_pCurrentList->TransitionBuffer(m_pTransformBuffer, RESOURCE_STATE_COPY_DEST);
+                m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);
+                m_pCurrentList->TransitionBuffer(m_pTransformBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+                
+                //Set buffers
+                IBuffer* vsBuffers[] = { m_pCameraBuffer, m_pTransformBuffer };
+                m_pCurrentList->VSSetConstantBuffers(vsBuffers, 2, 0);
                 m_pCurrentList->PSSetConstantBuffers(&m_pColorBuffer, 1, 0);
                 
                 //Set texture and samplers
@@ -296,7 +434,7 @@ namespace Lambda
                 m_pCurrentList->SetVertexBuffer(m_pVertexBuffer, 0);
                 m_pCurrentList->SetIndexBuffer(m_pIndexBuffer);
                 
-                m_pCurrentList->DrawIndexedInstanced(6, 1, 0, 0, 0);
+                m_pCurrentList->DrawIndexedInstanced(36, 1, 0, 0, 0);
                 
                 //m_pCurrentList->TransitionTexture(pRenderTarget, RESOURCE_STATE_PRESENT_COMMON);
                 
@@ -332,7 +470,8 @@ namespace Lambda
             pDevice->DestroyBuffer(&m_pIndexBuffer);
             pDevice->DestroyBuffer(&m_pColorBuffer);
             pDevice->DestroyBuffer(&m_pCameraBuffer);
-            //pDevice->DestroyTexture2D(&m_pDepthBuffer);
+            pDevice->DestroyBuffer(&m_pTransformBuffer);
+            pDevice->DestroyTexture2D(&m_pDepthBuffer);
             pDevice->DestroyTexture2D(&m_pTexture);
             pDevice->DestroySamplerState(&m_pSampler);
         }
@@ -341,7 +480,7 @@ namespace Lambda
 
 	void SandBox::CreateCamera(uint32 width, uint32 height)
 	{
-        m_Camera.View = glm::lookAt(glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        m_Camera.View = glm::lookAt(glm::vec3(0.0f, 0.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         m_Camera.Proj = glm::perspective(glm::radians(90.0f), (float)width / (float)height, 0.1f, 100.0f);
 	}
 

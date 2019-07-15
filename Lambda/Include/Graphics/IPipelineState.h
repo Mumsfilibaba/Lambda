@@ -2,7 +2,7 @@
 #include "IObject.h"
 
 namespace Lambda
-{
+{    
     //Forwarddeclarations
 	class IShader;
 
@@ -33,6 +33,7 @@ namespace Lambda
         
         //State
         PrimitiveTopology Topology      = PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+        CullMode Cull                   = CULL_MODE_BACK;
 	};
 
 

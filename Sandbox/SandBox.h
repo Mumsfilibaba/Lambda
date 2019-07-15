@@ -16,6 +16,13 @@ namespace Lambda
         glm::mat4 View;
         glm::mat4 Proj;
 	};
+    
+    
+    //Buffer for transform
+    struct TransformBuffer
+    {
+        glm::mat4 Model;
+    };
 
 
     //Sandbox application
@@ -33,22 +40,37 @@ namespace Lambda
 		void CreateCamera(uint32 width, uint32 height);
 
 	private:
+        //Commandlist
 		ICommandList* m_pLists[3];
         ICommandList* m_pCurrentList;
-		IShader* m_pVS;
+		
+        //Shaders
+        IShader* m_pVS;
 		IShader* m_pPS;
 		IShader* m_pCompute;
+        
+        //Buffers
 		IBuffer* m_pVertexBuffer;
         IBuffer* m_pIndexBuffer;
 		IBuffer* m_pColorBuffer;
 		IBuffer* m_pCameraBuffer;
-		ITexture2D* m_pDepthBuffer;
+        IBuffer* m_pTransformBuffer;
+        
+        //Textures
+        ITexture2D* m_pDepthBuffer;
 		ITexture2D* m_pTexture;
-		ISamplerState* m_pSampler;
-		IGraphicsPipelineState* m_pPipelineState;
-		float m_Width;
+		
+        //Samplers
+        ISamplerState* m_pSampler;
+		
+        //Pipelinestates
+        IGraphicsPipelineState* m_pPipelineState;
+		
+        //Other
+        float m_Width;
 		float m_Height;
 		CameraBuffer m_Camera;
+        TransformBuffer m_Transform;
 
 	public:
 		static bool OnEvent(const Event& event);
