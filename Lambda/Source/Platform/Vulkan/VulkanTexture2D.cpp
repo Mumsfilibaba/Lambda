@@ -5,15 +5,16 @@
 
 namespace Lambda
 {
-    VulkanTexture2D::VulkanTexture2D(VkImage image, VkExtent2D extent, ResourceFormat format, OptimizedClearValue clearValue, uint32 flags, uint32 miplevels, uint32 arraySize)
+    VulkanTexture2D::VulkanTexture2D(VkDevice device, const VulkanTextureDesc& desc)
     : m_Texture(VK_NULL_HANDLE),
     m_View(VK_NULL_HANDLE),
     m_DeviceMemory(VK_NULL_HANDLE),
+    m_AspectFlags(0),
     m_CurrentResourceState(VK_IMAGE_LAYOUT_UNDEFINED),
     m_Desc(),
     m_IsOwner(false)
     {
-        InitFromResource(image, extent, format, clearValue, flags, miplevels, arraySize);
+        InitFromResource(device, desc);
     }
     
     
@@ -21,6 +22,7 @@ namespace Lambda
         : m_Texture(VK_NULL_HANDLE),
         m_View(VK_NULL_HANDLE),
         m_DeviceMemory(VK_NULL_HANDLE),
+        m_AspectFlags(0),
         m_CurrentResourceState(VK_IMAGE_LAYOUT_UNDEFINED),
         m_Desc(),
         m_IsOwner(false)
@@ -29,22 +31,60 @@ namespace Lambda
     }
     
     
-    void VulkanTexture2D::InitFromResource(VkImage image, VkExtent2D extent, ResourceFormat format, OptimizedClearValue clearValue, uint32 flags, uint32 miplevels, uint32 arraySize)
+    void VulkanTexture2D::InitFromResource(VkDevice device, const VulkanTextureDesc& desc)
     {
         //Set texture
-        m_Texture = image;
+        m_Texture = desc.Image;
         
         //Set description
-        m_Desc.Width        = extent.width;
-        m_Desc.Height       = extent.height;
-        m_Desc.Flags        = flags;
-        m_Desc.MipLevels    = miplevels;
-        m_Desc.Format       = format;
-        m_Desc.ArraySize    = arraySize;
-        m_Desc.ClearValue   = clearValue;
+        m_Desc.Width        = desc.Extent.width;
+        m_Desc.Height       = desc.Extent.height;
+        m_Desc.MipLevels    = desc.MipLevels;
+        m_Desc.Format       = ConvertVkFormat(desc.Format);
+        m_Desc.ArraySize    = desc.ArraySize;
+        
+        //Should the depth or the color value be used?
+        if (desc.Depth)
+        {
+            m_Desc.ClearValue.Depth = desc.ClearValue.depthStencil.depth;
+            m_Desc.ClearValue.Stencil = desc.ClearValue.depthStencil.stencil;
+        }
+        else
+        {
+            memcpy(m_Desc.ClearValue.Color, desc.ClearValue.color.float32, sizeof(float) * 4);
+        }
+        
+        //Set aspect flags
+        m_AspectFlags = desc.AspectFlags;
+        
+        //Set usage
+        m_Desc.Usage = RESOURCE_USAGE_DEFAULT;
+        
+        //Set flags
+        if (desc.UsageFlags | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
+            m_Desc.Flags |= TEXTURE_FLAGS_RENDER_TARGET;
+        if (desc.UsageFlags | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
+            m_Desc.Flags |= TEXTURE_FLAGS_DEPTH_STENCIL;
+        if (desc.UsageFlags | VK_IMAGE_USAGE_SAMPLED_BIT)
+            m_Desc.Flags |= TEXTURE_FLAGS_SHADER_RESOURCE;
+        
+        //Set samples
+        if (desc.Samples == VK_SAMPLE_COUNT_1_BIT)
+            m_Desc.SampleCount = 1;
+        if (desc.Samples == VK_SAMPLE_COUNT_2_BIT)
+            m_Desc.SampleCount = 2;
+        if (desc.Samples == VK_SAMPLE_COUNT_4_BIT)
+            m_Desc.SampleCount = 4;
+        if (desc.Samples == VK_SAMPLE_COUNT_8_BIT)
+            m_Desc.SampleCount = 8;
+        if (desc.Samples == VK_SAMPLE_COUNT_16_BIT)
+            m_Desc.SampleCount = 16;
         
         //We are not owners of this image
         m_IsOwner = false;
+        
+        //Create view
+        CreateImageView(device);
     }
     
     
@@ -68,22 +108,36 @@ namespace Lambda
         info.initialLayout          = VK_IMAGE_LAYOUT_UNDEFINED;
         info.sharingMode            = VK_SHARING_MODE_EXCLUSIVE;
         info.samples                = VK_SAMPLE_COUNT_1_BIT;
-        info.usage                  = VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-        
+
         //Set special usage
         if (desc.Flags & TEXTURE_FLAGS_SHADER_RESOURCE)
-            info.usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
+        {
+            //Set usage
+            info.usage |= VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+            
+            //Set aspect flag
+            m_AspectFlags |= VK_IMAGE_ASPECT_COLOR_BIT;
+        }
+        if (desc.Flags & TEXTURE_FLAGS_DEPTH_STENCIL)
+        {
+            //Set usage
+            info.usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+            
+            //Set aspect flag
+            m_AspectFlags |= VK_IMAGE_ASPECT_DEPTH_BIT;
+        }
+
         
         //Create image
         if (vkCreateImage(device, &info, nullptr, &m_Texture) != VK_SUCCESS)
         {
-            LOG_DEBUG_ERROR("Vulkan: Failed to create texture\n");
+            LOG_DEBUG_ERROR("Vulkan: Failed to create image\n");
             return;
         }
         else
         {
 
-            LOG_DEBUG_INFO("Vulkan: Created texture. w=%u, h=%u, format=%s\n", desc.Width, desc.Height, VkFormatToString(info.format));
+            LOG_DEBUG_INFO("Vulkan: Created image. w=%u, h=%u, format=%s, adress=%p\n", desc.Width, desc.Height, VkFormatToString(info.format), m_Texture);
             
             //Set that we have created the texture and not external memory
             m_IsOwner = true;
@@ -122,9 +176,15 @@ namespace Lambda
             
             //Bind memory
             vkBindImageMemory(device, m_Texture, m_DeviceMemory, 0);
+            
+            //Create view
+            CreateImageView(device);
         }
-        
-        
+    }
+    
+    
+    void VulkanTexture2D::CreateImageView(VkDevice device)
+    {
         //Create image views
         VkImageViewCreateInfo viewInfo = {};
         viewInfo.sType      = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -132,8 +192,8 @@ namespace Lambda
         viewInfo.flags      = 0;
         viewInfo.image      = m_Texture;
         viewInfo.viewType   = VK_IMAGE_VIEW_TYPE_2D;
-        viewInfo.format     = ConvertResourceFormat(desc.Format);
-        viewInfo.subresourceRange.aspectMask        = VK_IMAGE_ASPECT_COLOR_BIT;
+        viewInfo.format     = ConvertResourceFormat(m_Desc.Format);
+        viewInfo.subresourceRange.aspectMask        = m_AspectFlags;
         viewInfo.subresourceRange.baseMipLevel      = 0;
         viewInfo.subresourceRange.levelCount        = 1;
         viewInfo.subresourceRange.baseArrayLayer    = 0;

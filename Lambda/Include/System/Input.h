@@ -3,8 +3,10 @@
 
 namespace Lambda
 {
+    //Forward declaration
 	class IWindow;
 
+    //Class for input
 	class LAMBDA_API Input
 	{
 	public:
@@ -41,6 +43,7 @@ namespace Lambda
 		static std::unique_ptr<Input> s_Instance;
 	};
 
+    
 	inline Input& Input::GetInstance()
 	{
 		return *s_Instance;

@@ -20,43 +20,81 @@ namespace Lambda
     {
         //RENDERPASS
         
-        //Setup attachments
-        VkAttachmentDescription colorAttachment = {};
-        colorAttachment.flags           = 0;
-        colorAttachment.format          = reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance())->GetBackBufferFormat();
-        colorAttachment.samples         = VK_SAMPLE_COUNT_1_BIT;
-        colorAttachment.loadOp          = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        colorAttachment.storeOp         = VK_ATTACHMENT_STORE_OP_STORE;
-        colorAttachment.stencilLoadOp   = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-        colorAttachment.stencilStoreOp  = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        colorAttachment.initialLayout   = VK_IMAGE_LAYOUT_UNDEFINED;
-        colorAttachment.finalLayout     = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-        
-        //Descripe attachment bindpoint
-        VkAttachmentReference colorAttachmentRef = {};
-        colorAttachmentRef.attachment   = 0;
-        colorAttachmentRef.layout       = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        //Setup color attachments
+        std::vector<VkAttachmentReference> colorAttachentRefs;
+        std::vector<VkAttachmentDescription> attachments;
+        for (uint32 i = 0; i < desc.RenderTargetCount; i++)
+        {
+            //Setup attachments
+            VkAttachmentDescription colorAttachment = {};
+            colorAttachment.flags           = 0;
+            colorAttachment.format          = ConvertResourceFormat(desc.RenderTargetFormats[i]);
+            colorAttachment.samples         = VK_SAMPLE_COUNT_1_BIT;
+            colorAttachment.loadOp          = VK_ATTACHMENT_LOAD_OP_LOAD;
+            colorAttachment.storeOp         = VK_ATTACHMENT_STORE_OP_STORE;
+            colorAttachment.stencilLoadOp   = VK_ATTACHMENT_LOAD_OP_LOAD;
+            colorAttachment.stencilStoreOp  = VK_ATTACHMENT_STORE_OP_STORE;
+            colorAttachment.initialLayout   = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+            colorAttachment.finalLayout     = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+            attachments.push_back(colorAttachment);
+            
+            //Descripe attachment bindpoint
+            VkAttachmentReference colorAttachmentRef = {};
+            colorAttachmentRef.attachment   = i;
+            colorAttachmentRef.layout       = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+            colorAttachentRefs.push_back(colorAttachmentRef);
+            
+        }
         
         //Describe subpass
         VkSubpassDescription subpass = {};
         subpass.flags                       = 0;
         subpass.pipelineBindPoint           = VK_PIPELINE_BIND_POINT_GRAPHICS;
-        subpass.colorAttachmentCount        = 1;
-        subpass.pColorAttachments           = &colorAttachmentRef;
+        subpass.colorAttachmentCount        = uint32(colorAttachentRefs.size());
+        subpass.pColorAttachments           = colorAttachentRefs.data();
         subpass.preserveAttachmentCount     = 0;
         subpass.pPreserveAttachments        = nullptr;
         subpass.inputAttachmentCount        = 0;
         subpass.pInputAttachments           = nullptr;
         subpass.pResolveAttachments         = nullptr;
-        subpass.pDepthStencilAttachment     = nullptr;
+        
+        //Setup depthstencil
+        VkAttachmentReference depthAttachmentRef = {};
+        if (desc.DepthStencilFormat == FORMAT_UNKNOWN)
+        {
+            subpass.pDepthStencilAttachment = nullptr;
+        }
+        else
+        {
+            //Setup attachments
+            VkAttachmentDescription depthAttachment = {};
+            depthAttachment.flags           = 0;
+            depthAttachment.format          = ConvertResourceFormat(desc.DepthStencilFormat);
+            depthAttachment.samples         = VK_SAMPLE_COUNT_1_BIT;
+            depthAttachment.loadOp          = VK_ATTACHMENT_LOAD_OP_LOAD;
+            depthAttachment.storeOp         = VK_ATTACHMENT_STORE_OP_STORE;
+            depthAttachment.stencilLoadOp   = VK_ATTACHMENT_LOAD_OP_LOAD;
+            depthAttachment.stencilStoreOp  = VK_ATTACHMENT_STORE_OP_STORE;
+            depthAttachment.initialLayout   = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+            depthAttachment.finalLayout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+            attachments.push_back(depthAttachment);
+            
+            //Setup ref
+            depthAttachmentRef.attachment   = uint32(attachments.size() - 1);
+            depthAttachmentRef.layout       = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+            
+            //Set attachment
+            subpass.pDepthStencilAttachment = &depthAttachmentRef;
+        }
+        
         
         //Setup renderpass
         VkRenderPassCreateInfo renderPassInfo = {};
         renderPassInfo.sType            = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
         renderPassInfo.flags            = 0;
         renderPassInfo.pNext            = nullptr;
-        renderPassInfo.attachmentCount  = 1;
-        renderPassInfo.pAttachments     = &colorAttachment;
+        renderPassInfo.attachmentCount  = uint32(attachments.size());
+        renderPassInfo.pAttachments     = attachments.data();
         renderPassInfo.subpassCount     = 1;
         renderPassInfo.pSubpasses       = &subpass;
         renderPassInfo.pDependencies    = nullptr;
@@ -71,6 +109,7 @@ namespace Lambda
         {
             LOG_DEBUG_INFO("Vulkan: Created renderpass\n");
         }
+        
         
         //PIPELINESTATE
         
@@ -108,6 +147,7 @@ namespace Lambda
             
             shaderStages.push_back(info);
         }
+        
         
         //InputLayout
         std::vector<VkVertexInputBindingDescription> bindingDescriptions;
@@ -161,6 +201,7 @@ namespace Lambda
         inputAssembly.topology = ConvertPrimitiveTopology(desc.Topology);
         inputAssembly.primitiveRestartEnable = VK_FALSE;
         
+        
         //Setup dynamic states
         VkDynamicState dynamicStates[] =
         {
@@ -175,6 +216,7 @@ namespace Lambda
         dynamicState.pDynamicStates = dynamicStates;
         dynamicState.dynamicStateCount = 2;
         
+        
         //Setup viewportstate
         VkPipelineViewportStateCreateInfo viewportState = {};
         viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -185,6 +227,7 @@ namespace Lambda
         viewportState.scissorCount = 1;
         viewportState.pScissors = nullptr;
         
+        
         //RasterizerState
         VkPipelineRasterizationStateCreateInfo rasterizerState = {};
         rasterizerState.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
@@ -194,7 +237,7 @@ namespace Lambda
         rasterizerState.rasterizerDiscardEnable = VK_FALSE;
         rasterizerState.polygonMode             = VK_POLYGON_MODE_FILL;
         rasterizerState.lineWidth               = 1.0f;
-        rasterizerState.frontFace               = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+        rasterizerState.frontFace               = VK_FRONT_FACE_CLOCKWISE;
         rasterizerState.depthBiasEnable         = VK_FALSE;
         rasterizerState.depthBiasConstantFactor = 0.0f;
         rasterizerState.depthBiasClamp          = 0.0f;
@@ -208,6 +251,7 @@ namespace Lambda
         else if (desc.Cull == CULL_MODE_NONE)
             rasterizerState.cullMode                = VK_CULL_MODE_NONE;
         
+        
         //Multisampling
         VkPipelineMultisampleStateCreateInfo multisampling = {};
         multisampling.sType                 = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
@@ -217,6 +261,7 @@ namespace Lambda
         multisampling.pSampleMask           = nullptr;
         multisampling.alphaToCoverageEnable = VK_FALSE;
         multisampling.alphaToOneEnable      = VK_FALSE;
+        
         
         //Blendstate
         VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
@@ -240,6 +285,23 @@ namespace Lambda
         colorBlending.blendConstants[2] = 0.0f;
         colorBlending.blendConstants[3] = 0.0f;
         
+        
+        //DepthStencilState
+        VkPipelineDepthStencilStateCreateInfo depthStencilState = {};
+        depthStencilState.sType                  = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+        depthStencilState.flags                  = 0;
+        depthStencilState.pNext                  = nullptr;
+        depthStencilState.depthTestEnable        = VK_TRUE;
+        depthStencilState.depthWriteEnable       = VK_TRUE;
+        depthStencilState.depthCompareOp         = VK_COMPARE_OP_LESS;
+        depthStencilState.depthBoundsTestEnable  = VK_FALSE;
+        depthStencilState.minDepthBounds         = 0.0f;
+        depthStencilState.maxDepthBounds         = 1.0f;
+        depthStencilState.stencilTestEnable      = VK_FALSE;
+        depthStencilState.front                  = {};
+        depthStencilState.back                   = {};
+        
+        
         //Setup pipelinestate
         VkGraphicsPipelineCreateInfo pipelineInfo = {};
         pipelineInfo.sType                  = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -252,7 +314,7 @@ namespace Lambda
         pipelineInfo.pViewportState         = &viewportState;
         pipelineInfo.pRasterizationState    = &rasterizerState;
         pipelineInfo.pMultisampleState      = &multisampling;
-        pipelineInfo.pDepthStencilState     = nullptr;
+        pipelineInfo.pDepthStencilState     = &depthStencilState;
         pipelineInfo.pColorBlendState       = &colorBlending;
         pipelineInfo.pDynamicState          = &dynamicState;
         pipelineInfo.layout                 = VulkanGraphicsDevice::GetDefaultPipelineLayout();
@@ -264,6 +326,7 @@ namespace Lambda
         if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_Pipeline) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create GraphicsPipelineState\n");
+            return;
         }
         else
         {

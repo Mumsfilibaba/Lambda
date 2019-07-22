@@ -3,15 +3,17 @@
 
 namespace Lambda
 {
+    //Describe GPU-buffer
 	struct BufferDesc
 	{
-		ResourceUsage Usage = RESOURCE_USAGE_UNKNOWN;
-		uint32 Flags = BUFFER_FLAGS_NONE;
-		uint32 StrideInBytes = 0;
-		uint32 SizeInBytes = 0;
+		ResourceUsage Usage     = RESOURCE_USAGE_UNKNOWN;
+		uint32 Flags            = BUFFER_FLAGS_NONE;
+		uint32 StrideInBytes    = 0;
+		uint32 SizeInBytes      = 0;
 	};
 
 
+    //GPU-Buffer interface
 	class LAMBDA_API IBuffer
 	{
 	public:

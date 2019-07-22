@@ -81,8 +81,8 @@ namespace Lambda
             9, 11, 10,
             
             //LEFT FACE
-            12, 13, 14,
-            13, 15, 14,
+            14, 13, 12,
+            14, 15, 13,
             
             //ROOF FACE
             16, 17, 18,
@@ -200,12 +200,15 @@ namespace Lambda
                 };
                 
                 GraphicsPipelineStateDesc desc = {};
-                desc.pVertexShader      = m_pVS;
-                desc.pPixelShader       = m_pPS;
-                desc.pInputElements     = elements;
-                desc.InputElementCount  = sizeof(elements) / sizeof(InputElement);
-                desc.Topology           = PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-                desc.Cull               = CULL_MODE_NONE;
+                desc.pVertexShader          = m_pVS;
+                desc.pPixelShader           = m_pPS;
+                desc.pInputElements         = elements;
+                desc.InputElementCount      = sizeof(elements) / sizeof(InputElement);
+                desc.Topology               = PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+                desc.Cull                   = CULL_MODE_BACK;
+                desc.RenderTargetFormats[0] = pDevice->GetBackBufferFormat();
+                desc.DepthStencilFormat     = FORMAT_D32_FLOAT;
+                desc.RenderTargetCount      = 1;
 
                 pDevice->CreateGraphicsPipelineState(&m_pPipelineState, desc);
             }
@@ -225,7 +228,6 @@ namespace Lambda
                 data.SizeInBytes    = desc.SizeInBytes;
 
                 pDevice->CreateBuffer(&m_pVertexBuffer, &data, desc);
-                m_pCurrentList->TransitionBuffer(m_pVertexBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
             }
             
             //Create indexbuffer
@@ -264,8 +266,11 @@ namespace Lambda
 
             //Create camerabuffer
             {
-                CreateCamera(GetWindow()->GetWidth(), GetWindow()->GetHeight());
-
+                //Set camera
+                m_Camera.SetPosition(glm::vec3(0.0f, 2.0f, 2.0f));
+                m_Camera.SetRotation(glm::vec3(45.0f, 0.0f, 0.0f));
+                m_Camera.CreateView();
+                
                 BufferDesc desc = {};
                 desc.Usage = RESOURCE_USAGE_DEFAULT;
                 desc.Flags = BUFFER_FLAGS_CONSTANT_BUFFER;
@@ -277,13 +282,13 @@ namespace Lambda
                 data.SizeInBytes = desc.SizeInBytes;
 
                 pDevice->CreateBuffer(&m_pCameraBuffer, &data, desc);
-                m_pCurrentList->TransitionBuffer(m_pCameraBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
             }
 
+            //Init transforms
+            m_TransformBuffer.Model = glm::mat4(1.0f);
+            
             //Create TransformBuffer
             {
-                m_Transform.Model = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-                
                 BufferDesc desc = {};
                 desc.Usage = RESOURCE_USAGE_DEFAULT;
                 desc.Flags = BUFFER_FLAGS_CONSTANT_BUFFER;
@@ -291,11 +296,10 @@ namespace Lambda
                 desc.StrideInBytes = sizeof(TransformBuffer);
                 
                 ResourceData data = {};
-                data.pData = &m_Transform;
+                data.pData = &m_TransformBuffer;
                 data.SizeInBytes = desc.SizeInBytes;
                 
                 pDevice->CreateBuffer(&m_pTransformBuffer, &data, desc);
-                m_pCurrentList->TransitionBuffer(m_pTransformBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
             }
             
             //Create depthbuffer
@@ -306,9 +310,9 @@ namespace Lambda
                 desc.ArraySize          = 1;
                 desc.Width              = GetWindow()->GetWidth();
                 desc.Height             = GetWindow()->GetHeight();
-                desc.Format             = FORMAT_D24_UNORM_S8_UINT;
+                desc.Format             = FORMAT_D32_FLOAT;
                 desc.SampleCount        = 1;
-                desc.MipLevels          = 0;
+                desc.MipLevels          = 1;
                 desc.ClearValue.Depth   = 1.0f;
                 desc.ClearValue.Stencil = 0;
 
@@ -317,7 +321,6 @@ namespace Lambda
 
             //Create texture
             m_pTexture = ITexture2D::CreateTextureFromFile(pDevice, "texture.jpg", TEXTURE_FLAGS_SHADER_RESOURCE, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
-            m_pCurrentList->TransitionTexture(m_pTexture, RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
             //Create samplerstate
             {
@@ -339,8 +342,31 @@ namespace Lambda
 
 	void SandBox::OnUpdate(Time dt)
 	{
-        //Rotate cube
-        m_Transform.Model = glm::rotate(m_Transform.Model, glm::radians(30.0f * dt.AsSeconds()), glm::vec3(0.0f, 1.0f, 0.0f));
+        //Move camera
+        constexpr float speed = 2.0f;
+        if (Input::IsKeyDown(KEY_W))
+            m_Camera.Translate(glm::vec3(0.0f, 0.0f, speed) * dt.AsSeconds());
+        else if (Input::IsKeyDown(KEY_S))
+            m_Camera.Translate(glm::vec3(0.0f, 0.0f, -speed) * dt.AsSeconds());
+        
+        if (Input::IsKeyDown(KEY_A))
+            m_Camera.Translate(glm::vec3(-speed, 0.0f, 0.0f) * dt.AsSeconds());
+        else if (Input::IsKeyDown(KEY_D))
+            m_Camera.Translate(glm::vec3(speed, 0.0f, 0.0f) * dt.AsSeconds());
+        
+        //Rotate camera
+         constexpr float rotation = 30.0f;
+        if (Input::IsKeyDown(KEY_UP))
+            m_Camera.Rotate(glm::vec3(rotation, 0.0f, 0.0f) * dt.AsSeconds());
+        else if (Input::IsKeyDown(KEY_DOWN))
+            m_Camera.Rotate(glm::vec3(-rotation, 0.0f, 0.0f) * dt.AsSeconds());
+        
+        if (Input::IsKeyDown(KEY_RIGHT))
+            m_Camera.Rotate(glm::vec3(0.0f, rotation, 0.0f) * dt.AsSeconds());
+        else if (Input::IsKeyDown(KEY_LEFT))
+            m_Camera.Rotate(glm::vec3(0.0f, -rotation, 0.0f) * dt.AsSeconds());
+        
+        m_Camera.CreateView();
 	}
 
 
@@ -359,9 +385,7 @@ namespace Lambda
                 float color[] = { 0.392f, 0.584f, 0.929f, 1.0f };
                 ITexture2D* pRenderTarget = pDevice->GetCurrentRenderTarget();
                 
-                //m_pCurrentList->TransitionTexture(pRenderTarget, RESOURCE_STATE_RENDERTARGET);
                 m_pCurrentList->ClearRenderTarget(pRenderTarget, color);
-                //m_pCurrentList->TransitionTexture(m_pDepthBuffer, RESOURCE_STATE_DEPTH_WRITE);
                 m_pCurrentList->ClearDepthStencil(m_pDepthBuffer, 1.0f, 0);
                 m_pCurrentList->SetRenderTarget(pRenderTarget, m_pDepthBuffer);
                 
@@ -386,40 +410,22 @@ namespace Lambda
                 //Set pipelinestate and topology
                 m_pCurrentList->SetGraphicsPipelineState(m_pPipelineState);
                 
-                //Set constantbuffers
-                /*static Random random;
-                static Vec4f colorBuff    = random.GenerateVector4();
-                static Vec4f beginBuff    = random.GenerateVector4();
-                static Vec4f endBuff      = random.GenerateVector4();
-                static float timer        = 0.0f;
-                timer += dt.AsSeconds();
-                
-                //Lerp color
-                colorBuff = Store(Lerp(timer, Load(beginBuff), Load(endBuff)));
-                if (timer >= 1.0f)
-                {
-                    beginBuff = endBuff;
-                    endBuff = random.GenerateVector4();
-                    timer = 0.0f;
-                }*/
-                
-                //Update data
+                //Update Colorbuffer
                 glm::vec4 colorBuff = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
                 
                 ResourceData data = {};
                 data.pData = &colorBuff;
                 data.SizeInBytes = sizeof(glm::vec4);
                 
-                m_pCurrentList->TransitionBuffer(m_pColorBuffer, RESOURCE_STATE_COPY_DEST);
                 m_pCurrentList->UpdateBuffer(m_pColorBuffer, &data);
-                m_pCurrentList->TransitionBuffer(m_pColorBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
                 
-                data.pData = &m_Transform;
-                data.SizeInBytes = sizeof(TransformBuffer);
-                
-                m_pCurrentList->TransitionBuffer(m_pTransformBuffer, RESOURCE_STATE_COPY_DEST);
-                m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);
-                m_pCurrentList->TransitionBuffer(m_pTransformBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+                //Update camera buffer
+                m_CameraBuffer.View = m_Camera.GetView();
+                m_CameraBuffer.Proj = m_Camera.GetProjection();
+
+                data.pData = &m_CameraBuffer;
+                data.SizeInBytes = sizeof(CameraBuffer);
+                m_pCurrentList->UpdateBuffer(m_pCameraBuffer, &data);
                 
                 //Set buffers
                 IBuffer* vsBuffers[] = { m_pCameraBuffer, m_pTransformBuffer };
@@ -434,15 +440,28 @@ namespace Lambda
                 m_pCurrentList->SetVertexBuffer(m_pVertexBuffer, 0);
                 m_pCurrentList->SetIndexBuffer(m_pIndexBuffer);
                 
-                m_pCurrentList->DrawIndexedInstanced(36, 1, 0, 0, 0);
-                
-                //m_pCurrentList->TransitionTexture(pRenderTarget, RESOURCE_STATE_PRESENT_COMMON);
+                //Draw cubes
+                for (uint32 y = 0; y < 10; y++)
+                {
+                    for (uint32 x = 0; x < 10; x++)
+                    {
+                        //Update transforms
+                        m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(-10.0f + (float(x) * 2), 0.0f, 10.0f + (float(y) * 2)));
+                        
+                        data.pData = &m_TransformBuffer;
+                        data.SizeInBytes = sizeof(TransformBuffer);
+                        m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);
+                        
+                        //Draw
+                        m_pCurrentList->DrawIndexedInstanced(36, 1, 0, 0, 0);
+                    }
+                }
                 
                 m_pCurrentList->Close();
                 
                 //Present
                 pDevice->ExecuteCommandList(&m_pCurrentList, 1);
-                pDevice->Present(0);
+                pDevice->Present();
                 pDevice->GPUWaitForFrame();
             }
         }
@@ -480,86 +499,91 @@ namespace Lambda
 
 	void SandBox::CreateCamera(uint32 width, uint32 height)
 	{
-        m_Camera.View = glm::lookAt(glm::vec3(0.0f, 0.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        m_Camera.Proj = glm::perspective(glm::radians(90.0f), (float)width / (float)height, 0.1f, 100.0f);
 	}
-
-
-	bool SandBox::OnEvent(const Event& event)
-	{
-		if (event.Type == EVENT_TYPE_WINDOW_RESIZE)
-		{
-			/*SandBox& instance = (SandBox&)GetInstance();
-
-			//Set size variable
-			instance.m_Width = (float)event.WindowResize.Width;
-			instance.m_Height = (float)event.WindowResize.Height;
-
-			//if size is zero then do not resize
-			if (event.WindowResize.Width > 0 && event.WindowResize.Height > 0)
-			{
-				IGraphicsDevice* pDevice = IGraphicsDevice::GetInstance();
-                if (!pDevice)
-                {
-                    return false;
-                }
-                
-				pDevice->WaitForGPU();
-
-				//Release depthbuffer
-				pDevice->DestroyTexture2D(&instance.m_pDepthBuffer);
-
-				//Create depthbuffer
-				Texture2DDesc desc = {};
-				desc.Usage = RESOURCE_USAGE_DEFAULT;
-				desc.Flags = TEXTURE_FLAGS_DEPTH_STENCIL;
-				desc.ArraySize = 1;
-				desc.Width = event.WindowResize.Width;
-				desc.Height = event.WindowResize.Height;
-				desc.Format = FORMAT_D24_UNORM_S8_UINT;
-				desc.SampleCount = 1;
-				desc.MipLevels = 0;
-                desc.ClearValue.Depth = 1.0f;
-                desc.ClearValue.Stencil = 0;
-
-				//TODO: needs to release the descriptor in DX12-backend
-				pDevice->CreateTexture2D(&instance.m_pDepthBuffer, nullptr, desc);
-                if (instance.m_pDepthBuffer)
-                {
-                    LOG_DEBUG_INFO("Resized depthbuffer\n");
-                }
-
-				//Update camera
-				instance.CreateCamera(event.WindowResize.Width, event.WindowResize.Height);
-
-				ResourceData data = {};
-				data.pData = &instance.m_Camera;
-				data.SizeInBytes = sizeof(CameraBuffer);
-
-                //Update camerabuffer
-                if (instance.m_pCurrentList)
-                {
-                    instance.m_pCurrentList->Reset();
-                    
-                    instance.m_pCurrentList->TransitionResource(instance.m_pCameraBuffer, RESOURCE_STATE_COPY_DEST);
-                    instance.m_pCurrentList->UpdateBuffer(instance.m_pCameraBuffer, &data);
-                    instance.m_pCurrentList->TransitionResource(instance.m_pCameraBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-                    
-                    //Copy new camera
-                    instance.m_pCurrentList->Close();
-                    pDevice->ExecuteCommandList(&instance.m_pCurrentList, 1);
-                }
-
-				pDevice->WaitForGPU();
-			}*/
-		}
+    
+    
+    //Event handler function for the instance
+    bool SandBox::EventHandler(const Event &event)
+    {
+        if (event.Type == EVENT_TYPE_WINDOW_RESIZE)
+        {
+            //Set size variable
+            m_Width = (float)event.WindowResize.Width;
+            m_Height = (float)event.WindowResize.Height;
+            
+            //if size is zero then do not resize
+            /*if (event.WindowResize.Width > 0 && event.WindowResize.Height > 0)
+             {
+             IGraphicsDevice* pDevice = IGraphicsDevice::GetInstance();
+             if (!pDevice)
+             {
+             return false;
+             }
+             
+             pDevice->WaitForGPU();
+             
+             //Release depthbuffer
+             pDevice->DestroyTexture2D(&instance.m_pDepthBuffer);
+             
+             //Create depthbuffer
+             Texture2DDesc desc = {};
+             desc.Usage = RESOURCE_USAGE_DEFAULT;
+             desc.Flags = TEXTURE_FLAGS_DEPTH_STENCIL;
+             desc.ArraySize = 1;
+             desc.Width = event.WindowResize.Width;
+             desc.Height = event.WindowResize.Height;
+             desc.Format = FORMAT_D24_UNORM_S8_UINT;
+             desc.SampleCount = 1;
+             desc.MipLevels = 0;
+             desc.ClearValue.Depth = 1.0f;
+             desc.ClearValue.Stencil = 0;
+             
+             //TODO: needs to release the descriptor in DX12-backend
+             pDevice->CreateTexture2D(&instance.m_pDepthBuffer, nullptr, desc);
+             if (instance.m_pDepthBuffer)
+             {
+             LOG_DEBUG_INFO("Resized depthbuffer\n");
+             }
+             
+             //Update camera
+             instance.CreateCamera(event.WindowResize.Width, event.WindowResize.Height);
+             
+             ResourceData data = {};
+             data.pData = &instance.m_Camera;
+             data.SizeInBytes = sizeof(CameraBuffer);
+             
+             //Update camerabuffer
+             if (instance.m_pCurrentList)
+             {
+             instance.m_pCurrentList->Reset();
+             
+             instance.m_pCurrentList->TransitionResource(instance.m_pCameraBuffer, RESOURCE_STATE_COPY_DEST);
+             instance.m_pCurrentList->UpdateBuffer(instance.m_pCameraBuffer, &data);
+             instance.m_pCurrentList->TransitionResource(instance.m_pCameraBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+             
+             //Copy new camera
+             instance.m_pCurrentList->Close();
+             pDevice->ExecuteCommandList(&instance.m_pCurrentList, 1);
+             }
+             
+             pDevice->WaitForGPU();
+             }*/
+        }
         else if (event.Type == EVENT_TYPE_KEYDOWN)
         {
-            LOG_DEBUG_INFO("Key pressed\n");
+            //LOG_DEBUG_INFO("Key pressed\n");
         }
         else if (event.Type == EVENT_TYPE_MOUSE_MOVED)
         {
             //LOG_DEBUG_INFO("Mouse moved (x: %d, y: %d)\n", event.MouseMoveEvent.PosX, event.MouseMoveEvent.PosY);
+            
+            //Rotate camera
+            //glm::vec2 diff = glm::vec2(m_Width / 2, m_Height / 2) - glm::vec2(event.MouseMoveEvent.PosX, event.MouseMoveEvent.PosY);
+            //m_Camera.Rotate(glm::vec3(diff.y, diff.x, 0.0f));
+            //m_Camera.CreateView();
+            
+            //Set position back to the middle
+            //Input::SetMousePosition(m_Width / 2, m_Height / 2);
         }
         else if (event.Type == EVENT_TYPE_MOUSE_BUTTONDOWN)
         {
@@ -587,7 +611,15 @@ namespace Lambda
                 LOG_DEBUG_INFO("Window lost focus\n");
             }
         }
+        
+        return false;
+    }
 
-		return false;
+    
+    //Call the instance eventhandler
+	bool SandBox::OnEvent(const Event& event)
+	{
+        SandBox& instance = (SandBox&)GetInstance();
+        return instance.EventHandler(event);
 	}
 }

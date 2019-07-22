@@ -37,7 +37,7 @@ namespace Lambda
 		while (m_Running)
 		{
 			clock.Tick();
-			
+            
 			//Logic update
 			accumulator += clock.GetDeltaTime();
 			while (accumulator >= timestep)
@@ -137,9 +137,14 @@ namespace Lambda
 
 	void Application::InternalOnUpdate(Time dt)
 	{
-		m_pWindow->OnUpdate();
+        //Window update (Handle events)
+        m_pWindow->OnUpdate();
+        
+        //Update controllers
 		JoystickManager::OnUpdate();
-		OnUpdate(dt);
+		
+        //Call update 
+        OnUpdate(dt);
 	}
 
 

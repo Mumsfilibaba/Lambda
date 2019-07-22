@@ -65,15 +65,15 @@ namespace Lambda
         virtual void Destroy() const override final;
         
         virtual void ExecuteCommandList(ICommandList* const * ppLists, uint32 numLists) const override final;
-        virtual void Present(uint32 verticalSync) const override final;
+        virtual void Present() const override final;
         virtual void GPUWaitForFrame() const override final;
         virtual void WaitForGPU() const override final;
         
+        virtual ResourceFormat GetBackBufferFormat() const override final;
         virtual void* GetNativeHandle() const override final;
         virtual ITexture2D* GetCurrentRenderTarget() override final;
         virtual uint32 GetCurrentBackBufferIndex() const override final;
     
-        VkFormat GetBackBufferFormat() const;
         VkPhysicalDevice GetAdapter() const;
         QueueFamilyIndices GetQueueFamilyIndices() const;
         
@@ -164,15 +164,11 @@ namespace Lambda
         
     private:
         static PFN_vkSetDebugUtilsObjectNameEXT SetDebugUtilsObjectNameEXT;
+        static PFN_vkCreateDebugUtilsMessengerEXT CreateDebugUtilsMessengerEXT;
+        static PFN_vkDestroyDebugUtilsMessengerEXT DestroyDebugUtilsMessengerEXT;
     };
     
-    
-    inline VkFormat VulkanGraphicsDevice::GetBackBufferFormat() const
-    {
-        return m_SwapChainFormat;
-    }
-    
-    
+
     inline VkPhysicalDevice VulkanGraphicsDevice::GetAdapter() const
     {
         return m_Adapter;

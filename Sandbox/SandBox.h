@@ -6,7 +6,7 @@
 #include "Graphics/IBuffer.h"
 #include "Graphics/ITexture2D.h"
 #include "Graphics/ISamplerState.h"
-#include "glm/glm.hpp"
+#include "Graphics/Camera.h"
 
 namespace Lambda
 {
@@ -38,6 +38,7 @@ namespace Lambda
 		virtual void OnRelease() override final;
 
 		void CreateCamera(uint32 width, uint32 height);
+        bool EventHandler(const Event& event);
 
 	private:
         //Commandlist
@@ -69,8 +70,9 @@ namespace Lambda
         //Other
         float m_Width;
 		float m_Height;
-		CameraBuffer m_Camera;
-        TransformBuffer m_Transform;
+        Camera m_Camera;
+		CameraBuffer m_CameraBuffer;
+        TransformBuffer m_TransformBuffer;
 
 	public:
 		static bool OnEvent(const Event& event);

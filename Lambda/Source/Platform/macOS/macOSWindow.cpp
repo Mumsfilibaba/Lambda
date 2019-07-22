@@ -15,18 +15,19 @@ namespace Lambda
         return DBG_NEW MacOSWindow(desc);
     }
     
-    
+    //Static variable declarations
     bool MacOSWindow::s_HasInitGLFW = false;
     
+    //macOS window definition
     MacOSWindow::MacOSWindow(const WindowDesc& desc)
         : m_pWindow(nullptr),
-        m_Width(0),
-        m_Height(0),
+        m_Width(0.0f),
+        m_Height(0.0f),
         m_OnEvent(nullptr)
     {
         Init(desc);
         
-        LOG_SYSTEM_INFO("Creating window. w: %d, h: %d\n", desc.Width, desc.Height);
+        LOG_SYSTEM_INFO("Created window. w: %d, h: %d\n", desc.Width, desc.Height);
     }
     
     
@@ -82,6 +83,9 @@ namespace Lambda
             
             //Set userdata
             glfwSetWindowUserPointer(m_pWindow, this);
+            
+            //Set mouse input mode (TODO: Move to function)
+            //glfwSetInputMode(m_pWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         }
         else
         {

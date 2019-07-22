@@ -40,9 +40,6 @@ namespace Lambda
         virtual void SetVertexBuffer(IBuffer* pBuffer, uint32 slot) override final;
         virtual void SetIndexBuffer(IBuffer* pBuffer) override final;
         
-        virtual void TransitionBuffer(IBuffer* pBuffer, ResourceState resourceState) override final;
-        virtual void TransitionTexture(ITexture2D* pTexture, ResourceState resourceState) override final;
-        
         virtual void VSSetConstantBuffers(const IBuffer* const* ppBuffers, uint32 numBuffers, uint32 startSlot) override final;
         virtual void VSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot) override final;
         virtual void VSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot) override final;
@@ -83,9 +80,16 @@ namespace Lambda
         
     private:
         void Init(VkDevice device, CommandListType type);
-        void InternalWriteConstantBufferDescriptorsToStage(uint32 shaderStage, uint32 startSlot, const IBuffer* const* ppBuffers, uint32 numBuffers);
-        void InternalWriteTextureDescriptorsToStage(uint32 shaderStage, uint32 startSlot, const ITexture2D* const* ppTextures, uint32 numTextures);
-        void InternalWriteSamplerDescriptorsToStage(uint32 shaderStage, uint32 startSlot, const ISamplerState* const* ppSamplers, uint32 numSamplers);
+        
+        void WriteConstantBufferDescriptorsToStage(uint32 shaderStage, uint32 startSlot, const IBuffer* const* ppBuffers, uint32 numBuffers);
+        void WriteTextureDescriptorsToStage(uint32 shaderStage, uint32 startSlot, const ITexture2D* const* ppTextures, uint32 numTextures);
+        void WriteSamplerDescriptorsToStage(uint32 shaderStage, uint32 startSlot, const ISamplerState* const* ppSamplers, uint32 numSamplers);
+        
+        void TransitionBuffer(IBuffer* pBuffer, ResourceState resourceState);
+        void TransitionTexture(const VulkanTexture2D* pTexture, VkImageLayout toImageLayout);
+        
+        void BeginRenderPass(VkFramebuffer framebuffer, VkRenderPass renderpass, uint32 width, uint32 height);
+        void EndRenderPass();
         
     private:
         VkDevice m_Device; //Store the device that was used when creating device
@@ -95,7 +99,9 @@ namespace Lambda
         VulkanUploadBuffer m_BufferUpload;
         VulkanUploadBuffer m_TextureUpload;
         
-        VkClearColorValue m_ClearColor;
+        VkClearValue m_ClearValues[2];
+        
+        VkFramebuffer m_BoundFrameBuffer;
         
         VkDescriptorSet m_DescriptorSets[LAMBDA_SHADERSTAGE_COUNT];
         VkDescriptorPool m_DescriptorPool;
@@ -109,5 +115,6 @@ namespace Lambda
         VkPipelineLayout m_PipelineLayout;
         const ITexture2D* m_pRT;
         const ITexture2D* m_pDS;
+        bool m_HasRenderPass;
     };
 }

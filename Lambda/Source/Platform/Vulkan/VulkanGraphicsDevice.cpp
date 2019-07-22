@@ -50,6 +50,9 @@ namespace Lambda
     
     //Vulkan device static members
     PFN_vkSetDebugUtilsObjectNameEXT VulkanGraphicsDevice::SetDebugUtilsObjectNameEXT = nullptr;
+    PFN_vkCreateDebugUtilsMessengerEXT VulkanGraphicsDevice::CreateDebugUtilsMessengerEXT = nullptr;
+    PFN_vkDestroyDebugUtilsMessengerEXT VulkanGraphicsDevice::DestroyDebugUtilsMessengerEXT = nullptr;
+    
     
     //Vulkan Graphics Context
     VulkanGraphicsDevice::VulkanGraphicsDevice(IWindow* pWindow, const GraphicsDeviceDesc& desc)
@@ -152,7 +155,6 @@ namespace Lambda
                 m_Fences[i] = VK_NULL_HANDLE;
             }
         }
-
         
         //Destroy all framebuffers
         VulkanFramebufferCache::Release(m_Device);
@@ -170,16 +172,8 @@ namespace Lambda
         //Destroy debugmessenger
         if (m_DebugMessenger != VK_NULL_HANDLE)
         {
-            auto destroyDebugUtilsMessengerEXT = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(m_Instance, "vkDestroyDebugUtilsMessengerEXT");
-            if (destroyDebugUtilsMessengerEXT != nullptr)
-            {
-                destroyDebugUtilsMessengerEXT(m_Instance, m_DebugMessenger, nullptr);
-                m_DebugMessenger = VK_NULL_HANDLE;
-            }
-            else
-            {
-                LOG_DEBUG_ERROR("Vulkan: Failed to find the function 'vkDestroyDebugUtilsMessengerEXT'\n");
-            }
+            DestroyDebugUtilsMessengerEXT(m_Instance, m_DebugMessenger, nullptr);
+            m_DebugMessenger = VK_NULL_HANDLE;
         }
         
         //Destroy surface
@@ -239,7 +233,7 @@ namespace Lambda
             desc.Width          = 2;
             desc.Height         = 2;
             desc.Format         = FORMAT_R8G8B8A8_UNORM;
-            desc.MipLevels      = 0;
+            desc.MipLevels      = 1;
             desc.SampleCount    = 1;
             desc.Usage          = RESOURCE_USAGE_DEFAULT;
             
@@ -423,13 +417,23 @@ namespace Lambda
         }
         else
         {
-            LOG_DEBUG_INFO("Vulkan: Created Vulkan instance\n");
+            LOG_SYSTEM_PRINT ("Vulkan: Created Vulkan instance\n");
             
             //Get instance functions
             SetDebugUtilsObjectNameEXT = (PFN_vkSetDebugUtilsObjectNameEXT)vkGetInstanceProcAddr(m_Instance, "vkSetDebugUtilsObjectNameEXT");
             if (!SetDebugUtilsObjectNameEXT)
             {
-                LOG_DEBUG_ERROR("Vulkan: Failed to retrive 'vkSetDebugUtilsObjectNameEXT'");
+                LOG_DEBUG_ERROR("Vulkan: Failed to retrive 'vkSetDebugUtilsObjectNameEXT'\n");
+            }
+            CreateDebugUtilsMessengerEXT = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(m_Instance, "vkCreateDebugUtilsMessengerEXT");
+            if (!CreateDebugUtilsMessengerEXT)
+            {
+                LOG_DEBUG_ERROR("Vulkan: Failed to retrive 'vkCreateDebugUtilsMessengerEXT'\n");
+            }
+            DestroyDebugUtilsMessengerEXT = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(m_Instance, "vkDestroyDebugUtilsMessengerEXT");
+            if (!DestroyDebugUtilsMessengerEXT)
+            {
+                LOG_DEBUG_ERROR("Vulkan: Failed to retrive 'vkDestroyDebugUtilsMessengerEXT'\n");
             }
             
             return true;
@@ -468,28 +472,17 @@ namespace Lambda
         InitDebugMessengerCreateInfo(&info);
         
         //Create debugmessenger
-        auto createDebugUtilsMessengerEXT = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(m_Instance, "vkCreateDebugUtilsMessengerEXT");
-        if (createDebugUtilsMessengerEXT != nullptr)
+        if (CreateDebugUtilsMessengerEXT(m_Instance, &info, nullptr, &m_DebugMessenger) != VK_SUCCESS)
         {
-            if (createDebugUtilsMessengerEXT(m_Instance, &info, nullptr, &m_DebugMessenger) != VK_SUCCESS)
-            {
-                LOG_DEBUG_ERROR("Vulkan: Failed to create debugmessenger, maybe the extension is not present?\n");
-                
-                m_DebugMessenger = VK_NULL_HANDLE;
-                return false;
-            }
-            else
-            {
-                LOG_DEBUG_INFO("Vulkan: Created Debugmessenger\n");
-                return true;
-            }
-        }
-        else
-        {
-            LOG_DEBUG_ERROR("Vulkan: Failed to find function 'vkCreateDebugUtilsMessengerEXT'\n");
+            LOG_DEBUG_ERROR("Vulkan: Failed to create debugmessenger, maybe the extension is not present?\n");
             
             m_DebugMessenger = VK_NULL_HANDLE;
             return false;
+        }
+        else
+        {
+            LOG_DEBUG_INFO("Vulkan: Created Debugmessenger\n");
+            return true;
         }
     }
     
@@ -535,7 +528,7 @@ namespace Lambda
             //Get familiy indices
             m_FamiliyIndices = FindQueueFamilies(m_Adapter);
             
-            LOG_DEBUG_INFO("Vulkan: Selected GPU '%s'\n", m_AdapterProperties.deviceName);
+            LOG_SYSTEM_PRINT("Vulkan: Selected GPU '%s'\n", m_AdapterProperties.deviceName);
             return true;
         }
     }
@@ -616,9 +609,6 @@ namespace Lambda
         
         std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
         vkGetPhysicalDeviceQueueFamilyProperties(adapter, &queueFamilyCount, queueFamilies.data());
-        
-        //Debug print the number of queuefamilies
-        LOG_DEBUG_INFO("Vulkan: Number of queuefamilies on adapter '%d'\n", queueFamilyCount);
         
         //Find a queuefamily that supports
         int32 i = 0;
@@ -729,7 +719,7 @@ namespace Lambda
         }
         else
         {
-            LOG_DEBUG_INFO("Vulkan: Created device and retrived queues\n");
+            LOG_SYSTEM_PRINT("Vulkan: Created device and retrived queues\n");
             
             //Get queues
             vkGetDeviceQueue(m_Device, m_FamiliyIndices.GraphicsFamily, 0, &m_GraphicsQueue);
@@ -775,7 +765,7 @@ namespace Lambda
         }
         else
         {
-            LOG_DEBUG_INFO("Vulkan: Created SurfaceKHR\n");
+            LOG_SYSTEM_PRINT("Vulkan: Created SurfaceKHR\n");
             return true;
         }
 #endif
@@ -845,7 +835,7 @@ namespace Lambda
             }
         }
         
-        LOG_DEBUG_INFO("Vulkan: Chosen SwapChain PresentationMode '%d'\n", presentationMode);
+        LOG_DEBUG_INFO("Vulkan: Chosen SwapChain PresentationMode '%s'\n", VkPresentatModeToString(presentationMode));
         
         //Choose swapchain extent (Size)
         VkExtent2D extent;
@@ -938,50 +928,23 @@ namespace Lambda
         //Init textures
         for (uint32 i = 0; i < imageCount; i++)
         {
-            OptimizedClearValue clearValue = {};
-            clearValue.Color[0] = 0.0f;
-            clearValue.Color[1] = 0.0f;
-            clearValue.Color[2] = 0.0f;
-            clearValue.Color[3] = 0.0f;
-            
-            uint32 flags = TEXTURE_FLAGS_RENDER_TARGET;
-            
+            VulkanTextureDesc desc = {};
+            desc.ArraySize                   = 1;
+            desc.AspectFlags                 = VK_IMAGE_ASPECT_COLOR_BIT;
+            desc.ClearValue.color.float32[0] = 0.0f;
+            desc.ClearValue.color.float32[1] = 0.0f;
+            desc.ClearValue.color.float32[2] = 0.0f;
+            desc.ClearValue.color.float32[3] = 0.0f;
+            desc.Depth                       = false;
+            desc.Extent                      = m_SwapChainSize;
+            desc.Format                      = m_SwapChainFormat;
+            desc.Image                       = textures[i];
+            desc.MipLevels                   = 1;
+            desc.Samples                     = VK_SAMPLE_COUNT_1_BIT;
+            desc.UsageFlags                  = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
             //Create texture
-            VulkanTexture2D* pTexture = DBG_NEW VulkanTexture2D(textures[i], m_SwapChainSize, ConvertVkFormat(m_SwapChainFormat), clearValue, flags, 0, 1);
-            m_BackBuffers.push_back(pTexture);
-            
-            //Setup image views
-            VkImageViewCreateInfo info = {};
-            info.sType      = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-            info.pNext      = nullptr;
-            info.flags      = 0;
-            info.image      = reinterpret_cast<VkImage>(pTexture->GetNativeHandle());
-            info.viewType   = VK_IMAGE_VIEW_TYPE_2D;
-            info.format     = m_SwapChainFormat;
-            info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-            info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-            info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-            info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-            info.subresourceRange.aspectMask        = VK_IMAGE_ASPECT_COLOR_BIT;
-            info.subresourceRange.baseMipLevel      = 0;
-            info.subresourceRange.levelCount        = 1;
-            info.subresourceRange.baseArrayLayer    = 0;
-            info.subresourceRange.layerCount        = 1;
-            
-            //Create image views
-            VkImageView view;
-            if (vkCreateImageView(m_Device, &info, nullptr, &view) != VK_SUCCESS)
-            {
-                LOG_DEBUG_ERROR("Vulkan: Failed to create ImageView '%u'\n", i);
-                
-                view = VK_NULL_HANDLE;
-                return false;
-            }
-            else
-            {
-                //Set the imageview
-                pTexture->SetImageView(view);
-            }
+            m_BackBuffers.push_back(DBG_NEW VulkanTexture2D(m_Device, desc));
         }
         
         //Aquire the first swapchain image
@@ -1174,7 +1137,7 @@ namespace Lambda
         m_CurrentFrame = (m_CurrentFrame + 1) % FRAMES_AHEAD;
         
         //Aquire the next swapchain image
-        vkAcquireNextImageKHR(m_Device, m_SwapChain, std::numeric_limits<uint64>::max(), m_ImageSemaphores[m_CurrentFrame], VK_NULL_HANDLE, &m_CurrentBackbufferIndex);
+        vkAcquireNextImageKHR(m_Device, m_SwapChain, 0xffffffffffffffff, m_ImageSemaphores[m_CurrentFrame], VK_NULL_HANDLE, &m_CurrentBackbufferIndex);
     }
     
     
@@ -1249,9 +1212,6 @@ namespace Lambda
         {
             //Reset internal commandlist
             m_pCommandList->Reset();
-            
-            //Transition texture
-            m_pCommandList->TransitionTexture(pTexture, RESOURCE_STATE_COPY_DEST);
             
             //Update texture data
             m_pCommandList->UpdateTexture(pTexture, pInitalData, 0);
@@ -1446,7 +1406,7 @@ namespace Lambda
     }
     
     
-    void VulkanGraphicsDevice::Present(uint32 verticalSync) const
+    void VulkanGraphicsDevice::Present() const
     {
         //Setup presentinfo
         VkSemaphore signalSemaphores[] = { m_RenderSemaphores[m_CurrentFrame] };
@@ -1462,6 +1422,7 @@ namespace Lambda
         info.pImageIndices = &m_CurrentBackbufferIndex;
         info.pResults = nullptr;
         
+        //Present
         vkQueuePresentKHR(m_PresentationQueue, &info);
         
         //LOG_DEBUG_INFO("Vulkan: Present\n");
@@ -1474,8 +1435,6 @@ namespace Lambda
         vkWaitForFences(m_Device, 1, &m_Fences[m_CurrentFrame], VK_TRUE, std::numeric_limits<uint64_t>::max());
         vkResetFences(m_Device, 1, &m_Fences[m_CurrentFrame]);
         
-        //LOG_DEBUG_INFO("VulkanGraphicsDevice::GPUWaitForFrame, currentframe=%u\n", m_CurrentFrame);
-        
         GetNextFrame();
     }
     
@@ -1486,6 +1445,12 @@ namespace Lambda
         vkQueueWaitIdle(m_GraphicsQueue);
     }
 
+    
+    ResourceFormat VulkanGraphicsDevice::GetBackBufferFormat() const
+    {
+        return ConvertVkFormat(m_SwapChainFormat);
+    }
+    
     
     void* VulkanGraphicsDevice::GetNativeHandle() const
     {

@@ -34,6 +34,11 @@ namespace Lambda
         //State
         PrimitiveTopology Topology      = PRIMITIVE_TOPOLOGY_TRIANGLELIST;
         CullMode Cull                   = CULL_MODE_BACK;
+        
+        //Define framebuffer
+        ResourceFormat RenderTargetFormats[LAMBDA_RENDERTARGET_COUNT];
+        ResourceFormat DepthStencilFormat = FORMAT_UNKNOWN;
+        uint32 RenderTargetCount = 0;
 	};
 
 

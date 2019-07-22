@@ -5,48 +5,66 @@
 namespace Lambda
 {
     //Static variable declarations
-    std::unordered_map<const ITexture2D*, VkFramebuffer> VulkanFramebufferCache::s_Framebuffers = std::unordered_map<const ITexture2D*, VkFramebuffer>();
+    std::unordered_map<const ITexture2D*, VulkanFramebufferInfo> VulkanFramebufferCache::s_Framebuffers = std::unordered_map<const ITexture2D*, VulkanFramebufferInfo>();
+    
     
     //VulkanFramebufferCache
-    VkFramebuffer VulkanFramebufferCache::GetFramebuffer(VkDevice device, VkRenderPass renderpass, const ITexture2D* const * const ppRendertargets, uint32 numRenderTargets, const ITexture2D* const pDepthStencil)
+    VkFramebuffer VulkanFramebufferCache::GetFramebuffer(VkDevice device, VkRenderPass renderPass, const ITexture2D* const * const ppRenderTargets, uint32 numRenderTargets, const ITexture2D* const pDepthStencil)
     {
         assert(device != VK_NULL_HANDLE);
         
-        //Use first texture as key
-        const ITexture2D* pKey = ppRendertargets[0];
+        //Get key
+        const ITexture2D* pKey = nullptr;
+        if (ppRenderTargets)
+        {
+            pKey = ppRenderTargets[0];
+        }
+        else
+        {
+            pKey = pDepthStencil;
+        }
+
+        
+        //If the key is nullptr return
+        if (!pKey)
+        {
+            return VK_NULL_HANDLE;
+        }
+
+        
+        //Info about the bound framebuffers
+        VulkanFramebufferInfo fbInfo = {};
+        fbInfo.RenderPass       = renderPass;
+        fbInfo.Width            = pKey->GetWidth();
+        fbInfo.Height           = pKey->GetHeight();
+        fbInfo.pDepthStencil    = pDepthStencil;
+        fbInfo.numRenderTargets = numRenderTargets;
+        memcpy(fbInfo.ppRenderTargets, ppRenderTargets, sizeof(const ITexture2D*) * numRenderTargets);
+        
         
         //Check if a framebuffer exists
-        auto value = s_Framebuffers.find(pKey);
-        if (value != s_Framebuffers.end())
+        auto range = s_Framebuffers.equal_range(pKey);
+        for (auto i = range.first; i != range.second; i++)
         {
-            return value->second;
+            //Find the matching framebuffer
+            auto& value = i->second;
+            if (value == fbInfo)
+                return value.FrameBuffer;
         }
         
-        //Framebuffer size, all textures must have the same size
-        uint32 width    = 0;
-        uint32 height   = 0;
         
         //Loop through all textures and get the imageview, and check dimensions
         std::vector<VkImageView> attachments;
         for (uint32 i = 0; i < numRenderTargets; i++)
         {
             //Add attachment
-            attachments.push_back(reinterpret_cast<const VulkanTexture2D*>(ppRendertargets[i])->GetImageView());
+            attachments.push_back(reinterpret_cast<const VulkanTexture2D*>(ppRenderTargets[i])->GetImageView());
             
             //Check dimensions
-            Texture2DDesc desc = ppRendertargets[i]->GetDesc();
-            if (width + height != 0)
+            if (ppRenderTargets[i]->GetWidth() != fbInfo.Width || ppRenderTargets[i]->GetHeight() != fbInfo.Height)
             {
-                if (desc.Width != width || desc.Height != height)
-                {
-                    LOG_DEBUG_ERROR("Vulkan: Dimensions on textures are not equal\n");
-                    return VK_NULL_HANDLE;
-                }
-            }
-            else
-            {
-                width   = desc.Width;
-                height  = desc.Height;
+                LOG_DEBUG_ERROR("Vulkan: Dimensions on textures are not equal\n");
+                return VK_NULL_HANDLE;
             }
         }
         
@@ -57,32 +75,23 @@ namespace Lambda
             attachments.push_back(reinterpret_cast<const VulkanTexture2D*>(pDepthStencil)->GetImageView());
             
             //Check dimensions
-            Texture2DDesc desc = pDepthStencil->GetDesc();
-            if (width + height != 0)
+            if (pDepthStencil->GetWidth() != fbInfo.Width || pDepthStencil->GetHeight() != fbInfo.Height)
             {
-                if (desc.Width != width || desc.Height != height)
-                {
-                    LOG_DEBUG_ERROR("Vulkan: Dimensions on textures are not equal\n");
-                    return VK_NULL_HANDLE;
-                }
-            }
-            else
-            {
-                width   = desc.Width;
-                height  = desc.Height;
+                LOG_DEBUG_ERROR("Vulkan: Dimensions on textures are not equal\n");
+                return VK_NULL_HANDLE;
             }
         }
         
         //Setup new framebuffer
         VkFramebufferCreateInfo info = {};
-        info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        info.pNext = nullptr;
-        info.renderPass = renderpass;
-        info.attachmentCount = uint32(attachments.size());
-        info.pAttachments = attachments.data();
-        info.width = width;
-        info.height = height;
-        info.layers = 1;
+        info.sType              = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        info.pNext              = nullptr;
+        info.renderPass         = renderPass;
+        info.attachmentCount    = uint32(attachments.size());
+        info.pAttachments       = attachments.data();
+        info.width              = fbInfo.Width;
+        info.height             = fbInfo.Height;
+        info.layers             = 1;
         
         //Create new framebuffer
         VkFramebuffer framebuffer = VK_NULL_HANDLE;
@@ -96,7 +105,8 @@ namespace Lambda
             LOG_DEBUG_INFO("Vulkan: Created new Framebuffer\n");
             
             //Insert new framebuffer
-            s_Framebuffers.insert(std::pair<const ITexture2D*, VkFramebuffer>(pKey, framebuffer));
+            fbInfo.FrameBuffer = framebuffer;
+            s_Framebuffers.insert(std::pair<const ITexture2D*, VulkanFramebufferInfo>(pKey, fbInfo));
             return framebuffer;
         }
     }
@@ -104,37 +114,33 @@ namespace Lambda
     
     void VulkanFramebufferCache::ReleaseTexture(VkDevice device, const ITexture2D* pTexture)
     {
-        //Release framebuffer if it exists
-        auto value = s_Framebuffers.find(pTexture);
-        if (value != s_Framebuffers.end())
+        //Check if a framebuffer exists
+        auto range = s_Framebuffers.equal_range(pTexture);
+        for (auto i = range.first; i != range.second; i++)
         {
-            LOG_DEBUG_INFO("Vulkan: Deleting Framebuffer '%p'\n", value->second);
-            
-            //Destroy the framebuffer in vulkan
-            vkDestroyFramebuffer(device, value->second, nullptr);
-            value->second = VK_NULL_HANDLE;
-            
-            //Delete it from the framebuffers
-            s_Framebuffers.erase(value);
+            //Find the matching framebuffer
+            if (i->second.Contains(pTexture))
+            {
+                //Destroy the framebuffer in vulkan
+                vkDestroyFramebuffer(device, i->second.FrameBuffer, nullptr);
+                i->second.FrameBuffer = VK_NULL_HANDLE;
+                
+                //Erase from map
+                s_Framebuffers.erase(i);
+            }
         }
-
     }
     
     
     void VulkanFramebufferCache::Release(VkDevice device)
     {
-        LOG_DEBUG_INFO("Vulkan: Num framebuffers before '%u'\n", s_Framebuffers.size());
-        
         for (auto& buffer : s_Framebuffers)
         {
-            LOG_DEBUG_INFO("Vulkan: Deleting Framebuffer '%p'\n", buffer.second);
-            
             //Destroy the framebuffer in vulkan
-            vkDestroyFramebuffer(device, buffer.second, nullptr);
-            buffer.second = VK_NULL_HANDLE;
+            vkDestroyFramebuffer(device, buffer.second.FrameBuffer, nullptr);
+            buffer.second.FrameBuffer = VK_NULL_HANDLE;
         }
         
         s_Framebuffers.clear();
-        LOG_DEBUG_INFO("Vulkan: Num framebuffers after '%u'\n", s_Framebuffers.size());
     }
 }

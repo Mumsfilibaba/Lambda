@@ -6,22 +6,7 @@
 
 namespace Lambda
 {
-    enum GraphicsContextFlags : uint32
-	{
-		GRAPHICS_CONTEXT_FLAG_NONE                      = 0,
-		GRAPHICS_CONTEXT_FLAG_DEBUG                     = (1 << 0),
-		GRAPHICS_CONTEXT_FLAG_ALLOW_SOFTWARE_ADAPTER    = (1 << 1),
-	};
-    
-    
-    enum GraphicsApi : uint32
-    {
-        GRAPHICS_API_UNKNOWN    = 0,
-        GRAPHICS_API_D3D12      = 1,
-        GRAPHICS_API_VULKAN     = 2
-    };
-    
-
+    //Forward declarations
 	class IBuffer;
 	class ISamplerState;
 	class ITexture2D;
@@ -36,6 +21,7 @@ namespace Lambda
 	struct GraphicsPipelineStateDesc;
 
     
+    //Graphics device descriptor
     struct GraphicsDeviceDesc
     {
         uint32 Flags = GRAPHICS_CONTEXT_FLAG_NONE;
@@ -43,6 +29,7 @@ namespace Lambda
     };
     
     
+    //Graphic device
 	class LAMBDA_API IGraphicsDevice
 	{
 	public:
@@ -67,10 +54,11 @@ namespace Lambda
 		virtual void Destroy() const = 0;
 
 		virtual void ExecuteCommandList(ICommandList* const * ppLists, uint32 numLists) const = 0;
-		virtual void Present(uint32 verticalSync) const = 0;
+		virtual void Present() const = 0;
 		virtual void WaitForGPU() const = 0;
 		virtual void GPUWaitForFrame() const = 0;
 		
+        virtual ResourceFormat GetBackBufferFormat() const = 0;
 		virtual ITexture2D* GetCurrentRenderTarget() = 0;
 		virtual uint32 GetCurrentBackBufferIndex() const = 0;
 		virtual void* GetNativeHandle() const = 0;

@@ -283,6 +283,24 @@ namespace Lambda
         CULL_MODE_NONE      = 3
     };
 
+    
+    //Flags for graphics context
+    enum GraphicsContextFlags : uint32
+    {
+        GRAPHICS_CONTEXT_FLAG_NONE                      = 0,
+        GRAPHICS_CONTEXT_FLAG_DEBUG                     = (1 << 0),
+        GRAPHICS_CONTEXT_FLAG_ALLOW_SOFTWARE_ADAPTER    = (1 << 1),
+    };
+    
+    
+    //Graphics-APIs defines
+    enum GraphicsApi : uint32
+    {
+        GRAPHICS_API_UNKNOWN    = 0,
+        GRAPHICS_API_D3D12      = 1,
+        GRAPHICS_API_VULKAN     = 2
+    };
+    
 
     //Struct for updating data in a buffer or texture
 	struct ResourceData
