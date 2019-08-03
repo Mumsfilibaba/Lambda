@@ -79,17 +79,17 @@ workspace "Lambda"
 		{
 			"glfw.3.3",
 			"vulkan.1",
-			"vulkan.1.1.106"
+			"vulkan.1.1.114"
 		}
 		libdirs
 		{
 			"/usr/local/lib",
-			"../vulkansdk-macos-1.1.106.0/macOS/lib"
+			"../vulkansdk-macos-1.1.114.0/macOS/lib"
 		}
 		sysincludedirs
 		{
 			"/usr/local/include",
-			"../vulkansdk-macos-1.1.106.0/macOS/include"
+			"../vulkansdk-macos-1.1.114.0/macOS/include"
 		}
 		defines
 		{
