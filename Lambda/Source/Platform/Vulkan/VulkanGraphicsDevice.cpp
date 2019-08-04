@@ -1426,6 +1426,8 @@ namespace Lambda
         vkQueuePresentKHR(m_PresentationQueue, &info);
         
         //LOG_DEBUG_INFO("Vulkan: Present\n");
+        
+        GPUWaitForFrame();
     }
     
     
@@ -1443,6 +1445,7 @@ namespace Lambda
     {
         //LOG_DEBUG_INFO("VulkanGraphicsDevice::WaitForGPU\n");
         vkQueueWaitIdle(m_GraphicsQueue);
+        //vkDeviceWaitIdle(m_Device);
     }
 
     

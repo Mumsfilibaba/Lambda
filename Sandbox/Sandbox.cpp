@@ -362,9 +362,14 @@ namespace Lambda
             m_Camera.Rotate(glm::vec3(-rotation, 0.0f, 0.0f) * dt.AsSeconds());
         
         if (Input::IsKeyDown(KEY_RIGHT))
-            m_Camera.Rotate(glm::vec3(0.0f, rotation, 0.0f) * dt.AsSeconds());
-        else if (Input::IsKeyDown(KEY_LEFT))
             m_Camera.Rotate(glm::vec3(0.0f, -rotation, 0.0f) * dt.AsSeconds());
+        else if (Input::IsKeyDown(KEY_LEFT))
+            m_Camera.Rotate(glm::vec3(0.0f, rotation, 0.0f) * dt.AsSeconds());
+        
+        if (Input::IsKeyDown(KEY_Q))
+            m_Camera.Rotate(glm::vec3(0.0f, 0.0f, rotation) * dt.AsSeconds());
+        else if (Input::IsKeyDown(KEY_E))
+            m_Camera.Rotate(glm::vec3(0.0f, 0.0f, -rotation) * dt.AsSeconds());
         
         m_Camera.CreateView();
 	}
@@ -372,99 +377,98 @@ namespace Lambda
 
 	void SandBox::OnRender(Time dt)
 	{
-		IGraphicsDevice* pDevice = IGraphicsDevice::GetInstance();
-        if (pDevice)
-        {
-            //Set commandlist for frame
-            m_pCurrentList = m_pLists[pDevice->GetCurrentBackBufferIndex()];
-            if (m_pCurrentList)
-            {
-                m_pCurrentList->Reset();
-                
-                //Set and clear rendertarget
-                float color[] = { 0.392f, 0.584f, 0.929f, 1.0f };
-                ITexture2D* pRenderTarget = pDevice->GetCurrentRenderTarget();
-                
-                m_pCurrentList->ClearRenderTarget(pRenderTarget, color);
-                m_pCurrentList->ClearDepthStencil(m_pDepthBuffer, 1.0f, 0);
-                m_pCurrentList->SetRenderTarget(pRenderTarget, m_pDepthBuffer);
-                
-                //Set scissor and viewport
-                Rectangle scissorrect;
-                scissorrect.X       = 0.0f;
-                scissorrect.Y       = 0.0f;
-                scissorrect.Width   = m_Width;
-                scissorrect.Height  = m_Height;
-                
-                Viewport viewport = {};
-                viewport.Width      = scissorrect.Width;
-                viewport.Height     = scissorrect.Height;
-                viewport.TopX       = 0.0f;
-                viewport.TopY       = 0.0f;
-                viewport.MinDepth   = 0.0f;
-                viewport.MaxDepth   = 1.0f;
-                
-                m_pCurrentList->SetViewport(viewport);
-                m_pCurrentList->SetScissorRect(scissorrect);
-                
-                //Set pipelinestate and topology
-                m_pCurrentList->SetGraphicsPipelineState(m_pPipelineState);
-                
-                //Update Colorbuffer
-                glm::vec4 colorBuff = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-                
-                ResourceData data = {};
-                data.pData = &colorBuff;
-                data.SizeInBytes = sizeof(glm::vec4);
-                
-                m_pCurrentList->UpdateBuffer(m_pColorBuffer, &data);
-                
-                //Update camera buffer
-                m_CameraBuffer.View = m_Camera.GetView();
-                m_CameraBuffer.Proj = m_Camera.GetProjection();
+        //Get current device
+        IGraphicsDevice* pDevice = IGraphicsDevice::GetInstance();
+        
+        //Set commandlist for frame
+        m_pCurrentList = m_pLists[pDevice->GetCurrentBackBufferIndex()];
+        m_pCurrentList->Reset();
+        
+        //Set and clear rendertarget
+        float color[] = { 0.392f, 0.584f, 0.929f, 1.0f };
+        ITexture2D* pRenderTarget = pDevice->GetCurrentRenderTarget();
+        
+        m_pCurrentList->ClearRenderTarget(pRenderTarget, color);
+        m_pCurrentList->ClearDepthStencil(m_pDepthBuffer, 1.0f, 0);
+        m_pCurrentList->SetRenderTarget(pRenderTarget, m_pDepthBuffer);
+        
+        //Set scissor and viewport
+        Rectangle scissorrect;
+        scissorrect.X       = 0.0f;
+        scissorrect.Y       = 0.0f;
+        scissorrect.Width   = m_Width;
+        scissorrect.Height  = m_Height;
+        
+        Viewport viewport = {};
+        viewport.Width      = scissorrect.Width;
+        viewport.Height     = scissorrect.Height;
+        viewport.TopX       = 0.0f;
+        viewport.TopY       = 0.0f;
+        viewport.MinDepth   = 0.0f;
+        viewport.MaxDepth   = 1.0f;
+        
+        m_pCurrentList->SetViewport(viewport);
+        m_pCurrentList->SetScissorRect(scissorrect);
+        
+        //Set pipelinestate and topology
+        m_pCurrentList->SetGraphicsPipelineState(m_pPipelineState);
+        
+        //Update Colorbuffer
+        glm::vec4 colorBuff = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+        
+        ResourceData data = {};
+        data.pData = &colorBuff;
+        data.SizeInBytes = sizeof(glm::vec4);
+        
+        m_pCurrentList->UpdateBuffer(m_pColorBuffer, &data);
+        
+        //Update camera buffer
+        m_CameraBuffer.View = m_Camera.GetView();
+        m_CameraBuffer.Proj = m_Camera.GetProjection();
 
-                data.pData = &m_CameraBuffer;
-                data.SizeInBytes = sizeof(CameraBuffer);
-                m_pCurrentList->UpdateBuffer(m_pCameraBuffer, &data);
+        data.pData = &m_CameraBuffer;
+        data.SizeInBytes = sizeof(CameraBuffer);
+        m_pCurrentList->UpdateBuffer(m_pCameraBuffer, &data);
+        
+        //Set buffers
+        IBuffer* vsBuffers[] = { m_pCameraBuffer, m_pTransformBuffer };
+        m_pCurrentList->VSSetConstantBuffers(vsBuffers, 2, 0);
+        m_pCurrentList->PSSetConstantBuffers(&m_pColorBuffer, 1, 0);
+        
+        //Set texture and samplers
+        m_pCurrentList->PSSetTextures(&m_pTexture, 1, 0);
+        m_pCurrentList->PSSetSamplers(&m_pSampler, 1, 0);
+        
+        //Set vertex- and indexbuffer
+        m_pCurrentList->SetVertexBuffer(m_pVertexBuffer, 0);
+        m_pCurrentList->SetIndexBuffer(m_pIndexBuffer);
+        
+        //Setup rotation
+        static glm::mat4 rotation = glm::mat4(1.0f);
+        rotation = glm::rotate(rotation, glm::radians(45.0f) * dt.AsSeconds(), glm::vec3(0.0f, 1.0f, 0.0f));
+        
+        //Draw cubes
+        for (uint32 y = 0; y < 10; y++)
+        {
+            for (uint32 x = 0; x < 10; x++)
+            {
+                //Update transforms
+                m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(-10.0f + (float(x) * 2), 0.0f, 10.0f + (float(y) * 2))) * rotation;
                 
-                //Set buffers
-                IBuffer* vsBuffers[] = { m_pCameraBuffer, m_pTransformBuffer };
-                m_pCurrentList->VSSetConstantBuffers(vsBuffers, 2, 0);
-                m_pCurrentList->PSSetConstantBuffers(&m_pColorBuffer, 1, 0);
+                data.pData = &m_TransformBuffer;
+                data.SizeInBytes = sizeof(TransformBuffer);
+                m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);
                 
-                //Set texture and samplers
-                m_pCurrentList->PSSetTextures(&m_pTexture, 1, 0);
-                m_pCurrentList->PSSetSamplers(&m_pSampler, 1, 0);
-                
-                //Set vertex- and indexbuffer
-                m_pCurrentList->SetVertexBuffer(m_pVertexBuffer, 0);
-                m_pCurrentList->SetIndexBuffer(m_pIndexBuffer);
-                
-                //Draw cubes
-                for (uint32 y = 0; y < 10; y++)
-                {
-                    for (uint32 x = 0; x < 10; x++)
-                    {
-                        //Update transforms
-                        m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(-10.0f + (float(x) * 2), 0.0f, 10.0f + (float(y) * 2)));
-                        
-                        data.pData = &m_TransformBuffer;
-                        data.SizeInBytes = sizeof(TransformBuffer);
-                        m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);
-                        
-                        //Draw
-                        m_pCurrentList->DrawIndexedInstanced(36, 1, 0, 0, 0);
-                    }
-                }
-                
-                m_pCurrentList->Close();
-                
-                //Present
-                pDevice->ExecuteCommandList(&m_pCurrentList, 1);
-                pDevice->Present();
-                pDevice->GPUWaitForFrame();
+                //Draw
+                m_pCurrentList->DrawIndexedInstanced(36, 1, 0, 0, 0);
             }
         }
+        
+        m_pCurrentList->Close();
+        
+        //Present
+        pDevice->ExecuteCommandList(&m_pCurrentList, 1);
+        pDevice->Present();
 	}
 
 

@@ -30,11 +30,11 @@ namespace Lambda
             colorAttachment.flags           = 0;
             colorAttachment.format          = ConvertResourceFormat(desc.RenderTargetFormats[i]);
             colorAttachment.samples         = VK_SAMPLE_COUNT_1_BIT;
-            colorAttachment.loadOp          = VK_ATTACHMENT_LOAD_OP_LOAD;
+            colorAttachment.loadOp          = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
             colorAttachment.storeOp         = VK_ATTACHMENT_STORE_OP_STORE;
-            colorAttachment.stencilLoadOp   = VK_ATTACHMENT_LOAD_OP_LOAD;
+            colorAttachment.stencilLoadOp   = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
             colorAttachment.stencilStoreOp  = VK_ATTACHMENT_STORE_OP_STORE;
-            colorAttachment.initialLayout   = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+            colorAttachment.initialLayout   = VK_IMAGE_LAYOUT_UNDEFINED;
             colorAttachment.finalLayout     = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
             attachments.push_back(colorAttachment);
             
@@ -71,11 +71,11 @@ namespace Lambda
             depthAttachment.flags           = 0;
             depthAttachment.format          = ConvertResourceFormat(desc.DepthStencilFormat);
             depthAttachment.samples         = VK_SAMPLE_COUNT_1_BIT;
-            depthAttachment.loadOp          = VK_ATTACHMENT_LOAD_OP_LOAD;
+            depthAttachment.loadOp          = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
             depthAttachment.storeOp         = VK_ATTACHMENT_STORE_OP_STORE;
-            depthAttachment.stencilLoadOp   = VK_ATTACHMENT_LOAD_OP_LOAD;
+            depthAttachment.stencilLoadOp   = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
             depthAttachment.stencilStoreOp  = VK_ATTACHMENT_STORE_OP_STORE;
-            depthAttachment.initialLayout   = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+            depthAttachment.initialLayout   = VK_IMAGE_LAYOUT_UNDEFINED;
             depthAttachment.finalLayout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
             attachments.push_back(depthAttachment);
             

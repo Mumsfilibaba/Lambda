@@ -28,15 +28,19 @@ namespace Lambda
         //Add to rotation
         m_Rotation += rotation;
         
+        //Create rotation matrix
+        glm::mat4 rotationMat = glm::rotate(glm::mat4(1.0f),    glm::radians(rotation.y), UP);
+        rotationMat           = glm::rotate(rotationMat,        glm::radians(rotation.x), m_Right);
+        rotationMat           = glm::rotate(rotationMat,        glm::radians(rotation.z), m_Forward);
+        
         //Rotate forward vector
-        glm::mat3 rotationMat = glm::eulerAngleYXZ(glm::radians(rotation.y), glm::radians(rotation.x), glm::radians(rotation.z));
-        m_Forward = rotationMat * m_Forward;
+        m_Forward = rotationMat * glm::vec4(m_Forward, 0.0f);
         
         //Rotate right vector
-        m_Right = rotationMat * m_Right;
+        m_Right = rotationMat * glm::vec4(m_Right, 0.0f);
         
         //Rotate up vector
-        m_Up = rotationMat * m_Up;
+        m_Up = rotationMat * glm::vec4(m_Up, 0.0f);
     }
     
     
