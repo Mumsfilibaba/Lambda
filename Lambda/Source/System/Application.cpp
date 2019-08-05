@@ -4,6 +4,7 @@
 #include "System/Log.h"
 #include "System/Input.h"
 #include "System/JoystickManager.h"
+#include <thread>
 
 namespace Lambda
 {
@@ -47,11 +48,17 @@ namespace Lambda
                 ups++;
 			}
 
-			//Render when the application has focus
+			
             if (m_HasFocus)
             {
+                //Render when the application has focus
                 InternalOnRender(clock.GetDeltaTime());
                 fps++;
+            }
+            else
+            {
+                //If the application does not have focus sleep for one frame (16ms)
+                std::this_thread::sleep_for(std::chrono::milliseconds(16));
             }
 			
 			//Print FPS and UPS to console
