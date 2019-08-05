@@ -59,8 +59,11 @@ namespace Lambda
 		virtual void GPUWaitForFrame() const = 0;
 		
         virtual ResourceFormat GetBackBufferFormat() const = 0;
-		virtual ITexture2D* GetCurrentRenderTarget() = 0;
+		virtual ITexture2D* GetCurrentRenderTarget() const = 0;
+        virtual ITexture2D* GetDepthStencil() const = 0;
 		virtual uint32 GetCurrentBackBufferIndex() const = 0;
+        virtual uint32 GetCurrentSwapChainWidth() const = 0;
+        virtual uint32 GetCurrentSwapChainHeight() const = 0;
 		virtual void* GetNativeHandle() const = 0;
 
 	private:

@@ -124,7 +124,10 @@ namespace Lambda
             info.usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
             
             //Set aspect flag
-            m_AspectFlags |= VK_IMAGE_ASPECT_DEPTH_BIT;
+            if (info.format == VK_FORMAT_D24_UNORM_S8_UINT || info.format == VK_FORMAT_D32_SFLOAT_S8_UINT)
+                m_AspectFlags |= VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+            else
+                m_AspectFlags |= VK_IMAGE_ASPECT_DEPTH_BIT;
         }
 
         

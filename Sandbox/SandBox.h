@@ -58,7 +58,6 @@ namespace Lambda
         IBuffer* m_pTransformBuffer;
         
         //Textures
-        ITexture2D* m_pDepthBuffer;
 		ITexture2D* m_pTexture;
 		
         //Samplers

@@ -161,6 +161,7 @@ namespace Lambda
         
         //Destroy swapchain and related resources
         ReleaseSwapChain();
+        ReleaseDepthStencil();
         
         //Destroy device
         if (m_Device != VK_NULL_HANDLE)
@@ -205,6 +206,7 @@ namespace Lambda
         if (!CreateSemaphoresAndFences()) { return; }
         if (!CreateSwapChain(pWindow->GetWidth(), pWindow->GetHeight())) { return; }
         if (!CreateTextures()) { return; }
+        if (!CreateDepthStencil()) { return; }
         if (!CreateDefaultLayouts()) { return; }
         
         //Create nullbufferdescriptor
@@ -674,6 +676,7 @@ namespace Lambda
         VkPhysicalDeviceFeatures deviceFeatures = {};
         deviceFeatures.samplerAnisotropy = VK_TRUE;
         
+        
         //Get the required layers, assume that the layers exists because we could create the vulkaninstance
         std::vector<const char*> requiredLayers = GetRequiredValidationLayers(desc.Flags & GRAPHICS_CONTEXT_FLAG_DEBUG);
         
@@ -916,6 +919,26 @@ namespace Lambda
     }
     
     
+    bool VulkanGraphicsDevice::CreateDepthStencil()
+    {
+        //Create depthbuffer
+        Texture2DDesc desc = {};
+        desc.Usage              = RESOURCE_USAGE_DEFAULT;
+        desc.Flags              = TEXTURE_FLAGS_DEPTH_STENCIL;
+        desc.ArraySize          = 1;
+        desc.Width              = m_SwapChainSize.width;
+        desc.Height             = m_SwapChainSize.height;
+        desc.Format             = FORMAT_D24_UNORM_S8_UINT;
+        desc.SampleCount        = 1;
+        desc.MipLevels          = 1;
+        desc.ClearValue.Depth   = 1.0f;
+        desc.ClearValue.Stencil = 0;
+        
+        m_pDepthStencil = DBG_NEW VulkanTexture2D(m_Device, m_Adapter, desc);
+        return true;
+    }
+    
+    
     bool VulkanGraphicsDevice::CreateTextures()
     {
         //Get SwapChain images
@@ -1127,6 +1150,17 @@ namespace Lambda
         {
             vkDestroySwapchainKHR(m_Device, m_SwapChain, nullptr);
             m_SwapChain = VK_NULL_HANDLE;
+        }
+    }
+    
+    
+    void VulkanGraphicsDevice::ReleaseDepthStencil()
+    {
+        //Release depthbuffer
+        if (m_pDepthStencil != nullptr)
+        {
+            m_pDepthStencil->Destroy(m_Device);
+            m_pDepthStencil = nullptr;
         }
     }
     
@@ -1461,15 +1495,33 @@ namespace Lambda
     }
     
     
-    ITexture2D* VulkanGraphicsDevice::GetCurrentRenderTarget()
+    ITexture2D* VulkanGraphicsDevice::GetCurrentRenderTarget() const
     {
         return m_BackBuffers[GetCurrentBackBufferIndex()];
+    }
+    
+    
+    ITexture2D* VulkanGraphicsDevice::GetDepthStencil() const
+    {
+        return m_pDepthStencil;
     }
     
     
     uint32 VulkanGraphicsDevice::GetCurrentBackBufferIndex() const
     {
         return m_CurrentBackbufferIndex;
+    }
+    
+    
+    uint32 VulkanGraphicsDevice::GetCurrentSwapChainWidth() const
+    {
+        return m_SwapChainSize.width;
+    }
+    
+    
+    uint32 VulkanGraphicsDevice::GetCurrentSwapChainHeight() const
+    {
+        return m_SwapChainSize.height;
     }
     
     
@@ -1488,8 +1540,9 @@ namespace Lambda
             //Syncronize the GPU so no operations are in flight when recreating swapchain
             vkDeviceWaitIdle(m_Device);
             
-            //Release the old SwapChain
+            //Release the old SwapChain and depthbuffer
             ReleaseSwapChain();
+            ReleaseDepthStencil();
             
             //Create new swapchain
             if (!CreateSwapChain(event.WindowResize.Width, event.WindowResize.Height))
@@ -1498,8 +1551,9 @@ namespace Lambda
                 return false;
             }
             
-            //Create new backbuffer textures
+            //Create new textures
             CreateTextures();
+            CreateDepthStencil();
             
             //Resize swapchain etc. here
             LOG_DEBUG_INFO("VulkanGraphicsDevice: Window resized w: %d h: %d\n", event.WindowResize.Width, event.WindowResize.Height);

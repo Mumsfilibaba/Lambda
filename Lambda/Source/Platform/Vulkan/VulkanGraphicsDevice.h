@@ -71,8 +71,11 @@ namespace Lambda
         
         virtual ResourceFormat GetBackBufferFormat() const override final;
         virtual void* GetNativeHandle() const override final;
-        virtual ITexture2D* GetCurrentRenderTarget() override final;
+        virtual ITexture2D* GetCurrentRenderTarget() const override final;
+        virtual ITexture2D* GetDepthStencil() const override final;
         virtual uint32 GetCurrentBackBufferIndex() const override final;
+        virtual uint32 GetCurrentSwapChainWidth() const override final;
+        virtual uint32 GetCurrentSwapChainHeight() const override final;
     
         VkPhysicalDevice GetAdapter() const;
         QueueFamilyIndices GetQueueFamilyIndices() const;
@@ -87,11 +90,13 @@ namespace Lambda
         bool CreateDeviceAndQueues(const GraphicsDeviceDesc& desc);
         bool CreateSurface(IWindow* pWindow);
         bool CreateSwapChain(uint16 width, uint16 height);
+        bool CreateDepthStencil();
         bool CreateTextures();
         bool CreateSemaphoresAndFences();
         bool CreateDefaultLayouts();
         
         void ReleaseSwapChain();
+        void ReleaseDepthStencil();
         
         void GetNextFrame() const;
         
@@ -126,6 +131,7 @@ namespace Lambda
         mutable uint64 m_CurrentFrame;
         mutable uint32 m_CurrentBackbufferIndex;
         std::vector<VulkanTexture2D*> m_BackBuffers;
+        VulkanTexture2D* m_pDepthStencil;
         
         VulkanCommandList* m_pCommandList;
         

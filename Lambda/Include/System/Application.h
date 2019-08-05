@@ -41,6 +41,7 @@ namespace Lambda
 		IGraphicsDevice* m_pGraphicsContext;
 		int32 m_ExitCode;
 		bool m_Running;
+        bool m_HasFocus;
 
 	public:
 		static Application& GetInstance();

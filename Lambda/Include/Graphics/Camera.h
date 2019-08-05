@@ -14,6 +14,7 @@ namespace Lambda
         
         void SetPosition(const glm::vec3& position);
         void SetRotation(const glm::vec3& rotation);
+        void SetAspect(float width, float height);
         
         const glm::mat4& GetView() const { return m_View; }
         const glm::mat4& GetProjection() const { return m_Projection; }
@@ -29,5 +30,6 @@ namespace Lambda
         glm::vec3 m_Forward;
         glm::vec3 m_Right;
         glm::vec3 m_Up;
+        float m_Aspect;
     };
 }

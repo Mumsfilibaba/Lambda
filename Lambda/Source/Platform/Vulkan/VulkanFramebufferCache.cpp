@@ -38,7 +38,7 @@ namespace Lambda
         fbInfo.Width            = pKey->GetWidth();
         fbInfo.Height           = pKey->GetHeight();
         fbInfo.pDepthStencil    = pDepthStencil;
-        fbInfo.numRenderTargets = numRenderTargets;
+        fbInfo.NumRenderTargets = numRenderTargets;
         memcpy(fbInfo.ppRenderTargets, ppRenderTargets, sizeof(const ITexture2D*) * numRenderTargets);
         
         

@@ -16,11 +16,11 @@ namespace Lambda
         inline bool operator==(const VulkanFramebufferInfo& other) const
         {
             //Does it contain the same amount of rendertargets?
-            if (numRenderTargets != other.numRenderTargets)
+            if (NumRenderTargets != other.NumRenderTargets)
                 return false;
             
             //Are the rendertargets the same?
-            for (uint32 i = 0; i < numRenderTargets; i++)
+            for (uint32 i = 0; i < NumRenderTargets; i++)
             {
                 if (ppRenderTargets[i] != other.ppRenderTargets[i])
                     return false;
@@ -35,7 +35,7 @@ namespace Lambda
         inline bool Contains(const ITexture2D* pTexture) const
         {
             //Check if this texture is amongst the rendertargets
-            for (uint32 i = 0; i < numRenderTargets; i++)
+            for (uint32 i = 0; i < NumRenderTargets; i++)
             {
                 if (ppRenderTargets[i] == pTexture)
                     return true;
@@ -47,7 +47,7 @@ namespace Lambda
         
     public:
         const ITexture2D* ppRenderTargets[LAMBDA_RENDERTARGET_COUNT];
-        uint32 numRenderTargets             = 0;
+        uint32 NumRenderTargets             = 0;
         const ITexture2D* pDepthStencil     = nullptr;
         VkRenderPass RenderPass             = VK_NULL_HANDLE;
         VkFramebuffer FrameBuffer           = VK_NULL_HANDLE;

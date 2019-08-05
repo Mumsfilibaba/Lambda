@@ -138,7 +138,6 @@ namespace Lambda
         m_pCompute(nullptr),
 		m_pVertexBuffer(nullptr),
         m_pIndexBuffer(nullptr),
-		m_pDepthBuffer(nullptr),
         m_pPipelineState(nullptr)
 	{
 		for (uint32 i = 0; i < 3; i++)
@@ -190,6 +189,9 @@ namespace Lambda
             //m_pPS = IShader::CreateShaderFromFile(pDevice, "Triangle.hlsl", "PSMain", SHADER_TYPE_PIXEL);
             //m_pCompute = IShader::CreateShaderFromFile(pDevice, "Texture2DMipMapGen.cso", "main", SHADER_TYPE_COMPUTE, SHADER_LANG_HLSL_COMPILED);
             
+            //Define depthformat
+            ResourceFormat depthFormat = FORMAT_D24_UNORM_S8_UINT;
+            
             //Create pipelinestate
             {
                 InputElement elements[]
@@ -207,7 +209,7 @@ namespace Lambda
                 desc.Topology               = PRIMITIVE_TOPOLOGY_TRIANGLELIST;
                 desc.Cull                   = CULL_MODE_BACK;
                 desc.RenderTargetFormats[0] = pDevice->GetBackBufferFormat();
-                desc.DepthStencilFormat     = FORMAT_D32_FLOAT;
+                desc.DepthStencilFormat     = depthFormat;
                 desc.RenderTargetCount      = 1;
 
                 pDevice->CreateGraphicsPipelineState(&m_pPipelineState, desc);
@@ -267,7 +269,7 @@ namespace Lambda
             //Create camerabuffer
             {
                 //Set camera
-                m_Camera.SetPosition(glm::vec3(0.0f, 2.0f, 2.0f));
+                m_Camera.SetPosition(glm::vec3(0.0f, 2.0f, -2.0f));
                 m_Camera.SetRotation(glm::vec3(45.0f, 0.0f, 0.0f));
                 m_Camera.CreateView();
                 
@@ -300,23 +302,6 @@ namespace Lambda
                 data.SizeInBytes = desc.SizeInBytes;
                 
                 pDevice->CreateBuffer(&m_pTransformBuffer, &data, desc);
-            }
-            
-            //Create depthbuffer
-            {
-                Texture2DDesc desc = {};
-                desc.Usage              = RESOURCE_USAGE_DEFAULT;
-                desc.Flags              = TEXTURE_FLAGS_DEPTH_STENCIL;
-                desc.ArraySize          = 1;
-                desc.Width              = GetWindow()->GetWidth();
-                desc.Height             = GetWindow()->GetHeight();
-                desc.Format             = FORMAT_D32_FLOAT;
-                desc.SampleCount        = 1;
-                desc.MipLevels          = 1;
-                desc.ClearValue.Depth   = 1.0f;
-                desc.ClearValue.Stencil = 0;
-
-                pDevice->CreateTexture2D(&m_pDepthBuffer, nullptr, desc);
             }
 
             //Create texture
@@ -387,17 +372,18 @@ namespace Lambda
         //Set and clear rendertarget
         float color[] = { 0.392f, 0.584f, 0.929f, 1.0f };
         ITexture2D* pRenderTarget = pDevice->GetCurrentRenderTarget();
+        ITexture2D* pDepthBuffer = pDevice->GetDepthStencil();
         
         m_pCurrentList->ClearRenderTarget(pRenderTarget, color);
-        m_pCurrentList->ClearDepthStencil(m_pDepthBuffer, 1.0f, 0);
-        m_pCurrentList->SetRenderTarget(pRenderTarget, m_pDepthBuffer);
+        m_pCurrentList->ClearDepthStencil(pDepthBuffer, 1.0f, 0);
+        m_pCurrentList->SetRenderTarget(pRenderTarget, pDepthBuffer);
         
         //Set scissor and viewport
         Rectangle scissorrect;
         scissorrect.X       = 0.0f;
         scissorrect.Y       = 0.0f;
-        scissorrect.Width   = m_Width;
-        scissorrect.Height  = m_Height;
+        scissorrect.Width   = pDevice->GetCurrentSwapChainWidth();
+        scissorrect.Height  = pDevice->GetCurrentSwapChainHeight();
         
         Viewport viewport = {};
         viewport.Width      = scissorrect.Width;
@@ -447,22 +433,16 @@ namespace Lambda
         static glm::mat4 rotation = glm::mat4(1.0f);
         rotation = glm::rotate(rotation, glm::radians(45.0f) * dt.AsSeconds(), glm::vec3(0.0f, 1.0f, 0.0f));
         
-        //Draw cubes
-        for (uint32 y = 0; y < 10; y++)
-        {
-            for (uint32 x = 0; x < 10; x++)
-            {
-                //Update transforms
-                m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(-10.0f + (float(x) * 2), 0.0f, 10.0f + (float(y) * 2))) * rotation;
-                
-                data.pData = &m_TransformBuffer;
-                data.SizeInBytes = sizeof(TransformBuffer);
-                m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);
-                
-                //Draw
-                m_pCurrentList->DrawIndexedInstanced(36, 1, 0, 0, 0);
-            }
-        }
+        //Draw cube
+        //Update transforms
+        m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)) * rotation;
+        
+        data.pData = &m_TransformBuffer;
+        data.SizeInBytes = sizeof(TransformBuffer);
+        m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);
+        
+        //Draw
+        m_pCurrentList->DrawIndexedInstanced(36, 1, 0, 0, 0);
         
         m_pCurrentList->Close();
         
@@ -494,7 +474,6 @@ namespace Lambda
             pDevice->DestroyBuffer(&m_pColorBuffer);
             pDevice->DestroyBuffer(&m_pCameraBuffer);
             pDevice->DestroyBuffer(&m_pTransformBuffer);
-            pDevice->DestroyTexture2D(&m_pDepthBuffer);
             pDevice->DestroyTexture2D(&m_pTexture);
             pDevice->DestroySamplerState(&m_pSampler);
         }
@@ -502,118 +481,69 @@ namespace Lambda
 
 
 	void SandBox::CreateCamera(uint32 width, uint32 height)
-	{
+    {
+        m_Camera.SetAspect(float(width), float(height));
+        m_Camera.CreateProjection();
 	}
     
     
     //Event handler function for the instance
     bool SandBox::EventHandler(const Event &event)
     {
-        if (event.Type == EVENT_TYPE_WINDOW_RESIZE)
+        switch (event.Type)
         {
-            //Set size variable
-            m_Width = (float)event.WindowResize.Width;
-            m_Height = (float)event.WindowResize.Height;
+            case EVENT_TYPE_WINDOW_RESIZE:
+                //Resize camera if size is not zero
+                if (event.WindowResize.Width > 0 && event.WindowResize.Height > 0)
+                {
+                    CreateCamera(event.WindowResize.Width, event.WindowResize.Height);
+                }
+                return false;
+                
+            case EVENT_TYPE_KEYDOWN:
+                //LOG_DEBUG_INFO("Key pressed\n");
+                return false;
+                
+            case EVENT_TYPE_MOUSE_MOVED:
+                //LOG_DEBUG_INFO("Mouse moved (x: %d, y: %d)\n", event.MouseMoveEvent.PosX, event.MouseMoveEvent.PosY);
+                
+                //Rotate camera
+                //glm::vec2 diff = glm::vec2(m_Width / 2, m_Height / 2) - glm::vec2(event.MouseMoveEvent.PosX, event.MouseMoveEvent.PosY);
+                //m_Camera.Rotate(glm::vec3(diff.y, diff.x, 0.0f));
+                //m_Camera.CreateView();
+                
+                //Set position back to the middle
+                //Input::SetMousePosition(m_Width / 2, m_Height / 2);
+                return false;
+                
+            case EVENT_TYPE_MOUSE_BUTTONDOWN:
+                //LOG_DEBUG_INFO("Mouse pressed\n");
+                return false;
             
-            //if size is zero then do not resize
-            /*if (event.WindowResize.Width > 0 && event.WindowResize.Height > 0)
-             {
-             IGraphicsDevice* pDevice = IGraphicsDevice::GetInstance();
-             if (!pDevice)
-             {
-             return false;
-             }
-             
-             pDevice->WaitForGPU();
-             
-             //Release depthbuffer
-             pDevice->DestroyTexture2D(&instance.m_pDepthBuffer);
-             
-             //Create depthbuffer
-             Texture2DDesc desc = {};
-             desc.Usage = RESOURCE_USAGE_DEFAULT;
-             desc.Flags = TEXTURE_FLAGS_DEPTH_STENCIL;
-             desc.ArraySize = 1;
-             desc.Width = event.WindowResize.Width;
-             desc.Height = event.WindowResize.Height;
-             desc.Format = FORMAT_D24_UNORM_S8_UINT;
-             desc.SampleCount = 1;
-             desc.MipLevels = 0;
-             desc.ClearValue.Depth = 1.0f;
-             desc.ClearValue.Stencil = 0;
-             
-             //TODO: needs to release the descriptor in DX12-backend
-             pDevice->CreateTexture2D(&instance.m_pDepthBuffer, nullptr, desc);
-             if (instance.m_pDepthBuffer)
-             {
-             LOG_DEBUG_INFO("Resized depthbuffer\n");
-             }
-             
-             //Update camera
-             instance.CreateCamera(event.WindowResize.Width, event.WindowResize.Height);
-             
-             ResourceData data = {};
-             data.pData = &instance.m_Camera;
-             data.SizeInBytes = sizeof(CameraBuffer);
-             
-             //Update camerabuffer
-             if (instance.m_pCurrentList)
-             {
-             instance.m_pCurrentList->Reset();
-             
-             instance.m_pCurrentList->TransitionResource(instance.m_pCameraBuffer, RESOURCE_STATE_COPY_DEST);
-             instance.m_pCurrentList->UpdateBuffer(instance.m_pCameraBuffer, &data);
-             instance.m_pCurrentList->TransitionResource(instance.m_pCameraBuffer, RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-             
-             //Copy new camera
-             instance.m_pCurrentList->Close();
-             pDevice->ExecuteCommandList(&instance.m_pCurrentList, 1);
-             }
-             
-             pDevice->WaitForGPU();
-             }*/
-        }
-        else if (event.Type == EVENT_TYPE_KEYDOWN)
-        {
-            //LOG_DEBUG_INFO("Key pressed\n");
-        }
-        else if (event.Type == EVENT_TYPE_MOUSE_MOVED)
-        {
-            //LOG_DEBUG_INFO("Mouse moved (x: %d, y: %d)\n", event.MouseMoveEvent.PosX, event.MouseMoveEvent.PosY);
-            
-            //Rotate camera
-            //glm::vec2 diff = glm::vec2(m_Width / 2, m_Height / 2) - glm::vec2(event.MouseMoveEvent.PosX, event.MouseMoveEvent.PosY);
-            //m_Camera.Rotate(glm::vec3(diff.y, diff.x, 0.0f));
-            //m_Camera.CreateView();
-            
-            //Set position back to the middle
-            //Input::SetMousePosition(m_Width / 2, m_Height / 2);
-        }
-        else if (event.Type == EVENT_TYPE_MOUSE_BUTTONDOWN)
-        {
-            //LOG_DEBUG_INFO("Mouse pressed\n");
-        }
-        else if (event.Type == EVENT_TYPE_MOUSE_SCROLLED)
-        {
-            if (event.MouseScrollEvent.Vertical)
-            {
-                //LOG_DEBUG_INFO("Vertical scroll\n");
-            }
-            else
-            {
-                //LOG_DEBUG_INFO("Horizontal scroll\n");
-            }
-        }
-        else if (event.Type == EVENT_TYPE_FOCUS_CHANGED)
-        {
-            if (event.FocusChanged.HasFocus)
-            {
-                LOG_DEBUG_INFO("Window got focus\n");
-            }
-            else
-            {
-                LOG_DEBUG_INFO("Window lost focus\n");
-            }
+            case EVENT_TYPE_MOUSE_SCROLLED:
+                /*if (event.MouseScrollEvent.Vertical)
+                {
+                    LOG_DEBUG_INFO("Vertical scroll\n");
+                }
+                else
+                {
+                    LOG_DEBUG_INFO("Horizontal scroll\n");
+                }*/
+                return false;
+                
+            case EVENT_TYPE_FOCUS_CHANGED:
+                if (event.FocusChanged.HasFocus)
+                {
+                    LOG_DEBUG_INFO("Window got focus\n");
+                }
+                else
+                {
+                    LOG_DEBUG_INFO("Window lost focus\n");
+                }
+                return false;
+                
+            default:
+                return false;
         }
         
         return false;

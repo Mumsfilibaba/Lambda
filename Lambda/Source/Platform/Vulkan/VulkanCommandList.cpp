@@ -334,8 +334,8 @@ namespace Lambda
     void VulkanCommandList::ClearRenderTarget(ITexture2D* pRenderTarget, float color[4])
     {
         //Transition texture to correct layout
-        VulkanTexture2D* pTex = reinterpret_cast<VulkanTexture2D*>(pRenderTarget);
-        TransitionTexture(pTex, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+        //VulkanTexture2D* pTex = reinterpret_cast<VulkanTexture2D*>(pRenderTarget);
+        //TransitionTexture(pTex, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
         
         //Clear value
         VkClearColorValue col = {};
@@ -344,8 +344,10 @@ namespace Lambda
         col.float32[2] = color[2];
         col.float32[3] = color[3];
         
+        m_ClearValues[0].color = col;
+        
         //Range to clear
-        VkImageSubresourceRange imageSubresourceRange = {};
+        /*VkImageSubresourceRange imageSubresourceRange = {};
         imageSubresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
         imageSubresourceRange.baseMipLevel   = 0;
         imageSubresourceRange.levelCount     = 1;
@@ -356,22 +358,24 @@ namespace Lambda
         vkCmdClearColorImage(m_CommandBuffer, pTex->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &col, 1, &imageSubresourceRange);
         
         //Transition texture to correct layout
-        TransitionTexture(pTex, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+        TransitionTexture(pTex, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);*/
     }
     
     
     void VulkanCommandList::ClearDepthStencil(ITexture2D* pDepthStencil, float depth, uint8 stencil)
     {
         //Transition texture to correct layout
-        VulkanTexture2D* pTex = reinterpret_cast<VulkanTexture2D*>(pDepthStencil);
-        TransitionTexture(pTex, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+        //VulkanTexture2D* pTex = reinterpret_cast<VulkanTexture2D*>(pDepthStencil);
+        //TransitionTexture(pTex, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
         
         //Specify clearValue
         VkClearDepthStencilValue value = {};
         value.depth     = depth;
         value.stencil   = stencil;
         
-        //Specify what part of an image that is going to be cleared
+        m_ClearValues[1].depthStencil = value;
+        
+        /*//Specify what part of an image that is going to be cleared
         VkImageSubresourceRange imageSubresourceRange = {};
         imageSubresourceRange.aspectMask     = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
         imageSubresourceRange.baseMipLevel   = 0;
@@ -383,7 +387,7 @@ namespace Lambda
         vkCmdClearDepthStencilImage(m_CommandBuffer, pTex->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &value, 1, &imageSubresourceRange);
         
         //Transition texture to correct layout
-        TransitionTexture(pTex, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+        TransitionTexture(pTex, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);*/
     }
     
     

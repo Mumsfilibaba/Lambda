@@ -47,9 +47,12 @@ namespace Lambda
                 ups++;
 			}
 
-			//Render
-			InternalOnRender(clock.GetDeltaTime());
-			fps++;
+			//Render when the application has focus
+            if (m_HasFocus)
+            {
+                InternalOnRender(clock.GetDeltaTime());
+                fps++;
+            }
 			
 			//Print FPS and UPS to console
 			if (clock.GetTotalTime().AsSeconds() >= 1.0f)
@@ -172,22 +175,38 @@ namespace Lambda
 
 	bool Application::OnEvent(const Event& event)
 	{
-		if (event.Type == EVENT_TYPE_WINDOW_CLOSED)
-		{
-			Application::GetInstance().Quit(0);
-			LOG_DEBUG_INFO("Window closed\n");
-			return true;
-		}
-		else if (event.Type == EVENT_TYPE_KEYDOWN)
-		{
-			if (event.KeyEvent.KeyCode == KEY_ESCAPE)
-			{
-				Application::GetInstance().Quit(0);
-                LOG_DEBUG_INFO("Escape pressed, exiting\n");
-				return true;
-			}
-		}
-
-		return false;
+        switch(event.Type)
+        {
+            //Exit the application when the window is closed
+            case EVENT_TYPE_WINDOW_CLOSED:
+                Application::GetInstance().Quit(0);
+                LOG_DEBUG_INFO("Window closed\n");
+                return true;
+            
+            //Exit the application when the escape key is pressed
+            case EVENT_TYPE_KEYDOWN:
+                if (event.KeyEvent.KeyCode == KEY_ESCAPE)
+                {
+                    Application::GetInstance().Quit(0);
+                    LOG_DEBUG_INFO("Escape pressed, exiting\n");
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+                
+            //When window is out of focus make sure that the rendering-loop pauses
+            case EVENT_TYPE_FOCUS_CHANGED:
+                IGraphicsDevice::GetInstance()->WaitForGPU();
+                GetInstance().m_HasFocus = event.FocusChanged.HasFocus;
+                
+                //Return false so that other parts of the app still can get this event
+                return false;
+            
+            //If not an handled event return false to let it continue in the eventhandler
+            default:
+                return false;
+        }
 	}
 }

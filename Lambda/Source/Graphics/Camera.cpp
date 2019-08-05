@@ -16,7 +16,8 @@ namespace Lambda
         m_Rotation(0.0f, 0.0f, 0.0f),
         m_Forward(FORWARD),
         m_Right(RIGHT),
-        m_Up(UP)
+        m_Up(UP),
+        m_Aspect(16.0f / 9.0f)
     {
         CreateView();
         CreateProjection();
@@ -70,6 +71,12 @@ namespace Lambda
     }
     
     
+    void Camera::SetAspect(float width, float height)
+    {
+        m_Aspect = width / height;
+    }
+    
+    
     void Camera::CreateView()
     {
         //Calculate new lookat
@@ -80,6 +87,6 @@ namespace Lambda
     
     void Camera::CreateProjection()
     {
-        m_Projection = glm::perspective(glm::radians(90.0f), 16.0f / 9.0f, 0.1f, 100.0f);
+        m_Projection = glm::perspective(glm::radians(90.0f), m_Aspect, 0.1f, 100.0f);
     }
 }
