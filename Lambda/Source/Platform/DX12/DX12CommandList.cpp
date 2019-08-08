@@ -92,14 +92,14 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::SetScissorRect(const Math::Rectangle& scissorRect)
+	void DX12CommandList::SetScissorRect(const Rectangle& scissorRect)
 	{
 		D3D12_RECT rect = { (LONG)scissorRect.TopLeft.x, (LONG)scissorRect.TopLeft.y, (LONG)scissorRect.BottomRight.x, (LONG)scissorRect.BottomRight.y };
 		m_List->RSSetScissorRects(1, &rect);
 	}
 
 
-	void DX12CommandList::SetPrimtiveTopology(PrimitiveTopology topology)
+	/*void DX12CommandList::SetPrimtiveTopology(PrimitiveTopology topology)
 	{
 		D3D_PRIMITIVE_TOPOLOGY top = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
 		if (topology == PRIMITIVE_TOPOLOGY_TRIANGLELIST)
@@ -108,7 +108,7 @@ namespace Lambda
 			top = D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
 
 		m_List->IASetPrimitiveTopology(top);
-	}
+	}*/
 
 
 	void DX12CommandList::SetGraphicsPipelineState(IGraphicsPipelineState* pPSO)
