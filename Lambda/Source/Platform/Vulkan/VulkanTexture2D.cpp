@@ -1,18 +1,18 @@
 #include "VulkanTexture2D.h"
-#include "VulkanFramebufferCache.h"
+#include "VulkanFramebuffer.h"
 #include "VulkanConversions.inl"
 #include "VulkanHelpers.inl"
 
 namespace Lambda
 {
     VulkanTexture2D::VulkanTexture2D(VkDevice device, const VulkanTextureDesc& desc)
-    : m_Texture(VK_NULL_HANDLE),
-    m_View(VK_NULL_HANDLE),
-    m_DeviceMemory(VK_NULL_HANDLE),
-    m_AspectFlags(0),
-    m_CurrentResourceState(VK_IMAGE_LAYOUT_UNDEFINED),
-    m_Desc(),
-    m_IsOwner(false)
+        : m_Texture(VK_NULL_HANDLE),
+        m_View(VK_NULL_HANDLE),
+        m_DeviceMemory(VK_NULL_HANDLE),
+        m_AspectFlags(0),
+        m_CurrentResourceState(VK_IMAGE_LAYOUT_UNDEFINED),
+        m_Desc(),
+        m_IsOwner(false)
     {
         InitFromResource(device, desc);
     }
@@ -83,6 +83,9 @@ namespace Lambda
         //We are not owners of this image
         m_IsOwner = false;
         
+        //Set vkformat
+        m_Format = desc.Format;
+        
         //Create view
         CreateImageView(device);
     }
@@ -147,6 +150,7 @@ namespace Lambda
             
             //Set desc
             m_Desc = desc;
+            m_Format = info.format;
         }
         
         //Get memory requirements
@@ -244,7 +248,7 @@ namespace Lambda
         LOG_DEBUG_INFO("Vulkan: Destroying Texture2D '%p'\n", this);
         
         //Remove associated framebuffer if there is any
-        VulkanFramebufferCache::ReleaseTexture(device, this);
+        VulkanFramebufferCache::ReleaseAllContainingTexture(device, this);
         
         //Destroy views
         if (m_View != VK_NULL_HANDLE)

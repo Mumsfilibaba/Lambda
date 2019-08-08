@@ -374,8 +374,17 @@ namespace Lambda
         ITexture2D* pRenderTarget = pDevice->GetCurrentRenderTarget();
         ITexture2D* pDepthBuffer = pDevice->GetDepthStencil();
         
+        //Transition and clear rendertarget
+        m_pCurrentList->TransitionTexture(pRenderTarget, RESOURCE_STATE_RENDERTARGET_CLEAR);
         m_pCurrentList->ClearRenderTarget(pRenderTarget, color);
+        
+        //Transition and clear depthstencil
+        m_pCurrentList->TransitionTexture(pDepthBuffer, RESORUCE_STATE_DEPTH_STENCIL_CLEAR);
         m_pCurrentList->ClearDepthStencil(pDepthBuffer, 1.0f, 0);
+        
+        //Transition and set rendertargets
+        m_pCurrentList->TransitionTexture(pRenderTarget, RESOURCE_STATE_RENDERTARGET);
+        m_pCurrentList->TransitionTexture(pDepthBuffer, RESOURCE_STATE_DEPTH_WRITE);
         m_pCurrentList->SetRenderTarget(pRenderTarget, pDepthBuffer);
         
         //Set scissor and viewport
@@ -433,9 +442,9 @@ namespace Lambda
         static glm::mat4 rotation = glm::mat4(1.0f);
         rotation = glm::rotate(rotation, glm::radians(45.0f) * dt.AsSeconds(), glm::vec3(0.0f, 1.0f, 0.0f));
         
-        //Draw cube
+        //Draw cube 1
         //Update transforms
-        m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)) * rotation;
+        m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 0.0f)) * rotation;
         
         data.pData = &m_TransformBuffer;
         data.SizeInBytes = sizeof(TransformBuffer);
@@ -444,6 +453,8 @@ namespace Lambda
         //Draw
         m_pCurrentList->DrawIndexedInstanced(36, 1, 0, 0, 0);
         
+        //Transition rendertarget to present
+        m_pCurrentList->TransitionTexture(pRenderTarget, RESOURCE_STATE_RENDERTARGET_PRESENT);
         m_pCurrentList->Close();
         
         //Present

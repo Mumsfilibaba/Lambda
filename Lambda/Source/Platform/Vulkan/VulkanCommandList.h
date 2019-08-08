@@ -65,6 +65,9 @@ namespace Lambda
         
         virtual void CopyBuffer(IBuffer* pDst, IBuffer* pSrc) override final;
         
+        virtual void TransitionBuffer(const IBuffer* pBuffer, ResourceState state) override final;
+        virtual void TransitionTexture(const ITexture2D* pTexture, ResourceState state) override final;
+        
         virtual void DrawInstanced(uint32 vertexCountPerInstance, uint32 instanceCount, uint32 startVertexLocation, uint32 startInstanceLocation) override final;
         virtual void DrawIndexedInstanced(uint32 indexCountPerInstance, uint32 instanceCount, uint32 startIndexLocation, uint32 baseVertexLocation, uint32 startInstanceLocation) override final;
         
@@ -85,9 +88,6 @@ namespace Lambda
         void WriteTextureDescriptorsToStage(uint32 shaderStage, uint32 startSlot, const ITexture2D* const* ppTextures, uint32 numTextures);
         void WriteSamplerDescriptorsToStage(uint32 shaderStage, uint32 startSlot, const ISamplerState* const* ppSamplers, uint32 numSamplers);
         
-        void TransitionBuffer(IBuffer* pBuffer, ResourceState resourceState);
-        void TransitionTexture(const VulkanTexture2D* pTexture, VkImageLayout toImageLayout);
-        
         void BeginRenderPass(VkFramebuffer framebuffer, VkRenderPass renderpass, uint32 width, uint32 height);
         void EndRenderPass();
         
@@ -101,6 +101,7 @@ namespace Lambda
         
         VkClearValue m_ClearValues[2];
         
+        VkRenderPass m_BoundRenderPass;
         VkFramebuffer m_BoundFrameBuffer;
         
         VkDescriptorSet m_DescriptorSets[LAMBDA_SHADERSTAGE_COUNT];
@@ -111,7 +112,6 @@ namespace Lambda
         std::string m_Name;
         
         //Temp?
-        VkRenderPass m_RenderPass;
         VkPipelineLayout m_PipelineLayout;
         const ITexture2D* m_pRT;
         const ITexture2D* m_pDS;

@@ -5,7 +5,7 @@
 #include "VulkanTexture2D.h"
 #include "VulkanSamplerState.h"
 #include "VulkanCommandList.h"
-#include "VulkanFramebufferCache.h"
+#include "VulkanFramebuffer.h"
 #include "VulkanBuffer.h"
 #include "VulkanConversions.inl"
 #if defined(LAMBDA_PLAT_MACOS)
@@ -157,7 +157,7 @@ namespace Lambda
         }
         
         //Destroy all framebuffers
-        VulkanFramebufferCache::Release(m_Device);
+        VulkanFramebufferCache::ReleaseAll(m_Device);
         
         //Destroy swapchain and related resources
         ReleaseSwapChain();
@@ -502,6 +502,8 @@ namespace Lambda
         
         std::vector<VkPhysicalDevice> adapters(adapterCount);
         vkEnumeratePhysicalDevices(m_Instance, &adapterCount, adapters.data());
+        
+        LOG_DEBUG_INFO("Vulkan: Number of adapters '%d'\n", adapters.size());
         
         //Find a suitable graphics card
         int i = 0;
@@ -966,6 +968,9 @@ namespace Lambda
             desc.Samples                     = VK_SAMPLE_COUNT_1_BIT;
             desc.UsageFlags                  = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
+            //Set name
+            SetVulkanObjectName(VK_OBJECT_TYPE_IMAGE, (uint64)desc.Image, "BackBuffer[" + std::to_string(i) + "]");
+            
             //Create texture
             m_BackBuffers.push_back(DBG_NEW VulkanTexture2D(m_Device, desc));
         }
@@ -1459,7 +1464,7 @@ namespace Lambda
         //Present
         vkQueuePresentKHR(m_PresentationQueue, &info);
         
-        //LOG_DEBUG_INFO("Vulkan: Present\n");
+        LOG_DEBUG_INFO("Vulkan: Present Frame '%d' Image '%d'\n", m_CurrentFrame, m_CurrentBackbufferIndex);
         
         GPUWaitForFrame();
     }

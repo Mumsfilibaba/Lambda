@@ -34,6 +34,7 @@ namespace Lambda
             case FORMAT_R32_FLOAT:              return VK_FORMAT_R32_SFLOAT;
             case FORMAT_R32_UINT:               return VK_FORMAT_R32_UINT;
             case FORMAT_R32_SINT:               return VK_FORMAT_R32_SINT;
+            case FORMAT_D32_FLOAT_S8X24_UINT:    return VK_FORMAT_D32_SFLOAT_S8_UINT;
             case FORMAT_D24_UNORM_S8_UINT:      return VK_FORMAT_D24_UNORM_S8_UINT;
             case FORMAT_R8G8_UNORM:             return VK_FORMAT_R8G8_UNORM;
             case FORMAT_R8G8_UINT:              return VK_FORMAT_R8G8_UINT;
@@ -139,6 +140,11 @@ namespace Lambda
         switch (state)
         {
             case RESOURCE_STATE_PIXEL_SHADER_RESOURCE:  return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            case RESOURCE_STATE_RENDERTARGET:           return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+            case RESOURCE_STATE_DEPTH_WRITE:            return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+            case RESOURCE_STATE_RENDERTARGET_CLEAR:     return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            case RESOURCE_STATE_RENDERTARGET_PRESENT:   return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+            case RESORUCE_STATE_DEPTH_STENCIL_CLEAR:    return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
             case RESOURCE_STATE_COPY_DEST:              return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
             case RESOURCE_STATE_UNKNOWN:
             default: return VK_IMAGE_LAYOUT_UNDEFINED;

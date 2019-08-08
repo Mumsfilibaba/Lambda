@@ -4,7 +4,7 @@
 #include "VulkanPipelineState.h"
 #include "VulkanSamplerState.h"
 #include "VulkanTexture2D.h"
-#include "VulkanFramebufferCache.h"
+#include "VulkanFramebuffer.h"
 #include "VulkanBuffer.h"
 #include "VulkanConversions.inl"
 
@@ -14,11 +14,11 @@ namespace Lambda
         : m_Device(VK_NULL_HANDLE),
         m_CommandPool(VK_NULL_HANDLE),
         m_CommandBuffer(VK_NULL_HANDLE),
+        m_BoundRenderPass(VK_NULL_HANDLE),
         m_BoundFrameBuffer(VK_NULL_HANDLE),
         m_DescriptorSets(),
         m_DescriptorPool(VK_NULL_HANDLE),
         m_Type(COMMAND_LIST_TYPE_UNKNOWN),
-        m_RenderPass(VK_NULL_HANDLE),
         m_pRT(nullptr),
         m_pDS(nullptr),
         m_HasRenderPass(false)
@@ -333,10 +333,6 @@ namespace Lambda
     
     void VulkanCommandList::ClearRenderTarget(ITexture2D* pRenderTarget, float color[4])
     {
-        //Transition texture to correct layout
-        //VulkanTexture2D* pTex = reinterpret_cast<VulkanTexture2D*>(pRenderTarget);
-        //TransitionTexture(pTex, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-        
         //Clear value
         VkClearColorValue col = {};
         col.float32[0] = color[0];
@@ -346,8 +342,11 @@ namespace Lambda
         
         m_ClearValues[0].color = col;
         
+        //Transition texture to correct layout
+        VulkanTexture2D* pVkRenderTarget = reinterpret_cast<VulkanTexture2D*>(pRenderTarget);
+        
         //Range to clear
-        /*VkImageSubresourceRange imageSubresourceRange = {};
+        VkImageSubresourceRange imageSubresourceRange = {};
         imageSubresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
         imageSubresourceRange.baseMipLevel   = 0;
         imageSubresourceRange.levelCount     = 1;
@@ -355,19 +354,12 @@ namespace Lambda
         imageSubresourceRange.layerCount     = 1;
         
         //Clear image
-        vkCmdClearColorImage(m_CommandBuffer, pTex->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &col, 1, &imageSubresourceRange);
-        
-        //Transition texture to correct layout
-        TransitionTexture(pTex, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);*/
+        vkCmdClearColorImage(m_CommandBuffer, pVkRenderTarget->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &col, 1, &imageSubresourceRange);
     }
     
     
     void VulkanCommandList::ClearDepthStencil(ITexture2D* pDepthStencil, float depth, uint8 stencil)
     {
-        //Transition texture to correct layout
-        //VulkanTexture2D* pTex = reinterpret_cast<VulkanTexture2D*>(pDepthStencil);
-        //TransitionTexture(pTex, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-        
         //Specify clearValue
         VkClearDepthStencilValue value = {};
         value.depth     = depth;
@@ -375,7 +367,10 @@ namespace Lambda
         
         m_ClearValues[1].depthStencil = value;
         
-        /*//Specify what part of an image that is going to be cleared
+        //Transition texture to correct layout
+        VulkanTexture2D* pVkDepthStencil = reinterpret_cast<VulkanTexture2D*>(pDepthStencil);
+    
+        //Specify what part of an image that is going to be cleared
         VkImageSubresourceRange imageSubresourceRange = {};
         imageSubresourceRange.aspectMask     = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
         imageSubresourceRange.baseMipLevel   = 0;
@@ -384,10 +379,7 @@ namespace Lambda
         imageSubresourceRange.layerCount     = 1;
         
         //Clear image
-        vkCmdClearDepthStencilImage(m_CommandBuffer, pTex->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &value, 1, &imageSubresourceRange);
-        
-        //Transition texture to correct layout
-        TransitionTexture(pTex, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);*/
+        vkCmdClearDepthStencilImage(m_CommandBuffer, pVkDepthStencil->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &value, 1, &imageSubresourceRange);
     }
     
     
@@ -396,17 +388,12 @@ namespace Lambda
         m_pRT = pRenderTarget;
         m_pDS = pDepthStencil;
         
+        //Get formats
+        VkFormat colorFormat = (pRenderTarget) ? reinterpret_cast<VulkanTexture2D*>(pRenderTarget)->GetFormat() : VK_FORMAT_UNDEFINED;
+        VkFormat depthStencilFormat = (pDepthStencil) ? reinterpret_cast<VulkanTexture2D*>(pDepthStencil)->GetFormat() : VK_FORMAT_UNDEFINED;
         //Set rendertarget and get framebuffer
-        if (m_RenderPass != VK_NULL_HANDLE)
-        {
-            m_BoundFrameBuffer = VulkanFramebufferCache::GetFramebuffer(m_Device, m_RenderPass, &pRenderTarget, 1, pDepthStencil);
-        }
-        else
-        {
-            m_BoundFrameBuffer = VK_NULL_HANDLE;
-            
-            LOG_DEBUG_WARNING("Vulkan: No renderpass bound\n");
-        }
+        m_BoundRenderPass = VulkanRenderPassCache::GetRenderPass(m_Device, &colorFormat, 1, depthStencilFormat, VK_SAMPLE_COUNT_1_BIT);
+        m_BoundFrameBuffer = VulkanFramebufferCache::GetFramebuffer(m_Device, m_BoundRenderPass, &pRenderTarget, 1, pDepthStencil);
     }
     
     
@@ -441,8 +428,7 @@ namespace Lambda
     void VulkanCommandList::SetGraphicsPipelineState(IGraphicsPipelineState* pPSO)
     {
         VkPipeline pipeline = reinterpret_cast<VkPipeline>(pPSO->GetNativeHandle());
-        m_RenderPass = reinterpret_cast<VulkanGraphicsPipelineState*>(pPSO)->GetRenderPass();
-        
+
         vkCmdBindPipeline(m_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
     }
     
@@ -475,22 +461,25 @@ namespace Lambda
     }
     
     
-    void VulkanCommandList::TransitionBuffer(IBuffer* pBuffer, ResourceState resourceState)
+    void VulkanCommandList::TransitionBuffer(const IBuffer* pBuffer, ResourceState state)
     {
     }
     
     
-    void VulkanCommandList::TransitionTexture(const VulkanTexture2D* pTexture, VkImageLayout toImageLayout)
+    void VulkanCommandList::TransitionTexture(const ITexture2D* pTexture, ResourceState state)
     {
+        //Convert texture to vulkan texture
+        const VulkanTexture2D* pVkTexture = reinterpret_cast<const VulkanTexture2D*>(pTexture);
+        
         //Setup barrier
         VkImageMemoryBarrier barrier = {};
         barrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-        barrier.oldLayout                       = pTexture->GetCurrentResourceState();
-        barrier.newLayout                       = toImageLayout;
+        barrier.oldLayout                       = pVkTexture->GetCurrentResourceState();
+        barrier.newLayout                       = ConvertResourceStateToImageLayout(state);
         barrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
         barrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
-        barrier.image                           = pTexture->GetImage();
-        barrier.subresourceRange.aspectMask     = pTexture->GetAspectFlags();
+        barrier.image                           = pVkTexture->GetImage();
+        barrier.subresourceRange.aspectMask     = pVkTexture->GetAspectFlags();
         barrier.subresourceRange.baseMipLevel   = 0;
         barrier.subresourceRange.levelCount     = 1;
         barrier.subresourceRange.baseArrayLayer = 0;
@@ -520,7 +509,7 @@ namespace Lambda
         }
         else if (barrier.oldLayout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
         {
-            barrier.srcAccessMask = 0;
+            barrier.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
             sourceStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
         }
         else if (barrier.oldLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
@@ -528,9 +517,14 @@ namespace Lambda
             barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
             sourceStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
         }
+        else if (barrier.oldLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+        {
+            barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+            sourceStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        }
         else
         {
-            LOG_DEBUG_ERROR("Vulkan: Unsupported src-image layout transition\n");
+            LOG_DEBUG_ERROR("Vulkan: Unsupported src-image layout transition '%d'\n", barrier.oldLayout);
         }
         
         //Set destination- mask and stage
@@ -551,17 +545,22 @@ namespace Lambda
         }
         else if (barrier.newLayout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
         {
-            barrier.dstAccessMask = 0;
-            destinationStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+            barrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+            destinationStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
         }
         else if (barrier.newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
         {
             barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
             destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
         }
+        else if (barrier.newLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+        {
+            barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+            destinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        }
         else
         {
-            LOG_DEBUG_ERROR("Vulkan: Unsupported dst-image layout transition\n");
+            LOG_DEBUG_ERROR("Vulkan: Unsupported dst-image layout transition '%d'\n", barrier.newLayout);
         }
         
         
@@ -569,7 +568,7 @@ namespace Lambda
         vkCmdPipelineBarrier(m_CommandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
         
         //Set the new state to the texture
-        pTexture->SetCurrentResourceState(barrier.newLayout);
+        pVkTexture->SetCurrentResourceState(barrier.newLayout);
     }
     
     
@@ -583,7 +582,7 @@ namespace Lambda
     {
         //Transition textures to correct state
         for (uint32 i = 0; i < numTextures; i++)
-            TransitionTexture(reinterpret_cast<const VulkanTexture2D*>(ppTextures[i]), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            TransitionTexture(ppTextures[i], RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
         
         //Write descriptors
         WriteTextureDescriptorsToStage(LAMBDA_SHADERSTAGE_VERTEX, startSlot, ppTextures, numTextures);
@@ -606,7 +605,7 @@ namespace Lambda
     {
         //Transition textures to correct state
         for (uint32 i = 0; i < numTextures; i++)
-            TransitionTexture(reinterpret_cast<const VulkanTexture2D*>(ppTextures[i]), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            TransitionTexture(ppTextures[i], RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
         
         //Write descriptors
          WriteTextureDescriptorsToStage(LAMBDA_SHADERSTAGE_HULL, startSlot, ppTextures, numTextures);
@@ -629,7 +628,7 @@ namespace Lambda
     {
         //Transition textures to correct state
         for (uint32 i = 0; i < numTextures; i++)
-            TransitionTexture(reinterpret_cast<const VulkanTexture2D*>(ppTextures[i]), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            TransitionTexture(ppTextures[i], RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
         
         //Write descriptors
          WriteTextureDescriptorsToStage(LAMBDA_SHADERSTAGE_DOMAIN, startSlot, ppTextures, numTextures);
@@ -652,7 +651,7 @@ namespace Lambda
     {
         //Transition textures to correct state
         for (uint32 i = 0; i < numTextures; i++)
-            TransitionTexture(reinterpret_cast<const VulkanTexture2D*>(ppTextures[i]), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            TransitionTexture(ppTextures[i], RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
         
         //Write descriptors
          WriteTextureDescriptorsToStage(LAMBDA_SHADERSTAGE_GEOMETRY, startSlot, ppTextures, numTextures);
@@ -675,7 +674,7 @@ namespace Lambda
     {
         //Transition textures to correct state
         for (uint32 i = 0; i < numTextures; i++)
-            TransitionTexture(reinterpret_cast<const VulkanTexture2D*>(ppTextures[i]), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            TransitionTexture(ppTextures[i], RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
         //Write descriptors
         WriteTextureDescriptorsToStage(LAMBDA_SHADERSTAGE_PIXEL, startSlot, ppTextures, numTextures);
@@ -720,7 +719,7 @@ namespace Lambda
     {
         //Transition texture into correct layout
         VulkanTexture2D* pTex = reinterpret_cast<VulkanTexture2D*>(pResource);
-        TransitionTexture(pTex, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+        TransitionTexture(pResource, RESOURCE_STATE_COPY_DEST);
         
         //Get offset before allocating
         uint64 offset = m_TextureUpload.GetOffset();
@@ -769,8 +768,8 @@ namespace Lambda
         //Start renderpass if none is started
         if (!m_HasRenderPass)
         {
-            VkFramebuffer fbo = (m_BoundFrameBuffer == VK_NULL_HANDLE) ? VulkanFramebufferCache::GetFramebuffer(m_Device, m_RenderPass, &m_pRT, 1, m_pDS) : m_BoundFrameBuffer;
-            BeginRenderPass(fbo, m_RenderPass, m_pRT->GetWidth(), m_pRT->GetHeight());
+            VkFramebuffer fbo = (m_BoundFrameBuffer == VK_NULL_HANDLE) ? VulkanFramebufferCache::GetFramebuffer(m_Device, m_BoundRenderPass, &m_pRT, 1, m_pDS) : m_BoundFrameBuffer;
+            BeginRenderPass(fbo, m_BoundRenderPass, m_pRT->GetWidth(), m_pRT->GetHeight());
         }
         
         //Set descriptorsets
@@ -789,8 +788,8 @@ namespace Lambda
         //Start renderpass if none is started
         if (!m_HasRenderPass)
         {
-            VkFramebuffer fbo = (m_BoundFrameBuffer == VK_NULL_HANDLE) ? VulkanFramebufferCache::GetFramebuffer(m_Device, m_RenderPass, &m_pRT, 1, m_pDS) : m_BoundFrameBuffer;
-            BeginRenderPass(fbo, m_RenderPass, m_pRT->GetWidth(), m_pRT->GetHeight());
+            VkFramebuffer fbo = (m_BoundFrameBuffer == VK_NULL_HANDLE) ? VulkanFramebufferCache::GetFramebuffer(m_Device, m_BoundRenderPass, &m_pRT, 1, m_pDS) : m_BoundFrameBuffer;
+            BeginRenderPass(fbo, m_BoundRenderPass, m_pRT->GetWidth(), m_pRT->GetHeight());
         }
 
         //Bind descriptors
@@ -878,7 +877,6 @@ namespace Lambda
         //End renderpass
         vkCmdEndRenderPass(m_CommandBuffer);
         m_HasRenderPass = false;
-        
         //LOG_DEBUG_INFO("Vulkan: Ended renderpass\n");
     }
 }

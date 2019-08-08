@@ -44,6 +44,7 @@ namespace Lambda
         VkImage GetImage() const;
         VkImageView GetImageView() const;
         VkImageLayout GetCurrentResourceState() const;
+        VkFormat GetFormat() const;
         
         void SetCurrentResourceState(VkImageLayout resourceState) const;
         
@@ -59,6 +60,7 @@ namespace Lambda
         VkImageView m_View;
         VkDeviceMemory m_DeviceMemory;
         VkImageAspectFlags m_AspectFlags;
+        VkFormat m_Format;
         mutable VkImageLayout m_CurrentResourceState;
         Texture2DDesc m_Desc;
         bool m_IsOwner;
@@ -92,5 +94,11 @@ namespace Lambda
     inline void VulkanTexture2D::SetCurrentResourceState(VkImageLayout resourceState) const
     {
         m_CurrentResourceState = resourceState;
+    }
+    
+    
+    inline VkFormat VulkanTexture2D::GetFormat() const
+    {
+        return m_Format;
     }
 }
