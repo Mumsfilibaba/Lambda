@@ -211,7 +211,8 @@ namespace Lambda
                 desc.RenderTargetFormats[0] = pDevice->GetBackBufferFormat();
                 desc.DepthStencilFormat     = depthFormat;
                 desc.RenderTargetCount      = 1;
-
+                desc.DepthTest              = false;
+                
                 pDevice->CreateGraphicsPipelineState(&m_pPipelineState, desc);
             }
 
@@ -445,6 +446,17 @@ namespace Lambda
         //Draw cube 1
         //Update transforms
         m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 0.0f)) * rotation;
+        
+        data.pData = &m_TransformBuffer;
+        data.SizeInBytes = sizeof(TransformBuffer);
+        m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);
+        
+        //Draw
+        m_pCurrentList->DrawIndexedInstanced(36, 1, 0, 0, 0);
+        
+        //Draw cube 2
+        //Update transforms
+        m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(-1.0f, 0.0f, 0.0f)) * rotation;
         
         data.pData = &m_TransformBuffer;
         data.SizeInBytes = sizeof(TransformBuffer);

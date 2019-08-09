@@ -291,7 +291,7 @@ namespace Lambda
         depthStencilState.sType                  = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
         depthStencilState.flags                  = 0;
         depthStencilState.pNext                  = nullptr;
-        depthStencilState.depthTestEnable        = VK_TRUE;
+        depthStencilState.depthTestEnable        = desc.DepthTest ? VK_TRUE : VK_FALSE;
         depthStencilState.depthWriteEnable       = VK_TRUE;
         depthStencilState.depthCompareOp         = VK_COMPARE_OP_LESS;
         depthStencilState.depthBoundsTestEnable  = VK_FALSE;

@@ -35,6 +35,9 @@ namespace Lambda
         PrimitiveTopology Topology      = PRIMITIVE_TOPOLOGY_TRIANGLELIST;
         CullMode Cull                   = CULL_MODE_BACK;
         
+        //Depth test
+        bool DepthTest                  = true;
+        
         //Define framebuffer
         ResourceFormat RenderTargetFormats[LAMBDA_RENDERTARGET_COUNT];
         ResourceFormat DepthStencilFormat = FORMAT_UNKNOWN;
