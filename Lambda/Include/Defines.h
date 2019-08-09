@@ -55,12 +55,12 @@
 
 //Disable warnings
 #if defined(LAMBDA_VISUAL_STUDIO)
-	#pragma warning(disable : 4251) //Disable DLL-linkage warning
-	#pragma warning(error : 4456) //Redefinition is an error
-	#pragma warning(error : 4005) //Redefinition is an error
-	#pragma warning(disable : 4201) //Anonomys unions and structs are allowed
+	#pragma warning(disable : 4251)		//Disable DLL-linkage warning
+	#pragma warning(error : 4456)		//Redefinition is an error
+	#pragma warning(error : 4005)		//Redefinition is an error
+	#pragma warning(disable : 4201)		//Anonomys unions and structs are allowed
 
-	#define DEBUG_BREAK __debugbreak
+	#define DEBUG_BREAK __debugbreak()
 #else
 	#define DEBUG_BREAK
 #endif
