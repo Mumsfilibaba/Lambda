@@ -36,12 +36,12 @@ namespace Lambda
 		virtual void Destroy() const override final;
 
 		virtual void ExecuteCommandList(ICommandList* const * ppLists, uint32 numLists) const;
-		virtual void Present(uint32 verticalSync) const override final;
+		virtual void Present() const override final;
 		virtual void GPUWaitForFrame() const override final;
 		virtual void WaitForGPU() const override final;
 
 		virtual void* GetNativeHandle() const override final;
-		virtual ITexture2D* GetCurrentRenderTarget() override final;
+		virtual ITexture2D* GetCurrentRenderTarget() const override final;
 		virtual uint32 GetCurrentBackBufferIndex() const override final;
 
 	private:

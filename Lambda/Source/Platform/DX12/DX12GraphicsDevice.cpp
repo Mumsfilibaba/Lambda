@@ -103,9 +103,8 @@ namespace Lambda
 			else if(desc.Usage == RESOURCE_USAGE_DEFAULT)
 			{
 				//Copy data
-				m_pCommandList->TransitionResource(pBuffer, RESOURCE_STATE_COPY_DEST);
+				m_pCommandList->TransitionBuffer(pBuffer, RESOURCE_STATE_COPY_DEST);
 				m_pCommandList->UpdateBuffer(pBuffer, pInitalData);
-				m_pCommandList->TransitionResource(pBuffer, RESOURCE_STATE_PRESENT_COMMON);
 
 				//Execute and wait for GPU before creating
 				m_pCommandList->Close();
@@ -151,9 +150,9 @@ namespace Lambda
 		if (pInitalData != nullptr)
 		{
 			//Copy data
-			m_pCommandList->TransitionResource(pTexture, RESOURCE_STATE_COPY_DEST);
+			m_pCommandList->TransitionTexture(pTexture, RESOURCE_STATE_COPY_DEST);
 			m_pCommandList->UpdateTexture(pTexture, pInitalData, 0);
-			m_pCommandList->TransitionResource(pTexture, RESOURCE_STATE_PRESENT_COMMON);
+			m_pCommandList->TransitionTexture(pTexture, RESOURCE_STATE_RENDERTARGET_PRESENT);
 
 			//Execute and wait for GPU before creating
 			m_pCommandList->Close();
@@ -325,9 +324,9 @@ namespace Lambda
 	}
 
 
-	void DX12GraphicsDevice::Present(uint32 verticalSync) const
+	void DX12GraphicsDevice::Present() const
 	{
-		m_SwapChain->Present(verticalSync, 0);
+		m_SwapChain->Present(1, 0);
 	}
 
 
@@ -365,7 +364,7 @@ namespace Lambda
 	}
 
 
-	ITexture2D* DX12GraphicsDevice::GetCurrentRenderTarget()
+	ITexture2D* DX12GraphicsDevice::GetCurrentRenderTarget() const
 	{
 		return m_BackBuffers[m_SwapChain->GetCurrentBackBufferIndex()];
 	}

@@ -38,6 +38,17 @@ namespace Lambda
 	}
 
 
+	void* DX12Buffer::GetNativeHandle() const
+	{
+		return m_Buffer.Get();
+	}
+
+	uint64 DX12Buffer::GetSizeInBytes() const
+	{
+		return m_Desc.SizeInBytes;
+	}
+
+
 	BufferDesc DX12Buffer::GetDesc() const
 	{
 		return m_Desc;

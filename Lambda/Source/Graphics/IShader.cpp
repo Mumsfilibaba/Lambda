@@ -7,14 +7,16 @@ namespace Lambda
 {
 	IShader* IShader::CreateShaderFromFile(const IGraphicsDevice* pDevice, const char* pFilename, const char* pEntryPoint, ShaderType type, ShaderLang languange)
 	{
-        assert(pDevice != nullptr);
-        
+		assert(pDevice != nullptr);
+
 		IShader* pShader = nullptr;
-        
-        //Setup mode
-        std::ios_base::openmode mode = std::ios::in;
-        if (languange == SHADER_LANG_SPIRV)
-            mode = std::ios::in | std::ios::binary;
+
+		//Setup mode
+		std::ios_base::openmode mode = std::ios::in;
+		if (languange == SHADER_LANG_SPIRV)
+		{
+			mode = std::ios::in | std::ios::binary;
+		}
         
         //Load and read file
 		std::ifstream file(pFilename, mode);
