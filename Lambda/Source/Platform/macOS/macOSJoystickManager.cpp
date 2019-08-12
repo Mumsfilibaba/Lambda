@@ -1,3 +1,4 @@
+#include "LambdaPch.h"
 #include "macOSJoystickManager.h"
 #if defined(LAMBDA_PLAT_MACOS)
 

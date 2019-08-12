@@ -16,6 +16,8 @@ namespace Lambda
 		DX12GraphicsPipelineState(ID3D12Device* pDevice, const GraphicsPipelineStateDesc& desc);
 		~DX12GraphicsPipelineState() = default;
 
+		virtual void* GetNativeHandle() const override final;
+
 	private:
 		void Init(ID3D12Device* pDevice, const GraphicsPipelineStateDesc& desc);
 		ID3D12PipelineState* GetPipelineState() const;

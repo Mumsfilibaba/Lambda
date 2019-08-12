@@ -94,7 +94,7 @@ namespace Lambda
 
 	void DX12CommandList::SetScissorRect(const Rectangle& scissorRect)
 	{
-		D3D12_RECT rect = { (LONG)scissorRect.TopLeft.x, (LONG)scissorRect.TopLeft.y, (LONG)scissorRect.BottomRight.x, (LONG)scissorRect.BottomRight.y };
+		D3D12_RECT rect = { (LONG)scissorRect.X, (LONG)scissorRect.Y, (LONG)scissorRect.X + (LONG)scissorRect.Width, (LONG)scissorRect.Y + (LONG)scissorRect.Height };
 		m_List->RSSetScissorRects(1, &rect);
 	}
 
@@ -126,22 +126,29 @@ namespace Lambda
 	}
 
 
+	void DX12CommandList::SetIndexBuffer(IBuffer* pIndexBuffer)
+	{
+		D3D12_INDEX_BUFFER_VIEW view = reinterpret_cast<DX12Buffer*>(pIndexBuffer)->GetIndexBufferView();
+		m_List->IASetIndexBuffer(&view);
+	}
+
+
 	CommandListType DX12CommandList::GetType() const
 	{
 		return m_Type;
 	}
 
 
-	void DX12CommandList::TransitionResource(IBuffer* pResource, ResourceState resourceState)
+	void DX12CommandList::TransitionBuffer(const IBuffer* pResource, ResourceState resourceState)
 	{
-		DX12Buffer* pBuffer = reinterpret_cast<DX12Buffer*>(pResource);
+		const DX12Buffer* pBuffer = reinterpret_cast<const DX12Buffer*>(pResource);
 		m_ResourceTracker.TransitionResource(pBuffer->GetResource(), D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, ConvertResourceState(resourceState));
 	}
 
 
-	void DX12CommandList::TransitionResource(ITexture2D* pResource, ResourceState resourceState)
+	void DX12CommandList::TransitionTexture(const ITexture2D* pResource, ResourceState resourceState)
 	{
-		DX12Texture2D* pTexture = reinterpret_cast<DX12Texture2D*>(pResource);
+		const DX12Texture2D* pTexture = reinterpret_cast<const DX12Texture2D*>(pResource);
 		m_ResourceTracker.TransitionResource(pTexture->GetResource(), D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, ConvertResourceState(resourceState));
 	}
 
@@ -348,10 +355,20 @@ namespace Lambda
 		m_List->DrawInstanced(vertexCountPerInstance, instanceCount, startVertexLocation, startInstanceLocation);
 	}
 
+	void DX12CommandList::DrawIndexedInstanced(uint32 indexCountPerInstance, uint32 instanceCount, uint32 startIndexLocation, uint32 baseVertexLocation, uint32 startInstanceLocation)
+	{
+	}
+
 
 	void DX12CommandList::SetName(const char* pName)
 	{
 		m_List->SetName(StringToWidestring(pName).c_str());
+	}
+
+
+	void* DX12CommandList::GetNativeHandle() const
+	{
+		return m_List.Get();
 	}
 
 

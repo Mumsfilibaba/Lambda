@@ -1,6 +1,5 @@
 #include "LambdaPch.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
-	#include "Math/Math.h"
 	#include "DX12LinearAllocator.h"
 namespace Lambda
 {
@@ -26,8 +25,6 @@ namespace Lambda
 
 	DX12Allocation DX12LinearAllocatorBlock::Allocate(uint64 size, uint64 alignment)
 	{
-		using namespace Math;
-
 		//Offset CPU pointer
 		uint8* pBase = (uint8*)m_CPUPtr;
 
@@ -45,7 +42,6 @@ namespace Lambda
 
 	bool DX12LinearAllocatorBlock::HasSpace(uint64 size, uint64 alignment) const
 	{
-		using namespace Math;
 		uint64 alignedOffset = AlignUp<uint64>(m_Offset, alignment);
 		uint64 alignedSize = AlignUp<uint64>(size, alignment);
 		return (alignedOffset + alignedSize) < m_Size;

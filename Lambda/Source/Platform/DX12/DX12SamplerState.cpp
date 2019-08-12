@@ -18,6 +18,11 @@ namespace Lambda
 		return m_Desc;
 	}
 
+	void* DX12SamplerState::GetNativeHandle() const
+	{
+		return nullptr;
+	}
+
 
 	void DX12SamplerState::Init(ID3D12Device* pDevice, DX12DescriptorHandle hDescriptor, const SamplerDesc& desc)
 	{

@@ -20,6 +20,9 @@ namespace Lambda
 		~DX12Texture2D() = default;
 
 		virtual Texture2DDesc GetDesc() const override final;
+		virtual uint32 GetWidth() const override final;
+		virtual uint32 GetHeight() const override final;
+		virtual void* GetNativeHandle() const override final;
 
 	private:
 		void Init(ID3D12Device* pDevice, const Texture2DDesc& desc);

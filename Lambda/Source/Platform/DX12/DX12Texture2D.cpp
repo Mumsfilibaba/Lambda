@@ -34,6 +34,22 @@ namespace Lambda
 		return m_Desc;
 	}
 
+	uint32 DX12Texture2D::GetWidth() const
+	{
+		return m_Desc.Width;
+	}
+
+
+	uint32 DX12Texture2D::GetHeight() const
+	{
+		return m_Desc.Height;
+	}
+
+	void* DX12Texture2D::GetNativeHandle() const
+	{
+		return m_Texture.Get();
+	}
+
 
 	void DX12Texture2D::Init(ID3D12Device* pDevice, const Texture2DDesc& desc)
 	{
@@ -67,12 +83,12 @@ namespace Lambda
 			D3D12_CLEAR_VALUE* pClearValue = nullptr;
 			D3D12_CLEAR_VALUE clearValue = {};
 			clearValue.Format = format;
-			clearValue.Color[0] = desc.ClearColor[0];
-			clearValue.Color[1] = desc.ClearColor[1];
-			clearValue.Color[2] = desc.ClearColor[2];
-			clearValue.Color[3] = desc.ClearColor[3];
-			clearValue.DepthStencil.Depth = desc.ClearDepth;
-			clearValue.DepthStencil.Stencil = desc.ClearStencil;
+			clearValue.Color[0] = desc.ClearValue.Color[0];
+			clearValue.Color[1] = desc.ClearValue.Color[1];
+			clearValue.Color[2] = desc.ClearValue.Color[2];
+			clearValue.Color[3] = desc.ClearValue.Color[3];
+			clearValue.DepthStencil.Depth = desc.ClearValue.Depth;
+			clearValue.DepthStencil.Stencil = desc.ClearValue.Stencil;
 
 			//only if we support rendertargets or depthstencil
 			if (flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET || flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL)
