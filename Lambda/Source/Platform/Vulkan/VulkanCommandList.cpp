@@ -334,15 +334,14 @@ namespace Lambda
     void VulkanCommandList::ClearRenderTarget(ITexture2D* pRenderTarget, float color[4])
     {
         //Clear value
-        VkClearColorValue col = {};
+        /*VkClearColorValue col = {};
         col.float32[0] = color[0];
         col.float32[1] = color[1];
         col.float32[2] = color[2];
         col.float32[3] = color[3];
         
-        m_ClearValues[0].color = col;
+        m_ClearValues[0].color = col;*/
         
-        //Transition texture to correct layout
         VulkanTexture2D* pVkRenderTarget = reinterpret_cast<VulkanTexture2D*>(pRenderTarget);
         
         //Range to clear
@@ -361,15 +360,15 @@ namespace Lambda
     void VulkanCommandList::ClearDepthStencil(ITexture2D* pDepthStencil, float depth, uint8 stencil)
     {
         //Specify clearValue
-        VkClearDepthStencilValue value = {};
+        /*VkClearDepthStencilValue value = {};
         value.depth     = depth;
         value.stencil   = stencil;
         
-        m_ClearValues[1].depthStencil = value;
-        
-        //Transition texture to correct layout
-        VulkanTexture2D* pVkDepthStencil = reinterpret_cast<VulkanTexture2D*>(pDepthStencil);
+        m_ClearValues[1].depthStencil = value;*/
     
+        //Get vulkan image
+                VulkanTexture2D* pVkDepthStencil = reinterpret_cast<VulkanTexture2D*>(pDepthStencil);
+        
         //Specify what part of an image that is going to be cleared
         VkImageSubresourceRange imageSubresourceRange = {};
         imageSubresourceRange.aspectMask     = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;

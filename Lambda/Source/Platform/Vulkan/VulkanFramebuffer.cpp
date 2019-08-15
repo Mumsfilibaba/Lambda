@@ -277,4 +277,15 @@ namespace Lambda
             return renderPass;
         }
     }
+    
+    
+    void VulkanRenderPassCache::ReleaseAll(VkDevice device)
+    {
+        for (auto& rp : s_RenderPasses)
+        {
+            //Release renderpass
+            vkDestroyRenderPass(device, rp.second.RenderPass, nullptr);
+            rp.second.RenderPass = VK_NULL_HANDLE;
+        }
+    }
 }

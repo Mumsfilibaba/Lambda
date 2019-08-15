@@ -156,8 +156,9 @@ namespace Lambda
             }
         }
         
-        //Destroy all framebuffers
+        //Destroy all framebuffers and renderpasses
         VulkanFramebufferCache::ReleaseAll(m_Device);
+        VulkanRenderPassCache::ReleaseAll(m_Device);
         
         //Destroy swapchain and related resources
         ReleaseSwapChain();
@@ -1448,14 +1449,14 @@ namespace Lambda
     void VulkanGraphicsDevice::Present() const
     {
         //Setup presentinfo
-        VkSemaphore signalSemaphores[] = { m_RenderSemaphores[m_CurrentFrame] };
+        VkSemaphore waitSemaphores[] = { m_RenderSemaphores[m_CurrentFrame] };
         VkSwapchainKHR swapChains[] = { m_SwapChain };
         
         VkPresentInfoKHR info = {};
         info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
         info.pNext = nullptr;
         info.waitSemaphoreCount = 1;
-        info.pWaitSemaphores = signalSemaphores;
+        info.pWaitSemaphores = waitSemaphores;
         info.swapchainCount = 1;
         info.pSwapchains = swapChains;
         info.pImageIndices = &m_CurrentBackbufferIndex;
