@@ -1,3 +1,4 @@
+#include "LambdaPch.h"
 #include "VulkanShader.h"
 
 namespace Lambda

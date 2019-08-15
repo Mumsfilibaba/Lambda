@@ -27,6 +27,7 @@ namespace Lambda
 		virtual void SetScissorRect(const Rectangle& scissorRect) override final;
 		virtual void SetGraphicsPipelineState(IGraphicsPipelineState* pPSO) override final;
 		virtual void SetVertexBuffer(IBuffer* pBuffer, uint32 slot) override final; 
+		virtual void SetIndexBuffer(IBuffer* pIndexBuffer) override final;
 
 		virtual CommandListType GetType() const override final;
 
@@ -59,8 +60,11 @@ namespace Lambda
 		virtual void CopyBuffer(IBuffer* pDst, IBuffer* pSrc) override final;
 
 		virtual void DrawInstanced(uint32 vertexCountPerInstance, uint32 instanceCount, uint32 startVertexLocation, uint32 startInstanceLocation) override final;
+		virtual void DrawIndexedInstanced(uint32 indexCountPerInstance, uint32 instanceCount, uint32 startIndexLocation, uint32 baseVertexLocation, uint32 startInstanceLocation) override final;
 
 		virtual void SetName(const char* pName) override final;
+
+		virtual void* GetNativeHandle() const override final;
 
 		virtual void Close() override final;
 		virtual void Reset() override final;

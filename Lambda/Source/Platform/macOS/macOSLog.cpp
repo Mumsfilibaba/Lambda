@@ -1,3 +1,4 @@
+#include "LambdaPch.h"
 #include "macOSLog.h"
 #if defined(LAMBDA_PLAT_MACOS)
 #include <string>

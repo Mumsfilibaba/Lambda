@@ -17,6 +17,17 @@ namespace Lambda
 		return m_Type;
 	}
 
+	void* DX12Shader::GetNativeHandle() const
+	{
+		return nullptr;
+	}
+
+
+	const char* DX12Shader::GetEntryPoint() const
+	{
+		return m_EntryPoint.c_str();
+	}
+
 
 	void DX12Shader::Init(const ShaderDesc& desc)
 	{

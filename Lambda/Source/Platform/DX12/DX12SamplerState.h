@@ -18,6 +18,7 @@ namespace Lambda
 		~DX12SamplerState() = default;
 
 		virtual SamplerDesc GetDesc() const override final;
+		virtual void* GetNativeHandle() const override final;
 
 	private:
 		void Init(ID3D12Device* pDevice, DX12DescriptorHandle hDescriptor, const SamplerDesc& desc);

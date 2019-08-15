@@ -18,6 +18,8 @@ namespace Lambda
 		~DX12Shader() = default;
 
 		virtual ShaderType GetType() const override final;
+		virtual void* GetNativeHandle() const override final;
+		virtual const char* GetEntryPoint() const override final;
 
 	private:
 		void Init(const ShaderDesc& desc);
@@ -27,6 +29,7 @@ namespace Lambda
 
 	private:
 		std::vector<uint8> m_ShaderBlob;
+		std::string m_EntryPoint;
 		ShaderType m_Type;
 
 	private:
