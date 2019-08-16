@@ -219,6 +219,7 @@ namespace Lambda
         subpass.inputAttachmentCount        = 0;
         subpass.pInputAttachments           = nullptr;
         subpass.pResolveAttachments         = nullptr;
+        subpass.pDepthStencilAttachment     = nullptr;
         
         //Setup depthstencil
         VkAttachmentReference depthAttachmentRef = {};
@@ -249,7 +250,6 @@ namespace Lambda
             subpass.pDepthStencilAttachment = &depthAttachmentRef;
         }
         
-        
         //Setup renderpass
         VkRenderPassCreateInfo renderPassInfo = {};
         renderPassInfo.sType            = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
@@ -259,6 +259,7 @@ namespace Lambda
         renderPassInfo.pAttachments     = attachments.data();
         renderPassInfo.subpassCount     = 1;
         renderPassInfo.pSubpasses       = &subpass;
+        renderPassInfo.dependencyCount  = 0;
         renderPassInfo.pDependencies    = nullptr;
         
         //Create renderpass

@@ -334,14 +334,13 @@ namespace Lambda
     void VulkanCommandList::ClearRenderTarget(ITexture2D* pRenderTarget, float color[4])
     {
         //Clear value
-        /*VkClearColorValue col = {};
+        VkClearColorValue col = {};
         col.float32[0] = color[0];
         col.float32[1] = color[1];
         col.float32[2] = color[2];
         col.float32[3] = color[3];
         
-        m_ClearValues[0].color = col;*/
-        
+        //Get vulkan image
         VulkanTexture2D* pVkRenderTarget = reinterpret_cast<VulkanTexture2D*>(pRenderTarget);
         
         //Range to clear
@@ -360,15 +359,13 @@ namespace Lambda
     void VulkanCommandList::ClearDepthStencil(ITexture2D* pDepthStencil, float depth, uint8 stencil)
     {
         //Specify clearValue
-        /*VkClearDepthStencilValue value = {};
+        VkClearDepthStencilValue value = {};
         value.depth     = depth;
         value.stencil   = stencil;
         
-        m_ClearValues[1].depthStencil = value;*/
-    
         //Get vulkan image
-                VulkanTexture2D* pVkDepthStencil = reinterpret_cast<VulkanTexture2D*>(pDepthStencil);
-        
+        VulkanTexture2D* pVkDepthStencil = reinterpret_cast<VulkanTexture2D*>(pDepthStencil);
+    
         //Specify what part of an image that is going to be cleared
         VkImageSubresourceRange imageSubresourceRange = {};
         imageSubresourceRange.aspectMask     = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
@@ -467,6 +464,12 @@ namespace Lambda
     
     void VulkanCommandList::TransitionTexture(const ITexture2D* pTexture, ResourceState state)
     {
+        //End renderpass if there are any
+        if (m_HasRenderPass)
+        {
+            EndRenderPass();
+        }
+        
         //Convert texture to vulkan texture
         const VulkanTexture2D* pVkTexture = reinterpret_cast<const VulkanTexture2D*>(pTexture);
         
@@ -852,30 +855,36 @@ namespace Lambda
     
     void VulkanCommandList::BeginRenderPass(VkFramebuffer framebuffer, VkRenderPass renderpass, uint32 width, uint32 height)
     {
-        //Begin renderpass
-        VkRenderPassBeginInfo info = {};
-        info.sType                      = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        info.pNext                      = nullptr;
-        info.renderPass                 = renderpass;
-        info.framebuffer                = framebuffer;
-        info.renderArea.offset          = { 0, 0 };
-        info.renderArea.extent.width    = width;
-        info.renderArea.extent.height   = height;
-        info.clearValueCount            = 2;
-        info.pClearValues               = m_ClearValues;
-        
-        vkCmdBeginRenderPass(m_CommandBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
-        m_HasRenderPass = true;
-        
-        //qLOG_DEBUG_INFO("Vulkan: Started renderpass\n");
+        if (!m_HasRenderPass)
+        {
+            //Begin renderpass
+            VkRenderPassBeginInfo info = {};
+            info.sType                      = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+            info.pNext                      = nullptr;
+            info.renderPass                 = renderpass;
+            info.framebuffer                = framebuffer;
+            info.renderArea.offset          = { 0, 0 };
+            info.renderArea.extent.width    = width;
+            info.renderArea.extent.height   = height;
+            info.clearValueCount            = 0;
+            info.pClearValues               = nullptr;
+            
+            vkCmdBeginRenderPass(m_CommandBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
+            m_HasRenderPass = true;
+        }
+
+        //LOG_DEBUG_INFO("Vulkan: Started renderpass\n");
     }
     
     
     void VulkanCommandList::EndRenderPass()
     {
         //End renderpass
-        vkCmdEndRenderPass(m_CommandBuffer);
-        m_HasRenderPass = false;
+        if (m_HasRenderPass)
+        {
+            vkCmdEndRenderPass(m_CommandBuffer);
+            m_HasRenderPass = false;
+        }
         //LOG_DEBUG_INFO("Vulkan: Ended renderpass\n");
     }
 }

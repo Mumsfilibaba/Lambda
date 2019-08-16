@@ -679,7 +679,6 @@ namespace Lambda
         VkPhysicalDeviceFeatures deviceFeatures = {};
         deviceFeatures.samplerAnisotropy = VK_TRUE;
         
-        
         //Get the required layers, assume that the layers exists because we could create the vulkaninstance
         std::vector<const char*> requiredLayers = GetRequiredValidationLayers(desc.Flags & GRAPHICS_CONTEXT_FLAG_DEBUG);
         
@@ -1465,7 +1464,7 @@ namespace Lambda
         //Present
         vkQueuePresentKHR(m_PresentationQueue, &info);
         
-        LOG_DEBUG_INFO("Vulkan: Present Frame '%d' Image '%d'\n", m_CurrentFrame, m_CurrentBackbufferIndex);
+        //LOG_DEBUG_INFO("Vulkan: Present Frame '%d' Image '%d'\n", m_CurrentFrame, m_CurrentBackbufferIndex);
         
         GPUWaitForFrame();
     }

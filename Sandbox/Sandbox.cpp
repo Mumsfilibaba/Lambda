@@ -380,8 +380,8 @@ namespace Lambda
         m_pCurrentList->ClearRenderTarget(pRenderTarget, color);
         
         //Transition and clear depthstencil
-        m_pCurrentList->TransitionTexture(pDepthBuffer, RESORUCE_STATE_DEPTH_STENCIL_CLEAR);
-        m_pCurrentList->ClearDepthStencil(pDepthBuffer, 1.0f, 0);
+        //m_pCurrentList->TransitionTexture(pDepthBuffer, RESORUCE_STATE_DEPTH_STENCIL_CLEAR);
+        //m_pCurrentList->ClearDepthStencil(pDepthBuffer, 1.0f, 0);
         
         //Transition and set rendertargets
         m_pCurrentList->TransitionTexture(pRenderTarget, RESOURCE_STATE_RENDERTARGET);
