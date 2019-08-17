@@ -7,6 +7,7 @@
 #include "DX12SamplerState.h"
 #include "Utilities/TextureHelper.h"
 #include "Utilities/StringHelper.h"
+#include "Utilities/MathHelper.h"
 
 #if defined(LAMBDA_PLAT_WINDOWS)
 #define SAMPLER_DESCRIPTOR_INDEX 0
@@ -325,7 +326,7 @@ namespace Lambda
 		srcPitchedDesc.Width = desc.Width;
 		srcPitchedDesc.Height = desc.Height;
 		srcPitchedDesc.Depth = 1;
-		srcPitchedDesc.RowPitch = Math::AlignUp(srcPitchedDesc.Width * StrideInBytesFromResourceFormat(desc.Format), D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
+		srcPitchedDesc.RowPitch = AlignUp(srcPitchedDesc.Width * StrideInBytesFromResourceFormat(desc.Format), D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
 
 		D3D12_PLACED_SUBRESOURCE_FOOTPRINT placedTexture2D = { 0 };
 		placedTexture2D.Offset = allocation.Offset;

@@ -12,6 +12,14 @@
 #endif
 
 
+//Define forceinline
+#if defined(LAMBDA_PLAT_WINDOWS)
+	#define forceinline __forceinline
+#elif defined(LAMBDA_PLAT_MACOS)
+	#define forceinline inline
+#endif
+
+
 //Remove default functions
 #if !defined(LAMBDA_NO_COPY)
 	#define LAMBDA_NO_COPY(name)					\

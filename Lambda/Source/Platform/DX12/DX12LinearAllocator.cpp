@@ -1,6 +1,7 @@
 #include "LambdaPch.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include "DX12LinearAllocator.h"
+	#include "Utilities/MathHelper.h"
 namespace Lambda
 {
 	//Page
