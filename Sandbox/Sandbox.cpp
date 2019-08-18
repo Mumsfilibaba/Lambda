@@ -443,27 +443,22 @@ namespace Lambda
         static glm::mat4 rotation = glm::mat4(1.0f);
         rotation = glm::rotate(rotation, glm::radians(45.0f) * dt.AsSeconds(), glm::vec3(0.0f, 1.0f, 0.0f));
         
-        //Draw cube 1
-        //Update transforms
-        m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 0.0f)) * rotation;
-        
-        data.pData = &m_TransformBuffer;
-        data.SizeInBytes = sizeof(TransformBuffer);
-        m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);
-        
-        //Draw
-        m_pCurrentList->DrawIndexedInstanced(36, 1, 0, 0, 0);
-        
-        //Draw cube 2
-        //Update transforms
-        m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(-1.0f, 0.0f, 0.0f)) * rotation;
-        
-        data.pData = &m_TransformBuffer;
-        data.SizeInBytes = sizeof(TransformBuffer);
-        m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);
-        
-        //Draw
-        m_pCurrentList->DrawIndexedInstanced(36, 1, 0, 0, 0);
+        //Draw cubes
+        for (uint32 y = 0; y < 20; y++)
+        {
+            for (uint32 x = 0; x < 20; x++)
+            {
+                //Update transforms
+                m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(-20.0f + x * 2.0f, 0.0f, -8.0f + y * 2.0f)) * rotation;
+                
+                data.pData = &m_TransformBuffer;
+                data.SizeInBytes = sizeof(TransformBuffer);
+                m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);
+                
+                //Draw
+                m_pCurrentList->DrawIndexedInstanced(36, 1, 0, 0, 0);
+            }
+        }
         
         //Transition rendertarget to present
         m_pCurrentList->TransitionTexture(pRenderTarget, RESOURCE_STATE_RENDERTARGET_PRESENT);
