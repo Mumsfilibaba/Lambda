@@ -246,5 +246,11 @@ namespace Lambda
         MacOSWindow* pUserWindow = reinterpret_cast<MacOSWindow*>(glfwGetWindowUserPointer(pWindow));
         pUserWindow->m_OnEvent(event);
     }
+    
+    
+    IGraphicsDevice* MacOSWindow::GetGraphicsDevice() const
+    {
+        return nullptr;
+    }
 }
 #endif

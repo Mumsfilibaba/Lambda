@@ -14,6 +14,7 @@ namespace Lambda
         virtual void SetEventCallback(EventCallback callback) override final;
         virtual void OnUpdate() const override final;
         
+        virtual IGraphicsDevice* GetGraphicsDevice() const override final;
         virtual uint32 GetHeight() const override final;
         virtual uint32 GetWidth() const override final;
         virtual void* GetNativeHandle() const override final;

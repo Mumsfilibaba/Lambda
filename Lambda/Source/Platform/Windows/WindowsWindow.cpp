@@ -56,6 +56,12 @@ namespace Lambda
 		}
 	}
 
+    
+    IGraphicsDevice* WindowsWindow::GetGraphicsDevice() const
+    {
+        return nullptr;
+    }
+    
 
 	void* WindowsWindow::GetNativeHandle() const
 	{
