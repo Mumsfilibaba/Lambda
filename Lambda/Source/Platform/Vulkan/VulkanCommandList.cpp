@@ -465,7 +465,7 @@ namespace Lambda
     void VulkanCommandList::TransitionTexture(const ITexture2D* pTexture, ResourceState state)
     {
         //End renderpass if there are any
-        if (m_HasRenderPass)
+        if (HasRenderPass())
         {
             EndRenderPass();
         }
@@ -692,10 +692,9 @@ namespace Lambda
     void VulkanCommandList::UpdateBuffer(IBuffer* pResource, const ResourceData* pData)
     {
         //Renderpass cannot be active when updating a buffer
-        if (m_HasRenderPass)
+        if (HasRenderPass())
         {
             EndRenderPass();
-            m_HasRenderPass = false;
         }
         
         //Get offset before allocating
@@ -768,7 +767,7 @@ namespace Lambda
     void VulkanCommandList::DrawInstanced(uint32 vertexCountPerInstance, uint32 instanceCount, uint32 startVertexLocation, uint32 startInstanceLocation)
     {
         //Start renderpass if none is started
-        if (!m_HasRenderPass)
+        if (!HasRenderPass())
         {
             VkFramebuffer fbo = (m_BoundFrameBuffer == VK_NULL_HANDLE) ? VulkanFramebufferCache::GetFramebuffer(m_Device, m_BoundRenderPass, &m_pRT, 1, m_pDS) : m_BoundFrameBuffer;
             BeginRenderPass(fbo, m_BoundRenderPass, m_pRT->GetWidth(), m_pRT->GetHeight());
@@ -788,7 +787,7 @@ namespace Lambda
     void VulkanCommandList::DrawIndexedInstanced(uint32 indexCountPerInstance, uint32 instanceCount, uint32 startIndexLocation, uint32 baseVertexLocation, uint32 startInstanceLocation)
     {
         //Start renderpass if none is started
-        if (!m_HasRenderPass)
+        if (!HasRenderPass())
         {
             VkFramebuffer fbo = (m_BoundFrameBuffer == VK_NULL_HANDLE) ? VulkanFramebufferCache::GetFramebuffer(m_Device, m_BoundRenderPass, &m_pRT, 1, m_pDS) : m_BoundFrameBuffer;
             BeginRenderPass(fbo, m_BoundRenderPass, m_pRT->GetWidth(), m_pRT->GetHeight());
@@ -815,7 +814,7 @@ namespace Lambda
     void VulkanCommandList::Close()
     {
         //If there is an active renderpass, end it
-        if (m_HasRenderPass)
+        if (HasRenderPass())
         {
             EndRenderPass();
         }
@@ -855,7 +854,7 @@ namespace Lambda
     
     void VulkanCommandList::BeginRenderPass(VkFramebuffer framebuffer, VkRenderPass renderpass, uint32 width, uint32 height)
     {
-        if (!m_HasRenderPass)
+        if (!HasRenderPass())
         {
             //Begin renderpass
             VkRenderPassBeginInfo info = {};
@@ -880,7 +879,7 @@ namespace Lambda
     void VulkanCommandList::EndRenderPass()
     {
         //End renderpass
-        if (m_HasRenderPass)
+        if (HasRenderPass())
         {
             vkCmdEndRenderPass(m_CommandBuffer);
             m_HasRenderPass = false;

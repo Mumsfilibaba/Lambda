@@ -91,6 +91,11 @@ namespace Lambda
         void BeginRenderPass(VkFramebuffer framebuffer, VkRenderPass renderpass, uint32 width, uint32 height);
         void EndRenderPass();
         
+        inline bool HasRenderPass() const
+        {
+            return m_HasRenderPass;
+        }
+        
     private:
         VkDevice m_Device; //Store the device that was used when creating device
         VkCommandPool m_CommandPool;
