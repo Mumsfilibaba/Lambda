@@ -17,7 +17,7 @@ namespace Lambda
         
         //Return error
         LOG_DEBUG_ERROR("Vulkan: Failed to find a suitable memory type\n");
-        return -1;
+        return uint32(-1);
     }
     
     

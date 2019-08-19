@@ -69,6 +69,14 @@ workspace "Lambda"
 			"dxgi",
 			"d3dcompiler"
 		}
+		libdirs
+		{
+			"C:/VulkanSDK/1.1.114.0/Lib"
+		}
+		sysincludedirs
+		{
+			"C:/VulkanSDK/1.1.114.0/Include"
+		}
 		defines
 		{
 			"LAMBDA_PLAT_WINDOWS" 

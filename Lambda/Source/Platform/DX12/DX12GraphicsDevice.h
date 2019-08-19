@@ -42,7 +42,11 @@ namespace Lambda
 
 		virtual void* GetNativeHandle() const override final;
 		virtual ITexture2D* GetCurrentRenderTarget() const override final;
+		virtual ITexture2D* GetDepthStencil() const override final;
+		virtual ResourceFormat GetBackBufferFormat() const override final;
 		virtual uint32 GetCurrentBackBufferIndex() const override final;
+		virtual uint32 GetCurrentSwapChainWidth() const override final;
+		virtual uint32 GetCurrentSwapChainHeight() const override final;
 
 	private:
 		void Init(IWindow* pWindow, const GraphicsDeviceDesc& desc);
@@ -87,6 +91,8 @@ namespace Lambda
 
 		DXGI_FORMAT m_BackBufferFormat;
 		uint32 m_BackBufferFlags;
+		uint32 m_BackBufferHeight;
+		uint32 m_BackBufferWidth;
 		mutable uint32 m_CurrentBackBuffer;
 		uint32 m_NumBackbuffers;
 		bool m_DXRSupported;

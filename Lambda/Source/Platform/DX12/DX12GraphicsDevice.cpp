@@ -31,7 +31,9 @@ namespace Lambda
 		m_DXRSupported(false),
 		m_BackBufferFlags(0),
 		m_NumBackbuffers(0),
-		m_CurrentBackBuffer(0)
+		m_CurrentBackBuffer(0),
+		m_BackBufferHeight(0),
+		m_BackBufferWidth(0)
 	{
 		assert(s_pInstance == nullptr);
 		s_pInstance = this;
@@ -370,9 +372,33 @@ namespace Lambda
 	}
 
 
+	ITexture2D* DX12GraphicsDevice::GetDepthStencil() const
+	{
+		return nullptr;
+	}
+
+
+	ResourceFormat DX12GraphicsDevice::GetBackBufferFormat() const
+	{
+		return ConvertDXGIFormat(m_BackBufferFormat);
+	}
+
+
 	uint32 DX12GraphicsDevice::GetCurrentBackBufferIndex() const
 	{
 		return m_SwapChain->GetCurrentBackBufferIndex();
+	}
+
+
+	uint32 DX12GraphicsDevice::GetCurrentSwapChainWidth() const
+	{
+		return m_BackBufferWidth;
+	}
+
+
+	uint32 DX12GraphicsDevice::GetCurrentSwapChainHeight() const
+	{
+		return m_BackBufferHeight;
 	}
 
 
@@ -650,6 +676,10 @@ namespace Lambda
 				return false;
 			}
 
+			//Set size of swapchain
+			m_BackBufferWidth = desc.Width;
+			m_BackBufferHeight = desc.Height;
+
 			//No fullscreen with ALT+ENTER
 			if (FAILED(m_Factory->MakeWindowAssociation(hWnd, DXGI_MWA_NO_ALT_ENTER)))
 			{
@@ -797,8 +827,13 @@ namespace Lambda
 				{
 					LOG_DEBUG_ERROR("DX12: Failed to resize window\n");
 				}
+				else
+				{
+					InitBackBuffers();
 
-				InitBackBuffers();
+					m_BackBufferWidth = event.WindowResize.Width;
+					m_BackBufferHeight = event.WindowResize.Height;
+				}
 			}
 		}
 

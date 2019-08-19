@@ -6,16 +6,16 @@ namespace Lambda
 {
     //Vulkan UploadBuffer
     VulkanUploadBuffer::VulkanUploadBuffer()
-    : m_pStart(nullptr),
-    m_pCurrent(nullptr),
-    m_Buffer(VK_NULL_HANDLE),
-    m_Memory(VK_NULL_HANDLE),
-    m_SizeInBytes(0)
+		: m_pStart(nullptr),
+		m_pCurrent(nullptr),
+		m_Buffer(VK_NULL_HANDLE),
+		m_Memory(VK_NULL_HANDLE),
+		m_SizeInBytes(0)
     {
     }
     
     
-    VulkanUploadBuffer::VulkanUploadBuffer(VkDevice device, VkPhysicalDevice adapter, uint32 sizeInBytes)
+    VulkanUploadBuffer::VulkanUploadBuffer(VkDevice device, VkPhysicalDevice adapter, uint64 sizeInBytes)
         : m_pStart(nullptr),
         m_pCurrent(nullptr),
         m_Buffer(VK_NULL_HANDLE),
@@ -26,7 +26,7 @@ namespace Lambda
     }
 
     
-    bool VulkanUploadBuffer::Init(VkDevice device, VkPhysicalDevice adapter, uint32 sizeInBytes)
+    bool VulkanUploadBuffer::Init(VkDevice device, VkPhysicalDevice adapter, uint64 sizeInBytes)
     {
         assert(device != VK_NULL_HANDLE);
         assert(adapter != VK_NULL_HANDLE);
@@ -92,7 +92,7 @@ namespace Lambda
     }
     
     
-    void* VulkanUploadBuffer::Allocate(uint32 bytesToAllocate)
+    void* VulkanUploadBuffer::Allocate(uint64 bytesToAllocate)
     {
         //Do we have enough space?
         if ((m_pStart + m_SizeInBytes) - (m_pCurrent + bytesToAllocate) < 0)

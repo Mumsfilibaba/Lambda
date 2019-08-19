@@ -13,11 +13,11 @@ namespace Lambda
         LAMBDA_NO_COPY(VulkanUploadBuffer);
         
         VulkanUploadBuffer();
-        VulkanUploadBuffer(VkDevice device, VkPhysicalDevice adapter, uint32 sizeInBytes);
+        VulkanUploadBuffer(VkDevice device, VkPhysicalDevice adapter, uint64 sizeInBytes);
         ~VulkanUploadBuffer() = default;
         
-        bool Init(VkDevice device, VkPhysicalDevice adapter, uint32 sizeInBytes);
-        void* Allocate(uint32 bytesToAllocate);
+        bool Init(VkDevice device, VkPhysicalDevice adapter, uint64 sizeInBytes);
+        void* Allocate(uint64 bytesToAllocate);
         void Reset();
         void Destroy(VkDevice device);
         
@@ -29,7 +29,7 @@ namespace Lambda
         uint8* m_pCurrent;
         VkBuffer m_Buffer;
         VkDeviceMemory m_Memory;
-        uint32 m_SizeInBytes;
+		uint64 m_SizeInBytes;
     };
     
     

@@ -61,7 +61,7 @@ namespace Lambda
         if (type == COMMAND_LIST_TYPE_GRAPHICS)
             poolInfo.queueFamilyIndex = familyIndices.GraphicsFamily;
         else
-            poolInfo.queueFamilyIndex = -1;
+            poolInfo.queueFamilyIndex = uint32(-1);
         
         //Create commandpool
         if (vkCreateCommandPool(device, &poolInfo, nullptr, &m_CommandPool) != VK_SUCCESS)
@@ -412,10 +412,10 @@ namespace Lambda
     {
         //Setup vulkan scissorrect
         VkRect2D rect = {};
-        rect.extent.height  = scissorRect.Height;
-        rect.extent.width   = scissorRect.Width;
-        rect.offset.x       = scissorRect.X;
-        rect.offset.y       = scissorRect.Y;
+        rect.extent.height  = uint32(scissorRect.Height);
+        rect.extent.width   = uint32(scissorRect.Width);
+        rect.offset.x       = int32(scissorRect.X);
+        rect.offset.y       = int32(scissorRect.Y);
         
         vkCmdSetScissor(m_CommandBuffer, 0, 1, &rect);
     }

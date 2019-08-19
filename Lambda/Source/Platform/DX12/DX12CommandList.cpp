@@ -326,7 +326,7 @@ namespace Lambda
 		srcPitchedDesc.Width = desc.Width;
 		srcPitchedDesc.Height = desc.Height;
 		srcPitchedDesc.Depth = 1;
-		srcPitchedDesc.RowPitch = AlignUp(srcPitchedDesc.Width * StrideInBytesFromResourceFormat(desc.Format), D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
+		srcPitchedDesc.RowPitch = Math::AlignUp(srcPitchedDesc.Width * StrideInBytesFromResourceFormat(desc.Format), D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
 
 		D3D12_PLACED_SUBRESOURCE_FOOTPRINT placedTexture2D = { 0 };
 		placedTexture2D.Offset = allocation.Offset;
@@ -356,8 +356,13 @@ namespace Lambda
 		m_List->DrawInstanced(vertexCountPerInstance, instanceCount, startVertexLocation, startInstanceLocation);
 	}
 
+
 	void DX12CommandList::DrawIndexedInstanced(uint32 indexCountPerInstance, uint32 instanceCount, uint32 startIndexLocation, uint32 baseVertexLocation, uint32 startInstanceLocation)
 	{
+		m_ResourceTracker.FlushBarriers(m_List.Get());
+
+		InternalCopyAndSetDescriptors();
+		m_List->DrawIndexedInstanced(indexCountPerInstance, instanceCount, startIndexLocation, baseVertexLocation, startInstanceLocation);
 	}
 
 

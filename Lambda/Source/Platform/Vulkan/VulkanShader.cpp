@@ -21,7 +21,7 @@ namespace Lambda
             m_Type = desc.Type;
             
             //Copy source to array
-            m_ByteCode = std::vector<const char>(desc.pSource, desc.pSource + desc.SourceLength);
+            m_ByteCode = std::vector<char>(desc.pSource, desc.pSource + desc.SourceLength);
         }
         else
         {

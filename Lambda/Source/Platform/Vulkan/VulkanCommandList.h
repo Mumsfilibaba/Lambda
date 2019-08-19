@@ -1,7 +1,7 @@
 #pragma once
+#include <string>
 #include "Graphics/ICommandList.h"
 #include "VulkanUploadBuffer.h"
-#include <string>
 #include "VulkanHelpers.inl"
 
 namespace Lambda

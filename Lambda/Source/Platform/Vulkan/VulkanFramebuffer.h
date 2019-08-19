@@ -75,7 +75,7 @@ namespace Lambda
         inline bool operator==(const VulkanRenderPassInfo& other)
         {
             //Check if all the format of the colorattachments are the same
-            for (uint i = 0; i < NumColorAttachmentFormats; i++)
+            for (uint32 i = 0; i < NumColorAttachmentFormats; i++)
             {
                 if (ColorAttachmentFormats[i] != other.ColorAttachmentFormats[i])
                     return false;

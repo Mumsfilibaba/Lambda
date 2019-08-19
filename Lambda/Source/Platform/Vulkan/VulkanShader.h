@@ -25,7 +25,7 @@ namespace Lambda
         
     private:
         VkShaderModule m_Shader;
-        std::vector<const char> m_ByteCode;
+        std::vector<char> m_ByteCode;
         std::string m_EntryPoint;
         ShaderType m_Type;
     };
