@@ -67,7 +67,8 @@ workspace "Lambda"
 		{
 			"d3d12",
 			"dxgi",
-			"d3dcompiler"
+			"d3dcompiler",
+			"vulkan-1"
 		}
 		libdirs
 		{

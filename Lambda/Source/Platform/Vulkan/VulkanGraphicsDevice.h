@@ -1,5 +1,8 @@
 #pragma once
 #include "Graphics/IGraphicsDevice.h"
+#if defined(LAMBDA_PLAT_WINDOWS)
+	#define VK_USE_PLATFORM_WIN32_KHR
+#endif
 #include <vulkan/vulkan.h>
 
 #define FRAMES_AHEAD 3
@@ -89,7 +92,7 @@ namespace Lambda
         bool QueryAdapter();
         bool CreateDeviceAndQueues(const GraphicsDeviceDesc& desc);
         bool CreateSurface(IWindow* pWindow);
-        bool CreateSwapChain(uint16 width, uint16 height);
+        bool CreateSwapChain(uint32 width, uint32 height);
         bool CreateDepthStencil();
         bool CreateTextures();
         bool CreateSemaphoresAndFences();

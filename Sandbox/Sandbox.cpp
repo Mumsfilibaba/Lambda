@@ -211,7 +211,7 @@ namespace Lambda
                 desc.RenderTargetFormats[0] = pDevice->GetBackBufferFormat();
                 desc.DepthStencilFormat     = depthFormat;
                 desc.RenderTargetCount      = 1;
-                desc.DepthTest              = false;
+                desc.DepthTest              = true;
                 
                 pDevice->CreateGraphicsPipelineState(&m_pPipelineState, desc);
             }
@@ -380,9 +380,12 @@ namespace Lambda
         m_pCurrentList->ClearRenderTarget(pRenderTarget, color);
         
         //Transition and clear depthstencil
-        //m_pCurrentList->TransitionTexture(pDepthBuffer, RESORUCE_STATE_DEPTH_STENCIL_CLEAR);
-        //m_pCurrentList->ClearDepthStencil(pDepthBuffer, 1.0f, 0);
-        
+#if defined(LAMBDA_PLAT_WINDOWS)
+		//For now only works on windows, because of bug in MoltenVK
+        m_pCurrentList->TransitionTexture(pDepthBuffer, RESORUCE_STATE_DEPTH_STENCIL_CLEAR);
+        m_pCurrentList->ClearDepthStencil(pDepthBuffer, 1.0f, 0);
+#endif
+
         //Transition and set rendertargets
         m_pCurrentList->TransitionTexture(pRenderTarget, RESOURCE_STATE_RENDERTARGET);
         m_pCurrentList->TransitionTexture(pDepthBuffer, RESOURCE_STATE_DEPTH_WRITE);

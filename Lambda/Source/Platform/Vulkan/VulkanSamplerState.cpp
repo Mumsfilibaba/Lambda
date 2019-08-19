@@ -72,5 +72,8 @@ namespace Lambda
             vkDestroySampler(device, m_Sampler, nullptr);
             m_Sampler = VK_NULL_HANDLE;
         }
+
+		//Delete me
+		delete this;
     }
 }

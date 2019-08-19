@@ -29,22 +29,22 @@ namespace Lambda
 		//Offset CPU pointer
 		uint8* pBase = (uint8*)m_CPUPtr;
 
-		m_Offset = AlignUp<uint64>(m_Offset, alignment);
+		m_Offset = Math::AlignUp<uint64>(m_Offset, alignment);
 
 		DX12Allocation allocation = {};
 		allocation.Offset = m_Offset;
 		allocation.pCPU = (void*)(pBase + m_Offset);
 		allocation.pPageResource = m_Resource.Get();
 
-		m_Offset += AlignUp<uint64>(size, alignment);
+		m_Offset += Math::AlignUp<uint64>(size, alignment);
 		return allocation;
 	}
 
 
 	bool DX12LinearAllocatorBlock::HasSpace(uint64 size, uint64 alignment) const
 	{
-		uint64 alignedOffset = AlignUp<uint64>(m_Offset, alignment);
-		uint64 alignedSize = AlignUp<uint64>(size, alignment);
+		uint64 alignedOffset = Math::AlignUp<uint64>(m_Offset, alignment);
+		uint64 alignedSize = Math::AlignUp<uint64>(size, alignment);
 		return (alignedOffset + alignedSize) < m_Size;
 	}
 

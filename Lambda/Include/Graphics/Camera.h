@@ -1,9 +1,10 @@
 #pragma once
+#include "Defines.h"
 #include "glm/glm.hpp"
 
 namespace Lambda
 {
-    class Camera
+    class LAMBDA_API Camera
     {
     public:
         Camera();

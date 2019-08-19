@@ -76,10 +76,10 @@ namespace Lambda
         
         //Setup commandbuffer
         VkCommandBufferAllocateInfo allocInfo = {};
-        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        allocInfo.commandPool = m_CommandPool;
-        allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        allocInfo.commandBufferCount = 1;
+        allocInfo.sType					= VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        allocInfo.commandPool			= m_CommandPool;
+        allocInfo.level					= VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        allocInfo.commandBufferCount	= 1;
         
         //Allocate commandbuffer
         if (vkAllocateCommandBuffers(device, &allocInfo, &m_CommandBuffer) != VK_SUCCESS)

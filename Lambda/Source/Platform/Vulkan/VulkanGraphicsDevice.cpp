@@ -1,4 +1,6 @@
 #include "LambdaPch.h"
+#include <set>
+#include <algorithm>
 #include "VulkanGraphicsDevice.h"
 #include "VulkanShader.h"
 #include "VulkanPipelineState.h"
@@ -10,8 +12,12 @@
 #include "VulkanConversions.inl"
 #if defined(LAMBDA_PLAT_MACOS)
     #include <GLFW/glfw3.h>
+#elif defined(LAMBDA_PLAT_WINDOWS)
+	#if !defined(WIN32_LEAN_AND_MEAN)
+		#define WIN32_LEAN_AND_MEAN 1
+	#endif
+	#include <Windows.h>
 #endif
-#include <set>
 
 namespace Lambda
 {
@@ -213,13 +219,13 @@ namespace Lambda
         //Create nullbufferdescriptor
         {
             //Create nullbuffer
-            BufferDesc desc = {};
-            desc.SizeInBytes    = 4;
-            desc.Flags          = BUFFER_FLAGS_CONSTANT_BUFFER | BUFFER_FLAGS_VERTEX_BUFFER;
-            desc.StrideInBytes  = 4;
-            desc.Usage          = RESOURCE_USAGE_DEFAULT;
+            BufferDesc nullBufferDesc = {};
+			nullBufferDesc.SizeInBytes    = 4;
+			nullBufferDesc.Flags          = BUFFER_FLAGS_CONSTANT_BUFFER | BUFFER_FLAGS_VERTEX_BUFFER;
+			nullBufferDesc.StrideInBytes  = 4;
+			nullBufferDesc.Usage          = RESOURCE_USAGE_DEFAULT;
             
-            m_pNullBuffer = DBG_NEW VulkanBuffer(m_Device, m_Adapter, desc);
+            m_pNullBuffer = DBG_NEW VulkanBuffer(m_Device, m_Adapter, nullBufferDesc);
             
             //Fill in bufferdescriptpr
             m_NullBufferDescriptor.buffer = reinterpret_cast<VkBuffer>(m_pNullBuffer->GetNativeHandle());
@@ -230,17 +236,17 @@ namespace Lambda
         //Create nulltexturedescriptor
         {
             //Create nulltexture
-            Texture2DDesc desc = {};
-            desc.ArraySize      = 1;
-            desc.Flags          = TEXTURE_FLAGS_SHADER_RESOURCE;
-            desc.Width          = 2;
-            desc.Height         = 2;
-            desc.Format         = FORMAT_R8G8B8A8_UNORM;
-            desc.MipLevels      = 1;
-            desc.SampleCount    = 1;
-            desc.Usage          = RESOURCE_USAGE_DEFAULT;
+            Texture2DDesc nullTextureDesc = {};
+			nullTextureDesc.ArraySize      = 1;
+			nullTextureDesc.Flags          = TEXTURE_FLAGS_SHADER_RESOURCE;
+			nullTextureDesc.Width          = 2;
+			nullTextureDesc.Height         = 2;
+			nullTextureDesc.Format         = FORMAT_R8G8B8A8_UNORM;
+			nullTextureDesc.MipLevels      = 1;
+			nullTextureDesc.SampleCount    = 1;
+			nullTextureDesc.Usage          = RESOURCE_USAGE_DEFAULT;
             
-            m_pNullTexture = DBG_NEW VulkanTexture2D(m_Device, m_Adapter, desc);
+            m_pNullTexture = DBG_NEW VulkanTexture2D(m_Device, m_Adapter, nullTextureDesc);
             
             //Fill in texturedescriptpr
             m_NullTextureDescriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -319,21 +325,26 @@ namespace Lambda
         }
         
         //Get extensions
-        uint32 extensionCount = 0;
-        const char** ppExtensions = nullptr;
+		std::vector<const char*> requiredExtensions;
+
 #if defined(LAMBDA_PLAT_MACOS)
         //Get extensions on macOS
-        ppExtensions = glfwGetRequiredInstanceExtensions(&extensionCount);
+		uint32 extensionCount = 0;
+		const char** ppExtensions = glfwGetRequiredInstanceExtensions(&extensionCount);
+		requiredExtensions = std::vector<const char*>(ppExtensions, ppExtensions + extensionCount);
+
+#elif defined(LAMBDA_PLAT_WINDOWS)
+		//Get extensions on Windows
+		requiredExtensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
+		requiredExtensions.push_back("VK_KHR_win32_surface");
 #endif
-        
-        //The layers and extensions that we want
-        std::vector<const char*> requiredLayers = GetRequiredValidationLayers(desc.Flags & GRAPHICS_CONTEXT_FLAG_DEBUG);
-        std::vector<const char*> requiredExtensions(ppExtensions, ppExtensions + extensionCount);
-        if (desc.Flags & GRAPHICS_CONTEXT_FLAG_DEBUG)
-        {
-            //Pushback extensions
-            requiredExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-        }
+		
+		//Add debug extensions to the required ones
+		if (desc.Flags & GRAPHICS_CONTEXT_FLAG_DEBUG)
+		{
+			//Pushback extensions
+			requiredExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+		}
         
         //if extensioncount is more than 0, we print witch ones we need to use
         if (requiredExtensions.size() > 0)
@@ -343,8 +354,11 @@ namespace Lambda
                 LOG_DEBUG_INFO("   Instance-Extension '%s'\n", extension);
         }
         
-        //if layercount is more than 0, we print witch ones we need to use
-        if (requiredLayers.size() > 0)
+		//The layer that we want
+		std::vector<const char*> requiredLayers = GetRequiredValidationLayers(desc.Flags & GRAPHICS_CONTEXT_FLAG_DEBUG);
+
+		//if layercount is more than 0, we print witch ones we need to use
+		if (requiredLayers.size() > 0)
         {
             LOG_DEBUG_INFO("[Vulkan] Required Instance-Layers:\n");
             for (const auto& layer : requiredLayers)
@@ -773,6 +787,28 @@ namespace Lambda
             LOG_SYSTEM_PRINT("Vulkan: Created SurfaceKHR\n");
             return true;
         }
+#elif defined(LAMBDA_PLAT_WINDOWS)
+		//Get native window handle for windows
+		HWND hWnd = reinterpret_cast<HWND>(pWindow->GetNativeHandle());
+
+		//Create a surface for windows
+		VkWin32SurfaceCreateInfoKHR info = {};
+		info.sType		= VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+		info.pNext		= nullptr;
+		info.flags		= 0;
+		info.hwnd		= hWnd;
+		info.hinstance	= GetModuleHandle(nullptr);
+
+		if (vkCreateWin32SurfaceKHR(m_Instance, &info, nullptr, &m_Surface) != VK_SUCCESS) 
+		{
+			LOG_DEBUG_ERROR("Vulkan: Failed to create SurfaceKHR\n");
+			return false;
+		}
+		else
+		{
+			LOG_SYSTEM_PRINT("Vulkan: Created SurfaceKHR\n");
+			return true;
+		}
 #endif
     }
     
@@ -808,7 +844,7 @@ namespace Lambda
     }
     
     
-    bool VulkanGraphicsDevice::CreateSwapChain(uint16 width, uint16 height)
+    bool VulkanGraphicsDevice::CreateSwapChain(uint32 width, uint32 height)
     {
         SwapChainCapabilities cap = QuerySwapChainSupport(m_Adapter);
         
@@ -1056,7 +1092,7 @@ namespace Lambda
         }
         
         //Increment offset
-        m_TextureBinding = layoutBindings.size();
+        m_TextureBinding = uint32(layoutBindings.size());
 
         //Create descriptor bindings for textures
         VkDescriptorSetLayoutBinding textureLayoutBinding = {};
@@ -1070,7 +1106,7 @@ namespace Lambda
         }
         
         //Increment offset
-        m_SamplerBinding = layoutBindings.size();
+        m_SamplerBinding = uint32(layoutBindings.size());
         
         //Create descriptor bindings for samplers
         VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
