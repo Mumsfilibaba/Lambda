@@ -20,7 +20,8 @@ namespace Lambda
 
 	WindowsWindow::WindowsWindow(const WindowDesc& desc)
 		: m_OnEvent(nullptr),
-		m_Wnd(0)
+		m_Wnd(0),
+		m_EventBackLog()
 	{
 		Init(desc);
 
@@ -125,7 +126,6 @@ namespace Lambda
 
 				//Set userdata so we can retrive this-pointer when handling events
 				SetWindowLongPtr(m_Wnd, GWLP_USERDATA, reinterpret_cast<uintptr_t>(this));
-
 				ShowWindow(m_Wnd, SW_NORMAL);
 			}
 		}
@@ -235,7 +235,21 @@ namespace Lambda
 
 		if (m_OnEvent)
 		{
+			//When a eventhandler is registered, then we handled all the backloged items
+			if (m_EventBackLog.size() > 0)
+			{
+				for (auto& e : m_EventBackLog)
+					m_OnEvent(e);
+
+				m_EventBackLog.clear();
+			}
+
 			m_OnEvent(event);
+		}
+		else
+		{
+			//If a eventcallback is not registered then we put the event in the backlog
+			m_EventBackLog.push_back(event);
 		}
 
 		return LRESULT(0);

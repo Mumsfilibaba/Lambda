@@ -13,7 +13,8 @@ namespace Lambda
 	Application::Application(const EngineParams& params)
 		: m_pWindow(nullptr),
 		m_pGraphicsContext(nullptr),
-		m_Running(true)
+		m_Running(true),
+		m_HasFocus(false)
 	{
 		assert(s_pInstance == nullptr);
 		s_pInstance = this;
@@ -180,40 +181,46 @@ namespace Lambda
 	}
 
 
+	bool Application::InternalOnEvent(const Event& event)
+	{
+		switch (event.Type)
+		{
+			//Exit the application when the window is closed
+		case EVENT_TYPE_WINDOW_CLOSED:
+			Quit(0);
+			LOG_DEBUG_INFO("Window closed\n");
+			return true;
+
+			//Exit the application when the escape key is pressed
+		case EVENT_TYPE_KEYDOWN:
+			if (event.KeyEvent.KeyCode == KEY_ESCAPE)
+			{
+				Quit(0);
+				LOG_DEBUG_INFO("Escape pressed, exiting\n");
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+
+			//When window is out of focus make sure that the rendering-loop pauses
+		case EVENT_TYPE_FOCUS_CHANGED:
+			IGraphicsDevice::GetInstance()->WaitForGPU();
+			m_HasFocus = event.FocusChanged.HasFocus;
+
+			//Return false so that other parts of the app still can get this event
+			return false;
+
+			//If not an handled event return false to let it continue in the eventhandler
+		default:
+			return false;
+		}
+	}
+
+
 	bool Application::OnEvent(const Event& event)
 	{
-        switch(event.Type)
-        {
-            //Exit the application when the window is closed
-            case EVENT_TYPE_WINDOW_CLOSED:
-                Application::GetInstance().Quit(0);
-                LOG_DEBUG_INFO("Window closed\n");
-                return true;
-            
-            //Exit the application when the escape key is pressed
-            case EVENT_TYPE_KEYDOWN:
-                if (event.KeyEvent.KeyCode == KEY_ESCAPE)
-                {
-                    Application::GetInstance().Quit(0);
-                    LOG_DEBUG_INFO("Escape pressed, exiting\n");
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-                
-            //When window is out of focus make sure that the rendering-loop pauses
-            case EVENT_TYPE_FOCUS_CHANGED:
-                IGraphicsDevice::GetInstance()->WaitForGPU();
-                GetInstance().m_HasFocus = event.FocusChanged.HasFocus;
-                
-                //Return false so that other parts of the app still can get this event
-                return false;
-            
-            //If not an handled event return false to let it continue in the eventhandler
-            default:
-                return false;
-        }
+		return Application::GetInstance().InternalOnEvent(event);
 	}
 }

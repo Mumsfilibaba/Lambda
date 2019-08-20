@@ -35,6 +35,7 @@ namespace Lambda
 		void InternalOnUpdate(Time dt);
 		void InternalOnRender(Time dt);
 		void InternalOnRelease();
+		bool InternalOnEvent(const Event& event);
 
 	private:
 		IWindow* m_pWindow;

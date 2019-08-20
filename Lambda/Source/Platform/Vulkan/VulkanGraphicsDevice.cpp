@@ -9,6 +9,8 @@
 #include "VulkanCommandList.h"
 #include "VulkanFramebuffer.h"
 #include "VulkanBuffer.h"
+#include "VulkanSwapChain.h"
+#include "VulkanHelpers.inl"
 #include "VulkanConversions.inl"
 #if defined(LAMBDA_PLAT_MACOS)
     #include <GLFW/glfw3.h>
@@ -55,8 +57,8 @@ namespace Lambda
     
     
     //Vulkan device static members
-    PFN_vkSetDebugUtilsObjectNameEXT VulkanGraphicsDevice::SetDebugUtilsObjectNameEXT = nullptr;
-    PFN_vkCreateDebugUtilsMessengerEXT VulkanGraphicsDevice::CreateDebugUtilsMessengerEXT = nullptr;
+    PFN_vkSetDebugUtilsObjectNameEXT VulkanGraphicsDevice::SetDebugUtilsObjectNameEXT		= nullptr;
+    PFN_vkCreateDebugUtilsMessengerEXT VulkanGraphicsDevice::CreateDebugUtilsMessengerEXT	= nullptr;
     PFN_vkDestroyDebugUtilsMessengerEXT VulkanGraphicsDevice::DestroyDebugUtilsMessengerEXT = nullptr;
     
     
@@ -67,33 +69,22 @@ namespace Lambda
         m_Device(VK_NULL_HANDLE),
         m_GraphicsQueue(VK_NULL_HANDLE),
         m_PresentationQueue(VK_NULL_HANDLE),
-        m_ImageSemaphores(),
         m_RenderSemaphores(),
         m_FamiliyIndices(),
         m_Adapter(VK_NULL_HANDLE),
         m_AdapterProperties(),
         m_Surface(VK_NULL_HANDLE),
-        m_SwapChain(VK_NULL_HANDLE),
-        m_SwapChainFormat(),
-        m_SwapChainSize(),
-        m_CurrentFrame(0),
-        m_CurrentBackbufferIndex(0),
-        m_BackBuffers()
+		m_pSwapChain(nullptr),
+		m_CurrentFrame(0)
     {       
         assert(s_pInstance == nullptr);
         s_pInstance = this;
         
         //Init default descriptorsetlayouts
-        for (uint32 i = 0; i < LAMBDA_SHADERSTAGE_COUNT; i++)
+		for (uint32 i = 0; i < LAMBDA_SHADERSTAGE_COUNT; i++)
+		{
             m_DefaultDescriptorSetLayouts[i] = VK_NULL_HANDLE;
-        
-        //Init semaphores and fences
-        for (uint32 i = 0; i < FRAMES_AHEAD; i++)
-        {
-            m_ImageSemaphores[i] = VK_NULL_HANDLE;
-            m_RenderSemaphores[i] = VK_NULL_HANDLE;
-            m_Fences[i] = VK_NULL_HANDLE;
-        }
+		}
         
         Init(pWindow, desc);
     }
@@ -145,11 +136,11 @@ namespace Lambda
         //Destroy semaphores and fences
         for (uint32 i = 0; i < FRAMES_AHEAD; i++)
         {
-            if (m_ImageSemaphores[i] != VK_NULL_HANDLE)
-            {
-                vkDestroySemaphore(m_Device, m_ImageSemaphores[i], nullptr);
-                m_ImageSemaphores[i] = VK_NULL_HANDLE;
-            }
+			if (m_ImageSemaphores[i] != VK_NULL_HANDLE)
+			{
+				vkDestroySemaphore(m_Device, m_ImageSemaphores[i], nullptr);
+				m_ImageSemaphores[i] = VK_NULL_HANDLE;
+			}
             if (m_RenderSemaphores[i] != VK_NULL_HANDLE)
             {
                 vkDestroySemaphore(m_Device, m_RenderSemaphores[i], nullptr);
@@ -166,8 +157,8 @@ namespace Lambda
         VulkanFramebufferCache::ReleaseAll(m_Device);
         VulkanRenderPassCache::ReleaseAll(m_Device);
         
-        //Destroy swapchain and related resources
-        ReleaseSwapChain();
+        //Destroy swapchain and depthstencil
+		m_pSwapChain->Destroy(m_Device);
         ReleaseDepthStencil();
         
         //Destroy device
@@ -257,10 +248,10 @@ namespace Lambda
         //Create nullsamplerdescriptor
         {
             //Create nullsampler
-            SamplerDesc desc = {};
+            SamplerDesc nullSamplerdesc = {};
 
             //Create sampler
-            m_pNullSampler = DBG_NEW VulkanSamplerState(m_Device, desc);
+            m_pNullSampler = DBG_NEW VulkanSamplerState(m_Device, nullSamplerdesc);
             
             //Fill in samplerdescriptpr
             m_NullSamplerDescriptor.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -297,8 +288,10 @@ namespace Lambda
         if (availableExtensions.size() > 0)
         {
             LOG_DEBUG_INFO("[Vulkan] Available Instance-Extensions:\n");
-            for (const auto& extension : availableExtensions)
+			for (const auto& extension : availableExtensions)
+			{
                 LOG_DEBUG_INFO("   Instance-Extension '%s'\n", extension.extensionName);
+			}
         }
         else
         {
@@ -316,8 +309,10 @@ namespace Lambda
         if (availableLayers.size() > 0)
         {
             LOG_DEBUG_INFO("[Vulkan] Available Instance-Layers:\n");
-            for (const auto& layer : availableLayers)
+			for (const auto& layer : availableLayers)
+			{
                 LOG_DEBUG_INFO("   Instance-Layer '%s'\n", layer.layerName);
+			}
         }
         else
         {
@@ -545,7 +540,7 @@ namespace Lambda
             vkGetPhysicalDeviceProperties(m_Adapter, &m_AdapterProperties);
             
             //Get familiy indices
-            m_FamiliyIndices = FindQueueFamilies(m_Adapter);
+            m_FamiliyIndices = FindQueueFamilies(m_Adapter, m_Surface);
             
             LOG_SYSTEM_PRINT("Vulkan: Selected GPU '%s'\n", m_AdapterProperties.deviceName);
             return true;
@@ -569,7 +564,7 @@ namespace Lambda
         }
         
         //Find indices for queuefamilies
-        QueueFamilyIndices indices = FindQueueFamilies(adapter);
+        QueueFamilyIndices indices = FindQueueFamilies(adapter, m_Surface);
         if (!indices.Valid())
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to find a suitable queuefamilies\n");
@@ -609,7 +604,7 @@ namespace Lambda
         }
         
         //Check if the swapchain supports whats required
-        SwapChainCapabilities swapChainInfo = QuerySwapChainSupport(adapter);
+        SwapChainCapabilities swapChainInfo = QuerySwapChainSupport(adapter, m_Surface);
         if (!swapChainInfo.Valid())
         {
             LOG_DEBUG_ERROR("Vulkan: Adapter does not have valid SwapChain support\n");
@@ -617,47 +612,6 @@ namespace Lambda
         }
         
         return true;
-    }
-    
-    
-    QueueFamilyIndices VulkanGraphicsDevice::FindQueueFamilies(VkPhysicalDevice adapter)
-    {
-        //Get all queuefamilies for this adapter
-        uint32 queueFamilyCount = 0;
-        vkGetPhysicalDeviceQueueFamilyProperties(adapter, &queueFamilyCount, nullptr);
-        
-        std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-        vkGetPhysicalDeviceQueueFamilyProperties(adapter, &queueFamilyCount, queueFamilies.data());
-        
-        //Find a queuefamily that supports
-        int32 i = 0;
-        QueueFamilyIndices indices;
-        for (const auto& queueFamiliy : queueFamilies)
-        {
-            //Check for graphics support
-            if (queueFamiliy.queueCount > 0 && queueFamiliy.queueFlags & VK_QUEUE_GRAPHICS_BIT)
-            {
-                indices.GraphicsFamily = i;
-            }
-            
-            //Check for presentationsupport
-            VkBool32 presentSupport = false;
-            vkGetPhysicalDeviceSurfaceSupportKHR(adapter, i, m_Surface, &presentSupport);
-            if (queueFamiliy.queueCount > 0 && presentSupport)
-            {
-                indices.PresentFamily = i;
-            }
-            
-            //If we have found a queuefamiliy for both presentation and graphics we break
-            if (indices.Valid())
-            {
-                break;
-            }
-            
-            i++;
-        }
-        
-        return indices;
     }
     
     
@@ -707,13 +661,17 @@ namespace Lambda
         vkEnumerateDeviceExtensionProperties(m_Adapter, nullptr, &extensionCount, availableExtensions.data());
         
         LOG_DEBUG_INFO("[Vulkan] Available Device-Extensions:\n");
-        for (const auto& extension : availableExtensions)
+		for (const auto& extension : availableExtensions)
+		{
             LOG_DEBUG_INFO("   Device-Extension '%s'\n", extension.extensionName);
+		}
         
         //Print all required extensions
         LOG_DEBUG_INFO("[Vulkan] Required Device-Extensions:\n");
-        for (const auto& extension : deviceExtensions)
+		for (const auto& extension : deviceExtensions)
+		{
             LOG_DEBUG_INFO("   Device-Extension '%s'\n", extension);
+		}
         
         //Setup the device
         VkDeviceCreateInfo info = {};
@@ -813,147 +771,17 @@ namespace Lambda
     }
     
     
-    SwapChainCapabilities VulkanGraphicsDevice::QuerySwapChainSupport(VkPhysicalDevice adapter)
-    {
-        SwapChainCapabilities info;
-        
-        //Get capabilities from the surface
-        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(adapter, m_Surface, &info.Capabilities);
-        
-        //Get supported surface formats
-        uint32 formatCount = 0;
-        vkGetPhysicalDeviceSurfaceFormatsKHR(adapter, m_Surface, &formatCount, nullptr);
-        
-        if (formatCount != 0)
-        {
-            info.Formats.resize(formatCount);
-            vkGetPhysicalDeviceSurfaceFormatsKHR(adapter, m_Surface, &formatCount, info.Formats.data());
-        }
-        
-        //Get presentation modes
-        uint32 presentModeCount = 0;
-        vkGetPhysicalDeviceSurfacePresentModesKHR(adapter, m_Surface, &presentModeCount, nullptr);
-        
-        if (presentModeCount != 0)
-        {
-            info.PresentModes.resize(presentModeCount);
-            vkGetPhysicalDeviceSurfacePresentModesKHR(adapter, m_Surface, &presentModeCount, info.PresentModes.data());
-        }
-        
-        return info;
-    }
-    
-    
     bool VulkanGraphicsDevice::CreateSwapChain(uint32 width, uint32 height)
     {
-        SwapChainCapabilities cap = QuerySwapChainSupport(m_Adapter);
-        
-        //Choose a swapchain format
-        VkSurfaceFormatKHR format = cap.Formats[0];
-        for (const auto& availableFormat : cap.Formats)
-        {
-            if (availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
-            {
-                format = availableFormat;
-                break;
-            }
-        }
-        
-        LOG_DEBUG_INFO("Vulkan: Chosen SwapChain format '%s'\n", VkFormatToString(format.format));
-        
-        //Choose a presentationmode
-        VkPresentModeKHR presentationMode = VK_PRESENT_MODE_FIFO_KHR;
-        for (const auto& availablePresentMode : cap.PresentModes)
-        {
-            if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
-            {
-                presentationMode = availablePresentMode;
-                break;
-            }
-            else if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR)
-            {
-                presentationMode = availablePresentMode;
-            }
-        }
-        
-        LOG_DEBUG_INFO("Vulkan: Chosen SwapChain PresentationMode '%s'\n", VkPresentatModeToString(presentationMode));
-        
-        //Choose swapchain extent (Size)
-        VkExtent2D extent;
-        if (cap.Capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
-        {
-            extent = cap.Capabilities.currentExtent;
-        }
-        else
-        {
-            VkExtent2D actualExtent = { width, height };
-            
-            actualExtent.width = std::max(cap.Capabilities.minImageExtent.width, std::min(cap.Capabilities.maxImageExtent.width, actualExtent.width));
-            actualExtent.height = std::max(cap.Capabilities.minImageExtent.height, std::min(cap.Capabilities.maxImageExtent.height, actualExtent.height));
-            
-            extent = actualExtent;
-        }
-        
-        LOG_DEBUG_INFO("Vulkan: Chosen SwapChain Extent w: %u h: %u\n", extent.width, extent.height);
-        
-        //Setup swapchain images
-        uint32 imageCount = cap.Capabilities.minImageCount + 1;
-        if (cap.Capabilities.maxImageCount > 0 && imageCount > cap.Capabilities.maxImageCount)
-            imageCount = cap.Capabilities.maxImageCount;
-        
-        LOG_DEBUG_INFO("Vulkan: Number of images in SwapChain '%u'\n", imageCount);
-        
-        
-        //Setup swapchain
-        VkSwapchainCreateInfoKHR info = {};
-        info.sType              = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-        info.pNext              = nullptr;
-        info.surface            = m_Surface;
-        info.minImageCount      = imageCount;
-        info.imageFormat        = format.format;
-        info.imageColorSpace    = format.colorSpace;
-        info.imageExtent        = extent;
-        info.imageArrayLayers   = 1;
-        info.imageUsage         = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT; //Use as color attachment and clear
-        info.preTransform       = cap.Capabilities.currentTransform;
-        info.compositeAlpha     = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-        info.presentMode        = presentationMode;
-        info.clipped            = VK_TRUE;
-        info.oldSwapchain       = VK_NULL_HANDLE;
-        
-        QueueFamilyIndices indices = FindQueueFamilies(m_Adapter);
-        uint32 queueFamilyIndices[] = { uint32(indices.GraphicsFamily), uint32(indices.PresentFamily) };
-        
-        if (indices.GraphicsFamily != indices.PresentFamily)
-        {
-            info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-            info.queueFamilyIndexCount = 2;
-            info.pQueueFamilyIndices = queueFamilyIndices;
-        }
-        else
-        {
-            info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-            info.queueFamilyIndexCount = 0; // Optional
-            info.pQueueFamilyIndices = nullptr; // Optional
-        }
-        
-        //Create swapchain
-        if (vkCreateSwapchainKHR(m_Device, &info, nullptr, &m_SwapChain) != VK_SUCCESS)
-        {
-            LOG_DEBUG_ERROR("Vulkan: Failed to create SwapChain\n");
-            
-            m_SwapChain = VK_NULL_HANDLE;
-            return false;
-        }
-        else
-        {
-            LOG_DEBUG_INFO("Vulkan: Created SwapChain\n");
-            
-            //Save the extent and formats
-            m_SwapChainFormat = format.format;
-            m_SwapChainSize = extent;
-            return true;
-        }
+		VulkanSwapChainDesc desc = {};
+		desc.Adapter			= m_Adapter;
+		desc.Surface			= m_Surface;
+		desc.SignalSemaphore	= m_ImageSemaphores[m_CurrentFrame];
+		desc.Extent				= { width, height };
+		desc.ImageCount			= FRAMES_AHEAD;
+
+		m_pSwapChain = DBG_NEW VulkanSwapChain(m_Device, desc);
+		return true;
     }
     
     
@@ -964,8 +792,8 @@ namespace Lambda
         desc.Usage              = RESOURCE_USAGE_DEFAULT;
         desc.Flags              = TEXTURE_FLAGS_DEPTH_STENCIL;
         desc.ArraySize          = 1;
-        desc.Width              = m_SwapChainSize.width;
-        desc.Height             = m_SwapChainSize.height;
+        desc.Width              = m_pSwapChain->GetWidth();
+        desc.Height             = m_pSwapChain->GetHeight();
         desc.Format             = FORMAT_D24_UNORM_S8_UINT;
         desc.SampleCount        = 1;
         desc.MipLevels          = 1;
@@ -979,43 +807,6 @@ namespace Lambda
     
     bool VulkanGraphicsDevice::CreateTextures()
     {
-        //Get SwapChain images
-        uint32 imageCount = 0;
-        vkGetSwapchainImagesKHR(m_Device, m_SwapChain, &imageCount, nullptr);
-    
-        std::vector<VkImage> textures(imageCount);
-        vkGetSwapchainImagesKHR(m_Device, m_SwapChain, &imageCount, textures.data());
-    
-        //Init textures
-        for (uint32 i = 0; i < imageCount; i++)
-        {
-            VulkanTextureDesc desc = {};
-            desc.ArraySize                   = 1;
-            desc.AspectFlags                 = VK_IMAGE_ASPECT_COLOR_BIT;
-            desc.ClearValue.color.float32[0] = 0.0f;
-            desc.ClearValue.color.float32[1] = 0.0f;
-            desc.ClearValue.color.float32[2] = 0.0f;
-            desc.ClearValue.color.float32[3] = 0.0f;
-            desc.Depth                       = false;
-            desc.Extent                      = m_SwapChainSize;
-            desc.Format                      = m_SwapChainFormat;
-            desc.Image                       = textures[i];
-            desc.MipLevels                   = 1;
-            desc.Samples                     = VK_SAMPLE_COUNT_1_BIT;
-            desc.UsageFlags                  = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-
-            //Set name
-            SetVulkanObjectName(VK_OBJECT_TYPE_IMAGE, (uint64)desc.Image, "BackBuffer[" + std::to_string(i) + "]");
-            
-            //Create texture
-            m_BackBuffers.push_back(DBG_NEW VulkanTexture2D(m_Device, desc));
-        }
-        
-        //Aquire the first swapchain image
-        m_CurrentFrame = 0;
-        GetNextFrame();
-        
-        LOG_DEBUG_INFO("Vulkan: Created ImageViews\n");
         return true;
     }
     
@@ -1032,20 +823,26 @@ namespace Lambda
         VkFenceCreateInfo fenceInfo = {};
         fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 
+		//Resize vectors
+		m_ImageSemaphores.resize(FRAMES_AHEAD);
+		m_RenderSemaphores.resize(FRAMES_AHEAD);
+		m_Fences.resize(FRAMES_AHEAD);
+
+		//Create sync-objects
         for (uint32 i = 0; i < FRAMES_AHEAD; i++)
         {
             //Create semaphores
             if (vkCreateSemaphore(m_Device, &info, nullptr, &m_ImageSemaphores[i]) != VK_SUCCESS ||
-                vkCreateSemaphore(m_Device, &info, nullptr, &m_RenderSemaphores[i]) != VK_SUCCESS)
+				vkCreateSemaphore(m_Device, &info, nullptr, &m_RenderSemaphores[i]) != VK_SUCCESS)
             {
-                LOG_DEBUG_ERROR("Vulkan: Failed to create Semaphores\n");
+                LOG_DEBUG_ERROR("Vulkan: Failed to create Semaphore\n");
                 return false;
             }
             else
             {
                 //Set semaphorenames
                 VulkanGraphicsDevice::SetVulkanObjectName(VK_OBJECT_TYPE_SEMAPHORE, (uint64)m_ImageSemaphores[i], "ImageSemaphore[" +  std::to_string(i) + "]");
-                VulkanGraphicsDevice::SetVulkanObjectName(VK_OBJECT_TYPE_SEMAPHORE, (uint64)m_RenderSemaphores[i], "RenderSemaphore[" +  std::to_string(i) + "]");
+				VulkanGraphicsDevice::SetVulkanObjectName(VK_OBJECT_TYPE_SEMAPHORE, (uint64)m_RenderSemaphores[i], "RenderSemaphore[" + std::to_string(i) + "]");
             }
             
             //Create fence
@@ -1173,25 +970,6 @@ namespace Lambda
     
     void VulkanGraphicsDevice::ReleaseSwapChain()
     {
-        //Release backbuffers
-        for (size_t i = 0; i < m_BackBuffers.size(); i++)
-        {
-            if (m_BackBuffers[i])
-            {
-                m_BackBuffers[i]->Destroy(m_Device);
-                m_BackBuffers[i] = nullptr;
-            }
-        }
-        
-        //Clear backbuffer array
-        m_BackBuffers.clear();
-        
-        //Release swapchain
-        if (m_SwapChain != VK_NULL_HANDLE)
-        {
-            vkDestroySwapchainKHR(m_Device, m_SwapChain, nullptr);
-            m_SwapChain = VK_NULL_HANDLE;
-        }
     }
     
     
@@ -1210,9 +988,6 @@ namespace Lambda
     {
         //Advance current frame counter
         m_CurrentFrame = (m_CurrentFrame + 1) % FRAMES_AHEAD;
-        
-        //Aquire the next swapchain image
-        vkAcquireNextImageKHR(m_Device, m_SwapChain, 0xffffffffffffffff, m_ImageSemaphores[m_CurrentFrame], VK_NULL_HANDLE, &m_CurrentBackbufferIndex);
     }
     
     
@@ -1444,65 +1219,81 @@ namespace Lambda
     
     void VulkanGraphicsDevice::Destroy() const
     {
+		//Delete 
 		delete this;
     }
     
     
     void VulkanGraphicsDevice::ExecuteCommandList(ICommandList* const * ppLists, uint32 numLists) const
     {
-        //LOG_DEBUG_INFO("Vulkan: VulkanGraphicsDevice::ExecuteCommandList currentFrame=%u\n", m_CurrentFrame);
-        
         //Retrive commandbuffers
         std::vector<VkCommandBuffer> buffers;
         for (uint32 i = 0; i < numLists; i++)
             buffers.push_back(reinterpret_cast<VkCommandBuffer>(ppLists[i]->GetNativeHandle()));
         
-        //Setup submitinfo
-        VkSemaphore waitSemaphores[]        = { m_ImageSemaphores[m_CurrentFrame] };
-        VkSemaphore signalSemaphores[]      = { m_RenderSemaphores[m_CurrentFrame] };
-        VkPipelineStageFlags waitStages[]   = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-        
+        //Setup submitinfo        
         VkSubmitInfo submitInfo = {};
-        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        submitInfo.pNext = nullptr;
-        submitInfo.waitSemaphoreCount = 1;
-        submitInfo.pWaitSemaphores = waitSemaphores;
-        submitInfo.pWaitDstStageMask = waitStages;
-        submitInfo.commandBufferCount = numLists;
-        submitInfo.pCommandBuffers = buffers.data();
-        submitInfo.signalSemaphoreCount = 1;
-        submitInfo.pSignalSemaphores = signalSemaphores;
+        submitInfo.sType				= VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submitInfo.pNext				= nullptr;
+        submitInfo.waitSemaphoreCount	= 0;
+        submitInfo.pWaitSemaphores		= nullptr;
+        submitInfo.pWaitDstStageMask	= nullptr;
+        submitInfo.commandBufferCount	= numLists;
+        submitInfo.pCommandBuffers		= buffers.data();
+        submitInfo.signalSemaphoreCount = 0;
+        submitInfo.pSignalSemaphores	= nullptr;
 
         //submit commandbuffers
-        if (vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, m_Fences[m_CurrentFrame]) != VK_SUCCESS)
+        if (vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to submit CommandBuffers\n");
         }
     }
+
+	void VulkanGraphicsDevice::ExecuteCommandListAndPresent(ICommandList* const* ppLists, uint32 numLists) const
+	{
+		LOG_DEBUG_INFO("Vulkan: VulkanGraphicsDevice::ExecuteCommandListAndPresent  Frame '%d' - WaitSemaphore='%x', SignalSemaphore='%x'\n", m_CurrentFrame, m_ImageSemaphores[m_CurrentFrame], m_RenderSemaphores[m_CurrentFrame]);
+
+		//Retrive commandbuffers
+		std::vector<VkCommandBuffer> buffers;
+		for (uint32 i = 0; i < numLists; i++)
+			buffers.push_back(reinterpret_cast<VkCommandBuffer>(ppLists[i]->GetNativeHandle()));
+
+		//Setup submitinfo
+		VkSemaphore waitSemaphores[] = { m_ImageSemaphores[m_CurrentFrame] };
+		VkSemaphore signalSemaphores[] = { m_RenderSemaphores[m_CurrentFrame] };
+		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+
+		VkSubmitInfo submitInfo = {};
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submitInfo.pNext = nullptr;
+		submitInfo.waitSemaphoreCount = 1;
+		submitInfo.pWaitSemaphores = waitSemaphores;
+		submitInfo.pWaitDstStageMask = waitStages;
+		submitInfo.commandBufferCount = numLists;
+		submitInfo.pCommandBuffers = buffers.data();
+		submitInfo.signalSemaphoreCount = 1;
+		submitInfo.pSignalSemaphores = signalSemaphores;
+
+		//submit commandbuffers
+		if (vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, m_Fences[m_CurrentFrame]) != VK_SUCCESS)
+		{
+			LOG_DEBUG_ERROR("Vulkan: Failed to submit CommandBuffers\n");
+		}
+
+		//Present
+		Present();
+	}
     
     
     void VulkanGraphicsDevice::Present() const
     {
-        //Setup presentinfo
-        VkSemaphore waitSemaphores[] = { m_RenderSemaphores[m_CurrentFrame] };
-        VkSwapchainKHR swapChains[] = { m_SwapChain };
-        
-        VkPresentInfoKHR info = {};
-        info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-        info.pNext = nullptr;
-        info.waitSemaphoreCount = 1;
-        info.pWaitSemaphores = waitSemaphores;
-        info.swapchainCount = 1;
-        info.pSwapchains = swapChains;
-        info.pImageIndices = &m_CurrentBackbufferIndex;
-        info.pResults = nullptr;
-        
-        //Present
-        vkQueuePresentKHR(m_PresentationQueue, &info);
-        
-        //LOG_DEBUG_INFO("Vulkan: Present Frame '%d' Image '%d'\n", m_CurrentFrame, m_CurrentBackbufferIndex);
-        
+        LOG_DEBUG_INFO("Vulkan: Present Frame '%d' - WaitSemaphore='%x', SignalSemaphore='%x'\n", m_CurrentFrame, m_RenderSemaphores[m_CurrentFrame], m_ImageSemaphores[m_CurrentFrame]);
+		
+		m_pSwapChain->Present(m_Device, m_PresentationQueue, m_RenderSemaphores[m_CurrentFrame]);
         GPUWaitForFrame();
+
+		m_pSwapChain->AquireNextImage(m_Device, m_ImageSemaphores[m_CurrentFrame]);
     }
     
     
@@ -1526,19 +1317,19 @@ namespace Lambda
     
     ResourceFormat VulkanGraphicsDevice::GetBackBufferFormat() const
     {
-        return ConvertVkFormat(m_SwapChainFormat);
+        return ConvertVkFormat(m_pSwapChain->GetFormat());
     }
     
     
     void* VulkanGraphicsDevice::GetNativeHandle() const
     {
-        return (void*)m_Device;
+        return reinterpret_cast<void*>(m_Device);
     }
     
     
     ITexture2D* VulkanGraphicsDevice::GetCurrentRenderTarget() const
     {
-        return m_BackBuffers[GetCurrentBackBufferIndex()];
+        return m_pSwapChain->GetCurrentBuffer();
     }
     
     
@@ -1550,19 +1341,19 @@ namespace Lambda
     
     uint32 VulkanGraphicsDevice::GetCurrentBackBufferIndex() const
     {
-        return m_CurrentBackbufferIndex;
+        return m_pSwapChain->GetCurrentBackBufferIndex();
     }
     
     
     uint32 VulkanGraphicsDevice::GetCurrentSwapChainWidth() const
     {
-        return m_SwapChainSize.width;
+        return m_pSwapChain->GetWidth();
     }
     
     
     uint32 VulkanGraphicsDevice::GetCurrentSwapChainHeight() const
     {
-        return m_SwapChainSize.height;
+        return m_pSwapChain->GetHeight();
     }
     
     
@@ -1573,7 +1364,7 @@ namespace Lambda
         {
             //When we minimize or any other reason the size is zero
             //Do not resize if the size is the same as the current one
-            if ((event.WindowResize.Width == 0 || event.WindowResize.Height == 0) || (event.WindowResize.Width == m_SwapChainSize.width && event.WindowResize.Height == m_SwapChainSize.height))
+            if ((event.WindowResize.Width == 0 || event.WindowResize.Height == 0) || (event.WindowResize.Width == m_pSwapChain->GetWidth() && event.WindowResize.Height == m_pSwapChain->GetHeight()))
             {
                 return false;
             }

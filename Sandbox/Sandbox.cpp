@@ -321,7 +321,7 @@ namespace Lambda
             pDevice->ExecuteCommandList(&m_pCurrentList, 1);
 
             //Wait for GPU
-            pDevice->GPUWaitForFrame();
+            pDevice->WaitForGPU();
         }
 	}
 
@@ -343,9 +343,9 @@ namespace Lambda
         //Rotate camera
          constexpr float rotation = 30.0f;
         if (Input::IsKeyDown(KEY_UP))
-            m_Camera.Rotate(glm::vec3(rotation, 0.0f, 0.0f) * dt.AsSeconds());
-        else if (Input::IsKeyDown(KEY_DOWN))
             m_Camera.Rotate(glm::vec3(-rotation, 0.0f, 0.0f) * dt.AsSeconds());
+        else if (Input::IsKeyDown(KEY_DOWN))
+            m_Camera.Rotate(glm::vec3(rotation, 0.0f, 0.0f) * dt.AsSeconds());
         
         if (Input::IsKeyDown(KEY_RIGHT))
             m_Camera.Rotate(glm::vec3(0.0f, -rotation, 0.0f) * dt.AsSeconds());
@@ -468,8 +468,7 @@ namespace Lambda
         m_pCurrentList->Close();
         
         //Present
-        pDevice->ExecuteCommandList(&m_pCurrentList, 1);
-        pDevice->Present();
+        pDevice->ExecuteCommandListAndPresent(&m_pCurrentList, 1);
 	}
 
 
@@ -566,8 +565,6 @@ namespace Lambda
             default:
                 return false;
         }
-        
-        return false;
     }
 
     

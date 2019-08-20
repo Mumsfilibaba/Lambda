@@ -326,6 +326,11 @@ namespace Lambda
 	}
 
 
+	void DX12GraphicsDevice::ExecuteCommandListAndPresent(ICommandList* const* ppLists, uint32 numLists) const
+	{
+	}
+
+
 	void DX12GraphicsDevice::Present() const
 	{
 		m_SwapChain->Present(1, 0);

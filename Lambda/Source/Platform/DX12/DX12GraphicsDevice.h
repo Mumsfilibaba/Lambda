@@ -36,6 +36,7 @@ namespace Lambda
 		virtual void Destroy() const override final;
 
 		virtual void ExecuteCommandList(ICommandList* const * ppLists, uint32 numLists) const;
+		virtual void ExecuteCommandListAndPresent(ICommandList* const* ppLists, uint32 numLists) const;
 		virtual void Present() const override final;
 		virtual void GPUWaitForFrame() const override final;
 		virtual void WaitForGPU() const override final;

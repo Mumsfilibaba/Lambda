@@ -1,5 +1,7 @@
+#pragma once
 namespace Lambda
 {
+	//Helper function to retrive the type of memory required
     inline uint32 FindMemoryType(VkPhysicalDevice adapter, uint32 typeFilter, VkMemoryPropertyFlags properties)
     {
         //Get memory properties of the GPU
@@ -19,7 +21,7 @@ namespace Lambda
         LOG_DEBUG_ERROR("Vulkan: Failed to find a suitable memory type\n");
         return uint32(-1);
     }
-    
+
     
     inline const char* VkPresentatModeToString(VkPresentModeKHR mode)
     {

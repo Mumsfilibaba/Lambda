@@ -1,6 +1,8 @@
 #pragma once
 #include "System/IWindow.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
+	#include <vector>
+
 namespace Lambda
 {
 	class WindowsWindow : public IWindow
@@ -27,6 +29,7 @@ namespace Lambda
 
 	private:
 		EventCallback m_OnEvent;
+		std::vector<Event> m_EventBackLog;
 		HWND m_Wnd;
 		uint32 m_Height;
 		uint32 m_Width;

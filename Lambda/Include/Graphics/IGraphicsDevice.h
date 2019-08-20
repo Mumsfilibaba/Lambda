@@ -54,6 +54,7 @@ namespace Lambda
 		virtual void Destroy() const = 0;
 
 		virtual void ExecuteCommandList(ICommandList* const * ppLists, uint32 numLists) const = 0;
+		virtual void ExecuteCommandListAndPresent(ICommandList* const* ppLists, uint32 numLists) const = 0;
 		virtual void Present() const = 0;
 		virtual void WaitForGPU() const = 0;
 		virtual void GPUWaitForFrame() const = 0;

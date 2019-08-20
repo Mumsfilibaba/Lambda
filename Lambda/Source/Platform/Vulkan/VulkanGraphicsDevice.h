@@ -3,44 +3,18 @@
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#define VK_USE_PLATFORM_WIN32_KHR
 #endif
-#include <vulkan/vulkan.h>
+#include "VulkanHelperStructs.h"
 
 #define FRAMES_AHEAD 3
 
 namespace Lambda
-{
-    //Helperstruct for when finding queuefamilies
-    struct QueueFamilyIndices
-    {
-        int32 GraphicsFamily    = -1;
-        int32 PresentFamily     = -1;
-        
-        inline bool Valid()
-        {
-            return (GraphicsFamily >= 0) && (PresentFamily >= 0);
-        }
-    };
-    
-    
-    //SwapChain support helper struct
-    struct SwapChainCapabilities
-    {
-        VkSurfaceCapabilitiesKHR Capabilities;
-        std::vector<VkSurfaceFormatKHR> Formats;
-        std::vector<VkPresentModeKHR> PresentModes;
-        
-        inline bool Valid()
-        {
-            return !Formats.empty() && !PresentModes.empty() && Capabilities.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-        }
-    };
-    
-    
+{    
     //Forward declarations
     class VulkanBuffer;
     class VulkanTexture2D;
     class VulkanCommandList;
     class VulkanSamplerState;
+	class VulkanSwapChain;
     
     
     //Vulkan implementation of graphics device
@@ -68,6 +42,7 @@ namespace Lambda
         virtual void Destroy() const override final;
         
         virtual void ExecuteCommandList(ICommandList* const * ppLists, uint32 numLists) const override final;
+		virtual void ExecuteCommandListAndPresent(ICommandList* const* ppLists, uint32 numLists) const override final;
         virtual void Present() const override final;
         virtual void GPUWaitForFrame() const override final;
         virtual void WaitForGPU() const override final;
@@ -104,8 +79,6 @@ namespace Lambda
         void GetNextFrame() const;
         
         bool AdapterIsSuitable(VkPhysicalDevice adapter);
-        SwapChainCapabilities QuerySwapChainSupport(VkPhysicalDevice adapter);
-        QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice adapter); //Returns -1 on failure, otherwise index of queuefamily
         
         std::vector<const char*> GetRequiredValidationLayers(bool debug);
         std::vector<const char*> GetRequiredDeviceExtensions();
@@ -118,25 +91,23 @@ namespace Lambda
         VkDevice m_Device;
         VkQueue m_GraphicsQueue;
         VkQueue m_PresentationQueue;
-        VkFence m_Fences[FRAMES_AHEAD];
-        VkSemaphore m_ImageSemaphores[FRAMES_AHEAD];
-        VkSemaphore m_RenderSemaphores[FRAMES_AHEAD];
+
+		std::vector<VkFence> m_Fences;
+		std::vector<VkSemaphore> m_RenderSemaphores;
+		std::vector<VkSemaphore> m_ImageSemaphores;
+
         QueueFamilyIndices m_FamiliyIndices;
         
         VkPhysicalDevice m_Adapter;
         VkPhysicalDeviceProperties m_AdapterProperties;
         
         VkSurfaceKHR m_Surface;
-        VkSwapchainKHR m_SwapChain;
-        VkFormat m_SwapChainFormat;
-        VkExtent2D m_SwapChainSize;
-        
+
+		VulkanSwapChain* m_pSwapChain;
+		VulkanTexture2D* m_pDepthStencil;
+		VulkanCommandList* m_pCommandList;
+
         mutable uint64 m_CurrentFrame;
-        mutable uint32 m_CurrentBackbufferIndex;
-        std::vector<VulkanTexture2D*> m_BackBuffers;
-        VulkanTexture2D* m_pDepthStencil;
-        
-        VulkanCommandList* m_pCommandList;
         
         VkPipelineLayout m_DefaultPipelineLayout;
         VkDescriptorSetLayout m_DefaultDescriptorSetLayouts[LAMBDA_SHADERSTAGE_COUNT];
