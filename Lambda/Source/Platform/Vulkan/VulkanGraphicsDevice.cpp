@@ -1372,19 +1372,11 @@ namespace Lambda
             //Syncronize the GPU so no operations are in flight when recreating swapchain
             vkDeviceWaitIdle(m_Device);
             
-            //Release the old SwapChain and depthbuffer
-            ReleaseSwapChain();
+            //Resize the swapchain
+			m_pSwapChain->ResizeBuffers(event.WindowResize.Width, event.WindowResize.Height);
+
+			//Recreate depthstencil
             ReleaseDepthStencil();
-            
-            //Create new swapchain
-            if (!CreateSwapChain(event.WindowResize.Width, event.WindowResize.Height))
-            {
-                LOG_DEBUG_ERROR("Vulkan: Failed to create new SwapChain\n");
-                return false;
-            }
-            
-            //Create new textures
-            CreateTextures();
             CreateDepthStencil();
             
             //Resize swapchain etc. here
