@@ -181,7 +181,7 @@ namespace Lambda
 
 	void VulkanSwapChain::AquireNextImage(VkDevice device, VkSemaphore signalSemaphore)
 	{
-		LOG_DEBUG_INFO("Vulkan: vkAcquireNextImageKHR with semaphore %x\n", signalSemaphore);
+		//LOG_DEBUG_INFO("Vulkan: vkAcquireNextImageKHR with semaphore %x\n", signalSemaphore);
 		vkAcquireNextImageKHR(device, m_SwapChain, 0xffffffffffffffff, signalSemaphore, VK_NULL_HANDLE, &m_CurrentBufferIndex);
 	}
 

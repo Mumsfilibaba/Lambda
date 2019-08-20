@@ -3,6 +3,8 @@
 #include "System/Input.h"
 #include "glm/gtc/matrix_transform.hpp"
 
+#define SINGLE_CUBE
+
 namespace Lambda
 {
     //Declare vertex
@@ -446,6 +448,7 @@ namespace Lambda
         static glm::mat4 rotation = glm::mat4(1.0f);
         rotation = glm::rotate(rotation, glm::radians(45.0f) * dt.AsSeconds(), glm::vec3(0.0f, 1.0f, 0.0f));
         
+#if !defined(SINGLE_CUBE)
         //Draw cubes
         for (uint32 y = 0; y < 20; y++)
         {
@@ -462,6 +465,17 @@ namespace Lambda
                 m_pCurrentList->DrawIndexedInstanced(36, 1, 0, 0, 0);
             }
         }
+#else
+		//Update transforms
+		m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)) * rotation;
+
+		data.pData = &m_TransformBuffer;
+		data.SizeInBytes = sizeof(TransformBuffer);
+		m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);
+
+		//Draw
+		m_pCurrentList->DrawIndexedInstanced(36, 1, 0, 0, 0);
+#endif
         
         //Transition rendertarget to present
         m_pCurrentList->TransitionTexture(pRenderTarget, RESOURCE_STATE_RENDERTARGET_PRESENT);
