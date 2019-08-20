@@ -213,7 +213,11 @@ namespace Lambda
                 desc.RenderTargetFormats[0] = pDevice->GetBackBufferFormat();
                 desc.DepthStencilFormat     = depthFormat;
                 desc.RenderTargetCount      = 1;
+#if defined(LAMBDA_PLAT_WINDOWS)
                 desc.DepthTest              = true;
+#elif defined(LAMBDA_PLAT_MACOS)
+                desc.DepthTest              = false;
+#endif
                 
                 pDevice->CreateGraphicsPipelineState(&m_pPipelineState, desc);
             }
