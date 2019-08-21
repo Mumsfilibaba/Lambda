@@ -3,7 +3,7 @@
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#define VK_USE_PLATFORM_WIN32_KHR
 #endif
-#include "VulkanHelperStructs.h"
+#include "VulkanUtilities.h"
 
 #define FRAMES_AHEAD 3
 

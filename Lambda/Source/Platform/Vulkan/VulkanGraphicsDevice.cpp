@@ -10,7 +10,7 @@
 #include "VulkanFramebuffer.h"
 #include "VulkanBuffer.h"
 #include "VulkanSwapChain.h"
-#include "VulkanHelpers.inl"
+#include "VulkanUtilities.h"
 #include "VulkanConversions.inl"
 #if defined(LAMBDA_PLAT_MACOS)
     #include <GLFW/glfw3.h>
@@ -777,6 +777,9 @@ namespace Lambda
 		desc.Adapter			= m_Adapter;
 		desc.Surface			= m_Surface;
 		desc.SignalSemaphore	= m_ImageSemaphores[m_CurrentFrame];
+        desc.PresentationMode   = VK_PRESENT_MODE_MAILBOX_KHR;
+        desc.Format.format      = VK_FORMAT_B8G8R8A8_UNORM;
+        desc.Format.colorSpace  = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
 		desc.Extent				= { width, height };
 		desc.ImageCount			= FRAMES_AHEAD;
 
@@ -1290,7 +1293,7 @@ namespace Lambda
     {
         //LOG_DEBUG_INFO("Vulkan: Present Frame '%d' - WaitSemaphore='%x', SignalSemaphore='%x'\n", m_CurrentFrame, m_RenderSemaphores[m_CurrentFrame], m_ImageSemaphores[m_CurrentFrame]);
 		
-		m_pSwapChain->Present(m_Device, m_PresentationQueue, m_RenderSemaphores[m_CurrentFrame]);
+		m_pSwapChain->Present(m_PresentationQueue, m_RenderSemaphores[m_CurrentFrame]);
         GPUWaitForFrame();
 
 		m_pSwapChain->AquireNextImage(m_Device, m_ImageSemaphores[m_CurrentFrame]);
@@ -1373,7 +1376,7 @@ namespace Lambda
             vkDeviceWaitIdle(m_Device);
             
             //Resize the swapchain
-			m_pSwapChain->ResizeBuffers(event.WindowResize.Width, event.WindowResize.Height);
+            m_pSwapChain->ResizeBuffers(m_Device, m_ImageSemaphores[m_CurrentFrame], event.WindowResize.Width, event.WindowResize.Height);
 
 			//Recreate depthstencil
             ReleaseDepthStencil();

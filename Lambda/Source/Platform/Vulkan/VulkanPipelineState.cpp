@@ -2,7 +2,7 @@
 #include "VulkanPipelineState.h"
 #include "VulkanShader.h"
 #include "VulkanGraphicsDevice.h"
-#include "VulkanHelpers.inl"
+#include "VulkanUtilities.h"
 #include "VulkanConversions.inl"
 #include <vector>
 #include <set>

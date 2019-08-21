@@ -2,7 +2,7 @@
 #include "VulkanTexture2D.h"
 #include "VulkanFramebuffer.h"
 #include "VulkanConversions.inl"
-#include "VulkanHelpers.inl"
+#include "VulkanUtilities.h"
 
 namespace Lambda
 {

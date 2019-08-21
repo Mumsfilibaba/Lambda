@@ -2,7 +2,7 @@
 #include "Defines.h"
 #include "Types.h"
 #include <vector>
-#include <vulkan/vulkan.h>
+#include "VulkanUtilities.h"
 
 namespace Lambda
 {
@@ -14,11 +14,13 @@ namespace Lambda
 	//Describe vulkanswapchain
 	struct VulkanSwapChainDesc
 	{
-		VkSurfaceKHR Surface = VK_NULL_HANDLE;
-		VkPhysicalDevice Adapter = VK_NULL_HANDLE;
+		VkSurfaceKHR Surface        = VK_NULL_HANDLE;
+		VkPhysicalDevice Adapter    = VK_NULL_HANDLE;
 		VkSemaphore	SignalSemaphore = VK_NULL_HANDLE;
-		VkExtent2D Extent;
-		uint32 ImageCount = 0;
+        VkExtent2D Extent           = { 0, 0 };
+		uint32 ImageCount           = 0;
+        VkSurfaceFormatKHR Format;
+        VkPresentModeKHR PresentationMode;
 	};
 
 
@@ -33,24 +35,31 @@ namespace Lambda
 
 		uint32 GetWidth() const;
 		uint32 GetHeight() const;
-		uint32 GetCurrentBackBufferIndex() const;
+        uint32 GetBufferCount() const;
+        uint32 GetCurrentBackBufferIndex() const;
 		VkFormat GetFormat() const;
 		ITexture2D* GetCurrentBuffer() const;
 
-		void ResizeBuffers(uint32 width, uint32 height);
+		void ResizeBuffers(VkDevice device, VkSemaphore signalSemaphore, uint32 width, uint32 height);
 		void AquireNextImage(VkDevice device, VkSemaphore signalSemaphore);
-		void Present(VkDevice device, VkQueue presentQueue, VkSemaphore waitSemaphore);
+		void Present(VkQueue presentQueue, VkSemaphore waitSemaphore);
 
 		void Release(VkDevice device);
 		void Destroy(VkDevice device);
 
 	private:
 		void Init(VkDevice device, const VulkanSwapChainDesc& desc);
+        void InitSwapChain(VkDevice device, VkSemaphore signalSemaphore, VkExtent2D extent);
 
 	private:
+        VkPhysicalDevice m_Adapter;
+        VkSurfaceKHR m_Surface;
 		VkSwapchainKHR m_SwapChain;
-		VkFormat m_Format;
-		VkExtent2D m_Size;
+		VkSurfaceFormatKHR m_Format;
+		VkExtent2D m_Extent;
+        VkPresentModeKHR m_PresentationMode;
+        QueueFamilyIndices m_FamilyIndices;
+        SwapChainCapabilities m_Cap;
 		uint32 m_ImageCount;
 		uint32 m_CurrentFrame;
 		mutable uint32 m_CurrentBufferIndex;

@@ -1,6 +1,6 @@
 #include "LambdaPch.h"
 #include "VulkanBuffer.h"
-#include "VulkanHelpers.inl"
+#include "VulkanUtilities.h"
 #include "VulkanGraphicsDevice.h"
 
 namespace Lambda

@@ -2,7 +2,7 @@
 #include <string>
 #include "Graphics/ICommandList.h"
 #include "VulkanUploadBuffer.h"
-#include "VulkanHelpers.inl"
+#include "VulkanUtilities.h"
 
 namespace Lambda
 {
