@@ -6,6 +6,7 @@
 #include "VulkanTexture2D.h"
 #include "VulkanFramebuffer.h"
 #include "VulkanBuffer.h"
+#include "VulkanRenderPass.h"
 #include "VulkanConversions.inl"
 
 namespace Lambda
@@ -20,8 +21,7 @@ namespace Lambda
         m_DescriptorPool(VK_NULL_HANDLE),
         m_Type(COMMAND_LIST_TYPE_UNKNOWN),
         m_pRT(nullptr),
-        m_pDS(nullptr),
-        m_HasRenderPass(false)
+        m_pDS(nullptr)
     {
         //Init samplers in texturedescriptors to null
         for (uint32 i = 0; i < LAMBDA_SHADERSTAGE_COUNT; i++)
@@ -379,20 +379,6 @@ namespace Lambda
     }
     
     
-    void VulkanCommandList::SetRenderTarget(ITexture2D* pRenderTarget, ITexture2D* pDepthStencil)
-    {
-        m_pRT = pRenderTarget;
-        m_pDS = pDepthStencil;
-        
-        //Get formats
-        VkFormat colorFormat = (pRenderTarget) ? reinterpret_cast<VulkanTexture2D*>(pRenderTarget)->GetFormat() : VK_FORMAT_UNDEFINED;
-        VkFormat depthStencilFormat = (pDepthStencil) ? reinterpret_cast<VulkanTexture2D*>(pDepthStencil)->GetFormat() : VK_FORMAT_UNDEFINED;
-        //Set rendertarget and get framebuffer
-        m_BoundRenderPass = VulkanRenderPassCache::GetRenderPass(m_Device, &colorFormat, 1, depthStencilFormat, VK_SAMPLE_COUNT_1_BIT);
-        m_BoundFrameBuffer = VulkanFramebufferCache::GetFramebuffer(m_Device, m_BoundRenderPass, &pRenderTarget, 1, pDepthStencil);
-    }
-    
-    
     void VulkanCommandList::SetViewport(const Viewport& viewport)
     {
         //Setup vulkan viewport
@@ -459,17 +445,12 @@ namespace Lambda
     
     void VulkanCommandList::TransitionBuffer(const IBuffer* pBuffer, ResourceState state)
     {
+		assert(pBuffer && state);
     }
     
     
     void VulkanCommandList::TransitionTexture(const ITexture2D* pTexture, ResourceState state)
-    {
-        //End renderpass if there are any
-        if (HasRenderPass())
-        {
-            EndRenderPass();
-        }
-        
+    {        
         //Convert texture to vulkan texture
         const VulkanTexture2D* pVkTexture = reinterpret_cast<const VulkanTexture2D*>(pTexture);
         
@@ -690,13 +671,7 @@ namespace Lambda
     
     
     void VulkanCommandList::UpdateBuffer(IBuffer* pResource, const ResourceData* pData)
-    {
-        //Renderpass cannot be active when updating a buffer
-        if (HasRenderPass())
-        {
-            EndRenderPass();
-        }
-        
+    {        
         //Get offset before allocating
         uint64 offset = m_BufferUpload.GetOffset();
         
@@ -765,34 +740,17 @@ namespace Lambda
     
     
     void VulkanCommandList::DrawInstanced(uint32 vertexCountPerInstance, uint32 instanceCount, uint32 startVertexLocation, uint32 startInstanceLocation)
-    {
-        //Start renderpass if none is started
-        if (!HasRenderPass())
-        {
-            VkFramebuffer fbo = (m_BoundFrameBuffer == VK_NULL_HANDLE) ? VulkanFramebufferCache::GetFramebuffer(m_Device, m_BoundRenderPass, &m_pRT, 1, m_pDS) : m_BoundFrameBuffer;
-            BeginRenderPass(fbo, m_BoundRenderPass, m_pRT->GetWidth(), m_pRT->GetHeight());
-        }
-        
+    {        
         //Set descriptorsets
         vkCmdBindDescriptorSets(m_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, LAMBDA_SHADERSTAGE_COUNT, m_DescriptorSets, 0, nullptr);
         
         //Draw current vertexbuffer
         vkCmdDraw(m_CommandBuffer, vertexCountPerInstance, instanceCount, startVertexLocation, startInstanceLocation);
-        
-        //End renderpass
-        vkCmdEndRenderPass(m_CommandBuffer);
     }
     
     
     void VulkanCommandList::DrawIndexedInstanced(uint32 indexCountPerInstance, uint32 instanceCount, uint32 startIndexLocation, uint32 baseVertexLocation, uint32 startInstanceLocation)
     {
-        //Start renderpass if none is started
-        if (!HasRenderPass())
-        {
-            VkFramebuffer fbo = (m_BoundFrameBuffer == VK_NULL_HANDLE) ? VulkanFramebufferCache::GetFramebuffer(m_Device, m_BoundRenderPass, &m_pRT, 1, m_pDS) : m_BoundFrameBuffer;
-            BeginRenderPass(fbo, m_BoundRenderPass, m_pRT->GetWidth(), m_pRT->GetHeight());
-        }
-
         //Bind descriptors
         vkCmdBindDescriptorSets(m_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, LAMBDA_SHADERSTAGE_COUNT, m_DescriptorSets, 0, nullptr);
         
@@ -813,12 +771,6 @@ namespace Lambda
     
     void VulkanCommandList::Close()
     {
-        //If there is an active renderpass, end it
-        if (HasRenderPass())
-        {
-            EndRenderPass();
-        }
-        
         //End and close commandbuffer
         if (vkEndCommandBuffer(m_CommandBuffer) != VK_SUCCESS)
         {
@@ -852,38 +804,28 @@ namespace Lambda
     }
     
     
-    void VulkanCommandList::BeginRenderPass(VkFramebuffer framebuffer, VkRenderPass renderpass, uint32 width, uint32 height)
-    {
-        if (!HasRenderPass())
-        {
-            //Begin renderpass
-            VkRenderPassBeginInfo info = {};
-            info.sType                      = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-            info.pNext                      = nullptr;
-            info.renderPass                 = renderpass;
-            info.framebuffer                = framebuffer;
-            info.renderArea.offset          = { 0, 0 };
-            info.renderArea.extent.width    = width;
-            info.renderArea.extent.height   = height;
-            info.clearValueCount            = 0;
-            info.pClearValues               = nullptr;
-            
-            vkCmdBeginRenderPass(m_CommandBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
-            m_HasRenderPass = true;
-        }
+	void VulkanCommandList::BeginRenderPass(IRenderPass* pRenderPass)
+	{
+		//Get vulkanrenderpass
+		VulkanRenderPass* pVkRenderPass = reinterpret_cast<VulkanRenderPass*>(pRenderPass);
 
-        //LOG_DEBUG_INFO("Vulkan: Started renderpass\n");
-    }
-    
-    
-    void VulkanCommandList::EndRenderPass()
-    {
-        //End renderpass
-        if (HasRenderPass())
-        {
-            vkCmdEndRenderPass(m_CommandBuffer);
-            m_HasRenderPass = false;
-        }
-        //LOG_DEBUG_INFO("Vulkan: Ended renderpass\n");
-    }
+		//Begin renderpass
+		VkRenderPassBeginInfo info = {};
+		info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		info.pNext = nullptr;
+		info.renderPass = pVkRenderPass->GetRenderPass();
+		info.framebuffer = pVkRenderPass->GetFramebuffer();
+		info.renderArea.offset = { 0, 0 };
+		info.renderArea.extent = pVkRenderPass->GetFramebufferExtent();
+		info.clearValueCount = pVkRenderPass->GetAttachmentCount();
+		info.pClearValues = pVkRenderPass->GetClearValues();
+
+		vkCmdBeginRenderPass(m_CommandBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
+	}
+
+
+	void VulkanCommandList::EndRenderPass()
+	{
+		vkCmdEndRenderPass(m_CommandBuffer);
+	}
 }

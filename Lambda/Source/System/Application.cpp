@@ -50,6 +50,7 @@ namespace Lambda
 			}
 
 			
+#if defined(LAMBDA_PLAT_MACOS)
             if (m_HasFocus)
             {
                 //Render when the application has focus
@@ -61,6 +62,11 @@ namespace Lambda
                 //If the application does not have focus sleep for one frame (16ms)
                 std::this_thread::sleep_for(std::chrono::milliseconds(16));
             }
+#else
+			//Render
+			InternalOnRender(clock.GetDeltaTime());
+			fps++;
+#endif
 			
 			//Print FPS and UPS to console
 			if (clock.GetTotalTime().AsSeconds() >= 1.0f)

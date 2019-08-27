@@ -191,9 +191,26 @@ namespace Lambda
             //m_pPS = IShader::CreateShaderFromFile(pDevice, "Triangle.hlsl", "PSMain", SHADER_TYPE_PIXEL);
             //m_pCompute = IShader::CreateShaderFromFile(pDevice, "Texture2DMipMapGen.cso", "main", SHADER_TYPE_COMPUTE, SHADER_LANG_HLSL_COMPILED);
             
+
             //Define depthformat
             ResourceFormat depthFormat = FORMAT_D24_UNORM_S8_UINT;
             
+
+			//Create RenderPass
+			{
+				RenderPassDesc desc = {};
+				desc.NumRenderTargets = 1;
+				desc.RenderTargets[0].Format = pDevice->GetBackBufferFormat();;
+				desc.RenderTargets[0].LoadOperation = LOAD_OP_CLEAR;
+				desc.RenderTargets[0].StoreOperation = STORE_OP_STORE;
+				desc.DepthStencil.Format = depthFormat;
+				desc.DepthStencil.LoadOperation = LOAD_OP_CLEAR;
+				desc.DepthStencil.StoreOperation = STORE_OP_STORE;
+
+				pDevice->CreateRenderPass(&m_pRenderPass, desc);
+			}
+
+
             //Create pipelinestate
             {
                 InputElement elements[]
@@ -204,19 +221,17 @@ namespace Lambda
                 };
                 
                 GraphicsPipelineStateDesc desc = {};
-                desc.pVertexShader          = m_pVS;
-                desc.pPixelShader           = m_pPS;
-                desc.pInputElements         = elements;
-                desc.InputElementCount      = sizeof(elements) / sizeof(InputElement);
-                desc.Topology               = PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-                desc.Cull                   = CULL_MODE_BACK;
-                desc.RenderTargetFormats[0] = pDevice->GetBackBufferFormat();
-                desc.DepthStencilFormat     = depthFormat;
-                desc.RenderTargetCount      = 1;
+                desc.pVertexShader = m_pVS;
+                desc.pPixelShader = m_pPS;
+                desc.pInputElements = elements;
+                desc.InputElementCount = sizeof(elements) / sizeof(InputElement);
+                desc.Topology = PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+                desc.Cull = CULL_MODE_BACK;
+				desc.pRenderPass = m_pRenderPass;
 #if defined(LAMBDA_PLAT_WINDOWS)
-                desc.DepthTest              = true;
+                desc.DepthTest = true;
 #elif defined(LAMBDA_PLAT_MACOS)
-                desc.DepthTest              = false;
+                desc.DepthTest = false;
 #endif
                 
                 pDevice->CreateGraphicsPipelineState(&m_pPipelineState, desc);
@@ -229,7 +244,7 @@ namespace Lambda
                 BufferDesc desc = {};
                 desc.Usage          = RESOURCE_USAGE_DEFAULT;
                 desc.Flags          = BUFFER_FLAGS_VERTEX_BUFFER;
-                desc.SizeInBytes    = sizeof(Vertex) * vertices.size();
+                desc.SizeInBytes    = sizeof(Vertex) * uint32(vertices.size());
                 desc.StrideInBytes  = sizeof(Vertex);
 
                 ResourceData data = {};
@@ -246,7 +261,7 @@ namespace Lambda
                 BufferDesc desc = {};
                 desc.Usage          = RESOURCE_USAGE_DEFAULT;
                 desc.Flags          = BUFFER_FLAGS_INDEX_BUFFER;
-                desc.SizeInBytes    = sizeof(uint32) * indices.size();
+                desc.SizeInBytes    = sizeof(uint32) * uint32(indices.size());
                 desc.StrideInBytes  = sizeof(uint32);
                 
                 ResourceData data = {};
@@ -380,29 +395,13 @@ namespace Lambda
         float color[] = { 0.392f, 0.584f, 0.929f, 1.0f };
         ITexture2D* pRenderTarget = pDevice->GetCurrentRenderTarget();
         ITexture2D* pDepthBuffer = pDevice->GetDepthStencil();
-        
-        //Transition and clear rendertarget
-        m_pCurrentList->TransitionTexture(pRenderTarget, RESOURCE_STATE_RENDERTARGET_CLEAR);
-        m_pCurrentList->ClearRenderTarget(pRenderTarget, color);
-        
-        //Transition and clear depthstencil
-#if defined(LAMBDA_PLAT_WINDOWS)
-		//For now only works on windows, because of bug in MoltenVK
-        m_pCurrentList->TransitionTexture(pDepthBuffer, RESORUCE_STATE_DEPTH_STENCIL_CLEAR);
-        m_pCurrentList->ClearDepthStencil(pDepthBuffer, 1.0f, 0);
-#endif
-
-        //Transition and set rendertargets
-        m_pCurrentList->TransitionTexture(pRenderTarget, RESOURCE_STATE_RENDERTARGET);
-        m_pCurrentList->TransitionTexture(pDepthBuffer, RESOURCE_STATE_DEPTH_WRITE);
-        m_pCurrentList->SetRenderTarget(pRenderTarget, pDepthBuffer);
-        
+                
         //Set scissor and viewport
         Rectangle scissorrect;
         scissorrect.X       = 0.0f;
         scissorrect.Y       = 0.0f;
-        scissorrect.Width   = pDevice->GetCurrentSwapChainWidth();
-        scissorrect.Height  = pDevice->GetCurrentSwapChainHeight();
+        scissorrect.Width   = float(pDevice->GetCurrentSwapChainWidth());
+        scissorrect.Height  = float(pDevice->GetCurrentSwapChainHeight());
         
         Viewport viewport = {};
         viewport.Width      = scissorrect.Width;
@@ -448,6 +447,10 @@ namespace Lambda
         m_pCurrentList->SetVertexBuffer(m_pVertexBuffer, 0);
         m_pCurrentList->SetIndexBuffer(m_pIndexBuffer);
         
+		//Set rendertargets and clearcolors
+		m_pRenderPass->SetRenderTargets(&pRenderTarget, pDepthBuffer);
+		m_pRenderPass->SetClearValues(color, 1.0f, 0);
+
         //Setup rotation
         static glm::mat4 rotation = glm::mat4(1.0f);
         rotation = glm::rotate(rotation, glm::radians(45.0f) * dt.AsSeconds(), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -465,8 +468,14 @@ namespace Lambda
                 data.SizeInBytes = sizeof(TransformBuffer);
                 m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);
                 
-                //Draw
-                m_pCurrentList->DrawIndexedInstanced(36, 1, 0, 0, 0);
+				//Begin renderpass
+				m_pCurrentList->BeginRenderPass(m_pRenderPass);
+
+				//Draw
+				m_pCurrentList->DrawIndexedInstanced(36, 1, 0, 0, 0);
+
+				//End renderpass
+				m_pCurrentList->EndRenderPass();
             }
         }
 #else
@@ -477,12 +486,16 @@ namespace Lambda
 		data.SizeInBytes = sizeof(TransformBuffer);
 		m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);
 
+		//Begin renderpass
+		m_pCurrentList->BeginRenderPass(m_pRenderPass);
+
 		//Draw
 		m_pCurrentList->DrawIndexedInstanced(36, 1, 0, 0, 0);
+
+		//End renderpass
+		m_pCurrentList->EndRenderPass();
 #endif
-        
         //Transition rendertarget to present
-        m_pCurrentList->TransitionTexture(pRenderTarget, RESOURCE_STATE_RENDERTARGET_PRESENT);
         m_pCurrentList->Close();
         
         //Present
@@ -506,6 +519,7 @@ namespace Lambda
             pDevice->DestroyShader(&m_pPS);
             //pDevice->DestroyShader(&m_pCompute);
 
+			pDevice->DestroyRenderPass(&m_pRenderPass);
             pDevice->DestroyGraphicsPipelineState(&m_pPipelineState);
             pDevice->DestroyBuffer(&m_pVertexBuffer);
             pDevice->DestroyBuffer(&m_pIndexBuffer);

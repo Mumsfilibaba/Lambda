@@ -14,21 +14,12 @@ namespace Lambda
         VulkanGraphicsPipelineState() = default;
         
         virtual void* GetNativeHandle() const override final;
-        
         void Destroy(VkDevice device);
-        VkRenderPass GetRenderPass() const;
         
     private:
         void Init(VkDevice device, const GraphicsPipelineStateDesc& desc);
         
     private:
         VkPipeline m_Pipeline;
-        VkRenderPass m_RenderPass;
     };
-    
-    
-    inline VkRenderPass VulkanGraphicsPipelineState::GetRenderPass() const
-    {
-        return m_RenderPass;
-    }
 }

@@ -12,13 +12,14 @@ namespace Lambda
 	class ITexture2D;
 	class IShader;
 	class IGraphicsPipelineState;
-	class IRenderTarget;
+	class IRenderPass;
 
 	struct SamplerDesc;
 	struct BufferDesc;
 	struct Texture2DDesc;
 	struct ShaderDesc;
 	struct GraphicsPipelineStateDesc;
+	struct RenderPassDesc;
 
     
     //Graphics device descriptor
@@ -43,7 +44,8 @@ namespace Lambda
 		virtual void CreateTexture2D(ITexture2D** ppTexture, const ResourceData* pInitalData, const Texture2DDesc& desc) const = 0;
 		virtual void CreateShader(IShader** ppShader, const ShaderDesc& desc) const = 0;
 		virtual void CreateSamplerState(ISamplerState** ppSamplerState, const SamplerDesc& desc) const = 0;
-		virtual void CreateGraphicsPipelineState(IGraphicsPipelineState** ppPSO, const GraphicsPipelineStateDesc& desc) const = 0;
+		virtual void CreateGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc) const = 0;
+		virtual void CreateRenderPass(IRenderPass** ppRenderPass, const RenderPassDesc& desc) const = 0;
 
 		virtual void DestroyCommandList(ICommandList** ppList) const = 0;
 		virtual void DestroyBuffer(IBuffer** ppBuffer) const = 0;
@@ -51,6 +53,7 @@ namespace Lambda
 		virtual void DestroyShader(IShader** ppShader) const = 0;
 		virtual void DestroySamplerState(ISamplerState** ppSamplerState) const = 0;
 		virtual void DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPSO) const = 0;
+		virtual void DestroyRenderPass(IRenderPass** ppRenderPass) const = 0;
 		virtual void Destroy() const = 0;
 
 		virtual void ExecuteCommandList(ICommandList* const * ppLists, uint32 numLists) const = 0;

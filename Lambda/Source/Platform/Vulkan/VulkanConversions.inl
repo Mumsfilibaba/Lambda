@@ -154,7 +154,8 @@ namespace Lambda
     
     inline VkSamplerAddressMode ConvertSamplerAdressMode(SamplerAddressMode adressMode)
     {
-        switch (adressMode) {
+        switch (adressMode) 
+		{
             case SAMPLER_ADDRESS_MODE_REPEAT:               return VK_SAMPLER_ADDRESS_MODE_REPEAT;
             case SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT:      return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
             case SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE:        return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
@@ -164,4 +165,43 @@ namespace Lambda
             default: return VK_SAMPLER_ADDRESS_MODE_MAX_ENUM;
         }
     }
+
+
+	inline VkSampleCountFlagBits ConvertSampleCount(uint32 sampleCount)
+	{
+		switch (sampleCount) 
+		{
+		case 1:  return VK_SAMPLE_COUNT_1_BIT;
+		case 2:  return VK_SAMPLE_COUNT_2_BIT;
+		case 4:  return VK_SAMPLE_COUNT_4_BIT;
+		case 8:  return VK_SAMPLE_COUNT_8_BIT;
+		case 16: return VK_SAMPLE_COUNT_16_BIT;
+		case 32: return VK_SAMPLE_COUNT_32_BIT;
+		case 64: return VK_SAMPLE_COUNT_64_BIT;
+		default: return VK_SAMPLE_COUNT_FLAG_BITS_MAX_ENUM;
+		}
+	}
+
+
+	inline VkAttachmentLoadOp ConvertLoadOp(LoadOp loadOp)
+	{
+		switch (loadOp)
+		{
+		case LOAD_OP_CLEAR:   return VK_ATTACHMENT_LOAD_OP_CLEAR;
+		case LOAD_OP_LOAD:   return VK_ATTACHMENT_LOAD_OP_LOAD;
+		case LOAD_OP_UNKNOWN:
+		default: return VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		}
+	}
+
+
+	inline VkAttachmentStoreOp ConvertStoreOp(StoreOp storeOp)
+	{
+		switch (storeOp)
+		{
+		case STORE_OP_STORE:   return VK_ATTACHMENT_STORE_OP_STORE;
+		case STORE_OP_UNKNOWN:
+		default: return VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		}
+	}
 }

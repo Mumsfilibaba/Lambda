@@ -16,9 +16,9 @@ namespace Lambda
     //Forward declarations
     class IBuffer;
 	class ITexture2D;
-	class IRenderTarget;
 	class ISamplerState;
 	class IGraphicsPipelineState;
+	class IRenderPass;
 
     
     //Commandlist
@@ -33,7 +33,9 @@ namespace Lambda
 		virtual void ClearRenderTarget(ITexture2D* pRenderTarget, float color[4]) = 0;
 		virtual void ClearDepthStencil(ITexture2D* pDepthStencil, float depth, uint8 stencil) = 0;
 
-		virtual void SetRenderTarget(ITexture2D* pRenderTarget, ITexture2D* pDepthStencil) = 0;
+		virtual void BeginRenderPass(IRenderPass* pRenderPass) = 0;
+		virtual void EndRenderPass() = 0;
+
 		virtual void SetViewport(const Viewport& viewport) = 0;
 		virtual void SetScissorRect(const Rectangle& scissorRect) = 0;
 		virtual void SetGraphicsPipelineState(IGraphicsPipelineState* pPSO) = 0;

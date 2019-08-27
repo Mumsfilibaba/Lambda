@@ -48,7 +48,7 @@ namespace Lambda
         if (desc.Depth)
         {
             m_Desc.ClearValue.Depth = desc.ClearValue.depthStencil.depth;
-            m_Desc.ClearValue.Stencil = desc.ClearValue.depthStencil.stencil;
+            m_Desc.ClearValue.Stencil = uint8(desc.ClearValue.depthStencil.stencil);
         }
         else
         {

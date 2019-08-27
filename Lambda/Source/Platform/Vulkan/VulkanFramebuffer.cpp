@@ -129,11 +129,11 @@ namespace Lambda
                 //Destroy the framebuffer in vulkan
                 vkDestroyFramebuffer(device, i->second.FrameBuffer, nullptr);
                 i->second.FrameBuffer = VK_NULL_HANDLE;
-                
-                //Erase from map
-                s_Framebuffers.erase(i);
             }
         }
+
+		//Erase the range
+		s_Framebuffers.erase(range.first, range.second);
     }
     
     

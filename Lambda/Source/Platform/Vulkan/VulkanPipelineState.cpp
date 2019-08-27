@@ -1,6 +1,7 @@
 #include "LambdaPch.h"
 #include "VulkanPipelineState.h"
 #include "VulkanShader.h"
+#include "VulkanRenderPass.h"
 #include "VulkanGraphicsDevice.h"
 #include "VulkanUtilities.h"
 #include "VulkanConversions.inl"
@@ -10,110 +11,14 @@
 namespace Lambda
 {
     VulkanGraphicsPipelineState::VulkanGraphicsPipelineState(VkDevice device, const GraphicsPipelineStateDesc& desc)
-        : m_Pipeline(VK_NULL_HANDLE),
-        m_RenderPass(VK_NULL_HANDLE)
+        : m_Pipeline(VK_NULL_HANDLE)
     {
         Init(device, desc);
     }
 
     
     void VulkanGraphicsPipelineState::Init(VkDevice device, const GraphicsPipelineStateDesc& desc)
-    {
-        //RENDERPASS
-        
-        //Setup color attachments
-        std::vector<VkAttachmentReference> colorAttachentRefs;
-        std::vector<VkAttachmentDescription> attachments;
-        for (uint32 i = 0; i < desc.RenderTargetCount; i++)
-        {
-            //Setup attachments
-            VkAttachmentDescription colorAttachment = {};
-            colorAttachment.flags           = 0;
-            colorAttachment.format          = ConvertResourceFormat(desc.RenderTargetFormats[i]);
-            colorAttachment.samples         = VK_SAMPLE_COUNT_1_BIT;
-            colorAttachment.loadOp          = VK_ATTACHMENT_LOAD_OP_CLEAR;
-            colorAttachment.storeOp         = VK_ATTACHMENT_STORE_OP_STORE;
-            colorAttachment.stencilLoadOp   = VK_ATTACHMENT_LOAD_OP_CLEAR;
-            colorAttachment.stencilStoreOp  = VK_ATTACHMENT_STORE_OP_STORE;
-            colorAttachment.initialLayout   = VK_IMAGE_LAYOUT_UNDEFINED;
-            colorAttachment.finalLayout     = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-            attachments.push_back(colorAttachment);
-            
-            //Descripe attachment bindpoint
-            VkAttachmentReference colorAttachmentRef = {};
-            colorAttachmentRef.attachment   = i;
-            colorAttachmentRef.layout       = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-            colorAttachentRefs.push_back(colorAttachmentRef);
-            
-        }
-        
-        //Describe subpass
-        VkSubpassDescription subpass = {};
-        subpass.flags                       = 0;
-        subpass.pipelineBindPoint           = VK_PIPELINE_BIND_POINT_GRAPHICS;
-        subpass.colorAttachmentCount        = uint32(colorAttachentRefs.size());
-        subpass.pColorAttachments           = colorAttachentRefs.data();
-        subpass.preserveAttachmentCount     = 0;
-        subpass.pPreserveAttachments        = nullptr;
-        subpass.inputAttachmentCount        = 0;
-        subpass.pInputAttachments           = nullptr;
-        subpass.pResolveAttachments         = nullptr;
-        
-        //Setup depthstencil
-        VkAttachmentReference depthAttachmentRef = {};
-        if (desc.DepthStencilFormat == FORMAT_UNKNOWN)
-        {
-            subpass.pDepthStencilAttachment = nullptr;
-        }
-        else
-        {
-            //Setup attachments
-            VkAttachmentDescription depthAttachment = {};
-            depthAttachment.flags           = 0;
-            depthAttachment.format          = ConvertResourceFormat(desc.DepthStencilFormat);
-            depthAttachment.samples         = VK_SAMPLE_COUNT_1_BIT;
-            depthAttachment.loadOp          = VK_ATTACHMENT_LOAD_OP_CLEAR;
-            depthAttachment.storeOp         = VK_ATTACHMENT_STORE_OP_STORE;
-            depthAttachment.stencilLoadOp   = VK_ATTACHMENT_LOAD_OP_CLEAR;
-            depthAttachment.stencilStoreOp  = VK_ATTACHMENT_STORE_OP_STORE;
-            depthAttachment.initialLayout   = VK_IMAGE_LAYOUT_UNDEFINED;
-            depthAttachment.finalLayout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-            attachments.push_back(depthAttachment);
-            
-            //Setup ref
-            depthAttachmentRef.attachment   = uint32(attachments.size() - 1);
-            depthAttachmentRef.layout       = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-            
-            //Set attachment
-            subpass.pDepthStencilAttachment = &depthAttachmentRef;
-        }
-        
-        
-        //Setup renderpass
-        VkRenderPassCreateInfo renderPassInfo = {};
-        renderPassInfo.sType            = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-        renderPassInfo.flags            = 0;
-        renderPassInfo.pNext            = nullptr;
-        renderPassInfo.attachmentCount  = uint32(attachments.size());
-        renderPassInfo.pAttachments     = attachments.data();
-        renderPassInfo.subpassCount     = 1;
-        renderPassInfo.pSubpasses       = &subpass;
-        renderPassInfo.pDependencies    = nullptr;
-        
-        //Create renderpass
-        if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &m_RenderPass) != VK_SUCCESS)
-        {
-            LOG_DEBUG_ERROR("Vulkan: Failed to create renderpass\n");
-            return;
-        }
-        else
-        {
-            LOG_DEBUG_INFO("Vulkan: Created renderpass\n");
-        }
-        
-        
-        //PIPELINESTATE
-        
+    {       
         //Describe shaderstages
         std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
         
@@ -319,7 +224,7 @@ namespace Lambda
         pipelineInfo.pColorBlendState       = &colorBlending;
         pipelineInfo.pDynamicState          = &dynamicState;
         pipelineInfo.layout                 = VulkanGraphicsDevice::GetDefaultPipelineLayout();
-        pipelineInfo.renderPass             = m_RenderPass;
+        pipelineInfo.renderPass             = reinterpret_cast<VkRenderPass>(desc.pRenderPass->GetNativeHandle());
         pipelineInfo.subpass                = 0;
         pipelineInfo.basePipelineHandle     = VK_NULL_HANDLE;
         pipelineInfo.basePipelineIndex      = -1;
@@ -345,13 +250,6 @@ namespace Lambda
     void VulkanGraphicsPipelineState::Destroy(VkDevice device)
     {
         assert(device != VK_NULL_HANDLE);
-               
-        //Destroy renderpass
-        if (m_RenderPass != VK_NULL_HANDLE)
-        {
-            vkDestroyRenderPass(device, m_RenderPass, nullptr);
-            m_RenderPass = VK_NULL_HANDLE;
-        }
         
         //Destroy pipelinestate
         if (m_Pipeline != VK_NULL_HANDLE)

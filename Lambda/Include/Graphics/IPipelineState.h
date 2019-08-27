@@ -5,6 +5,7 @@ namespace Lambda
 {    
     //Forwarddeclarations
 	class IShader;
+	class IRenderPass;
 
     
     //Struct describing an VertexInputElement
@@ -24,24 +25,18 @@ namespace Lambda
 	struct GraphicsPipelineStateDesc
 	{
         //Shaders
-		IShader* pVertexShader          = nullptr;
-		IShader* pPixelShader           = nullptr;
-        
+		IShader* pVertexShader = nullptr;
+		IShader* pPixelShader = nullptr;
         //Input Layout
-        InputElement* pInputElements    = nullptr;
-        uint32 InputElementCount        = 0;
-        
+        InputElement* pInputElements = nullptr;
+        uint32 InputElementCount = 0;
         //State
-        PrimitiveTopology Topology      = PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-        CullMode Cull                   = CULL_MODE_BACK;
-        
+        PrimitiveTopology Topology = PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+        CullMode Cull = CULL_MODE_BACK;
         //Depth test
-        bool DepthTest                  = true;
-        
-        //Define framebuffer
-        ResourceFormat RenderTargetFormats[LAMBDA_RENDERTARGET_COUNT];
-        ResourceFormat DepthStencilFormat = FORMAT_UNKNOWN;
-        uint32 RenderTargetCount = 0;
+        bool DepthTest = true;
+        //RenderPass defines the framebuffer
+		IRenderPass* pRenderPass = nullptr;
 	};
 
 

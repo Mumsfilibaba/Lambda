@@ -62,7 +62,18 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::SetRenderTarget(ITexture2D* pRenderTarget, ITexture2D* pDepthStencil)
+	void DX12CommandList::BeginRenderPass(IRenderPass* pRenderPass)
+	{
+		assert(pRenderPass);
+	}
+
+
+	void DX12CommandList::EndRenderPass()
+	{
+	}
+
+
+	/*void DX12CommandList::SetRenderTarget(ITexture2D* pRenderTarget, ITexture2D* pDepthStencil)
 	{
 		//TODO: Multiple rendertargets
 
@@ -83,13 +94,13 @@ namespace Lambda
 			D3D12_CPU_DESCRIPTOR_HANDLE dsv = pDsv->GetDescriptorHandle().CPU;
 			m_List->OMSetRenderTargets(1, &rtv, false, &dsv);
 		}
-	}
+	}*/
 
 
 	void DX12CommandList::SetViewport(const Viewport& viewport)
 	{
 		D3D12_VIEWPORT port = { viewport.TopX, viewport.TopY, viewport.Width, viewport.Height, viewport.MinDepth, viewport.MaxDepth };
-		m_List->RSSetViewports(1, &port);
+		m_List->RSSetViewports( 1, &port );
 	}
 
 

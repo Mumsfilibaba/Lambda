@@ -10,6 +10,7 @@
 #include "VulkanFramebuffer.h"
 #include "VulkanBuffer.h"
 #include "VulkanSwapChain.h"
+#include "VulkanRenderPass.h"
 #include "VulkanUtilities.h"
 #include "VulkanConversions.inl"
 #if defined(LAMBDA_PLAT_MACOS)
@@ -1107,11 +1108,18 @@ namespace Lambda
     }
     
     
-    void VulkanGraphicsDevice::CreateGraphicsPipelineState(IGraphicsPipelineState** ppPSO, const GraphicsPipelineStateDesc& desc) const
+    void VulkanGraphicsDevice::CreateGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc) const
     {
-        assert(ppPSO != nullptr);
-        (*ppPSO) = DBG_NEW VulkanGraphicsPipelineState(m_Device, desc);
+        assert(ppPipelineState != nullptr);
+        (*ppPipelineState) = DBG_NEW VulkanGraphicsPipelineState(m_Device, desc);
     }
+
+
+	void VulkanGraphicsDevice::CreateRenderPass(IRenderPass** ppRenderPass, const RenderPassDesc& desc) const
+	{
+		assert(ppRenderPass != nullptr);
+		(*ppRenderPass) = DBG_NEW VulkanRenderPass(m_Device, desc);
+	}
     
     
     void VulkanGraphicsDevice::DestroyCommandList(ICommandList** ppList) const
@@ -1202,22 +1210,40 @@ namespace Lambda
     }
     
     
-    void VulkanGraphicsDevice::DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPSO) const
+    void VulkanGraphicsDevice::DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState) const
     {
-        assert(ppPSO != nullptr);
+        assert(ppPipelineState != nullptr);
         
-        //Delete shader
-        VulkanGraphicsPipelineState* pPSO = reinterpret_cast<VulkanGraphicsPipelineState*>(*ppPSO);
-        if (pPSO != nullptr)
+        //Delete PipelineState
+        VulkanGraphicsPipelineState* pPipelineState = reinterpret_cast<VulkanGraphicsPipelineState*>(*ppPipelineState);
+        if (pPipelineState != nullptr)
         {
-            pPSO->Destroy(m_Device);
+			pPipelineState->Destroy(m_Device);
             
             //Set ptr to null
-            *ppPSO = nullptr;
+            *ppPipelineState = nullptr;
             
             LOG_DEBUG_INFO("Vulkan: Destroyed PipelineState\n");
         }
     }
+
+
+	void VulkanGraphicsDevice::DestroyRenderPass(IRenderPass** ppRenderPass) const
+	{
+		assert(ppRenderPass != nullptr);
+
+		//Delete PipelineState
+		VulkanRenderPass* pRenderPass = reinterpret_cast<VulkanRenderPass*>(*ppRenderPass);
+		if (pRenderPass != nullptr)
+		{
+			pRenderPass->Destroy(m_Device);
+
+			//Set ptr to null
+			*ppRenderPass = nullptr;
+
+			LOG_DEBUG_INFO("Vulkan: Destroyed PipelineState\n");
+		}
+	}
     
     
     void VulkanGraphicsDevice::Destroy() const

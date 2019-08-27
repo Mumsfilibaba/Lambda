@@ -229,8 +229,16 @@ namespace Lambda
 	}
 
 
+	void DX12GraphicsDevice::CreateRenderPass(IRenderPass** ppRenderPass, const RenderPassDesc& desc) const
+	{
+		assert(ppRenderPass && &desc);
+	}
+
+
 	void DX12GraphicsDevice::DestroyCommandList(ICommandList** ppList) const
 	{
+		assert(ppList != nullptr);
+
 		DX12CommandList* pList = reinterpret_cast<DX12CommandList*>(*ppList);
 		delete pList;
 		*ppList = nullptr;
@@ -239,6 +247,8 @@ namespace Lambda
 
 	void DX12GraphicsDevice::DestroyBuffer(IBuffer** ppBuffer) const
 	{
+		assert(ppBuffer != nullptr);
+
 		DX12Buffer* pBuffer = reinterpret_cast<DX12Buffer*>(*ppBuffer);
 		
 		//Check if constantbuffer and release descriptor
@@ -259,6 +269,8 @@ namespace Lambda
 
 	void DX12GraphicsDevice::DestroyTexture2D(ITexture2D** ppTexture) const
 	{
+		assert(ppTexture != nullptr);
+
 		DX12Texture2D* pTexture = reinterpret_cast<DX12Texture2D*>(*ppTexture);
 		Texture2DDesc desc = pTexture->GetDesc();
 
@@ -287,6 +299,8 @@ namespace Lambda
 
 	void DX12GraphicsDevice::DestroyShader(IShader** ppShader) const
 	{
+		assert(ppShader != nullptr);
+
 		DX12Shader* pShader = reinterpret_cast<DX12Shader*>(*ppShader);
 		delete pShader;
 		*ppShader = nullptr;
@@ -295,6 +309,8 @@ namespace Lambda
 
 	void DX12GraphicsDevice::DestroySamplerState(ISamplerState** ppSamplerState) const
 	{
+		assert(ppSamplerState != nullptr);
+
 		DX12SamplerState* pSamplerState = reinterpret_cast<DX12SamplerState*>(*ppSamplerState);
 
 		//Release descriptor
@@ -306,11 +322,19 @@ namespace Lambda
 	}
 
 
-	void DX12GraphicsDevice::DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPSO) const
+	void DX12GraphicsDevice::DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState) const
 	{
-		DX12GraphicsPipelineState* pPSO = reinterpret_cast<DX12GraphicsPipelineState*>(*ppPSO);
-		delete pPSO;
-		*ppPSO = nullptr;
+		assert(ppPipelineState != nullptr);
+
+		DX12GraphicsPipelineState* pPipelineState = reinterpret_cast<DX12GraphicsPipelineState*>(*ppPipelineState);
+		delete pPipelineState;
+		*ppPipelineState = nullptr;
+	}
+
+
+	void DX12GraphicsDevice::DestroyRenderPass(IRenderPass** ppRenderPass) const
+	{
+		assert(ppRenderPass);
 	}
 
 
@@ -328,6 +352,8 @@ namespace Lambda
 
 	void DX12GraphicsDevice::ExecuteCommandListAndPresent(ICommandList* const* ppLists, uint32 numLists) const
 	{
+		m_DirectQueue.ExecuteCommandLists(reinterpret_cast<DX12CommandList * const*>(ppLists), numLists);
+		Present();
 	}
 
 

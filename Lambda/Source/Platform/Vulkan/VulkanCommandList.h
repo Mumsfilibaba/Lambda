@@ -33,13 +33,6 @@ namespace Lambda
         virtual void ClearRenderTarget(ITexture2D* pRenderTarget, float color[4]) override final;
         virtual void ClearDepthStencil(ITexture2D* pDepthStencil, float depth, uint8 stencil) override final;
         
-        virtual void SetRenderTarget(ITexture2D* pRenderTarget, ITexture2D* pDepthStencil) override final;
-        virtual void SetViewport(const Viewport& viewport) override final;
-        virtual void SetScissorRect(const Rectangle& scissorRect) override final;
-        virtual void SetGraphicsPipelineState(IGraphicsPipelineState* pPSO) override final;
-        virtual void SetVertexBuffer(IBuffer* pBuffer, uint32 slot) override final;
-        virtual void SetIndexBuffer(IBuffer* pBuffer) override final;
-        
         virtual void VSSetConstantBuffers(const IBuffer* const* ppBuffers, uint32 numBuffers, uint32 startSlot) override final;
         virtual void VSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot) override final;
         virtual void VSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot) override final;
@@ -59,6 +52,15 @@ namespace Lambda
         virtual void PSSetConstantBuffers(const IBuffer* const* ppBuffers, uint32 numBuffers, uint32 startSlot) override final;
         virtual void PSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot) override final;
         virtual void PSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot) override final;
+        
+		virtual void BeginRenderPass(IRenderPass* pRenderPass) override final;
+		virtual void EndRenderPass() override final;
+
+		virtual void SetViewport(const Viewport& viewport) override final;
+        virtual void SetScissorRect(const Rectangle& scissorRect) override final;
+        virtual void SetGraphicsPipelineState(IGraphicsPipelineState* pPSO) override final;
+        virtual void SetVertexBuffer(IBuffer* pBuffer, uint32 slot) override final;
+        virtual void SetIndexBuffer(IBuffer* pBuffer) override final;
         
         virtual void UpdateBuffer(IBuffer* pResource, const ResourceData* pData) override final;
         virtual void UpdateTexture(ITexture2D* pResource, const ResourceData* pData, uint32 subresource) override final;
@@ -88,16 +90,8 @@ namespace Lambda
         void WriteTextureDescriptorsToStage(uint32 shaderStage, uint32 startSlot, const ITexture2D* const* ppTextures, uint32 numTextures);
         void WriteSamplerDescriptorsToStage(uint32 shaderStage, uint32 startSlot, const ISamplerState* const* ppSamplers, uint32 numSamplers);
         
-        void BeginRenderPass(VkFramebuffer framebuffer, VkRenderPass renderpass, uint32 width, uint32 height);
-        void EndRenderPass();
-        
-        inline bool HasRenderPass() const
-        {
-            return m_HasRenderPass;
-        }
-        
     private:
-        VkDevice m_Device; //Store the device that was used when creating device
+        VkDevice m_Device;
         VkCommandPool m_CommandPool;
         VkCommandBuffer m_CommandBuffer;
         
@@ -120,6 +114,5 @@ namespace Lambda
         VkPipelineLayout m_PipelineLayout;
         const ITexture2D* m_pRT;
         const ITexture2D* m_pDS;
-        bool m_HasRenderPass;
     };
 }

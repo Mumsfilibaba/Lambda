@@ -26,6 +26,8 @@ namespace Lambda
 
 	void DX12SamplerState::Init(ID3D12Device* pDevice, DX12DescriptorHandle hDescriptor, const SamplerDesc& desc)
 	{
+		assert(&desc != nullptr);
+
 		//Create sampler
 		D3D12_SAMPLER_DESC sDesc = {};
 		sDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;

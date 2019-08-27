@@ -25,14 +25,16 @@ namespace Lambda
 		virtual void CreateTexture2D(ITexture2D** ppTexture, const ResourceData* pInitalData, const Texture2DDesc& desc) const override final;
 		virtual void CreateShader(IShader** ppShader, const ShaderDesc& desc) const override final;
 		virtual void CreateSamplerState(ISamplerState** ppSamplerState, const SamplerDesc& desc) const override final;
-		virtual void CreateGraphicsPipelineState(IGraphicsPipelineState** ppPSO, const GraphicsPipelineStateDesc& desc) const override final;
+		virtual void CreateGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc) const override final;
+		virtual void CreateRenderPass(IRenderPass** ppRenderPass, const RenderPassDesc& desc) const override final;
 
 		virtual void DestroyCommandList(ICommandList** ppList) const override final;
 		virtual void DestroyBuffer(IBuffer** ppBuffer) const override final;
 		virtual void DestroyTexture2D(ITexture2D** ppTexture) const override final;
 		virtual void DestroyShader(IShader** ppShader) const override final;
 		virtual void DestroySamplerState(ISamplerState** ppSamplerState) const override final;
-		virtual void DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPSO) const override final;
+		virtual void DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState) const override final;
+		virtual void DestroyRenderPass(IRenderPass** ppRenderPass) const override final;
 		virtual void Destroy() const override final;
 
 		virtual void ExecuteCommandList(ICommandList* const * ppLists, uint32 numLists) const;

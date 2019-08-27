@@ -302,6 +302,23 @@ namespace Lambda
         GRAPHICS_API_D3D12      = 1,
         GRAPHICS_API_VULKAN     = 2
     };
+
+
+	//Enum for loadoperations for a renderpass
+	enum LoadOp : uint32
+	{
+		LOAD_OP_UNKNOWN = 0,
+		LOAD_OP_CLEAR	= 1,
+		LOAD_OP_LOAD	= 2,
+	};
+
+
+	//Enum for storeoperations for a renderpass
+	enum StoreOp : uint32
+	{
+		STORE_OP_UNKNOWN	= 0,
+		STORE_OP_STORE		= 1,
+	};
     
 
     //Struct for updating data in a buffer or texture

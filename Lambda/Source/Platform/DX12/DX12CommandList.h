@@ -22,7 +22,9 @@ namespace Lambda
 		virtual void ClearRenderTarget(ITexture2D* pRenderTarget, float color[4]) override final;
 		virtual void ClearDepthStencil(ITexture2D* pDepthStencil, float depth, uint8 stencil) override final;
 
-		virtual void SetRenderTarget(ITexture2D* pRenderTarget, ITexture2D* pDepthStencil) override final;
+		virtual void BeginRenderPass(IRenderPass* pRenderPass) override final;
+		virtual void EndRenderPass() override final;
+
 		virtual void SetViewport(const Viewport& viewport) override final;
 		virtual void SetScissorRect(const Rectangle& scissorRect) override final;
 		virtual void SetGraphicsPipelineState(IGraphicsPipelineState* pPSO) override final;

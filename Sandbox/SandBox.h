@@ -6,6 +6,7 @@
 #include "Graphics/IBuffer.h"
 #include "Graphics/ITexture2D.h"
 #include "Graphics/ISamplerState.h"
+#include "Graphics/IRenderPass.h"
 #include "Graphics/Camera.h"
 
 namespace Lambda
@@ -65,6 +66,9 @@ namespace Lambda
 		
         //Pipelinestates
         IGraphicsPipelineState* m_pPipelineState;
+
+		//RenderPass
+		IRenderPass* m_pRenderPass;
 		
         //Other
         float m_Width;
