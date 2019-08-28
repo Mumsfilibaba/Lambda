@@ -18,7 +18,7 @@ namespace Lambda
 	struct RenderPassDesc
 	{
 		uint32 NumRenderTargets = 0;
-		RenderPassAttachmentDesc RenderTargets[LAMBDA_RENDERTARGET_COUNT];
+		RenderPassAttachmentDesc RenderTargets[LAMBDA_MAX_RENDERTARGET_COUNT];
 		RenderPassAttachmentDesc DepthStencil;
 		uint32 SampleCount = 1;
 	};

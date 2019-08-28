@@ -156,7 +156,6 @@ namespace Lambda
         
         //Destroy all framebuffers and renderpasses
         VulkanFramebufferCache::ReleaseAll(m_Device);
-        VulkanRenderPassCache::ReleaseAll(m_Device);
         
         //Destroy swapchain and depthstencil
 		m_pSwapChain->Destroy(m_Device);

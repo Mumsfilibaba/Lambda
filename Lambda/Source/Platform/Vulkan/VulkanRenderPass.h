@@ -15,14 +15,14 @@ namespace Lambda
 		virtual void SetRenderTargets(const ITexture2D* const* const ppRenderTargets, const ITexture2D* pDepthStencil) override final;
 		virtual void SetClearValues(float color[4], float depth, uint8 stencil) override final;
 		virtual void* GetNativeHandle() const override final;
-
-		void Destroy(VkDevice device);
-
+		
 		VkRenderPass GetRenderPass() const;
 		VkFramebuffer GetFramebuffer() const;
 		VkExtent2D GetFramebufferExtent() const;
 		const VkClearValue* GetClearValues() const;
 		uint32 GetAttachmentCount() const;
+
+		void Destroy(VkDevice device);
 
 	private:
 		void Init(VkDevice device, const RenderPassDesc& desc);
@@ -34,9 +34,7 @@ namespace Lambda
 		VkExtent2D m_FramebufferExtent;
 		uint32 m_RenderTargetCount;
 		VkFormat m_DepthStencilFormat;
-		ITexture2D* m_pCurrentRenderTargets[LAMBDA_RENDERTARGET_COUNT];
-		ITexture2D* m_pCurrentDepthStencil;
-		VkClearValue m_ClearValues[LAMBDA_RENDERTARGET_COUNT + 1];
+		VkClearValue m_ClearValues[LAMBDA_MAX_RENDERTARGET_COUNT + 1];
 	};
 
 
@@ -56,6 +54,7 @@ namespace Lambda
 	{
 		return m_FramebufferExtent;
 	}
+
 
 	inline const VkClearValue* VulkanRenderPass::GetClearValues() const
 	{

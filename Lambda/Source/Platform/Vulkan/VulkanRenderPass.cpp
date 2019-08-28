@@ -13,15 +13,9 @@ namespace Lambda
 		m_FramebufferExtent(),
 		m_RenderTargetCount(0),
 		m_DepthStencilFormat(VK_FORMAT_UNDEFINED),
-		m_pCurrentRenderTargets(),
-		m_pCurrentDepthStencil(nullptr),
 		m_ClearValues()
 	{
 		assert(device != VK_NULL_HANDLE);
-
-		//Set all current rendertargets to nullptr
-		memset(m_pCurrentRenderTargets, 0, sizeof(ITexture2D*) * LAMBDA_RENDERTARGET_COUNT);
-
 		Init(device, desc);
 	}
 	
@@ -29,19 +23,32 @@ namespace Lambda
 	void VulkanRenderPass::SetRenderTargets(const ITexture2D* const* const ppRenderTargets, const ITexture2D* pDepthStencil)
 	{
 		assert(m_Device != VK_NULL_HANDLE);
-		if (ppRenderTargets)
+
+		VulkanFramebufferCacheKey key = {};
+		if (pDepthStencil)
 		{
-			m_FramebufferExtent.width = ppRenderTargets[0]->GetWidth();
-			m_FramebufferExtent.height = ppRenderTargets[0]->GetHeight();
-		}
-		else if (pDepthStencil)
-		{
+			key.DepthStencilView = reinterpret_cast<const VulkanTexture2D*>(pDepthStencil)->GetImageView();
 			m_FramebufferExtent.width = pDepthStencil->GetWidth();
 			m_FramebufferExtent.height = pDepthStencil->GetHeight();
 		}
+		if (ppRenderTargets)
+		{
+			for (uint32 i = 0; i < m_RenderTargetCount; i++)
+				key.ColorAttachmentViews[i] = reinterpret_cast<const VulkanTexture2D*>(ppRenderTargets[i])->GetImageView();
 
-		m_Framebuffer = VulkanFramebufferCache::GetFramebuffer(m_Device, m_RenderPass, ppRenderTargets, m_RenderTargetCount, pDepthStencil);
+			if (!pDepthStencil)
+			{
+				m_FramebufferExtent.width = ppRenderTargets[0]->GetWidth();
+				m_FramebufferExtent.height = ppRenderTargets[0]->GetHeight();
+			}
+		}
+
+		key.NumColorAttachments = m_RenderTargetCount;
+		key.RenderPass = m_RenderPass;
+
+		m_Framebuffer = VulkanFramebufferCache::GetFramebuffer(m_Device, key, m_FramebufferExtent.width, m_FramebufferExtent.height);
 	}
+
 
 	void VulkanRenderPass::SetClearValues(float color[4], float depth, uint8 stencil)
 	{
