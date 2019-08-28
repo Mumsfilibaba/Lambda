@@ -1346,13 +1346,13 @@ namespace Lambda
     }
     
     
-    uint32 VulkanGraphicsDevice::GetCurrentSwapChainWidth() const
+    uint32 VulkanGraphicsDevice::GetSwapChainWidth() const
     {
         return m_pSwapChain->GetWidth();
     }
     
     
-    uint32 VulkanGraphicsDevice::GetCurrentSwapChainHeight() const
+    uint32 VulkanGraphicsDevice::GetSwapChainHeight() const
     {
         return m_pSwapChain->GetHeight();
     }

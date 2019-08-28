@@ -400,8 +400,8 @@ namespace Lambda
         Rectangle scissorrect;
         scissorrect.X       = 0.0f;
         scissorrect.Y       = 0.0f;
-        scissorrect.Width   = float(pDevice->GetCurrentSwapChainWidth());
-        scissorrect.Height  = float(pDevice->GetCurrentSwapChainHeight());
+        scissorrect.Width   = float(pDevice->GetSwapChainWidth());
+        scissorrect.Height  = float(pDevice->GetSwapChainHeight());
         
         Viewport viewport = {};
         viewport.Width      = scissorrect.Width;

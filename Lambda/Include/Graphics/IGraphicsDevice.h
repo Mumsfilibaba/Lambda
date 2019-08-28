@@ -61,14 +61,14 @@ namespace Lambda
 		virtual void Present() const = 0;
 		virtual void WaitForGPU() const = 0;
 		virtual void GPUWaitForFrame() const = 0;
-		
-        virtual ResourceFormat GetBackBufferFormat() const = 0;
-		virtual ITexture2D* GetCurrentRenderTarget() const = 0;
-        virtual ITexture2D* GetDepthStencil() const = 0;
-		virtual uint32 GetCurrentBackBufferIndex() const = 0;
-        virtual uint32 GetCurrentSwapChainWidth() const = 0;
-        virtual uint32 GetCurrentSwapChainHeight() const = 0;
-		virtual void* GetNativeHandle() const = 0;
+
+		virtual void* GetNativeHandle() const  = 0;
+		virtual ITexture2D* GetDepthStencil() const  = 0;
+		virtual ITexture2D* GetCurrentRenderTarget() const  = 0;
+		virtual ResourceFormat GetBackBufferFormat() const  = 0;
+		virtual uint32 GetCurrentBackBufferIndex() const  = 0;
+		virtual uint32 GetSwapChainWidth() const  = 0;
+		virtual uint32 GetSwapChainHeight() const  = 0;
 
 	private:
 		virtual bool InternalOnEvent(const Event& event) = 0;

@@ -421,13 +421,13 @@ namespace Lambda
 	}
 
 
-	uint32 DX12GraphicsDevice::GetCurrentSwapChainWidth() const
+	uint32 DX12GraphicsDevice::GetSwapChainWidth() const
 	{
 		return m_BackBufferWidth;
 	}
 
 
-	uint32 DX12GraphicsDevice::GetCurrentSwapChainHeight() const
+	uint32 DX12GraphicsDevice::GetSwapChainHeight() const
 	{
 		return m_BackBufferHeight;
 	}
