@@ -112,7 +112,5 @@ namespace Lambda
         
         //Temp?
         VkPipelineLayout m_PipelineLayout;
-        const ITexture2D* m_pRT;
-        const ITexture2D* m_pDS;
     };
 }

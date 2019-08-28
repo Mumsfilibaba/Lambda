@@ -64,11 +64,9 @@ namespace Lambda
         void Init(IWindow* pWindow, const GraphicsDeviceDesc& desc);
         void InitDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo);
         
-        bool CreateInstance(const GraphicsDeviceDesc& desc);
-        bool CreateDebugDebugMessenger(const GraphicsDeviceDesc& desc);
-        bool QueryAdapter();
-        bool CreateDeviceAndQueues(const GraphicsDeviceDesc& desc);
-        bool CreateSurface(IWindow* pWindow);
+        VkPhysicalDevice QueryAdapter();
+		VkSurfaceKHR CreateSurface(IWindow* pWindow);
+        
         bool CreateSwapChain(uint32 width, uint32 height);
         bool CreateDepthStencil();
         bool CreateTextures();
@@ -84,6 +82,7 @@ namespace Lambda
         
         std::vector<const char*> GetRequiredValidationLayers(bool debug);
         std::vector<const char*> GetRequiredDeviceExtensions();
+		std::vector<const char*> GetRequiredInstanceExtensions(bool debug);
         
         virtual bool InternalOnEvent(const Event& event) override final;
         

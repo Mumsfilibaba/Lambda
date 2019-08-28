@@ -19,10 +19,10 @@ namespace Lambda
         m_BoundFrameBuffer(VK_NULL_HANDLE),
         m_DescriptorSets(),
         m_DescriptorPool(VK_NULL_HANDLE),
-        m_Type(COMMAND_LIST_TYPE_UNKNOWN),
-        m_pRT(nullptr),
-        m_pDS(nullptr)
+        m_Type(COMMAND_LIST_TYPE_UNKNOWN)
     {
+		assert(device != VK_NULL_HANDLE);
+
         //Init samplers in texturedescriptors to null
         for (uint32 i = 0; i < LAMBDA_SHADERSTAGE_COUNT; i++)
         {
@@ -40,7 +40,6 @@ namespace Lambda
             }
         }
 
-        
         Init(device, type);
     }
 
@@ -335,10 +334,7 @@ namespace Lambda
     {
         //Clear value
         VkClearColorValue col = {};
-        col.float32[0] = color[0];
-        col.float32[1] = color[1];
-        col.float32[2] = color[2];
-        col.float32[3] = color[3];
+		memcpy(col.float32, color, sizeof(float) * 4);
         
         //Get vulkan image
         VulkanTexture2D* pVkRenderTarget = reinterpret_cast<VulkanTexture2D*>(pRenderTarget);
@@ -410,7 +406,6 @@ namespace Lambda
     void VulkanCommandList::SetGraphicsPipelineState(IGraphicsPipelineState* pPSO)
     {
         VkPipeline pipeline = reinterpret_cast<VkPipeline>(pPSO->GetNativeHandle());
-
         vkCmdBindPipeline(m_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
     }
     
@@ -418,6 +413,7 @@ namespace Lambda
     void VulkanCommandList::SetVertexBuffer(IBuffer* pBuffer, uint32 slot)
     {
         VkBuffer buffers[] = { reinterpret_cast<VkBuffer>(pBuffer->GetNativeHandle()) };
+
         VkDeviceSize offsets[] = { 0 };
         vkCmdBindVertexBuffers(m_CommandBuffer, slot, 1, buffers, offsets);
     }
@@ -425,8 +421,8 @@ namespace Lambda
     
     void VulkanCommandList::SetIndexBuffer(IBuffer* pBuffer)
     {
+		//Force uint32 for indices
         VkBuffer buffer = reinterpret_cast<VkBuffer>(pBuffer->GetNativeHandle());
-        //Force uint32 for indices
         vkCmdBindIndexBuffer(m_CommandBuffer, buffer, 0, VK_INDEX_TYPE_UINT32);
     }
 
