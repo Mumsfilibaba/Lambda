@@ -570,13 +570,21 @@ namespace Lambda
         if (adapterCount == 0)
         {
             LOG_DEBUG_ERROR("Vulkan: No vulkan-supported GPUs found\n");
-            return false;
+            return VK_NULL_HANDLE;
         }
         
         std::vector<VkPhysicalDevice> adapters(adapterCount);
         vkEnumeratePhysicalDevices(m_Instance, &adapterCount, adapters.data());
         
-        LOG_DEBUG_INFO("Vulkan: Number of adapters '%d'\n", adapters.size());
+#if defined(LAMBDA_DEBUG)
+        LOG_DEBUG_INFO("Vulkan: Following of physcial devices found:\n");
+        for (auto& dev : adapters)
+        {
+            VkPhysicalDeviceProperties properties = {};
+            vkGetPhysicalDeviceProperties(dev, &properties);
+            LOG_DEBUG_INFO("    %s\n", properties.deviceName);
+        }
+#endif
         
         //Find a suitable graphics card
         for (const auto& adapter : adapters)
