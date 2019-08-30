@@ -18,14 +18,13 @@ namespace Lambda
         m_BufferMemory(VK_NULL_HANDLE),
         m_Desc()
     {
+        assert(device != VK_NULL_HANDLE);
         Init(device, adapter, desc);
     }
     
     
     void VulkanBuffer::Init(VkDevice device, VkPhysicalDevice adapter, const BufferDesc& desc)
     {
-        assert(device != VK_NULL_HANDLE);
-        
         //Setup buffer
         VkBufferCreateInfo info = {};
         info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;

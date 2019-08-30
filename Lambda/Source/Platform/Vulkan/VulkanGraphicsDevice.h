@@ -60,24 +60,19 @@ namespace Lambda
         VkPhysicalDevice GetAdapter() const;
         QueueFamilyIndices GetQueueFamilyIndices() const;
         
+        void SetVulkanObjectName(VkObjectType type, uint64 objectHandle, const std::string& name);
+        
     private:
         void Init(IWindow* pWindow, const GraphicsDeviceDesc& desc);
         void InitDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo);
         
         VkPhysicalDevice QueryAdapter();
 		VkSurfaceKHR CreateSurface(IWindow* pWindow);
-        
-        bool CreateSwapChain(uint32 width, uint32 height);
         bool CreateDepthStencil();
-        bool CreateTextures();
-        bool CreateSemaphoresAndFences();
-        bool CreateDefaultLayouts();
-        
-        void ReleaseSwapChain();
+
         void ReleaseDepthStencil();
         
         void GetNextFrame() const;
-        
         bool AdapterIsSuitable(VkPhysicalDevice adapter);
         
         std::vector<const char*> GetRequiredValidationLayers(bool debug);
@@ -135,7 +130,6 @@ namespace Lambda
         static uint32 GetTextureBinding();
         static uint32 GetSamplerBinding();
         static VkDescriptorSetLayout* GetDefaultDescriptorSetLayouts();
-        static void SetVulkanObjectName(VkObjectType type, uint64 objectHandle, const std::string& name);
         
     private:
         static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,

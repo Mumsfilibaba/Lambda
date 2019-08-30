@@ -13,7 +13,9 @@ namespace Lambda
         VulkanGraphicsPipelineState(VkDevice device, const GraphicsPipelineStateDesc& desc);
         VulkanGraphicsPipelineState() = default;
         
+        virtual void SetName(const char* pName) override final;
         virtual void* GetNativeHandle() const override final;
+        
         void Destroy(VkDevice device);
         
     private:

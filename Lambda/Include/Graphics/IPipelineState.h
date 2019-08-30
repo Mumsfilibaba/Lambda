@@ -24,6 +24,8 @@ namespace Lambda
     //Struct describing a graphicspipeline
 	struct GraphicsPipelineStateDesc
 	{
+        //Name
+        const char* pName = nullptr;
         //Shaders
 		IShader* pVertexShader = nullptr;
 		IShader* pPixelShader = nullptr;
@@ -49,6 +51,7 @@ namespace Lambda
 		IGraphicsPipelineState() = default;
 		~IGraphicsPipelineState() = default;
         
+        virtual void SetName(const char* pName) = 0;
         virtual void* GetNativeHandle() const = 0;
 	};
 

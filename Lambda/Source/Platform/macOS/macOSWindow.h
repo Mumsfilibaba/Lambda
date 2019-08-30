@@ -40,7 +40,7 @@ namespace Lambda
         static void WindowFocusCallback(GLFWwindow* pWindow, int32 focused);
         
     private:
-        static bool s_HasInitGLFW;
+        static bool s_HasGLFW;
     };
 }
 #endif

@@ -761,7 +761,7 @@ namespace Lambda
         m_Name = std::string(pName);
         
         //Set name in vulkan
-        VulkanGraphicsDevice::SetVulkanObjectName(VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64)m_CommandBuffer, m_Name);
+        reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance())->SetVulkanObjectName(VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64)m_CommandBuffer, m_Name);
     }
     
     

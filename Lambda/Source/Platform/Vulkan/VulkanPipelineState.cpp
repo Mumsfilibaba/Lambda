@@ -261,4 +261,16 @@ namespace Lambda
         //Delete me
         delete this;
     }
+    
+    
+    void VulkanGraphicsPipelineState::SetName(const char* pName)
+    {
+        if (pName != nullptr)
+        {
+            //Set name in vulkan
+            std::string name(pName);
+            reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance())->SetVulkanObjectName(VK_OBJECT_TYPE_PIPELINE, (uint64)m_Pipeline, name);            
+        }
+    }
+    
 }

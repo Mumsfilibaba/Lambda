@@ -16,7 +16,7 @@ namespace Lambda
     }
     
     //Static variable declarations
-    bool MacOSWindow::s_HasInitGLFW = false;
+    bool MacOSWindow::s_HasGLFW = false;
     
     //macOS window definition
     MacOSWindow::MacOSWindow(const WindowDesc& desc)
@@ -34,7 +34,7 @@ namespace Lambda
     MacOSWindow::~MacOSWindow()
     {
         //Destroy glfw
-        if (s_HasInitGLFW)
+        if (s_HasGLFW)
         {
             glfwTerminate();
         }
@@ -44,11 +44,11 @@ namespace Lambda
     void MacOSWindow::Init(const WindowDesc& desc)
     {
         //Init glfw
-        if (!s_HasInitGLFW)
+        if (!s_HasGLFW)
         {
             if (glfwInit())
             {
-                s_HasInitGLFW = true;
+                s_HasGLFW = true;
                 LOG_DEBUG_INFO("macOS: Initialized GLFW\n");
             }
             else
@@ -59,6 +59,7 @@ namespace Lambda
         
         //Setup window, we do not want any API since we are using vulkan
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+        glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GL_FALSE);
         
         //Create window
         m_pWindow = glfwCreateWindow(desc.Width, desc.Height, desc.pTitle, nullptr, nullptr);
@@ -67,8 +68,8 @@ namespace Lambda
             LOG_DEBUG_INFO("macOS: Created window\n");
             
             //Setup size
-            m_Width     = desc.Width;
-            m_Height    = desc.Height;
+            m_Width = desc.Width;
+            m_Height = desc.Height;
             
             //Setup callbacks
             glfwSetWindowCloseCallback(m_pWindow, MacOSWindow::WindowClosedCallback);

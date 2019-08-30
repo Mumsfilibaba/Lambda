@@ -487,12 +487,177 @@ namespace Lambda
 		}
 
 
-        if (!CreateSemaphoresAndFences()) { return; }
-        if (!CreateSwapChain(pWindow->GetWidth(), pWindow->GetHeight())) { return; }
-        if (!CreateTextures()) { return; }
-        if (!CreateDepthStencil()) { return; }
-        if (!CreateDefaultLayouts()) { return; }
+        //Setup semaphore structure
+        VkSemaphoreCreateInfo semaphoreInfo = {};
+        semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+        semaphoreInfo.pNext = nullptr;
+        semaphoreInfo.flags = 0;
         
+        //Setup fence struct
+        VkFenceCreateInfo fenceInfo = {};
+        fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        
+        //Resize vectors
+        m_ImageSemaphores.resize(FRAMES_AHEAD);
+        m_RenderSemaphores.resize(FRAMES_AHEAD);
+        m_Fences.resize(FRAMES_AHEAD);
+        
+        //Create sync-objects
+        for (uint32 i = 0; i < FRAMES_AHEAD; i++)
+        {
+            //Create semaphores
+            if (vkCreateSemaphore(m_Device, &semaphoreInfo, nullptr, &m_ImageSemaphores[i]) != VK_SUCCESS ||
+                vkCreateSemaphore(m_Device, &semaphoreInfo, nullptr, &m_RenderSemaphores[i]) != VK_SUCCESS)
+            {
+                LOG_DEBUG_ERROR("Vulkan: Failed to create Semaphore\n");
+                return;
+            }
+            else
+            {
+                //Set semaphorenames
+                VulkanGraphicsDevice::SetVulkanObjectName(VK_OBJECT_TYPE_SEMAPHORE, (uint64)m_ImageSemaphores[i], "ImageSemaphore[" +  std::to_string(i) + "]");
+                VulkanGraphicsDevice::SetVulkanObjectName(VK_OBJECT_TYPE_SEMAPHORE, (uint64)m_RenderSemaphores[i], "RenderSemaphore[" + std::to_string(i) + "]");
+            }
+            
+            //Create fence
+            if (vkCreateFence(m_Device, &fenceInfo, nullptr, &m_Fences[i]) != VK_SUCCESS)
+            {
+                LOG_DEBUG_ERROR("Vulkan: Failed to create fence\n");
+                return;
+            }
+            else
+            {
+                VulkanGraphicsDevice::SetVulkanObjectName(VK_OBJECT_TYPE_FENCE, (uint64)m_Fences[i], "Fence[" +  std::to_string(i) + "]");
+            }
+        }
+        
+        LOG_DEBUG_INFO("Vulkan: Created Semaphores and fences\n");
+        
+        
+        //Create swapchain
+        VulkanSwapChainDesc swapChainInfo = {};
+        swapChainInfo.Adapter            = m_Adapter;
+        swapChainInfo.Surface            = m_Surface;
+        swapChainInfo.SignalSemaphore    = m_ImageSemaphores[m_CurrentFrame];
+        swapChainInfo.PresentationMode   = VK_PRESENT_MODE_MAILBOX_KHR;
+        swapChainInfo.Format.format      = VK_FORMAT_B8G8R8A8_UNORM;
+        swapChainInfo.Format.colorSpace  = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+        swapChainInfo.Extent             = { pWindow->GetWidth(), pWindow->GetHeight() };
+        swapChainInfo.ImageCount         = FRAMES_AHEAD;
+        
+        m_pSwapChain = DBG_NEW VulkanSwapChain(m_Device, swapChainInfo);
+
+        
+        //Create depthbuffer
+        if (!CreateDepthStencil())
+        {
+            LOG_DEBUG_INFO("Vulkan: Failed to create DepthBuffer");
+            return;
+        }
+        
+        
+        //Create default pipelinelayout and default descriptorsets
+        VkShaderStageFlagBits shaderStages[] =
+        {
+            VK_SHADER_STAGE_VERTEX_BIT,
+            VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT,
+            VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT,
+            VK_SHADER_STAGE_GEOMETRY_BIT,
+            VK_SHADER_STAGE_FRAGMENT_BIT,
+        };
+        
+        //Vector for keeping all the bindins for a stage
+        std::vector<VkDescriptorSetLayoutBinding> layoutBindings;
+        m_UniformBinding = 0;
+        
+        //Create descriptor bindings for uniformbuffers
+        VkDescriptorSetLayoutBinding uboLayoutBinding = {};
+        uboLayoutBinding.descriptorType     = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        uboLayoutBinding.descriptorCount    = 1;
+        uboLayoutBinding.pImmutableSamplers = nullptr;
+        for (uint32 i = 0; i < LAMBDA_SHADERSTAGE_UNIFORM_COUNT; i++)
+        {
+            uboLayoutBinding.binding = m_UniformBinding + i;
+            layoutBindings.push_back(uboLayoutBinding);
+        }
+        
+        //Increment offset
+        m_TextureBinding = uint32(layoutBindings.size());
+        
+        //Create descriptor bindings for textures
+        VkDescriptorSetLayoutBinding textureLayoutBinding = {};
+        textureLayoutBinding.descriptorType     = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+        textureLayoutBinding.descriptorCount    = 1;
+        textureLayoutBinding.pImmutableSamplers = nullptr;
+        for (uint32 i = 0; i < LAMBDA_SHADERSTAGE_TEXTURE_COUNT; i++)
+        {
+            textureLayoutBinding.binding = m_TextureBinding + i;
+            layoutBindings.push_back(textureLayoutBinding);
+        }
+        
+        //Increment offset
+        m_SamplerBinding = uint32(layoutBindings.size());
+        
+        //Create descriptor bindings for samplers
+        VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
+        samplerLayoutBinding.descriptorType     = VK_DESCRIPTOR_TYPE_SAMPLER;
+        samplerLayoutBinding.descriptorCount    = 1;
+        samplerLayoutBinding.pImmutableSamplers = nullptr;
+        for (uint32 i = 0; i < LAMBDA_SHADERSTAGE_SAMPLER_COUNT; i++)
+        {
+            samplerLayoutBinding.binding = m_SamplerBinding + i;
+            layoutBindings.push_back(samplerLayoutBinding);
+        }
+        
+        //Setup layout
+        VkDescriptorSetLayoutCreateInfo descriptorLayoutInfo = {};
+        descriptorLayoutInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        descriptorLayoutInfo.pNext        = nullptr;
+        descriptorLayoutInfo.flags        = 0;
+        descriptorLayoutInfo.bindingCount = uint32(layoutBindings.size());
+        descriptorLayoutInfo.pBindings    = layoutBindings.data();
+        
+        for (uint32 i = 0; i < LAMBDA_SHADERSTAGE_COUNT; i++)
+        {
+            //Set shaderstage
+            for (auto& binding : layoutBindings)
+                binding.stageFlags = shaderStages[i];
+            
+            //Create layout for shaderstage
+            if (vkCreateDescriptorSetLayout(m_Device, &descriptorLayoutInfo, nullptr, &m_DefaultDescriptorSetLayouts[i]) != VK_SUCCESS)
+            {
+                LOG_DEBUG_ERROR("Vulkan: Failed to create default DescriptorSetLayout\n");
+                return;
+            }
+            else
+            {
+                LOG_DEBUG_INFO("Vulkan: Created default DescriptorSetLayout\n");
+            }
+        }
+        
+        
+        //Setup pipelinelayout
+        VkPipelineLayoutCreateInfo layoutInfo = {};
+        layoutInfo.sType                    = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+        layoutInfo.flags                    = 0;
+        layoutInfo.pNext                    = nullptr;
+        layoutInfo.setLayoutCount           = LAMBDA_SHADERSTAGE_COUNT;
+        layoutInfo.pSetLayouts              = m_DefaultDescriptorSetLayouts;
+        layoutInfo.pushConstantRangeCount   = 0;
+        layoutInfo.pPushConstantRanges      = nullptr;
+        
+        //Create pipelinelayout
+        if (vkCreatePipelineLayout(m_Device, &layoutInfo, nullptr, &m_DefaultPipelineLayout) != VK_SUCCESS)
+        {
+            LOG_DEBUG_ERROR("Vulkan: Failed to create default PipelineLayout\n");
+            return;
+        }
+        else
+        {
+            LOG_DEBUG_INFO("Vulkan: Created default PipelineLayout\n");
+        }
+        
+
         //Create nullbuffer
         {
             BufferDesc nullBufferDesc = {};
@@ -752,208 +917,22 @@ namespace Lambda
     }
     
     
-    bool VulkanGraphicsDevice::CreateSwapChain(uint32 width, uint32 height)
-    {
-		VulkanSwapChainDesc desc = {};
-		desc.Adapter			= m_Adapter;
-		desc.Surface			= m_Surface;
-		desc.SignalSemaphore	= m_ImageSemaphores[m_CurrentFrame];
-        desc.PresentationMode   = VK_PRESENT_MODE_MAILBOX_KHR;
-        desc.Format.format      = VK_FORMAT_B8G8R8A8_UNORM;
-        desc.Format.colorSpace  = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
-		desc.Extent				= { width, height };
-		desc.ImageCount			= FRAMES_AHEAD;
-
-		m_pSwapChain = DBG_NEW VulkanSwapChain(m_Device, desc);
-		return true;
-    }
-    
-    
     bool VulkanGraphicsDevice::CreateDepthStencil()
     {
-        //Create depthbuffer
-        Texture2DDesc desc = {};
-        desc.Usage              = RESOURCE_USAGE_DEFAULT;
-        desc.Flags              = TEXTURE_FLAGS_DEPTH_STENCIL;
-        desc.ArraySize          = 1;
-        desc.Width              = m_pSwapChain->GetWidth();
-        desc.Height             = m_pSwapChain->GetHeight();
-        desc.Format             = FORMAT_D24_UNORM_S8_UINT;
-        desc.SampleCount        = 1;
-        desc.MipLevels          = 1;
-        desc.ClearValue.Depth   = 1.0f;
-        desc.ClearValue.Stencil = 0;
+        Texture2DDesc depthBufferDesc = {};
+        depthBufferDesc.Usage              = RESOURCE_USAGE_DEFAULT;
+        depthBufferDesc.Flags              = TEXTURE_FLAGS_DEPTH_STENCIL;
+        depthBufferDesc.ArraySize          = 1;
+        depthBufferDesc.Width              = m_pSwapChain->GetWidth();
+        depthBufferDesc.Height             = m_pSwapChain->GetHeight();
+        depthBufferDesc.Format             = FORMAT_D24_UNORM_S8_UINT;
+        depthBufferDesc.SampleCount        = 1;
+        depthBufferDesc.MipLevels          = 1;
+        depthBufferDesc.ClearValue.Depth   = 1.0f;
+        depthBufferDesc.ClearValue.Stencil = 0;
         
-        m_pDepthStencil = DBG_NEW VulkanTexture2D(m_Device, m_Adapter, desc);
+        m_pDepthStencil = DBG_NEW VulkanTexture2D(m_Device, m_Adapter, depthBufferDesc);
         return true;
-    }
-    
-    
-    bool VulkanGraphicsDevice::CreateTextures()
-    {
-        return true;
-    }
-    
-    
-    bool VulkanGraphicsDevice::CreateSemaphoresAndFences()
-    {        
-        //Setup semaphore structure
-        VkSemaphoreCreateInfo info = {};
-        info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-        info.pNext = nullptr;
-        info.flags = 0;
-        
-        //Setup fence struct
-        VkFenceCreateInfo fenceInfo = {};
-        fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-
-		//Resize vectors
-		m_ImageSemaphores.resize(FRAMES_AHEAD);
-		m_RenderSemaphores.resize(FRAMES_AHEAD);
-		m_Fences.resize(FRAMES_AHEAD);
-
-		//Create sync-objects
-        for (uint32 i = 0; i < FRAMES_AHEAD; i++)
-        {
-            //Create semaphores
-            if (vkCreateSemaphore(m_Device, &info, nullptr, &m_ImageSemaphores[i]) != VK_SUCCESS ||
-				vkCreateSemaphore(m_Device, &info, nullptr, &m_RenderSemaphores[i]) != VK_SUCCESS)
-            {
-                LOG_DEBUG_ERROR("Vulkan: Failed to create Semaphore\n");
-                return false;
-            }
-            else
-            {
-                //Set semaphorenames
-                VulkanGraphicsDevice::SetVulkanObjectName(VK_OBJECT_TYPE_SEMAPHORE, (uint64)m_ImageSemaphores[i], "ImageSemaphore[" +  std::to_string(i) + "]");
-				VulkanGraphicsDevice::SetVulkanObjectName(VK_OBJECT_TYPE_SEMAPHORE, (uint64)m_RenderSemaphores[i], "RenderSemaphore[" + std::to_string(i) + "]");
-            }
-            
-            //Create fence
-            if (vkCreateFence(m_Device, &fenceInfo, nullptr, &m_Fences[i]) != VK_SUCCESS)
-            {
-                LOG_DEBUG_ERROR("Vulkan: Failed to create fence\n");
-                return false;
-            }
-            else
-            {
-                VulkanGraphicsDevice::SetVulkanObjectName(VK_OBJECT_TYPE_FENCE, (uint64)m_Fences[i], "Fence[" +  std::to_string(i) + "]");
-            }
-        }
-        
-        LOG_DEBUG_INFO("Vulkan: Created Semaphores and fences\n");
-        return true;
-    }
-    
-    
-    bool VulkanGraphicsDevice::CreateDefaultLayouts()
-    {
-        VkShaderStageFlagBits shaderStages[] =
-        {
-            VK_SHADER_STAGE_VERTEX_BIT,
-            VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT,
-            VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT,
-            VK_SHADER_STAGE_GEOMETRY_BIT,
-            VK_SHADER_STAGE_FRAGMENT_BIT,
-        };
-        
-        //Vector for keeping all the bindins for a stage
-        std::vector<VkDescriptorSetLayoutBinding> layoutBindings;
-        m_UniformBinding = 0;
-        
-        //Create descriptor bindings for uniformbuffers
-        VkDescriptorSetLayoutBinding uboLayoutBinding = {};
-        uboLayoutBinding.descriptorType     = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        uboLayoutBinding.descriptorCount    = 1;
-        uboLayoutBinding.pImmutableSamplers = nullptr;
-        for (uint32 i = 0; i < LAMBDA_SHADERSTAGE_UNIFORM_COUNT; i++)
-        {
-            uboLayoutBinding.binding = m_UniformBinding + i;
-            layoutBindings.push_back(uboLayoutBinding);
-        }
-        
-        //Increment offset
-        m_TextureBinding = uint32(layoutBindings.size());
-
-        //Create descriptor bindings for textures
-        VkDescriptorSetLayoutBinding textureLayoutBinding = {};
-        textureLayoutBinding.descriptorType     = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        textureLayoutBinding.descriptorCount    = 1;
-        textureLayoutBinding.pImmutableSamplers = nullptr;
-        for (uint32 i = 0; i < LAMBDA_SHADERSTAGE_TEXTURE_COUNT; i++)
-        {
-            textureLayoutBinding.binding = m_TextureBinding + i;
-            layoutBindings.push_back(textureLayoutBinding);
-        }
-        
-        //Increment offset
-        m_SamplerBinding = uint32(layoutBindings.size());
-        
-        //Create descriptor bindings for samplers
-        VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
-        samplerLayoutBinding.descriptorType     = VK_DESCRIPTOR_TYPE_SAMPLER;
-        samplerLayoutBinding.descriptorCount    = 1;
-        samplerLayoutBinding.pImmutableSamplers = nullptr;
-        for (uint32 i = 0; i < LAMBDA_SHADERSTAGE_SAMPLER_COUNT; i++)
-        {
-            samplerLayoutBinding.binding = m_SamplerBinding + i;
-            layoutBindings.push_back(samplerLayoutBinding);
-        }
-        
-        //Setup layout
-        VkDescriptorSetLayoutCreateInfo descriptorLayoutInfo = {};
-        descriptorLayoutInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-        descriptorLayoutInfo.pNext        = nullptr;
-        descriptorLayoutInfo.flags        = 0;
-        descriptorLayoutInfo.bindingCount = uint32(layoutBindings.size());
-        descriptorLayoutInfo.pBindings    = layoutBindings.data();
-        
-        for (uint32 i = 0; i < LAMBDA_SHADERSTAGE_COUNT; i++)
-        {
-            //Set shaderstage
-            for (auto& binding : layoutBindings)
-                binding.stageFlags = shaderStages[i];
-            
-            //Create layout for shaderstage
-            if (vkCreateDescriptorSetLayout(m_Device, &descriptorLayoutInfo, nullptr, &m_DefaultDescriptorSetLayouts[i]) != VK_SUCCESS)
-            {
-                LOG_DEBUG_ERROR("Vulkan: Failed to create default DescriptorSetLayout\n");
-                return false;
-            }
-            else
-            {
-                LOG_DEBUG_INFO("Vulkan: Created default DescriptorSetLayout\n");
-            }
-        }
-
-        
-        //Setup pipelinelayout
-        VkPipelineLayoutCreateInfo layoutInfo = {};
-        layoutInfo.sType                    = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        layoutInfo.flags                    = 0;
-        layoutInfo.pNext                    = nullptr;
-        layoutInfo.setLayoutCount           = LAMBDA_SHADERSTAGE_COUNT;
-        layoutInfo.pSetLayouts              = m_DefaultDescriptorSetLayouts;
-        layoutInfo.pushConstantRangeCount   = 0;
-        layoutInfo.pPushConstantRanges      = nullptr;
-        
-        //Create pipelinelayout
-        if (vkCreatePipelineLayout(m_Device, &layoutInfo, nullptr, &m_DefaultPipelineLayout) != VK_SUCCESS)
-        {
-            LOG_DEBUG_ERROR("Vulkan: Failed to create default PipelineLayout\n");
-            return false;
-        }
-        else
-        {
-            LOG_DEBUG_INFO("Vulkan: Created default PipelineLayout\n");
-        }
-        
-        return true;
-    }
-    
-    
-    void VulkanGraphicsDevice::ReleaseSwapChain()
-    {
     }
     
     
@@ -1221,7 +1200,7 @@ namespace Lambda
 			//Set ptr to null
 			*ppRenderPass = nullptr;
 
-			LOG_DEBUG_INFO("Vulkan: Destroyed PipelineState\n");
+			LOG_DEBUG_INFO("Vulkan: Destroyed RenderPass\n");
 		}
 	}
     
@@ -1259,6 +1238,7 @@ namespace Lambda
         }
     }
 
+    
 	void VulkanGraphicsDevice::ExecuteCommandListAndPresent(ICommandList* const* ppLists, uint32 numLists) const
 	{
 		//LOG_DEBUG_INFO("Vulkan: VulkanGraphicsDevice::ExecuteCommandListAndPresent  Frame '%d' - WaitSemaphore='%x', SignalSemaphore='%x'\n", m_CurrentFrame, m_ImageSemaphores[m_CurrentFrame], m_RenderSemaphores[m_CurrentFrame]);
@@ -1379,7 +1359,7 @@ namespace Lambda
             }
             
             //Syncronize the GPU so no operations are in flight when recreating swapchain
-            vkDeviceWaitIdle(m_Device);
+            WaitForGPU();
             
             //Resize the swapchain
             m_pSwapChain->ResizeBuffers(m_Device, m_ImageSemaphores[m_CurrentFrame], event.WindowResize.Width, event.WindowResize.Height);
@@ -1408,7 +1388,7 @@ namespace Lambda
             info.pObjectName = name.c_str();
             info.objectHandle = objectHandle;
             
-            if (SetDebugUtilsObjectNameEXT(VulkanGraphicsDevice::GetCurrentDevice(), &info) != VK_SUCCESS)
+            if (SetDebugUtilsObjectNameEXT(m_Device, &info) != VK_SUCCESS)
             {
                 LOG_DEBUG_ERROR("Vulkan: Failed to set name '%s'\n", info.pObjectName);
             }

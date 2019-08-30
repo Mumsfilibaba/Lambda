@@ -23,8 +23,8 @@ void main()
     
     vec3  lightDir = normalize(g_LightDir);
     float lightStrength = dot(lightDir, g_Normal);
-    const float aimbientLight = 0.15f;
+    const float ambientLight = 0.15f;
     
     vec4 col = tex * u_Material.Color;
-    g_OutColor = min(vec4(1.0f), col * aimbientLight + lightStrength * col);
+    g_OutColor = min(vec4(1.0f), (ambientLight + lightStrength) * col);
 }
