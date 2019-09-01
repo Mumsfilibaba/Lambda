@@ -237,6 +237,7 @@ namespace Lambda
         else
         {
             LOG_DEBUG_INFO("Vulkan: Created GraphicsPipelineState\n");
+            SetName(desc.pName);
         }
     }
     

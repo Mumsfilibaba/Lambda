@@ -185,8 +185,8 @@ namespace Lambda
             }
 
             //Create shaders
-            m_pVS = IShader::CreateShaderFromFile(pDevice, "vert.spv", "main", SHADER_TYPE_VERTEX, SHADER_LANG_SPIRV);
-            m_pPS = IShader::CreateShaderFromFile(pDevice, "frag.spv", "main", SHADER_TYPE_PIXEL, SHADER_LANG_SPIRV);
+            m_pVS = IShader::CreateShaderFromFile(pDevice, "vert.spv", "main", SHADER_STAGE_VERTEX, SHADER_LANG_SPIRV);
+            m_pPS = IShader::CreateShaderFromFile(pDevice, "frag.spv", "main", SHADER_STAGE_PIXEL, SHADER_LANG_SPIRV);
             //m_pVS = IShader::CreateShaderFromFile(pDevice, "Triangle.hlsl", "VSMain", SHADER_TYPE_VERTEX);
             //m_pPS = IShader::CreateShaderFromFile(pDevice, "Triangle.hlsl", "PSMain", SHADER_TYPE_PIXEL);
             //m_pCompute = IShader::CreateShaderFromFile(pDevice, "Texture2DMipMapGen.cso", "main", SHADER_TYPE_COMPUTE, SHADER_LANG_HLSL_COMPILED);

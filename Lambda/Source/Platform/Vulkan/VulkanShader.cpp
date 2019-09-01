@@ -6,7 +6,7 @@ namespace Lambda
     VulkanShader::VulkanShader(VkDevice device, const ShaderDesc& desc)
         : m_Shader(VK_NULL_HANDLE),
         m_ByteCode(),
-        m_Type(SHADER_TYPE_UNKNOWN)
+        m_Type(SHADER_STAGE_UNKNOWN)
     {
         Init(device, desc);
     }
@@ -66,7 +66,7 @@ namespace Lambda
     }
     
     
-    ShaderType VulkanShader::GetType() const
+    ShaderStage VulkanShader::GetType() const
     {
         return m_Type;
     }

@@ -22,7 +22,7 @@ void main()
     vec4 tex = texture(sampler2D(u_Texture, u_Sampler), g_TexCoord);
     
     vec3  lightDir = normalize(g_LightDir);
-    float lightStrength = dot(lightDir, g_Normal);
+    float lightStrength = max(dot(lightDir, g_Normal), 0.0f);
     const float ambientLight = 0.15f;
     
     vec4 col = tex * u_Material.Color;

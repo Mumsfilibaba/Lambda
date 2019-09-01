@@ -320,6 +320,19 @@ namespace Lambda
 		STORE_OP_STORE		= 1,
 	};
     
+    
+    //Enum describing shaderstages
+    enum ShaderStage
+    {
+        SHADER_STAGE_UNKNOWN     = 0,
+        SHADER_STAGE_VERTEX      = 1,
+        SHADER_STAGE_HULL        = 2,
+        SHADER_STAGE_DOMAIN      = 3,
+        SHADER_STAGE_GEOMETRY    = 4,
+        SHADER_STAGE_PIXEL       = 5,
+        SHADER_STAGE_COMPUTE     = 6,
+    };
+    
 
     //Struct for updating data in a buffer or texture
 	struct ResourceData
