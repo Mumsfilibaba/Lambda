@@ -7,6 +7,7 @@
 #include "Graphics/ITexture2D.h"
 #include "Graphics/ISamplerState.h"
 #include "Graphics/IRenderPass.h"
+#include "Graphics/IResourceState.h"
 #include "Graphics/Camera.h"
 
 namespace Lambda
@@ -69,6 +70,9 @@ namespace Lambda
 
 		//RenderPass
 		IRenderPass* m_pRenderPass;
+        
+        //ResourceState
+        IResourceState* m_pResourceState;
 		
         //Other
         float m_Width;

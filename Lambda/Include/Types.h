@@ -333,6 +333,16 @@ namespace Lambda
         SHADER_STAGE_COMPUTE     = 6,
     };
     
+    
+    //Type of resource in a resourcestate
+    enum ResourceType
+    {
+        RESOURCE_TYPE_UNKNOWN = 0,
+        RESOURCE_TYPE_TEXTURE = 1,
+        RESOURCE_TYPE_SAMPLER = 2,
+        RESOURCE_TYPE_CONSTANT_BUFFER = 3
+    };
+    
 
     //Struct for updating data in a buffer or texture
 	struct ResourceData
