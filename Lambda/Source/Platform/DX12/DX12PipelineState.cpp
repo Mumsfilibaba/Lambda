@@ -13,6 +13,12 @@ namespace Lambda
 		Init(pDevice, desc);
 	}
 
+
+	void DX12GraphicsPipelineState::SetName(const char* pName)
+	{
+	}
+
+
 	void* DX12GraphicsPipelineState::GetNativeHandle() const
 	{
 		return m_State.Get();

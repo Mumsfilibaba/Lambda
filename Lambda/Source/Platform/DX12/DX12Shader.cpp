@@ -6,13 +6,13 @@ namespace Lambda
 {
 	DX12Shader::DX12Shader(const ShaderDesc& desc)
 		: m_ShaderBlob(),
-		m_Type(SHADER_TYPE_UNKNOWN)
+		m_Type(SHADER_STAGE_UNKNOWN)
 	{
 		Init(desc);
 	}
     
 
-	ShaderType DX12Shader::GetType() const
+	ShaderStage DX12Shader::GetType() const
 	{
 		return m_Type;
 	}
@@ -77,17 +77,17 @@ namespace Lambda
 	}
 
 
-	const char* DX12Shader::GetTarget(ShaderType type)
+	const char* DX12Shader::GetTarget(ShaderStage type)
 	{
 		switch (type)
 		{
-		case SHADER_TYPE_VERTEX: return "vs_5_0";
-		case SHADER_TYPE_HULL: return "hs_5_0";
-		case SHADER_TYPE_DOMAIN: return "ds_5_0";
-		case SHADER_TYPE_GEOMETRY: return "gs_5_0";
-		case SHADER_TYPE_PIXEL: return "ps_5_0";
-		case SHADER_TYPE_COMPUTE: return "cs_5_0";
-		case SHADER_TYPE_UNKNOWN:
+		case SHADER_STAGE_VERTEX: return "vs_5_0";
+		case SHADER_STAGE_HULL: return "hs_5_0";
+		case SHADER_STAGE_DOMAIN: return "ds_5_0";
+		case SHADER_STAGE_GEOMETRY: return "gs_5_0";
+		case SHADER_STAGE_PIXEL: return "ps_5_0";
+		case SHADER_STAGE_COMPUTE: return "cs_5_0";
+		case SHADER_STAGE_UNKNOWN:
 		default: return nullptr;
 		}
 	}
