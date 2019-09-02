@@ -3,14 +3,12 @@
 
 namespace Lambda
 {
-    //Descriptor for sampler
 	struct SamplerDesc
 	{
         SamplerAddressMode AdressMode = SAMPLER_ADDRESS_MODE_REPEAT;
 	};
 
 
-    //SamplerState interface
 	class LAMBDA_API ISamplerState
 	{
 	public:

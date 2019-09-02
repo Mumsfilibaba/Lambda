@@ -3,12 +3,11 @@
 
 namespace Lambda
 {    
-    //Forwarddeclarations
 	class IShader;
 	class IRenderPass;
+	class IResourceState;
 
     
-    //Struct describing an VertexInputElement
     struct InputElement
     {
         const char* pName       = nullptr;
@@ -21,10 +20,8 @@ namespace Lambda
     };
     
     
-    //Struct describing a graphicspipeline
 	struct GraphicsPipelineStateDesc
 	{
-        //Name
         const char* pName = nullptr;
         //Shaders
 		IShader* pVertexShader = nullptr;
@@ -39,10 +36,11 @@ namespace Lambda
         bool DepthTest = true;
         //RenderPass defines the framebuffer
 		IRenderPass* pRenderPass = nullptr;
+		//Resourcestate hold info about what resources will be bound to the pipeline
+		IResourceState* pResourceState = nullptr;
 	};
 
 
-    //GraphicsPipeline
 	class LAMBDA_API IGraphicsPipelineState
 	{
 	public:
@@ -56,14 +54,12 @@ namespace Lambda
 	};
 
 
-    //Struct describing a computepipeline
 	struct ComputePipelineStateDesc
 	{
 		IShader* pComputeShader = nullptr;
 	};
 
-    
-    //ComputePipeline
+
 	class LAMBDA_API IComputePipelineState
 	{
 	public:

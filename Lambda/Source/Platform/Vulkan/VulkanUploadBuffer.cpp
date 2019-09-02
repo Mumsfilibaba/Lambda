@@ -4,7 +4,6 @@
 
 namespace Lambda
 {
-    //Vulkan UploadBuffer
     VulkanUploadBuffer::VulkanUploadBuffer()
 		: m_pStart(nullptr),
 		m_pCurrent(nullptr),
@@ -31,7 +30,7 @@ namespace Lambda
         assert(device != VK_NULL_HANDLE);
         assert(adapter != VK_NULL_HANDLE);
         
-        //Setup buffer for block
+		//Create buffer
         VkBufferCreateInfo info = {};
         info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
         info.pNext = nullptr;
@@ -42,7 +41,6 @@ namespace Lambda
         info.size = sizeInBytes;
         info.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
         
-        //Create buffer
         if (vkCreateBuffer(device, &info, nullptr, &m_Buffer) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create buffer for UploadBuffer\n");
@@ -51,26 +49,20 @@ namespace Lambda
         else
         {
             LOG_DEBUG_INFO("Vulkan: Created buffer for UploadBuffer\n");
-            
-            //Set size
             m_SizeInBytes = sizeInBytes;
         }
         
-        //Get memory requirements
         VkMemoryRequirements memReq = {};
         vkGetBufferMemoryRequirements(device, m_Buffer, &memReq);
         
-        //Get memory type
+		//Allocate memory
         uint32 memoryType = FindMemoryType(adapter, memReq.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-        
-        //Setup allocation
         VkMemoryAllocateInfo allocInfo = {};
         allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         allocInfo.pNext = nullptr;
         allocInfo.memoryTypeIndex = memoryType;
         allocInfo.allocationSize = memReq.size;
-        
-        //Allocate memory
+
         if (vkAllocateMemory(device, &allocInfo, nullptr, &m_Memory) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to allocate UploadBuffer\n");
@@ -80,10 +72,8 @@ namespace Lambda
         {
             LOG_DEBUG_INFO("Vulkan: Allocated '%u' bytes for UploadBuffer\n", m_SizeInBytes);
             
-            //Bind buffer to allocated memory
             vkBindBufferMemory(device, m_Buffer, m_Memory, 0);
             
-            //Map buffer
             vkMapMemory(device, m_Memory, 0, m_SizeInBytes, 0, reinterpret_cast<void**>(&m_pStart));
             m_pCurrent = m_pStart;
             
@@ -102,7 +92,6 @@ namespace Lambda
         }
         else
         {
-            //Save current ptr, Increase current and return
             void* pMem = reinterpret_cast<void*>(m_pCurrent);
             m_pCurrent += bytesToAllocate;
             return pMem;
@@ -127,15 +116,11 @@ namespace Lambda
             vkDestroyBuffer(device, m_Buffer, nullptr);
             m_Buffer = VK_NULL_HANDLE;
         }
-        
-        //Free memory
         if (m_Memory != VK_NULL_HANDLE)
         {
-            //Unmap before freeing
             vkUnmapMemory(device, m_Memory);
-            
-            //Destroyed
-            vkFreeMemory(device, m_Memory, nullptr);
+         
+			vkFreeMemory(device, m_Memory, nullptr);
             m_Memory = VK_NULL_HANDLE;
         }
         

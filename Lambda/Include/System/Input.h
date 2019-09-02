@@ -3,10 +3,9 @@
 
 namespace Lambda
 {
-    //Forward declaration
 	class IWindow;
 
-    //Class for input
+
 	class LAMBDA_API Input
 	{
 	public:

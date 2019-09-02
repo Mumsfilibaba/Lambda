@@ -2,6 +2,7 @@
 #include "VulkanPipelineState.h"
 #include "VulkanShader.h"
 #include "VulkanRenderPass.h"
+#include "VulkanResourceState.h"
 #include "VulkanGraphicsDevice.h"
 #include "VulkanUtilities.h"
 #include "VulkanConversions.inl"
@@ -223,7 +224,7 @@ namespace Lambda
         pipelineInfo.pDepthStencilState     = &depthStencilState;
         pipelineInfo.pColorBlendState       = &colorBlending;
         pipelineInfo.pDynamicState          = &dynamicState;
-        pipelineInfo.layout                 = VulkanGraphicsDevice::GetDefaultPipelineLayout();
+        pipelineInfo.layout                 = reinterpret_cast<VkPipelineLayout>(desc.pResourceState->GetNativeHandle());
         pipelineInfo.renderPass             = reinterpret_cast<VkRenderPass>(desc.pRenderPass->GetNativeHandle());
         pipelineInfo.subpass                = 0;
         pipelineInfo.basePipelineHandle     = VK_NULL_HANDLE;
@@ -273,5 +274,4 @@ namespace Lambda
             reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance())->SetVulkanObjectName(VK_OBJECT_TYPE_PIPELINE, (uint64)m_Pipeline, name);            
         }
     }
-    
 }

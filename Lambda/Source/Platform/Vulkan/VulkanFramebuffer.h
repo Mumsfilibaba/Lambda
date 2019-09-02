@@ -5,11 +5,9 @@
 
 namespace Lambda
 {
-    //Forward declarations
     class VulkanTexture2D;
     
     
-    //Struct for describing a framebuffer
     struct VulkanFramebufferCacheKey
     {
 	public:

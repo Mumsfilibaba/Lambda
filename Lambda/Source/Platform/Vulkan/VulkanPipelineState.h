@@ -4,7 +4,6 @@
 
 namespace Lambda
 {
-    //Vulkan implementation of GraphicsPipelineState
     class VulkanGraphicsPipelineState final : public IGraphicsPipelineState
     {
     public:

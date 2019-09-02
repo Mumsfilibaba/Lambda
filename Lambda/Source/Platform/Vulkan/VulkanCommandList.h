@@ -6,20 +6,10 @@
 
 namespace Lambda
 {
-    //Helperstruct containing information about a shaderstage
-    struct VulkanShaderStageData
-    {
-        VkDescriptorBufferInfo  UBInfos[LAMBDA_SHADERSTAGE_UNIFORM_COUNT];
-        VkDescriptorImageInfo   TextureInfos[LAMBDA_SHADERSTAGE_TEXTURE_COUNT];
-        VkDescriptorImageInfo   SamplerInfos[LAMBDA_SHADERSTAGE_SAMPLER_COUNT];
-    };
-    
-    
-    //Forward declarations
     class VulkanTexture2D;
-    
-    
-    //Vulkan Implementation of CommandList
+	class VulkanResourceState;
+
+
     class VulkanCommandList final : public ICommandList
     {
         friend class VulkanGraphicsDevice;
@@ -33,26 +23,6 @@ namespace Lambda
         virtual void ClearRenderTarget(ITexture2D* pRenderTarget, float color[4]) override final;
         virtual void ClearDepthStencil(ITexture2D* pDepthStencil, float depth, uint8 stencil) override final;
         
-        virtual void VSSetConstantBuffers(const IBuffer* const* ppBuffers, uint32 numBuffers, uint32 startSlot) override final;
-        virtual void VSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot) override final;
-        virtual void VSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot) override final;
-        
-        virtual void HSSetConstantBuffers(const IBuffer* const* ppBuffers, uint32 numBuffers, uint32 startSlot) override final;
-        virtual void HSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot) override final;
-        virtual void HSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot) override final;
-        
-        virtual void DSSetConstantBuffers(const IBuffer* const* ppBuffers, uint32 numBuffers, uint32 startSlot) override final;
-        virtual void DSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot) override final;
-        virtual void DSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot) override final;
-        
-        virtual void GSSetConstantBuffers(const IBuffer* const* ppBuffers, uint32 numBuffers, uint32 startSlot) override final;
-        virtual void GSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot) override final;
-        virtual void GSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot) override final;
-        
-        virtual void PSSetConstantBuffers(const IBuffer* const* ppBuffers, uint32 numBuffers, uint32 startSlot) override final;
-        virtual void PSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot) override final;
-        virtual void PSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot) override final;
-        
 		virtual void BeginRenderPass(IRenderPass* pRenderPass) override final;
 		virtual void EndRenderPass() override final;
 
@@ -61,7 +31,8 @@ namespace Lambda
         virtual void SetGraphicsPipelineState(IGraphicsPipelineState* pPSO) override final;
         virtual void SetVertexBuffer(IBuffer* pBuffer, uint32 slot) override final;
         virtual void SetIndexBuffer(IBuffer* pBuffer) override final;
-        
+		virtual void SetResourceState(IResourceState* pResourceState) override final;
+
         virtual void UpdateBuffer(IBuffer* pResource, const ResourceData* pData) override final;
         virtual void UpdateTexture(ITexture2D* pResource, const ResourceData* pData, uint32 subresource) override final;
         
@@ -85,11 +56,7 @@ namespace Lambda
         
     private:
         void Init(VkDevice device, CommandListType type);
-        
-        void WriteConstantBufferDescriptorsToStage(uint32 shaderStage, uint32 startSlot, const IBuffer* const* ppBuffers, uint32 numBuffers);
-        void WriteTextureDescriptorsToStage(uint32 shaderStage, uint32 startSlot, const ITexture2D* const* ppTextures, uint32 numTextures);
-        void WriteSamplerDescriptorsToStage(uint32 shaderStage, uint32 startSlot, const ISamplerState* const* ppSamplers, uint32 numSamplers);
-        
+
     private:
         VkDevice m_Device;
         VkCommandPool m_CommandPool;
@@ -98,19 +65,12 @@ namespace Lambda
         VulkanUploadBuffer m_BufferUpload;
         VulkanUploadBuffer m_TextureUpload;
         
-        VkClearValue m_ClearValues[2];
-        
+		VulkanResourceState* m_pResourceState;
+
         VkRenderPass m_BoundRenderPass;
         VkFramebuffer m_BoundFrameBuffer;
         
-        VkDescriptorSet m_DescriptorSets[LAMBDA_SHADERSTAGE_COUNT];
-        VkDescriptorPool m_DescriptorPool;
-        VulkanShaderStageData m_ShaderSages[LAMBDA_SHADERSTAGE_COUNT];
-        
         CommandListType m_Type;
         std::string m_Name;
-        
-        //Temp?
-        VkPipelineLayout m_PipelineLayout;
     };
 }

@@ -16,7 +16,6 @@ namespace Lambda
 		m_Buffers()
 	{
 		assert(device != VK_NULL_HANDLE);
-
 		Init(device, desc);
 	}
 
@@ -78,18 +77,15 @@ namespace Lambda
 
 		LOG_DEBUG_INFO("Vulkan: Number of images in SwapChain '%u'\n", m_ImageCount);
         
-        //Set values
         m_Adapter = desc.Adapter;
         m_Surface = desc.Surface;
         
-        //Init swapchain
         InitSwapChain(device, desc.SignalSemaphore, desc.Extent);
 	}
     
     
     void VulkanSwapChain::InitSwapChain(VkDevice device, VkSemaphore signalSemaphore, VkExtent2D extent)
     {
-        //Get cap
         m_Cap = QuerySwapChainSupport(m_Adapter, m_Surface);
         
         //Choose swapchain extent (Size)
@@ -140,8 +136,7 @@ namespace Lambda
             info.queueFamilyIndexCount   = 0;
             info.pQueueFamilyIndices     = nullptr;
         }
-        
-        //Create swapchain
+
         if (vkCreateSwapchainKHR(device, &info, nullptr, &m_SwapChain) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create SwapChain\n");
@@ -160,8 +155,6 @@ namespace Lambda
         //Get SwapChain images
         uint32 imageCount = 0;
         vkGetSwapchainImagesKHR(device, m_SwapChain, &imageCount, nullptr);
-        
-        //Set imagecount
         m_ImageCount = imageCount;
         
         std::vector<VkImage> textures(imageCount);
@@ -221,6 +214,12 @@ namespace Lambda
 	}
 
 
+	uint32 VulkanSwapChain::GetBufferCount() const
+	{
+		return uint32(m_Buffers.size());
+	}
+
+
 	uint32 VulkanSwapChain::GetCurrentBackBufferIndex() const
 	{
 		return m_CurrentBufferIndex;
@@ -247,8 +246,6 @@ namespace Lambda
 	void VulkanSwapChain::Present(VkQueue presentQueue, VkSemaphore waitSemaphore)
 	{
 		VkSemaphore waitSemaphores[] = { waitSemaphore };
-
-		//Setup presentinfo
 		VkPresentInfoKHR info = {};
 		info.sType				= VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 		info.pNext				= nullptr;
@@ -259,7 +256,6 @@ namespace Lambda
 		info.pImageIndices		= &m_CurrentBufferIndex;
 		info.pResults			= nullptr;
 
-		//Present
 		vkQueuePresentKHR(presentQueue, &info);
 	}
 
@@ -276,10 +272,8 @@ namespace Lambda
 			}
 		}
 
-		//Clear backbuffer array
 		m_Buffers.clear();
 
-		//Release swapchain
 		if (m_SwapChain != VK_NULL_HANDLE)
 		{
 			vkDestroySwapchainKHR(device, m_SwapChain, nullptr);
@@ -290,10 +284,9 @@ namespace Lambda
 
 	void VulkanSwapChain::Destroy(VkDevice device)
 	{
-		//Release resources
-		Release(device);
+		assert(device != VK_NULL_HANDLE);
 
-		//Delete
+		Release(device);
 		delete this;
 	}
 }

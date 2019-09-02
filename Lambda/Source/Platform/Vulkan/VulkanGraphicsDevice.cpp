@@ -11,6 +11,7 @@
 #include "VulkanBuffer.h"
 #include "VulkanSwapChain.h"
 #include "VulkanRenderPass.h"
+#include "VulkanResourceState.h"
 #include "VulkanUtilities.h"
 #include "VulkanConversions.inl"
 #if defined(LAMBDA_PLAT_MACOS)
@@ -81,59 +82,15 @@ namespace Lambda
         assert(s_pInstance == nullptr);
         s_pInstance = this;
         
-        //Init default descriptorsetlayouts
-		for (uint32 i = 0; i < LAMBDA_SHADERSTAGE_COUNT; i++)
-		{
-            m_DefaultDescriptorSetLayouts[i] = VK_NULL_HANDLE;
-		}
-        
         Init(pWindow, desc);
     }
     
     
     VulkanGraphicsDevice::~VulkanGraphicsDevice()
     {
-        //Destroy nullobjects
-        if (m_pNullBuffer)
-        {
-            m_pNullBuffer->Destroy(m_Device);
-            m_pNullBuffer = nullptr;
-        }
-        if (m_pNullTexture)
-        {
-            m_pNullTexture->Destroy(m_Device);
-            m_pNullTexture = nullptr;
-        }
-        if (m_pNullSampler)
-        {
-            m_pNullSampler->Destroy(m_Device);
-            m_pNullSampler = nullptr;
-        }
-        
-        
-        //Destroy the directcommandlist
         ICommandList* pDirectCommandList = m_pCommandList;
         DestroyCommandList(&pDirectCommandList);
-        
-
-        //Destroy default pipelinelayout
-        if (m_DefaultPipelineLayout != VK_NULL_HANDLE)
-        {
-            vkDestroyPipelineLayout(m_Device, m_DefaultPipelineLayout, nullptr);
-            m_DefaultPipelineLayout = VK_NULL_HANDLE;
-        }
-        
-        //Destroy default descriptorsetlayouts
-        for (uint32 i = 0; i < LAMBDA_SHADERSTAGE_COUNT; i++)
-        {
-            if (m_DefaultDescriptorSetLayouts[i] != VK_NULL_HANDLE)
-            {
-                vkDestroyDescriptorSetLayout(m_Device, m_DefaultDescriptorSetLayouts[i], nullptr);
-                m_DefaultDescriptorSetLayouts[i] = VK_NULL_HANDLE;
-            }
-        }
-        
-        //Destroy semaphores and fences
+               
         for (uint32 i = 0; i < FRAMES_AHEAD; i++)
         {
 			if (m_ImageSemaphores[i] != VK_NULL_HANDLE)
@@ -154,16 +111,11 @@ namespace Lambda
         }
         
 
-        //Destroy all framebuffers
         VulkanFramebufferCache::ReleaseAll(m_Device);
         
-
-        //Destroy swapchain and depthstencil
 		m_pSwapChain->Destroy(m_Device);
         ReleaseDepthStencil();
 
-        
-        //Destroy vulkanobjects
         if (m_Device != VK_NULL_HANDLE)
         {
             vkDestroyDevice(m_Device, nullptr);
@@ -184,6 +136,11 @@ namespace Lambda
             vkDestroyInstance(m_Instance, nullptr);
             m_Instance = VK_NULL_HANDLE;
         }
+
+
+		//Set global instance to nullptr
+		if (s_pInstance == this)
+			s_pInstance = nullptr;
     }
     
     
@@ -398,7 +355,18 @@ namespace Lambda
 			vkGetPhysicalDeviceProperties(m_Adapter, &m_AdapterProperties);
 			m_FamiliyIndices = FindQueueFamilies(m_Adapter, m_Surface);
 
-			LOG_SYSTEM_PRINT("Vulkan: Selected GPU '%s'\n", m_AdapterProperties.deviceName);
+			VkPhysicalDeviceMemoryProperties memoryProperties = {};
+			vkGetPhysicalDeviceMemoryProperties(m_Adapter, &memoryProperties);
+
+			uint64 vram = 0;
+			for (uint32 i = 0; i < memoryProperties.memoryHeapCount; i++)
+			{
+				if (memoryProperties.memoryHeaps[i].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)
+					vram = memoryProperties.memoryHeaps[i].size;
+			}
+
+			vram = vram / (1024 * 1024);
+			LOG_SYSTEM_PRINT("Vulkan: Selected GPU '%s'\n        VRAM: %llu MB\n", m_AdapterProperties.deviceName, vram);
 		}
 
 
@@ -554,157 +522,7 @@ namespace Lambda
             LOG_DEBUG_INFO("Vulkan: Failed to create DepthBuffer");
             return;
         }
-        
-        
-        //Create default pipelinelayout and default descriptorsets
-        VkShaderStageFlagBits shaderStages[] =
-        {
-            VK_SHADER_STAGE_VERTEX_BIT,
-            VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT,
-            VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT,
-            VK_SHADER_STAGE_GEOMETRY_BIT,
-            VK_SHADER_STAGE_FRAGMENT_BIT,
-        };
-        
-        //Vector for keeping all the bindins for a stage
-        std::vector<VkDescriptorSetLayoutBinding> layoutBindings;
-        m_UniformBinding = 0;
-        
-        //Create descriptor bindings for uniformbuffers
-        VkDescriptorSetLayoutBinding uboLayoutBinding = {};
-        uboLayoutBinding.descriptorType     = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        uboLayoutBinding.descriptorCount    = 1;
-        uboLayoutBinding.pImmutableSamplers = nullptr;
-        for (uint32 i = 0; i < LAMBDA_SHADERSTAGE_UNIFORM_COUNT; i++)
-        {
-            uboLayoutBinding.binding = m_UniformBinding + i;
-            layoutBindings.push_back(uboLayoutBinding);
-        }
-        
-        //Increment offset
-        m_TextureBinding = uint32(layoutBindings.size());
-        
-        //Create descriptor bindings for textures
-        VkDescriptorSetLayoutBinding textureLayoutBinding = {};
-        textureLayoutBinding.descriptorType     = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        textureLayoutBinding.descriptorCount    = 1;
-        textureLayoutBinding.pImmutableSamplers = nullptr;
-        for (uint32 i = 0; i < LAMBDA_SHADERSTAGE_TEXTURE_COUNT; i++)
-        {
-            textureLayoutBinding.binding = m_TextureBinding + i;
-            layoutBindings.push_back(textureLayoutBinding);
-        }
-        
-        //Increment offset
-        m_SamplerBinding = uint32(layoutBindings.size());
-        
-        //Create descriptor bindings for samplers
-        VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
-        samplerLayoutBinding.descriptorType     = VK_DESCRIPTOR_TYPE_SAMPLER;
-        samplerLayoutBinding.descriptorCount    = 1;
-        samplerLayoutBinding.pImmutableSamplers = nullptr;
-        for (uint32 i = 0; i < LAMBDA_SHADERSTAGE_SAMPLER_COUNT; i++)
-        {
-            samplerLayoutBinding.binding = m_SamplerBinding + i;
-            layoutBindings.push_back(samplerLayoutBinding);
-        }
-        
-        //Setup layout
-        VkDescriptorSetLayoutCreateInfo descriptorLayoutInfo = {};
-        descriptorLayoutInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-        descriptorLayoutInfo.pNext        = nullptr;
-        descriptorLayoutInfo.flags        = 0;
-        descriptorLayoutInfo.bindingCount = uint32(layoutBindings.size());
-        descriptorLayoutInfo.pBindings    = layoutBindings.data();
-        
-        for (uint32 i = 0; i < LAMBDA_SHADERSTAGE_COUNT; i++)
-        {
-            //Set shaderstage
-            for (auto& binding : layoutBindings)
-                binding.stageFlags = shaderStages[i];
-            
-            //Create layout for shaderstage
-            if (vkCreateDescriptorSetLayout(m_Device, &descriptorLayoutInfo, nullptr, &m_DefaultDescriptorSetLayouts[i]) != VK_SUCCESS)
-            {
-                LOG_DEBUG_ERROR("Vulkan: Failed to create default DescriptorSetLayout\n");
-                return;
-            }
-            else
-            {
-                LOG_DEBUG_INFO("Vulkan: Created default DescriptorSetLayout\n");
-            }
-        }
-        
-        
-        //Setup pipelinelayout
-        VkPipelineLayoutCreateInfo layoutInfo = {};
-        layoutInfo.sType                    = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        layoutInfo.flags                    = 0;
-        layoutInfo.pNext                    = nullptr;
-        layoutInfo.setLayoutCount           = LAMBDA_SHADERSTAGE_COUNT;
-        layoutInfo.pSetLayouts              = m_DefaultDescriptorSetLayouts;
-        layoutInfo.pushConstantRangeCount   = 0;
-        layoutInfo.pPushConstantRanges      = nullptr;
-        
-        //Create pipelinelayout
-        if (vkCreatePipelineLayout(m_Device, &layoutInfo, nullptr, &m_DefaultPipelineLayout) != VK_SUCCESS)
-        {
-            LOG_DEBUG_ERROR("Vulkan: Failed to create default PipelineLayout\n");
-            return;
-        }
-        else
-        {
-            LOG_DEBUG_INFO("Vulkan: Created default PipelineLayout\n");
-        }
-        
-
-        //Create nullbuffer
-        {
-            BufferDesc nullBufferDesc = {};
-			nullBufferDesc.SizeInBytes    = 4;
-			nullBufferDesc.Flags          = BUFFER_FLAGS_CONSTANT_BUFFER | BUFFER_FLAGS_VERTEX_BUFFER;
-			nullBufferDesc.StrideInBytes  = 4;
-			nullBufferDesc.Usage          = RESOURCE_USAGE_DEFAULT;
-            
-            m_pNullBuffer = DBG_NEW VulkanBuffer(m_Device, m_Adapter, nullBufferDesc);
-            
-            //Fill in bufferdescriptpr
-            m_NullBufferDescriptor.buffer = reinterpret_cast<VkBuffer>(m_pNullBuffer->GetNativeHandle());
-            m_NullBufferDescriptor.offset = 0;
-            m_NullBufferDescriptor.range  = VK_WHOLE_SIZE;
-        }
-        
-        //Create nulltexture
-        {
-            Texture2DDesc nullTextureDesc = {};
-			nullTextureDesc.ArraySize      = 1;
-			nullTextureDesc.Flags          = TEXTURE_FLAGS_SHADER_RESOURCE;
-			nullTextureDesc.Width          = 2;
-			nullTextureDesc.Height         = 2;
-			nullTextureDesc.Format         = FORMAT_R8G8B8A8_UNORM;
-			nullTextureDesc.MipLevels      = 1;
-			nullTextureDesc.SampleCount    = 1;
-			nullTextureDesc.Usage          = RESOURCE_USAGE_DEFAULT;
-            
-            m_pNullTexture = DBG_NEW VulkanTexture2D(m_Device, m_Adapter, nullTextureDesc);
-            
-            //Fill in texturedescriptpr
-            m_NullTextureDescriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            m_NullTextureDescriptor.imageView   = m_pNullTexture->GetImageView();
-            m_NullTextureDescriptor.sampler     = VK_NULL_HANDLE;
-        }
-        
-        //Create nullsampler
-        {
-            SamplerDesc nullSamplerdesc = {};
-            m_pNullSampler = DBG_NEW VulkanSamplerState(m_Device, nullSamplerdesc);
-            
-            //Fill in samplerdescriptpr
-            m_NullSamplerDescriptor.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-            m_NullSamplerDescriptor.imageView   = VK_NULL_HANDLE;
-            m_NullSamplerDescriptor.sampler     = reinterpret_cast<VkSampler>(m_pNullSampler->GetNativeHandle());
-        }
-        
+         
         //Init GraphicsDevice dependent members
         CreateCommandList(reinterpret_cast<ICommandList**>(&m_pCommandList), COMMAND_LIST_TYPE_GRAPHICS);
         m_pCommandList->SetName("Graphics Device Internal CommandList");
@@ -1079,6 +897,13 @@ namespace Lambda
 		assert(ppRenderPass != nullptr);
 		(*ppRenderPass) = DBG_NEW VulkanRenderPass(m_Device, desc);
 	}
+
+
+	void VulkanGraphicsDevice::CreateResourceState(IResourceState** ppResourceState, const ResourceStateDesc& desc) const
+	{
+		assert(ppResourceState != nullptr);
+		(*ppResourceState) = DBG_NEW VulkanResourceState(m_Device, desc);
+	}
     
     
     void VulkanGraphicsDevice::DestroyCommandList(ICommandList** ppList) const
@@ -1090,8 +915,6 @@ namespace Lambda
         if (pList != nullptr)
         {
             pList->Destroy(m_Device);
-            
-            //Set ptr to null
             *ppList = nullptr;
         }
     }
@@ -1106,8 +929,6 @@ namespace Lambda
         if (pBuffer != nullptr)
         {
             pBuffer->Destroy(m_Device);
-            
-            //Set ptr to null
             *ppBuffer = nullptr;
             
             LOG_DEBUG_INFO("Vulkan: Destroyed Buffer\n");
@@ -1124,8 +945,6 @@ namespace Lambda
         if (pTexture != nullptr)
         {
             pTexture->Destroy(m_Device);
-            
-            //Set ptr to null
             *ppTexture = nullptr;
             
             LOG_DEBUG_INFO("Vulkan: Destroyed Texture2D\n");
@@ -1142,8 +961,6 @@ namespace Lambda
         if (pShader != nullptr)
         {
             pShader->Destroy(m_Device);
-
-            //Set ptr to null
             *ppShader = nullptr;
             
             LOG_DEBUG_INFO("Vulkan: Destroyed Shader\n");
@@ -1160,8 +977,6 @@ namespace Lambda
         if (pSamplerState != nullptr)
         {
             pSamplerState->Destroy(m_Device);
-            
-            //Set ptr to null
             *ppSamplerState = nullptr;
             
             LOG_DEBUG_INFO("Vulkan: Destroyed SamplerState\n");
@@ -1178,8 +993,6 @@ namespace Lambda
         if (pPipelineState != nullptr)
         {
 			pPipelineState->Destroy(m_Device);
-            
-            //Set ptr to null
             *ppPipelineState = nullptr;
             
             LOG_DEBUG_INFO("Vulkan: Destroyed PipelineState\n");
@@ -1196,11 +1009,25 @@ namespace Lambda
 		if (pRenderPass != nullptr)
 		{
 			pRenderPass->Destroy(m_Device);
-
-			//Set ptr to null
 			*ppRenderPass = nullptr;
 
 			LOG_DEBUG_INFO("Vulkan: Destroyed RenderPass\n");
+		}
+	}
+
+
+	void VulkanGraphicsDevice::DestroyResourceState(IResourceState** ppResourceState) const
+	{
+		assert(ppResourceState != nullptr);
+
+		//Delete PipelineState
+		VulkanResourceState* pResourceState = reinterpret_cast<VulkanResourceState*>(*ppResourceState);
+		if (pResourceState != nullptr)
+		{
+			pResourceState->Destroy(m_Device);
+			*ppResourceState = nullptr;
+
+			LOG_DEBUG_INFO("Vulkan: Destroyed ResourceState\n");
 		}
 	}
     

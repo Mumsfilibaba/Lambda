@@ -29,8 +29,7 @@ namespace Lambda
         //Get adress mode
         VkSamplerAddressMode adressMode = ConvertSamplerAdressMode(desc.AdressMode);
         
-        
-        //Setup sampler
+		//Create sampler
         VkSamplerCreateInfo info = {};
         info.sType                      = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
         info.pNext                      = nullptr;
@@ -51,7 +50,6 @@ namespace Lambda
         info.minLod                     = 0.0f;
         info.maxLod                     = 0.0f;
         
-        //Create sampler
         if (vkCreateSampler(device, &info, nullptr, &m_Sampler) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create samplerstate\n");
@@ -73,7 +71,6 @@ namespace Lambda
             m_Sampler = VK_NULL_HANDLE;
         }
 
-		//Delete me
 		delete this;
     }
 }

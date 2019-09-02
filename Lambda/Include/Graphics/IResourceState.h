@@ -4,6 +4,11 @@
 
 namespace Lambda
 {
+	class IBuffer;
+	class ISamplerState;
+	class ITexture2D;
+
+
     struct ResourceSlot
     {
         ResourceType Type = RESOURCE_TYPE_UNKNOWN;
@@ -19,7 +24,7 @@ namespace Lambda
     };
     
     
-    class IResourceState
+    class LAMBDA_API IResourceState
     {
     public:
         LAMBDA_INTERFACE(IResourceState);
@@ -27,6 +32,10 @@ namespace Lambda
         IResourceState() = default;
         ~IResourceState() = default;
         
+		virtual void SetTextures(ITexture2D** ppTextures, uint32 numTextures, uint32 startSlot) = 0;
+		virtual void SetSamplerStates(ISamplerState** ppSamplerStates, uint32 numSamplerStates, uint32 startSlot) = 0;
+		virtual void SetConstantBuffers(IBuffer** ppBuffers, uint32 numBuffers, uint32 startSlot) = 0;
+
         virtual void* GetNativeHandle() const = 0;
     };
 }

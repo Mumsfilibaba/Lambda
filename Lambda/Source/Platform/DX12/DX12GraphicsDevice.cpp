@@ -234,6 +234,10 @@ namespace Lambda
 		assert(ppRenderPass && &desc);
 	}
 
+	void DX12GraphicsDevice::CreateResourceState(IResourceState** ppResourceState, const ResourceStateDesc& desc) const
+	{
+	}
+
 
 	void DX12GraphicsDevice::DestroyCommandList(ICommandList** ppList) const
 	{
@@ -335,6 +339,10 @@ namespace Lambda
 	void DX12GraphicsDevice::DestroyRenderPass(IRenderPass** ppRenderPass) const
 	{
 		assert(ppRenderPass);
+	}
+
+	void DX12GraphicsDevice::DestroyResourceState(IResourceState** ppResourceState) const
+	{
 	}
 
 

@@ -324,13 +324,13 @@ namespace Lambda
     //Enum describing shaderstages
     enum ShaderStage
     {
-        SHADER_STAGE_UNKNOWN     = 0,
-        SHADER_STAGE_VERTEX      = 1,
-        SHADER_STAGE_HULL        = 2,
-        SHADER_STAGE_DOMAIN      = 3,
-        SHADER_STAGE_GEOMETRY    = 4,
-        SHADER_STAGE_PIXEL       = 5,
-        SHADER_STAGE_COMPUTE     = 6,
+        SHADER_STAGE_UNKNOWN  = 0,
+        SHADER_STAGE_VERTEX	  = 1,
+        SHADER_STAGE_HULL	  = 2,
+        SHADER_STAGE_DOMAIN	  = 3,
+        SHADER_STAGE_GEOMETRY = 4,
+        SHADER_STAGE_PIXEL	  = 5,
+        SHADER_STAGE_COMPUTE  = 6,
     };
     
     
@@ -342,6 +342,16 @@ namespace Lambda
         RESOURCE_TYPE_SAMPLER = 2,
         RESOURCE_TYPE_CONSTANT_BUFFER = 3
     };
+
+
+	//Enum describing a commandlisttype
+	enum CommandListType : uint32
+	{
+		COMMAND_LIST_TYPE_UNKNOWN = 0,
+		COMMAND_LIST_TYPE_GRAPHICS = 1,
+		COMMAND_LIST_TYPE_COMPUTE = 2,
+		COMMAND_LIST_TYPE_COPY = 2,
+	};
     
 
     //Struct for updating data in a buffer or texture

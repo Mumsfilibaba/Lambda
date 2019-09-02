@@ -34,10 +34,8 @@ namespace Lambda
     
     void VulkanTexture2D::InitFromResource(VkDevice device, const VulkanTextureDesc& desc)
     {
-        //Set texture
         m_Texture = desc.Image;
-        
-        //Set description
+
         m_Desc.Width        = desc.Extent.width;
         m_Desc.Height       = desc.Extent.height;
         m_Desc.MipLevels    = desc.MipLevels;
@@ -55,21 +53,17 @@ namespace Lambda
             memcpy(m_Desc.ClearValue.Color, desc.ClearValue.color.float32, sizeof(float) * 4);
         }
         
-        //Set aspect flags
+
         m_AspectFlags = desc.AspectFlags;
-        
-        //Set usage
         m_Desc.Usage = RESOURCE_USAGE_DEFAULT;
         
-        //Set flags
         if (desc.UsageFlags | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
             m_Desc.Flags |= TEXTURE_FLAGS_RENDER_TARGET;
         if (desc.UsageFlags | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
             m_Desc.Flags |= TEXTURE_FLAGS_DEPTH_STENCIL;
         if (desc.UsageFlags | VK_IMAGE_USAGE_SAMPLED_BIT)
             m_Desc.Flags |= TEXTURE_FLAGS_SHADER_RESOURCE;
-        
-        //Set samples
+
         if (desc.Samples == VK_SAMPLE_COUNT_1_BIT)
             m_Desc.SampleCount = 1;
         if (desc.Samples == VK_SAMPLE_COUNT_2_BIT)
@@ -84,17 +78,14 @@ namespace Lambda
         //We are not owners of this image
         m_IsOwner = false;
         
-        //Set vkformat
         m_Format = desc.Format;
-        
-        //Create view
         CreateImageView(device);
     }
     
     
     void VulkanTexture2D::Init(VkDevice device, VkPhysicalDevice adapter, const Texture2DDesc& desc)
     {
-        //Setup image
+		//Create image
         VkImageCreateInfo info = {};
         info.sType                  = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
         info.pNext                  = nullptr;
@@ -116,26 +107,18 @@ namespace Lambda
         //Set special usage
         if (desc.Flags & TEXTURE_FLAGS_SHADER_RESOURCE)
         {
-            //Set usage
             info.usage |= VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-            
-            //Set aspect flag
             m_AspectFlags |= VK_IMAGE_ASPECT_COLOR_BIT;
         }
         if (desc.Flags & TEXTURE_FLAGS_DEPTH_STENCIL)
         {
-            //Set usage
             info.usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-            
-            //Set aspect flag
             if (info.format == VK_FORMAT_D24_UNORM_S8_UINT || info.format == VK_FORMAT_D32_SFLOAT_S8_UINT)
                 m_AspectFlags |= VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
             else
                 m_AspectFlags |= VK_IMAGE_ASPECT_DEPTH_BIT;
         }
 
-        
-        //Create image
         if (vkCreateImage(device, &info, nullptr, &m_Texture) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create image\n");
@@ -149,12 +132,10 @@ namespace Lambda
             //Set that we have created the texture and not external memory
             m_IsOwner = true;
             
-            //Set desc
             m_Desc = desc;
             m_Format = info.format;
         }
         
-        //Get memory requirements
         VkMemoryRequirements memRequirements = {};
         vkGetImageMemoryRequirements(device, m_Texture, &memRequirements);
         
@@ -162,11 +143,9 @@ namespace Lambda
         VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
         if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
             properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-        
-        //Find memorytype
-        uint32 memoryType = FindMemoryType(adapter, memRequirements.memoryTypeBits, properties);
-        
+                
         //Allocate memory
+        uint32 memoryType = FindMemoryType(adapter, memRequirements.memoryTypeBits, properties);
         VkMemoryAllocateInfo allocInfo = {};
         allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         allocInfo.pNext = nullptr;
@@ -181,11 +160,9 @@ namespace Lambda
         else
         {
             LOG_DEBUG_INFO("Vulkan: Allocated memory for texture\n");
-            
-            //Bind memory
+
             vkBindImageMemory(device, m_Texture, m_DeviceMemory, 0);
-            
-            //Create view
+
             CreateImageView(device);
         }
     }
@@ -251,7 +228,6 @@ namespace Lambda
         //Remove associated framebuffer if there is any
         VulkanFramebufferCache::ReleaseAllContainingTexture(device, this);
         
-        //Destroy views
         if (m_View != VK_NULL_HANDLE)
         {
             vkDestroyImageView(device, m_View, nullptr);
@@ -261,14 +237,11 @@ namespace Lambda
         //Destroy if texture was created from init
         if (m_IsOwner)
         {
-            //Destroy image
             if (m_Texture != VK_NULL_HANDLE)
             {
                 vkDestroyImage(device, m_Texture, nullptr);
                 m_Texture = VK_NULL_HANDLE;
             }
-            
-            //Free memory
             if (m_DeviceMemory != VK_NULL_HANDLE)
             {
                 vkFreeMemory(device, m_DeviceMemory, nullptr);
@@ -276,7 +249,6 @@ namespace Lambda
             }
         }
         
-        //Delete me
         delete this;
     }
 }

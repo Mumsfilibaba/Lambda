@@ -212,7 +212,11 @@ namespace Lambda
 
 			//When window is out of focus make sure that the rendering-loop pauses
 		case EVENT_TYPE_FOCUS_CHANGED:
-			IGraphicsDevice::GetInstance()->WaitForGPU();
+			if (IGraphicsDevice::GetInstance())
+			{
+				IGraphicsDevice::GetInstance()->WaitForGPU();
+			}
+
 			m_HasFocus = event.FocusChanged.HasFocus;
 
 			//Return false so that other parts of the app still can get this event

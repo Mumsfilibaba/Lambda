@@ -5,7 +5,6 @@
 
 namespace Lambda
 {
-    //Struct for creating a vulkantexture from image
     struct VulkanTextureDesc
     {
         VkImage Image                   = VK_NULL_HANDLE;
@@ -21,7 +20,6 @@ namespace Lambda
     };
     
     
-    //VulkanTexture interface
     class VulkanTexture2D final : public ITexture2D
     {
         friend class VulkanGraphicsDevice;

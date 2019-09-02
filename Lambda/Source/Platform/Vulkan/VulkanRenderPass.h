@@ -4,7 +4,7 @@
 
 namespace Lambda
 {
-	class VulkanRenderPass : public IRenderPass
+	class VulkanRenderPass final : public IRenderPass
 	{
 	public:
 		LAMBDA_NO_COPY(VulkanRenderPass);

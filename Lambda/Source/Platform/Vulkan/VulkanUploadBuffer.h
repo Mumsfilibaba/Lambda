@@ -6,7 +6,6 @@
 
 namespace Lambda
 {
-    //UploadBuffer for GPU
     class VulkanUploadBuffer final
     {
     public:

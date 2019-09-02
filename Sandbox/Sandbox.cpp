@@ -137,7 +137,6 @@ namespace Lambda
         m_pCurrentList(nullptr),
 		m_pVS(nullptr),
 		m_pPS(nullptr),
-        m_pCompute(nullptr),
 		m_pVertexBuffer(nullptr),
         m_pIndexBuffer(nullptr),
         m_pPipelineState(nullptr)
@@ -189,7 +188,6 @@ namespace Lambda
             m_pPS = IShader::CreateShaderFromFile(pDevice, "frag.spv", "main", SHADER_STAGE_PIXEL, SHADER_LANG_SPIRV);
             //m_pVS = IShader::CreateShaderFromFile(pDevice, "Triangle.hlsl", "VSMain", SHADER_TYPE_VERTEX);
             //m_pPS = IShader::CreateShaderFromFile(pDevice, "Triangle.hlsl", "PSMain", SHADER_TYPE_PIXEL);
-            //m_pCompute = IShader::CreateShaderFromFile(pDevice, "Texture2DMipMapGen.cso", "main", SHADER_TYPE_COMPUTE, SHADER_LANG_HLSL_COMPILED);
             
 
             //Define depthformat
@@ -211,6 +209,37 @@ namespace Lambda
 			}
 
 
+			//Create ResourceState
+			{
+				ResourceSlot slots[5];
+				slots[0].Slot = 0;
+				slots[0].Stage = SHADER_STAGE_VERTEX;
+				slots[0].Type = RESOURCE_TYPE_CONSTANT_BUFFER;
+				
+				slots[1].Slot = 1;
+				slots[1].Stage = SHADER_STAGE_VERTEX;
+				slots[1].Type = RESOURCE_TYPE_CONSTANT_BUFFER;
+
+				slots[2].Slot = 2;
+				slots[2].Stage = SHADER_STAGE_PIXEL;
+				slots[2].Type = RESOURCE_TYPE_CONSTANT_BUFFER;
+
+				slots[3].Slot = 3;
+				slots[3].Stage = SHADER_STAGE_PIXEL;
+				slots[3].Type = RESOURCE_TYPE_TEXTURE;
+
+				slots[4].Slot = 4;
+				slots[4].Stage = SHADER_STAGE_PIXEL;
+				slots[4].Type = RESOURCE_TYPE_SAMPLER;
+
+				ResourceStateDesc desc = {};
+				desc.NumResourceSlots = 5;
+				desc.pResourceSlots = slots;
+
+				pDevice->CreateResourceState(&m_pResourceState, desc);
+			}
+
+
             //Create pipelinestate
             {
                 InputElement elements[]
@@ -228,11 +257,8 @@ namespace Lambda
                 desc.Topology = PRIMITIVE_TOPOLOGY_TRIANGLELIST;
                 desc.Cull = CULL_MODE_BACK;
 				desc.pRenderPass = m_pRenderPass;
-#if defined(LAMBDA_PLAT_WINDOWS)
+				desc.pResourceState = m_pResourceState;
                 desc.DepthTest = true;
-#elif defined(LAMBDA_PLAT_MACOS)
-                desc.DepthTest = false;
-#endif
                 
                 pDevice->CreateGraphicsPipelineState(&m_pPipelineState, desc);
             }
@@ -328,13 +354,14 @@ namespace Lambda
 
             //Create texture
             m_pTexture = ITexture2D::CreateTextureFromFile(pDevice, "texture.jpg", TEXTURE_FLAGS_SHADER_RESOURCE, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
+			m_pCurrentList->TransitionTexture(m_pTexture, RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
             //Create samplerstate
             {
                 SamplerDesc desc = {};
                 desc.AdressMode = SAMPLER_ADDRESS_MODE_REPEAT;
                 
-                pDevice->CreateSamplerState(&m_pSampler, desc);
+                pDevice->CreateSamplerState(&m_pSamplerState, desc);
             }
 
             //Close and execute commandlist
@@ -434,14 +461,12 @@ namespace Lambda
         data.SizeInBytes = sizeof(CameraBuffer);
         m_pCurrentList->UpdateBuffer(m_pCameraBuffer, &data);
         
-        //Set buffers
-        IBuffer* vsBuffers[] = { m_pCameraBuffer, m_pTransformBuffer };
-        m_pCurrentList->VSSetConstantBuffers(vsBuffers, 2, 0);
-        m_pCurrentList->PSSetConstantBuffers(&m_pColorBuffer, 1, 0);
-        
-        //Set texture and samplers
-        m_pCurrentList->PSSetTextures(&m_pTexture, 1, 0);
-        m_pCurrentList->PSSetSamplers(&m_pSampler, 1, 0);
+        //Set resources
+		IBuffer* buffers[] = { m_pCameraBuffer, m_pTransformBuffer, m_pColorBuffer };
+		m_pResourceState->SetConstantBuffers(buffers, 3, 0);
+		m_pResourceState->SetTextures(&m_pTexture, 1, 3);
+		m_pResourceState->SetSamplerStates(&m_pSamplerState, 1, 4);
+		m_pCurrentList->SetResourceState(m_pResourceState);
         
         //Set vertex- and indexbuffer
         m_pCurrentList->SetVertexBuffer(m_pVertexBuffer, 0);
@@ -517,8 +542,8 @@ namespace Lambda
 
             pDevice->DestroyShader(&m_pVS);
             pDevice->DestroyShader(&m_pPS);
-            //pDevice->DestroyShader(&m_pCompute);
 
+			pDevice->DestroyResourceState(&m_pResourceState);
 			pDevice->DestroyRenderPass(&m_pRenderPass);
             pDevice->DestroyGraphicsPipelineState(&m_pPipelineState);
             pDevice->DestroyBuffer(&m_pVertexBuffer);
@@ -527,7 +552,7 @@ namespace Lambda
             pDevice->DestroyBuffer(&m_pCameraBuffer);
             pDevice->DestroyBuffer(&m_pTransformBuffer);
             pDevice->DestroyTexture2D(&m_pTexture);
-            pDevice->DestroySamplerState(&m_pSampler);
+            pDevice->DestroySamplerState(&m_pSamplerState);
         }
 	}
 

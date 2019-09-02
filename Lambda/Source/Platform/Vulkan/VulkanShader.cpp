@@ -17,7 +17,6 @@ namespace Lambda
         //Get the bytecode
         if (desc.Languange == SHADER_LANG_SPIRV)
         {
-            //Copy type
             m_Type = desc.Type;
             
             //Copy source to array
@@ -28,7 +27,7 @@ namespace Lambda
             LOG_DEBUG_ERROR("Vulkan: Language not supported\n");
         }
         
-        //Setup a vulkan shader
+		//Create a vulkan shader
         VkShaderModuleCreateInfo info = {};
         info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
         info.pNext = nullptr;
@@ -36,12 +35,9 @@ namespace Lambda
         info.codeSize = desc.SourceLength;
         info.pCode = reinterpret_cast<const uint32_t*>(m_ByteCode.data());
         
-        //Create a vulkan shader
         if (vkCreateShaderModule(device, &info, nullptr, &m_Shader) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create shadermodule\n");
-            
-            //Set shader to null otherwise destroy may fail
             m_Shader = VK_NULL_HANDLE;
 
         }
@@ -55,13 +51,14 @@ namespace Lambda
     
     void VulkanShader::Destroy(VkDevice device)
     {
+		assert(device != VK_NULL_HANDLE);
+
         if (m_Shader != VK_NULL_HANDLE)
         {
             vkDestroyShaderModule(device, m_Shader, nullptr);
             m_Shader = VK_NULL_HANDLE;
         }
         
-        //Delete me
         delete this;
     }
     

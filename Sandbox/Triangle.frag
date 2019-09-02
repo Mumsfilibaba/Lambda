@@ -6,13 +6,13 @@ layout(location = 1) in     vec3 g_Normal;
 
 layout(location = 0) out vec4 g_OutColor;
 
-layout(set = 4, binding = 0) uniform ColorBuffer
+layout(set = 0, binding = 2) uniform ColorBuffer
 {
     vec4 Color;
 } u_Material;
 
-layout(set = 4, binding = 8) uniform texture2D u_Texture;
-layout(set = 4, binding = 16) uniform sampler u_Sampler;
+layout(set = 0, binding = 3) uniform texture2D u_Texture;
+layout(set = 0, binding = 4) uniform sampler u_Sampler;
 
 
 const vec3 g_LightDir = vec3(0.0f, 1.0f, -1.0f);

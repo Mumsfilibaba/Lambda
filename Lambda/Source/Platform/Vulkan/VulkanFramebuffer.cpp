@@ -5,11 +5,9 @@
 
 namespace Lambda
 {
-	//Static variable declarations
 	std::unordered_map<VkImageView, VulkanFramebufferCacheKey> VulkanFramebufferCache::s_Framebuffers = std::unordered_map<VkImageView, VulkanFramebufferCacheKey>();
 
 
-	//VulkanFramebufferCacheKey
 	VulkanFramebufferCacheKey::VulkanFramebufferCacheKey()
 		: RenderPass(VK_NULL_HANDLE),
 		FrameBuffer(VK_NULL_HANDLE),
@@ -63,7 +61,6 @@ namespace Lambda
 	}
 
 
-	//VulkanFramebufferCache
 	VkFramebuffer VulkanFramebufferCache::GetFramebuffer(VkDevice device, const VulkanFramebufferCacheKey& fbKey, uint32 width, uint32 height)
 	{
 		assert(device != VK_NULL_HANDLE);
@@ -79,24 +76,19 @@ namespace Lambda
 			key = fbKey.DepthStencilView;
 		}
 
-
-		//If the key is null return
 		if (key == VK_NULL_HANDLE)
 		{
 			return VK_NULL_HANDLE;
 		}
 
-
 		//Check if a framebuffer exists
 		auto range = s_Framebuffers.equal_range(key);
 		for (auto i = range.first; i != range.second; i++)
 		{
-			//Find the matching framebuffer
 			auto& value = i->second;
 			if (value == fbKey)
 				return value.FrameBuffer;
 		}
-
 
 		//Add all attachments
 		std::vector<VkImageView> attachments(fbKey.ColorAttachmentViews, fbKey.ColorAttachmentViews + fbKey.NumColorAttachments);
@@ -106,7 +98,7 @@ namespace Lambda
 		}
 
 
-		//Setup new framebuffer
+		//Create new framebuffer
 		VkFramebufferCreateInfo info = {};
 		info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		info.pNext = nullptr;
@@ -117,7 +109,6 @@ namespace Lambda
 		info.height = height;
 		info.layers = 1;
 
-		//Create new framebuffer
 		VkFramebuffer framebuffer = VK_NULL_HANDLE;
 		if (vkCreateFramebuffer(device, &info, nullptr, &framebuffer) != VK_SUCCESS)
 		{

@@ -89,7 +89,6 @@ namespace Lambda
 
 		int32 error = 0;
 		{
-			//Setup window
 			WNDCLASSEX wc = {};
 			wc.cbSize = sizeof(WNDCLASSEX);
 			wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
@@ -104,7 +103,6 @@ namespace Lambda
 			wc.lpszClassName = NAME_APPWINDOW;
 			wc.hIconSm = 0;
 
-			//Register window class
 			WindowClass::Register(wc);
 
 			//Set client area size

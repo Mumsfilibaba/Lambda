@@ -27,6 +27,7 @@ namespace Lambda
 		virtual void CreateSamplerState(ISamplerState** ppSamplerState, const SamplerDesc& desc) const override final;
 		virtual void CreateGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc) const override final;
 		virtual void CreateRenderPass(IRenderPass** ppRenderPass, const RenderPassDesc& desc) const override final;
+		virtual void CreateResourceState(IResourceState** ppResourceState, const ResourceStateDesc& desc) const override final;
 
 		virtual void DestroyCommandList(ICommandList** ppList) const override final;
 		virtual void DestroyBuffer(IBuffer** ppBuffer) const override final;
@@ -35,6 +36,7 @@ namespace Lambda
 		virtual void DestroySamplerState(ISamplerState** ppSamplerState) const override final;
 		virtual void DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState) const override final;
 		virtual void DestroyRenderPass(IRenderPass** ppRenderPass) const override final;
+		virtual void DestroyResourceState(IResourceState** ppResourceState) const override final;
 		virtual void Destroy() const override final;
 
 		virtual void ExecuteCommandList(ICommandList* const * ppLists, uint32 numLists) const;

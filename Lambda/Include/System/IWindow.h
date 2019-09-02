@@ -3,11 +3,9 @@
 
 namespace Lambda
 {
-    //Forward declarations
     class IGraphicsDevice;
     
     
-    //Window desceription
 	struct WindowDesc
 	{
 		const char* pTitle = nullptr;
@@ -17,7 +15,6 @@ namespace Lambda
 	};
 
     
-    //Window class
 	class LAMBDA_API IWindow
 	{
 	public:

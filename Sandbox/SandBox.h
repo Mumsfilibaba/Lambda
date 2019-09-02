@@ -50,7 +50,6 @@ namespace Lambda
         //Shaders
         IShader* m_pVS;
 		IShader* m_pPS;
-		IShader* m_pCompute;
         
         //Buffers
 		IBuffer* m_pVertexBuffer;
@@ -63,7 +62,7 @@ namespace Lambda
 		ITexture2D* m_pTexture;
 		
         //Samplers
-        ISamplerState* m_pSampler;
+        ISamplerState* m_pSamplerState;
 		
         //Pipelinestates
         IGraphicsPipelineState* m_pPipelineState;

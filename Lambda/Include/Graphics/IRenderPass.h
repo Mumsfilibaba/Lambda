@@ -24,7 +24,7 @@ namespace Lambda
 	};
 
 	
-	class IRenderPass
+	class LAMBDA_API IRenderPass
 	{
 	public:
 		LAMBDA_INTERFACE(IRenderPass);

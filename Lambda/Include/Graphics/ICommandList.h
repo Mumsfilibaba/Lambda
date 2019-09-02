@@ -3,25 +3,14 @@
 
 namespace Lambda
 {
-    //Type of commandlist
-	enum CommandListType : uint32
-	{
-		COMMAND_LIST_TYPE_UNKNOWN = 0,
-		COMMAND_LIST_TYPE_GRAPHICS = 1,
-		COMMAND_LIST_TYPE_COMPUTE = 2,
-		COMMAND_LIST_TYPE_COPY = 2,
-	};
-
-
-    //Forward declarations
     class IBuffer;
 	class ITexture2D;
 	class ISamplerState;
 	class IGraphicsPipelineState;
 	class IRenderPass;
+	class IResourceState;
 
-    
-    //Commandlist
+
 	class LAMBDA_API ICommandList
 	{
 	public:
@@ -41,26 +30,7 @@ namespace Lambda
 		virtual void SetGraphicsPipelineState(IGraphicsPipelineState* pPSO) = 0;
 		virtual void SetVertexBuffer(IBuffer* pBuffer, uint32 slot) = 0;
         virtual void SetIndexBuffer(IBuffer* pBuffer) = 0;
-
-		virtual void VSSetConstantBuffers(const IBuffer* const * ppBuffers, uint32 numBuffers, uint32 startSlot) = 0;
-		virtual void VSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot) = 0;
-		virtual void VSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot) = 0;
-		
-		virtual void HSSetConstantBuffers(const IBuffer* const * ppBuffers, uint32 numBuffers, uint32 startSlot) = 0;
-		virtual void HSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot) = 0;
-		virtual void HSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot) = 0;
-		
-		virtual void DSSetConstantBuffers(const IBuffer* const * ppBuffers, uint32 numBuffers, uint32 startSlot) = 0;
-		virtual void DSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot) = 0;
-		virtual void DSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot) = 0;
-		
-		virtual void GSSetConstantBuffers(const IBuffer* const * ppBuffers, uint32 numBuffers, uint32 startSlot) = 0;
-		virtual void GSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot) = 0;
-		virtual void GSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot) = 0;
-
-		virtual void PSSetConstantBuffers(const IBuffer* const * ppBuffers, uint32 numBuffers, uint32 startSlot) = 0;
-		virtual void PSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot) = 0;
-		virtual void PSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot) = 0;
+		virtual void SetResourceState(IResourceState* pResourceState) = 0;
 
 		virtual void UpdateBuffer(IBuffer* pResource, const ResourceData* pData) = 0;
 		virtual void UpdateTexture(ITexture2D* pResource, const ResourceData* pData, uint32 subresource) = 0;

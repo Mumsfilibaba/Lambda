@@ -6,12 +6,10 @@
 
 namespace Lambda
 {
-	//Forward declarations
 	class ITexture2D;
 	class VulkanTexture2D;
 
 
-	//Describe vulkanswapchain
 	struct VulkanSwapChainDesc
 	{
 		VkSurfaceKHR Surface        = VK_NULL_HANDLE;
@@ -24,7 +22,6 @@ namespace Lambda
 	};
 
 
-	//Class containing vulkanswapchain
 	class VulkanSwapChain
 	{
 	public:

@@ -21,6 +21,7 @@ namespace Lambda
 		EVENT_TYPE_JOYSTICK_CHANGED
 	};
 
+
 	struct Event
 	{
 		EventType Type;

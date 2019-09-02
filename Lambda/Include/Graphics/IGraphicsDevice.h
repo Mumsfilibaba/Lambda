@@ -6,13 +6,13 @@
 
 namespace Lambda
 {
-    //Forward declarations
 	class IBuffer;
 	class ISamplerState;
 	class ITexture2D;
 	class IShader;
 	class IGraphicsPipelineState;
 	class IRenderPass;
+	class IResourceState;
 
 	struct SamplerDesc;
 	struct BufferDesc;
@@ -20,9 +20,9 @@ namespace Lambda
 	struct ShaderDesc;
 	struct GraphicsPipelineStateDesc;
 	struct RenderPassDesc;
+	struct ResourceStateDesc;
 
     
-    //Graphics device descriptor
     struct GraphicsDeviceDesc
     {
         uint32 Flags = GRAPHICS_CONTEXT_FLAG_NONE;
@@ -30,7 +30,6 @@ namespace Lambda
     };
     
     
-    //Graphic device
 	class LAMBDA_API IGraphicsDevice
 	{
 	public:
@@ -46,14 +45,16 @@ namespace Lambda
 		virtual void CreateSamplerState(ISamplerState** ppSamplerState, const SamplerDesc& desc) const = 0;
 		virtual void CreateGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc) const = 0;
 		virtual void CreateRenderPass(IRenderPass** ppRenderPass, const RenderPassDesc& desc) const = 0;
+		virtual void CreateResourceState(IResourceState** ppResourceState, const ResourceStateDesc& desc) const = 0;
 
 		virtual void DestroyCommandList(ICommandList** ppList) const = 0;
 		virtual void DestroyBuffer(IBuffer** ppBuffer) const = 0;
 		virtual void DestroyTexture2D(ITexture2D** ppTexture) const = 0;
 		virtual void DestroyShader(IShader** ppShader) const = 0;
 		virtual void DestroySamplerState(ISamplerState** ppSamplerState) const = 0;
-		virtual void DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPSO) const = 0;
+		virtual void DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState) const = 0;
 		virtual void DestroyRenderPass(IRenderPass** ppRenderPass) const = 0;
+		virtual void DestroyResourceState(IResourceState** ppResourceState) const = 0;
 		virtual void Destroy() const = 0;
 
 		virtual void ExecuteCommandList(ICommandList* const * ppLists, uint32 numLists) const = 0;

@@ -52,11 +52,9 @@ namespace Lambda
 
 	void VulkanRenderPass::SetClearValues(float color[4], float depth, uint8 stencil)
 	{
-		//Copy the color into the first clear values
 		for (uint32 i = 0; i < m_RenderTargetCount; i++)
 			memcpy(m_ClearValues[i].color.float32, color, sizeof(float) * 4);
 
-		//Set clear values for the depthstencil
 		m_ClearValues[m_RenderTargetCount].depthStencil.depth = depth;
 		m_ClearValues[m_RenderTargetCount].depthStencil.stencil = uint32(stencil);
 	}
@@ -70,7 +68,8 @@ namespace Lambda
 	
 	void VulkanRenderPass::Destroy(VkDevice device)
 	{
-		//Destroy the renderpass
+		assert(device != VK_NULL_HANDLE);
+
 		if (m_RenderPass != VK_NULL_HANDLE)
 		{
 			vkDestroyRenderPass(device, m_RenderPass, nullptr);
@@ -106,7 +105,6 @@ namespace Lambda
 			colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 			attachments.push_back(colorAttachment);
 
-			//Descripe attachment bindpoint
 			VkAttachmentReference colorAttachmentRef = {};
 			colorAttachmentRef.attachment = i;
 			colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -133,7 +131,6 @@ namespace Lambda
 		}
 		else
 		{
-			//Setup attachments
 			VkAttachmentDescription depthAttachment = {};
 			depthAttachment.flags = 0;
 			depthAttachment.format = m_DepthStencilFormat = ConvertResourceFormat(desc.DepthStencil.Format);
@@ -146,16 +143,13 @@ namespace Lambda
 			depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 			attachments.push_back(depthAttachment);
 
-			//Setup ref
 			depthAttachmentRef.attachment = uint32(attachments.size() - 1);
 			depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-			//Set attachment
 			subpass.pDepthStencilAttachment = &depthAttachmentRef;
 		}
 
 
-		//Setup renderpass
+		//Create renderpass
 		VkRenderPassCreateInfo renderPassInfo = {};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 		renderPassInfo.flags = 0;
@@ -166,7 +160,6 @@ namespace Lambda
 		renderPassInfo.pSubpasses = &subpass;
 		renderPassInfo.pDependencies = nullptr;
 
-		//Create renderpass
 		if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &m_RenderPass) != VK_SUCCESS)
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to create renderpass\n");
@@ -175,7 +168,6 @@ namespace Lambda
 		{
 			LOG_DEBUG_INFO("Vulkan: Created renderpass\n");
 
-			//Set variables
 			m_RenderTargetCount = desc.NumRenderTargets;
 			m_Device = device;
 		}

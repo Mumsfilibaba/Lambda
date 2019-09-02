@@ -3,7 +3,10 @@
 #include "Types.h"
 
 namespace Lambda
-{    
+{   
+	class IGraphicsDevice;
+
+
 	enum ShaderFlags
 	{
 		SHADER_FLAG_NONE            = 0,
@@ -30,8 +33,6 @@ namespace Lambda
 		const char* pSource = nullptr;
 	};
 
-    
-	class IGraphicsDevice;
 
 	class LAMBDA_API IShader
 	{

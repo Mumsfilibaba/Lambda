@@ -145,6 +145,11 @@ namespace Lambda
 	}
 
 
+	void DX12CommandList::SetResourceState(IResourceState* pResourceState)
+	{
+	}
+
+
 	CommandListType DX12CommandList::GetType() const
 	{
 		return m_Type;

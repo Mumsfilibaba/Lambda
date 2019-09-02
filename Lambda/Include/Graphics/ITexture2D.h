@@ -3,7 +3,9 @@
 
 namespace Lambda
 {
-    //Helperstruct
+	class IGraphicsDevice;
+
+
     struct OptimizedClearValue
     {
         union
@@ -18,7 +20,6 @@ namespace Lambda
     };
     
     
-    //Texturedesc
 	struct Texture2DDesc
 	{
 		ResourceUsage Usage = RESOURCE_USAGE_UNKNOWN;
@@ -32,8 +33,6 @@ namespace Lambda
         OptimizedClearValue ClearValue;
 	};
 
-
-	class IGraphicsDevice;
 
 	class LAMBDA_API ITexture2D
 	{

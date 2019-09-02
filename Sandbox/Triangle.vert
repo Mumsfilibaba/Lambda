@@ -23,7 +23,6 @@ layout(set = 0, binding = 1) uniform TransformBuffer
 void main()
 {
     vec3 position = a_Position;
-    //position.y = -position.y;
     
     //Vertexposition
     gl_Position = u_Camera.Proj * u_Camera.View * u_Transform.Model * vec4(position, 1.0);

@@ -9,7 +9,6 @@
 
 namespace Lambda
 {    
-    //Forward declarations
     class VulkanBuffer;
     class VulkanTexture2D;
     class VulkanCommandList;
@@ -17,7 +16,6 @@ namespace Lambda
 	class VulkanSwapChain;
     
     
-    //Vulkan implementation of graphics device
     class VulkanGraphicsDevice final : public IGraphicsDevice
     {
     public:
@@ -33,6 +31,7 @@ namespace Lambda
         virtual void CreateSamplerState(ISamplerState** ppSamplerState, const SamplerDesc& desc) const override final;
         virtual void CreateGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc) const override final;
 		virtual void CreateRenderPass(IRenderPass** ppRenderPass, const RenderPassDesc& desc) const override final;
+		virtual void CreateResourceState(IResourceState** ppResourceState, const ResourceStateDesc& desc) const override final;
 
         virtual void DestroyCommandList(ICommandList** ppList) const override final;
         virtual void DestroyBuffer(IBuffer** ppBuffer) const override final;
@@ -41,6 +40,7 @@ namespace Lambda
         virtual void DestroySamplerState(ISamplerState** ppSamplerState) const override final;
         virtual void DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState) const override final;
 		virtual void DestroyRenderPass(IRenderPass** ppRenderPass) const override final;
+		virtual void DestroyResourceState(IResourceState** ppResourceState) const override final;
         virtual void Destroy() const override final;
         
         virtual void ExecuteCommandList(ICommandList* const * ppLists, uint32 numLists) const override final;
@@ -105,31 +105,9 @@ namespace Lambda
 
         mutable uint64 m_CurrentFrame;
         
-        VkPipelineLayout m_DefaultPipelineLayout;
-        VkDescriptorSetLayout m_DefaultDescriptorSetLayouts[LAMBDA_SHADERSTAGE_COUNT];
-        
-        VulkanBuffer* m_pNullBuffer;
-        VkDescriptorBufferInfo m_NullBufferDescriptor;
-        VulkanTexture2D* m_pNullTexture;
-        VkDescriptorImageInfo m_NullTextureDescriptor;
-        VulkanSamplerState* m_pNullSampler;
-        VkDescriptorImageInfo m_NullSamplerDescriptor;
-        
-        uint32 m_UniformBinding;
-        uint32 m_TextureBinding;
-        uint32 m_SamplerBinding;
-        
     public:
         static VkDevice GetCurrentDevice();
         static VkPhysicalDevice GetCurrentAdapter();
-        static VkPipelineLayout GetDefaultPipelineLayout();
-        static VkDescriptorBufferInfo GetNullBufferDescriptor();
-        static VkDescriptorImageInfo GetNullTextureDescriptor();
-        static VkDescriptorImageInfo GetNullSamplerDescriptor();
-        static uint32 GetUniformBinding();
-        static uint32 GetTextureBinding();
-        static uint32 GetSamplerBinding();
-        static VkDescriptorSetLayout* GetDefaultDescriptorSetLayouts();
         
     private:
         static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
@@ -167,61 +145,5 @@ namespace Lambda
     {
         assert(IGraphicsDevice::GetInstance() != nullptr);
         return reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance())->m_Adapter;
-    }
-    
-    
-    inline VkPipelineLayout VulkanGraphicsDevice::GetDefaultPipelineLayout()
-    {
-        assert(IGraphicsDevice::GetInstance() != nullptr);
-        return reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance())->m_DefaultPipelineLayout;
-    }
-    
-    
-    inline VkDescriptorBufferInfo VulkanGraphicsDevice::GetNullBufferDescriptor()
-    {
-        assert(IGraphicsDevice::GetInstance() != nullptr);
-        return reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance())->m_NullBufferDescriptor;
-    }
-    
-    
-    inline VkDescriptorImageInfo VulkanGraphicsDevice::GetNullTextureDescriptor()
-    {
-        assert(IGraphicsDevice::GetInstance() != nullptr);
-        return reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance())->m_NullTextureDescriptor;
-    }
-    
-    
-    inline VkDescriptorImageInfo VulkanGraphicsDevice::GetNullSamplerDescriptor()
-    {
-        assert(IGraphicsDevice::GetInstance() != nullptr);
-        return reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance())->m_NullSamplerDescriptor;
-    }
-    
-    
-    inline VkDescriptorSetLayout* VulkanGraphicsDevice::GetDefaultDescriptorSetLayouts()
-    {
-        assert(IGraphicsDevice::GetInstance() != nullptr);
-        return reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance())->m_DefaultDescriptorSetLayouts;
-    }
-    
-    
-    inline uint32 VulkanGraphicsDevice::GetUniformBinding()
-    {
-        assert(IGraphicsDevice::GetInstance() != nullptr);
-        return reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance())->m_UniformBinding;
-    }
-    
-    
-    inline uint32 VulkanGraphicsDevice::GetTextureBinding()
-    {
-        assert(IGraphicsDevice::GetInstance() != nullptr);
-        return reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance())->m_TextureBinding;
-    }
-    
-    
-    inline uint32 VulkanGraphicsDevice::GetSamplerBinding()
-    {
-        assert(IGraphicsDevice::GetInstance() != nullptr);
-        return reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance())->m_SamplerBinding;
     }
 }
