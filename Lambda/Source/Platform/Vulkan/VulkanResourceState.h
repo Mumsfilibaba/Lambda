@@ -9,7 +9,7 @@ namespace Lambda
 	class VulkanSamplerState;
 
 
-	class VulkanResourceState : public IResourceState
+	class VulkanResourceState final : public IResourceState
 	{
 	public:
 		union VulkanResourceBinding

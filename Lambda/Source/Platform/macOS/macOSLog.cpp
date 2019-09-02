@@ -32,7 +32,7 @@ namespace Lambda
             message = "[MESSAGE]: ";
         }
         
-        printf(message.c_str());
+        printf("%s", message.c_str());
         
         va_list args;
         va_start(args, pFormat);

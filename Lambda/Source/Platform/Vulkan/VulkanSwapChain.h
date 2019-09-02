@@ -58,7 +58,6 @@ namespace Lambda
         QueueFamilyIndices m_FamilyIndices;
         SwapChainCapabilities m_Cap;
 		uint32 m_ImageCount;
-		uint32 m_CurrentFrame;
 		mutable uint32 m_CurrentBufferIndex;
 		std::vector<VulkanTexture2D*> m_Buffers;
 	};

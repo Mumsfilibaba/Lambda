@@ -11,7 +11,6 @@ namespace Lambda
 		m_Format(),
 		m_Extent(),
 		m_ImageCount(0),
-		m_CurrentFrame(0),
 		m_CurrentBufferIndex(0),
 		m_Buffers()
 	{

@@ -16,9 +16,9 @@ namespace Lambda
         : m_Device(VK_NULL_HANDLE),
         m_CommandPool(VK_NULL_HANDLE),
         m_CommandBuffer(VK_NULL_HANDLE),
+        m_pResourceState(nullptr),
         m_BoundRenderPass(VK_NULL_HANDLE),
         m_BoundFrameBuffer(VK_NULL_HANDLE),
-		m_pResourceState(nullptr),
         m_Type(COMMAND_LIST_TYPE_UNKNOWN)
     {
 		assert(device != VK_NULL_HANDLE);
