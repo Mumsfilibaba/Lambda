@@ -142,7 +142,7 @@ namespace Lambda
             }
 
             //Create vertexbuffer
-			MeshData mesh = MeshFactory::CreateCube();
+			MeshData mesh = MeshFactory::CreateSphere(3, 1.0f);
 			m_IndexCount = uint32(mesh.Indices.size());
 			{
                 BufferDesc desc = {};
