@@ -1,136 +1,13 @@
 #include "SandBox.h"
 #include "System/Log.h"
 #include "System/Input.h"
+#include "Graphics/MeshFactory.h"
 #include "glm/gtc/matrix_transform.hpp"
 
 #define SINGLE_CUBE
 
 namespace Lambda
-{
-    //Declare vertex
-    struct Vertex
-    {
-        glm::vec3 Position;
-        glm::vec3 Normal;
-        glm::vec2 UV;
-    };
-    
-    
-    //Create cubeverts
-    std::vector<Vertex> CreateCubeVertices()
-    {
-        using namespace glm;
-        
-        std::vector<Vertex> vertices =
-        {
-            //FRONT FACE
-            { vec3(-0.5f,  0.5f, -0.5f), vec3( 0.0f,  0.0f, -1.0f), vec2(0.0f, 0.0f) },
-            { vec3( 0.5f,  0.5f, -0.5f), vec3( 0.0f,  0.0f, -1.0f), vec2(1.0f, 0.0f) },
-            { vec3(-0.5f, -0.5f, -0.5f), vec3( 0.0f,  0.0f, -1.0f), vec2(0.0f, 1.0f) },
-            { vec3( 0.5f, -0.5f, -0.5f), vec3( 0.0f,  0.0f, -1.0f), vec2(1.0f, 1.0f) },
-            
-            //BACK FACE
-            { vec3( 0.5f,  0.5f,  0.5f), vec3( 0.0f,  0.0f,  1.0f), vec2(0.0f, 0.0f) },
-            { vec3(-0.5f,  0.5f,  0.5f), vec3( 0.0f,  0.0f,  1.0f), vec2(1.0f, 0.0f) },
-            { vec3( 0.5f, -0.5f,  0.5f), vec3( 0.0f,  0.0f,  1.0f), vec2(0.0f, 1.0f) },
-            { vec3(-0.5f, -0.5f,  0.5f), vec3( 0.0f,  0.0f,  1.0f), vec2(1.0f, 1.0f) },
-            
-            //RIGHT FACE
-            { vec3( 0.5f,  0.5f, -0.5f), vec3( 1.0f,  0.0f,  0.0f), vec2(0.0f, 0.0f) },
-            { vec3( 0.5f,  0.5f,  0.5f), vec3( 1.0f,  0.0f,  0.0f), vec2(1.0f, 0.0f) },
-            { vec3( 0.5f, -0.5f, -0.5f), vec3( 1.0f,  0.0f,  0.0f), vec2(0.0f, 1.0f) },
-            { vec3( 0.5f, -0.5f,  0.5f), vec3( 1.0f,  0.0f,  0.0f), vec2(1.0f, 1.0f) },
-            
-            //LEFT FACE
-            { vec3(-0.5f,  0.5f, -0.5f), vec3(-1.0f,  0.0f,  0.0f), vec2(0.0f, 0.0f) },
-            { vec3(-0.5f,  0.5f,  0.5f), vec3(-1.0f,  0.0f,  0.0f), vec2(1.0f, 0.0f) },
-            { vec3(-0.5f, -0.5f, -0.5f), vec3(-1.0f,  0.0f,  0.0f), vec2(0.0f, 1.0f) },
-            { vec3(-0.5f, -0.5f,  0.5f), vec3(-1.0f,  0.0f,  0.0f), vec2(1.0f, 1.0f) },
-            
-            //ROOF FACE
-            { vec3(-0.5f,  0.5f,  0.5f), vec3( 0.0f,  1.0f,  0.0f), vec2(0.0f, 0.0f) },
-            { vec3( 0.5f,  0.5f,  0.5f), vec3( 0.0f,  1.0f,  0.0f), vec2(1.0f, 0.0f) },
-            { vec3(-0.5f,  0.5f, -0.5f), vec3( 0.0f,  1.0f,  0.0f), vec2(0.0f, 1.0f) },
-            { vec3( 0.5f,  0.5f, -0.5f), vec3( 0.0f,  1.0f,  0.0f), vec2(1.0f, 1.0f) },
-            
-            //FLOOR FACE
-            { vec3(-0.5f, -0.5f, -0.5f), vec3( 0.0f, -1.0f,  0.0f), vec2(0.0f, 0.0f) },
-            { vec3( 0.5f, -0.5f, -0.5f), vec3( 0.0f, -1.0f,  0.0f), vec2(1.0f, 0.0f) },
-            { vec3(-0.5f, -0.5f,  0.5f), vec3( 0.0f, -1.0f,  0.0f), vec2(0.0f, 1.0f) },
-            { vec3( 0.5f, -0.5f,  0.5f), vec3( 0.0f, -1.0f,  0.0f), vec2(1.0f, 1.0f) },
-        };
-        
-
-        return vertices;
-    }
-    
-    
-    //Create cube-indices
-    std::vector<uint32> CreateCubeIndices()
-    {
-        std::vector<uint32> indices =
-        {
-            //FRONT FACE
-            0, 1, 2,
-            1, 3, 2,
-            
-            //BACK FACE
-            4, 5, 6,
-            5, 7, 6,
-            
-            //RIGHT FACE
-            8, 9, 10,
-            9, 11, 10,
-            
-            //LEFT FACE
-            14, 13, 12,
-            14, 15, 13,
-            
-            //ROOF FACE
-            16, 17, 18,
-            17, 19, 18,
-            
-            //FLOOR FACE
-            20, 21, 22,
-            21, 23, 22
-        };
-        
-        return indices;
-    }
-    
-    
-    //Create planeverts
-    std::vector<Vertex> CreatePlaneVertices()
-    {
-        using namespace glm;
-        
-        std::vector<Vertex> vertices =
-        {
-            { vec3(-0.5f, -0.5f, 0.0f),    vec3(0.0f, 0.0f, 1.0f), vec2(0.0f, 0.0f) },
-            { vec3(0.5f, -0.5f, 0.0f),     vec3(0.0f, 0.0f, 1.0f), vec2(1.0f, 0.0f) },
-            { vec3(0.5f, 0.5f, 0.0f),      vec3(0.0f, 0.0f, 1.0f), vec2(1.0f, 1.0f) },
-            { vec3(-0.5f, 0.5f, 0.0f),     vec3(0.0f, 0.0f, 1.0f), vec2(0.0f, 1.0f) }
-        };
-        
-        
-        return vertices;
-    }
-    
-    
-    //Create plane-indices
-    std::vector<uint32> CreatePlaneIndices()
-    {
-        std::vector<uint32> indices =
-        {
-            0, 1, 2,
-            2, 3, 0
-        };
-        
-        return indices;
-    }
-    
-    
-    //Sandbox definitions
+{   
 	SandBox::SandBox(const EngineParams& params)
 		: Application(params),
 		m_pLists(),
@@ -255,7 +132,7 @@ namespace Lambda
                 desc.pInputElements = elements;
                 desc.InputElementCount = sizeof(elements) / sizeof(InputElement);
                 desc.Topology = PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-                desc.Cull = CULL_MODE_BACK;
+                desc.Cull = CULL_MODE_NONE;
 				desc.pRenderPass = m_pRenderPass;
 				desc.pResourceState = m_pResourceState;
                 desc.DepthTest = true;
@@ -264,17 +141,16 @@ namespace Lambda
             }
 
             //Create vertexbuffer
-            {
-                std::vector<Vertex> vertices = CreateCubeVertices();
-
+			MeshData mesh = MeshFactory::CreateCube();
+			{
                 BufferDesc desc = {};
                 desc.Usage          = RESOURCE_USAGE_DEFAULT;
                 desc.Flags          = BUFFER_FLAGS_VERTEX_BUFFER;
-                desc.SizeInBytes    = sizeof(Vertex) * uint32(vertices.size());
+                desc.SizeInBytes    = sizeof(Vertex) * uint32(mesh.Vertices.size());
                 desc.StrideInBytes  = sizeof(Vertex);
 
                 ResourceData data = {};
-                data.pData          = vertices.data();
+                data.pData          = mesh.Vertices.data();
                 data.SizeInBytes    = desc.SizeInBytes;
 
                 pDevice->CreateBuffer(&m_pVertexBuffer, &data, desc);
@@ -282,16 +158,14 @@ namespace Lambda
             
             //Create indexbuffer
             {
-                std::vector<uint32> indices = CreateCubeIndices();
-                
                 BufferDesc desc = {};
                 desc.Usage          = RESOURCE_USAGE_DEFAULT;
                 desc.Flags          = BUFFER_FLAGS_INDEX_BUFFER;
-                desc.SizeInBytes    = sizeof(uint32) * uint32(indices.size());
+                desc.SizeInBytes    = sizeof(uint32) * uint32(mesh.Indices.size());
                 desc.StrideInBytes  = sizeof(uint32);
                 
                 ResourceData data = {};
-                data.pData          = indices.data();
+                data.pData          = mesh.Indices.data();
                 data.SizeInBytes    = desc.SizeInBytes;
                 
                 pDevice->CreateBuffer(&m_pIndexBuffer, &data, desc);
