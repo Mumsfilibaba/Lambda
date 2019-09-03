@@ -198,6 +198,7 @@ namespace Lambda
 			11, 2, 7
 		};
 
+
 		if (subdivisions > 0)
 		{
 			Subdivide(data, subdivisions);
@@ -205,8 +206,15 @@ namespace Lambda
 
 		for (uint32 i = 0; i < data.Vertices.size(); i++)
 		{
-			data.Vertices[i].Position = normalize(data.Vertices[i].Position) * 0.5f;
+			data.Vertices[i].Position = normalize(data.Vertices[i].Position) * 1.0f;
 			data.Vertices[i].Normal = normalize(data.Vertices[i].Position);
+
+			//Calculate uvs
+			vec2 uv;
+			uv.x = (atan2f(data.Vertices[i].Position.z, data.Vertices[i].Position.x) / (2.0f * pi<float>()));
+			uv.y = (asin(data.Vertices[i].Position.y) / pi<float>()) + 0.5f;
+			
+			data.Vertices[i].TexCoord = uv;
 		}
 
 		data.Indices.shrink_to_fit();
@@ -303,7 +311,6 @@ namespace Lambda
 		CalculateNormalsHardened(data);
 		return data;
 	}
-
 
 
 	MeshData MeshFactory::CreateCylinder(uint8 sides) noexcept
@@ -521,7 +528,6 @@ namespace Lambda
 	}
 
 
-
 	void MeshFactory::Optimize(MeshData& data, uint32 startVertex) noexcept
 	{
 		using namespace std;
@@ -559,7 +565,6 @@ namespace Lambda
 			}
 		}
 	}
-
 
 
 	void MeshFactory::CalculateNormalsHardened(MeshData& data) noexcept
