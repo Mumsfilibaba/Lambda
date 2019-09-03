@@ -41,7 +41,7 @@ namespace Lambda
         
         //PixelShader
         VulkanShader* pPS = reinterpret_cast<VulkanShader*>(desc.pPixelShader);
-        if (desc.pVertexShader)
+        if (desc.pPixelShader)
         {
             VkPipelineShaderStageCreateInfo info = {};
             info.sType                  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -142,7 +142,7 @@ namespace Lambda
         rasterizerState.flags                   = 0;
         rasterizerState.depthClampEnable        = VK_FALSE;
         rasterizerState.rasterizerDiscardEnable = VK_FALSE;
-        rasterizerState.polygonMode             = VK_POLYGON_MODE_FILL;
+        rasterizerState.polygonMode             = ConvertPolygonMode(desc.Mode);
         rasterizerState.lineWidth               = 1.0f;
         rasterizerState.frontFace               = VK_FRONT_FACE_CLOCKWISE;
         rasterizerState.depthBiasEnable         = VK_FALSE;

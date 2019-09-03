@@ -205,8 +205,8 @@ namespace Lambda
 
 		for (uint32 i = 0; i < data.Vertices.size(); i++)
 		{
+			data.Vertices[i].Position = normalize(data.Vertices[i].Position) * 0.5f;
 			data.Vertices[i].Normal = normalize(data.Vertices[i].Position);
-			data.Vertices[i].Position *= 0.5f;
 		}
 
 		data.Indices.shrink_to_fit();
@@ -311,19 +311,21 @@ namespace Lambda
 		using namespace glm;
 		MeshData data;
 		if (sides < 5)
+		{
 			sides = 5;
+		}
 
 		data.Vertices.resize(22);
 		data.Indices.resize(60);
 
-		float angle = (pi<float>() * 2.0f) / 5.0f;
+		constexpr float angle = (pi<float>() * 2.0f) / 5.0f;
 		//TOP CAP VERTICES
 		data.Vertices[0].Position = vec3(0.0f, 0.5f, 0.0f);
-		data.Vertices[1].Position = normalize(vec3(cosf( pi<float>() / 2.0f),				 0.5f, sinf( pi<float>() / 2.0f)))				  * 0.5f + vec3(0.0f, 0.5f, 0.0f);
-		data.Vertices[2].Position = normalize(vec3(cosf((pi<float>() / 2.0f) +	angle),		 0.5f, sinf((pi<float>() / 2.0f) + angle)))		  * 0.5f + vec3(0.0f, 0.5f, 0.0f);
-		data.Vertices[3].Position = normalize(vec3(cosf((pi<float>() / 2.0f) + (angle * 2)), 0.5f, sinf((pi<float>() / 2.0f) + (angle * 2)))) * 0.5f + vec3(0.0f, 0.5f, 0.0f);
-		data.Vertices[4].Position = normalize(vec3(cosf((pi<float>() / 2.0f) + (angle * 3)), 0.5f, sinf((pi<float>() / 2.0f) + (angle * 3)))) * 0.5f + vec3(0.0f, 0.5f, 0.0f);
-		data.Vertices[5].Position = normalize(vec3(cosf((pi<float>() / 2.0f) + (angle * 4)), 0.5f, sinf((pi<float>() / 2.0f) + (angle * 4)))) * 0.5f + vec3(0.0f, 0.5f, 0.0f);
+		data.Vertices[1].Position = normalize(vec3(cosf( pi<float>() / 2.0f),				 0.0f, sinf( pi<float>() / 2.0f)))				  * 0.5f + vec3(0.0f, 0.5f, 0.0f);
+		data.Vertices[2].Position = normalize(vec3(cosf((pi<float>() / 2.0f) +	angle),		 0.0f, sinf((pi<float>() / 2.0f) + angle)))		  * 0.5f + vec3(0.0f, 0.5f, 0.0f);
+		data.Vertices[3].Position = normalize(vec3(cosf((pi<float>() / 2.0f) + (angle * 2)), 0.0f, sinf((pi<float>() / 2.0f) + (angle * 2)))) * 0.5f + vec3(0.0f, 0.5f, 0.0f);
+		data.Vertices[4].Position = normalize(vec3(cosf((pi<float>() / 2.0f) + (angle * 3)), 0.0f, sinf((pi<float>() / 2.0f) + (angle * 3)))) * 0.5f + vec3(0.0f, 0.5f, 0.0f);
+		data.Vertices[5].Position = normalize(vec3(cosf((pi<float>() / 2.0f) + (angle * 4)), 0.0f, sinf((pi<float>() / 2.0f) + (angle * 4)))) * 0.5f + vec3(0.0f, 0.5f, 0.0f);
 		data.Vertices[0].Normal = vec3(0.0f, -1.0f, 0.0f);
 		data.Vertices[1].Normal = vec3(0.0f, -1.0f, 0.0f);
 		data.Vertices[2].Normal = vec3(0.0f, -1.0f, 0.0f);
@@ -332,12 +334,12 @@ namespace Lambda
 		data.Vertices[5].Normal = vec3(0.0f, -1.0f, 0.0f);
 
 		//BOTTOM CAP VERTICES
-		data.Vertices[6].Position = data.Vertices[0].Position - vec3(0.0f, 0.5f, 0.0f);
-		data.Vertices[7].Position = data.Vertices[1].Position - vec3(0.0f, 0.5f, 0.0f);
-		data.Vertices[8].Position = data.Vertices[2].Position - vec3(0.0f, 0.5f, 0.0f);
-		data.Vertices[9].Position = data.Vertices[3].Position - vec3(0.0f, 0.5f, 0.0f);
-		data.Vertices[10].Position = data.Vertices[4].Position - vec3(0.0f, 0.5f, 0.0f);
-		data.Vertices[11].Position = data.Vertices[5].Position - vec3(0.0f, 0.5f, 0.0f);
+		data.Vertices[6].Position = data.Vertices[0].Position - vec3(0.0f, 1.0f, 0.0f);
+		data.Vertices[7].Position = data.Vertices[1].Position - vec3(0.0f, 1.0f, 0.0f);
+		data.Vertices[8].Position = data.Vertices[2].Position - vec3(0.0f, 1.0f, 0.0f);
+		data.Vertices[9].Position = data.Vertices[3].Position - vec3(0.0f, 1.0f, 0.0f);
+		data.Vertices[10].Position = data.Vertices[4].Position - vec3(0.0f, 1.0f, 0.0f);
+		data.Vertices[11].Position = data.Vertices[5].Position - vec3(0.0f, 1.0f, 0.0f);
 		data.Vertices[6].Normal = vec3(0.0f, 1.0f, 0.0f);
 		data.Vertices[7].Normal = vec3(0.0f, 1.0f, 0.0f);
 		data.Vertices[8].Normal = vec3(0.0f, 1.0f, 0.0f);
@@ -446,9 +448,9 @@ namespace Lambda
 		data.Indices[57] = 17;
 		data.Indices[58] = 16;
 		data.Indices[59] = 12;
+
 		return data;
 	}
-
 
 
 	void MeshFactory::Subdivide(MeshData& data, uint8 subdivisions) noexcept

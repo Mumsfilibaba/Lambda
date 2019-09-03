@@ -76,6 +76,7 @@ namespace Lambda
         //Other
         float m_Width;
 		float m_Height;
+		uint32 m_IndexCount;
         Camera m_Camera;
 		CameraBuffer m_CameraBuffer;
         TransformBuffer m_TransformBuffer;

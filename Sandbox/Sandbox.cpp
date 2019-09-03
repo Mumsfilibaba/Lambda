@@ -131,8 +131,9 @@ namespace Lambda
                 desc.pPixelShader = m_pPS;
                 desc.pInputElements = elements;
                 desc.InputElementCount = sizeof(elements) / sizeof(InputElement);
+                desc.Cull = CULL_MODE_BACK;
+				desc.Mode = POLYGON_MODE_FILL;
                 desc.Topology = PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-                desc.Cull = CULL_MODE_NONE;
 				desc.pRenderPass = m_pRenderPass;
 				desc.pResourceState = m_pResourceState;
                 desc.DepthTest = true;
@@ -141,7 +142,8 @@ namespace Lambda
             }
 
             //Create vertexbuffer
-			MeshData mesh = MeshFactory::CreateCube();
+			MeshData mesh = MeshFactory::CreatePyramid();
+			m_IndexCount = uint32(mesh.Indices.size());
 			{
                 BufferDesc desc = {};
                 desc.Usage          = RESOURCE_USAGE_DEFAULT;
@@ -389,7 +391,7 @@ namespace Lambda
 		m_pCurrentList->BeginRenderPass(m_pRenderPass);
 
 		//Draw
-		m_pCurrentList->DrawIndexedInstanced(36, 1, 0, 0, 0);
+		m_pCurrentList->DrawIndexedInstanced(m_IndexCount, 1, 0, 0, 0);
 
 		//End renderpass
 		m_pCurrentList->EndRenderPass();

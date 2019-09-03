@@ -117,13 +117,26 @@ namespace Lambda
     {
         switch (toplogy)
         {
-            case PRIMITIVE_TOPOLOGY_TRIANGLELIST: return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+            case PRIMITIVE_TOPOLOGY_POINTLIST: return VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+			case PRIMITIVE_TOPOLOGY_TRIANGLELIST: return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
             case PRIMITIVE_TOPOLOGY_TRIANGLESTRIP: return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
             default: return VK_PRIMITIVE_TOPOLOGY_MAX_ENUM;
         }
     }
     
-    
+
+	inline VkPolygonMode ConvertPolygonMode(PolygonMode mode)
+	{
+		switch (mode)
+		{
+		case POLYGON_MODE_FILL: return VK_POLYGON_MODE_FILL;
+		case POLYGON_MODE_LINE: return VK_POLYGON_MODE_LINE;
+		case POLYGON_MODE_POINT: return VK_POLYGON_MODE_POINT;
+		default: return VK_POLYGON_MODE_MAX_ENUM;
+		}
+	}
+
+
     inline PrimitiveTopology ConvertVkPrimitiveTopology(VkPrimitiveTopology toplogy)
     {
         switch (toplogy)

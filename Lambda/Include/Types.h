@@ -159,6 +159,17 @@ namespace Lambda
 		PRIMITIVE_TOPOLOGY_UNKNOWN          = 0,
 		PRIMITIVE_TOPOLOGY_TRIANGLELIST     = 1,
 		PRIMITIVE_TOPOLOGY_TRIANGLESTRIP    = 2,
+		PRIMITIVE_TOPOLOGY_POINTLIST		= 3,
+	};
+
+
+	//How polygons will be drawn
+	enum PolygonMode : uint32
+	{
+		POLYGON_MODE_UNKNOWN = 0,
+		POLYGON_MODE_FILL = 1,
+		POLYGON_MODE_LINE = 2,
+		POLYGON_MODE_POINT = 3,
 	};
 
 
