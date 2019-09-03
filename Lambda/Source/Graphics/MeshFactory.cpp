@@ -152,50 +152,55 @@ namespace Lambda
 
 
 
-	MeshData MeshFactory::CreateSphere(uint8 subdivisions) noexcept
+	MeshData MeshFactory::CreateSphere(uint8 subdivisions, float radius) noexcept
 	{
 		using namespace glm;
 
 		MeshData data;
 		data.Vertices.resize(12);
 
+
 		//VERTICES
-		data.Vertices[0].Position = vec3(-0.525731f, 0.0f, 0.850651f);
-		data.Vertices[1].Position = vec3(0.525731f, 0.0f, 0.850651f);
-		data.Vertices[2].Position = vec3(-0.525731f, 0.0f, -0.850651f);
-		data.Vertices[3].Position = vec3(0.525731f, 0.0f, -0.850651f);
-		data.Vertices[4].Position = vec3(0.0f, 0.850651f, 0.525731f);
-		data.Vertices[5].Position = vec3(0.0f, 0.850651f, -0.525731f);
-		data.Vertices[6].Position = vec3(0.0f, -0.850651f, 0.525731f);
-		data.Vertices[7].Position = vec3(0.0f, -0.850651f, -0.525731f);
-		data.Vertices[8].Position = vec3(0.850651f, 0.525731f, 0.0f);
-		data.Vertices[9].Position = vec3(-0.850651f, 0.525731f, 0.0f);
-		data.Vertices[10].Position = vec3(0.850651f, -0.525731f, 0.0f);
-		data.Vertices[11].Position = vec3(-0.850651f, -0.525731f, 0.0f);
+		float t = (1.0f + sqrt(5.0f)) / 2.0f;
+		data.Vertices[0].Position = vec3(-1.0f, t, 0.0f);
+		data.Vertices[1].Position = vec3( 1.0f, t, 0.0f);
+		data.Vertices[2].Position = vec3(-1.0f, -t, 0.0f);
+		data.Vertices[3].Position = vec3( 1.0f, -t, 0.0f);
+		data.Vertices[4].Position = vec3(0.0f, -1.0f, t);
+		data.Vertices[5].Position = vec3(0.0f,  1.0f, t);
+		data.Vertices[6].Position = vec3(0.0f, -1.0f, -t);
+		data.Vertices[7].Position = vec3(0.0f,  1.0f, -t);
+		data.Vertices[8].Position = vec3(t, 0.0f, -1.0f);
+		data.Vertices[9].Position = vec3(t, 0.0f, 1.0f);
+		data.Vertices[10].Position = vec3(-t, 0.0f, -1.0f);
+		data.Vertices[11].Position = vec3(-t, 0.0f, 1.0f);
 
 		//INDICIES
 		data.Indices =
 		{
-			1, 4, 0,
-			4, 9, 0,
-			4, 5, 9,
-			8, 5, 4,
-			1, 8, 4,
-			1, 10, 8,
-			10, 3, 8,
-			8, 3, 5,
-			3, 2, 5,
-			3, 7, 2,
-			3, 10, 7,
-			10, 6, 7,
-			6, 11, 7,
-			6, 0, 11,
-			6, 1, 0,
-			10, 1, 6,
-			11, 0, 9,
-			2, 11, 9,
-			5, 2, 9,
-			11, 2, 7
+			0, 11, 5,
+			0, 5, 1,
+			0, 1, 7,
+			0, 7, 10,
+			0, 10, 11,
+
+			1, 5, 9,
+			5, 11, 4,
+			11, 10, 2,
+			10, 7, 6,
+			7, 1, 8,
+
+			3, 9, 4,
+			3, 4, 2,
+			3, 2, 6,
+			3, 6, 8,
+			3, 8, 9,
+
+			4, 9, 5,
+			2, 4, 11,
+			6, 2, 10,
+			8, 6, 7,
+			9, 8, 1
 		};
 
 
@@ -211,12 +216,12 @@ namespace Lambda
 
 			//Calculate uvs
 			vec2 uv;
-			uv.x = (atan2f(data.Vertices[i].Position.z, data.Vertices[i].Position.x) / (2.0f * pi<float>()));
-			uv.y = (asin(data.Vertices[i].Position.y) / pi<float>()) + 0.5f;
+			uv.y = asin(data.Vertices[i].Position.y) / pi<float>() + 0.5f;
+			uv.x = abs(atan2f(data.Vertices[i].Position.z, data.Vertices[i].Position.x) / (2.0f * pi<float>()));
 			data.Vertices[i].TexCoord = uv;
 
 			//Scale down the sphere
-			data.Vertices[i].Position *= 0.5f;
+			data.Vertices[i].Position *= radius;
 		}
 
 		data.Indices.shrink_to_fit();

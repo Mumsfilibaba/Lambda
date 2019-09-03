@@ -47,7 +47,7 @@ namespace Lambda
 		static MeshData CreateFromFile(const std::string& filename, bool rightHanded = true) noexcept;
 		static MeshData CreateCube() noexcept;
 		static MeshData CreatePlane(uint8 width = 1, uint8 height = 1) noexcept;
-		static MeshData CreateSphere(uint8 subdivisions = 0) noexcept;
+		static MeshData CreateSphere(uint8 subdivisions = 0, float radius = 0.5f) noexcept;
 		//static MeshData createCone() noexcept;
 		//static MeshData createTorus() noexcept;
 		//static MeshData createTeapot() noexcept;
