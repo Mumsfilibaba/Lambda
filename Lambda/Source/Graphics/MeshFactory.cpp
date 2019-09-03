@@ -206,15 +206,17 @@ namespace Lambda
 
 		for (uint32 i = 0; i < data.Vertices.size(); i++)
 		{
-			data.Vertices[i].Position = normalize(data.Vertices[i].Position) * 1.0f;
-			data.Vertices[i].Normal = normalize(data.Vertices[i].Position);
+			data.Vertices[i].Position = normalize(data.Vertices[i].Position);
+			data.Vertices[i].Normal = data.Vertices[i].Position;
 
 			//Calculate uvs
 			vec2 uv;
 			uv.x = (atan2f(data.Vertices[i].Position.z, data.Vertices[i].Position.x) / (2.0f * pi<float>()));
 			uv.y = (asin(data.Vertices[i].Position.y) / pi<float>()) + 0.5f;
-			
 			data.Vertices[i].TexCoord = uv;
+
+			//Scale down the sphere
+			data.Vertices[i].Position *= 0.5f;
 		}
 
 		data.Indices.shrink_to_fit();
