@@ -24,48 +24,52 @@ namespace Lambda
 	}
 
 
-	MeshData MeshFactory::CreateCube() noexcept
+	MeshData MeshFactory::CreateCube(float width, float height, float depth) noexcept
 	{
 		using namespace glm;
+
+		float w = width  * 0.5f;
+		float h = height * 0.5f;
+		float d = depth  * 0.5f;
 
 		MeshData data;
 		data.Vertices =
 		{
 			//FRONT FACE
-			{ vec3(-0.5f,  0.5f, -0.5f), vec3(0.0f,  0.0f, -1.0f), vec2(0.0f, 0.0f) },
-			{ vec3(0.5f,  0.5f, -0.5f), vec3(0.0f,  0.0f, -1.0f), vec2(1.0f, 0.0f) },
-			{ vec3(-0.5f, -0.5f, -0.5f), vec3(0.0f,  0.0f, -1.0f), vec2(0.0f, 1.0f) },
-			{ vec3(0.5f, -0.5f, -0.5f), vec3(0.0f,  0.0f, -1.0f), vec2(1.0f, 1.0f) },
+			{ vec3(-w,  h, -d), vec3(0.0f,  0.0f, -1.0f), vec2(0.0f, 0.0f) },
+			{ vec3( w,  h, -d), vec3(0.0f,  0.0f, -1.0f), vec2(1.0f, 0.0f) },
+			{ vec3(-w, -h, -d), vec3(0.0f,  0.0f, -1.0f), vec2(0.0f, 1.0f) },
+			{ vec3( w, -h, -d), vec3(0.0f,  0.0f, -1.0f), vec2(1.0f, 1.0f) },
 
 			//BACK FACE
-			{ vec3(0.5f,  0.5f,  0.5f), vec3(0.0f,  0.0f,  1.0f), vec2(0.0f, 0.0f) },
-			{ vec3(-0.5f,  0.5f,  0.5f), vec3(0.0f,  0.0f,  1.0f), vec2(1.0f, 0.0f) },
-			{ vec3(0.5f, -0.5f,  0.5f), vec3(0.0f,  0.0f,  1.0f), vec2(0.0f, 1.0f) },
-			{ vec3(-0.5f, -0.5f,  0.5f), vec3(0.0f,  0.0f,  1.0f), vec2(1.0f, 1.0f) },
+			{ vec3( w,  h,  d), vec3(0.0f,  0.0f,  1.0f), vec2(0.0f, 0.0f) },
+			{ vec3(-w,  h,  d), vec3(0.0f,  0.0f,  1.0f), vec2(1.0f, 0.0f) },
+			{ vec3( w, -h,  d), vec3(0.0f,  0.0f,  1.0f), vec2(0.0f, 1.0f) },
+			{ vec3(-w, -h,  d), vec3(0.0f,  0.0f,  1.0f), vec2(1.0f, 1.0f) },
 
 			//RIGHT FACE
-			{ vec3(0.5f,  0.5f, -0.5f), vec3(1.0f,  0.0f,  0.0f), vec2(0.0f, 0.0f) },
-			{ vec3(0.5f,  0.5f,  0.5f), vec3(1.0f,  0.0f,  0.0f), vec2(1.0f, 0.0f) },
-			{ vec3(0.5f, -0.5f, -0.5f), vec3(1.0f,  0.0f,  0.0f), vec2(0.0f, 1.0f) },
-			{ vec3(0.5f, -0.5f,  0.5f), vec3(1.0f,  0.0f,  0.0f), vec2(1.0f, 1.0f) },
+			{ vec3( w,  h, -d), vec3(1.0f,  0.0f,  0.0f), vec2(0.0f, 0.0f) },
+			{ vec3( w,  h,  d), vec3(1.0f,  0.0f,  0.0f), vec2(1.0f, 0.0f) },
+			{ vec3( w, -h, -d), vec3(1.0f,  0.0f,  0.0f), vec2(0.0f, 1.0f) },
+			{ vec3( w, -h,  d), vec3(1.0f,  0.0f,  0.0f), vec2(1.0f, 1.0f) },
 
 			//LEFT FACE
-			{ vec3(-0.5f,  0.5f, -0.5f), vec3(-1.0f,  0.0f,  0.0f), vec2(0.0f, 0.0f) },
-			{ vec3(-0.5f,  0.5f,  0.5f), vec3(-1.0f,  0.0f,  0.0f), vec2(1.0f, 0.0f) },
-			{ vec3(-0.5f, -0.5f, -0.5f), vec3(-1.0f,  0.0f,  0.0f), vec2(0.0f, 1.0f) },
-			{ vec3(-0.5f, -0.5f,  0.5f), vec3(-1.0f,  0.0f,  0.0f), vec2(1.0f, 1.0f) },
+			{ vec3(-w,  h, -d), vec3(-1.0f,  0.0f,  0.0f), vec2(0.0f, 0.0f) },
+			{ vec3(-w,  h,  d), vec3(-1.0f,  0.0f,  0.0f), vec2(1.0f, 0.0f) },
+			{ vec3(-w, -h, -d), vec3(-1.0f,  0.0f,  0.0f), vec2(0.0f, 1.0f) },
+			{ vec3(-w, -h,  d), vec3(-1.0f,  0.0f,  0.0f), vec2(1.0f, 1.0f) },
 
 			//ROOF FACE
-			{ vec3(-0.5f,  0.5f,  0.5f), vec3(0.0f,  1.0f,  0.0f), vec2(0.0f, 0.0f) },
-			{ vec3(0.5f,  0.5f,  0.5f), vec3(0.0f,  1.0f,  0.0f), vec2(1.0f, 0.0f) },
-			{ vec3(-0.5f,  0.5f, -0.5f), vec3(0.0f,  1.0f,  0.0f), vec2(0.0f, 1.0f) },
-			{ vec3(0.5f,  0.5f, -0.5f), vec3(0.0f,  1.0f,  0.0f), vec2(1.0f, 1.0f) },
+			{ vec3(-w,  h,  d), vec3(0.0f,  1.0f,  0.0f), vec2(0.0f, 0.0f) },
+			{ vec3( w,  h,  d), vec3(0.0f,  1.0f,  0.0f), vec2(1.0f, 0.0f) },
+			{ vec3(-w,  h, -d), vec3(0.0f,  1.0f,  0.0f), vec2(0.0f, 1.0f) },
+			{ vec3( w,  h, -d), vec3(0.0f,  1.0f,  0.0f), vec2(1.0f, 1.0f) },
 
 			//FLOOR FACE
-			{ vec3(-0.5f, -0.5f, -0.5f), vec3(0.0f, -1.0f,  0.0f), vec2(0.0f, 0.0f) },
-			{ vec3(0.5f, -0.5f, -0.5f), vec3(0.0f, -1.0f,  0.0f), vec2(1.0f, 0.0f) },
-			{ vec3(-0.5f, -0.5f,  0.5f), vec3(0.0f, -1.0f,  0.0f), vec2(0.0f, 1.0f) },
-			{ vec3(0.5f, -0.5f,  0.5f), vec3(0.0f, -1.0f,  0.0f), vec2(1.0f, 1.0f) },
+			{ vec3(-w, -h, -d), vec3(0.0f, -1.0f,  0.0f), vec2(0.0f, 0.0f) },
+			{ vec3( w, -h, -d), vec3(0.0f, -1.0f,  0.0f), vec2(1.0f, 0.0f) },
+			{ vec3(-w, -h,  d), vec3(0.0f, -1.0f,  0.0f), vec2(0.0f, 1.0f) },
+			{ vec3( w, -h,  d), vec3(0.0f, -1.0f,  0.0f), vec2(1.0f, 1.0f) },
 		};
 
 		data.Indices =
@@ -99,7 +103,6 @@ namespace Lambda
 	}
 
 
-
 	MeshData MeshFactory::CreatePlane(uint8 width, uint8 height) noexcept
 	{
 		using namespace glm;
@@ -123,19 +126,19 @@ namespace Lambda
 		{
 			for (uint32 y = 0; y <= height; y++)
 			{
-				int v = ((1 + height) * x) + y;
-				data.Vertices[v].Position = vec3(0.5f - (quadSize.x * x), 0.5f - (quadSize.y * y), 0.0f);
-				data.Vertices[v].Normal = vec3(0.0f, 0.0f, 1.0f);
-				data.Vertices[v].TexCoord = vec2(0.0f + (uvQuadSize.x * x), 0.0f + (uvQuadSize.y * y));
+				int32 v = ((1 + height) * x) + y;
+				data.Vertices[v].Position	= vec3(0.5f - (quadSize.x * x), 0.5f - (quadSize.y * y), 0.0f);
+				data.Vertices[v].Normal		= vec3(0.0f, 0.0f, 1.0f);
+				data.Vertices[v].TexCoord	= vec2(0.0f + (uvQuadSize.x * x), 0.0f + (uvQuadSize.y * y));
 			}
 		}
 
 		//Initialize Indices
-		for (unsigned char x = 0; x < width; x++)
+		for (uint8 x = 0; x < width; x++)
 		{
-			for (unsigned char y = 0; y < height; y++)
+			for (uint8 y = 0; y < height; y++)
 			{
-				int quad = (height * x) + y;
+				int32 quad = (height * x) + y;
 				data.Indices[quad * 6] = (x * (1 + height)) + y + 1;
 				data.Indices[(quad * 6) + 1] = (data.Indices[quad * 6] + 2 + (height - 1));
 				data.Indices[(quad * 6) + 2] =  data.Indices[quad * 6] - 1;
@@ -151,14 +154,12 @@ namespace Lambda
 	}
 
 
-
 	MeshData MeshFactory::CreateSphere(uint8 subdivisions, float radius) noexcept
 	{
 		using namespace glm;
 
 		MeshData data;
 		data.Vertices.resize(12);
-
 
 		//VERTICES
 		float t = (1.0f + sqrt(5.0f)) / 2.0f;
@@ -216,8 +217,8 @@ namespace Lambda
 
 			//Calculate uvs
 			vec2 uv;
-			uv.y = asin(data.Vertices[i].Position.y) / pi<float>() + 0.5f;
-			uv.x = abs(atan2f(data.Vertices[i].Position.z, data.Vertices[i].Position.x) / (2.0f * pi<float>()));
+			uv.y = (asin(data.Vertices[i].Position.y) / pi<float>()) + 0.5f;
+			uv.x = (atan2f(data.Vertices[i].Position.z, data.Vertices[i].Position.x) + pi<float>()) / (2.0f * pi<float>());
 			data.Vertices[i].TexCoord = uv;
 
 			//Scale down the sphere
@@ -229,7 +230,6 @@ namespace Lambda
 
 		return data;
 	}
-
 
 
 	MeshData MeshFactory::CreatePyramid() noexcept
@@ -320,14 +320,16 @@ namespace Lambda
 	}
 
 
-	MeshData MeshFactory::CreateCylinder(uint8 sides) noexcept
+	MeshData MeshFactory::CreateCylinder(uint8 sides, float radius, float height) noexcept
 	{
 		using namespace glm;
 		MeshData data;
 		if (sides < 5)
-		{
 			sides = 5;
-		}
+		if (height < 0.1f)
+			height = 0.1f;
+		if (radius < 0.1f)
+			radius = 0.1f;
 
 		//Num verts = (Sides*2)	(Top, since we need unique normals) 
 		//          + (Sides*2)	(Bottom)
@@ -344,14 +346,15 @@ namespace Lambda
 		//Angle between verts
 		float angle = (pi<float>() * 2.0f) / float(sides);
 		float uOffset = 1.0f / float(sides - 1);
+		float halfHeight = height * 0.5f;
 		
 		//CREATE VERTICES
-		data.Vertices[0].Position	= vec3(0.0f, 0.5f, 0.0f);
+		data.Vertices[0].Position	= vec3(0.0f, halfHeight, 0.0f);
 		data.Vertices[0].Normal		= vec3(0.0f, 1.0f, 0.0f);
 		data.Vertices[0].TexCoord	= vec2(0.25f, 0.25f);
 
 		size_t offset = size_t(sides) + 1;
-		data.Vertices[offset].Position	= vec3(0.0f, -0.5f, 0.0f);
+		data.Vertices[offset].Position	= vec3(0.0f, -halfHeight, 0.0f);
 		data.Vertices[offset].Normal	= vec3(0.0f, -1.0f, 0.0f);
 		data.Vertices[offset].TexCoord	= vec2(0.75f, 0.25f);
 
@@ -363,12 +366,12 @@ namespace Lambda
 			float x = cosf((pi<float>() / 2.0f) + (angle * i));
 			float z = sinf((pi<float>() / 2.0f) + (angle * i));
 			vec3 pos = normalize(vec3(x, 0.0f, z));
-			data.Vertices[i + 1].Position	= pos * 0.5f + vec3(0.0f, 0.5f, 0.0f);
+			data.Vertices[i + 1].Position	= (pos * radius) + vec3(0.0f, halfHeight, 0.0f);
 			data.Vertices[i + 1].Normal		= vec3(0.0f, 1.0f, 0.0f);
 			data.Vertices[i + 1].TexCoord	= vec2(x + 1.0f, z + 1.0f) * 0.25f;
 
 			//BOTTOM CAP VERTICES
-			data.Vertices[offset + i + 1].Position	= data.Vertices[i + 1].Position - vec3(0.0f, 1.0f, 0.0f);
+			data.Vertices[offset + i + 1].Position	= data.Vertices[i + 1].Position - vec3(0.0f, height, 0.0f);
 			data.Vertices[offset + i + 1].Normal	= vec3(0.0f, -1.0f, 0.0f);
 			data.Vertices[offset + i + 1].TexCoord	= data.Vertices[i + 1].TexCoord + vec2(0.5f, 0.5f);
 
