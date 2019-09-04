@@ -315,7 +315,7 @@ namespace Lambda
 		data.Indices.shrink_to_fit();
 		data.Vertices.shrink_to_fit();
 
-		CalculateNormalsHardened(data);
+		CalculateHardNormals(data);
 		return data;
 	}
 
@@ -329,103 +329,164 @@ namespace Lambda
 			sides = 5;
 		}
 
-		data.Vertices.resize(22);
-		data.Indices.resize(60);
+		//Num verts = (Sides*2)	(Top, since we need unique normals) 
+		//          + (Sides*2)	(Bottom)
+		//		    + 2			(MiddlePoints)
+		size_t vertSize = size_t(sides) * 4 + 2;
+		data.Vertices.resize(vertSize);
 
-		constexpr float angle = (pi<float>() * 2.0f) / 5.0f;
+
+		//Num indices = (Sides*3*2) (Each cap has 'sides' number of tris, each tri has 3 verts)
+		//			  + (Sides*6)	(Each side has 6 verts)
+		size_t indexSize = size_t(sides) * 12;
+		data.Indices.resize(indexSize);
+
+		//Angle between verts
+		float angle = (pi<float>() * 2.0f) / float(sides);
+		
 		//TOP CAP VERTICES
-		data.Vertices[0].Position = vec3(0.0f, 0.5f, 0.0f);
-		data.Vertices[1].Position = normalize(vec3(cosf( pi<float>() / 2.0f),				 0.0f, sinf( pi<float>() / 2.0f)))				  * 0.5f + vec3(0.0f, 0.5f, 0.0f);
-		data.Vertices[2].Position = normalize(vec3(cosf((pi<float>() / 2.0f) +	angle),		 0.0f, sinf((pi<float>() / 2.0f) + angle)))		  * 0.5f + vec3(0.0f, 0.5f, 0.0f);
-		data.Vertices[3].Position = normalize(vec3(cosf((pi<float>() / 2.0f) + (angle * 2)), 0.0f, sinf((pi<float>() / 2.0f) + (angle * 2)))) * 0.5f + vec3(0.0f, 0.5f, 0.0f);
-		data.Vertices[4].Position = normalize(vec3(cosf((pi<float>() / 2.0f) + (angle * 3)), 0.0f, sinf((pi<float>() / 2.0f) + (angle * 3)))) * 0.5f + vec3(0.0f, 0.5f, 0.0f);
-		data.Vertices[5].Position = normalize(vec3(cosf((pi<float>() / 2.0f) + (angle * 4)), 0.0f, sinf((pi<float>() / 2.0f) + (angle * 4)))) * 0.5f + vec3(0.0f, 0.5f, 0.0f);
-		data.Vertices[0].Normal = vec3(0.0f, -1.0f, 0.0f);
-		data.Vertices[1].Normal = vec3(0.0f, -1.0f, 0.0f);
-		data.Vertices[2].Normal = vec3(0.0f, -1.0f, 0.0f);
-		data.Vertices[3].Normal = vec3(0.0f, -1.0f, 0.0f);
-		data.Vertices[4].Normal = vec3(0.0f, -1.0f, 0.0f);
-		data.Vertices[5].Normal = vec3(0.0f, -1.0f, 0.0f);
+		data.Vertices[0].Position	= vec3(0.0f, 0.5f, 0.0f);
+		data.Vertices[0].Normal		= vec3(0.0f, 1.0f, 0.0f);
+		for (size_t i = 0; i < sides; i++)
+		{
+			float x = cosf((pi<float>() / 2.0f) + (angle * i));
+			float z = sinf((pi<float>() / 2.0f) + (angle * i));
+			data.Vertices[i + 1].Position	= normalize(vec3(x, 0.0f, z)) * 0.5f + vec3(0.0f, 0.5f, 0.0f);
+			data.Vertices[i + 1].Normal		= vec3(0.0f, 1.0f, 0.0f);
+		}
+		
+		//BOTTOM CAP VERTICES
+		size_t offset = size_t(sides) + 1;
+		data.Vertices[offset].Position	= vec3(0.0f, -0.5f, 0.0f);
+		data.Vertices[offset].Normal	= vec3(0.0f, -1.0f, 0.0f);
+		for (size_t i = 0; i < sides; i++)
+		{
+			data.Vertices[offset + i + 1].Position	= data.Vertices[i + 1].Position - vec3(0.0f, 1.0f, 0.0f);
+			data.Vertices[offset + i + 1].Normal	= vec3(0.0f, -1.0f, 0.0f);
+		}
+
+		//SIDE VERTICES
+		size_t doubleOffset = offset * 2;
+		size_t trippleOffset = doubleOffset + size_t(sides);
+		for (size_t i = 0; i < sides; i++)
+		{
+			data.Vertices[doubleOffset + i].Position	= data.Vertices[i + 1].Position;
+			data.Vertices[doubleOffset + i].Normal		= normalize(data.Vertices[doubleOffset].Position);
+
+			data.Vertices[trippleOffset + i].Position	= data.Vertices[offset + i + 1].Position;
+			data.Vertices[trippleOffset + i].Normal		= normalize(data.Vertices[trippleOffset].Position);
+		}
+
+		//data.Vertices[1].Position = normalize(vec3(cosf( pi<float>() / 2.0f),				 0.0f, sinf( pi<float>() / 2.0f)))				  * 0.5f + vec3(0.0f, 0.5f, 0.0f);
+		//data.Vertices[2].Position = normalize(vec3(cosf((pi<float>() / 2.0f) +	angle),		 0.0f, sinf((pi<float>() / 2.0f) + angle)))		  * 0.5f + vec3(0.0f, 0.5f, 0.0f);
+		//data.Vertices[3].Position = normalize(vec3(cosf((pi<float>() / 2.0f) + (angle * 2)), 0.0f, sinf((pi<float>() / 2.0f) + (angle * 2)))) * 0.5f + vec3(0.0f, 0.5f, 0.0f);
+		//data.Vertices[4].Position = normalize(vec3(cosf((pi<float>() / 2.0f) + (angle * 3)), 0.0f, sinf((pi<float>() / 2.0f) + (angle * 3)))) * 0.5f + vec3(0.0f, 0.5f, 0.0f);
+		//data.Vertices[5].Position = normalize(vec3(cosf((pi<float>() / 2.0f) + (angle * 4)), 0.0f, sinf((pi<float>() / 2.0f) + (angle * 4)))) * 0.5f + vec3(0.0f, 0.5f, 0.0f);
+
+		//data.Vertices[1].Normal = vec3(0.0f, 1.0f, 0.0f);
+		//data.Vertices[2].Normal = vec3(0.0f, 1.0f, 0.0f);
+		//data.Vertices[3].Normal = vec3(0.0f, 1.0f, 0.0f);
+		//data.Vertices[4].Normal = vec3(0.0f, 1.0f, 0.0f);
+		//data.Vertices[5].Normal = vec3(0.0f, 1.0f, 0.0f);
 
 		//BOTTOM CAP VERTICES
-		data.Vertices[6].Position = data.Vertices[0].Position - vec3(0.0f, 1.0f, 0.0f);
-		data.Vertices[7].Position = data.Vertices[1].Position - vec3(0.0f, 1.0f, 0.0f);
-		data.Vertices[8].Position = data.Vertices[2].Position - vec3(0.0f, 1.0f, 0.0f);
-		data.Vertices[9].Position = data.Vertices[3].Position - vec3(0.0f, 1.0f, 0.0f);
-		data.Vertices[10].Position = data.Vertices[4].Position - vec3(0.0f, 1.0f, 0.0f);
-		data.Vertices[11].Position = data.Vertices[5].Position - vec3(0.0f, 1.0f, 0.0f);
-		data.Vertices[6].Normal = vec3(0.0f, 1.0f, 0.0f);
-		data.Vertices[7].Normal = vec3(0.0f, 1.0f, 0.0f);
-		data.Vertices[8].Normal = vec3(0.0f, 1.0f, 0.0f);
-		data.Vertices[9].Normal = vec3(0.0f, 1.0f, 0.0f);
-		data.Vertices[10].Normal = vec3(0.0f, 1.0f, 0.0f);
-		data.Vertices[11].Normal = vec3(0.0f, 1.0f, 0.0f);
+		//data.Vertices[6].Position = data.Vertices[0].Position - vec3(0.0f, 1.0f, 0.0f);
+		//data.Vertices[7].Position = data.Vertices[1].Position - vec3(0.0f, 1.0f, 0.0f);
+		//data.Vertices[8].Position = data.Vertices[2].Position - vec3(0.0f, 1.0f, 0.0f);
+		//data.Vertices[9].Position = data.Vertices[3].Position - vec3(0.0f, 1.0f, 0.0f);
+		//data.Vertices[10].Position = data.Vertices[4].Position - vec3(0.0f, 1.0f, 0.0f);
+		//data.Vertices[11].Position = data.Vertices[5].Position - vec3(0.0f, 1.0f, 0.0f);
+		//data.Vertices[6].Normal = vec3(0.0f,  -1.0f, 0.0f);
+		//data.Vertices[7].Normal = vec3(0.0f,  -1.0f, 0.0f);
+		//data.Vertices[8].Normal = vec3(0.0f,  -1.0f, 0.0f);
+		//data.Vertices[9].Normal = vec3(0.0f,  -1.0f, 0.0f);
+		//data.Vertices[10].Normal = vec3(0.0f, -1.0f, 0.0f);
+		//data.Vertices[11].Normal = vec3(0.0f, -1.0f, 0.0f);
 
-		//TOP SIDE VERTICES
-		data.Vertices[12].Position = data.Vertices[1].Position;
-		data.Vertices[12].Normal = normalize(data.Vertices[12].Position);
-		data.Vertices[13].Position = data.Vertices[2].Position;
-		data.Vertices[13].Normal = normalize(data.Vertices[13].Position);
-		data.Vertices[14].Position = data.Vertices[3].Position;
-		data.Vertices[14].Normal = normalize(data.Vertices[14].Position);
-		data.Vertices[15].Position = data.Vertices[4].Position;
-		data.Vertices[15].Normal = normalize(data.Vertices[15].Position);
-		data.Vertices[16].Position = data.Vertices[5].Position;
-		data.Vertices[16].Normal = normalize(data.Vertices[16].Position);
+		//TOP 
+		//data.Vertices[12].Position = data.Vertices[1].Position;
+		//data.Vertices[12].Normal = normalize(data.Vertices[12].Position);
+		//data.Vertices[13].Position = data.Vertices[2].Position;
+		//data.Vertices[13].Normal = normalize(data.Vertices[13].Position);
+		//data.Vertices[14].Position = data.Vertices[3].Position;
+		//data.Vertices[14].Normal = normalize(data.Vertices[14].Position);
+		//data.Vertices[15].Position = data.Vertices[4].Position;
+		//data.Vertices[15].Normal = normalize(data.Vertices[15].Position);
+		//data.Vertices[16].Position = data.Vertices[5].Position;
+		//data.Vertices[16].Normal = normalize(data.Vertices[16].Position);
 
 		//BOTTOM SIDE VERTICES
-		data.Vertices[17].Position = data.Vertices[7].Position;
-		data.Vertices[17].Normal = normalize(data.Vertices[17].Position);
-		data.Vertices[18].Position = data.Vertices[8].Position;
-		data.Vertices[18].Normal = normalize(data.Vertices[18].Position);
-		data.Vertices[19].Position = data.Vertices[9].Position;
-		data.Vertices[19].Normal = normalize(data.Vertices[19].Position);
-		data.Vertices[20].Position = data.Vertices[10].Position;
-		data.Vertices[20].Normal = normalize(data.Vertices[20].Position);
-		data.Vertices[21].Position = data.Vertices[11].Position;
-		data.Vertices[21].Normal = normalize(data.Vertices[21].Position);
+		//data.Vertices[17].Position = data.Vertices[7].Position;
+		//data.Vertices[17].Normal = normalize(data.Vertices[17].Position);
+		//data.Vertices[18].Position = data.Vertices[8].Position;
+		//data.Vertices[18].Normal = normalize(data.Vertices[18].Position);
+		//data.Vertices[19].Position = data.Vertices[9].Position;
+		//data.Vertices[19].Normal = normalize(data.Vertices[19].Position);
+		//data.Vertices[20].Position = data.Vertices[10].Position;
+		//data.Vertices[20].Normal = normalize(data.Vertices[20].Position);
+		//data.Vertices[21].Position = data.Vertices[11].Position;
+		//data.Vertices[21].Normal = normalize(data.Vertices[21].Position);
 
-		//TOP CAP Indices
-		data.Indices[0] = 0;
-		data.Indices[1] = 2;
-		data.Indices[2] = 1;
+		//TOP CAP INDICES
+		size_t index = 0;
+		for (uint8 i = 0; i < sides; i++)
+		{
+			data.Indices[index + 0] = 0;
+			data.Indices[index + 1] = (i + 1) % (sides) + 1;
+			data.Indices[index + 2] = i + 1;
+			index += 3;
+		}
 
-		data.Indices[3] = 0;
-		data.Indices[4] = 3;
-		data.Indices[5] = 2;
+		//BOTTOM CAP INDICES
+		for (uint8 i = 0; i < sides; i++)
+		{
+			uint32 base = uint32(sides) + 1;
+			data.Indices[index + 0] = base;
+			data.Indices[index + 1] = base + i + 1;
+			data.Indices[index + 2] = base + ((i + 1) % (sides)+1);
+			index += 3;
+		}
 
-		data.Indices[6] = 0;
-		data.Indices[7] = 4;
-		data.Indices[8] = 3;
-
-		data.Indices[9] = 0;
-		data.Indices[10] = 5;
-		data.Indices[11] = 4;
-
-		data.Indices[12] = 0;
-		data.Indices[13] = 1;
-		data.Indices[14] = 5;
+		//data.Indices[0] = 0;
+		//data.Indices[1] = 2;
+		//data.Indices[2] = 1;
+		////
+		//data.Indices[3] = 0;
+		//data.Indices[4] = 3;
+		//data.Indices[5] = 2;
+		////
+		//data.Indices[6] = 0;
+		//data.Indices[7] = 4;
+		//data.Indices[8] = 3;
+		////
+		//data.Indices[9] = 0;
+		//data.Indices[10] = 5;
+		//data.Indices[11] = 4;
+		////
+		//data.Indices[12] = 0;
+		//data.Indices[13] = 1;
+		//data.Indices[14] = 5;
 
 		//BOTTOM CAP Indices
-		data.Indices[15] = 6;
-		data.Indices[16] = 7;
-		data.Indices[17] = 8;
-
-		data.Indices[18] = 6;
-		data.Indices[19] = 8;
-		data.Indices[20] = 9;
-
-		data.Indices[21] = 6;
-		data.Indices[22] = 9;
-		data.Indices[23] = 10;
-
-		data.Indices[24] = 6;
-		data.Indices[25] = 10;
-		data.Indices[26] = 11;
-
-		data.Indices[27] = 6;
-		data.Indices[28] = 11;
-		data.Indices[29] = 7;
+		//data.Indices[15] = 6;
+		//data.Indices[16] = 7;
+		//data.Indices[17] = 8;
+		////
+		//data.Indices[18] = 6;
+		//data.Indices[19] = 8;
+		//data.Indices[20] = 9;
+		////
+		//data.Indices[21] = 6;
+		//data.Indices[22] = 9;
+		//data.Indices[23] = 10;
+		////
+		//data.Indices[24] = 6;
+		//data.Indices[25] = 10;
+		//data.Indices[26] = 11;
+		////
+		//data.Indices[27] = 6;
+		//data.Indices[28] = 11;
+		//data.Indices[29] = 7;
 
 		//SIDES
 		data.Indices[30] = 17;
@@ -434,28 +495,28 @@ namespace Lambda
 		data.Indices[33] = 18;
 		data.Indices[34] = 17;
 		data.Indices[35] = 13;
-
+		
 		data.Indices[36] = 18;
 		data.Indices[37] = 13;
 		data.Indices[38] = 14;
 		data.Indices[39] = 14;
 		data.Indices[40] = 19;
 		data.Indices[41] = 18;
-
+		
 		data.Indices[42] = 19;
 		data.Indices[43] = 14;
 		data.Indices[44] = 15;
 		data.Indices[45] = 15;
 		data.Indices[46] = 20;
 		data.Indices[47] = 19;
-
+		
 		data.Indices[48] = 20;
 		data.Indices[49] = 15;
 		data.Indices[50] = 16;
 		data.Indices[51] = 16;
 		data.Indices[52] = 21;
 		data.Indices[53] = 20;
-
+		
 		data.Indices[54] = 21;
 		data.Indices[55] = 16;
 		data.Indices[56] = 17;
@@ -574,7 +635,7 @@ namespace Lambda
 	}
 
 
-	void MeshFactory::CalculateNormalsHardened(MeshData& data) noexcept
+	void MeshFactory::CalculateHardNormals(MeshData& data) noexcept
 	{
 		using namespace glm;
 		vec3 e1;

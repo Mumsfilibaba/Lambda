@@ -56,6 +56,6 @@ namespace Lambda
 
 		static void Subdivide(MeshData& data, uint8 subdivisions = 1) noexcept;
 		static void Optimize(MeshData& data, uint32 startVertex = 0) noexcept;
-		static void CalculateNormalsHardened(MeshData& data) noexcept;
+		static void CalculateHardNormals(MeshData& data) noexcept;
 	};
 }
