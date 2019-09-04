@@ -103,7 +103,7 @@ namespace Lambda
 	}
 
 
-	MeshData MeshFactory::CreatePlane(uint8 width, uint8 height) noexcept
+	MeshData MeshFactory::CreatePlane(uint32 width, uint32 height) noexcept
 	{
 		using namespace glm;
 		using namespace std;
@@ -154,7 +154,7 @@ namespace Lambda
 	}
 
 
-	MeshData MeshFactory::CreateSphere(uint8 subdivisions, float radius) noexcept
+	MeshData MeshFactory::CreateSphere(uint32 subdivisions, float radius) noexcept
 	{
 		using namespace glm;
 
@@ -227,6 +227,78 @@ namespace Lambda
 
 		data.Indices.shrink_to_fit();
 		data.Vertices.shrink_to_fit();
+
+		return data;
+	}
+
+
+	MeshData MeshFactory::CreateCone(uint32 sides, float radius, float height) noexcept
+	{
+		using namespace glm;
+
+		MeshData data;
+		//Num verts = (Sides*2)	(Bottom, since we need unique normals)
+		//		    +  Sides	(1 MiddlePoint per side)
+		//			+  1		(One middlepoint on the underside)
+		size_t vertSize = size_t(sides) * 3 + 1;
+		data.Vertices.resize(vertSize);
+
+		//Num indices = (Sides*3*2) (Cap has 'sides' number of tris + sides tris for the sides, each tri has 3 verts)
+		size_t indexSize = size_t(sides) * 6;
+		data.Indices.resize(indexSize);
+
+		//Angle between verts
+		float angle = (pi<float>() * 2.0f) / float(sides);
+		float uOffset = 1.0f / float(sides - 1);
+
+		//CREATE VERTICES
+		data.Vertices[0].Position	= vec3(0.0f, 0.0f, 0.0f);
+		data.Vertices[0].Normal		= vec3(0.0f, -1.0f, 0.0f);
+		data.Vertices[0].TexCoord	= vec2(0.25f, 0.25f);
+
+		size_t offset = size_t(sides) + 1;
+		size_t topOffset = offset + size_t(sides);
+		for (size_t i = 0; i < sides; i++)
+		{
+			//BOTTOM CAP VERTICES
+			float x = cosf((pi<float>() / 2.0f) + (angle * i));
+			float z = sinf((pi<float>() / 2.0f) + (angle * i));
+
+			vec3 pos = normalize(vec3(x, 0.0f, z));
+			data.Vertices[i + 1].Position	= (pos * radius);
+			data.Vertices[i + 1].Normal		= vec3(0.0f, -1.0f, 0.0f);
+			data.Vertices[i + 1].TexCoord	= (vec2(x + 1.0f, z + 1.0f) * 0.25f);
+
+			//BOTTOM SIDE VERTICES
+			vec3 normal = normalize(pos + vec3(0.0f, sin(atan(height / radius)), 0.0f));
+			data.Vertices[offset + i].Position	= data.Vertices[i + 1].Position;
+			data.Vertices[offset + i].Normal	= normal;
+			data.Vertices[offset + i].TexCoord	= vec2(0.0f + (uOffset * i), 1.0f);
+
+			//TOP
+			data.Vertices[topOffset + i].Position	= vec3(0.0f, height, 0.0f);
+			data.Vertices[topOffset + i].Normal		= normal;
+			data.Vertices[topOffset + i].TexCoord	= vec2(0.0f + (uOffset * i), 0.25f);
+		}
+
+		//BOTTOM CAP INDICES
+		size_t index = 0;
+		for (uint32 i = 0; i < sides; i++)
+		{
+			data.Indices[index + 0] = 0;
+			data.Indices[index + 1] = i + 1;
+			data.Indices[index + 2] = ((i + 1) % sides) + 1;
+			index += 3;
+		}
+
+		//SIDES INDICES
+		for (uint32 i = 0; i < sides; i++)
+		{
+			data.Indices[index + 0] = topOffset + i;
+			data.Indices[index + 1] = offset + ((i + 1) % sides);
+			data.Indices[index + 2] = offset + i;
+			index += 3;
+		}
 
 		return data;
 	}
@@ -320,9 +392,10 @@ namespace Lambda
 	}
 
 
-	MeshData MeshFactory::CreateCylinder(uint8 sides, float radius, float height) noexcept
+	MeshData MeshFactory::CreateCylinder(uint32 sides, float radius, float height) noexcept
 	{
 		using namespace glm;
+		
 		MeshData data;
 		if (sides < 5)
 			sides = 5;
@@ -336,7 +409,6 @@ namespace Lambda
 		//		    + 2			(MiddlePoints)
 		size_t vertSize = size_t(sides) * 4 + 2;
 		data.Vertices.resize(vertSize);
-
 
 		//Num indices = (Sides*3*2) (Each cap has 'sides' number of tris, each tri has 3 verts)
 		//			  + (Sides*6)	(Each side has 6 verts)
@@ -388,7 +460,7 @@ namespace Lambda
 
 		//TOP CAP INDICES
 		size_t index = 0;
-		for (uint8 i = 0; i < sides; i++)
+		for (uint32 i = 0; i < sides; i++)
 		{
 			data.Indices[index + 0] = 0;
 			data.Indices[index + 1] = (i + 1) % (sides) + 1;
@@ -397,7 +469,7 @@ namespace Lambda
 		}
 
 		//BOTTOM CAP INDICES
-		for (uint8 i = 0; i < sides; i++)
+		for (uint32 i = 0; i < sides; i++)
 		{
 			uint32 base = uint32(sides) + 1;
 			data.Indices[index + 0] = base;
@@ -407,7 +479,7 @@ namespace Lambda
 		}
 
 		//SIDES
-		for (uint8 i = 0; i < sides; i++)
+		for (uint32 i = 0; i < sides; i++)
 		{
 			uint32 base = (uint32(sides) + 1) * 2;
 			data.Indices[index + 0] = base + i + sides;
@@ -423,26 +495,27 @@ namespace Lambda
 	}
 
 
-	void MeshFactory::Subdivide(MeshData& data, uint8 subdivisions) noexcept
+	void MeshFactory::Subdivide(MeshData& data, uint32 subdivisions) noexcept
 	{
 		using namespace glm;
+		
 		if (subdivisions < 1)
 		{
 			return;
 		}
 
 		Vertex v[3];
-		int j = 0;
-		int indexCount = 0;
-		int vertexCount = 0;
-		int oldVertexCount = 0;
-		data.Vertices.reserve((data.Vertices.size() * (uint32)pow(2, subdivisions)));
-		data.Indices.reserve((data.Indices.size() * (uint32)pow(4, subdivisions)));
+		int32 j = 0;
+		int32 indexCount = 0;
+		int32 vertexCount = 0;
+		int32 oldVertexCount = 0;
+		data.Vertices.reserve((data.Vertices.size() * uint32(pow(2, subdivisions))));
+		data.Indices.reserve((data.Indices.size() * uint32(pow(4, subdivisions))));
 
-		for (int i = 0; i < subdivisions; i++)
+		for (int32 i = 0; i < subdivisions; i++)
 		{
-			oldVertexCount = (int)data.Vertices.size();
-			indexCount = (int)data.Indices.size();
+			oldVertexCount = int32(data.Vertices.size());
+			indexCount = int32(data.Indices.size());
 
 			for (j = 0; j < indexCount; j += 3)
 			{
@@ -464,7 +537,7 @@ namespace Lambda
 				data.Vertices.emplace_back(v[2]);
 
 				//Push index of the new triangles
-				vertexCount = (int)data.Vertices.size();
+				vertexCount = int32(data.Vertices.size());
 				data.Indices.emplace_back((vertexCount - 3));
 				data.Indices.emplace_back((vertexCount - 1));
 				data.Indices.emplace_back((vertexCount - 2));
