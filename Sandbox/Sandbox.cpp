@@ -131,7 +131,7 @@ namespace Lambda
                 desc.pPixelShader = m_pPS;
                 desc.pInputElements = elements;
                 desc.InputElementCount = sizeof(elements) / sizeof(InputElement);
-                desc.Cull = CULL_MODE_NONE;
+                desc.Cull = CULL_MODE_BACK;
 				desc.Mode = POLYGON_MODE_FILL;
                 desc.Topology = PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 				desc.pRenderPass = m_pRenderPass;
@@ -142,7 +142,7 @@ namespace Lambda
             }
 
             //Create vertexbuffer
-			MeshData mesh = MeshFactory::CreateCylinder(5);
+			MeshData mesh = MeshFactory::CreateCylinder(25);
 			m_IndexCount = uint32(mesh.Indices.size());
 			{
                 BufferDesc desc = {};
