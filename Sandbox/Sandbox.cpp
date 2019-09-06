@@ -2,7 +2,7 @@
 #include "System/Log.h"
 #include "System/Input.h"
 #include "Graphics/MeshFactory.h"
-#include "glm/gtc/matrix_transform.hpp"
+#include <glm/gtc/matrix_transform.hpp>
 
 #define SINGLE_CUBE
 

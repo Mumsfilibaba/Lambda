@@ -2,11 +2,12 @@
 #include "Types.h"
 
 #if defined(LAMBDA_EXPORT)
+	//All headers specific for windows
 	#if defined(LAMBDA_PLAT_WINDOWS)
-        //All headers specific for windows
-		#define WIN32_LEAN_AND_MEAN //Remove unneccesary stuff
-        #define NOMINMAX //Remove min max macros
-
+		//Remove unneccesary stuff
+		#define WIN32_LEAN_AND_MEAN 
+		//Remove min max macros
+        #define NOMINMAX
         #include <Windows.h>
 		#include <Windowsx.h>
 		#include <crtdbg.h>
@@ -28,6 +29,8 @@
 #include <codecvt>
 #include <iostream>
 #include <fstream>
+#include <algorithm>
+#include <cmath>
 
 #include <vector>
 #include <mutex>

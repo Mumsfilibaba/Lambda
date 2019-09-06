@@ -16,6 +16,7 @@ namespace Lambda
 
 	void DX12GraphicsPipelineState::SetName(const char* pName)
 	{
+		m_Name = std::string(pName);
 	}
 
 

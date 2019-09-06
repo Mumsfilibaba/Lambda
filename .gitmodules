@@ -1,3 +1,6 @@
 [submodule "Dependencies/glm"]
 	path = Dependencies/glm
 	url = http://github.com/g-truc/glm/
+[submodule "Dependencies/Assimp"]
+	path = Dependencies/Assimp
+	url = https://github.com/assimp/assimp

@@ -27,6 +27,7 @@ namespace Lambda
 	private:
 		Microsoft::WRL::ComPtr<ID3D12PipelineState> m_State;
 		Microsoft::WRL::ComPtr<ID3D12RootSignature> m_RootSignature;
+		std::string m_Name;
 	};
 
 

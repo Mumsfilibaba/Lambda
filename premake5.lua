@@ -117,7 +117,10 @@ project "Lambda"
 	
 	includedirs 
 	{ 
-		"%{prj.name}/Include",
+		"%{prj.name}/Include"
+	}
+	sysincludedirs
+	{
 		"Dependencies/stb",
 		"Dependencies/glm"
 	}
@@ -125,6 +128,10 @@ project "Lambda"
 	filter "system:windows"
 		pchheader "LambdaPch.h"
 		pchsource "Lambda/Source/LambdaPch.cpp"
+		sysincludedirs
+		{
+			"Dependencies/Assimp/include"
+		}
 		defines 
 		{ 
 			"LAMBDA_EXPORT" 
@@ -144,13 +151,19 @@ project "Sandbox"
 	targetdir ("Build/bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("Build/bin-int/" .. outputdir .. "/%{prj.name}")
 	
-	includedirs 
+	includedirs
 	{ 
-		"Lambda/Include",
+		"Lambda/Include"
+	}
+	sysincludedirs
+	{
 		"Dependencies/glm"
 	}
 	
-	dependson { "Lambda" }
+	dependson 
+	{ 
+		"Lambda" 
+	}
 	
 	links 
 	{ 

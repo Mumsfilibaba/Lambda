@@ -1,6 +1,6 @@
 #pragma once
 #include "Defines.h"
-#include "glm/glm.hpp"
+#include <glm/glm.hpp>
 
 namespace Lambda
 {

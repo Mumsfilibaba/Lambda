@@ -4,12 +4,10 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #define GLM_FORCE_RADIANS
-#include "glm/gtc/constants.hpp"
-
+#include <glm/gtc/constants.hpp>
 
 namespace Lambda
 {
-
 	MeshData MeshFactory::CreateFromFile(const std::string& filename, bool rightHanded) noexcept
 	{
 		using namespace std;
@@ -26,6 +24,15 @@ namespace Lambda
                 LOG_DEBUG_INFO("Loading Scene with '%u' meshes\n", pScene->mNumMeshes);
                 
                 const aiMesh* pMesh = pScene->mMeshes[0];
+				if (!pMesh->HasNormals())
+				{
+					LOG_DEBUG_WARNING("Mesh does not have normals\n");
+				}
+				if (pMesh->HasTextureCoords(0))
+				{
+					LOG_DEBUG_WARNING("Mesh does not have texcoords\n");
+				}
+
                 if (pMesh)
                 {
                     if (pMesh->HasFaces())
