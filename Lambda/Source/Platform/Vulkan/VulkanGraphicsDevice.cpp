@@ -799,27 +799,12 @@ namespace Lambda
             }
             else if (desc.Usage == RESOURCE_USAGE_DEFAULT)
             {
-                //Prepare commandlist
                 m_pCommandList->Reset();
-                
-                //Update data with inital data
                 m_pCommandList->UpdateBuffer(pBuffer, pInitalData);
-                
-                //Execute commands
                 m_pCommandList->Close();
-                
-                VkCommandBuffer buffers[] =
-                {
-                    reinterpret_cast<VkCommandBuffer>(m_pCommandList->GetNativeHandle())
-                };
-                
-                VkSubmitInfo submitInfo = {};
-                submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-                submitInfo.pNext = nullptr;
-                submitInfo.commandBufferCount = 1;
-                submitInfo.pCommandBuffers = buffers;
-                
-                vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+            
+                ICommandList* ppLists[] = { m_pCommandList };
+                ExecuteCommandList(ppLists, 1);
                 
                 //Wait until buffer is copied
                 WaitForGPU();
@@ -841,28 +826,19 @@ namespace Lambda
         //Upload inital data
         if (pInitalData)
         {
-            //Reset internal commandlist
             m_pCommandList->Reset();
-            
-            //Update texture data
             m_pCommandList->UpdateTexture(pTexture, pInitalData, 0);
             
-            //Execute commands
-            m_pCommandList->Close();
-            VkCommandBuffer buffers[] =
+            if (desc.Flags & TEXTURE_FLAGS_GENEATE_MIPS)
             {
-                reinterpret_cast<VkCommandBuffer>(m_pCommandList->GetNativeHandle())
-            };
+                
+            }
             
-            VkSubmitInfo submitInfo = {};
-            submitInfo.sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-            submitInfo.pNext                = nullptr;
-            submitInfo.commandBufferCount   = 1;
-            submitInfo.pCommandBuffers      = buffers;
+            m_pCommandList->Close();
             
-            vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-            
-            //Wait until buffer is copied
+            ICommandList* ppLists[] = { m_pCommandList };
+            ExecuteCommandList(ppLists, 1);
+
             WaitForGPU();
         }
         

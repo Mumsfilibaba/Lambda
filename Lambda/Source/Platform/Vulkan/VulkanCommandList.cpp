@@ -235,7 +235,7 @@ namespace Lambda
         barrier.image                           = pVkTexture->GetImage();
         barrier.subresourceRange.aspectMask     = pVkTexture->GetAspectFlags();
         barrier.subresourceRange.baseMipLevel   = 0;
-        barrier.subresourceRange.levelCount     = 1;
+        barrier.subresourceRange.levelCount     = pVkTexture->GetMipLevels();
         barrier.subresourceRange.baseArrayLayer = 0;
         barrier.subresourceRange.layerCount     = 1;
         barrier.srcAccessMask                   = 0;

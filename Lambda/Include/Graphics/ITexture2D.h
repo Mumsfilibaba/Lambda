@@ -44,10 +44,11 @@ namespace Lambda
 
         virtual void* GetNativeHandle() const = 0;
 		virtual Texture2DDesc GetDesc() const = 0;
+        virtual uint32 GetMipLevels() const = 0;
         virtual uint32 GetWidth() const = 0;
         virtual uint32 GetHeight() const = 0;
 
 	public:
-		static ITexture2D* CreateTextureFromFile(const IGraphicsDevice* pDevice, const char* pFileName, TextureFlags flags, ResourceUsage Usage, ResourceFormat Format);
+		static ITexture2D* CreateTextureFromFile(const IGraphicsDevice* pDevice, const char* pFileName, uint32 flags, ResourceUsage Usage, ResourceFormat Format);
 	};
 }

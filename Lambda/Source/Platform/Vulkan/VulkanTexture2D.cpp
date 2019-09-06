@@ -85,6 +85,13 @@ namespace Lambda
     
     void VulkanTexture2D::Init(VkDevice device, VkPhysicalDevice adapter, const Texture2DDesc& desc)
     {
+        //Set miplevels
+        uint32 mipLevels = desc.MipLevels;
+        if (desc.Flags & TEXTURE_FLAGS_GENEATE_MIPS)
+        {
+            mipLevels = std::floor(std::log2(std::max(desc.Width, desc.Height)));
+        }
+        
 		//Create image
         VkImageCreateInfo info = {};
         info.sType                  = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -94,7 +101,7 @@ namespace Lambda
         info.extent.width           = desc.Width;
         info.extent.height          = desc.Height;
         info.extent.depth           = 1;
-        info.mipLevels              = desc.MipLevels;
+        info.mipLevels              = mipLevels;
         info.arrayLayers            = desc.ArraySize;
         info.pQueueFamilyIndices    = nullptr;
         info.queueFamilyIndexCount  = 0;
@@ -105,6 +112,10 @@ namespace Lambda
         info.samples                = VK_SAMPLE_COUNT_1_BIT;
 
         //Set special usage
+        if (desc.Flags & TEXTURE_FLAGS_GENEATE_MIPS)
+        {
+            info.usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+        }
         if (desc.Flags & TEXTURE_FLAGS_SHADER_RESOURCE)
         {
             info.usage |= VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
@@ -133,6 +144,7 @@ namespace Lambda
             m_IsOwner = true;
             
             m_Desc = desc;
+            m_Desc.MipLevels = mipLevels;
             m_Format = info.format;
         }
         
@@ -180,7 +192,7 @@ namespace Lambda
         viewInfo.format     = ConvertResourceFormat(m_Desc.Format);
         viewInfo.subresourceRange.aspectMask        = m_AspectFlags;
         viewInfo.subresourceRange.baseMipLevel      = 0;
-        viewInfo.subresourceRange.levelCount        = 1;
+        viewInfo.subresourceRange.levelCount        = m_Desc.MipLevels;
         viewInfo.subresourceRange.baseArrayLayer    = 0;
         viewInfo.subresourceRange.layerCount        = 1;
         
@@ -204,6 +216,12 @@ namespace Lambda
     Texture2DDesc VulkanTexture2D::GetDesc() const
     {
         return m_Desc;
+    }
+    
+    
+    uint32 VulkanTexture2D::GetMipLevels() const
+    {
+        return m_Desc.MipLevels;
     }
     
     

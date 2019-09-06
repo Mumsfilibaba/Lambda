@@ -200,6 +200,7 @@ namespace Lambda
 		TEXTURE_FLAGS_DEPTH_STENCIL     = (1 << 2),
 		TEXTURE_FLAGS_SHADER_RESOURCE   = (1 << 3),
 		TEXTURE_FLAGS_TEXTURE_CUBE      = (1 << 4),
+        TEXTURE_FLAGS_GENEATE_MIPS      = (1 << 5),
 	};
 
 

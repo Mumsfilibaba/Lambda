@@ -36,11 +36,11 @@ namespace Lambda
         virtual void UpdateBuffer(IBuffer* pResource, const ResourceData* pData) override final;
         virtual void UpdateTexture(ITexture2D* pResource, const ResourceData* pData, uint32 subresource) override final;
         
-        virtual void CopyBuffer(IBuffer* pDst, IBuffer* pSrc) override final;
-        
         virtual void TransitionBuffer(const IBuffer* pBuffer, ResourceState state) override final;
         virtual void TransitionTexture(const ITexture2D* pTexture, ResourceState state) override final;
         
+        virtual void CopyBuffer(IBuffer* pDst, IBuffer* pSrc) override final;
+
         virtual void DrawInstanced(uint32 vertexCountPerInstance, uint32 instanceCount, uint32 startVertexLocation, uint32 startInstanceLocation) override final;
         virtual void DrawIndexedInstanced(uint32 indexCountPerInstance, uint32 instanceCount, uint32 startIndexLocation, uint32 baseVertexLocation, uint32 startInstanceLocation) override final;
         

@@ -35,6 +35,7 @@ namespace Lambda
         
         virtual void* GetNativeHandle() const override final;
         virtual Texture2DDesc GetDesc() const override final;
+        virtual uint32 GetMipLevels() const override final;
         virtual uint32 GetWidth() const override final;
         virtual uint32 GetHeight() const override final;
         
