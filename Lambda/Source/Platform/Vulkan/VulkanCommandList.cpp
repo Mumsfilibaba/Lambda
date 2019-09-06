@@ -72,8 +72,8 @@ namespace Lambda
             
             //Init upload buffers
             VkPhysicalDevice adapter = reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance())->GetAdapter();
-            if (!m_BufferUpload.Init(device, adapter, MB(16))) { return; }
-            if (!m_TextureUpload.Init(device, adapter, MB(32))) { return; }
+            if (!m_BufferUpload.Init(device, adapter, MB(128))) { return; }
+            if (!m_TextureUpload.Init(device, adapter, MB(128))) { return; }
         }
     }
     

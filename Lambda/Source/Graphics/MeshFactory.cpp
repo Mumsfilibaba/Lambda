@@ -1,7 +1,11 @@
 #include "LambdaPch.h"
 #include "Graphics/MeshFactory.h"
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 #define GLM_FORCE_RADIANS
 #include "glm/gtc/constants.hpp"
+
 
 namespace Lambda
 {
@@ -9,17 +13,59 @@ namespace Lambda
 	MeshData MeshFactory::CreateFromFile(const std::string& filename, bool rightHanded) noexcept
 	{
 		using namespace std;
+        using namespace glm;
 
+        Assimp::Importer importer;
+        const aiScene* pScene = importer.ReadFile(filename, aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_ImproveCacheLocality | aiProcess_GenSmoothNormals | aiProcess_ConvertToLeftHanded);
+        
 		MeshData data;
-		//FILE* file = fopen(filename.c_str(), "rb");
-		//if (file == nullptr)
-		//{
-		//	Re_LogDebugError(ERROR_LEVEL_ERROR, "'MeshFactory::CreateFromFile': Could not open file '" + filename + "'");
-		//	return data;
-		//}
-
-		//fclose(file);
-
+        if (pScene)
+        {
+            if(pScene->HasMeshes())
+            {
+                LOG_DEBUG_INFO("Loading Scene with '%u' meshes\n", pScene->mNumMeshes);
+                
+                const aiMesh* pMesh = pScene->mMeshes[0];
+                if (pMesh)
+                {
+                    if (pMesh->HasFaces())
+                    {
+                        uint32 vertCount = pMesh->mNumVertices;
+                        data.Vertices.resize(vertCount);
+                        for (uint32 i = 0; i < vertCount; i++)
+                        {
+                            data.Vertices[i].Position = vec3(pMesh->mVertices[i].x, pMesh->mVertices[i].y, pMesh->mVertices[i].z);
+                            if (pMesh->HasNormals())
+                            {
+                                data.Vertices[i].Normal = vec3(pMesh->mNormals[i].x, pMesh->mNormals[i].y, pMesh->mNormals[i].z);
+                            }
+                            if (pMesh->HasTextureCoords(0))
+                            {
+                                data.Vertices[i].TexCoord = vec2(pMesh->mTextureCoords[0][i].x, pMesh->mTextureCoords[0][i].y);
+                            }
+                        }
+                        
+                        uint32 triCount = pMesh->mNumFaces;
+                        data.Indices.resize(triCount * 3);
+                        for (uint32 i = 0; i < triCount; i++)
+                        {
+                            data.Indices[i*3 + 0] = pMesh->mFaces[i].mIndices[0];
+                            data.Indices[i*3 + 1] = pMesh->mFaces[i].mIndices[1];
+                            data.Indices[i*3 + 2] = pMesh->mFaces[i].mIndices[2];
+                        }
+                    }
+                }
+            }
+            else
+            {
+                LOG_DEBUG_ERROR("File '%s' does not have any meshes\n", filename.c_str());
+            }
+        }
+        else
+        {
+            LOG_DEBUG_ERROR("Failed to load file '%s'\n", filename.c_str());
+        }
+        
 		return data;
 	}
 

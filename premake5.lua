@@ -88,7 +88,8 @@ workspace "Lambda"
 		{
 			"glfw.3.3",
 			"vulkan.1",
-			"vulkan.1.1.114"
+			"vulkan.1.1.114",
+			"assimp"
 		}
 		libdirs
 		{

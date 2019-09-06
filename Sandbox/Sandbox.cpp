@@ -75,12 +75,12 @@ namespace Lambda
 			{
 				RenderPassDesc desc = {};
 				desc.NumRenderTargets = 1;
-				desc.RenderTargets[0].Format = pDevice->GetBackBufferFormat();;
+				desc.RenderTargets[0].Format = pDevice->GetBackBufferFormat();
 				desc.RenderTargets[0].LoadOperation = LOAD_OP_CLEAR;
 				desc.RenderTargets[0].StoreOperation = STORE_OP_STORE;
 				desc.DepthStencil.Format = depthFormat;
 				desc.DepthStencil.LoadOperation = LOAD_OP_CLEAR;
-				desc.DepthStencil.StoreOperation = STORE_OP_STORE;
+				desc.DepthStencil.StoreOperation = STORE_OP_UNKNOWN;
 
 				pDevice->CreateRenderPass(&m_pRenderPass, desc);
 			}
@@ -131,7 +131,7 @@ namespace Lambda
                 desc.pPixelShader = m_pPS;
                 desc.pInputElements = elements;
                 desc.InputElementCount = sizeof(elements) / sizeof(InputElement);
-                desc.Cull = CULL_MODE_BACK;
+                desc.Cull = CULL_MODE_NONE;
 				desc.Mode = POLYGON_MODE_FILL;
                 desc.Topology = PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 				desc.pRenderPass = m_pRenderPass;
@@ -142,7 +142,7 @@ namespace Lambda
             }
 
             //Create vertexbuffer
-            MeshData mesh = MeshFactory::CreateSphere(3);
+            MeshData mesh = MeshFactory::CreateFromFile("chalet.obj");
 			m_IndexCount = uint32(mesh.Indices.size());
 			{
                 BufferDesc desc = {};
@@ -229,7 +229,7 @@ namespace Lambda
             }
 
             //Create texture
-            m_pTexture = ITexture2D::CreateTextureFromFile(pDevice, "texture.jpg", TEXTURE_FLAGS_SHADER_RESOURCE, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
+            m_pTexture = ITexture2D::CreateTextureFromFile(pDevice, "chalet.jpg", TEXTURE_FLAGS_SHADER_RESOURCE, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
 			m_pCurrentList->TransitionTexture(m_pTexture, RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
             //Create samplerstate
@@ -353,8 +353,8 @@ namespace Lambda
 		m_pRenderPass->SetClearValues(color, 1.0f, 0);
 
         //Setup rotation
-        static glm::mat4 rotation = glm::mat4(1.0f);
-        rotation = glm::rotate(rotation, glm::radians(45.0f) * dt.AsSeconds(), glm::vec3(0.0f, 1.0f, 0.0f));
+        static glm::mat4 rotation = glm::rotate(glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)), glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));;
+        //rotation = glm::rotate(rotation, glm::radians(45.0f) * dt.AsSeconds(), glm::vec3(0.0f, 0.0f, 1.0f));
         
 #if !defined(SINGLE_CUBE)
         //Draw cubes
