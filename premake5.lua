@@ -124,6 +124,34 @@ project "Lambda"
 		"Dependencies/stb",
 		"Dependencies/glm"
 	}
+
+	filter { "system:windows", "configurations:Debug" }
+		links
+		{
+			"assimp-vc141-mtd",
+			"IrrXMLd",
+			"zlibstaticd",
+		}
+		libdirs
+		{
+			"Dependencies/Assimp/build/code/Debug/",
+			"Dependencies/Assimp/build/contrib/irrXML/Debug",
+			"Dependencies/Assimp/build/contrib/zlib/Debug"
+		}
+	
+	filter { "system:windows", "configurations:Release" }
+		links
+		{
+			"assimp-vc141-mt",
+			"IrrXML",
+			"zlibstatic",
+		}
+		libdirs
+		{
+			"Dependencies/Assimp/build/code/Release/",
+			"Dependencies/Assimp/build/contrib/irrXML/Release",
+			"Dependencies/Assimp/build/contrib/zlib/Release"
+		}
 	
 	filter "system:windows"
 		pchheader "LambdaPch.h"

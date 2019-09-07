@@ -1,5 +1,6 @@
 #include "LambdaPch.h"
 #include "System/Log.h"
+#include "Graphics/IGraphicsDevice.h"
 #include "Utilities/StringHelper.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include "WindowsWindow.h"
@@ -19,18 +20,24 @@ namespace Lambda
 
 
 	WindowsWindow::WindowsWindow(const WindowDesc& desc)
-		: m_OnEvent(nullptr),
+		: m_pGraphicsDevice(nullptr),
+		m_OnEvent(nullptr),
 		m_Wnd(0),
 		m_EventBackLog()
 	{
 		Init(desc);
 
-		LOG_SYSTEM_INFO("Creating window. w: %d, h: %d\n", desc.Width, desc.Height);
+		LOG_SYSTEM_INFO("Created window. w: %d, h: %d\n", desc.Width, desc.Height);
 	}
 	
 
 	WindowsWindow::~WindowsWindow()
 	{
+		if (m_pGraphicsDevice)
+		{
+			m_pGraphicsDevice->Destroy();
+			m_pGraphicsDevice = nullptr;
+		}
 		if (IsWindow(m_Wnd))
 		{
 			DestroyWindow(m_Wnd);
@@ -60,7 +67,7 @@ namespace Lambda
     
     IGraphicsDevice* WindowsWindow::GetGraphicsDevice() const
     {
-        return nullptr;
+        return m_pGraphicsDevice;
     }
     
 
@@ -126,6 +133,19 @@ namespace Lambda
 				SetWindowLongPtr(m_Wnd, GWLP_USERDATA, reinterpret_cast<uintptr_t>(this));
 				ShowWindow(m_Wnd, SW_NORMAL);
 			}
+		}
+
+
+		//Create graphics context
+		{
+			GraphicsDeviceDesc gcDesc = {};
+			gcDesc.Api = desc.GraphicsDeviceAPI;
+#if LAMBDA_DEBUG
+			gcDesc.Flags = GRAPHICS_CONTEXT_FLAG_DEBUG;
+#else
+			gcDesc.Flags = GRAPHICS_CONTEXT_FLAG_NONE;
+#endif
+			m_pGraphicsDevice = IGraphicsDevice::Create(this, gcDesc);
 		}
 	}
 

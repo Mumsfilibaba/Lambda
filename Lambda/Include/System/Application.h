@@ -8,6 +8,7 @@ namespace Lambda
 	struct EngineParams
 	{
 		const char* pTitle = nullptr;
+		GraphicsApi GraphicsDeviceApi = GRAPHICS_API_VULKAN;
 		uint32 WindowWidth = 1920;
 		uint32 WindowHeight = 1080;
 		bool Fullscreen = false;
@@ -39,7 +40,6 @@ namespace Lambda
 
 	private:
 		IWindow* m_pWindow;
-		IGraphicsDevice* m_pGraphicsContext;
 		int32 m_ExitCode;
 		bool m_Running;
         bool m_HasFocus;

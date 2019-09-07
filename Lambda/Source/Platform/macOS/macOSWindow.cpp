@@ -33,6 +33,11 @@ namespace Lambda
     
     MacOSWindow::~MacOSWindow()
     {
+		if (m_pGraphicsDevice)
+		{
+			m_pGraphicsDevice->Destroy();
+			m_pGraphicsDevice = nullptr;
+		}
         //Destroy glfw
         if (s_HasGLFW)
         {
@@ -87,6 +92,18 @@ namespace Lambda
             
             //Set mouse input mode (TODO: Move to function)
             //glfwSetInputMode(m_pWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+			//Create graphics context
+			{
+				GraphicsDeviceDesc gcDesc = {};
+				gcDesc.Api = desc.GraphicsDeviceAPI;
+#if LAMBDA_DEBUG
+				gcDesc.Flags = GRAPHICS_CONTEXT_FLAG_DEBUG;
+#else
+				gcDesc.Flags = GRAPHICS_CONTEXT_FLAG_NONE;
+#endif
+				m_pGraphicsDevice = IGraphicsDevice::Create(this, gcDesc);
+			}
         }
         else
         {
@@ -251,7 +268,7 @@ namespace Lambda
     
     IGraphicsDevice* MacOSWindow::GetGraphicsDevice() const
     {
-        return nullptr;
+        return m_pGraphicsDevice;
     }
 }
 #endif

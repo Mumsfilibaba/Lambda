@@ -8,14 +8,23 @@
 
 namespace Lambda
 {
-	MeshData MeshFactory::CreateFromFile(const std::string& filename, bool rightHanded) noexcept
+	MeshData MeshFactory::CreateFromFile(const std::string& filename, bool mergeMeshes, bool rightHanded) noexcept
 	{
 		using namespace std;
         using namespace glm;
 
+		//Set import flags
+		uint32 flags = aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_ImproveCacheLocality | aiProcess_GenSmoothNormals;
+		if (rightHanded)
+		{
+			flags |= aiProcess_ConvertToLeftHanded;
+		}
+
+		//Load scene
         Assimp::Importer importer;
-        const aiScene* pScene = importer.ReadFile(filename, aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_ImproveCacheLocality | aiProcess_GenSmoothNormals | aiProcess_ConvertToLeftHanded);
+        const aiScene* pScene = importer.ReadFile(filename, flags);
         
+		//Extract scene-data
 		MeshData data;
         if (pScene)
         {
@@ -23,45 +32,62 @@ namespace Lambda
             {
                 LOG_DEBUG_INFO("Loading Scene with '%u' meshes\n", pScene->mNumMeshes);
                 
-                const aiMesh* pMesh = pScene->mMeshes[0];
-				if (!pMesh->HasNormals())
+				uint32 vertexOffset = 0;
+				uint32 indexOffset = 0;
+				uint32 numMeshesToLoad = (mergeMeshes) ? pScene->mNumMeshes : 1;
+				for (uint32 m = 0; m < numMeshesToLoad; m++)
 				{
-					LOG_DEBUG_WARNING("Mesh does not have normals\n");
-				}
-				if (pMesh->HasTextureCoords(0))
-				{
-					LOG_DEBUG_WARNING("Mesh does not have texcoords\n");
-				}
+					const aiMesh* pMesh = pScene->mMeshes[m];
+					if (!pMesh->HasNormals())
+					{
+						LOG_DEBUG_WARNING("Mesh does not have normals\n");
+					}
+					if (!pMesh->HasTextureCoords(0))
+					{
+						LOG_DEBUG_WARNING("Mesh does not have texcoords\n");
+					}
 
-                if (pMesh)
-                {
-                    if (pMesh->HasFaces())
-                    {
-                        uint32 vertCount = pMesh->mNumVertices;
-                        data.Vertices.resize(vertCount);
-                        for (uint32 i = 0; i < vertCount; i++)
-                        {
-                            data.Vertices[i].Position = vec3(pMesh->mVertices[i].x, pMesh->mVertices[i].y, pMesh->mVertices[i].z);
-                            if (pMesh->HasNormals())
-                            {
-                                data.Vertices[i].Normal = vec3(pMesh->mNormals[i].x, pMesh->mNormals[i].y, pMesh->mNormals[i].z);
-                            }
-                            if (pMesh->HasTextureCoords(0))
-                            {
-                                data.Vertices[i].TexCoord = vec2(pMesh->mTextureCoords[0][i].x, pMesh->mTextureCoords[0][i].y);
-                            }
-                        }
+					if (pMesh)
+					{
+						if (pMesh->HasFaces())
+						{
+							//Get number of vertices and resize buffer
+							uint32 vertCount = pMesh->mNumVertices;
+							//Vertexoffset is used when there are more than one mesh in the scene and we want to merge all the meshes
+							data.Vertices.resize(vertexOffset + vertCount);
+							for (uint32 i = 0; i < vertCount; i++)
+							{
+								data.Vertices[vertexOffset + i].Position = vec3(pMesh->mVertices[i].x, pMesh->mVertices[i].y, pMesh->mVertices[i].z);
+								if (pMesh->HasNormals())
+								{
+									data.Vertices[vertexOffset + i].Normal = vec3(pMesh->mNormals[i].x, pMesh->mNormals[i].y, pMesh->mNormals[i].z);
+								}
+								if (pMesh->HasTextureCoords(0))
+								{
+									data.Vertices[vertexOffset + i].TexCoord = vec2(pMesh->mTextureCoords[0][i].x, pMesh->mTextureCoords[0][i].y);
+								}
+							}
                         
-                        uint32 triCount = pMesh->mNumFaces;
-                        data.Indices.resize(triCount * 3);
-                        for (uint32 i = 0; i < triCount; i++)
-                        {
-                            data.Indices[i*3 + 0] = pMesh->mFaces[i].mIndices[0];
-                            data.Indices[i*3 + 1] = pMesh->mFaces[i].mIndices[1];
-                            data.Indices[i*3 + 2] = pMesh->mFaces[i].mIndices[2];
-                        }
-                    }
-                }
+							//Get number of indices and resize indexbuffer
+							uint32 triCount = pMesh->mNumFaces;
+							//Indexoffset is used when there are more than one mesh in the scene and we want to merge all the meshes
+							data.Indices.resize(indexOffset + (triCount * 3));
+							for (uint32 i = 0; i < triCount; i++)
+							{
+								data.Indices[indexOffset + (i*3) + 0] = vertexOffset + pMesh->mFaces[i].mIndices[0];
+								data.Indices[indexOffset + (i*3) + 1] = vertexOffset + pMesh->mFaces[i].mIndices[1];
+								data.Indices[indexOffset + (i*3) + 2] = vertexOffset + pMesh->mFaces[i].mIndices[2];
+							}
+
+							//Increase offsets
+							if (mergeMeshes)
+							{
+								vertexOffset += vertCount;
+								indexOffset += triCount * 3;
+							}
+						}
+					}
+				}
             }
             else
             {
@@ -70,7 +96,8 @@ namespace Lambda
         }
         else
         {
-            LOG_DEBUG_ERROR("Failed to load file '%s'\n", filename.c_str());
+			const char* pErrorMessage = importer.GetErrorString();
+            LOG_DEBUG_ERROR("Failed to load file '%s'. Message: %s\n", filename.c_str(), pErrorMessage);
         }
         
 		return data;
@@ -347,9 +374,9 @@ namespace Lambda
 		//SIDES INDICES
 		for (uint32 i = 0; i < sides; i++)
 		{
-			data.Indices[index + 0] = topOffset + i;
-			data.Indices[index + 1] = offset + ((i + 1) % sides);
-			data.Indices[index + 2] = offset + i;
+			data.Indices[index + 0] = uint32(topOffset) + i;
+			data.Indices[index + 1] = uint32(offset) + ((i + 1) % sides);
+			data.Indices[index + 2] = uint32(offset) + i;
 			index += 3;
 		}
 
@@ -565,7 +592,7 @@ namespace Lambda
 		data.Vertices.reserve((data.Vertices.size() * uint32(pow(2, subdivisions))));
 		data.Indices.reserve((data.Indices.size() * uint32(pow(4, subdivisions))));
 
-		for (int32 i = 0; i < subdivisions; i++)
+		for (uint32 i = 0; i < subdivisions; i++)
 		{
 			oldVertexCount = int32(data.Vertices.size());
 			indexCount = int32(data.Indices.size());

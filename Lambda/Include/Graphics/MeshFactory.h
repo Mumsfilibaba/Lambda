@@ -44,7 +44,7 @@ namespace Lambda
 	public:
 		LAMBDA_STATIC_CLASS(MeshFactory);
 
-		static MeshData CreateFromFile(const std::string& filename, bool rightHanded = true) noexcept;
+		static MeshData CreateFromFile(const std::string& filename, bool mergeMeshes = true, bool rightHanded = true) noexcept;
 		static MeshData CreateCube(float width = 1.0f, float height = 1.0f, float depth = 1.0f) noexcept;
 		static MeshData CreatePlane(uint32 width = 1, uint32 height = 1) noexcept;
 		static MeshData CreateSphere(uint32 subdivisions = 0, float radius = 0.5f) noexcept;

@@ -28,6 +28,7 @@ namespace Lambda
 		LRESULT OnEvent(uint32 msg, WPARAM wParam, LPARAM lParam);
 
 	private:
+		IGraphicsDevice* m_pGraphicsDevice;
 		EventCallback m_OnEvent;
 		std::vector<Event> m_EventBackLog;
 		HWND m_Wnd;

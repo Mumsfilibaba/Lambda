@@ -12,7 +12,6 @@ namespace Lambda
 
 	Application::Application(const EngineParams& params)
 		: m_pWindow(nullptr),
-		m_pGraphicsContext(nullptr),
 		m_Running(true),
 		m_HasFocus(false)
 	{
@@ -105,22 +104,14 @@ namespace Lambda
 			desc.pTitle		= params.pTitle;
 			desc.Width		= params.WindowWidth;
 			desc.Height		= params.WindowHeight;
+			desc.GraphicsDeviceAPI = params.GraphicsDeviceApi;
 
 			m_pWindow = IWindow::Create(desc);
 			m_pWindow->SetEventCallback(EventDispatcher::SendEvent);
 		}
 
-		//Create graphics context
+		//Push graphics layer
 		{
-            GraphicsDeviceDesc desc;
-            desc.Api    = GRAPHICS_API_VULKAN;
-#if LAMBDA_DEBUG
-            desc.Flags  = GRAPHICS_CONTEXT_FLAG_DEBUG;
-#else
-            desc.Flags  = GRAPHICS_CONTEXT_FLAG_NONE;
-#endif
-			m_pGraphicsContext = IGraphicsDevice::Create(m_pWindow, desc);
-
 			EventLayer graphicsLayer = { IGraphicsDevice::OnEvent, "GraphicsLayer" };
 			EventDispatcher::PushEventLayer(graphicsLayer);
 		}
@@ -174,14 +165,7 @@ namespace Lambda
 	void Application::InternalOnRelease()
 	{
 		OnRelease();
-
-        //Destroy graphics context
-        if (m_pGraphicsContext)
-        {
-            m_pGraphicsContext->Destroy();
-            m_pGraphicsContext = nullptr;
-        }
-        
+       
         //Destroy window
         SafeDelete(m_pWindow);
 	}
