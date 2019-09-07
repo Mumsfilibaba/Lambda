@@ -24,7 +24,7 @@ namespace Lambda
         
     private:
         GLFWwindow* m_pWindow;
-		IGraphicsDevice* m_pGraphicsDevice
+        IGraphicsDevice* m_pGraphicsDevice;
         uint32 m_Width;
         uint32 m_Height;
         EventCallback m_OnEvent;
