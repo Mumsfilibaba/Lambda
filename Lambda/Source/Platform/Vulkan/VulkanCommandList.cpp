@@ -3,7 +3,7 @@
 #include "VulkanGraphicsDevice.h"
 #include "VulkanPipelineState.h"
 #include "VulkanSamplerState.h"
-#include "VulkanTexture2D.h"
+#include "VulkanTexture.h"
 #include "VulkanFramebuffer.h"
 #include "VulkanBuffer.h"
 #include "VulkanRenderPass.h"
@@ -103,12 +103,12 @@ namespace Lambda
     }
     
     
-    void VulkanCommandList::ClearRenderTarget(ITexture2D* pRenderTarget, float color[4])
+    void VulkanCommandList::ClearRenderTarget(ITexture* pRenderTarget, float color[4])
     {
         VkClearColorValue col = {};
 		memcpy(col.float32, color, sizeof(float) * 4);
         
-        VulkanTexture2D* pVkRenderTarget = reinterpret_cast<VulkanTexture2D*>(pRenderTarget);
+        VulkanTexture* pVkRenderTarget = reinterpret_cast<VulkanTexture*>(pRenderTarget);
         
 		//Specify what part of an image that is going to be cleared
         VkImageSubresourceRange imageSubresourceRange = {};
@@ -122,13 +122,13 @@ namespace Lambda
     }
     
     
-    void VulkanCommandList::ClearDepthStencil(ITexture2D* pDepthStencil, float depth, uint8 stencil)
+    void VulkanCommandList::ClearDepthStencil(ITexture* pDepthStencil, float depth, uint8 stencil)
     {
         VkClearDepthStencilValue value = {};
         value.depth     = depth;
         value.stencil   = stencil;
 
-        VulkanTexture2D* pVkDepthStencil = reinterpret_cast<VulkanTexture2D*>(pDepthStencil);
+        VulkanTexture* pVkDepthStencil = reinterpret_cast<VulkanTexture*>(pDepthStencil);
     
         //Specify what part of an image that is going to be cleared
         VkImageSubresourceRange imageSubresourceRange = {};
@@ -221,9 +221,9 @@ namespace Lambda
     }
     
     
-    void VulkanCommandList::TransitionTexture(const ITexture2D* pTexture, ResourceState state)
+    void VulkanCommandList::TransitionTexture(const ITexture* pTexture, ResourceState state)
     {        
-        const VulkanTexture2D* pVkTexture = reinterpret_cast<const VulkanTexture2D*>(pTexture);
+        const VulkanTexture* pVkTexture = reinterpret_cast<const VulkanTexture*>(pTexture);
         
         //Setup barrier
         VkImageMemoryBarrier barrier = {};
@@ -343,9 +343,9 @@ namespace Lambda
     }
     
     
-    void VulkanCommandList::UpdateTexture(ITexture2D* pResource, const ResourceData* pData, uint32 subresource)
+    void VulkanCommandList::UpdateTexture(ITexture* pResource, const ResourceData* pData, uint32 subresource)
     {
-        VulkanTexture2D* pTex = reinterpret_cast<VulkanTexture2D*>(pResource);
+        VulkanTexture* pTex = reinterpret_cast<VulkanTexture*>(pResource);
         TransitionTexture(pResource, RESOURCE_STATE_COPY_DEST);
         
         //Get offset before allocating

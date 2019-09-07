@@ -4,7 +4,7 @@
 #include "Graphics/IShader.h"
 #include "Graphics/IPipelineState.h"
 #include "Graphics/IBuffer.h"
-#include "Graphics/ITexture2D.h"
+#include "Graphics/ITexture.h"
 #include "Graphics/ISamplerState.h"
 #include "Graphics/IRenderPass.h"
 #include "Graphics/IResourceState.h"
@@ -59,7 +59,7 @@ namespace Lambda
         IBuffer* m_pTransformBuffer;
         
         //Textures
-		ITexture2D* m_pTexture;
+		ITexture* m_pTexture;
 		
         //Samplers
         ISamplerState* m_pSamplerState;

@@ -6,8 +6,8 @@
 
 namespace Lambda
 {
-	class ITexture2D;
-	class VulkanTexture2D;
+	class ITexture;
+	class VulkanTexture;
 
 
 	struct VulkanSwapChainDesc
@@ -35,7 +35,7 @@ namespace Lambda
         uint32 GetBufferCount() const;
         uint32 GetCurrentBackBufferIndex() const;
 		VkFormat GetFormat() const;
-		ITexture2D* GetCurrentBuffer() const;
+		ITexture* GetCurrentBuffer() const;
 
 		void ResizeBuffers(VkDevice device, VkSemaphore signalSemaphore, uint32 width, uint32 height);
 		void AquireNextImage(VkDevice device, VkSemaphore signalSemaphore);
@@ -59,6 +59,6 @@ namespace Lambda
         SwapChainCapabilities m_Cap;
 		uint32 m_ImageCount;
 		mutable uint32 m_CurrentBufferIndex;
-		std::vector<VulkanTexture2D*> m_Buffers;
+		std::vector<VulkanTexture*> m_Buffers;
 	};
 }

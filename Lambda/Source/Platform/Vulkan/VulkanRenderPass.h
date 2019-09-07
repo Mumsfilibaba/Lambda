@@ -12,7 +12,7 @@ namespace Lambda
 		VulkanRenderPass(VkDevice device, const RenderPassDesc& desc);
 		~VulkanRenderPass() = default;
 
-		virtual void SetRenderTargets(const ITexture2D* const* const ppRenderTargets, const ITexture2D* pDepthStencil) override final;
+		virtual void SetRenderTargets(const ITexture* const* const ppRenderTargets, const ITexture* pDepthStencil) override final;
 		virtual void SetClearValues(float color[4], float depth, uint8 stencil) override final;
 		virtual void* GetNativeHandle() const override final;
 		

@@ -1,7 +1,7 @@
 #include "LambdaPch.h"
 #include <algorithm>
 #include "VulkanSwapChain.h"
-#include "VulkanTexture2D.h"
+#include "VulkanTexture.h"
 #include "VulkanUtilities.h"
 
 namespace Lambda
@@ -178,7 +178,7 @@ namespace Lambda
             desc.UsageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
             
             //Create texture
-            m_Buffers.push_back(DBG_NEW VulkanTexture2D(device, desc));
+            m_Buffers.push_back(DBG_NEW VulkanTexture(device, desc));
         }
         
         //Aquire the first swapchain image
@@ -225,7 +225,7 @@ namespace Lambda
 	}
 
 
-	ITexture2D* VulkanSwapChain::GetCurrentBuffer() const
+	ITexture* VulkanSwapChain::GetCurrentBuffer() const
 	{
 		return m_Buffers[m_CurrentBufferIndex];
 	}

@@ -3,7 +3,7 @@
 #include "DX12CommandList.h"
 #include "DX12PipelineState.h"
 #include "DX12Buffer.h"
-#include "DX12Texture2D.h"
+#include "DX12Texture.h"
 #include "DX12SamplerState.h"
 #include "Utilities/TextureHelper.h"
 #include "Utilities/StringHelper.h"
@@ -40,24 +40,24 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::ClearRenderTarget(ITexture2D* pRenderTarget, float color[4])
+	void DX12CommandList::ClearRenderTarget(ITexture* pRenderTarget, float color[4])
 	{
 		//Flush barriers - needs to be transitioned outside function
 		m_ResourceTracker.FlushBarriers(m_List.Get());
 
 		//Clear rendertarget
-		DX12Texture2D* pTarget = reinterpret_cast<DX12Texture2D*>(pRenderTarget);
+		DX12Texture* pTarget = reinterpret_cast<DX12Texture*>(pRenderTarget);
 		m_List->ClearRenderTargetView(pTarget->GetDescriptorHandle().CPU, color, 0, nullptr);
 	}
 
 
-	void DX12CommandList::ClearDepthStencil(ITexture2D * pDepthStencil, float depth, uint8 stencil)
+	void DX12CommandList::ClearDepthStencil(ITexture * pDepthStencil, float depth, uint8 stencil)
 	{
 		//Flush barriers - needs to be transitioned outside function
 		m_ResourceTracker.FlushBarriers(m_List.Get());
 
 		//Clear depthstencil
-		DX12Texture2D* pDSV = reinterpret_cast<DX12Texture2D*>(pDepthStencil);
+		DX12Texture* pDSV = reinterpret_cast<DX12Texture*>(pDepthStencil);
 		m_List->ClearDepthStencilView(pDSV->GetDescriptorHandle().CPU, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, depth, stencil, 0, nullptr);
 	}
 
@@ -163,9 +163,9 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::TransitionTexture(const ITexture2D* pResource, ResourceState resourceState)
+	void DX12CommandList::TransitionTexture(const ITexture* pResource, ResourceState resourceState)
 	{
-		const DX12Texture2D* pTexture = reinterpret_cast<const DX12Texture2D*>(pResource);
+		const DX12Texture* pTexture = reinterpret_cast<const DX12Texture*>(pResource);
 		m_ResourceTracker.TransitionResource(pTexture->GetResource(), D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, ConvertResourceState(resourceState));
 	}
 
@@ -179,11 +179,11 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::VSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot)
+	void DX12CommandList::VSSetTextures(const ITexture* const* ppTextures, uint32 numTextures, uint32 startSlot)
 	{
 		for (uint32 i = 0; i < numTextures; i++)
 		{
-			InternalSetResourceDescriptor(m_hResourceDescriptorTables[0].CPU, reinterpret_cast<const DX12Texture2D*>(ppTextures[i])->GetDescriptorHandle().CPU, startSlot + i, 1);
+			InternalSetResourceDescriptor(m_hResourceDescriptorTables[0].CPU, reinterpret_cast<const DX12Texture*>(ppTextures[i])->GetDescriptorHandle().CPU, startSlot + i, 1);
 		}
 	}
 
@@ -206,11 +206,11 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::HSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot)
+	void DX12CommandList::HSSetTextures(const ITexture* const* ppTextures, uint32 numTextures, uint32 startSlot)
 	{
 		for (uint32 i = 0; i < numTextures; i++)
 		{
-			InternalSetResourceDescriptor(m_hResourceDescriptorTables[1].CPU, reinterpret_cast<const DX12Texture2D*>(ppTextures[i])->GetDescriptorHandle().CPU, startSlot + i, 1);
+			InternalSetResourceDescriptor(m_hResourceDescriptorTables[1].CPU, reinterpret_cast<const DX12Texture*>(ppTextures[i])->GetDescriptorHandle().CPU, startSlot + i, 1);
 		}
 	}
 
@@ -233,11 +233,11 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::DSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot)
+	void DX12CommandList::DSSetTextures(const ITexture* const* ppTextures, uint32 numTextures, uint32 startSlot)
 	{
 		for (uint32 i = 0; i < numTextures; i++)
 		{
-			InternalSetResourceDescriptor(m_hResourceDescriptorTables[2].CPU, reinterpret_cast<const DX12Texture2D*>(ppTextures[i])->GetDescriptorHandle().CPU, startSlot + i, 1);
+			InternalSetResourceDescriptor(m_hResourceDescriptorTables[2].CPU, reinterpret_cast<const DX12Texture*>(ppTextures[i])->GetDescriptorHandle().CPU, startSlot + i, 1);
 		}
 	}
 
@@ -260,11 +260,11 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::GSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot)
+	void DX12CommandList::GSSetTextures(const ITexture* const* ppTextures, uint32 numTextures, uint32 startSlot)
 	{
 		for (uint32 i = 0; i < numTextures; i++)
 		{
-			InternalSetResourceDescriptor(m_hResourceDescriptorTables[3].CPU, reinterpret_cast<const DX12Texture2D*>(ppTextures[i])->GetDescriptorHandle().CPU, startSlot + i, 1);
+			InternalSetResourceDescriptor(m_hResourceDescriptorTables[3].CPU, reinterpret_cast<const DX12Texture*>(ppTextures[i])->GetDescriptorHandle().CPU, startSlot + i, 1);
 		}
 	}
 
@@ -287,11 +287,11 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::PSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot)
+	void DX12CommandList::PSSetTextures(const ITexture* const* ppTextures, uint32 numTextures, uint32 startSlot)
 	{
 		for (uint32 i = 0; i < numTextures; i++)
 		{
-			InternalSetResourceDescriptor(m_hResourceDescriptorTables[4].CPU, reinterpret_cast<const DX12Texture2D*>(ppTextures[i])->GetDescriptorHandle().CPU, startSlot + i, 1);
+			InternalSetResourceDescriptor(m_hResourceDescriptorTables[4].CPU, reinterpret_cast<const DX12Texture*>(ppTextures[i])->GetDescriptorHandle().CPU, startSlot + i, 1);
 		}
 	}
 
@@ -318,7 +318,7 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::UpdateTexture(ITexture2D* pResource, const ResourceData* pData, uint32 subresource)
+	void DX12CommandList::UpdateTexture(ITexture* pResource, const ResourceData* pData, uint32 subresource)
 	{
 		m_ResourceTracker.FlushBarriers(m_List.Get());
 
@@ -327,8 +327,8 @@ namespace Lambda
 		memcpy(allocation.pCPU, pData->pData, pData->SizeInBytes);
 		
 		//Setup texture copy info
-		DX12Texture2D* pDX12Texture = reinterpret_cast<DX12Texture2D*>(pResource);
-		Texture2DDesc desc = pDX12Texture->GetDesc();
+		DX12Texture* pDX12Texture = reinterpret_cast<DX12Texture*>(pResource);
+		TextureDesc desc = pDX12Texture->GetDesc();
 
 		//Setup dst
 		D3D12_TEXTURE_COPY_LOCATION dst = {};

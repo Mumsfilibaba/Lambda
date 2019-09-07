@@ -10,7 +10,7 @@
 
 namespace Lambda
 {
-	class DX12Texture2D;
+	class DX12Texture;
 
 	class DX12GraphicsDevice final : public IGraphicsDevice
 	{
@@ -22,7 +22,7 @@ namespace Lambda
 
 		virtual void CreateCommandList(ICommandList** ppList, CommandListType type) const override final;
 		virtual void CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) const override final;
-		virtual void CreateTexture2D(ITexture2D** ppTexture, const ResourceData* pInitalData, const Texture2DDesc& desc) const override final;
+		virtual void CreateTexture2D(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc) const override final;
 		virtual void CreateShader(IShader** ppShader, const ShaderDesc& desc) const override final;
 		virtual void CreateSamplerState(ISamplerState** ppSamplerState, const SamplerStateDesc& desc) const override final;
 		virtual void CreateGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc) const override final;
@@ -31,7 +31,7 @@ namespace Lambda
 
 		virtual void DestroyCommandList(ICommandList** ppList) const override final;
 		virtual void DestroyBuffer(IBuffer** ppBuffer) const override final;
-		virtual void DestroyTexture2D(ITexture2D** ppTexture) const override final;
+		virtual void DestroyTexture2D(ITexture** ppTexture) const override final;
 		virtual void DestroyShader(IShader** ppShader) const override final;
 		virtual void DestroySamplerState(ISamplerState** ppSamplerState) const override final;
 		virtual void DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState) const override final;
@@ -46,8 +46,8 @@ namespace Lambda
 		virtual void WaitForGPU() const override final;
 
 		virtual void* GetNativeHandle() const override final;
-		virtual ITexture2D* GetDepthStencil() const override final;
-		virtual ITexture2D* GetCurrentRenderTarget() const override final;
+		virtual ITexture* GetDepthStencil() const override final;
+		virtual ITexture* GetCurrentRenderTarget() const override final;
 		virtual ResourceFormat GetBackBufferFormat() const override final;
 		virtual uint32 GetCurrentBackBufferIndex() const override final;
 		virtual uint32 GetSwapChainWidth() const override final;
@@ -91,7 +91,7 @@ namespace Lambda
 		DX12DescriptorHandle m_NullSRV;
 		DX12DescriptorHandle m_NullCBV;
 		DX12DescriptorHandle m_NullUAV;
-		std::vector<DX12Texture2D*> m_BackBuffers;
+		std::vector<DX12Texture*> m_BackBuffers;
 		mutable std::vector<uint64> m_FenceValues;
 
 		DXGI_FORMAT m_BackBufferFormat;

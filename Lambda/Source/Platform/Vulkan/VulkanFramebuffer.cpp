@@ -1,7 +1,7 @@
 #include "LambdaPch.h"
 #include "VulkanFramebuffer.h"
 #include "VulkanGraphicsDevice.h"
-#include "VulkanTexture2D.h"
+#include "VulkanTexture.h"
 
 namespace Lambda
 {
@@ -41,7 +41,7 @@ namespace Lambda
 	}
 
 
-	bool VulkanFramebufferCacheKey::ContainsTexture(const VulkanTexture2D* pTexture)
+	bool VulkanFramebufferCacheKey::ContainsTexture(const VulkanTexture* pTexture)
 	{
 		VkImageView view = pTexture->GetImageView();
 		if (DepthStencilView == view)
@@ -131,7 +131,7 @@ namespace Lambda
 	}
 
 
-	void VulkanFramebufferCache::ReleaseAllContainingTexture(VkDevice device, const VulkanTexture2D* pTexture)
+	void VulkanFramebufferCache::ReleaseAllContainingTexture(VkDevice device, const VulkanTexture* pTexture)
 	{
 		//Find all framebuffers containing this texture
 		auto range = s_Framebuffers.equal_range(pTexture->GetImageView());

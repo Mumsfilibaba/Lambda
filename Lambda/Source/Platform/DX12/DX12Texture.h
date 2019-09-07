@@ -1,5 +1,5 @@
 #pragma once
-#include "Graphics/ITexture2D.h"
+#include "Graphics/ITexture.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include <wrl/client.h>
 	#include "DX12DescriptorHandle.h"
@@ -7,26 +7,26 @@
 
 namespace Lambda
 {
-	class DX12Texture2D final : public ITexture2D
+	class DX12Texture final : public ITexture
 	{
 		friend class DX12CommandList;
 		friend class DX12GraphicsDevice;
 
 	public:
-		LAMBDA_NO_COPY(DX12Texture2D);
+		LAMBDA_NO_COPY(DX12Texture);
 
-		DX12Texture2D(ID3D12Resource* pResource);
-		DX12Texture2D(ID3D12Device* pDevice, const Texture2DDesc& desc);
-		~DX12Texture2D() = default;
+		DX12Texture(ID3D12Resource* pResource);
+		DX12Texture(ID3D12Device* pDevice, const TextureDesc& desc);
+		~DX12Texture() = default;
 
-		virtual Texture2DDesc GetDesc() const override final;
+		virtual TextureDesc GetDesc() const override final;
 		virtual uint32 GetMipLevels() const override final;
 		virtual uint32 GetWidth() const override final;
 		virtual uint32 GetHeight() const override final;
 		virtual void* GetNativeHandle() const override final;
 
 	private:
-		void Init(ID3D12Device* pDevice, const Texture2DDesc& desc);
+		void Init(ID3D12Device* pDevice, const TextureDesc& desc);
 		void InitFromResource(ID3D12Resource* pResource);
 
 		void SetResource(ID3D12Resource* pResource);
@@ -38,17 +38,17 @@ namespace Lambda
 	private:
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_Texture;
 		DX12DescriptorHandle m_hDescriptor;
-		Texture2DDesc m_Desc;
+		TextureDesc m_Desc;
 	};
 
 
-	inline ID3D12Resource* Lambda::DX12Texture2D::GetResource() const
+	inline ID3D12Resource* Lambda::DX12Texture::GetResource() const
 	{
 		return m_Texture.Get();
 	}
 	
 
-	inline DX12DescriptorHandle DX12Texture2D::GetDescriptorHandle() const
+	inline DX12DescriptorHandle DX12Texture::GetDescriptorHandle() const
 	{
 		return m_hDescriptor;
 	}

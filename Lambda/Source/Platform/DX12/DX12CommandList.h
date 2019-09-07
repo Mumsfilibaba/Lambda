@@ -19,8 +19,8 @@ namespace Lambda
 		DX12CommandList(ID3D12Device* pDevice, CommandListType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV);
 		~DX12CommandList() = default;
 	
-		virtual void ClearRenderTarget(ITexture2D* pRenderTarget, float color[4]) override final;
-		virtual void ClearDepthStencil(ITexture2D* pDepthStencil, float depth, uint8 stencil) override final;
+		virtual void ClearRenderTarget(ITexture* pRenderTarget, float color[4]) override final;
+		virtual void ClearDepthStencil(ITexture* pDepthStencil, float depth, uint8 stencil) override final;
 
 		virtual void BeginRenderPass(IRenderPass* pRenderPass) override final;
 		virtual void EndRenderPass() override final;
@@ -35,30 +35,30 @@ namespace Lambda
 		virtual CommandListType GetType() const override final;
 
 		virtual void TransitionBuffer(const IBuffer* pResource, ResourceState resourceState) override final;
-		virtual void TransitionTexture(const ITexture2D* pResource, ResourceState resourceState) override final;
+		virtual void TransitionTexture(const ITexture* pResource, ResourceState resourceState) override final;
 
 		virtual void VSSetConstantBuffers(const IBuffer* const* ppBuffers, uint32 numBuffers, uint32 startSlot);
-		virtual void VSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot);
+		virtual void VSSetTextures(const ITexture* const* ppTextures, uint32 numTextures, uint32 startSlot);
 		virtual void VSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot);
 
 		virtual void HSSetConstantBuffers(const IBuffer* const* ppBuffers, uint32 numBuffers, uint32 startSlot);
-		virtual void HSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot);
+		virtual void HSSetTextures(const ITexture* const* ppTextures, uint32 numTextures, uint32 startSlot);
 		virtual void HSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot);
 
 		virtual void DSSetConstantBuffers(const IBuffer* const* ppBuffers, uint32 numBuffers, uint32 startSlot);
-		virtual void DSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot);
+		virtual void DSSetTextures(const ITexture* const* ppTextures, uint32 numTextures, uint32 startSlot);
 		virtual void DSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot);
 
 		virtual void GSSetConstantBuffers(const IBuffer* const* ppBuffers, uint32 numBuffers, uint32 startSlot);
-		virtual void GSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot);
+		virtual void GSSetTextures(const ITexture* const* ppTextures, uint32 numTextures, uint32 startSlot);
 		virtual void GSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot);
 
 		virtual void PSSetConstantBuffers(const IBuffer* const* ppBuffers, uint32 numBuffers, uint32 startSlot);
-		virtual void PSSetTextures(const ITexture2D* const* ppTextures, uint32 numTextures, uint32 startSlot);
+		virtual void PSSetTextures(const ITexture* const* ppTextures, uint32 numTextures, uint32 startSlot);
 		virtual void PSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot);
 
 		virtual void UpdateBuffer(IBuffer* pResource, const ResourceData* pData) override final;
-		virtual void UpdateTexture(ITexture2D* pResource, const ResourceData* pData, uint32 subresource) override final;
+		virtual void UpdateTexture(ITexture* pResource, const ResourceData* pData, uint32 subresource) override final;
 
 		virtual void CopyBuffer(IBuffer* pDst, IBuffer* pSrc) override final;
 

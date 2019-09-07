@@ -20,7 +20,7 @@ namespace Lambda
     };
     
     
-	struct Texture2DDesc
+	struct TextureDesc
 	{
 		ResourceUsage Usage = RESOURCE_USAGE_UNKNOWN;
 		ResourceFormat Format = FORMAT_UNKNOWN;
@@ -34,21 +34,21 @@ namespace Lambda
 	};
 
 
-	class LAMBDA_API ITexture2D
+	class LAMBDA_API ITexture
 	{
 	public:
-		LAMBDA_INTERFACE(ITexture2D);
+		LAMBDA_INTERFACE(ITexture);
 
-		ITexture2D() = default;
-		~ITexture2D() = default;
+		ITexture() = default;
+		~ITexture() = default;
 
         virtual void* GetNativeHandle() const = 0;
-		virtual Texture2DDesc GetDesc() const = 0;
+		virtual TextureDesc GetDesc() const = 0;
         virtual uint32 GetMipLevels() const = 0;
         virtual uint32 GetWidth() const = 0;
         virtual uint32 GetHeight() const = 0;
 
 	public:
-		static ITexture2D* CreateTextureFromFile(const IGraphicsDevice* pDevice, const char* pFileName, uint32 flags, ResourceUsage Usage, ResourceFormat Format);
+		static ITexture* CreateTextureFromFile(const IGraphicsDevice* pDevice, const char* pFileName, uint32 flags, ResourceUsage Usage, ResourceFormat Format);
 	};
 }

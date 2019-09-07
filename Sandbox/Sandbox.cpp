@@ -229,7 +229,7 @@ namespace Lambda
             }
 
             //Create texture
-            m_pTexture = ITexture2D::CreateTextureFromFile(pDevice, "chalet.jpg", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
+            m_pTexture = ITexture::CreateTextureFromFile(pDevice, "chalet.jpg", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
 			m_pCurrentList->TransitionTexture(m_pTexture, RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
             //Create samplerstate
@@ -299,8 +299,8 @@ namespace Lambda
         
         //Set and clear rendertarget
         float color[] = { 0.392f, 0.584f, 0.929f, 1.0f };
-        ITexture2D* pRenderTarget = pDevice->GetCurrentRenderTarget();
-        ITexture2D* pDepthBuffer = pDevice->GetDepthStencil();
+        ITexture* pRenderTarget = pDevice->GetCurrentRenderTarget();
+        ITexture* pDepthBuffer = pDevice->GetDepthStencil();
                 
         //Set scissor and viewport
         Rectangle scissorrect;

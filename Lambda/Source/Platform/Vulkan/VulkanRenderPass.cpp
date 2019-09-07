@@ -1,7 +1,7 @@
 #include "LambdaPch.h"
 #include "VulkanRenderPass.h"
 #include "VulkanFramebuffer.h"
-#include "VulkanTexture2D.h"
+#include "VulkanTexture.h"
 #include "VulkanConversions.inl"
 
 namespace Lambda
@@ -20,21 +20,21 @@ namespace Lambda
 	}
 	
 	
-	void VulkanRenderPass::SetRenderTargets(const ITexture2D* const* const ppRenderTargets, const ITexture2D* pDepthStencil)
+	void VulkanRenderPass::SetRenderTargets(const ITexture* const* const ppRenderTargets, const ITexture* pDepthStencil)
 	{
 		assert(m_Device != VK_NULL_HANDLE);
 
 		VulkanFramebufferCacheKey key = {};
 		if (pDepthStencil)
 		{
-			key.DepthStencilView = reinterpret_cast<const VulkanTexture2D*>(pDepthStencil)->GetImageView();
+			key.DepthStencilView = reinterpret_cast<const VulkanTexture*>(pDepthStencil)->GetImageView();
 			m_FramebufferExtent.width = pDepthStencil->GetWidth();
 			m_FramebufferExtent.height = pDepthStencil->GetHeight();
 		}
 		if (ppRenderTargets)
 		{
 			for (uint32 i = 0; i < m_RenderTargetCount; i++)
-				key.ColorAttachmentViews[i] = reinterpret_cast<const VulkanTexture2D*>(ppRenderTargets[i])->GetImageView();
+				key.ColorAttachmentViews[i] = reinterpret_cast<const VulkanTexture*>(ppRenderTargets[i])->GetImageView();
 
 			if (!pDepthStencil)
 			{

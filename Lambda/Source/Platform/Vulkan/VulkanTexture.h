@@ -1,5 +1,5 @@
 #pragma once
-#include "Graphics/ITexture2D.h"
+#include "Graphics/ITexture.h"
 #include <vulkan/vulkan.h>
 #include <vector>
 
@@ -20,21 +20,21 @@ namespace Lambda
     };
     
     
-    class VulkanTexture2D final : public ITexture2D
+    class VulkanTexture final : public ITexture
     {
         friend class VulkanGraphicsDevice;
         friend class VulkanCommandList;
         friend class VulkanFramebufferCache;
         
     public:
-        LAMBDA_NO_COPY(VulkanTexture2D);
+        LAMBDA_NO_COPY(VulkanTexture);
 
-        VulkanTexture2D(VkDevice device, const VulkanTextureDesc& desc);
-        VulkanTexture2D(VkDevice device, VkPhysicalDevice adapter, const Texture2DDesc& desc);
-        VulkanTexture2D() = default;
+        VulkanTexture(VkDevice device, const VulkanTextureDesc& desc);
+        VulkanTexture(VkDevice device, VkPhysicalDevice adapter, const TextureDesc& desc);
+        VulkanTexture() = default;
         
         virtual void* GetNativeHandle() const override final;
-        virtual Texture2DDesc GetDesc() const override final;
+        virtual TextureDesc GetDesc() const override final;
         virtual uint32 GetMipLevels() const override final;
         virtual uint32 GetWidth() const override final;
         virtual uint32 GetHeight() const override final;
@@ -50,7 +50,7 @@ namespace Lambda
         void Destroy(VkDevice device);
         
     private:
-        void Init(VkDevice device, VkPhysicalDevice adapter, const Texture2DDesc& desc);
+        void Init(VkDevice device, VkPhysicalDevice adapter, const TextureDesc& desc);
         void InitFromResource(VkDevice device, const VulkanTextureDesc& desc);
         void CreateImageView(VkDevice device);
         
@@ -61,42 +61,42 @@ namespace Lambda
         VkImageAspectFlags m_AspectFlags;
         VkFormat m_Format;
         mutable VkImageLayout m_CurrentResourceState;
-        Texture2DDesc m_Desc;
+		TextureDesc m_Desc;
         bool m_IsOwner;
     };
     
     
-    inline VkImageAspectFlags VulkanTexture2D::GetAspectFlags() const
+    inline VkImageAspectFlags VulkanTexture::GetAspectFlags() const
     {
         return m_AspectFlags;
     }
     
     
-    inline VkImage VulkanTexture2D::GetImage() const
+    inline VkImage VulkanTexture::GetImage() const
     {
         return m_Texture;
     }
     
     
-    inline VkImageView VulkanTexture2D::GetImageView() const
+    inline VkImageView VulkanTexture::GetImageView() const
     {
         return m_View;
     }
     
     
-    inline VkImageLayout VulkanTexture2D::GetCurrentResourceState() const
+    inline VkImageLayout VulkanTexture::GetCurrentResourceState() const
     {
         return m_CurrentResourceState;
     }
     
     
-    inline void VulkanTexture2D::SetCurrentResourceState(VkImageLayout resourceState) const
+    inline void VulkanTexture::SetCurrentResourceState(VkImageLayout resourceState) const
     {
         m_CurrentResourceState = resourceState;
     }
     
     
-    inline VkFormat VulkanTexture2D::GetFormat() const
+    inline VkFormat VulkanTexture::GetFormat() const
     {
         return m_Format;
     }

@@ -10,7 +10,7 @@
 namespace Lambda
 {    
     class VulkanBuffer;
-    class VulkanTexture2D;
+    class VulkanTexture;
     class VulkanCommandList;
     class VulkanSamplerState;
 	class VulkanSwapChain;
@@ -26,7 +26,7 @@ namespace Lambda
         
         virtual void CreateCommandList(ICommandList** ppList, CommandListType type) const override final;
         virtual void CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) const override final;
-        virtual void CreateTexture2D(ITexture2D** ppTexture, const ResourceData* pInitalData, const Texture2DDesc& desc) const override final;
+        virtual void CreateTexture2D(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc) const override final;
         virtual void CreateShader(IShader** ppShader, const ShaderDesc& desc) const override final;
         virtual void CreateSamplerState(ISamplerState** ppSamplerState, const SamplerStateDesc& desc) const override final;
         virtual void CreateGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc) const override final;
@@ -35,7 +35,7 @@ namespace Lambda
 
         virtual void DestroyCommandList(ICommandList** ppList) const override final;
         virtual void DestroyBuffer(IBuffer** ppBuffer) const override final;
-        virtual void DestroyTexture2D(ITexture2D** ppTexture) const override final;
+        virtual void DestroyTexture2D(ITexture** ppTexture) const override final;
         virtual void DestroyShader(IShader** ppShader) const override final;
         virtual void DestroySamplerState(ISamplerState** ppSamplerState) const override final;
         virtual void DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState) const override final;
@@ -50,8 +50,8 @@ namespace Lambda
         virtual void WaitForGPU() const override final;
         
         virtual void* GetNativeHandle() const override final;
-        virtual ITexture2D* GetDepthStencil() const override final;
-        virtual ITexture2D* GetCurrentRenderTarget() const override final;
+        virtual ITexture* GetDepthStencil() const override final;
+        virtual ITexture* GetCurrentRenderTarget() const override final;
         virtual ResourceFormat GetBackBufferFormat() const override final;
         virtual uint32 GetCurrentBackBufferIndex() const override final;
         virtual uint32 GetSwapChainWidth() const override final;
@@ -100,7 +100,7 @@ namespace Lambda
         VkSurfaceKHR m_Surface;
 
 		VulkanSwapChain* m_pSwapChain;
-		VulkanTexture2D* m_pDepthStencil;
+		VulkanTexture* m_pDepthStencil;
 		VulkanCommandList* m_pCommandList;
 
         mutable uint64 m_CurrentFrame;

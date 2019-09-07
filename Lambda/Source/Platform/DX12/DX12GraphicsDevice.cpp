@@ -7,7 +7,7 @@
 	#include "DX12PipelineState.h"
 	#include "DX12Shader.h"
 	#include "DX12Buffer.h"
-	#include "DX12Texture2D.h"
+	#include "DX12Texture.h"
 	#include "DX12SamplerState.h"
 	#define INITAL_FENCE_VALUE 0
 
@@ -64,7 +64,7 @@ namespace Lambda
 
 		for (uint32 i = 0; i < m_NumBackbuffers; i++)
 		{
-			ITexture2D* pTexture = m_BackBuffers[i];
+			ITexture* pTexture = m_BackBuffers[i];
 			DestroyTexture2D(&pTexture);
 			m_BackBuffers[i] = nullptr;
 		}
@@ -135,7 +135,7 @@ namespace Lambda
 	}
 
 
-	void DX12GraphicsDevice::CreateTexture2D(ITexture2D** ppTexture, const ResourceData* pInitalData, const Texture2DDesc& desc) const
+	void DX12GraphicsDevice::CreateTexture2D(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc) const
 	{
 		//Return early if errors
 		if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
@@ -146,7 +146,7 @@ namespace Lambda
 		}
 
 		//Create resource
-		DX12Texture2D* pTexture = DBG_NEW DX12Texture2D(m_Device.Get(), desc);
+		DX12Texture* pTexture = DBG_NEW DX12Texture(m_Device.Get(), desc);
 		
 		//Set initaldata if there are any
 		if (pInitalData != nullptr)
@@ -271,12 +271,12 @@ namespace Lambda
 	}
 
 
-	void DX12GraphicsDevice::DestroyTexture2D(ITexture2D** ppTexture) const
+	void DX12GraphicsDevice::DestroyTexture2D(ITexture** ppTexture) const
 	{
 		assert(ppTexture != nullptr);
 
-		DX12Texture2D* pTexture = reinterpret_cast<DX12Texture2D*>(*ppTexture);
-		Texture2DDesc desc = pTexture->GetDesc();
+		DX12Texture* pTexture = reinterpret_cast<DX12Texture*>(*ppTexture);
+		TextureDesc desc = pTexture->GetDesc();
 
 		//Check what descriptor and free it
 		DX12DescriptorHandle hDescriptor = pTexture->GetDescriptorHandle();		
@@ -405,13 +405,13 @@ namespace Lambda
 	}
 
 
-	ITexture2D* DX12GraphicsDevice::GetCurrentRenderTarget() const
+	ITexture* DX12GraphicsDevice::GetCurrentRenderTarget() const
 	{
 		return m_BackBuffers[m_SwapChain->GetCurrentBackBufferIndex()];
 	}
 
 
-	ITexture2D* DX12GraphicsDevice::GetDepthStencil() const
+	ITexture* DX12GraphicsDevice::GetDepthStencil() const
 	{
 		return nullptr;
 	}
@@ -464,7 +464,7 @@ namespace Lambda
 	{
 		using namespace Microsoft::WRL;
 
-		for (DX12Texture2D* pTarget : m_BackBuffers)
+		for (DX12Texture* pTarget : m_BackBuffers)
 		{
 			//Free descriptor
 			m_RTAllocator.Free(pTarget->GetDescriptorHandle());
@@ -736,7 +736,7 @@ namespace Lambda
 			//Create the rendertarget-objects
 			m_BackBuffers.resize(m_NumBackbuffers);
 			for (uint32 i = 0; i < m_NumBackbuffers; i++)
-				m_BackBuffers[i] = DBG_NEW DX12Texture2D(nullptr);
+				m_BackBuffers[i] = DBG_NEW DX12Texture(nullptr);
 
 			LOG_DEBUG_INFO("DX12: Created swapchain\n");
 		}

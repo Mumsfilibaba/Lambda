@@ -1,7 +1,7 @@
 #include "LambdaPch.h"
 #include "VulkanResourceState.h"
 #include "VulkanBuffer.h"
-#include "VulkanTexture2D.h"
+#include "VulkanTexture.h"
 #include "VulkanSamplerState.h"
 
 namespace Lambda
@@ -20,7 +20,7 @@ namespace Lambda
 	}
 
 
-	void VulkanResourceState::SetTextures(ITexture2D** ppTextures, uint32 numTextures, uint32 startSlot)
+	void VulkanResourceState::SetTextures(ITexture** ppTextures, uint32 numTextures, uint32 startSlot)
 	{
 		VkWriteDescriptorSet writeInfo = {};
 		writeInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -77,7 +77,7 @@ namespace Lambda
 
 			//Add this texture to the bindings
 			VkDescriptorImageInfo imageInfo = {};
-			imageInfo.imageView = reinterpret_cast<VulkanTexture2D*>(ppTextures[i])->GetImageView();
+			imageInfo.imageView = reinterpret_cast<VulkanTexture*>(ppTextures[i])->GetImageView();
 			imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 			imageInfo.sampler = VK_NULL_HANDLE;
 			m_ImageBindings.emplace_back(imageInfo);

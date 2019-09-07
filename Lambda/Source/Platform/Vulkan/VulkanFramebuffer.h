@@ -5,7 +5,7 @@
 
 namespace Lambda
 {
-    class VulkanTexture2D;
+    class VulkanTexture;
     
     
     struct VulkanFramebufferCacheKey
@@ -15,7 +15,7 @@ namespace Lambda
 		~VulkanFramebufferCacheKey() = default;
 
 		bool operator==(const VulkanFramebufferCacheKey& other);
-		bool ContainsTexture(const VulkanTexture2D* pTexture);
+		bool ContainsTexture(const VulkanTexture* pTexture);
 
 	public:
         VkRenderPass RenderPass;
@@ -33,7 +33,7 @@ namespace Lambda
         LAMBDA_STATIC_CLASS(VulkanFramebufferCache);
         
         static VkFramebuffer GetFramebuffer(VkDevice device, const VulkanFramebufferCacheKey& key, uint32 width, uint32 height);
-        static void ReleaseAllContainingTexture(VkDevice device, const VulkanTexture2D* pTexture);
+        static void ReleaseAllContainingTexture(VkDevice device, const VulkanTexture* pTexture);
         static void ReleaseAll(VkDevice device);
         
     private:

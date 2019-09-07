@@ -1,11 +1,10 @@
 #include "LambdaPch.h"
-#include "Graphics/ITexture2D.h"
-#include "DX12Texture2D.h"
-
 #if defined(LAMBDA_PLAT_WINDOWS)
+	#include "DX12Texture.h"
+
 namespace Lambda
 {
-	DX12Texture2D::DX12Texture2D(ID3D12Resource* pResource)
+	DX12Texture::DX12Texture(ID3D12Resource* pResource)
 		: m_Texture(nullptr),
 		m_hDescriptor(),
 		m_Desc()
@@ -16,7 +15,7 @@ namespace Lambda
 	}
 
 
-	DX12Texture2D::DX12Texture2D(ID3D12Device* pDevice, const Texture2DDesc& desc)
+	DX12Texture::DX12Texture(ID3D12Device* pDevice, const TextureDesc& desc)
 		: m_Texture(nullptr),
 		m_hDescriptor(),
 		m_Desc()
@@ -29,36 +28,36 @@ namespace Lambda
 	}
 
 
-	Texture2DDesc DX12Texture2D::GetDesc() const
+	TextureDesc DX12Texture::GetDesc() const
 	{
 		return m_Desc;
 	}
 
 
-	uint32 DX12Texture2D::GetMipLevels() const
+	uint32 DX12Texture::GetMipLevels() const
 	{
 		return m_Desc.MipLevels;
 	}
 
 
-	uint32 DX12Texture2D::GetWidth() const
+	uint32 DX12Texture::GetWidth() const
 	{
 		return m_Desc.Width;
 	}
 
 
-	uint32 DX12Texture2D::GetHeight() const
+	uint32 DX12Texture::GetHeight() const
 	{
 		return m_Desc.Height;
 	}
 
-	void* DX12Texture2D::GetNativeHandle() const
+	void* DX12Texture::GetNativeHandle() const
 	{
 		return m_Texture.Get();
 	}
 
 
-	void DX12Texture2D::Init(ID3D12Device* pDevice, const Texture2DDesc& desc)
+	void DX12Texture::Init(ID3D12Device* pDevice, const TextureDesc& desc)
 	{
 		//Create texture2d resource
 		{
@@ -122,7 +121,7 @@ namespace Lambda
 	}
 
 
-	void DX12Texture2D::InitFromResource(ID3D12Resource* pResource)
+	void DX12Texture::InitFromResource(ID3D12Resource* pResource)
 	{
 		m_Texture.Reset();
 		m_Texture = pResource;
@@ -158,13 +157,13 @@ namespace Lambda
 	}
 
 
-	void DX12Texture2D::SetResource(ID3D12Resource* pResource)
+	void DX12Texture::SetResource(ID3D12Resource* pResource)
 	{
 		InitFromResource(pResource);
 	}
 
 
-	void DX12Texture2D::SetDescriptorHandle(const DX12DescriptorHandle& hDescriptor)
+	void DX12Texture::SetDescriptorHandle(const DX12DescriptorHandle& hDescriptor)
 	{
 		m_hDescriptor = hDescriptor;
 	}

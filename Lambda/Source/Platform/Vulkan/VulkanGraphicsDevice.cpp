@@ -4,7 +4,7 @@
 #include "VulkanGraphicsDevice.h"
 #include "VulkanShader.h"
 #include "VulkanPipelineState.h"
-#include "VulkanTexture2D.h"
+#include "VulkanTexture.h"
 #include "VulkanSamplerState.h"
 #include "VulkanCommandList.h"
 #include "VulkanFramebuffer.h"
@@ -737,7 +737,7 @@ namespace Lambda
     
     bool VulkanGraphicsDevice::CreateDepthStencil()
     {
-        Texture2DDesc depthBufferDesc = {};
+        TextureDesc depthBufferDesc = {};
         depthBufferDesc.Usage              = RESOURCE_USAGE_DEFAULT;
         depthBufferDesc.Flags              = TEXTURE_FLAGS_DEPTH_STENCIL;
         depthBufferDesc.ArraySize          = 1;
@@ -749,7 +749,7 @@ namespace Lambda
         depthBufferDesc.ClearValue.Depth   = 1.0f;
         depthBufferDesc.ClearValue.Stencil = 0;
         
-        m_pDepthStencil = DBG_NEW VulkanTexture2D(m_Device, m_Adapter, depthBufferDesc);
+        m_pDepthStencil = DBG_NEW VulkanTexture(m_Device, m_Adapter, depthBufferDesc);
         return true;
     }
     
@@ -816,12 +816,12 @@ namespace Lambda
     }
     
     
-    void VulkanGraphicsDevice::CreateTexture2D(ITexture2D** ppTexture, const ResourceData* pInitalData, const Texture2DDesc& desc) const
+    void VulkanGraphicsDevice::CreateTexture2D(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc) const
     {
         assert(ppTexture != nullptr);
         
         //Create texture object
-        VulkanTexture2D* pTexture = DBG_NEW VulkanTexture2D(m_Device, m_Adapter, desc);
+        VulkanTexture* pTexture = DBG_NEW VulkanTexture(m_Device, m_Adapter, desc);
         
         //Upload inital data
         if (pInitalData)
@@ -967,12 +967,12 @@ namespace Lambda
     }
     
     
-    void VulkanGraphicsDevice::DestroyTexture2D(ITexture2D** ppTexture) const
+    void VulkanGraphicsDevice::DestroyTexture2D(ITexture** ppTexture) const
     {
         assert(ppTexture != nullptr);
         
         //Delete texture
-        VulkanTexture2D* pTexture = reinterpret_cast<VulkanTexture2D*>(*ppTexture);
+        VulkanTexture* pTexture = reinterpret_cast<VulkanTexture*>(*ppTexture);
         if (pTexture != nullptr)
         {
             pTexture->Destroy(m_Device);
@@ -1174,13 +1174,13 @@ namespace Lambda
     }
     
     
-    ITexture2D* VulkanGraphicsDevice::GetCurrentRenderTarget() const
+    ITexture* VulkanGraphicsDevice::GetCurrentRenderTarget() const
     {
         return m_pSwapChain->GetCurrentBuffer();
     }
     
     
-    ITexture2D* VulkanGraphicsDevice::GetDepthStencil() const
+    ITexture* VulkanGraphicsDevice::GetDepthStencil() const
     {
         return m_pDepthStencil;
     }

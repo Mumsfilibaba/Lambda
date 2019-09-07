@@ -6,7 +6,7 @@
 
 namespace Lambda
 {
-    class VulkanTexture2D;
+    class VulkanTexture;
 	class VulkanResourceState;
 
 
@@ -20,8 +20,8 @@ namespace Lambda
         VulkanCommandList(VkDevice device, CommandListType type);
         ~VulkanCommandList() = default;
         
-        virtual void ClearRenderTarget(ITexture2D* pRenderTarget, float color[4]) override final;
-        virtual void ClearDepthStencil(ITexture2D* pDepthStencil, float depth, uint8 stencil) override final;
+        virtual void ClearRenderTarget(ITexture* pRenderTarget, float color[4]) override final;
+        virtual void ClearDepthStencil(ITexture* pDepthStencil, float depth, uint8 stencil) override final;
         
 		virtual void BeginRenderPass(IRenderPass* pRenderPass) override final;
 		virtual void EndRenderPass() override final;
@@ -34,10 +34,10 @@ namespace Lambda
 		virtual void SetResourceState(IResourceState* pResourceState) override final;
 
         virtual void UpdateBuffer(IBuffer* pResource, const ResourceData* pData) override final;
-        virtual void UpdateTexture(ITexture2D* pResource, const ResourceData* pData, uint32 subresource) override final;
+        virtual void UpdateTexture(ITexture* pResource, const ResourceData* pData, uint32 subresource) override final;
         
         virtual void TransitionBuffer(const IBuffer* pBuffer, ResourceState state) override final;
-        virtual void TransitionTexture(const ITexture2D* pTexture, ResourceState state) override final;
+        virtual void TransitionTexture(const ITexture* pTexture, ResourceState state) override final;
         
         virtual void CopyBuffer(IBuffer* pDst, IBuffer* pSrc) override final;
 

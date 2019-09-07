@@ -5,7 +5,7 @@
 namespace Lambda
 {
 	class VulkanBuffer;
-	class VulkanTexture2D;
+	class VulkanTexture;
 	class VulkanSamplerState;
 
 
@@ -24,7 +24,7 @@ namespace Lambda
 		VulkanResourceState(VkDevice device, const ResourceStateDesc& desc);
 		~VulkanResourceState() = default;
 
-		virtual void SetTextures(ITexture2D** ppTextures, uint32 numTextures, uint32 startSlot) override final;
+		virtual void SetTextures(ITexture** ppTextures, uint32 numTextures, uint32 startSlot) override final;
 		virtual void SetSamplerStates(ISamplerState** ppSamplerStates, uint32 numSamplerStates, uint32 startSlot) override final;
 		virtual void SetConstantBuffers(IBuffer** ppBuffers, uint32 numBuffers, uint32 startSlot) override final;
 

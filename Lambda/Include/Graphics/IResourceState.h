@@ -6,7 +6,7 @@ namespace Lambda
 {
 	class IBuffer;
 	class ISamplerState;
-	class ITexture2D;
+	class ITexture;
 
 
     struct ResourceSlot
@@ -32,7 +32,7 @@ namespace Lambda
         IResourceState() = default;
         ~IResourceState() = default;
         
-		virtual void SetTextures(ITexture2D** ppTextures, uint32 numTextures, uint32 startSlot) = 0;
+		virtual void SetTextures(ITexture** ppTextures, uint32 numTextures, uint32 startSlot) = 0;
 		virtual void SetSamplerStates(ISamplerState** ppSamplerStates, uint32 numSamplerStates, uint32 startSlot) = 0;
 		virtual void SetConstantBuffers(IBuffer** ppBuffers, uint32 numBuffers, uint32 startSlot) = 0;
 

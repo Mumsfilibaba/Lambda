@@ -1,12 +1,12 @@
 #include "LambdaPch.h"
-#include "VulkanTexture2D.h"
+#include "VulkanTexture.h"
 #include "VulkanFramebuffer.h"
 #include "VulkanConversions.inl"
 #include "VulkanUtilities.h"
 
 namespace Lambda
 {
-    VulkanTexture2D::VulkanTexture2D(VkDevice device, const VulkanTextureDesc& desc)
+    VulkanTexture::VulkanTexture(VkDevice device, const VulkanTextureDesc& desc)
         : m_Texture(VK_NULL_HANDLE),
         m_View(VK_NULL_HANDLE),
         m_DeviceMemory(VK_NULL_HANDLE),
@@ -19,7 +19,7 @@ namespace Lambda
     }
     
     
-    VulkanTexture2D::VulkanTexture2D(VkDevice device, VkPhysicalDevice adapter, const Texture2DDesc& desc)
+    VulkanTexture::VulkanTexture(VkDevice device, VkPhysicalDevice adapter, const TextureDesc& desc)
         : m_Texture(VK_NULL_HANDLE),
         m_View(VK_NULL_HANDLE),
         m_DeviceMemory(VK_NULL_HANDLE),
@@ -32,7 +32,7 @@ namespace Lambda
     }
     
     
-    void VulkanTexture2D::InitFromResource(VkDevice device, const VulkanTextureDesc& desc)
+    void VulkanTexture::InitFromResource(VkDevice device, const VulkanTextureDesc& desc)
     {
         m_Texture = desc.Image;
 
@@ -83,13 +83,13 @@ namespace Lambda
     }
     
     
-    void VulkanTexture2D::Init(VkDevice device, VkPhysicalDevice adapter, const Texture2DDesc& desc)
+    void VulkanTexture::Init(VkDevice device, VkPhysicalDevice adapter, const TextureDesc& desc)
     {
         //Set miplevels
         uint32 mipLevels = desc.MipLevels;
         if (desc.Flags & TEXTURE_FLAGS_GENEATE_MIPS)
         {
-            mipLevels = std::floor(std::log2(std::max(desc.Width, desc.Height)));
+            mipLevels = uint32(std::floor(std::log2(std::max(desc.Width, desc.Height))));
         }
         
 		//Create image
@@ -180,7 +180,7 @@ namespace Lambda
     }
     
     
-    void VulkanTexture2D::CreateImageView(VkDevice device)
+    void VulkanTexture::CreateImageView(VkDevice device)
     {
         //Create image views
         VkImageViewCreateInfo viewInfo = {};
@@ -207,37 +207,37 @@ namespace Lambda
     }
     
     
-    void* VulkanTexture2D::GetNativeHandle() const
+    void* VulkanTexture::GetNativeHandle() const
     {
         return (void*)m_Texture;
     }
     
     
-    Texture2DDesc VulkanTexture2D::GetDesc() const
+	TextureDesc VulkanTexture::GetDesc() const
     {
         return m_Desc;
     }
     
     
-    uint32 VulkanTexture2D::GetMipLevels() const
+    uint32 VulkanTexture::GetMipLevels() const
     {
         return m_Desc.MipLevels;
     }
     
     
-    uint32 VulkanTexture2D::GetWidth() const
+    uint32 VulkanTexture::GetWidth() const
     {
         return m_Desc.Width;
     }
     
     
-    uint32 VulkanTexture2D::GetHeight() const
+    uint32 VulkanTexture::GetHeight() const
     {
         return m_Desc.Height;
     }
     
     
-    void VulkanTexture2D::Destroy(VkDevice device)
+    void VulkanTexture::Destroy(VkDevice device)
     {
         assert(device != VK_NULL_HANDLE);
         

@@ -1,5 +1,5 @@
 #include "LambdaPch.h"
-#include "Graphics/ITexture2D.h"
+#include "Graphics/ITexture.h"
 #include "Graphics/IGraphicsDevice.h"
 #include "Utilities/TextureHelper.h"
 #define STB_IMAGE_IMPLEMENTATION
@@ -7,20 +7,20 @@
 
 namespace Lambda
 {
-	ITexture2D* ITexture2D::CreateTextureFromFile(const IGraphicsDevice* pDevice, const char* pFileName, uint32 flags, ResourceUsage usage, ResourceFormat format)
+	ITexture* ITexture::CreateTextureFromFile(const IGraphicsDevice* pDevice, const char* pFileName, uint32 flags, ResourceUsage usage, ResourceFormat format)
 	{
 		int32 width = 0;
 		int32 height = 0;
 		int32 components = 0;
 		int32 reqComponents = ComponentCountFromResourceFormat(format);
-		ITexture2D* pTexture = nullptr;
+		ITexture* pTexture = nullptr;
 
 		//Load
 		uint8* pTexData = stbi_load(pFileName, &width, &height, &components, reqComponents);
 		if (pTexData != nullptr)
 		{
 			//Setup desc
-			Texture2DDesc desc = {};
+			TextureDesc desc = {};
 			desc.ArraySize = 1;
 			desc.Flags = flags;
 			desc.Format = format;

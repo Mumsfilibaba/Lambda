@@ -4,7 +4,7 @@
 namespace Lambda
 {
     class IBuffer;
-	class ITexture2D;
+	class ITexture;
 	class ISamplerState;
 	class IGraphicsPipelineState;
 	class IRenderPass;
@@ -19,8 +19,8 @@ namespace Lambda
 		ICommandList() = default;
 		~ICommandList() = default;
 
-		virtual void ClearRenderTarget(ITexture2D* pRenderTarget, float color[4]) = 0;
-		virtual void ClearDepthStencil(ITexture2D* pDepthStencil, float depth, uint8 stencil) = 0;
+		virtual void ClearRenderTarget(ITexture* pRenderTarget, float color[4]) = 0;
+		virtual void ClearDepthStencil(ITexture* pDepthStencil, float depth, uint8 stencil) = 0;
 
 		virtual void BeginRenderPass(IRenderPass* pRenderPass) = 0;
 		virtual void EndRenderPass() = 0;
@@ -33,10 +33,10 @@ namespace Lambda
 		virtual void SetResourceState(IResourceState* pResourceState) = 0;
 
 		virtual void UpdateBuffer(IBuffer* pResource, const ResourceData* pData) = 0;
-		virtual void UpdateTexture(ITexture2D* pResource, const ResourceData* pData, uint32 subresource) = 0;
+		virtual void UpdateTexture(ITexture* pResource, const ResourceData* pData, uint32 subresource) = 0;
 
         virtual void TransitionBuffer(const IBuffer* pBuffer, ResourceState state) = 0;
-        virtual void TransitionTexture(const ITexture2D* pTexture, ResourceState state) = 0;
+        virtual void TransitionTexture(const ITexture* pTexture, ResourceState state) = 0;
         
 		virtual void CopyBuffer(IBuffer* pDst, IBuffer* pSrc) = 0;
 

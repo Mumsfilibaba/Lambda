@@ -4,7 +4,7 @@
 
 namespace Lambda
 {
-	class ITexture2D;
+	class ITexture;
 
 
 	struct RenderPassAttachmentDesc
@@ -32,7 +32,7 @@ namespace Lambda
 		IRenderPass() = default;
 		~IRenderPass() = default;
 	
-		virtual void SetRenderTargets(const ITexture2D* const* const ppRenderTargets, const ITexture2D* pDepthStencil) = 0;
+		virtual void SetRenderTargets(const ITexture* const* const ppRenderTargets, const ITexture* pDepthStencil) = 0;
 		virtual void SetClearValues(float color[4], float depth, uint8 stencil) = 0;
 		virtual void* GetNativeHandle() const = 0;
 	};
