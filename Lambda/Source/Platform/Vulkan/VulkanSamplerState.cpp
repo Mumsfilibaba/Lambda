@@ -4,7 +4,7 @@
 
 namespace Lambda
 {
-    VulkanSamplerState::VulkanSamplerState(VkDevice device, const SamplerDesc& desc)
+    VulkanSamplerState::VulkanSamplerState(VkDevice device, const SamplerStateDesc& desc)
         : m_Sampler(VK_NULL_HANDLE),
         m_Desc()
     {
@@ -12,7 +12,7 @@ namespace Lambda
     }
     
     
-    SamplerDesc VulkanSamplerState::GetDesc() const
+	SamplerStateDesc VulkanSamplerState::GetDesc() const
     {
         return m_Desc;
     }
@@ -24,7 +24,7 @@ namespace Lambda
     }
     
     
-    void VulkanSamplerState::Init(VkDevice device, const SamplerDesc& desc)
+    void VulkanSamplerState::Init(VkDevice device, const SamplerStateDesc& desc)
     {
         //Get adress mode
         VkSamplerAddressMode adressMode = ConvertSamplerAdressMode(desc.AdressMode);
@@ -46,9 +46,9 @@ namespace Lambda
         info.compareEnable              = VK_FALSE;
         info.compareOp                  = VK_COMPARE_OP_ALWAYS;
         info.mipmapMode                 = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-        info.mipLodBias                 = 0.0f;
-        info.minLod                     = 0.0f;
-        info.maxLod                     = 0.0f;
+        info.minLod                     = desc.MinMipLOD;
+        info.maxLod                     = desc.MaxMipLOD;
+        info.mipLodBias                 = desc.MipLODBias;
         
         if (vkCreateSampler(device, &info, nullptr, &m_Sampler) != VK_SUCCESS)
         {

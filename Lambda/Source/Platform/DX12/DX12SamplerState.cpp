@@ -4,7 +4,7 @@
 
 namespace Lambda
 {
-	DX12SamplerState::DX12SamplerState(ID3D12Device* pDevice, DX12DescriptorHandle hDescriptor, const SamplerDesc& desc)
+	DX12SamplerState::DX12SamplerState(ID3D12Device* pDevice, DX12DescriptorHandle hDescriptor, const SamplerStateDesc& desc)
 		: m_Desc(),
 		m_Descriptor()
 	{
@@ -13,10 +13,11 @@ namespace Lambda
 	}
 
 
-	SamplerDesc DX12SamplerState::GetDesc() const
+	SamplerStateDesc DX12SamplerState::GetDesc() const
 	{
 		return m_Desc;
 	}
+
 
 	void* DX12SamplerState::GetNativeHandle() const
 	{
@@ -24,7 +25,7 @@ namespace Lambda
 	}
 
 
-	void DX12SamplerState::Init(ID3D12Device* pDevice, DX12DescriptorHandle hDescriptor, const SamplerDesc& desc)
+	void DX12SamplerState::Init(ID3D12Device* pDevice, DX12DescriptorHandle hDescriptor, const SamplerStateDesc& desc)
 	{
 		assert(&desc != nullptr);
 

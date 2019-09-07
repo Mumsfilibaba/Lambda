@@ -14,10 +14,10 @@ namespace Lambda
 	class IRenderPass;
 	class IResourceState;
 
-	struct SamplerDesc;
 	struct BufferDesc;
 	struct Texture2DDesc;
 	struct ShaderDesc;
+	struct SamplerStateDesc;
 	struct GraphicsPipelineStateDesc;
 	struct RenderPassDesc;
 	struct ResourceStateDesc;
@@ -42,7 +42,7 @@ namespace Lambda
 		virtual void CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) const = 0;
 		virtual void CreateTexture2D(ITexture2D** ppTexture, const ResourceData* pInitalData, const Texture2DDesc& desc) const = 0;
 		virtual void CreateShader(IShader** ppShader, const ShaderDesc& desc) const = 0;
-		virtual void CreateSamplerState(ISamplerState** ppSamplerState, const SamplerDesc& desc) const = 0;
+		virtual void CreateSamplerState(ISamplerState** ppSamplerState, const SamplerStateDesc& desc) const = 0;
 		virtual void CreateGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc) const = 0;
 		virtual void CreateRenderPass(IRenderPass** ppRenderPass, const RenderPassDesc& desc) const = 0;
 		virtual void CreateResourceState(IResourceState** ppResourceState, const ResourceStateDesc& desc) const = 0;

@@ -142,7 +142,7 @@ namespace Lambda
             }
 
             //Create vertexbuffer
-            MeshData mesh = MeshFactory::CreateFromFile("chalet.obj");
+			MeshData mesh = MeshFactory::CreateFromFile("chalet.obj");
 			m_IndexCount = uint32(mesh.Indices.size());
 			{
                 BufferDesc desc = {};
@@ -234,8 +234,11 @@ namespace Lambda
 
             //Create samplerstate
             {
-                SamplerDesc desc = {};
+                SamplerStateDesc desc = {};
                 desc.AdressMode = SAMPLER_ADDRESS_MODE_REPEAT;
+				desc.MinMipLOD = 0.0f;
+				desc.MaxMipLOD = m_pTexture->GetMipLevels();
+				desc.MipLODBias = 0.0f;
                 
                 pDevice->CreateSamplerState(&m_pSamplerState, desc);
             }

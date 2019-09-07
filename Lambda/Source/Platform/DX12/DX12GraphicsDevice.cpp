@@ -216,7 +216,7 @@ namespace Lambda
 	}
 
 
-	void DX12GraphicsDevice::CreateSamplerState(ISamplerState** ppSamplerState, const SamplerDesc& desc) const
+	void DX12GraphicsDevice::CreateSamplerState(ISamplerState** ppSamplerState, const SamplerStateDesc& desc) const
 	{
 		DX12DescriptorHandle hDescriptor = m_SamplerAllocator.Allocate();
 		(*ppSamplerState) = DBG_NEW DX12SamplerState(m_Device.Get(), hDescriptor, desc);

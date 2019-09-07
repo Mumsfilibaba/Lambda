@@ -9,19 +9,19 @@ namespace Lambda
     public:
         LAMBDA_NO_COPY(VulkanSamplerState);
         
-        VulkanSamplerState(VkDevice device, const SamplerDesc& desc);
+        VulkanSamplerState(VkDevice device, const SamplerStateDesc& desc);
         ~VulkanSamplerState() = default;
         
-        virtual SamplerDesc GetDesc() const override final;
+        virtual SamplerStateDesc GetDesc() const override final;
         virtual void* GetNativeHandle() const override final;
         
         void Destroy(VkDevice device);
         
     private:
-        void Init(VkDevice device, const SamplerDesc& desc);
+        void Init(VkDevice device, const SamplerStateDesc& desc);
         
     private:
         VkSampler m_Sampler;
-        SamplerDesc m_Desc;
+		SamplerStateDesc m_Desc;
     };
 }

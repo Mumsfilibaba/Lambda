@@ -3,9 +3,12 @@
 
 namespace Lambda
 {
-	struct SamplerDesc
+	struct SamplerStateDesc
 	{
         SamplerAddressMode AdressMode = SAMPLER_ADDRESS_MODE_REPEAT;
+		float MinMipLOD = 0.0f;
+		float MaxMipLOD = 0.0f;
+		float MipLODBias = 0.0f;
 	};
 
 
@@ -17,7 +20,7 @@ namespace Lambda
 		ISamplerState() = default;
 		~ISamplerState() = default;
 
-		virtual SamplerDesc GetDesc() const = 0;
+		virtual SamplerStateDesc GetDesc() const = 0;
         virtual void* GetNativeHandle() const = 0;
 	};
 }

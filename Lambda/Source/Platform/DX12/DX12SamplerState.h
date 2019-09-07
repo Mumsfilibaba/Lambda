@@ -14,21 +14,21 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(DX12SamplerState);
 
-		DX12SamplerState(ID3D12Device* pDevice, DX12DescriptorHandle hDescriptor, const SamplerDesc& desc);
+		DX12SamplerState(ID3D12Device* pDevice, DX12DescriptorHandle hDescriptor, const SamplerStateDesc& desc);
 		~DX12SamplerState() = default;
 
-		virtual SamplerDesc GetDesc() const override final;
+		virtual SamplerStateDesc GetDesc() const override final;
 		virtual void* GetNativeHandle() const override final;
 
 	private:
-		void Init(ID3D12Device* pDevice, DX12DescriptorHandle hDescriptor, const SamplerDesc& desc);
+		void Init(ID3D12Device* pDevice, DX12DescriptorHandle hDescriptor, const SamplerStateDesc& desc);
 
 		void SetDescriptorHandle(DX12DescriptorHandle hDescriptor);
 		DX12DescriptorHandle GetDescriptorHandle() const;
 
 	private:
 		DX12DescriptorHandle m_Descriptor;
-		SamplerDesc m_Desc;
+		SamplerStateDesc m_Desc;
 	};
 
     
