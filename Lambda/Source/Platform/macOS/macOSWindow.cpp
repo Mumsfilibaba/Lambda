@@ -93,17 +93,18 @@ namespace Lambda
             //Set mouse input mode (TODO: Move to function)
             //glfwSetInputMode(m_pWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-			//Create graphics context
-			{
-				GraphicsDeviceDesc gcDesc = {};
-				gcDesc.Api = desc.GraphicsDeviceAPI;
+            //Create graphics context
+            {
+                GraphicsDeviceDesc gcDesc = {};
+                gcDesc.Api = desc.GraphicsDeviceAPI;
+                gcDesc.SampleCount = desc.SampleCount;
 #if LAMBDA_DEBUG
-				gcDesc.Flags = GRAPHICS_CONTEXT_FLAG_DEBUG;
+                gcDesc.Flags = GRAPHICS_CONTEXT_FLAG_DEBUG;
 #else
-				gcDesc.Flags = GRAPHICS_CONTEXT_FLAG_NONE;
+                gcDesc.Flags = GRAPHICS_CONTEXT_FLAG_NONE;
 #endif
-				m_pGraphicsDevice = IGraphicsDevice::Create(this, gcDesc);
-			}
+                m_pGraphicsDevice = IGraphicsDevice::Create(this, gcDesc);
+            }
         }
         else
         {
