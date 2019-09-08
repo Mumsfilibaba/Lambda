@@ -120,6 +120,8 @@ namespace Lambda
 				ShowWindow(m_Wnd, SW_SHOW);
 
 				InvalidateRect(m_Wnd, 0, TRUE);
+                
+                m_Fullscreen = true;
 			}
 			else 
 			{
@@ -128,10 +130,14 @@ namespace Lambda
 		}
 		else
 		{
-			if (ChangeDisplaySettings(NULL, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL)
+			if (ChangeDisplaySettings(NULL, CDS_FULLSCREEN) == DISP_CHANGE_SUCCESSFUL)
 			{
-				return false;
+                m_Fullscreen = false;
 			}
+            else
+            {
+                return false;
+            }
 		}
 
 		return true;
