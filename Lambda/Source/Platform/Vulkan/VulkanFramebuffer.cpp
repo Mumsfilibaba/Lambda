@@ -56,6 +56,8 @@ namespace Lambda
 				return false;
 			}
 		}
+
+		return true;
 	}
 
 
@@ -93,16 +95,11 @@ namespace Lambda
 		assert(device != VK_NULL_HANDLE);
 
 		//Check if a framebuffer exists
-		auto range = s_Framebuffers.equal_range(fbKey);
-		for (auto i = range.first; i != range.second; i++)
+		auto fb = s_Framebuffers.find(fbKey);
+		if (fb != s_Framebuffers.end())
 		{
-			auto& value = i->first;
-			if (value == fbKey)
-			{
-				return i->second;
-			}
+			return fb->second;
 		}
-
 
 		//Create new framebuffer
 		VkFramebufferCreateInfo info = {};
@@ -123,7 +120,7 @@ namespace Lambda
 		}
 		else
 		{
-			LOG_DEBUG_INFO("Vulkan: Created new Framebuffer\n");
+			LOG_SYSTEM_PRINT("Vulkan: Created new Framebuffer\n");
 
 			s_Framebuffers.insert(std::pair<VulkanFramebufferCacheKey, VkFramebuffer>(fbKey, framebuffer));
 			return framebuffer;
