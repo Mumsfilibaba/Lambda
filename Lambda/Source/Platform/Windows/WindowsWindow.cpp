@@ -128,7 +128,10 @@ namespace Lambda
 		}
 		else
 		{
-			ChangeDisplaySettings(0, CDS_FULLSCREEN);
+			if (ChangeDisplaySettings(NULL, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL)
+			{
+				return false;
+			}
 		}
 
 		return true;
