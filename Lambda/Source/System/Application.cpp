@@ -113,6 +113,7 @@ namespace Lambda
 			desc.Height		= params.WindowHeight;
 			desc.GraphicsDeviceAPI = params.GraphicsDeviceApi;
 			desc.SampleCount = params.SampleCount;
+			desc.Fullscreen = params.Fullscreen;
 
 			m_pWindow = IWindow::Create(desc);
 			m_pWindow->SetEventCallback(EventDispatcher::SendEvent);

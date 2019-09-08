@@ -23,10 +23,10 @@ namespace Lambda
 		: m_pGraphicsDevice(nullptr),
 		m_OnEvent(nullptr),
 		m_Wnd(0),
-		m_EventBackLog()
+		m_EventBackLog(),
+		m_Fullscreen(false)
 	{
 		Init(desc);
-
 		LOG_SYSTEM_INFO("Created window. w: %d, h: %d\n", desc.Width, desc.Height);
 	}
 	
@@ -89,6 +89,52 @@ namespace Lambda
 	}
 
 
+	bool WindowsWindow::SetFullscreen(bool fullscreen)
+	{
+		if (m_Fullscreen == fullscreen)
+		{
+			return true;
+		}
+
+
+		if (fullscreen)
+		{
+			SetWindowRgn(m_Wnd, 0, FALSE);
+
+			DEVMODE settings = {};
+			settings.dmSize = sizeof(DEVMODE);
+			settings.dmPelsWidth = m_Width;
+			settings.dmPelsHeight = m_Height;
+			settings.dmBitsPerPel = 32;
+			settings.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
+
+			if (ChangeDisplaySettings(&settings, CDS_FULLSCREEN) == DISP_CHANGE_SUCCESSFUL)
+			{
+				m_Style = GetWindowLongW(m_Wnd, GWL_STYLE);
+				m_ExStyle = GetWindowLongW(m_Wnd, GWL_STYLE);
+
+				SetWindowLongW(m_Wnd, GWL_STYLE, WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS);
+				SetWindowLongW(m_Wnd, GWL_EXSTYLE, WS_EX_APPWINDOW);
+
+				SetWindowPos(m_Wnd, HWND_TOP, 0, 0, m_Width, m_Height, SWP_FRAMECHANGED);
+				ShowWindow(m_Wnd, SW_SHOW);
+
+				InvalidateRect(m_Wnd, 0, TRUE);
+			}
+			else 
+			{
+				return false;
+			}
+		}
+		else
+		{
+			ChangeDisplaySettings(0, CDS_FULLSCREEN);
+		}
+
+		return true;
+	}
+
+
 	void WindowsWindow::Init(const WindowDesc& desc)
 	{
 		//Should only be called once
@@ -135,6 +181,8 @@ namespace Lambda
 			}
 		}
 
+		//Set fullscreen
+		SetFullscreen(desc.Fullscreen);
 
 		//Create graphics context
 		{
@@ -184,6 +232,12 @@ namespace Lambda
 		case WM_KEYDOWN:
 		case WM_KEYUP:
 		{
+			if (msg == WM_KEYDOWN)
+			{
+				if (WindowsInput::ConvertWindowsKey(uint32(wParam)) == KEY_SPACE)
+					SetFullscreen(false);
+			}
+
 			event.Type = msg == WM_KEYDOWN ? EVENT_TYPE_KEYDOWN : EVENT_TYPE_KEYUP;
 			event.KeyEvent.KeyCode = WindowsInput::ConvertWindowsKey(uint32(wParam));
 			event.KeyEvent.RepeatCount = LOWORD(lParam);

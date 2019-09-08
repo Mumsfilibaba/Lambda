@@ -23,6 +23,8 @@ namespace Lambda
 		virtual uint32 GetHeight() const override;
 		virtual uint32 GetWidth() const override;
 
+		bool SetFullscreen(bool fullscreen);
+
 	private:
 		void Init(const WindowDesc& desc);
 		LRESULT OnEvent(uint32 msg, WPARAM wParam, LPARAM lParam);
@@ -34,6 +36,9 @@ namespace Lambda
 		HWND m_Wnd;
 		uint32 m_Height;
 		uint32 m_Width;
+		DWORD m_Style;
+		DWORD m_ExStyle;
+		bool m_Fullscreen;
 	};
 }
 #endif
