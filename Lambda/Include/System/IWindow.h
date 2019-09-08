@@ -27,7 +27,9 @@ namespace Lambda
 
 		virtual void SetEventCallback(EventCallback callback) = 0;
 		virtual void OnUpdate() const = 0;
-
+        virtual bool SetFullscreen(bool fullscreen) = 0;
+        virtual bool GetFullscreen() const = 0;
+        
         virtual IGraphicsDevice* GetGraphicsDevice() const = 0;
 		virtual uint32 GetHeight() const = 0;
 		virtual uint32 GetWidth() const = 0;

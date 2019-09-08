@@ -478,6 +478,10 @@ namespace Lambda
                 
             case EVENT_TYPE_KEYDOWN:
                 //LOG_DEBUG_INFO("Key pressed\n");
+                if (event.KeyEvent.KeyCode == KEY_SPACE)
+                {
+                    GetWindow()->SetFullscreen(!GetWindow()->GetFullscreen());
+                }
                 return false;
                 
             case EVENT_TYPE_MOUSE_MOVED:

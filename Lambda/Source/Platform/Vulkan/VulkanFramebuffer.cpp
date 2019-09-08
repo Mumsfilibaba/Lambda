@@ -131,7 +131,7 @@ namespace Lambda
 	void VulkanFramebufferCache::ReleaseAllContainingTexture(VkDevice device, const VulkanTexture* pTexture)
 	{
 		//Find all framebuffers containing this texture
-		for (auto it = s_Framebuffers.begin(); it != s_Framebuffers.end(); it++)
+		for (auto it = s_Framebuffers.begin(); it != s_Framebuffers.end();)
 		{
 			if (it->first.ContainsTexture(pTexture))
 			{
@@ -139,10 +139,12 @@ namespace Lambda
 				vkDestroyFramebuffer(device, it->second, nullptr);
 				it->second = VK_NULL_HANDLE;
 
-				//Erase invalidates iterators so start over
-				s_Framebuffers.erase(it);
-				it = s_Framebuffers.begin();
+				it = s_Framebuffers.erase(it);
 			}
+            else
+            {
+                it++;
+            }
 		}
 	}
 

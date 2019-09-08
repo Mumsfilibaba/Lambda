@@ -23,10 +23,10 @@ namespace Lambda
         : m_pWindow(nullptr),
         m_Width(0.0f),
         m_Height(0.0f),
-        m_OnEvent(nullptr)
+        m_OnEvent(nullptr),
+        m_Fullscreen(false)
     {
         Init(desc);
-        
         LOG_SYSTEM_INFO("Created window. w: %d, h: %d\n", desc.Width, desc.Height);
     }
     
@@ -93,6 +93,9 @@ namespace Lambda
             //Set mouse input mode (TODO: Move to function)
             //glfwSetInputMode(m_pWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
+            //Set fullscreen
+            SetFullscreen(desc.Fullscreen);
+            
             //Create graphics context
             {
                 GraphicsDeviceDesc gcDesc = {};
@@ -149,7 +152,7 @@ namespace Lambda
         event.Type = EVENT_TYPE_WINDOW_CLOSED;
         
         MacOSWindow* pUserWindow = reinterpret_cast<MacOSWindow*>(glfwGetWindowUserPointer(pWindow));
-        pUserWindow->m_OnEvent(event);
+        pUserWindow->SendEvent(event);
     }
     
     
@@ -161,7 +164,7 @@ namespace Lambda
         event.WindowResize.Height = height;
         
         MacOSWindow* pUserWindow = reinterpret_cast<MacOSWindow*>(glfwGetWindowUserPointer(pWindow));
-        pUserWindow->m_OnEvent(event);
+        pUserWindow->SendEvent(event);
     }
     
     
@@ -173,7 +176,7 @@ namespace Lambda
         event.WindowMove.PosY = y;
         
         MacOSWindow* pUserWindow = reinterpret_cast<MacOSWindow*>(glfwGetWindowUserPointer(pWindow));
-        pUserWindow->m_OnEvent(event);
+        pUserWindow->SendEvent(event);
     }
     
     
@@ -185,7 +188,7 @@ namespace Lambda
         event.KeyEvent.KeyCode = MacOSInput::ConvertGLFWKey(key);
         
         MacOSWindow* pUserWindow = reinterpret_cast<MacOSWindow*>(glfwGetWindowUserPointer(pWindow));
-        pUserWindow->m_OnEvent(event);
+        pUserWindow->SendEvent(event);
     }
     
     
@@ -196,7 +199,7 @@ namespace Lambda
         event.TextEvent.Character = codepoint;
         
         MacOSWindow* pUserWindow = reinterpret_cast<MacOSWindow*>(glfwGetWindowUserPointer(pWindow));
-        pUserWindow->m_OnEvent(event);
+        pUserWindow->SendEvent(event);
     }
     
     
@@ -208,7 +211,7 @@ namespace Lambda
         event.MouseMoveEvent.PosY = int16(y);
         
         MacOSWindow* pUserWindow = reinterpret_cast<MacOSWindow*>(glfwGetWindowUserPointer(pWindow));
-        pUserWindow->m_OnEvent(event);
+        pUserWindow->SendEvent(event);
     }
     
     
@@ -228,7 +231,7 @@ namespace Lambda
             event.MouseButtonEvent.Button = MOUSEBUTTON_BACKWARD;
         
         MacOSWindow* pUserWindow = reinterpret_cast<MacOSWindow*>(glfwGetWindowUserPointer(pWindow));
-        pUserWindow->m_OnEvent(event);
+        pUserWindow->SendEvent(event);
     }
     
     
@@ -243,7 +246,7 @@ namespace Lambda
         {
             event.MouseScrollEvent.Value = yoffset;
             event.MouseScrollEvent.Vertical = true;
-            pUserWindow->m_OnEvent(event);
+            pUserWindow->SendEvent(event);
         }
         
         //Send another event for horizontal value
@@ -251,7 +254,7 @@ namespace Lambda
         {
             event.MouseScrollEvent.Value = xoffset;
             event.MouseScrollEvent.Vertical = false;
-            pUserWindow->m_OnEvent(event);
+            pUserWindow->SendEvent(event);
         }
     }
     
@@ -263,7 +266,7 @@ namespace Lambda
         event.FocusChanged.HasFocus = (focused != 0);
         
         MacOSWindow* pUserWindow = reinterpret_cast<MacOSWindow*>(glfwGetWindowUserPointer(pWindow));
-        pUserWindow->m_OnEvent(event);
+        pUserWindow->SendEvent(event);
     }
     
     
@@ -271,5 +274,64 @@ namespace Lambda
     {
         return m_pGraphicsDevice;
     }
+    
+    
+    bool MacOSWindow::SetFullscreen(bool fullscreen)
+    {
+        if (m_Fullscreen == fullscreen)
+        {
+            return true;
+        }
+        
+        if (fullscreen)
+        {
+            GLFWmonitor* pMonitor = glfwGetPrimaryMonitor();
+            const GLFWvidmode* pVidMode = glfwGetVideoMode(pMonitor);
+            glfwSetWindowMonitor(m_pWindow, pMonitor, 0, 0, m_Width, m_Height, pVidMode->refreshRate);
+            
+            m_Fullscreen = true;
+        }
+        else
+        {
+            glfwSetWindowMonitor(m_pWindow, nullptr, 0, 0, m_Width, m_Height, GLFW_DONT_CARE);
+            m_Fullscreen = false;
+        }
+        
+        
+        return true;
+    }
+    
+    
+    bool MacOSWindow::GetFullscreen() const
+    {
+        return m_Fullscreen;
+    }
+    
+    
+    void MacOSWindow::SendEvent(const Lambda::Event &event)
+    {
+        if (m_OnEvent)
+        {
+            //When a eventhandler is registered, then we handled all the backloged items
+            if (m_EventBackLog.size() > 0)
+            {
+                for (auto& e : m_EventBackLog)
+                {
+                    m_OnEvent(e);
+                }
+                
+                m_EventBackLog.clear();
+            }
+            
+            m_OnEvent(event);
+        }
+        else
+        {
+            //If a eventcallback is not registered then we put the event in the backlog
+            m_EventBackLog.push_back(event);
+        }
+    }
+    
+    
 }
 #endif
