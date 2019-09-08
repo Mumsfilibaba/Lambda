@@ -140,6 +140,7 @@ namespace Lambda
 		{
 			GraphicsDeviceDesc gcDesc = {};
 			gcDesc.Api = desc.GraphicsDeviceAPI;
+			gcDesc.SampleCount = desc.SampleCount;
 #if LAMBDA_DEBUG
 			gcDesc.Flags = GRAPHICS_CONTEXT_FLAG_DEBUG;
 #else

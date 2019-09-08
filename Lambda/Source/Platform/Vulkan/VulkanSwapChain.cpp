@@ -219,7 +219,7 @@ namespace Lambda
 	}
 
 
-	uint32 VulkanSwapChain::GetCurrentBackBufferIndex() const
+	uint32 VulkanSwapChain::GetBackBufferIndex() const
 	{
 		return m_CurrentBufferIndex;
 	}

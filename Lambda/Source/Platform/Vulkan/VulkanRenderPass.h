@@ -12,13 +12,14 @@ namespace Lambda
 		VulkanRenderPass(VkDevice device, const RenderPassDesc& desc);
 		~VulkanRenderPass() = default;
 
-		virtual void SetRenderTargets(const ITexture* const* const ppRenderTargets, const ITexture* pDepthStencil) override final;
+		virtual void SetRenderTargets(const ITexture* const* const ppRenderTargets, uint32 numRenderTargets, const ITexture* pDepthStencil, const ITexture* const* const ppResolveTargets, uint32 numResolveTargets) override final;
 		virtual void SetClearValues(float color[4], float depth, uint8 stencil) override final;
 		virtual void* GetNativeHandle() const override final;
 		
 		VkRenderPass GetRenderPass() const;
 		VkFramebuffer GetFramebuffer() const;
 		VkExtent2D GetFramebufferExtent() const;
+		VkSampleCountFlagBits GetSampleCount() const;
 		const VkClearValue* GetClearValues() const;
 		uint32 GetAttachmentCount() const;
 
@@ -32,6 +33,7 @@ namespace Lambda
 		VkRenderPass m_RenderPass;
 		VkFramebuffer m_Framebuffer;
 		VkExtent2D m_FramebufferExtent;
+		VkSampleCountFlagBits m_SampleCount;
 		uint32 m_RenderTargetCount;
 		VkFormat m_DepthStencilFormat;
 		VkClearValue m_ClearValues[LAMBDA_MAX_RENDERTARGET_COUNT + 1];
@@ -53,6 +55,12 @@ namespace Lambda
 	inline VkExtent2D VulkanRenderPass::GetFramebufferExtent() const
 	{
 		return m_FramebufferExtent;
+	}
+
+
+	inline VkSampleCountFlagBits VulkanRenderPass::GetSampleCount() const
+	{
+		return m_SampleCount;
 	}
 
 

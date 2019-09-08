@@ -9,9 +9,10 @@ namespace Lambda
 	struct WindowDesc
 	{
 		const char* pTitle = nullptr;
+        GraphicsApi GraphicsDeviceAPI = GRAPHICS_API_VULKAN;
 		uint32 Width = 960;
 		uint32 Height = 540;
-        GraphicsApi GraphicsDeviceAPI = GRAPHICS_API_VULKAN;
+		uint32 SampleCount = 1;
 	};
 
     

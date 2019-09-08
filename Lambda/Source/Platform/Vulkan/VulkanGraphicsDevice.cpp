@@ -77,6 +77,8 @@ namespace Lambda
         m_AdapterProperties(),
         m_Surface(VK_NULL_HANDLE),
 		m_pSwapChain(nullptr),
+		m_pDepthStencil(nullptr),
+		m_pMSAABuffer(nullptr),
 		m_CurrentFrame(0)
     {       
         assert(s_pInstance == nullptr);
@@ -115,6 +117,7 @@ namespace Lambda
         
 		m_pSwapChain->Destroy(m_Device);
         ReleaseDepthStencil();
+		ReleaseMSAABuffer();
 
         if (m_Device != VK_NULL_HANDLE)
         {
@@ -362,11 +365,23 @@ namespace Lambda
 			for (uint32 i = 0; i < memoryProperties.memoryHeapCount; i++)
 			{
 				if (memoryProperties.memoryHeaps[i].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)
-					vram = memoryProperties.memoryHeaps[i].size;
+					vram += memoryProperties.memoryHeaps[i].size;
 			}
 
 			vram = vram / (1024 * 1024);
 			LOG_SYSTEM_PRINT("Vulkan: Selected GPU '%s'\n        VRAM: %llu MB\n", m_AdapterProperties.deviceName, vram);
+
+
+			//Get max MSAA we can use on the device
+			VkSampleCountFlags sampleCount = std::min(m_AdapterProperties.limits.framebufferStencilSampleCounts,
+				std::min(m_AdapterProperties.limits.framebufferColorSampleCounts, m_AdapterProperties.limits.framebufferDepthSampleCounts));
+
+			if (sampleCount & VK_SAMPLE_COUNT_64_BIT) { m_DeviceLimits.MaxSampleCount = VK_SAMPLE_COUNT_64_BIT; }
+			else if (sampleCount & VK_SAMPLE_COUNT_32_BIT) { m_DeviceLimits.MaxSampleCount = VK_SAMPLE_COUNT_32_BIT; }
+			else if (sampleCount & VK_SAMPLE_COUNT_16_BIT) { m_DeviceLimits.MaxSampleCount = VK_SAMPLE_COUNT_16_BIT; }
+			else if (sampleCount & VK_SAMPLE_COUNT_8_BIT) { m_DeviceLimits.MaxSampleCount = VK_SAMPLE_COUNT_8_BIT; }
+			else if (sampleCount & VK_SAMPLE_COUNT_4_BIT) { m_DeviceLimits.MaxSampleCount = VK_SAMPLE_COUNT_4_BIT; }
+			else if (sampleCount & VK_SAMPLE_COUNT_2_BIT) { m_DeviceLimits.MaxSampleCount = VK_SAMPLE_COUNT_2_BIT; }
 		}
 
 
@@ -452,6 +467,14 @@ namespace Lambda
 			//Get queues
 			vkGetDeviceQueue(m_Device, m_FamiliyIndices.GraphicsFamily, 0, &m_GraphicsQueue);
 			vkGetDeviceQueue(m_Device, m_FamiliyIndices.PresentFamily, 0, &m_PresentationQueue);
+
+			//Set device settings
+			m_DeviceSettings.SampleCount = ConvertSampleCount(desc.SampleCount);
+			if (m_DeviceSettings.SampleCount > m_DeviceLimits.MaxSampleCount)
+			{
+				m_DeviceSettings.SampleCount = m_DeviceLimits.MaxSampleCount;
+				LOG_DEBUG_WARNING("Vulkan: SampleCount (= %u) is higher  than the device's maximum of %u. SampleCount was set to the device's maximum.\n", uint32(m_DeviceSettings.SampleCount), uint32(m_DeviceLimits.MaxSampleCount));
+			}
 		}
 
 
@@ -515,11 +538,22 @@ namespace Lambda
         
         m_pSwapChain = DBG_NEW VulkanSwapChain(m_Device, swapChainInfo);
 
+
+		//If we are using MSAA we need to create a seperate texture
+		if (m_DeviceSettings.SampleCount > VK_SAMPLE_COUNT_1_BIT)
+		{
+			if (!CreateMSAABuffer())
+			{
+				LOG_DEBUG_INFO("Vulkan: Failed to create MSAABuffer\n");
+				return;
+			}
+		}
+
         
         //Create depthbuffer
         if (!CreateDepthStencil())
         {
-            LOG_DEBUG_INFO("Vulkan: Failed to create DepthBuffer");
+            LOG_DEBUG_INFO("Vulkan: Failed to create DepthBuffer\n");
             return;
         }
          
@@ -738,20 +772,41 @@ namespace Lambda
     bool VulkanGraphicsDevice::CreateDepthStencil()
     {
         TextureDesc depthBufferDesc = {};
-        depthBufferDesc.Usage              = RESOURCE_USAGE_DEFAULT;
-        depthBufferDesc.Flags              = TEXTURE_FLAGS_DEPTH_STENCIL;
-        depthBufferDesc.ArraySize          = 1;
-        depthBufferDesc.Width              = m_pSwapChain->GetWidth();
-        depthBufferDesc.Height             = m_pSwapChain->GetHeight();
-        depthBufferDesc.Format             = FORMAT_D24_UNORM_S8_UINT;
-        depthBufferDesc.SampleCount        = 1;
-        depthBufferDesc.MipLevels          = 1;
-        depthBufferDesc.ClearValue.Depth   = 1.0f;
+		depthBufferDesc.Type = TEXTURE_TYPE_2D;
+        depthBufferDesc.Usage = RESOURCE_USAGE_DEFAULT;
+        depthBufferDesc.Flags = TEXTURE_FLAGS_DEPTH_STENCIL;
+        depthBufferDesc.ArraySize = 1;
+        depthBufferDesc.Width = m_pSwapChain->GetWidth();
+        depthBufferDesc.Height = m_pSwapChain->GetHeight();
+        depthBufferDesc.Format = FORMAT_D24_UNORM_S8_UINT;
+        depthBufferDesc.SampleCount = uint32(m_DeviceSettings.SampleCount);
+        depthBufferDesc.MipLevels = 1;
+		depthBufferDesc.Depth = 1;
+        depthBufferDesc.ClearValue.Depth = 1.0f;
         depthBufferDesc.ClearValue.Stencil = 0;
         
         m_pDepthStencil = DBG_NEW VulkanTexture(m_Device, m_Adapter, depthBufferDesc);
         return true;
     }
+
+
+	bool VulkanGraphicsDevice::CreateMSAABuffer()
+	{
+		TextureDesc msaaBufferDesc = {};
+		msaaBufferDesc.Type = TEXTURE_TYPE_2D;
+		msaaBufferDesc.Usage = RESOURCE_USAGE_DEFAULT;
+		msaaBufferDesc.Flags = TEXTURE_FLAGS_RENDER_TARGET;
+		msaaBufferDesc.ArraySize = 1;
+		msaaBufferDesc.Width = m_pSwapChain->GetWidth();
+		msaaBufferDesc.Height = m_pSwapChain->GetHeight();
+		msaaBufferDesc.Format = FORMAT_B8G8R8A8_UNORM;
+		msaaBufferDesc.SampleCount = uint32(m_DeviceSettings.SampleCount);
+		msaaBufferDesc.MipLevels = 1;
+		msaaBufferDesc.Depth = 1;
+
+		m_pMSAABuffer = DBG_NEW VulkanTexture(m_Device, m_Adapter, msaaBufferDesc);
+		return true;
+	}
     
     
     void VulkanGraphicsDevice::ReleaseDepthStencil()
@@ -763,6 +818,17 @@ namespace Lambda
             m_pDepthStencil = nullptr;
         }
     }
+
+
+	void VulkanGraphicsDevice::ReleaseMSAABuffer()
+	{
+		//Release MSAABuffer
+		if (m_pMSAABuffer != nullptr)
+		{
+			m_pMSAABuffer->Destroy(m_Device);
+			m_pMSAABuffer = nullptr;
+		}
+	}
     
     
     void VulkanGraphicsDevice::GetNextFrame() const
@@ -816,7 +882,7 @@ namespace Lambda
     }
     
     
-    void VulkanGraphicsDevice::CreateTexture2D(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc) const
+    void VulkanGraphicsDevice::CreateTexture(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc) const
     {
         assert(ppTexture != nullptr);
         
@@ -967,7 +1033,7 @@ namespace Lambda
     }
     
     
-    void VulkanGraphicsDevice::DestroyTexture2D(ITexture** ppTexture) const
+    void VulkanGraphicsDevice::DestroyTexture(ITexture** ppTexture) const
     {
         assert(ppTexture != nullptr);
         
@@ -1174,10 +1240,16 @@ namespace Lambda
     }
     
     
-    ITexture* VulkanGraphicsDevice::GetCurrentRenderTarget() const
+    ITexture* VulkanGraphicsDevice::GetRenderTarget() const
     {
-        return m_pSwapChain->GetCurrentBuffer();
+        return (m_DeviceSettings.SampleCount > VK_SAMPLE_COUNT_1_BIT) ? m_pMSAABuffer : m_pSwapChain->GetCurrentBuffer();
     }
+
+
+	ITexture* VulkanGraphicsDevice::GetResolveTarget() const
+	{
+		return (m_DeviceSettings.SampleCount > VK_SAMPLE_COUNT_1_BIT) ? m_pSwapChain->GetCurrentBuffer() : nullptr;
+	}
     
     
     ITexture* VulkanGraphicsDevice::GetDepthStencil() const
@@ -1186,9 +1258,9 @@ namespace Lambda
     }
     
     
-    uint32 VulkanGraphicsDevice::GetCurrentBackBufferIndex() const
+    uint32 VulkanGraphicsDevice::GetBackBufferIndex() const
     {
-        return m_pSwapChain->GetCurrentBackBufferIndex();
+        return m_pSwapChain->GetBackBufferIndex();
     }
     
     
@@ -1225,8 +1297,14 @@ namespace Lambda
 			//Recreate depthstencil
             ReleaseDepthStencil();
             CreateDepthStencil();
+
+			//Recreate MSAA buffer if MSAA is used
+			if (m_DeviceSettings.SampleCount > VK_SAMPLE_COUNT_1_BIT)
+			{
+				ReleaseMSAABuffer();
+				CreateMSAABuffer();
+			}
             
-            //Resize swapchain etc. here
             LOG_DEBUG_INFO("VulkanGraphicsDevice: Window resized w: %d h: %d\n", event.WindowResize.Width, event.WindowResize.Height);
         }
         

@@ -14,6 +14,18 @@ namespace Lambda
     class VulkanCommandList;
     class VulkanSamplerState;
 	class VulkanSwapChain;
+
+
+	struct DeviceLimits
+	{
+		VkSampleCountFlagBits MaxSampleCount = VK_SAMPLE_COUNT_1_BIT;
+	};
+
+
+	struct DeviceSettings
+	{
+		VkSampleCountFlagBits SampleCount = VK_SAMPLE_COUNT_1_BIT;
+	};
     
     
     class VulkanGraphicsDevice final : public IGraphicsDevice
@@ -26,7 +38,7 @@ namespace Lambda
         
         virtual void CreateCommandList(ICommandList** ppList, CommandListType type) const override final;
         virtual void CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) const override final;
-        virtual void CreateTexture2D(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc) const override final;
+        virtual void CreateTexture(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc) const override final;
         virtual void CreateShader(IShader** ppShader, const ShaderDesc& desc) const override final;
         virtual void CreateSamplerState(ISamplerState** ppSamplerState, const SamplerStateDesc& desc) const override final;
         virtual void CreateGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc) const override final;
@@ -35,7 +47,7 @@ namespace Lambda
 
         virtual void DestroyCommandList(ICommandList** ppList) const override final;
         virtual void DestroyBuffer(IBuffer** ppBuffer) const override final;
-        virtual void DestroyTexture2D(ITexture** ppTexture) const override final;
+        virtual void DestroyTexture(ITexture** ppTexture) const override final;
         virtual void DestroyShader(IShader** ppShader) const override final;
         virtual void DestroySamplerState(ISamplerState** ppSamplerState) const override final;
         virtual void DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState) const override final;
@@ -51,9 +63,10 @@ namespace Lambda
         
         virtual void* GetNativeHandle() const override final;
         virtual ITexture* GetDepthStencil() const override final;
-        virtual ITexture* GetCurrentRenderTarget() const override final;
+        virtual ITexture* GetRenderTarget() const override final;
+		virtual ITexture* GetResolveTarget() const override final;
         virtual ResourceFormat GetBackBufferFormat() const override final;
-        virtual uint32 GetCurrentBackBufferIndex() const override final;
+        virtual uint32 GetBackBufferIndex() const override final;
         virtual uint32 GetSwapChainWidth() const override final;
         virtual uint32 GetSwapChainHeight() const override final;
     
@@ -69,9 +82,11 @@ namespace Lambda
         VkPhysicalDevice QueryAdapter();
 		VkSurfaceKHR CreateSurface(IWindow* pWindow);
         bool CreateDepthStencil();
+		bool CreateMSAABuffer();
 
         void ReleaseDepthStencil();
-        
+		void ReleaseMSAABuffer();
+
         void GetNextFrame() const;
         bool AdapterIsSuitable(VkPhysicalDevice adapter);
         
@@ -92,6 +107,8 @@ namespace Lambda
 		std::vector<VkSemaphore> m_RenderSemaphores;
 		std::vector<VkSemaphore> m_ImageSemaphores;
 
+		DeviceLimits m_DeviceLimits;
+		DeviceSettings m_DeviceSettings;
         QueueFamilyIndices m_FamiliyIndices;
         
         VkPhysicalDevice m_Adapter;
@@ -101,6 +118,7 @@ namespace Lambda
 
 		VulkanSwapChain* m_pSwapChain;
 		VulkanTexture* m_pDepthStencil;
+		VulkanTexture* m_pMSAABuffer;
 		VulkanCommandList* m_pCommandList;
 
         mutable uint64 m_CurrentFrame;

@@ -74,13 +74,31 @@ namespace Lambda
 			//Create RenderPass
 			{
 				RenderPassDesc desc = {};
+				desc.SampleCount = GetEngineParams().SampleCount;
 				desc.NumRenderTargets = 1;
 				desc.RenderTargets[0].Format = pDevice->GetBackBufferFormat();
 				desc.RenderTargets[0].LoadOperation = LOAD_OP_CLEAR;
 				desc.RenderTargets[0].StoreOperation = STORE_OP_STORE;
+				if (desc.SampleCount > 1)
+				{
+					desc.RenderTargets[0].FinalState = RESOURCE_STATE_RENDERTARGET;
+					
+					desc.NumResolveTargets = 1;
+					desc.ResolveTargets[0].Format = pDevice->GetBackBufferFormat();
+					desc.ResolveTargets[0].LoadOperation = LOAD_OP_UNKNOWN;
+					desc.ResolveTargets[0].StoreOperation = STORE_OP_STORE;
+					desc.ResolveTargets[0].FinalState = RESOURCE_STATE_RENDERTARGET_PRESENT;
+				}
+				else
+				{
+					desc.NumResolveTargets = 0;
+					desc.RenderTargets[0].FinalState = RESOURCE_STATE_RENDERTARGET_PRESENT;
+				}
+
 				desc.DepthStencil.Format = depthFormat;
 				desc.DepthStencil.LoadOperation = LOAD_OP_CLEAR;
 				desc.DepthStencil.StoreOperation = STORE_OP_UNKNOWN;
+				desc.DepthStencil.FinalState = RESOURCE_STATE_DEPTH_STENCIL;
 
 				pDevice->CreateRenderPass(&m_pRenderPass, desc);
 			}
@@ -294,12 +312,13 @@ namespace Lambda
         IGraphicsDevice* pDevice = IGraphicsDevice::GetInstance();
         
         //Set commandlist for frame
-        m_pCurrentList = m_pLists[pDevice->GetCurrentBackBufferIndex()];
+        m_pCurrentList = m_pLists[pDevice->GetBackBufferIndex()];
         m_pCurrentList->Reset();
         
         //Set and clear rendertarget
         float color[] = { 0.392f, 0.584f, 0.929f, 1.0f };
-        ITexture* pRenderTarget = pDevice->GetCurrentRenderTarget();
+        ITexture* pRenderTarget = pDevice->GetRenderTarget();
+		ITexture* pResolveTarget = pDevice->GetResolveTarget();
         ITexture* pDepthBuffer = pDevice->GetDepthStencil();
                 
         //Set scissor and viewport
@@ -352,7 +371,8 @@ namespace Lambda
         m_pCurrentList->SetIndexBuffer(m_pIndexBuffer);
         
 		//Set rendertargets and clearcolors
-		m_pRenderPass->SetRenderTargets(&pRenderTarget, pDepthBuffer);
+		uint32 numResolve = GetEngineParams().SampleCount > 1 ? 1 : 0;
+		m_pRenderPass->SetRenderTargets(&pRenderTarget, 1, pDepthBuffer, &pResolveTarget, numResolve);
 		m_pRenderPass->SetClearValues(color, 1.0f, 0);
 
         //Setup rotation
@@ -430,7 +450,7 @@ namespace Lambda
             pDevice->DestroyBuffer(&m_pColorBuffer);
             pDevice->DestroyBuffer(&m_pCameraBuffer);
             pDevice->DestroyBuffer(&m_pTransformBuffer);
-            pDevice->DestroyTexture2D(&m_pTexture);
+            pDevice->DestroyTexture(&m_pTexture);
             pDevice->DestroySamplerState(&m_pSamplerState);
         }
 	}

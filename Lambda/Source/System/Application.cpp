@@ -84,7 +84,13 @@ namespace Lambda
 	}
 
 
-	IWindow* Application::GetWindow()
+	const EngineParams& Application::GetEngineParams() const
+	{
+		return m_Params;
+	}
+
+
+	IWindow* Application::GetWindow() const
 	{
 		return m_pWindow;
 	}
@@ -98,6 +104,7 @@ namespace Lambda
 			EventDispatcher::PushEventLayer(applicationLayer);
 		}
 
+
 		//Create window
 		{
 			WindowDesc desc = {};
@@ -105,10 +112,12 @@ namespace Lambda
 			desc.Width		= params.WindowWidth;
 			desc.Height		= params.WindowHeight;
 			desc.GraphicsDeviceAPI = params.GraphicsDeviceApi;
+			desc.SampleCount = params.SampleCount;
 
 			m_pWindow = IWindow::Create(desc);
 			m_pWindow->SetEventCallback(EventDispatcher::SendEvent);
 		}
+
 
 		//Push graphics layer
 		{
@@ -116,8 +125,13 @@ namespace Lambda
 			EventDispatcher::PushEventLayer(graphicsLayer);
 		}
 
+
 		//Set joystick-pollingrate
 		JoystickManager::SetPollrate(Time::Seconds(1.0f / 60.0f));
+
+
+		//Set Params
+		m_Params = params;
 	}
 
 

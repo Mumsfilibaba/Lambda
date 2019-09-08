@@ -97,10 +97,21 @@ namespace Lambda
         info.sType                  = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
         info.pNext                  = nullptr;
         info.flags                  = 0;
-        info.imageType              = VK_IMAGE_TYPE_2D;
-        info.extent.width           = desc.Width;
+
+		//Set type
+		if (desc.Type == TEXTURE_TYPE_2D)
+		{
+			info.imageType = VK_IMAGE_TYPE_2D;
+		}
+		else
+		{
+			LOG_DEBUG_ERROR("Vulkan: Unknown Texture-Type\n");
+			return;
+		}
+        
+		info.extent.width           = desc.Width;
         info.extent.height          = desc.Height;
-        info.extent.depth           = 1;
+        info.extent.depth           = desc.Depth;
         info.mipLevels              = mipLevels;
         info.arrayLayers            = desc.ArraySize;
         info.pQueueFamilyIndices    = nullptr;
@@ -109,7 +120,8 @@ namespace Lambda
         info.tiling                 = VK_IMAGE_TILING_OPTIMAL;
         info.initialLayout          = VK_IMAGE_LAYOUT_UNDEFINED;
         info.sharingMode            = VK_SHARING_MODE_EXCLUSIVE;
-        info.samples                = VK_SAMPLE_COUNT_1_BIT;
+        info.samples                = ConvertSampleCount(desc.SampleCount);
+
 
         //Set special usage
         if (desc.Flags & TEXTURE_FLAGS_GENEATE_MIPS)
@@ -121,14 +133,24 @@ namespace Lambda
             info.usage |= VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
             m_AspectFlags |= VK_IMAGE_ASPECT_COLOR_BIT;
         }
+		if (desc.Flags & TEXTURE_FLAGS_RENDER_TARGET)
+		{
+			info.usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
+			m_AspectFlags |= VK_IMAGE_ASPECT_COLOR_BIT;
+		}
         if (desc.Flags & TEXTURE_FLAGS_DEPTH_STENCIL)
         {
             info.usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-            if (info.format == VK_FORMAT_D24_UNORM_S8_UINT || info.format == VK_FORMAT_D32_SFLOAT_S8_UINT)
+			if (info.format == VK_FORMAT_D24_UNORM_S8_UINT || info.format == VK_FORMAT_D32_SFLOAT_S8_UINT)
+			{
                 m_AspectFlags |= VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
-            else
+			}
+			else
+			{
                 m_AspectFlags |= VK_IMAGE_ASPECT_DEPTH_BIT;
+			}
         }
+
 
         if (vkCreateImage(device, &info, nullptr, &m_Texture) != VK_SUCCESS)
         {
@@ -174,7 +196,6 @@ namespace Lambda
             LOG_DEBUG_INFO("Vulkan: Allocated memory for texture\n");
 
             vkBindImageMemory(device, m_Texture, m_DeviceMemory, 0);
-
             CreateImageView(device);
         }
     }

@@ -1,5 +1,4 @@
 #pragma once
-#include "LambdaPch.h"
 #include <vulkan/vulkan.h>
 #include <unordered_map>
 
@@ -14,19 +13,19 @@ namespace Lambda
 		VulkanFramebufferCacheKey();
 		~VulkanFramebufferCacheKey() = default;
 
-		bool operator==(const VulkanFramebufferCacheKey& other);
-		bool ContainsTexture(const VulkanTexture* pTexture);
+		size_t GetHash() const;
+		bool ContainsTexture(const VulkanTexture* pTexture) const;
+
+		bool operator==(const VulkanFramebufferCacheKey& other) const;
 
 	public:
+		mutable size_t Hash;
         VkRenderPass RenderPass;
-        VkFramebuffer FrameBuffer;
-        uint32 NumColorAttachments;
-        VkImageView DepthStencilView;
-        VkImageView ColorAttachmentViews[LAMBDA_MAX_RENDERTARGET_COUNT];
+        uint32 NumAttachmentViews;
+        VkImageView AttachmentViews[(LAMBDA_MAX_RENDERTARGET_COUNT + 1) * 2];
     };
-    
-    
-    //Stores all framebuffers in the program
+
+
     class VulkanFramebufferCache final
     {
     public:
@@ -37,6 +36,6 @@ namespace Lambda
         static void ReleaseAll(VkDevice device);
         
     private:
-        static std::unordered_map<VkImageView, VulkanFramebufferCacheKey> s_Framebuffers;
+        static std::unordered_map<VulkanFramebufferCacheKey, VkFramebuffer> s_Framebuffers;
     };
 }

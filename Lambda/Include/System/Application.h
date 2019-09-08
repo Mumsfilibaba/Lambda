@@ -11,6 +11,7 @@ namespace Lambda
 		GraphicsApi GraphicsDeviceApi = GRAPHICS_API_VULKAN;
 		uint32 WindowWidth = 1920;
 		uint32 WindowHeight = 1080;
+		uint32 SampleCount = 1;
 		bool Fullscreen = false;
 	};
 
@@ -27,7 +28,8 @@ namespace Lambda
 		virtual void OnRelease() {}
 
 		int32 Run();
-		IWindow* GetWindow();
+		const EngineParams& GetEngineParams() const;
+		IWindow* GetWindow() const;
 
 	private:
 		void Init(const EngineParams& params);
@@ -40,6 +42,7 @@ namespace Lambda
 
 	private:
 		IWindow* m_pWindow;
+		EngineParams m_Params;
 		int32 m_ExitCode;
 		bool m_Running;
         bool m_HasFocus;

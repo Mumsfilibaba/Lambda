@@ -27,6 +27,7 @@ namespace Lambda
     {
         uint32 Flags = GRAPHICS_CONTEXT_FLAG_NONE;
         GraphicsApi Api = GRAPHICS_API_VULKAN;
+		uint32 SampleCount = 1;
     };
     
     
@@ -40,7 +41,7 @@ namespace Lambda
 
 		virtual void CreateCommandList(ICommandList** ppList, CommandListType type) const = 0;
 		virtual void CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) const = 0;
-		virtual void CreateTexture2D(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc) const = 0;
+		virtual void CreateTexture(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc) const = 0;
 		virtual void CreateShader(IShader** ppShader, const ShaderDesc& desc) const = 0;
 		virtual void CreateSamplerState(ISamplerState** ppSamplerState, const SamplerStateDesc& desc) const = 0;
 		virtual void CreateGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc) const = 0;
@@ -49,7 +50,7 @@ namespace Lambda
 
 		virtual void DestroyCommandList(ICommandList** ppList) const = 0;
 		virtual void DestroyBuffer(IBuffer** ppBuffer) const = 0;
-		virtual void DestroyTexture2D(ITexture** ppTexture) const = 0;
+		virtual void DestroyTexture(ITexture** ppTexture) const = 0;
 		virtual void DestroyShader(IShader** ppShader) const = 0;
 		virtual void DestroySamplerState(ISamplerState** ppSamplerState) const = 0;
 		virtual void DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState) const = 0;
@@ -63,13 +64,14 @@ namespace Lambda
 		virtual void WaitForGPU() const = 0;
 		virtual void GPUWaitForFrame() const = 0;
 
-		virtual void* GetNativeHandle() const  = 0;
-		virtual ITexture* GetDepthStencil() const  = 0;
-		virtual ITexture* GetCurrentRenderTarget() const  = 0;
-		virtual ResourceFormat GetBackBufferFormat() const  = 0;
-		virtual uint32 GetCurrentBackBufferIndex() const  = 0;
-		virtual uint32 GetSwapChainWidth() const  = 0;
-		virtual uint32 GetSwapChainHeight() const  = 0;
+		virtual void* GetNativeHandle() const = 0;
+		virtual ITexture* GetDepthStencil() const = 0;
+		virtual ITexture* GetRenderTarget() const = 0;
+		virtual ITexture* GetResolveTarget() const = 0;
+		virtual ResourceFormat GetBackBufferFormat() const = 0;
+		virtual uint32 GetBackBufferIndex() const = 0;
+		virtual uint32 GetSwapChainWidth() const = 0;
+		virtual uint32 GetSwapChainHeight() const = 0;
 
 	private:
 		virtual bool InternalOnEvent(const Event& event) = 0;

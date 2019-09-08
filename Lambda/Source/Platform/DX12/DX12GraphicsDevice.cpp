@@ -1,7 +1,9 @@
 #include "LambdaPch.h"
 #include "Utilities/StringHelper.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
+
 	#pragma comment(lib, "dxguid.lib")
+
 	#include "DX12GraphicsDevice.h"
 	#include "DX12CommandList.h"
 	#include "DX12PipelineState.h"
@@ -65,7 +67,7 @@ namespace Lambda
 		for (uint32 i = 0; i < m_NumBackbuffers; i++)
 		{
 			ITexture* pTexture = m_BackBuffers[i];
-			DestroyTexture2D(&pTexture);
+			DestroyTexture(&pTexture);
 			m_BackBuffers[i] = nullptr;
 		}
 
@@ -135,7 +137,7 @@ namespace Lambda
 	}
 
 
-	void DX12GraphicsDevice::CreateTexture2D(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc) const
+	void DX12GraphicsDevice::CreateTexture(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc) const
 	{
 		//Return early if errors
 		if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
@@ -271,7 +273,7 @@ namespace Lambda
 	}
 
 
-	void DX12GraphicsDevice::DestroyTexture2D(ITexture** ppTexture) const
+	void DX12GraphicsDevice::DestroyTexture(ITexture** ppTexture) const
 	{
 		assert(ppTexture != nullptr);
 
@@ -405,9 +407,15 @@ namespace Lambda
 	}
 
 
-	ITexture* DX12GraphicsDevice::GetCurrentRenderTarget() const
+	ITexture* DX12GraphicsDevice::GetRenderTarget() const
 	{
 		return m_BackBuffers[m_SwapChain->GetCurrentBackBufferIndex()];
+	}
+
+
+	ITexture* DX12GraphicsDevice::GetResolveTarget() const
+	{
+		return nullptr;
 	}
 
 
@@ -423,7 +431,7 @@ namespace Lambda
 	}
 
 
-	uint32 DX12GraphicsDevice::GetCurrentBackBufferIndex() const
+	uint32 DX12GraphicsDevice::GetBackBufferIndex() const
 	{
 		return m_SwapChain->GetCurrentBackBufferIndex();
 	}

@@ -20,21 +20,21 @@ namespace Lambda
 	}
 	
 	
-	void VulkanRenderPass::SetRenderTargets(const ITexture* const* const ppRenderTargets, const ITexture* pDepthStencil)
+	void VulkanRenderPass::SetRenderTargets(const ITexture* const* const ppRenderTargets, uint32 numRenderTargets, const ITexture* pDepthStencil, const ITexture* const* const ppResolveTargets, uint32 numResolveTargets)
 	{
 		assert(m_Device != VK_NULL_HANDLE);
+		assert(numRenderTargets == m_RenderTargetCount);
 
 		VulkanFramebufferCacheKey key = {};
-		if (pDepthStencil)
+		key.RenderPass = m_RenderPass;
+
+		if (numRenderTargets > 0)
 		{
-			key.DepthStencilView = reinterpret_cast<const VulkanTexture*>(pDepthStencil)->GetImageView();
-			m_FramebufferExtent.width = pDepthStencil->GetWidth();
-			m_FramebufferExtent.height = pDepthStencil->GetHeight();
-		}
-		if (ppRenderTargets)
-		{
-			for (uint32 i = 0; i < m_RenderTargetCount; i++)
-				key.ColorAttachmentViews[i] = reinterpret_cast<const VulkanTexture*>(ppRenderTargets[i])->GetImageView();
+			for (uint32 i = 0; i < numRenderTargets; i++)
+			{
+				key.AttachmentViews[i] = reinterpret_cast<const VulkanTexture*>(ppRenderTargets[i])->GetImageView();
+				key.NumAttachmentViews++;
+			}
 
 			if (!pDepthStencil)
 			{
@@ -42,9 +42,22 @@ namespace Lambda
 				m_FramebufferExtent.height = ppRenderTargets[0]->GetHeight();
 			}
 		}
+		if (pDepthStencil)
+		{
+			key.AttachmentViews[key.NumAttachmentViews] = reinterpret_cast<const VulkanTexture*>(pDepthStencil)->GetImageView();
+			key.NumAttachmentViews++;
 
-		key.NumColorAttachments = m_RenderTargetCount;
-		key.RenderPass = m_RenderPass;
+			m_FramebufferExtent.width = pDepthStencil->GetWidth();
+			m_FramebufferExtent.height = pDepthStencil->GetHeight();
+		}
+		if (numResolveTargets > 0)
+		{
+			for (uint32 i = 0; i < numResolveTargets; i++)
+			{
+				key.AttachmentViews[key.NumAttachmentViews] = reinterpret_cast<const VulkanTexture*>(ppResolveTargets[i])->GetImageView();
+				key.NumAttachmentViews++;
+			}
+		}
 
 		m_Framebuffer = VulkanFramebufferCache::GetFramebuffer(m_Device, key, m_FramebufferExtent.width, m_FramebufferExtent.height);
 	}
@@ -87,7 +100,7 @@ namespace Lambda
 		std::vector<VkAttachmentDescription> attachments;
 
 		//Number of samples (MSAA)
-		VkSampleCountFlagBits sampleCount = ConvertSampleCount(desc.SampleCount);
+		m_SampleCount = ConvertSampleCount(desc.SampleCount);
 
 		//Setup colorattachments
 		for (uint32 i = 0; i < desc.NumRenderTargets; i++)
@@ -96,13 +109,13 @@ namespace Lambda
 			VkAttachmentDescription colorAttachment = {};
 			colorAttachment.flags = 0;
 			colorAttachment.format = ConvertResourceFormat(desc.RenderTargets[i].Format);
-			colorAttachment.samples = sampleCount;
+			colorAttachment.samples = m_SampleCount;
 			colorAttachment.loadOp = ConvertLoadOp(desc.RenderTargets[i].LoadOperation);
 			colorAttachment.storeOp = ConvertStoreOp(desc.RenderTargets[i].StoreOperation);
 			colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 			colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 			colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+			colorAttachment.finalLayout = ConvertResourceStateToImageLayout(desc.RenderTargets[i].FinalState);
 			attachments.push_back(colorAttachment);
 
 			VkAttachmentReference colorAttachmentRef = {};
@@ -110,6 +123,7 @@ namespace Lambda
 			colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 			colorAttachentRefs.push_back(colorAttachmentRef);
 		}
+
 
 		//Describe subpass
 		VkSubpassDescription subpass = {};
@@ -121,7 +135,7 @@ namespace Lambda
 		subpass.pPreserveAttachments = nullptr;
 		subpass.inputAttachmentCount = 0;
 		subpass.pInputAttachments = nullptr;
-		subpass.pResolveAttachments = nullptr;
+
 
 		//Setup depthstencil
 		VkAttachmentReference depthAttachmentRef = {};
@@ -134,7 +148,7 @@ namespace Lambda
 			VkAttachmentDescription depthAttachment = {};
 			depthAttachment.flags = 0;
 			depthAttachment.format = m_DepthStencilFormat = ConvertResourceFormat(desc.DepthStencil.Format);
-			depthAttachment.samples = sampleCount;
+			depthAttachment.samples = m_SampleCount;
 			depthAttachment.loadOp = ConvertLoadOp(desc.DepthStencil.LoadOperation);
 			depthAttachment.storeOp = ConvertStoreOp(desc.DepthStencil.StoreOperation);;
 			depthAttachment.stencilLoadOp = depthAttachment.loadOp;
@@ -147,6 +161,31 @@ namespace Lambda
 			depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 			subpass.pDepthStencilAttachment = &depthAttachmentRef;
 		}
+
+
+		//Setup ResolveTargets
+		std::vector<VkAttachmentReference> resolveRefs;
+		for (uint32 i = 0; i < desc.NumResolveTargets; i++)
+		{
+			//Setup attachments
+			VkAttachmentDescription resolveAttachment = {};
+			resolveAttachment.flags = 0;
+			resolveAttachment.format = ConvertResourceFormat(desc.ResolveTargets[i].Format);
+			resolveAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+			resolveAttachment.loadOp = ConvertLoadOp(desc.ResolveTargets[i].LoadOperation);
+			resolveAttachment.storeOp = ConvertStoreOp(desc.ResolveTargets[i].StoreOperation);
+			resolveAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+			resolveAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			resolveAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			resolveAttachment.finalLayout = ConvertResourceStateToImageLayout(desc.ResolveTargets[i].FinalState);
+			attachments.push_back(resolveAttachment);
+
+			VkAttachmentReference resolveAttachmentRef = {};
+			resolveAttachmentRef.attachment = uint32(attachments.size() - 1);
+			resolveAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			resolveRefs.push_back(resolveAttachmentRef);
+		}
+		subpass.pResolveAttachments = resolveRefs.size() > 0 ? resolveRefs.data() : nullptr;
 
 
 		//Create renderpass

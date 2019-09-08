@@ -204,6 +204,16 @@ namespace Lambda
 	};
 
 
+	//Types of texture
+	enum TextureType : uint32
+	{
+		TEXTURE_TYPE_UNKNOWN = 0,
+		TEXTURE_TYPE_1D = 1,
+		TEXTURE_TYPE_2D = 2,
+		TEXTURE_TYPE_3D = 3,
+	};
+
+
     //Format
 	enum ResourceFormat : uint32
 	{
@@ -265,7 +275,7 @@ namespace Lambda
 		RESOURCE_STATE_RENDERTARGET                 = 1,
         RESOURCE_STATE_RENDERTARGET_CLEAR           = 2,
         RESORUCE_STATE_DEPTH_STENCIL_CLEAR          = 3,
-		RESOURCE_STATE_DEPTH_WRITE                  = 4,
+		RESOURCE_STATE_DEPTH_STENCIL                  = 4,
 		RESOURCE_STATE_DEPTH_READ                   = 5,
         RESOURCE_STATE_RENDERTARGET_PRESENT         = 6,
 		RESOURCE_STATE_COPY_DEST                    = 7,

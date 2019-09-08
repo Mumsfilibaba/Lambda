@@ -21,6 +21,7 @@ namespace Lambda
 		{
 			//Setup desc
 			TextureDesc desc = {};
+			desc.Type = TEXTURE_TYPE_2D;
 			desc.ArraySize = 1;
 			desc.Flags = flags;
 			desc.Format = format;
@@ -32,10 +33,10 @@ namespace Lambda
 
 			//Create texture from loaded data
 			ResourceData data = {};
-			data.pData = (void*)pTexData;
-			data.SizeInBytes = width * height * StrideInBytesFromResourceFormat(format);
+			data.pData = reinterpret_cast<void*>(pTexData);
+			data.SizeInBytes = uint64(width) * uint64(height) * uint64(StrideInBytesFromResourceFormat(format));
 
-			pDevice->CreateTexture2D(&pTexture, &data, desc);
+			pDevice->CreateTexture(&pTexture, &data, desc);
 			SafeDelete(pTexData);
 
 			LOG_DEBUG_INFO("Lambda Engine: Loaded texture '%s'\n", pFileName);

@@ -33,7 +33,7 @@ namespace Lambda
 		uint32 GetWidth() const;
 		uint32 GetHeight() const;
         uint32 GetBufferCount() const;
-        uint32 GetCurrentBackBufferIndex() const;
+        uint32 GetBackBufferIndex() const;
 		VkFormat GetFormat() const;
 		ITexture* GetCurrentBuffer() const;
 
