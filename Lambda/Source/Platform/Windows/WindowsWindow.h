@@ -34,7 +34,7 @@ namespace Lambda
 		IGraphicsDevice* m_pGraphicsDevice;
 		EventCallback m_OnEvent;
 		std::vector<Event> m_EventBackLog;
-		HWND m_Wnd;
+		HWND m_hWindow;
 		uint32 m_Height;
 		uint32 m_Width;
 		DWORD m_Style;

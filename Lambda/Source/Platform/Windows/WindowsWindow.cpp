@@ -22,7 +22,7 @@ namespace Lambda
 	WindowsWindow::WindowsWindow(const WindowDesc& desc)
 		: m_pGraphicsDevice(nullptr),
 		m_OnEvent(nullptr),
-		m_Wnd(0),
+		m_hWindow(0),
 		m_EventBackLog(),
 		m_Fullscreen(false)
 	{
@@ -38,10 +38,10 @@ namespace Lambda
 			m_pGraphicsDevice->Destroy();
 			m_pGraphicsDevice = nullptr;
 		}
-		if (IsWindow(m_Wnd))
+		if (IsWindow(m_hWindow))
 		{
-			DestroyWindow(m_Wnd);
-			m_Wnd = 0;
+			DestroyWindow(m_hWindow);
+			m_hWindow = 0;
 
 			WindowClass::Unregister(NAME_APPWINDOW);
 		}
@@ -73,7 +73,7 @@ namespace Lambda
 
 	void* WindowsWindow::GetNativeHandle() const
 	{
-		return (void*)m_Wnd;
+		return (void*)m_hWindow;
 	}
 
 
@@ -99,43 +99,54 @@ namespace Lambda
 
 		if (fullscreen)
 		{
-			SetWindowRgn(m_Wnd, 0, FALSE);
+			SetWindowRgn(m_hWindow, 0, FALSE);
 
 			DEVMODE settings = {};
+			memset(&settings, 0, sizeof(DEVMODE));
 			settings.dmSize = sizeof(DEVMODE);
 			settings.dmPelsWidth = m_Width;
 			settings.dmPelsHeight = m_Height;
 			settings.dmBitsPerPel = 32;
 			settings.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
 
-			if (ChangeDisplaySettings(&settings, CDS_FULLSCREEN) == DISP_CHANGE_SUCCESSFUL)
+			if (ChangeDisplaySettingsW(&settings, CDS_FULLSCREEN) == DISP_CHANGE_SUCCESSFUL)
 			{
-				m_Style = GetWindowLongW(m_Wnd, GWL_STYLE);
-				m_ExStyle = GetWindowLongW(m_Wnd, GWL_STYLE);
+				m_Style = GetWindowLongW(m_hWindow, GWL_STYLE);
+				m_ExStyle = GetWindowLongW(m_hWindow, GWL_EXSTYLE);
 
-				SetWindowLongW(m_Wnd, GWL_STYLE, WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS);
-				SetWindowLongW(m_Wnd, GWL_EXSTYLE, WS_EX_APPWINDOW);
+				SetWindowLongW(m_hWindow, GWL_STYLE, WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS);
+				SetWindowLongW(m_hWindow, GWL_EXSTYLE, WS_EX_APPWINDOW);
+				SetWindowPos(m_hWindow, HWND_TOP, 0, 0, m_Width, m_Height, SWP_FRAMECHANGED);
+				ShowWindow(m_hWindow, SW_SHOWMAXIMIZED);
 
-				SetWindowPos(m_Wnd, HWND_TOP, 0, 0, m_Width, m_Height, SWP_FRAMECHANGED);
-				ShowWindow(m_Wnd, SW_SHOW);
-
-				InvalidateRect(m_Wnd, 0, TRUE);
+				InvalidateRect(m_hWindow, 0, TRUE);
                 
                 m_Fullscreen = true;
+
+				LOG_DEBUG_WARNING("Switched into fullscreen\n");
 			}
 			else 
 			{
+				LOG_DEBUG_ERROR("Failed to switch into fullscreen\n");
 				return false;
 			}
 		}
 		else
 		{
-			if (ChangeDisplaySettings(NULL, CDS_FULLSCREEN) == DISP_CHANGE_SUCCESSFUL)
+			if (ChangeDisplaySettingsW(NULL, CDS_FULLSCREEN) == DISP_CHANGE_SUCCESSFUL)
 			{
+				SetWindowLongW(m_hWindow, GWL_STYLE, m_Style);
+				SetWindowLongW(m_hWindow, GWL_EXSTYLE, m_ExStyle);
+				SetWindowPos(m_hWindow, HWND_TOP, 0, 0, m_Width, m_Height, SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_FRAMECHANGED);
+				ShowWindow(m_hWindow, SW_SHOW);
+
                 m_Fullscreen = false;
+
+				LOG_DEBUG_INFO("Switched into windowed mode\n");
 			}
             else
             {
+				LOG_DEBUG_ERROR("Failed to switch from fullscreen\n");
                 return false;
             }
 		}
@@ -144,10 +155,16 @@ namespace Lambda
 	}
 
 
+	bool WindowsWindow::GetFullscreen() const
+	{
+		return m_Fullscreen;
+	}
+
+
 	void WindowsWindow::Init(const WindowDesc& desc)
 	{
 		//Should only be called once
-		assert(m_Wnd == 0);
+		assert(m_hWindow == 0);
 
 		int32 error = 0;
 		{
@@ -168,14 +185,15 @@ namespace Lambda
 			WindowClass::Register(wc);
 
 			//Set client area size
-			int32 style = WS_OVERLAPPEDWINDOW;
+			m_Style = WS_OVERLAPPEDWINDOW;
+			m_ExStyle = 0;
 			RECT rect = { 0, 0, static_cast<LONG>(desc.Width), static_cast<LONG>(desc.Height) };
-			AdjustWindowRect(&rect, style, false);
+			AdjustWindowRect(&rect, m_Style, false);
 
 			//Create window
 			SetLastError(0);
-			m_Wnd = CreateWindowEx(0, NAME_APPWINDOW, StringToWidestring(desc.pTitle).c_str(), style, 0, 0, rect.right - rect.left, rect.bottom - rect.top, 0, 0, wc.hInstance, 0);
-			if (m_Wnd == 0)
+			m_hWindow = CreateWindowEx(m_ExStyle, NAME_APPWINDOW, StringToWidestring(desc.pTitle).c_str(), m_Style, 0, 0, rect.right - rect.left, rect.bottom - rect.top, 0, 0, wc.hInstance, 0);
+			if (m_hWindow == 0)
 			{
 				error = GetLastError();
 			}
@@ -185,8 +203,8 @@ namespace Lambda
 				m_Height = desc.Height;
 
 				//Set userdata so we can retrive this-pointer when handling events
-				SetWindowLongPtr(m_Wnd, GWLP_USERDATA, reinterpret_cast<uintptr_t>(this));
-				ShowWindow(m_Wnd, SW_NORMAL);
+				SetWindowLongPtr(m_hWindow, GWLP_USERDATA, reinterpret_cast<uintptr_t>(this));
+				ShowWindow(m_hWindow, SW_NORMAL);
 			}
 		}
 
@@ -241,12 +259,6 @@ namespace Lambda
 		case WM_KEYDOWN:
 		case WM_KEYUP:
 		{
-			if (msg == WM_KEYDOWN)
-			{
-				if (WindowsInput::ConvertWindowsKey(uint32(wParam)) == KEY_SPACE)
-					SetFullscreen(false);
-			}
-
 			event.Type = msg == WM_KEYDOWN ? EVENT_TYPE_KEYDOWN : EVENT_TYPE_KEYUP;
 			event.KeyEvent.KeyCode = WindowsInput::ConvertWindowsKey(uint32(wParam));
 			event.KeyEvent.RepeatCount = LOWORD(lParam);
@@ -312,7 +324,7 @@ namespace Lambda
 		}
 
 		default:
-			return DefWindowProc(m_Wnd, msg, wParam, lParam);
+			return DefWindowProc(m_hWindow, msg, wParam, lParam);
 		}
 
 		if (m_OnEvent)
