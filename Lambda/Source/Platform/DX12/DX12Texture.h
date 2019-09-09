@@ -20,9 +20,6 @@ namespace Lambda
 		~DX12Texture() = default;
 
 		virtual TextureDesc GetDesc() const override final;
-		virtual uint32 GetMipLevels() const override final;
-		virtual uint32 GetWidth() const override final;
-		virtual uint32 GetHeight() const override final;
 		virtual void* GetNativeHandle() const override final;
 
 	private:

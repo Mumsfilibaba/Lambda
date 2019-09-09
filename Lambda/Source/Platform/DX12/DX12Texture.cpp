@@ -34,23 +34,6 @@ namespace Lambda
 	}
 
 
-	uint32 DX12Texture::GetMipLevels() const
-	{
-		return m_Desc.MipLevels;
-	}
-
-
-	uint32 DX12Texture::GetWidth() const
-	{
-		return m_Desc.Width;
-	}
-
-
-	uint32 DX12Texture::GetHeight() const
-	{
-		return m_Desc.Height;
-	}
-
 	void* DX12Texture::GetNativeHandle() const
 	{
 		return m_Texture.Get();
