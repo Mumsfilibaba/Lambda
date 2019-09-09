@@ -73,7 +73,7 @@ namespace Lambda
         m_PresentationQueue(VK_NULL_HANDLE),
         m_RenderSemaphores(),
         m_FamiliyIndices(),
-        m_Adapter(VK_NULL_HANDLE),
+        m_PhysicalDevice(VK_NULL_HANDLE),
         m_AdapterProperties(),
         m_Surface(VK_NULL_HANDLE),
 		m_pSwapChain(nullptr),
@@ -347,19 +347,19 @@ namespace Lambda
 		
 
 		//Choose an physical device (GPU) 
-		m_Adapter = QueryAdapter();
-		if (m_Adapter == VK_NULL_HANDLE)
+		m_PhysicalDevice = QueryAdapter();
+		if (m_PhysicalDevice == VK_NULL_HANDLE)
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to find a suitable GPU\n");
 			return;
 		}
 		else
 		{
-			vkGetPhysicalDeviceProperties(m_Adapter, &m_AdapterProperties);
-			m_FamiliyIndices = FindQueueFamilies(m_Adapter, m_Surface);
+			vkGetPhysicalDeviceProperties(m_PhysicalDevice, &m_AdapterProperties);
+			m_FamiliyIndices = FindQueueFamilies(m_PhysicalDevice, m_Surface);
 
 			VkPhysicalDeviceMemoryProperties memoryProperties = {};
-			vkGetPhysicalDeviceMemoryProperties(m_Adapter, &memoryProperties);
+			vkGetPhysicalDeviceMemoryProperties(m_PhysicalDevice, &memoryProperties);
 
 			uint64 vram = 0;
 			for (uint32 i = 0; i < memoryProperties.memoryHeapCount; i++)
@@ -427,10 +427,10 @@ namespace Lambda
 
 		//Get all the available extensions
 		uint32 extensionCount;
-		vkEnumerateDeviceExtensionProperties(m_Adapter, nullptr, &extensionCount, nullptr);
+		vkEnumerateDeviceExtensionProperties(m_PhysicalDevice, nullptr, &extensionCount, nullptr);
 
 		std::vector<VkExtensionProperties> availableDeviceExtensions(extensionCount);
-		vkEnumerateDeviceExtensionProperties(m_Adapter, nullptr, &extensionCount, availableDeviceExtensions.data());
+		vkEnumerateDeviceExtensionProperties(m_PhysicalDevice, nullptr, &extensionCount, availableDeviceExtensions.data());
 
 		LOG_DEBUG_INFO("[Vulkan] Available Device-Extensions:\n");
 		for (const auto& extension : availableDeviceExtensions)
@@ -453,7 +453,7 @@ namespace Lambda
 		info.pQueueCreateInfos = queueCreateInfos.data();
 
 		//Create device
-		if (vkCreateDevice(m_Adapter, &info, nullptr, &m_Device) != VK_SUCCESS)
+		if (vkCreateDevice(m_PhysicalDevice, &info, nullptr, &m_Device) != VK_SUCCESS)
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to create device\n");
 
@@ -527,7 +527,7 @@ namespace Lambda
         
         //Create swapchain
         VulkanSwapChainDesc swapChainInfo = {};
-        swapChainInfo.Adapter            = m_Adapter;
+        swapChainInfo.Adapter            = m_PhysicalDevice;
         swapChainInfo.Surface            = m_Surface;
         swapChainInfo.SignalSemaphore    = m_ImageSemaphores[m_CurrentFrame];
         swapChainInfo.PresentationMode   = VK_PRESENT_MODE_MAILBOX_KHR;
@@ -785,7 +785,7 @@ namespace Lambda
         depthBufferDesc.ClearValue.Depth = 1.0f;
         depthBufferDesc.ClearValue.Stencil = 0;
         
-        m_pDepthStencil = DBG_NEW VulkanTexture(m_Device, m_Adapter, depthBufferDesc);
+        m_pDepthStencil = DBG_NEW VulkanTexture(this, depthBufferDesc);
         return true;
     }
 
@@ -804,7 +804,7 @@ namespace Lambda
 		msaaBufferDesc.MipLevels = 1;
 		msaaBufferDesc.Depth = 1;
 
-		m_pMSAABuffer = DBG_NEW VulkanTexture(m_Device, m_Adapter, msaaBufferDesc);
+		m_pMSAABuffer = DBG_NEW VulkanTexture(this, msaaBufferDesc);
 		return true;
 	}
     
@@ -850,7 +850,7 @@ namespace Lambda
         assert(ppBuffer != nullptr);
         
         //Create buffer
-        VulkanBuffer* pBuffer = DBG_NEW VulkanBuffer(m_Device, m_Adapter, desc);
+        VulkanBuffer* pBuffer = DBG_NEW VulkanBuffer(m_Device, m_PhysicalDevice, desc);
         
         //Upload inital data
         if (pInitalData)
@@ -887,19 +887,20 @@ namespace Lambda
         assert(ppTexture != nullptr);
         
         //Create texture object
-        VulkanTexture* pTexture = DBG_NEW VulkanTexture(m_Device, m_Adapter, desc);
+        VulkanTexture* pVkTexture = DBG_NEW VulkanTexture(this, desc);
         
         //Upload inital data
         if (pInitalData)
         {
             m_pCommandList->Reset();
-            m_pCommandList->UpdateTexture(pTexture, pInitalData, 0);
+            m_pCommandList->UpdateTexture(pVkTexture, pInitalData, 0);
             
             if (desc.Flags & TEXTURE_FLAGS_GENEATE_MIPS)
             {
-				uint32 mipLevels = pTexture->GetMipLevels();
+                TextureDesc textureDesc = pVkTexture->GetDesc();
+				uint32 mipLevels = textureDesc.MipLevels;
 
-				VkImage image = reinterpret_cast<VkImage>(pTexture->GetNativeHandle());
+				VkImage image = reinterpret_cast<VkImage>(pVkTexture->GetNativeHandle());
 				VkCommandBuffer commandBuffer = reinterpret_cast<VkCommandBuffer>(m_pCommandList->GetNativeHandle());
 
 				VkImageMemoryBarrier barrier = {};
@@ -912,8 +913,8 @@ namespace Lambda
 				barrier.subresourceRange.layerCount = 1;
 				barrier.subresourceRange.levelCount = 1;
 
-				int32 mipWidth = pTexture->GetWidth();
-				int32 mipHeight = pTexture->GetHeight();
+				int32 mipWidth = textureDesc.Width;
+				int32 mipHeight = textureDesc.Height;
 				for (uint32 i = 1; i < mipLevels; i++) 
 				{
 					barrier.subresourceRange.baseMipLevel = i - 1;
@@ -964,7 +965,7 @@ namespace Lambda
         }
         
         //Return texture
-        (*ppTexture) = pTexture;
+        (*ppTexture) = pVkTexture;
     }
     
     
@@ -1328,6 +1329,33 @@ namespace Lambda
             {
                 LOG_DEBUG_ERROR("Vulkan: Failed to set name '%s'\n", info.pObjectName);
             }
+        }
+    }
+    
+    
+    VkDeviceMemory VulkanGraphicsDevice::AllocateImage(VkImage image, VkMemoryPropertyFlags properties) const
+    {
+        VkMemoryRequirements memRequirements = {};
+        vkGetImageMemoryRequirements(m_Device, image, &memRequirements);
+        
+        //Allocate memory
+        uint32 memoryType = FindMemoryType(m_PhysicalDevice, memRequirements.memoryTypeBits, properties);
+        VkMemoryAllocateInfo allocInfo = {};
+        allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        allocInfo.pNext = nullptr;
+        allocInfo.allocationSize = memRequirements.size;
+        allocInfo.memoryTypeIndex = memoryType;
+        
+        VkDeviceMemory memory = VK_NULL_HANDLE;
+        if (vkAllocateMemory(m_Device, &allocInfo, nullptr, &memory) != VK_SUCCESS)
+        {
+            LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for texture\n");
+            return VK_NULL_HANDLE;
+        }
+        else
+        {
+            LOG_DEBUG_INFO("Vulkan: Allocated memory for texture\n");
+            return memory;
         }
     }
 }

@@ -9,7 +9,7 @@ int main()
 	EngineParams params = {};
 	params.pTitle = "Lambda Engine - Sandbox [Vulkan]";
 	params.GraphicsDeviceApi = GRAPHICS_API_VULKAN;
-	params.SampleCount = 1;
+	params.SampleCount = 8;
 	params.WindowWidth = 1920;
 	params.WindowHeight = 1080;
 	params.Fullscreen = false;

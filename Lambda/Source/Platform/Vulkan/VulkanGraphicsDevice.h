@@ -70,10 +70,11 @@ namespace Lambda
         virtual uint32 GetSwapChainWidth() const override final;
         virtual uint32 GetSwapChainHeight() const override final;
     
-        VkPhysicalDevice GetAdapter() const;
-        QueueFamilyIndices GetQueueFamilyIndices() const;
+        VkDeviceMemory AllocateImage(VkImage image, VkMemoryPropertyFlags properties) const;
         
         void SetVulkanObjectName(VkObjectType type, uint64 objectHandle, const std::string& name);
+        VkPhysicalDevice GetPhysicalDevice() const;
+        QueueFamilyIndices GetQueueFamilyIndices() const;
         
     private:
         void Init(IWindow* pWindow, const GraphicsDeviceDesc& desc);
@@ -111,7 +112,7 @@ namespace Lambda
 		DeviceSettings m_DeviceSettings;
         QueueFamilyIndices m_FamiliyIndices;
         
-        VkPhysicalDevice m_Adapter;
+        VkPhysicalDevice m_PhysicalDevice;
         VkPhysicalDeviceProperties m_AdapterProperties;
         
         VkSurfaceKHR m_Surface;
@@ -140,9 +141,9 @@ namespace Lambda
     };
     
 
-    inline VkPhysicalDevice VulkanGraphicsDevice::GetAdapter() const
+    inline VkPhysicalDevice VulkanGraphicsDevice::GetPhysicalDevice() const
     {
-        return m_Adapter;
+        return m_PhysicalDevice;
     }
     
     
@@ -162,6 +163,6 @@ namespace Lambda
     inline VkPhysicalDevice VulkanGraphicsDevice::GetCurrentAdapter()
     {
         assert(IGraphicsDevice::GetInstance() != nullptr);
-        return reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance())->m_Adapter;
+        return reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance())->m_PhysicalDevice;
     }
 }

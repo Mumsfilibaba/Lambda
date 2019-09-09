@@ -77,29 +77,15 @@ namespace Lambda
 				desc.SampleCount = GetEngineParams().SampleCount;
 				desc.NumRenderTargets = 1;
 				desc.RenderTargets[0].Format = pDevice->GetBackBufferFormat();
-				desc.RenderTargets[0].LoadOperation = LOAD_OP_CLEAR;
-				desc.RenderTargets[0].StoreOperation = STORE_OP_STORE;
-				if (desc.SampleCount > 1)
-				{
-					desc.RenderTargets[0].FinalState = RESOURCE_STATE_RENDERTARGET;
-					
-					desc.NumResolveTargets = 1;
-					desc.ResolveTargets[0].Format = pDevice->GetBackBufferFormat();
-					desc.ResolveTargets[0].LoadOperation = LOAD_OP_UNKNOWN;
-					desc.ResolveTargets[0].StoreOperation = STORE_OP_STORE;
-					desc.ResolveTargets[0].FinalState = RESOURCE_STATE_RENDERTARGET_PRESENT;
-				}
-				else
-				{
-					desc.NumResolveTargets = 0;
-					desc.RenderTargets[0].FinalState = RESOURCE_STATE_RENDERTARGET_PRESENT;
-				}
-
+                desc.RenderTargets[0].Flags = RENDER_PASS_ATTACHMENT_FLAG_RESOLVE;
+                desc.RenderTargets[0].LoadOperation = LOAD_OP_CLEAR;
+                desc.RenderTargets[0].StoreOperation = STORE_OP_STORE;
+                desc.RenderTargets[0].FinalState = RESOURCE_STATE_RENDERTARGET_PRESENT;
 				desc.DepthStencil.Format = depthFormat;
-				desc.DepthStencil.LoadOperation = LOAD_OP_CLEAR;
-				desc.DepthStencil.StoreOperation = STORE_OP_UNKNOWN;
-				desc.DepthStencil.FinalState = RESOURCE_STATE_DEPTH_STENCIL;
-
+                desc.DepthStencil.Flags = 0;
+                desc.DepthStencil.LoadOperation = LOAD_OP_CLEAR;
+                desc.DepthStencil.StoreOperation = STORE_OP_UNKNOWN;
+                desc.DepthStencil.FinalState = RESOURCE_STATE_DEPTH_STENCIL;
 				pDevice->CreateRenderPass(&m_pRenderPass, desc);
 			}
 
@@ -252,10 +238,12 @@ namespace Lambda
 
             //Create samplerstate
             {
+                TextureDesc textureDesc = m_pTexture->GetDesc();
+                
                 SamplerStateDesc desc = {};
                 desc.AdressMode = SAMPLER_ADDRESS_MODE_REPEAT;
 				desc.MinMipLOD = 0.0f;
-				desc.MaxMipLOD = m_pTexture->GetMipLevels();
+				desc.MaxMipLOD = textureDesc.MipLevels;
 				desc.MipLODBias = 0.0f;
                 
                 pDevice->CreateSamplerState(&m_pSamplerState, desc);

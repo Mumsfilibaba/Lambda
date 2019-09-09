@@ -6,13 +6,21 @@ namespace Lambda
 {
 	class ITexture;
 
+    
+    enum RenderPassAttachmentFlags : uint32
+    {
+        RENDER_PASS_ATTACHMENT_FLAG_NONE = 0,
+        RENDER_PASS_ATTACHMENT_FLAG_RESOLVE = (1 << 0),
+    };
+    
 
 	struct RenderPassAttachmentDesc
 	{
 		ResourceFormat Format = FORMAT_UNKNOWN;
-		LoadOp LoadOperation = LOAD_OP_UNKNOWN;
-		StoreOp	StoreOperation = STORE_OP_UNKNOWN;
-		ResourceState FinalState = RESOURCE_STATE_UNKNOWN;
+        uint32 Flags = RENDER_PASS_ATTACHMENT_FLAG_NONE;
+        LoadOp LoadOperation = LOAD_OP_UNKNOWN;
+        StoreOp    StoreOperation = STORE_OP_UNKNOWN;
+        ResourceState FinalState = RESOURCE_STATE_UNKNOWN;
 	};
 
 
@@ -20,8 +28,6 @@ namespace Lambda
 	{
 		RenderPassAttachmentDesc RenderTargets[LAMBDA_MAX_RENDERTARGET_COUNT];
 		uint32 NumRenderTargets = 0;
-		RenderPassAttachmentDesc ResolveTargets[LAMBDA_MAX_RENDERTARGET_COUNT + 1];
-		uint32 NumResolveTargets = 0;
 		RenderPassAttachmentDesc DepthStencil;
 		uint32 SampleCount = 1;
 	};

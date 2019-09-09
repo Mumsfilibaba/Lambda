@@ -71,7 +71,7 @@ namespace Lambda
             m_Device = device;
             
             //Init upload buffers
-            VkPhysicalDevice adapter = reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance())->GetAdapter();
+            VkPhysicalDevice adapter = reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance())->GetPhysicalDevice();
             if (!m_BufferUpload.Init(device, adapter, MB(128))) { return; }
             if (!m_TextureUpload.Init(device, adapter, MB(128))) { return; }
         }
@@ -222,8 +222,9 @@ namespace Lambda
     
     
     void VulkanCommandList::TransitionTexture(const ITexture* pTexture, ResourceState state)
-    {        
+    {
         const VulkanTexture* pVkTexture = reinterpret_cast<const VulkanTexture*>(pTexture);
+        TextureDesc textureDesc = pVkTexture->GetDesc();
         
         //Setup barrier
         VkImageMemoryBarrier barrier = {};
@@ -235,7 +236,7 @@ namespace Lambda
         barrier.image                           = pVkTexture->GetImage();
         barrier.subresourceRange.aspectMask     = pVkTexture->GetAspectFlags();
         barrier.subresourceRange.baseMipLevel   = 0;
-        barrier.subresourceRange.levelCount     = pVkTexture->GetMipLevels();
+        barrier.subresourceRange.levelCount     = textureDesc.MipLevels;
         barrier.subresourceRange.baseArrayLayer = 0;
         barrier.subresourceRange.layerCount     = 1;
         barrier.srcAccessMask                   = 0;
@@ -345,8 +346,9 @@ namespace Lambda
     
     void VulkanCommandList::UpdateTexture(ITexture* pResource, const ResourceData* pData, uint32 subresource)
     {
-        VulkanTexture* pTex = reinterpret_cast<VulkanTexture*>(pResource);
+        VulkanTexture* pVkResource = reinterpret_cast<VulkanTexture*>(pResource);
         TransitionTexture(pResource, RESOURCE_STATE_COPY_DEST);
+        TextureDesc textureDesc = pVkResource->GetDesc();
         
         //Get offset before allocating
         uint64 offset = m_TextureUpload.GetOffset();
@@ -360,12 +362,12 @@ namespace Lambda
         region.bufferOffset                     = offset;
         region.bufferRowLength                  = 0;
         region.bufferImageHeight                = 0;
-        region.imageSubresource.aspectMask      = pTex->GetAspectFlags();
+        region.imageSubresource.aspectMask      = pVkResource->GetAspectFlags();
         region.imageSubresource.mipLevel        = 0;
         region.imageSubresource.baseArrayLayer  = 0;
         region.imageSubresource.layerCount      = 1;
         region.imageOffset                      = { 0, 0, 0 };
-        region.imageExtent                      = { pResource->GetWidth(), pResource->GetHeight(), 1 };
+        region.imageExtent                      = { textureDesc.Width, textureDesc.Height, textureDesc.Depth };
         
         //Get native resources
         VkBuffer buffer = m_TextureUpload.GetBuffer();

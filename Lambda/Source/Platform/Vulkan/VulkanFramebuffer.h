@@ -24,6 +24,15 @@ namespace Lambda
         uint32 NumAttachmentViews;
         VkImageView AttachmentViews[(LAMBDA_MAX_RENDERTARGET_COUNT + 1) * 2];
     };
+    
+    
+    struct VulkanFramebufferCacheKeyHash
+    {
+        size_t operator()(const VulkanFramebufferCacheKey& key) const
+        {
+            return key.GetHash();
+        }
+    };
 
 
     class VulkanFramebufferCache final
@@ -36,6 +45,6 @@ namespace Lambda
         static void ReleaseAll(VkDevice device);
         
     private:
-        static std::unordered_map<VulkanFramebufferCacheKey, VkFramebuffer> s_Framebuffers;
+        static std::unordered_map<VulkanFramebufferCacheKey, VkFramebuffer, VulkanFramebufferCacheKeyHash> s_Framebuffers;
     };
 }

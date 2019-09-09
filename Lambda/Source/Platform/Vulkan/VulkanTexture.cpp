@@ -1,5 +1,6 @@
 #include "LambdaPch.h"
 #include "VulkanTexture.h"
+#include "VulkanGraphicsDevice.h"
 #include "VulkanFramebuffer.h"
 #include "VulkanConversions.inl"
 #include "VulkanUtilities.h"
@@ -19,7 +20,7 @@ namespace Lambda
     }
     
     
-    VulkanTexture::VulkanTexture(VkDevice device, VkPhysicalDevice adapter, const TextureDesc& desc)
+    VulkanTexture::VulkanTexture(const VulkanGraphicsDevice* pVkDevice,  const TextureDesc& desc)
         : m_Texture(VK_NULL_HANDLE),
         m_View(VK_NULL_HANDLE),
         m_DeviceMemory(VK_NULL_HANDLE),
@@ -28,7 +29,8 @@ namespace Lambda
         m_Desc(),
         m_IsOwner(false)
     {
-        Init(device, adapter, desc);
+        assert(pVkDevice != nullptr);
+        Init(pVkDevice, desc);
     }
     
     
@@ -83,7 +85,7 @@ namespace Lambda
     }
     
     
-    void VulkanTexture::Init(VkDevice device, VkPhysicalDevice adapter, const TextureDesc& desc)
+    void VulkanTexture::Init(const VulkanGraphicsDevice* pVkDevice, const TextureDesc& desc)
     {
         //Set miplevels
         uint32 mipLevels = desc.MipLevels;
@@ -152,6 +154,7 @@ namespace Lambda
         }
 
 
+        VkDevice device = reinterpret_cast<VkDevice>(pVkDevice->GetNativeHandle());
         if (vkCreateImage(device, &info, nullptr, &m_Texture) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create image\n");
@@ -170,34 +173,23 @@ namespace Lambda
             m_Format = info.format;
         }
         
-        VkMemoryRequirements memRequirements = {};
-        vkGetImageMemoryRequirements(device, m_Texture, &memRequirements);
         
         //Set memoryproperty based on resource usage
         VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
         if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
+        {
             properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-                
-        //Allocate memory
-        uint32 memoryType = FindMemoryType(adapter, memRequirements.memoryTypeBits, properties);
-        VkMemoryAllocateInfo allocInfo = {};
-        allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-        allocInfo.pNext = nullptr;
-        allocInfo.allocationSize = memRequirements.size;
-        allocInfo.memoryTypeIndex = memoryType;
+        }
         
-        if (vkAllocateMemory(device, &allocInfo, nullptr, &m_DeviceMemory) != VK_SUCCESS)
+        
+        //Allocate memory
+        m_DeviceMemory = pVkDevice->AllocateImage(m_Texture, properties);
+        if (m_DeviceMemory != VK_NULL_HANDLE)
         {
-            LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for texture\n");
-            return;
-        }
-        else
-        {
-            LOG_DEBUG_INFO("Vulkan: Allocated memory for texture\n");
-
             vkBindImageMemory(device, m_Texture, m_DeviceMemory, 0);
-            CreateImageView(device);
         }
+        
+        CreateImageView(device);
     }
     
     
@@ -237,24 +229,6 @@ namespace Lambda
 	TextureDesc VulkanTexture::GetDesc() const
     {
         return m_Desc;
-    }
-    
-    
-    uint32 VulkanTexture::GetMipLevels() const
-    {
-        return m_Desc.MipLevels;
-    }
-    
-    
-    uint32 VulkanTexture::GetWidth() const
-    {
-        return m_Desc.Width;
-    }
-    
-    
-    uint32 VulkanTexture::GetHeight() const
-    {
-        return m_Desc.Height;
     }
     
     

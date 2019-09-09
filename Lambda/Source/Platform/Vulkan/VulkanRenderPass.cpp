@@ -38,8 +38,9 @@ namespace Lambda
 
 			if (!pDepthStencil)
 			{
-				m_FramebufferExtent.width = ppRenderTargets[0]->GetWidth();
-				m_FramebufferExtent.height = ppRenderTargets[0]->GetHeight();
+                TextureDesc rtDesc = ppRenderTargets[0]->GetDesc();
+				m_FramebufferExtent.width = rtDesc.Width;
+				m_FramebufferExtent.height = rtDesc.Height;
 			}
 		}
 		if (pDepthStencil)
@@ -47,8 +48,9 @@ namespace Lambda
 			key.AttachmentViews[key.NumAttachmentViews] = reinterpret_cast<const VulkanTexture*>(pDepthStencil)->GetImageView();
 			key.NumAttachmentViews++;
 
-			m_FramebufferExtent.width = pDepthStencil->GetWidth();
-			m_FramebufferExtent.height = pDepthStencil->GetHeight();
+            TextureDesc dsDesc = pDepthStencil->GetDesc();
+			m_FramebufferExtent.width = dsDesc.Width;
+			m_FramebufferExtent.height = dsDesc.Height;
 		}
 		if (numResolveTargets > 0)
 		{
@@ -98,11 +100,12 @@ namespace Lambda
 		//Setup color attachments
 		std::vector<VkAttachmentReference> colorAttachentRefs;
 		std::vector<VkAttachmentDescription> attachments;
+        std::vector<VkAttachmentDescription> resolveAttachments;
 
-		//Number of samples (MSAA)
-		m_SampleCount = ConvertSampleCount(desc.SampleCount);
+        //Number of samples (MSAA)
+        m_SampleCount = ConvertSampleCount(desc.SampleCount);
 
-		//Setup colorattachments
+        //Setup colorattachments
 		for (uint32 i = 0; i < desc.NumRenderTargets; i++)
 		{
 			//Setup attachments
@@ -116,12 +119,25 @@ namespace Lambda
 			colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 			colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 			colorAttachment.finalLayout = ConvertResourceStateToImageLayout(desc.RenderTargets[i].FinalState);
-			attachments.push_back(colorAttachment);
+            
+            if (desc.RenderTargets[i].Flags & RENDER_PASS_ATTACHMENT_FLAG_RESOLVE)
+            {
+                VkAttachmentDescription resolveAttachment = colorAttachment;
+                resolveAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+                resolveAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+                if (desc.RenderTargets[i].FinalState == RESOURCE_STATE_RENDERTARGET_PRESENT)
+                {
+                    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                    resolveAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+                }
+                resolveAttachments.emplace_back(resolveAttachment);
+            }
+            attachments.emplace_back(colorAttachment);
 
 			VkAttachmentReference colorAttachmentRef = {};
 			colorAttachmentRef.attachment = i;
 			colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-			colorAttachentRefs.push_back(colorAttachmentRef);
+			colorAttachentRefs.emplace_back(colorAttachmentRef);
 		}
 
 
@@ -155,8 +171,16 @@ namespace Lambda
 			depthAttachment.stencilStoreOp = depthAttachment.storeOp;
 			depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 			depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-			attachments.push_back(depthAttachment);
 
+            if (desc.DepthStencil.Flags & RENDER_PASS_ATTACHMENT_FLAG_RESOLVE)
+            {
+                VkAttachmentDescription resolveAttachment = depthAttachment;
+                resolveAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+                resolveAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+                resolveAttachments.emplace_back(resolveAttachment);
+            }
+            attachments.emplace_back(depthAttachment);
+            
 			depthAttachmentRef.attachment = uint32(attachments.size() - 1);
 			depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 			subpass.pDepthStencilAttachment = &depthAttachmentRef;
@@ -165,20 +189,9 @@ namespace Lambda
 
 		//Setup ResolveTargets
 		std::vector<VkAttachmentReference> resolveRefs;
-		for (uint32 i = 0; i < desc.NumResolveTargets; i++)
+        for (auto& attachment : resolveAttachments)
 		{
-			//Setup attachments
-			VkAttachmentDescription resolveAttachment = {};
-			resolveAttachment.flags = 0;
-			resolveAttachment.format = ConvertResourceFormat(desc.ResolveTargets[i].Format);
-			resolveAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-			resolveAttachment.loadOp = ConvertLoadOp(desc.ResolveTargets[i].LoadOperation);
-			resolveAttachment.storeOp = ConvertStoreOp(desc.ResolveTargets[i].StoreOperation);
-			resolveAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-			resolveAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-			resolveAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			resolveAttachment.finalLayout = ConvertResourceStateToImageLayout(desc.ResolveTargets[i].FinalState);
-			attachments.push_back(resolveAttachment);
+            attachments.emplace_back(attachment);
 
 			VkAttachmentReference resolveAttachmentRef = {};
 			resolveAttachmentRef.attachment = uint32(attachments.size() - 1);

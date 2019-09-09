@@ -5,6 +5,9 @@
 
 namespace Lambda
 {
+    class VulkanGraphicsDevice;
+    
+    
     struct VulkanTextureDesc
     {
         VkImage Image                   = VK_NULL_HANDLE;
@@ -23,21 +26,16 @@ namespace Lambda
     class VulkanTexture final : public ITexture
     {
         friend class VulkanGraphicsDevice;
-        friend class VulkanCommandList;
-        friend class VulkanFramebufferCache;
         
     public:
         LAMBDA_NO_COPY(VulkanTexture);
 
         VulkanTexture(VkDevice device, const VulkanTextureDesc& desc);
-        VulkanTexture(VkDevice device, VkPhysicalDevice adapter, const TextureDesc& desc);
+        VulkanTexture(const VulkanGraphicsDevice* pVkDevice, const TextureDesc& desc);
         VulkanTexture() = default;
         
         virtual void* GetNativeHandle() const override final;
         virtual TextureDesc GetDesc() const override final;
-        virtual uint32 GetMipLevels() const override final;
-        virtual uint32 GetWidth() const override final;
-        virtual uint32 GetHeight() const override final;
         
         VkImageAspectFlags GetAspectFlags() const;
         VkImage GetImage() const;
@@ -50,7 +48,7 @@ namespace Lambda
         void Destroy(VkDevice device);
         
     private:
-        void Init(VkDevice device, VkPhysicalDevice adapter, const TextureDesc& desc);
+        void Init(const VulkanGraphicsDevice* pVkDevice, const TextureDesc& desc);
         void InitFromResource(VkDevice device, const VulkanTextureDesc& desc);
         void CreateImageView(VkDevice device);
         

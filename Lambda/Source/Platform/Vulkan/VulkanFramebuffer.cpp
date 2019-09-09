@@ -3,33 +3,19 @@
 #include "VulkanGraphicsDevice.h"
 #include "VulkanTexture.h"
 
-
-template<typename T>
-inline void HashCombine(size_t& hash, const T& value)
-{
-	std::hash<T> hasher;
-	hash ^= hasher(value) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-}
-
-
-namespace std
-{
-	template <>
-	struct hash<Lambda::VulkanFramebufferCacheKey>
-	{
-		size_t operator()(const Lambda::VulkanFramebufferCacheKey& key) const
-		{
-			return key.GetHash();
-		}
-	};
-}
-
-
 namespace Lambda
 {
-	std::unordered_map<VulkanFramebufferCacheKey, VkFramebuffer> VulkanFramebufferCache::s_Framebuffers = std::unordered_map<VulkanFramebufferCacheKey, VkFramebuffer>();
+	std::unordered_map<VulkanFramebufferCacheKey, VkFramebuffer, VulkanFramebufferCacheKeyHash> VulkanFramebufferCache::s_Framebuffers = std::unordered_map<VulkanFramebufferCacheKey, VkFramebuffer, VulkanFramebufferCacheKeyHash>();
 
 
+    template<typename T>
+    inline void HashCombine(size_t& hash, const T& value)
+    {
+        std::hash<T> hasher;
+        hash ^= hasher(value) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+    }
+    
+    
 	VulkanFramebufferCacheKey::VulkanFramebufferCacheKey()
 		: Hash(0),
 		RenderPass(VK_NULL_HANDLE),
