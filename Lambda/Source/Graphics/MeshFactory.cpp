@@ -92,14 +92,17 @@ namespace Lambda
             else
             {
                 LOG_DEBUG_ERROR("File '%s' does not have any meshes\n", filename.c_str());
+				return data;
             }
         }
         else
         {
 			const char* pErrorMessage = importer.GetErrorString();
             LOG_DEBUG_ERROR("Failed to load file '%s'. Message: %s\n", filename.c_str(), pErrorMessage);
+			return data;
         }
         
+		LOG_SYSTEM_PRINT("Loaded mesh with %d vertices and %d indices. Triangles: %d\n", data.Vertices.size(), data.Indices.size(), data.Indices.size() / 3);
 		return data;
 	}
 
