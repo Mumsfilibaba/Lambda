@@ -6,16 +6,19 @@
 
 namespace Lambda
 {
+    class VulkanGraphicsDevice;
+    
+    
     class VulkanUploadBuffer final
     {
     public:
         LAMBDA_NO_COPY(VulkanUploadBuffer);
         
         VulkanUploadBuffer();
-        VulkanUploadBuffer(VkDevice device, VkPhysicalDevice adapter, uint64 sizeInBytes);
+        VulkanUploadBuffer(const VulkanGraphicsDevice* pVkDevice, uint64 sizeInBytes);
         ~VulkanUploadBuffer() = default;
         
-        bool Init(VkDevice device, VkPhysicalDevice adapter, uint64 sizeInBytes);
+        bool Init(const VulkanGraphicsDevice* pVkDevice, uint64 sizeInBytes);
         void* Allocate(uint64 bytesToAllocate);
         void Reset();
         void Destroy(VkDevice device);

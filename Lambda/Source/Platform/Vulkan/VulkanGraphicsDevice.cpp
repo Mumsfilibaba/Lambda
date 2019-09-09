@@ -840,7 +840,7 @@ namespace Lambda
     void VulkanGraphicsDevice::CreateCommandList(ICommandList** ppList, CommandListType type) const
     {
         assert(ppList != nullptr);
-        (*ppList) = DBG_NEW VulkanCommandList(m_Device, type);
+        (*ppList) = DBG_NEW VulkanCommandList(this, type);
     }
     
     
@@ -859,7 +859,9 @@ namespace Lambda
                 //Upload directly to buffer if it is dynamic
                 void* pData = nullptr;
                 pBuffer->Map(&pData);
+                
                 memcpy(pData, pInitalData->pData, pInitalData->SizeInBytes);
+                
                 pBuffer->Unmap();
             }
             else if (desc.Usage == RESOURCE_USAGE_DEFAULT)
@@ -1308,6 +1310,33 @@ namespace Lambda
     {
         VkMemoryRequirements memRequirements = {};
         vkGetImageMemoryRequirements(m_Device, image, &memRequirements);
+        
+        //Allocate memory
+        uint32 memoryType = FindMemoryType(m_PhysicalDevice, memRequirements.memoryTypeBits, properties);
+        VkMemoryAllocateInfo allocInfo = {};
+        allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        allocInfo.pNext = nullptr;
+        allocInfo.allocationSize = memRequirements.size;
+        allocInfo.memoryTypeIndex = memoryType;
+        
+        VkDeviceMemory memory = VK_NULL_HANDLE;
+        if (vkAllocateMemory(m_Device, &allocInfo, nullptr, &memory) != VK_SUCCESS)
+        {
+            LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for texture\n");
+            return VK_NULL_HANDLE;
+        }
+        else
+        {
+            LOG_DEBUG_INFO("Vulkan: Allocated memory for texture\n");
+            return memory;
+        }
+    }
+    
+    
+    VkDeviceMemory VulkanGraphicsDevice::AllocateBuffer(VkBuffer buffer, VkMemoryPropertyFlags properties) const
+    {
+        VkMemoryRequirements memRequirements = {};
+        vkGetBufferMemoryRequirements(m_Device, buffer, &memRequirements);
         
         //Allocate memory
         uint32 memoryType = FindMemoryType(m_PhysicalDevice, memRequirements.memoryTypeBits, properties);

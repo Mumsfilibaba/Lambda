@@ -1,5 +1,6 @@
 #include "LambdaPch.h"
 #include "VulkanUploadBuffer.h"
+#include "VulkanGraphicsDevice.h"
 #include "VulkanUtilities.h"
 
 namespace Lambda
@@ -14,22 +15,20 @@ namespace Lambda
     }
     
     
-    VulkanUploadBuffer::VulkanUploadBuffer(VkDevice device, VkPhysicalDevice adapter, uint64 sizeInBytes)
+    VulkanUploadBuffer::VulkanUploadBuffer(const VulkanGraphicsDevice* pVkDevice, uint64 sizeInBytes)
         : m_pStart(nullptr),
         m_pCurrent(nullptr),
         m_Buffer(VK_NULL_HANDLE),
         m_Memory(VK_NULL_HANDLE),
         m_SizeInBytes(0)
     {
-        Init(device, adapter, sizeInBytes);
+        assert(pVkDevice != nullptr);
+        Init(pVkDevice, sizeInBytes);
     }
 
     
-    bool VulkanUploadBuffer::Init(VkDevice device, VkPhysicalDevice adapter, uint64 sizeInBytes)
+    bool VulkanUploadBuffer::Init(const VulkanGraphicsDevice* pVkDevice, uint64 sizeInBytes)
     {
-        assert(device != VK_NULL_HANDLE);
-        assert(adapter != VK_NULL_HANDLE);
-        
 		//Create buffer
         VkBufferCreateInfo info = {};
         info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -41,6 +40,7 @@ namespace Lambda
         info.size = sizeInBytes;
         info.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
         
+        VkDevice device = reinterpret_cast<VkDevice>(pVkDevice->GetNativeHandle());
         if (vkCreateBuffer(device, &info, nullptr, &m_Buffer) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create buffer for UploadBuffer\n");
@@ -52,23 +52,10 @@ namespace Lambda
             m_SizeInBytes = sizeInBytes;
         }
         
-        VkMemoryRequirements memReq = {};
-        vkGetBufferMemoryRequirements(device, m_Buffer, &memReq);
         
-		//Allocate memory
-        uint32 memoryType = FindMemoryType(adapter, memReq.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-        VkMemoryAllocateInfo allocInfo = {};
-        allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-        allocInfo.pNext = nullptr;
-        allocInfo.memoryTypeIndex = memoryType;
-        allocInfo.allocationSize = memReq.size;
-
-        if (vkAllocateMemory(device, &allocInfo, nullptr, &m_Memory) != VK_SUCCESS)
-        {
-            LOG_DEBUG_ERROR("Vulkan: Failed to allocate UploadBuffer\n");
-            return false;
-        }
-        else
+        //Allocate memory
+        m_Memory = pVkDevice->AllocateBuffer(m_Buffer, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        if (m_Memory != VK_NULL_HANDLE)
         {
             LOG_DEBUG_INFO("Vulkan: Allocated '%u' bytes for UploadBuffer\n", m_SizeInBytes);
             
@@ -78,6 +65,11 @@ namespace Lambda
             m_pCurrent = m_pStart;
             
             return true;
+        }
+        else
+        {
+            LOG_DEBUG_ERROR("Vulkan: Failed to allocate UploadBuffer\n");
+            return false;
         }
     }
     

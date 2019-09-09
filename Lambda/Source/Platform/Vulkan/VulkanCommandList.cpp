@@ -12,26 +12,23 @@
 
 namespace Lambda
 {
-    VulkanCommandList::VulkanCommandList(VkDevice device, CommandListType type)
+    VulkanCommandList::VulkanCommandList(const VulkanGraphicsDevice* pVkDevice, CommandListType type)
         : m_Device(VK_NULL_HANDLE),
         m_CommandPool(VK_NULL_HANDLE),
         m_CommandBuffer(VK_NULL_HANDLE),
         m_pResourceState(nullptr),
-        m_BoundRenderPass(VK_NULL_HANDLE),
-        m_BoundFrameBuffer(VK_NULL_HANDLE),
+        m_pRenderPass(nullptr),
         m_Type(COMMAND_LIST_TYPE_UNKNOWN)
     {
-		assert(device != VK_NULL_HANDLE);
-        Init(device, type);
+		assert(pVkDevice != VK_NULL_HANDLE);
+        Init(pVkDevice, type);
     }
 
     
-    void VulkanCommandList::Init(VkDevice device, CommandListType type)
+    void VulkanCommandList::Init(const VulkanGraphicsDevice* pVkDevice, CommandListType type)
     {
-        assert(IGraphicsDevice::GetInstance() != nullptr);
-        
         //Get queuefamiliy indices
-        QueueFamilyIndices familyIndices = reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance())->GetQueueFamilyIndices();
+        QueueFamilyIndices familyIndices = pVkDevice->GetQueueFamilyIndices();
         
 		//Create commandpool
         VkCommandPoolCreateInfo poolInfo = {};
@@ -40,10 +37,15 @@ namespace Lambda
         poolInfo.pNext = nullptr;
         
         if (type == COMMAND_LIST_TYPE_GRAPHICS)
+        {
             poolInfo.queueFamilyIndex = familyIndices.GraphicsFamily;
+        }
         else
+        {
             poolInfo.queueFamilyIndex = uint32(-1);
+        }
         
+        VkDevice device = reinterpret_cast<VkDevice>(pVkDevice->GetNativeHandle());
         if (vkCreateCommandPool(device, &poolInfo, nullptr, &m_CommandPool) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create commandpool\n");
@@ -64,16 +66,25 @@ namespace Lambda
         if (vkAllocateCommandBuffers(device, &allocInfo, &m_CommandBuffer) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create commandbuffer\n");
+            return;
         }
         else
         {
             LOG_DEBUG_INFO("Vulkan: Created commandbuffer\n");
             m_Device = device;
-            
-            //Init upload buffers
-            VkPhysicalDevice adapter = reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance())->GetPhysicalDevice();
-            if (!m_BufferUpload.Init(device, adapter, MB(128))) { return; }
-            if (!m_TextureUpload.Init(device, adapter, MB(128))) { return; }
+        }
+
+
+        //Init upload buffers
+        if (!m_BufferUpload.Init(pVkDevice, MB(128)))
+        {
+            LOG_DEBUG_ERROR("Vulkan: Failed to create Buffer-UploadBuffer\n");
+            return;
+        }
+        if (!m_TextureUpload.Init(pVkDevice, MB(128)))
+        {
+            LOG_DEBUG_ERROR("Vulkan: Failed to create Texture-UploadBuffer\n");
+            return;
         }
     }
     

@@ -7,7 +7,9 @@
 namespace Lambda
 {
     class VulkanTexture;
-	class VulkanResourceState;
+    class VulkanRenderPass;
+    class VulkanResourceState;
+    class VulkanGraphicsDevice;
 
 
     class VulkanCommandList final : public ICommandList
@@ -17,7 +19,7 @@ namespace Lambda
     public:
         LAMBDA_NO_COPY(VulkanCommandList);
         
-        VulkanCommandList(VkDevice device, CommandListType type);
+        VulkanCommandList(const VulkanGraphicsDevice* pVkDevice, CommandListType type);
         ~VulkanCommandList() = default;
         
         virtual void ClearRenderTarget(ITexture* pRenderTarget, float color[4]) override final;
@@ -57,7 +59,7 @@ namespace Lambda
         void Destroy(VkDevice device);
         
     private:
-        void Init(VkDevice device, CommandListType type);
+        void Init(const VulkanGraphicsDevice* pVkDevice, CommandListType type);
 
     private:
         VkDevice m_Device;
@@ -68,9 +70,7 @@ namespace Lambda
         VulkanUploadBuffer m_TextureUpload;
         
 		VulkanResourceState* m_pResourceState;
-
-        VkRenderPass m_BoundRenderPass;
-        VkFramebuffer m_BoundFrameBuffer;
+        VulkanRenderPass* m_pRenderPass;
         
         CommandListType m_Type;
         std::string m_Name;
