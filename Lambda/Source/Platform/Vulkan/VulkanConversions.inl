@@ -1,3 +1,4 @@
+#pragma once
 #include "Types.h"
 
 namespace Lambda
@@ -159,6 +160,7 @@ namespace Lambda
             case RESOURCE_STATE_RENDERTARGET_PRESENT:   return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
             case RESORUCE_STATE_DEPTH_STENCIL_CLEAR:    return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
             case RESOURCE_STATE_COPY_DEST:              return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            case RESOURCE_STATE_COPY_SRC:               return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
             case RESOURCE_STATE_UNKNOWN:
             default: return VK_IMAGE_LAYOUT_UNDEFINED;
         }

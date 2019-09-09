@@ -2,86 +2,68 @@
 #include "VulkanTexture.h"
 #include "VulkanGraphicsDevice.h"
 #include "VulkanFramebuffer.h"
-#include "VulkanConversions.inl"
 #include "VulkanUtilities.h"
+#include "VulkanConversions.inl"
 
 namespace Lambda
 {
-    VulkanTexture::VulkanTexture(VkDevice device, const VulkanTextureDesc& desc)
-        : m_Texture(VK_NULL_HANDLE),
+    VulkanTexture::VulkanTexture(const VulkanGraphicsDevice* pVkDevice, const TextureDesc& desc)
+        : m_Image(VK_NULL_HANDLE),
         m_View(VK_NULL_HANDLE),
         m_DeviceMemory(VK_NULL_HANDLE),
         m_AspectFlags(0),
-        m_CurrentResourceState(VK_IMAGE_LAYOUT_UNDEFINED),
+        m_IsOwner(false),
         m_Desc(),
-        m_IsOwner(false)
-    {
-        InitFromResource(device, desc);
-    }
-    
-    
-    VulkanTexture::VulkanTexture(const VulkanGraphicsDevice* pVkDevice,  const TextureDesc& desc)
-        : m_Texture(VK_NULL_HANDLE),
-        m_View(VK_NULL_HANDLE),
-        m_DeviceMemory(VK_NULL_HANDLE),
-        m_AspectFlags(0),
-        m_CurrentResourceState(VK_IMAGE_LAYOUT_UNDEFINED),
-        m_Desc(),
-        m_IsOwner(false)
+        m_CurrentResourceState(VK_IMAGE_LAYOUT_UNDEFINED)
     {
         assert(pVkDevice != nullptr);
         Init(pVkDevice, desc);
     }
     
     
-    void VulkanTexture::InitFromResource(VkDevice device, const VulkanTextureDesc& desc)
+    VulkanTexture::VulkanTexture(const VulkanGraphicsDevice* pVkDevice, VkImage image, const TextureDesc& desc)
+        : m_Image(VK_NULL_HANDLE),
+        m_View(VK_NULL_HANDLE),
+        m_DeviceMemory(VK_NULL_HANDLE),
+        m_AspectFlags(0),
+        m_IsOwner(false),
+        m_Desc(),
+        m_CurrentResourceState(VK_IMAGE_LAYOUT_UNDEFINED)
     {
-        m_Texture = desc.Image;
-
-        m_Desc.Width        = desc.Extent.width;
-        m_Desc.Height       = desc.Extent.height;
-        m_Desc.MipLevels    = desc.MipLevels;
-        m_Desc.Format       = ConvertVkFormat(desc.Format);
-        m_Desc.ArraySize    = desc.ArraySize;
-        
-        //Should the depth or the color value be used?
-        if (desc.Depth)
-        {
-            m_Desc.ClearValue.Depth = desc.ClearValue.depthStencil.depth;
-            m_Desc.ClearValue.Stencil = uint8(desc.ClearValue.depthStencil.stencil);
-        }
-        else
-        {
-            memcpy(m_Desc.ClearValue.Color, desc.ClearValue.color.float32, sizeof(float) * 4);
-        }
-        
-
-        m_AspectFlags = desc.AspectFlags;
-        m_Desc.Usage = RESOURCE_USAGE_DEFAULT;
-        
-        if (desc.UsageFlags | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
-            m_Desc.Flags |= TEXTURE_FLAGS_RENDER_TARGET;
-        if (desc.UsageFlags | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
-            m_Desc.Flags |= TEXTURE_FLAGS_DEPTH_STENCIL;
-        if (desc.UsageFlags | VK_IMAGE_USAGE_SAMPLED_BIT)
-            m_Desc.Flags |= TEXTURE_FLAGS_SHADER_RESOURCE;
-
-        if (desc.Samples == VK_SAMPLE_COUNT_1_BIT)
-            m_Desc.SampleCount = 1;
-        if (desc.Samples == VK_SAMPLE_COUNT_2_BIT)
-            m_Desc.SampleCount = 2;
-        if (desc.Samples == VK_SAMPLE_COUNT_4_BIT)
-            m_Desc.SampleCount = 4;
-        if (desc.Samples == VK_SAMPLE_COUNT_8_BIT)
-            m_Desc.SampleCount = 8;
-        if (desc.Samples == VK_SAMPLE_COUNT_16_BIT)
-            m_Desc.SampleCount = 16;
-        
-        //We are not owners of this image
+        assert(pVkDevice != nullptr);
+        assert(image != VK_NULL_HANDLE);
+        InitFromResource(pVkDevice, image, desc);
+    }
+    
+    
+    void VulkanTexture::InitFromResource(const VulkanGraphicsDevice* pVkDevice, VkImage image, const TextureDesc& desc)
+    {
+        //Init data
+        m_Desc = desc;
+        m_Image = image;
         m_IsOwner = false;
         
-        m_Format = desc.Format;
+        //Set aspectflags
+        if (desc.Flags & TEXTURE_FLAGS_SHADER_RESOURCE || desc.Flags & TEXTURE_FLAGS_RENDER_TARGET)
+        {
+            m_AspectFlags |= VK_IMAGE_ASPECT_COLOR_BIT;
+        }
+        if (desc.Flags & TEXTURE_FLAGS_DEPTH_STENCIL)
+        {
+            if (desc.Format == FORMAT_D24_UNORM_S8_UINT || desc.Format == FORMAT_D32_FLOAT_S8X24_UINT)
+            {
+                m_AspectFlags |= VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+            }
+            else
+            {
+                m_AspectFlags |= VK_IMAGE_ASPECT_DEPTH_BIT;
+            }
+        }
+        
+        //Create view
+        VkDevice device = reinterpret_cast<VkDevice>(pVkDevice->GetNativeHandle());
         CreateImageView(device);
+        
     }
     
     
@@ -155,7 +137,7 @@ namespace Lambda
 
 
         VkDevice device = reinterpret_cast<VkDevice>(pVkDevice->GetNativeHandle());
-        if (vkCreateImage(device, &info, nullptr, &m_Texture) != VK_SUCCESS)
+        if (vkCreateImage(device, &info, nullptr, &m_Image) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create image\n");
             return;
@@ -163,14 +145,12 @@ namespace Lambda
         else
         {
 
-            LOG_DEBUG_INFO("Vulkan: Created image. w=%u, h=%u, format=%s, adress=%p\n", desc.Width, desc.Height, VkFormatToString(info.format), m_Texture);
-            
-            //Set that we have created the texture and not external memory
-            m_IsOwner = true;
-            
+            LOG_DEBUG_INFO("Vulkan: Created image. w=%u, h=%u, format=%s, adress=%p\n", desc.Width, desc.Height, VkFormatToString(info.format), m_Image);
             m_Desc = desc;
             m_Desc.MipLevels = mipLevels;
-            m_Format = info.format;
+
+            //Set that we have created the texture and not external memory
+            m_IsOwner = true;
         }
         
         
@@ -183,12 +163,14 @@ namespace Lambda
         
         
         //Allocate memory
-        m_DeviceMemory = pVkDevice->AllocateImage(m_Texture, properties);
+        m_DeviceMemory = pVkDevice->AllocateImage(m_Image, properties);
         if (m_DeviceMemory != VK_NULL_HANDLE)
         {
-            vkBindImageMemory(device, m_Texture, m_DeviceMemory, 0);
+            vkBindImageMemory(device, m_Image, m_DeviceMemory, 0);
         }
         
+        
+        //Create the view
         CreateImageView(device);
     }
     
@@ -200,9 +182,14 @@ namespace Lambda
         viewInfo.sType      = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         viewInfo.pNext      = nullptr;
         viewInfo.flags      = 0;
-        viewInfo.image      = m_Texture;
-        viewInfo.viewType   = VK_IMAGE_VIEW_TYPE_2D;
-        viewInfo.format     = ConvertResourceFormat(m_Desc.Format);
+        viewInfo.image      = m_Image;
+        
+        if (m_Desc.Type == TEXTURE_TYPE_2D)
+        {
+            viewInfo.viewType   = VK_IMAGE_VIEW_TYPE_2D;
+        }
+        
+        viewInfo.format     = GetFormat();
         viewInfo.subresourceRange.aspectMask        = m_AspectFlags;
         viewInfo.subresourceRange.baseMipLevel      = 0;
         viewInfo.subresourceRange.levelCount        = m_Desc.MipLevels;
@@ -222,7 +209,7 @@ namespace Lambda
     
     void* VulkanTexture::GetNativeHandle() const
     {
-        return (void*)m_Texture;
+        return reinterpret_cast<void*>(m_Image);
     }
     
     
@@ -250,10 +237,10 @@ namespace Lambda
         //Destroy if texture was created from init
         if (m_IsOwner)
         {
-            if (m_Texture != VK_NULL_HANDLE)
+            if (m_Image != VK_NULL_HANDLE)
             {
-                vkDestroyImage(device, m_Texture, nullptr);
-                m_Texture = VK_NULL_HANDLE;
+                vkDestroyImage(device, m_Image, nullptr);
+                m_Image = VK_NULL_HANDLE;
             }
             if (m_DeviceMemory != VK_NULL_HANDLE)
             {

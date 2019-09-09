@@ -347,7 +347,7 @@ namespace Lambda
 		
 
 		//Choose an physical device (GPU) 
-		m_PhysicalDevice = QueryAdapter();
+		m_PhysicalDevice = QueryPhyscialDevice();
 		if (m_PhysicalDevice == VK_NULL_HANDLE)
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to find a suitable GPU\n");
@@ -535,8 +535,7 @@ namespace Lambda
         swapChainInfo.Format.colorSpace  = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
         swapChainInfo.Extent             = { pWindow->GetWidth(), pWindow->GetHeight() };
         swapChainInfo.ImageCount         = FRAMES_AHEAD;
-        
-        m_pSwapChain = DBG_NEW VulkanSwapChain(m_Device, swapChainInfo);
+        m_pSwapChain = DBG_NEW VulkanSwapChain(this, swapChainInfo);
 
 
 		//If we are using MSAA we need to create a seperate texture
@@ -579,7 +578,7 @@ namespace Lambda
     }
     
     
-    VkPhysicalDevice VulkanGraphicsDevice::QueryAdapter()
+    VkPhysicalDevice VulkanGraphicsDevice::QueryPhyscialDevice()
     {
         //Enumerate all adapters
         uint32 adapterCount = 0;
@@ -606,7 +605,7 @@ namespace Lambda
         //Find a suitable graphics card
         for (const auto& adapter : adapters)
         {
-            if (AdapterIsSuitable(adapter))
+            if (PhysicalDeviceIsSuitable(adapter))
             {
                 return adapter;
             }
@@ -616,7 +615,7 @@ namespace Lambda
     }
     
     
-    bool VulkanGraphicsDevice::AdapterIsSuitable(VkPhysicalDevice adapter)
+    bool VulkanGraphicsDevice::PhysicalDeviceIsSuitable(VkPhysicalDevice adapter)
     {
         VkPhysicalDeviceProperties adapterProperties;
         vkGetPhysicalDeviceProperties(adapter, &adapterProperties);
@@ -772,9 +771,10 @@ namespace Lambda
     bool VulkanGraphicsDevice::CreateDepthStencil()
     {
         TextureDesc depthBufferDesc = {};
-		depthBufferDesc.Type = TEXTURE_TYPE_2D;
-        depthBufferDesc.Usage = RESOURCE_USAGE_DEFAULT;
+        depthBufferDesc.pResolveResource = nullptr;
         depthBufferDesc.Flags = TEXTURE_FLAGS_DEPTH_STENCIL;
+        depthBufferDesc.Type = TEXTURE_TYPE_2D;
+        depthBufferDesc.Usage = RESOURCE_USAGE_DEFAULT;
         depthBufferDesc.ArraySize = 1;
         depthBufferDesc.Width = m_pSwapChain->GetWidth();
         depthBufferDesc.Height = m_pSwapChain->GetHeight();
@@ -782,10 +782,8 @@ namespace Lambda
         depthBufferDesc.SampleCount = uint32(m_DeviceSettings.SampleCount);
         depthBufferDesc.MipLevels = 1;
 		depthBufferDesc.Depth = 1;
-        depthBufferDesc.ClearValue.Depth = 1.0f;
-        depthBufferDesc.ClearValue.Stencil = 0;
-        
         m_pDepthStencil = DBG_NEW VulkanTexture(this, depthBufferDesc);
+        
         return true;
     }
 
@@ -793,6 +791,7 @@ namespace Lambda
 	bool VulkanGraphicsDevice::CreateMSAABuffer()
 	{
 		TextureDesc msaaBufferDesc = {};
+        msaaBufferDesc.pResolveResource = m_pSwapChain->GetCurrentBuffer();
 		msaaBufferDesc.Type = TEXTURE_TYPE_2D;
 		msaaBufferDesc.Usage = RESOURCE_USAGE_DEFAULT;
 		msaaBufferDesc.Flags = TEXTURE_FLAGS_RENDER_TARGET;
@@ -803,8 +802,8 @@ namespace Lambda
 		msaaBufferDesc.SampleCount = uint32(m_DeviceSettings.SampleCount);
 		msaaBufferDesc.MipLevels = 1;
 		msaaBufferDesc.Depth = 1;
-
 		m_pMSAABuffer = DBG_NEW VulkanTexture(this, msaaBufferDesc);
+        
 		return true;
 	}
     
@@ -889,65 +888,26 @@ namespace Lambda
         //Create texture object
         VulkanTexture* pVkTexture = DBG_NEW VulkanTexture(this, desc);
         
-        //Upload inital data
+        //Handle inital data
         if (pInitalData)
         {
             m_pCommandList->Reset();
+            //Upload data
             m_pCommandList->UpdateTexture(pVkTexture, pInitalData, 0);
-            
+
+            //Generate mipmaps
             if (desc.Flags & TEXTURE_FLAGS_GENEATE_MIPS)
             {
                 TextureDesc textureDesc = pVkTexture->GetDesc();
 				uint32 mipLevels = textureDesc.MipLevels;
-
-				VkImage image = reinterpret_cast<VkImage>(pVkTexture->GetNativeHandle());
-				VkCommandBuffer commandBuffer = reinterpret_cast<VkCommandBuffer>(m_pCommandList->GetNativeHandle());
-
-				VkImageMemoryBarrier barrier = {};
-				barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-				barrier.image = image;
-				barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-				barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-				barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-				barrier.subresourceRange.baseArrayLayer = 0;
-				barrier.subresourceRange.layerCount = 1;
-				barrier.subresourceRange.levelCount = 1;
-
 				int32 mipWidth = textureDesc.Width;
 				int32 mipHeight = textureDesc.Height;
 				for (uint32 i = 1; i < mipLevels; i++) 
 				{
-					barrier.subresourceRange.baseMipLevel = i - 1;
-					barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-					barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-					barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-					barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-		
-					vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-
-					VkImageBlit blit = {};
-					blit.srcOffsets[0] = { 0, 0, 0 };
-					blit.srcOffsets[1] = { mipWidth, mipHeight, 1 };
-					blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-					blit.srcSubresource.mipLevel = i - 1;
-					blit.srcSubresource.baseArrayLayer = 0;
-					blit.srcSubresource.layerCount = 1;
-					blit.dstOffsets[0] = { 0, 0, 0 };
-					blit.dstOffsets[1] = { mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1 };
-					blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-					blit.dstSubresource.mipLevel = i;
-					blit.dstSubresource.baseArrayLayer = 0;
-					blit.dstSubresource.layerCount = 1;
-
-					vkCmdBlitImage(commandBuffer, image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
-
-					barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-					barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-					barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-					barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-
-					vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-
+                    m_pCommandList->TransitionTexture(pVkTexture, RESOURCE_STATE_COPY_SRC, i-1, 1);
+                    m_pCommandList->BlitTexture(pVkTexture, mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, i, pVkTexture, mipWidth, mipHeight, i-1);
+                    m_pCommandList->TransitionTexture(pVkTexture, RESOURCE_STATE_COPY_DEST, i-1, 1);
+                    
 					if (mipWidth > 1)
 						mipWidth /= 2;
 
@@ -956,6 +916,7 @@ namespace Lambda
 				}
             }
             
+            //Execute and wait for GPU
             m_pCommandList->Close();
             
             ICommandList* ppLists[] = { m_pCommandList };
@@ -1208,6 +1169,12 @@ namespace Lambda
         GPUWaitForFrame();
 
 		m_pSwapChain->AquireNextImage(m_Device, m_ImageSemaphores[m_CurrentFrame]);
+        
+        if (m_pMSAABuffer)
+        {
+            VulkanTexture* pResolveResource = reinterpret_cast<VulkanTexture*>(m_pSwapChain->GetCurrentBuffer());
+            m_pMSAABuffer->SetResolveResource(pResolveResource);
+        }
     }
     
     
@@ -1245,12 +1212,6 @@ namespace Lambda
     {
         return (m_DeviceSettings.SampleCount > VK_SAMPLE_COUNT_1_BIT) ? m_pMSAABuffer : m_pSwapChain->GetCurrentBuffer();
     }
-
-
-	ITexture* VulkanGraphicsDevice::GetResolveTarget() const
-	{
-		return (m_DeviceSettings.SampleCount > VK_SAMPLE_COUNT_1_BIT) ? m_pSwapChain->GetCurrentBuffer() : nullptr;
-	}
     
     
     ITexture* VulkanGraphicsDevice::GetDepthStencil() const
@@ -1293,7 +1254,7 @@ namespace Lambda
             WaitForGPU();
             
             //Resize the swapchain
-            m_pSwapChain->ResizeBuffers(m_Device, m_ImageSemaphores[m_CurrentFrame], event.WindowResize.Width, event.WindowResize.Height);
+            m_pSwapChain->ResizeBuffers(this, m_ImageSemaphores[m_CurrentFrame], event.WindowResize.Width, event.WindowResize.Height);
 
 			//Recreate depthstencil
             ReleaseDepthStencil();

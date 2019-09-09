@@ -11,8 +11,6 @@ namespace Lambda
 		m_RenderPass(VK_NULL_HANDLE),
 		m_Framebuffer(VK_NULL_HANDLE),
 		m_FramebufferExtent(),
-		m_RenderTargetCount(0),
-		m_DepthStencilFormat(VK_FORMAT_UNDEFINED),
 		m_ClearValues()
 	{
 		assert(device != VK_NULL_HANDLE);
@@ -20,14 +18,16 @@ namespace Lambda
 	}
 	
 	
-	void VulkanRenderPass::SetRenderTargets(const ITexture* const* const ppRenderTargets, uint32 numRenderTargets, const ITexture* pDepthStencil, const ITexture* const* const ppResolveTargets, uint32 numResolveTargets)
+	void VulkanRenderPass::SetRenderTargets(const ITexture* const* const ppRenderTargets, uint32 numRenderTargets, const ITexture* pDepthStencil)
 	{
 		assert(m_Device != VK_NULL_HANDLE);
-		assert(numRenderTargets == m_RenderTargetCount);
+		assert(numRenderTargets == m_Desc.NumRenderTargets);
 
 		VulkanFramebufferCacheKey key = {};
 		key.RenderPass = m_RenderPass;
 
+        //Get all textures to render to
+        uint32 sampleCount = 1;
 		if (numRenderTargets > 0)
 		{
 			for (uint32 i = 0; i < numRenderTargets; i++)
@@ -41,6 +41,8 @@ namespace Lambda
                 TextureDesc rtDesc = ppRenderTargets[0]->GetDesc();
 				m_FramebufferExtent.width = rtDesc.Width;
 				m_FramebufferExtent.height = rtDesc.Height;
+                
+                sampleCount = rtDesc.SampleCount;
 			}
 		}
 		if (pDepthStencil)
@@ -51,13 +53,24 @@ namespace Lambda
             TextureDesc dsDesc = pDepthStencil->GetDesc();
 			m_FramebufferExtent.width = dsDesc.Width;
 			m_FramebufferExtent.height = dsDesc.Height;
+            
+            sampleCount = dsDesc.SampleCount;
 		}
-		if (numResolveTargets > 0)
+        
+        //Get resolve textures
+		if (sampleCount > 1)
 		{
-			for (uint32 i = 0; i < numResolveTargets; i++)
+			for (uint32 i = 0; i < numRenderTargets; i++)
 			{
-				key.AttachmentViews[key.NumAttachmentViews] = reinterpret_cast<const VulkanTexture*>(ppResolveTargets[i])->GetImageView();
-				key.NumAttachmentViews++;
+				if (m_Desc.RenderTargets[i].Flags & RENDER_PASS_ATTACHMENT_FLAG_RESOLVE)
+                {
+                    const VulkanTexture* pResolveResource = reinterpret_cast<const VulkanTexture*>(ppRenderTargets[i])->GetResolveResource();
+                    if (pResolveResource)
+                    {
+                        key.AttachmentViews[key.NumAttachmentViews] = pResolveResource->GetImageView();
+                        key.NumAttachmentViews++;
+                    }
+                }
 			}
 		}
 
@@ -67,11 +80,11 @@ namespace Lambda
 
 	void VulkanRenderPass::SetClearValues(float color[4], float depth, uint8 stencil)
 	{
-		for (uint32 i = 0; i < m_RenderTargetCount; i++)
+		for (uint32 i = 0; i < m_Desc.NumRenderTargets; i++)
 			memcpy(m_ClearValues[i].color.float32, color, sizeof(float) * 4);
 
-		m_ClearValues[m_RenderTargetCount].depthStencil.depth = depth;
-		m_ClearValues[m_RenderTargetCount].depthStencil.stencil = uint32(stencil);
+		m_ClearValues[m_Desc.NumRenderTargets].depthStencil.depth = depth;
+		m_ClearValues[m_Desc.NumRenderTargets].depthStencil.stencil = uint32(stencil);
 	}
 
 
@@ -103,7 +116,7 @@ namespace Lambda
         std::vector<VkAttachmentDescription> resolveAttachments;
 
         //Number of samples (MSAA)
-        m_SampleCount = ConvertSampleCount(desc.SampleCount);
+        VkSampleCountFlagBits sampleCount = ConvertSampleCount(desc.SampleCount);
 
         //Setup colorattachments
 		for (uint32 i = 0; i < desc.NumRenderTargets; i++)
@@ -112,7 +125,7 @@ namespace Lambda
 			VkAttachmentDescription colorAttachment = {};
 			colorAttachment.flags = 0;
 			colorAttachment.format = ConvertResourceFormat(desc.RenderTargets[i].Format);
-			colorAttachment.samples = m_SampleCount;
+			colorAttachment.samples = sampleCount;
 			colorAttachment.loadOp = ConvertLoadOp(desc.RenderTargets[i].LoadOperation);
 			colorAttachment.storeOp = ConvertStoreOp(desc.RenderTargets[i].StoreOperation);
 			colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -163,8 +176,8 @@ namespace Lambda
 		{
 			VkAttachmentDescription depthAttachment = {};
 			depthAttachment.flags = 0;
-			depthAttachment.format = m_DepthStencilFormat = ConvertResourceFormat(desc.DepthStencil.Format);
-			depthAttachment.samples = m_SampleCount;
+			depthAttachment.format = ConvertResourceFormat(desc.DepthStencil.Format);
+			depthAttachment.samples = sampleCount;
 			depthAttachment.loadOp = ConvertLoadOp(desc.DepthStencil.LoadOperation);
 			depthAttachment.storeOp = ConvertStoreOp(desc.DepthStencil.StoreOperation);;
 			depthAttachment.stencilLoadOp = depthAttachment.loadOp;
@@ -219,9 +232,8 @@ namespace Lambda
 		else
 		{
 			LOG_DEBUG_INFO("Vulkan: Created renderpass\n");
-
-			m_RenderTargetCount = desc.NumRenderTargets;
-			m_Device = device;
+            m_Desc = desc;
+            m_Device = device;
 		}
 	}
 }

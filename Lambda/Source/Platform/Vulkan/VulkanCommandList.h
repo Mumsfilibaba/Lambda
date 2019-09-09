@@ -37,7 +37,7 @@ namespace Lambda
         virtual void UpdateTexture(ITexture* pResource, const ResourceData* pData, uint32 subresource) override final;
         
         virtual void TransitionBuffer(const IBuffer* pBuffer, ResourceState state) override final;
-        virtual void TransitionTexture(const ITexture* pTexture, ResourceState state) override final;
+        virtual void TransitionTexture(const ITexture* pTexture, ResourceState state, uint32 startMipLevel, uint32 numMipLevels) override final;
         
         virtual void CopyBuffer(IBuffer* pDst, IBuffer* pSrc) override final;
 
@@ -52,6 +52,8 @@ namespace Lambda
         virtual CommandListType GetType() const override final;
         virtual void* GetNativeHandle() const override final;
         
+        
+        void BlitTexture(VulkanTexture* pDst, uint32 dstWidth, uint32 dstHeight, uint32 dstMipLevel, VulkanTexture* pSrc, uint32 srcWidth, uint32 srcHeight, uint32 srcMipLevel);
         void Destroy(VkDevice device);
         
     private:

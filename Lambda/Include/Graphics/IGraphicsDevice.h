@@ -67,7 +67,6 @@ namespace Lambda
 		virtual void* GetNativeHandle() const = 0;
 		virtual ITexture* GetDepthStencil() const = 0;
 		virtual ITexture* GetRenderTarget() const = 0;
-		virtual ITexture* GetResolveTarget() const = 0;
 		virtual ResourceFormat GetBackBufferFormat() const = 0;
 		virtual uint32 GetBackBufferIndex() const = 0;
 		virtual uint32 GetSwapChainWidth() const = 0;

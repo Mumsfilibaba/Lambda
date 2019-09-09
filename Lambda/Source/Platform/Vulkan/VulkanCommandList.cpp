@@ -78,6 +78,26 @@ namespace Lambda
     }
     
     
+    void VulkanCommandList::BlitTexture(VulkanTexture* pDst, uint32 dstWidth, uint32 dstHeight, uint32 dstMipLevel, VulkanTexture* pSrc, uint32 srcWidth, uint32 srcHeight, uint32 srcMipLevel)
+    {
+        VkImageBlit blitInfo = {};
+        blitInfo.srcOffsets[0] = { 0, 0, 0 };
+        blitInfo.srcOffsets[1] = { int32(srcWidth), int32(srcHeight), 1 };
+        blitInfo.srcSubresource.aspectMask = pSrc->GetAspectFlags();
+        blitInfo.srcSubresource.mipLevel = srcMipLevel;
+        blitInfo.srcSubresource.baseArrayLayer = 0;
+        blitInfo.srcSubresource.layerCount = 1;
+        blitInfo.dstOffsets[0] = { 0, 0, 0 };
+        blitInfo.dstOffsets[1] = { int32(dstWidth), int32(dstHeight), 1 };
+        blitInfo.dstSubresource.aspectMask = pDst->GetAspectFlags();
+        blitInfo.dstSubresource.mipLevel = dstMipLevel;
+        blitInfo.dstSubresource.baseArrayLayer = 0;
+        blitInfo.dstSubresource.layerCount = 1;
+        
+        vkCmdBlitImage(m_CommandBuffer, pSrc->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, pDst->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blitInfo, VK_FILTER_LINEAR);
+    }
+    
+    
     void VulkanCommandList::Destroy(VkDevice device)
     {
         assert(device != VK_NULL_HANDLE);
@@ -221,7 +241,7 @@ namespace Lambda
     }
     
     
-    void VulkanCommandList::TransitionTexture(const ITexture* pTexture, ResourceState state)
+    void VulkanCommandList::TransitionTexture(const ITexture* pTexture, ResourceState state, uint32 startMipLevel, uint32 numMipLevels)
     {
         const VulkanTexture* pVkTexture = reinterpret_cast<const VulkanTexture*>(pTexture);
         TextureDesc textureDesc = pVkTexture->GetDesc();
@@ -235,8 +255,17 @@ namespace Lambda
         barrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
         barrier.image                           = pVkTexture->GetImage();
         barrier.subresourceRange.aspectMask     = pVkTexture->GetAspectFlags();
-        barrier.subresourceRange.baseMipLevel   = 0;
-        barrier.subresourceRange.levelCount     = textureDesc.MipLevels;
+        barrier.subresourceRange.baseMipLevel   = startMipLevel;
+        
+        if (numMipLevels == LAMBDA_TRANSITION_ALL_MIPS)
+        {
+            barrier.subresourceRange.levelCount = textureDesc.MipLevels;
+        }
+        else
+        {
+            barrier.subresourceRange.levelCount = numMipLevels;
+        }
+        
         barrier.subresourceRange.baseArrayLayer = 0;
         barrier.subresourceRange.layerCount     = 1;
         barrier.srcAccessMask                   = 0;
@@ -255,6 +284,11 @@ namespace Lambda
         else if (barrier.oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
         {
             barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+            sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+        }
+        else if (barrier.oldLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
+        {
+            barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
             sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
         }
         else if (barrier.newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
@@ -291,6 +325,11 @@ namespace Lambda
         else if (barrier.newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
         {
             barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+            destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+        }
+        else if (barrier.newLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
+        {
+            barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
             destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
         }
         else if (barrier.newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
@@ -347,7 +386,7 @@ namespace Lambda
     void VulkanCommandList::UpdateTexture(ITexture* pResource, const ResourceData* pData, uint32 subresource)
     {
         VulkanTexture* pVkResource = reinterpret_cast<VulkanTexture*>(pResource);
-        TransitionTexture(pResource, RESOURCE_STATE_COPY_DEST);
+        TransitionTexture(pResource, RESOURCE_STATE_COPY_DEST, 0, LAMBDA_TRANSITION_ALL_MIPS);
         TextureDesc textureDesc = pVkResource->GetDesc();
         
         //Get offset before allocating

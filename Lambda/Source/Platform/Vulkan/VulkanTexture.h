@@ -1,26 +1,12 @@
 #pragma once
 #include "Graphics/ITexture.h"
 #include <vulkan/vulkan.h>
+#include "VulkanConversions.inl"
 #include <vector>
 
 namespace Lambda
 {
     class VulkanGraphicsDevice;
-    
-    
-    struct VulkanTextureDesc
-    {
-        VkImage Image                   = VK_NULL_HANDLE;
-        VkExtent2D Extent               = { 0, 0};
-        VkFormat Format                 = VK_FORMAT_UNDEFINED;
-        VkClearValue ClearValue;
-        bool Depth                      = false;
-        VkImageUsageFlags UsageFlags    = 0;
-        VkImageAspectFlags AspectFlags  = 0;
-        VkSampleCountFlags Samples      = 0;
-        uint32 MipLevels                = 1;
-        uint32 ArraySize                = 1;
-    };
     
     
     class VulkanTexture final : public ITexture
@@ -30,37 +16,37 @@ namespace Lambda
     public:
         LAMBDA_NO_COPY(VulkanTexture);
 
-        VulkanTexture(VkDevice device, const VulkanTextureDesc& desc);
         VulkanTexture(const VulkanGraphicsDevice* pVkDevice, const TextureDesc& desc);
-        VulkanTexture() = default;
+        VulkanTexture(const VulkanGraphicsDevice* pVkDevice, VkImage image, const TextureDesc& desc);
+        ~VulkanTexture() = default;
         
         virtual void* GetNativeHandle() const override final;
         virtual TextureDesc GetDesc() const override final;
         
+        void Destroy(VkDevice device);
+
+        void SetResolveResource(VulkanTexture* pResolveResource) const;
+        void SetCurrentResourceState(VkImageLayout resourceState) const;
+        VulkanTexture* GetResolveResource() const;
         VkImageAspectFlags GetAspectFlags() const;
         VkImage GetImage() const;
         VkImageView GetImageView() const;
         VkImageLayout GetCurrentResourceState() const;
         VkFormat GetFormat() const;
         
-        void SetCurrentResourceState(VkImageLayout resourceState) const;
-        
-        void Destroy(VkDevice device);
-        
     private:
         void Init(const VulkanGraphicsDevice* pVkDevice, const TextureDesc& desc);
-        void InitFromResource(VkDevice device, const VulkanTextureDesc& desc);
+        void InitFromResource(const VulkanGraphicsDevice* pVkDevice, VkImage image, const TextureDesc& desc);
         void CreateImageView(VkDevice device);
         
     private:
-        VkImage m_Texture;
+        VkImage m_Image;
         VkImageView m_View;
         VkDeviceMemory m_DeviceMemory;
         VkImageAspectFlags m_AspectFlags;
-        VkFormat m_Format;
-        mutable VkImageLayout m_CurrentResourceState;
-		TextureDesc m_Desc;
         bool m_IsOwner;
+        mutable TextureDesc m_Desc;
+        mutable VkImageLayout m_CurrentResourceState;
     };
     
     
@@ -72,7 +58,7 @@ namespace Lambda
     
     inline VkImage VulkanTexture::GetImage() const
     {
-        return m_Texture;
+        return m_Image;
     }
     
     
@@ -88,14 +74,26 @@ namespace Lambda
     }
     
     
+    inline void VulkanTexture::SetResolveResource(VulkanTexture* pResolveResource) const
+    {
+        m_Desc.pResolveResource = pResolveResource;
+    }
+    
+    
     inline void VulkanTexture::SetCurrentResourceState(VkImageLayout resourceState) const
     {
         m_CurrentResourceState = resourceState;
     }
     
     
+    inline VulkanTexture* VulkanTexture::GetResolveResource() const
+    {
+        return reinterpret_cast<VulkanTexture*>(m_Desc.pResolveResource);
+    }
+    
+    
     inline VkFormat VulkanTexture::GetFormat() const
     {
-        return m_Format;
+        return ConvertResourceFormat(m_Desc.Format);
     }
 }

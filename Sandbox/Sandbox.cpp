@@ -234,7 +234,7 @@ namespace Lambda
 
             //Create texture
             m_pTexture = ITexture::CreateTextureFromFile(pDevice, "chalet.jpg", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
-			m_pCurrentList->TransitionTexture(m_pTexture, RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+			m_pCurrentList->TransitionTexture(m_pTexture, RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0, LAMBDA_TRANSITION_ALL_MIPS);
 
             //Create samplerstate
             {
@@ -306,7 +306,6 @@ namespace Lambda
         //Set and clear rendertarget
         float color[] = { 0.392f, 0.584f, 0.929f, 1.0f };
         ITexture* pRenderTarget = pDevice->GetRenderTarget();
-		ITexture* pResolveTarget = pDevice->GetResolveTarget();
         ITexture* pDepthBuffer = pDevice->GetDepthStencil();
                 
         //Set scissor and viewport
@@ -359,8 +358,7 @@ namespace Lambda
         m_pCurrentList->SetIndexBuffer(m_pIndexBuffer);
         
 		//Set rendertargets and clearcolors
-		uint32 numResolve = GetEngineParams().SampleCount > 1 ? 1 : 0;
-		m_pRenderPass->SetRenderTargets(&pRenderTarget, 1, pDepthBuffer, &pResolveTarget, numResolve);
+		m_pRenderPass->SetRenderTargets(&pRenderTarget, 1, pDepthBuffer);
 		m_pRenderPass->SetClearValues(color, 1.0f, 0);
 
         //Setup rotation

@@ -8,6 +8,7 @@ namespace Lambda
 {
 	class ITexture;
 	class VulkanTexture;
+    class VulkanGraphicsDevice;
 
 
 	struct VulkanSwapChainDesc
@@ -27,7 +28,7 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(VulkanSwapChain);
 
-		VulkanSwapChain(VkDevice device, const VulkanSwapChainDesc& desc);
+		VulkanSwapChain(const VulkanGraphicsDevice* pVkDevice, const VulkanSwapChainDesc& desc);
 		~VulkanSwapChain() = default;
 
 		uint32 GetWidth() const;
@@ -37,7 +38,7 @@ namespace Lambda
 		VkFormat GetFormat() const;
 		ITexture* GetCurrentBuffer() const;
 
-		void ResizeBuffers(VkDevice device, VkSemaphore signalSemaphore, uint32 width, uint32 height);
+		void ResizeBuffers(const VulkanGraphicsDevice* pVkDevice, VkSemaphore signalSemaphore, uint32 width, uint32 height);
 		void AquireNextImage(VkDevice device, VkSemaphore signalSemaphore);
 		void Present(VkQueue presentQueue, VkSemaphore waitSemaphore);
 
@@ -45,8 +46,8 @@ namespace Lambda
 		void Destroy(VkDevice device);
 
 	private:
-		void Init(VkDevice device, const VulkanSwapChainDesc& desc);
-        void InitSwapChain(VkDevice device, VkSemaphore signalSemaphore, VkExtent2D extent);
+		void Init(const VulkanGraphicsDevice* pVkDevice, const VulkanSwapChainDesc& desc);
+        void InitSwapChain(const VulkanGraphicsDevice* pVkDevice, VkSemaphore signalSemaphore, VkExtent2D extent);
 
 	private:
         VkPhysicalDevice m_Adapter;

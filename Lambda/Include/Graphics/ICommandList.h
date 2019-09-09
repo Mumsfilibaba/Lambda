@@ -1,6 +1,8 @@
 #pragma once
 #include "IObject.h"
 
+#define LAMBDA_TRANSITION_ALL_MIPS uint32(-1)
+
 namespace Lambda
 {
     class IBuffer;
@@ -36,7 +38,7 @@ namespace Lambda
 		virtual void UpdateTexture(ITexture* pResource, const ResourceData* pData, uint32 subresource) = 0;
 
         virtual void TransitionBuffer(const IBuffer* pBuffer, ResourceState state) = 0;
-        virtual void TransitionTexture(const ITexture* pTexture, ResourceState state) = 0;
+        virtual void TransitionTexture(const ITexture* pTexture, ResourceState state, uint32 startMipLevel, uint32 numMipLevels) = 0;
         
 		virtual void CopyBuffer(IBuffer* pDst, IBuffer* pSrc) = 0;
 

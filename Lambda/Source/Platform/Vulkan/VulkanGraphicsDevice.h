@@ -64,7 +64,6 @@ namespace Lambda
         virtual void* GetNativeHandle() const override final;
         virtual ITexture* GetDepthStencil() const override final;
         virtual ITexture* GetRenderTarget() const override final;
-		virtual ITexture* GetResolveTarget() const override final;
         virtual ResourceFormat GetBackBufferFormat() const override final;
         virtual uint32 GetBackBufferIndex() const override final;
         virtual uint32 GetSwapChainWidth() const override final;
@@ -80,7 +79,7 @@ namespace Lambda
         void Init(IWindow* pWindow, const GraphicsDeviceDesc& desc);
         void InitDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo);
         
-        VkPhysicalDevice QueryAdapter();
+        VkPhysicalDevice QueryPhyscialDevice();
 		VkSurfaceKHR CreateSurface(IWindow* pWindow);
         bool CreateDepthStencil();
 		bool CreateMSAABuffer();
@@ -89,7 +88,7 @@ namespace Lambda
 		void ReleaseMSAABuffer();
 
         void GetNextFrame() const;
-        bool AdapterIsSuitable(VkPhysicalDevice adapter);
+        bool PhysicalDeviceIsSuitable(VkPhysicalDevice physcialDevice);
         
         std::vector<const char*> GetRequiredValidationLayers(bool debug);
         std::vector<const char*> GetRequiredDeviceExtensions();
@@ -126,7 +125,7 @@ namespace Lambda
         
     public:
         static VkDevice GetCurrentDevice();
-        static VkPhysicalDevice GetCurrentAdapter();
+        static VkPhysicalDevice GetCurrentPhysicalDevice();
         
     private:
         static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
@@ -160,7 +159,7 @@ namespace Lambda
     }
     
     
-    inline VkPhysicalDevice VulkanGraphicsDevice::GetCurrentAdapter()
+    inline VkPhysicalDevice VulkanGraphicsDevice::GetCurrentPhysicalDevice()
     {
         assert(IGraphicsDevice::GetInstance() != nullptr);
         return reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance())->m_PhysicalDevice;

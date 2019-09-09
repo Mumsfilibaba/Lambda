@@ -19,7 +19,7 @@ namespace Lambda
 		ResourceFormat Format = FORMAT_UNKNOWN;
         uint32 Flags = RENDER_PASS_ATTACHMENT_FLAG_NONE;
         LoadOp LoadOperation = LOAD_OP_UNKNOWN;
-        StoreOp    StoreOperation = STORE_OP_UNKNOWN;
+        StoreOp StoreOperation = STORE_OP_UNKNOWN;
         ResourceState FinalState = RESOURCE_STATE_UNKNOWN;
 	};
 
@@ -41,7 +41,7 @@ namespace Lambda
 		IRenderPass() = default;
 		~IRenderPass() = default;
 	
-		virtual void SetRenderTargets(const ITexture* const* const ppRenderTargets, uint32 numRenderTargets, const ITexture* pDepthStencil, const ITexture* const* const ppResolveTargets, uint32 numResolveTargets) = 0;
+		virtual void SetRenderTargets(const ITexture* const* const ppRenderTargets, uint32 numRenderTargets, const ITexture* pDepthStencil) = 0;
 		virtual void SetClearValues(float color[4], float depth, uint8 stencil) = 0;
 		virtual void* GetNativeHandle() const = 0;
 	};
