@@ -898,22 +898,32 @@ namespace Lambda
             //Generate mipmaps
             if (desc.Flags & TEXTURE_FLAGS_GENEATE_MIPS)
             {
-                TextureDesc textureDesc = pVkTexture->GetDesc();
-				uint32 mipLevels = textureDesc.MipLevels;
-				int32 mipWidth = textureDesc.Width;
-				int32 mipHeight = textureDesc.Height;
-				for (uint32 i = 1; i < mipLevels; i++) 
-				{
-                    m_pCommandList->TransitionTexture(pVkTexture, RESOURCE_STATE_COPY_SRC, i-1, 1);
-                    m_pCommandList->BlitTexture(pVkTexture, mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, i, pVkTexture, mipWidth, mipHeight, i-1);
-                    m_pCommandList->TransitionTexture(pVkTexture, RESOURCE_STATE_COPY_DEST, i-1, 1);
-                    
-					if (mipWidth > 1)
-						mipWidth /= 2;
+                VkFormatProperties formatProperties = {};
+                vkGetPhysicalDeviceFormatProperties(m_PhysicalDevice, pVkTexture->GetFormat(), &formatProperties);
+                
+                if (formatProperties.linearTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)
+                {
+                    TextureDesc textureDesc = pVkTexture->GetDesc();
+                    uint32 mipLevels = textureDesc.MipLevels;
+                    int32 mipWidth = textureDesc.Width;
+                    int32 mipHeight = textureDesc.Height;
+                    for (uint32 i = 1; i < mipLevels; i++)
+                    {
+                        m_pCommandList->TransitionTexture(pVkTexture, RESOURCE_STATE_COPY_SRC, i-1, 1);
+                        m_pCommandList->BlitTexture(pVkTexture, mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, i, pVkTexture, mipWidth, mipHeight, i-1);
+                        m_pCommandList->TransitionTexture(pVkTexture, RESOURCE_STATE_COPY_DEST, i-1, 1);
+                        
+                        if (mipWidth > 1)
+                            mipWidth /= 2;
 
-					if (mipHeight > 1) 
-						mipHeight /= 2;
-				}
+                        if (mipHeight > 1)
+                            mipHeight /= 2;
+                    }
+                }
+                else
+                {
+                    LOG_DEBUG_ERROR("Vulkan: PhysicalDevice does not support mipmap generation for this format\n");
+                }
             }
             
             //Execute and wait for GPU
