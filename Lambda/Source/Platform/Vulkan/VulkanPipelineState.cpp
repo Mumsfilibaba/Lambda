@@ -6,8 +6,6 @@
 #include "VulkanGraphicsDevice.h"
 #include "VulkanUtilities.h"
 #include "VulkanConversions.inl"
-#include <vector>
-#include <set>
 
 namespace Lambda
 {
@@ -24,32 +22,32 @@ namespace Lambda
         std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
         
         //VertexShader
-        VulkanShader* pVS = reinterpret_cast<VulkanShader*>(desc.pVertexShader);
         if (desc.pVertexShader)
         {
+			ShaderDesc vsDesc = desc.pVertexShader->GetDesc();
             VkPipelineShaderStageCreateInfo info = {};
             info.sType                  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
             info.pNext                  = nullptr;
             info.flags                  = 0;
             info.stage                  = VK_SHADER_STAGE_VERTEX_BIT;
-            info.pName                  = pVS->GetEntryPoint();
-            info.module                 = reinterpret_cast<VkShaderModule>(pVS->GetNativeHandle());
+            info.pName                  = vsDesc.pEntryPoint;
+            info.module                 = reinterpret_cast<VkShaderModule>(desc.pVertexShader->GetNativeHandle());
             info.pSpecializationInfo    = nullptr;
             
             shaderStages.push_back(info);
         }
         
         //PixelShader
-        VulkanShader* pPS = reinterpret_cast<VulkanShader*>(desc.pPixelShader);
         if (desc.pPixelShader)
         {
+			ShaderDesc psDesc = desc.pPixelShader->GetDesc();
             VkPipelineShaderStageCreateInfo info = {};
             info.sType                  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
             info.pNext                  = nullptr;
             info.flags                  = 0;
             info.stage                  = VK_SHADER_STAGE_FRAGMENT_BIT;
-            info.pName                  = pPS->GetEntryPoint();
-            info.module                 = reinterpret_cast<VkShaderModule>(pPS->GetNativeHandle());
+            info.pName                  = psDesc.pEntryPoint;
+            info.module                 = reinterpret_cast<VkShaderModule>(desc.pPixelShader->GetNativeHandle());
             info.pSpecializationInfo    = nullptr;
             
             shaderStages.push_back(info);
@@ -245,33 +243,32 @@ namespace Lambda
     
     void* VulkanGraphicsPipelineState::GetNativeHandle() const
     {
-        return m_Pipeline;
+        return reinterpret_cast<void*>(m_Pipeline);
     }
     
     
     void VulkanGraphicsPipelineState::Destroy(VkDevice device)
     {
 		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
-        
-        //Destroy pipelinestate
+
         if (m_Pipeline != VK_NULL_HANDLE)
         {
             vkDestroyPipeline(device, m_Pipeline, nullptr);
             m_Pipeline = VK_NULL_HANDLE;
         }
-        
-        //Delete me
+
         delete this;
     }
     
     
     void VulkanGraphicsPipelineState::SetName(const char* pName)
     {
-        if (pName != nullptr)
-        {
-            //Set name in vulkan
-            std::string name(pName);
-            reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance())->SetVulkanObjectName(VK_OBJECT_TYPE_PIPELINE, (uint64)m_Pipeline, name);            
-        }
+		if (pName != nullptr)
+		{
+			std::string name(pName);
+
+			VulkanGraphicsDevice* pVkDevice = reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance());
+			pVkDevice->SetVulkanObjectName(VK_OBJECT_TYPE_PIPELINE, (uint64)m_Pipeline, name);    
+		}
     }
 }

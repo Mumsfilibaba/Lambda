@@ -16,7 +16,8 @@ namespace Lambda
 		virtual void SetRenderTargets(const ITexture* const* const ppRenderTargets, uint32 numRenderTargets, const ITexture* pDepthStencil) override final;
 		virtual void SetClearValues(float color[4], float depth, uint8 stencil) override final;
 		virtual void* GetNativeHandle() const override final;
-		
+		virtual RenderPassDesc GetDesc() const override final;
+
         void Destroy(VkDevice device);
 
         VkRenderPass GetRenderPass() const;

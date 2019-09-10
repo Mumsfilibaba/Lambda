@@ -3,11 +3,13 @@
 
 namespace Lambda
 {
-    VulkanShader::VulkanShader(VkDevice device, const ShaderDesc& desc)
-        : m_Shader(VK_NULL_HANDLE),
-        m_ByteCode(),
-        m_Type(SHADER_STAGE_UNKNOWN)
-    {
+	VulkanShader::VulkanShader(VkDevice device, const ShaderDesc& desc)
+		: m_Shader(VK_NULL_HANDLE),
+		m_ByteCode(),
+		m_EntryPoint(),
+		m_Desc()
+	{
+		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
         Init(device, desc);
     }
     
@@ -17,9 +19,6 @@ namespace Lambda
         //Get the bytecode
         if (desc.Languange == SHADER_LANG_SPIRV)
         {
-            m_Type = desc.Type;
-            
-            //Copy source to array
             m_ByteCode = std::vector<char>(desc.pSource, desc.pSource + desc.SourceLength);
         }
         else
@@ -39,12 +38,15 @@ namespace Lambda
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create shadermodule\n");
             m_Shader = VK_NULL_HANDLE;
-
         }
         else
         {
             LOG_DEBUG_INFO("Vulkan: Created shader\n");
+
             m_EntryPoint = std::string(desc.pEntryPoint);
+			m_Desc = desc;
+			m_Desc.pSource = nullptr;
+			m_Desc.pEntryPoint = m_EntryPoint.c_str();
         }
     }
     
@@ -63,20 +65,14 @@ namespace Lambda
     }
     
     
-    ShaderStage VulkanShader::GetType() const
-    {
-        return m_Type;
-    }
-    
-    
-    const char* VulkanShader::GetEntryPoint() const
-    {
-        return m_EntryPoint.c_str();
-    }
-    
-    
     void* VulkanShader::GetNativeHandle() const
     {
-        return (void*)m_Shader;
+        return reinterpret_cast<void*>(m_Shader);
     }
+	
+	
+	ShaderDesc VulkanShader::GetDesc() const
+	{
+		return m_Desc;
+	}
 }

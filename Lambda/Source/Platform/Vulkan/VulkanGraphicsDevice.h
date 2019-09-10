@@ -69,8 +69,8 @@ namespace Lambda
         virtual uint32 GetSwapChainWidth() const override final;
         virtual uint32 GetSwapChainHeight() const override final;
     
-        VkDeviceMemory AllocateImage(VkImage image, VkMemoryPropertyFlags properties) const;
-        VkDeviceMemory AllocateBuffer(VkBuffer buffer, VkMemoryPropertyFlags properties) const;
+        VkDeviceMemory AllocateImage(VkImage image, ResourceUsage usage) const;
+        VkDeviceMemory AllocateBuffer(VkBuffer buffer, ResourceUsage usage) const;
         
         void SetVulkanObjectName(VkObjectType type, uint64 objectHandle, const std::string& name);
         VkPhysicalDevice GetPhysicalDevice() const;

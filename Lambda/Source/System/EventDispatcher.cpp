@@ -8,11 +8,11 @@ namespace Lambda
 
 	bool EventDispatcher::SendEvent(const Event& event)
 	{
-		for (auto iter = s_LayerStack.begin(); iter < s_LayerStack.end(); iter++)
+		for (auto& layer : s_LayerStack)
 		{
 			//LOG_DEBUG_INFO("%s:\n", iter->pName);
 			
-			if (iter->OnEvent(event))
+			if (layer.OnEvent(event))
 				return true;
 		}
 

@@ -1,5 +1,4 @@
 #include "LambdaPch.h"
-#include <algorithm>
 #include "VulkanSwapChain.h"
 #include "VulkanTexture.h"
 #include "VulkanUtilities.h"
@@ -9,9 +8,14 @@
 namespace Lambda
 {
 	VulkanSwapChain::VulkanSwapChain(const VulkanGraphicsDevice* pVkDevice, const VulkanSwapChainDesc& desc)
-		: m_SwapChain(VK_NULL_HANDLE),
+		: m_Adapter(VK_NULL_HANDLE),
+		m_Surface(VK_NULL_HANDLE),
+		m_SwapChain(VK_NULL_HANDLE),
 		m_Format(),
 		m_Extent(),
+		m_PresentationMode(),
+		m_FamilyIndices(),
+		m_Cap(),
 		m_ImageCount(0),
 		m_CurrentBufferIndex(0),
 		m_Buffers()

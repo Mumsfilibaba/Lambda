@@ -10,7 +10,8 @@ namespace Lambda
         m_pCurrent(nullptr),
         m_Buffer(VK_NULL_HANDLE),
         m_Memory(VK_NULL_HANDLE),
-        m_SizeInBytes(0)
+        m_SizeInBytes(0),
+		m_IsMapped(false)
     {
 		LAMBDA_ASSERT(pVkDevice != nullptr);
         Init(pVkDevice, sizeInBytes);
@@ -19,14 +20,23 @@ namespace Lambda
 
 	void VulkanUploadBuffer::Map(VkDevice device)
 	{
-		vkMapMemory(device, m_Memory, 0, m_SizeInBytes, 0, reinterpret_cast<void**>(&m_pStart));
-		Reset();
+		if (!m_IsMapped)
+		{
+			vkMapMemory(device, m_Memory, 0, m_SizeInBytes, 0, reinterpret_cast<void**>(&m_pStart));
+			m_IsMapped = true;
+
+			Reset();
+		}
 	}
 
 
 	void VulkanUploadBuffer::Unmap(VkDevice device)
 	{
-		vkUnmapMemory(device, m_Memory);
+		if (m_IsMapped)
+		{
+			vkUnmapMemory(device, m_Memory);
+			m_IsMapped = false;
+		}
 	}
 
     
@@ -57,18 +67,15 @@ namespace Lambda
         
         
         //Allocate memory
-        m_Memory = pVkDevice->AllocateBuffer(m_Buffer, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        m_Memory = pVkDevice->AllocateBuffer(m_Buffer, RESOURCE_USAGE_DYNAMIC);
         if (m_Memory != VK_NULL_HANDLE)
         {
-            LOG_DEBUG_INFO("Vulkan: Allocated '%u' bytes for UploadBuffer\n", m_SizeInBytes);
-            
             vkBindBufferMemory(device, m_Buffer, m_Memory, 0);
 			Map(device);
             return true;
         }
         else
         {
-            LOG_DEBUG_ERROR("Vulkan: Failed to allocate UploadBuffer\n");
             return false;
         }
     }
@@ -110,8 +117,8 @@ namespace Lambda
         }
         if (m_Memory != VK_NULL_HANDLE)
         {
-            vkUnmapMemory(device, m_Memory);
-         
+			Unmap(device);
+
 			vkFreeMemory(device, m_Memory, nullptr);
             m_Memory = VK_NULL_HANDLE;
         }

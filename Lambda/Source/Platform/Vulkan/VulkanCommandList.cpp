@@ -21,7 +21,8 @@ namespace Lambda
 		m_pTextureUpload(nullptr),
         m_pResourceState(nullptr),
         m_pRenderPass(nullptr),
-        m_Type(COMMAND_LIST_TYPE_UNKNOWN)
+        m_Type(COMMAND_LIST_TYPE_UNKNOWN),
+		m_Name()
     {
 		LAMBDA_ASSERT(pVkDevice != VK_NULL_HANDLE);
         Init(pVkDevice, type);
@@ -458,8 +459,13 @@ namespace Lambda
     
     void VulkanCommandList::SetName(const char* pName)
     {
-        m_Name = std::string(pName);
-        reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance())->SetVulkanObjectName(VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64)m_CommandBuffer, m_Name);
+		if (pName != nullptr)
+		{
+			m_Name = std::string(pName);
+
+			VulkanGraphicsDevice* pVkDevice = reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance());
+			pVkDevice->SetVulkanObjectName(VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64)m_CommandBuffer, m_Name);
+		}
     }
     
     

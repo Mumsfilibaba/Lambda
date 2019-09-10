@@ -9,7 +9,13 @@ namespace Lambda
 	VulkanPipelineResourceState::VulkanPipelineResourceState(VkDevice device, const PipelineResourceStateDesc& desc)
 		: m_PipelineLayout(VK_NULL_HANDLE),
 		m_DescriptorSetLayout(VK_NULL_HANDLE),
-		m_DescriptorPool(VK_NULL_HANDLE)
+		m_DescriptorPool(VK_NULL_HANDLE),
+		m_DescriptorSet(VK_NULL_HANDLE),
+		m_ResourceSlots(),
+		m_DescriptorWrites(),
+		m_BufferBindings(),
+		m_ImageBindings(),
+		m_CurrentBindings()
 	{
 		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
 
@@ -232,10 +238,11 @@ namespace Lambda
 			}
 
 			//Add this buffer to the bindings
+			BufferDesc bufferDesc = ppBuffers[i]->GetDesc();
 			VkDescriptorBufferInfo bufferInfo = {};
 			bufferInfo.buffer = reinterpret_cast<VkBuffer>(ppBuffers[i]->GetNativeHandle());
 			bufferInfo.offset = 0;
-			bufferInfo.range = ppBuffers[i]->GetSizeInBytes();
+			bufferInfo.range = bufferDesc.SizeInBytes;
 			m_BufferBindings.emplace_back(bufferInfo);
 
 			numDescriptors++;
@@ -326,6 +333,7 @@ namespace Lambda
 
 			VkDescriptorSetLayoutBinding layoutBinding = {};
 			//Set type
+			layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM;
 			if (desc.pResourceSlots[i].Type == RESOURCE_TYPE_CONSTANT_BUFFER)
 				layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			else if (desc.pResourceSlots[i].Type == RESOURCE_TYPE_TEXTURE)

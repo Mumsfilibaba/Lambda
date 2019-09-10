@@ -11,6 +11,7 @@ namespace Lambda
 		m_RenderPass(VK_NULL_HANDLE),
 		m_Framebuffer(VK_NULL_HANDLE),
 		m_FramebufferExtent(),
+		m_Desc(),
 		m_ClearValues()
 	{
 		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
@@ -47,8 +48,7 @@ namespace Lambda
 		}
 		if (pDepthStencil)
 		{
-			key.AttachmentViews[key.NumAttachmentViews] = reinterpret_cast<const VulkanTexture*>(pDepthStencil)->GetImageView();
-			key.NumAttachmentViews++;
+			key.AttachmentViews[key.NumAttachmentViews++] = reinterpret_cast<const VulkanTexture*>(pDepthStencil)->GetImageView();
 
             TextureDesc dsDesc = pDepthStencil->GetDesc();
 			m_FramebufferExtent.width = dsDesc.Width;
@@ -67,8 +67,7 @@ namespace Lambda
                     const VulkanTexture* pResolveResource = reinterpret_cast<const VulkanTexture*>(ppRenderTargets[i])->GetResolveResource();
                     if (pResolveResource)
                     {
-                        key.AttachmentViews[key.NumAttachmentViews] = pResolveResource->GetImageView();
-                        key.NumAttachmentViews++;
+                        key.AttachmentViews[key.NumAttachmentViews++] = pResolveResource->GetImageView();
                     }
                 }
 			}
@@ -91,6 +90,12 @@ namespace Lambda
 	void* VulkanRenderPass::GetNativeHandle() const
 	{
 		return reinterpret_cast<void*>(m_RenderPass);
+	}
+
+
+	RenderPassDesc VulkanRenderPass::GetDesc() const
+	{
+		return m_Desc;
 	}
 	
 	

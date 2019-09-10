@@ -1,6 +1,4 @@
 #include "LambdaPch.h"
-#include <set>
-#include <algorithm>
 #include "VulkanGraphicsDevice.h"
 #include "VulkanShader.h"
 #include "VulkanPipelineState.h"
@@ -24,54 +22,23 @@
 #endif
 
 namespace Lambda
-{
-    //Debugcallback
-    VKAPI_ATTR VkBool32 VKAPI_CALL VulkanGraphicsDevice::VulkanDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-        VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
-    {
-        //Check message type
-        LogSeverity severity = LOG_SEVERITY_UNKNOWN;
-        switch (messageSeverity)
-        {
-            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:      severity = LOG_SEVERITY_INFO;       break;
-            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:   severity = LOG_SEVERITY_WARNING;    break;
-            case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:     severity = LOG_SEVERITY_ERROR;      break;
-            default: return VK_FALSE;
-        }
-        
-        //Get type of message
-        const char* pTypeStr = nullptr;
-        if (messageType == VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT)
-            pTypeStr = "GENERAL";
-        else if (messageType == VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT)
-            pTypeStr = "VALIDATION";
-        else if (messageType == VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT)
-            pTypeStr = "PERFORMANCE";
-        
-        //Get objectinfo
-        uint64 object           = (pCallbackData->objectCount != 0) ? pCallbackData->pObjects->objectHandle : 0;
-        const char* pObjectName = (pCallbackData->objectCount != 0) ? pCallbackData->pObjects->pObjectName : "";
-        
-        //Print message
-        Log::GetDebugLog().Print(severity, "[Vulkan Validation Layer - type=%s, object=0x%llx, objectname=%s] %s\n", pTypeStr, object, pObjectName, pCallbackData->pMessage);
-        return VK_FALSE;
-    }
-    
-    
-    //Vulkan device static members
+{    
     PFN_vkSetDebugUtilsObjectNameEXT VulkanGraphicsDevice::SetDebugUtilsObjectNameEXT		= nullptr;
     PFN_vkCreateDebugUtilsMessengerEXT VulkanGraphicsDevice::CreateDebugUtilsMessengerEXT	= nullptr;
     PFN_vkDestroyDebugUtilsMessengerEXT VulkanGraphicsDevice::DestroyDebugUtilsMessengerEXT = nullptr;
-    
-    
-    //Vulkan Graphics Context
+
+
     VulkanGraphicsDevice::VulkanGraphicsDevice(IWindow* pWindow, const GraphicsDeviceDesc& desc)
         : m_Instance(VK_NULL_HANDLE),
         m_DebugMessenger(VK_NULL_HANDLE),
         m_Device(VK_NULL_HANDLE),
         m_GraphicsQueue(VK_NULL_HANDLE),
         m_PresentationQueue(VK_NULL_HANDLE),
+		m_Fences(),
         m_RenderSemaphores(),
+		m_ImageSemaphores(),
+		m_DeviceLimits(),
+		m_DeviceSettings(),
         m_FamiliyIndices(),
         m_PhysicalDevice(VK_NULL_HANDLE),
         m_AdapterProperties(),
@@ -79,6 +46,7 @@ namespace Lambda
 		m_pSwapChain(nullptr),
 		m_pDepthStencil(nullptr),
 		m_pMSAABuffer(nullptr),
+		m_pCommandList(nullptr),
 		m_CurrentFrame(0)
     {       
 		LAMBDA_ASSERT(s_pInstance == nullptr);
@@ -468,7 +436,7 @@ namespace Lambda
 			vkGetDeviceQueue(m_Device, m_FamiliyIndices.GraphicsFamily, 0, &m_GraphicsQueue);
 			vkGetDeviceQueue(m_Device, m_FamiliyIndices.PresentFamily, 0, &m_PresentationQueue);
 
-			//Set device settings
+			//Set devicesettings
 			m_DeviceSettings.SampleCount = ConvertSampleCount(desc.SampleCount);
 			if (m_DeviceSettings.SampleCount > m_DeviceLimits.MaxSampleCount)
 			{
@@ -488,12 +456,11 @@ namespace Lambda
         VkFenceCreateInfo fenceInfo = {};
         fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
         
-        //Resize vectors
+
+        //Create sync-objects
+        m_Fences.resize(FRAMES_AHEAD);        
         m_ImageSemaphores.resize(FRAMES_AHEAD);
         m_RenderSemaphores.resize(FRAMES_AHEAD);
-        m_Fences.resize(FRAMES_AHEAD);
-        
-        //Create sync-objects
         for (uint32 i = 0; i < FRAMES_AHEAD; i++)
         {
             //Create semaphores
@@ -505,7 +472,6 @@ namespace Lambda
             }
             else
             {
-                //Set semaphorenames
                 VulkanGraphicsDevice::SetVulkanObjectName(VK_OBJECT_TYPE_SEMAPHORE, (uint64)m_ImageSemaphores[i], "ImageSemaphore[" +  std::to_string(i) + "]");
                 VulkanGraphicsDevice::SetVulkanObjectName(VK_OBJECT_TYPE_SEMAPHORE, (uint64)m_RenderSemaphores[i], "RenderSemaphore[" + std::to_string(i) + "]");
             }
@@ -556,9 +522,15 @@ namespace Lambda
             return;
         }
          
-        //Init GraphicsDevice dependent members
-        CreateCommandList(reinterpret_cast<ICommandList**>(&m_pCommandList), COMMAND_LIST_TYPE_GRAPHICS);
-        m_pCommandList->SetName("Graphics Device Internal CommandList");
+
+        //Init internal commandlist, used for copying from staging buffers to final resource etc.
+		ICommandList* pList = nullptr;
+        CreateCommandList(&pList, COMMAND_LIST_TYPE_GRAPHICS);
+		if (pList)
+		{
+			m_pCommandList = reinterpret_cast<VulkanCommandList*>(pList);
+			m_pCommandList->SetName("Graphics Device Internal CommandList");
+		}
     }
     
     
@@ -630,6 +602,7 @@ namespace Lambda
             return false;
         }
         
+
         //Find indices for queuefamilies
         QueueFamilyIndices indices = FindQueueFamilies(adapter, m_Surface);
         if (!indices.Valid())
@@ -642,6 +615,7 @@ namespace Lambda
             LOG_DEBUG_INFO("Vulkan: Using queueFamily-Index '%d' for graphics and '%d' for presentation\n", indices.GraphicsFamily, indices.PresentFamily);
         }
         
+
         //Check if required extension for device is supported
         std::vector<const char*> deviceExtensions = GetRequiredDeviceExtensions();
       
@@ -670,7 +644,8 @@ namespace Lambda
             }
         }
         
-        //Check if the swapchain supports whats required
+
+        //Check if the adapter and surface has the required support 
         SwapChainCapabilities swapChainInfo = QuerySwapChainSupport(adapter, m_Surface);
         if (!swapChainInfo.Valid())
         {
@@ -687,7 +662,6 @@ namespace Lambda
         std::vector<const char*> requiredLayers;
         if (debug)
         {
-            //Pushback layers
             requiredLayers.push_back("VK_LAYER_KHRONOS_validation");
         }
 
@@ -698,9 +672,9 @@ namespace Lambda
     std::vector<const char*> VulkanGraphicsDevice::GetRequiredDeviceExtensions()
     {
         std::vector<const char*> requiredExtensions;
-        //Pushback layers
         requiredExtensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
-        return requiredExtensions;
+        
+		return requiredExtensions;
     }
 
 
@@ -722,7 +696,6 @@ namespace Lambda
 		//Add debug extensions to the required ones
 		if (debug)
 		{
-			//Pushback extensions
 			requiredExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 		}
 
@@ -782,8 +755,8 @@ namespace Lambda
         depthBufferDesc.SampleCount = uint32(m_DeviceSettings.SampleCount);
         depthBufferDesc.MipLevels = 1;
 		depthBufferDesc.Depth = 1;
-        m_pDepthStencil = DBG_NEW VulkanTexture(this, depthBufferDesc);
         
+        m_pDepthStencil = DBG_NEW VulkanTexture(this, depthBufferDesc);
         return true;
     }
 
@@ -802,15 +775,14 @@ namespace Lambda
 		msaaBufferDesc.SampleCount = uint32(m_DeviceSettings.SampleCount);
 		msaaBufferDesc.MipLevels = 1;
 		msaaBufferDesc.Depth = 1;
+
 		m_pMSAABuffer = DBG_NEW VulkanTexture(this, msaaBufferDesc);
-        
 		return true;
 	}
     
     
     void VulkanGraphicsDevice::ReleaseDepthStencil()
     {
-        //Release depthbuffer
         if (m_pDepthStencil != nullptr)
         {
             m_pDepthStencil->Destroy(m_Device);
@@ -821,7 +793,6 @@ namespace Lambda
 
 	void VulkanGraphicsDevice::ReleaseMSAABuffer()
 	{
-		//Release MSAABuffer
 		if (m_pMSAABuffer != nullptr)
 		{
 			m_pMSAABuffer->Destroy(m_Device);
@@ -848,9 +819,8 @@ namespace Lambda
     {
 		LAMBDA_ASSERT(ppBuffer != nullptr);
         
-        //Create buffer
-        VulkanBuffer* pBuffer = DBG_NEW VulkanBuffer(m_Device, m_PhysicalDevice, desc);
-        
+        VulkanBuffer* pVkBuffer = DBG_NEW VulkanBuffer(this, desc);
+
         //Upload inital data
         if (pInitalData)
         {
@@ -858,28 +828,27 @@ namespace Lambda
             {
                 //Upload directly to buffer if it is dynamic
                 void* pData = nullptr;
-                pBuffer->Map(&pData);
+                pVkBuffer->Map(&pData);
                 
                 memcpy(pData, pInitalData->pData, pInitalData->SizeInBytes);
                 
-                pBuffer->Unmap();
+                pVkBuffer->Unmap();
             }
             else if (desc.Usage == RESOURCE_USAGE_DEFAULT)
             {
-                m_pCommandList->Reset();
-                m_pCommandList->UpdateBuffer(pBuffer, pInitalData);
+				//Setup copy with staging buffer if other usecase
+				m_pCommandList->Reset();
+                m_pCommandList->UpdateBuffer(pVkBuffer, pInitalData);
                 m_pCommandList->Close();
             
                 ICommandList* ppLists[] = { m_pCommandList };
                 ExecuteCommandList(ppLists, 1);
-                
-                //Wait until buffer is copied
+
                 WaitForGPU();
             }
         }
-        
-        //Set inputptr to the newly created buffer
-        (*ppBuffer) = pBuffer;
+
+        (*ppBuffer) = pVkBuffer;
     }
     
     
@@ -982,10 +951,10 @@ namespace Lambda
 		LAMBDA_ASSERT(ppList != nullptr);
         
         //Delete list
-        VulkanCommandList* pList = reinterpret_cast<VulkanCommandList*>(*ppList);
-        if (pList != nullptr)
+        VulkanCommandList* pVkList = reinterpret_cast<VulkanCommandList*>(*ppList);
+        if (pVkList != nullptr)
         {
-            pList->Destroy(m_Device);
+            pVkList->Destroy(m_Device);
             *ppList = nullptr;
         }
     }
@@ -996,10 +965,10 @@ namespace Lambda
 		LAMBDA_ASSERT(ppBuffer != nullptr);
         
         //Delete buffer
-        VulkanBuffer* pBuffer = reinterpret_cast<VulkanBuffer*>(*ppBuffer);
-        if (pBuffer != nullptr)
+        VulkanBuffer* pVkBuffer = reinterpret_cast<VulkanBuffer*>(*ppBuffer);
+        if (pVkBuffer != nullptr)
         {
-            pBuffer->Destroy(m_Device);
+            pVkBuffer->Destroy(m_Device);
             *ppBuffer = nullptr;
             
             LOG_DEBUG_INFO("Vulkan: Destroyed Buffer\n");
@@ -1012,10 +981,10 @@ namespace Lambda
 		LAMBDA_ASSERT(ppTexture != nullptr);
         
         //Delete texture
-        VulkanTexture* pTexture = reinterpret_cast<VulkanTexture*>(*ppTexture);
-        if (pTexture != nullptr)
+        VulkanTexture* pVkTexture = reinterpret_cast<VulkanTexture*>(*ppTexture);
+        if (pVkTexture != nullptr)
         {
-            pTexture->Destroy(m_Device);
+            pVkTexture->Destroy(m_Device);
             *ppTexture = nullptr;
             
             LOG_DEBUG_INFO("Vulkan: Destroyed Texture2D\n");
@@ -1028,10 +997,10 @@ namespace Lambda
 		LAMBDA_ASSERT(ppShader != nullptr);
         
         //Delete shader
-        VulkanShader* pShader = reinterpret_cast<VulkanShader*>(*ppShader);
-        if (pShader != nullptr)
+        VulkanShader* pVkShader = reinterpret_cast<VulkanShader*>(*ppShader);
+        if (pVkShader != nullptr)
         {
-            pShader->Destroy(m_Device);
+            pVkShader->Destroy(m_Device);
             *ppShader = nullptr;
             
             LOG_DEBUG_INFO("Vulkan: Destroyed Shader\n");
@@ -1044,10 +1013,10 @@ namespace Lambda
 		LAMBDA_ASSERT(ppSamplerState != nullptr);
         
         //Delete SamplerState
-        VulkanSamplerState* pSamplerState = reinterpret_cast<VulkanSamplerState*>(*ppSamplerState);
-        if (pSamplerState != nullptr)
+        VulkanSamplerState* pVkSamplerState = reinterpret_cast<VulkanSamplerState*>(*ppSamplerState);
+        if (pVkSamplerState != nullptr)
         {
-            pSamplerState->Destroy(m_Device);
+            pVkSamplerState->Destroy(m_Device);
             *ppSamplerState = nullptr;
             
             LOG_DEBUG_INFO("Vulkan: Destroyed SamplerState\n");
@@ -1060,10 +1029,10 @@ namespace Lambda
 		LAMBDA_ASSERT(ppPipelineState != nullptr);
         
         //Delete PipelineState
-        VulkanGraphicsPipelineState* pPipelineState = reinterpret_cast<VulkanGraphicsPipelineState*>(*ppPipelineState);
-        if (pPipelineState != nullptr)
+        VulkanGraphicsPipelineState* pVkPipelineState = reinterpret_cast<VulkanGraphicsPipelineState*>(*ppPipelineState);
+        if (pVkPipelineState != nullptr)
         {
-			pPipelineState->Destroy(m_Device);
+			pVkPipelineState->Destroy(m_Device);
             *ppPipelineState = nullptr;
             
             LOG_DEBUG_INFO("Vulkan: Destroyed PipelineState\n");
@@ -1076,10 +1045,10 @@ namespace Lambda
 		LAMBDA_ASSERT(ppRenderPass != nullptr);
 
 		//Delete PipelineState
-		VulkanRenderPass* pRenderPass = reinterpret_cast<VulkanRenderPass*>(*ppRenderPass);
-		if (pRenderPass != nullptr)
+		VulkanRenderPass* pVkRenderPass = reinterpret_cast<VulkanRenderPass*>(*ppRenderPass);
+		if (pVkRenderPass != nullptr)
 		{
-			pRenderPass->Destroy(m_Device);
+			pVkRenderPass->Destroy(m_Device);
 			*ppRenderPass = nullptr;
 
 			LOG_DEBUG_INFO("Vulkan: Destroyed RenderPass\n");
@@ -1091,11 +1060,11 @@ namespace Lambda
 	{
 		LAMBDA_ASSERT(ppResourceState != nullptr);
 
-		//Delete PipelineState
-		VulkanPipelineResourceState* pResourceState = reinterpret_cast<VulkanPipelineResourceState*>(*ppResourceState);
-		if (pResourceState != nullptr)
+		//Delete ResourceState
+		VulkanPipelineResourceState* pVkResourceState = reinterpret_cast<VulkanPipelineResourceState*>(*ppResourceState);
+		if (pVkResourceState != nullptr)
 		{
-			pResourceState->Destroy(m_Device);
+			pVkResourceState->Destroy(m_Device);
 			*ppResourceState = nullptr;
 
 			LOG_DEBUG_INFO("Vulkan: Destroyed ResourceState\n");
@@ -1105,7 +1074,6 @@ namespace Lambda
     
     void VulkanGraphicsDevice::Destroy() const
     {
-		//Delete 
 		delete this;
     }
     
@@ -1115,9 +1083,11 @@ namespace Lambda
         //Retrive commandbuffers
         std::vector<VkCommandBuffer> buffers;
         for (uint32 i = 0; i < numLists; i++)
+		{
             buffers.push_back(reinterpret_cast<VkCommandBuffer>(ppLists[i]->GetNativeHandle()));
-        
-        //Setup submitinfo        
+		}
+
+        //submit commandbuffers
         VkSubmitInfo submitInfo = {};
         submitInfo.sType				= VK_STRUCTURE_TYPE_SUBMIT_INFO;
         submitInfo.pNext				= nullptr;
@@ -1129,7 +1099,6 @@ namespace Lambda
         submitInfo.signalSemaphoreCount = 0;
         submitInfo.pSignalSemaphores	= nullptr;
 
-        //submit commandbuffers
         if (vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to submit CommandBuffers\n");
@@ -1144,13 +1113,16 @@ namespace Lambda
 		//Retrive commandbuffers
 		std::vector<VkCommandBuffer> buffers;
 		for (uint32 i = 0; i < numLists; i++)
+		{
 			buffers.push_back(reinterpret_cast<VkCommandBuffer>(ppLists[i]->GetNativeHandle()));
+		}
 
-		//Setup submitinfo
+		//Setup "syncobjects"
 		VkSemaphore waitSemaphores[] = { m_ImageSemaphores[m_CurrentFrame] };
 		VkSemaphore signalSemaphores[] = { m_RenderSemaphores[m_CurrentFrame] };
 		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
+		//submit commandbuffers
 		VkSubmitInfo submitInfo = {};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		submitInfo.pNext = nullptr;
@@ -1162,14 +1134,14 @@ namespace Lambda
 		submitInfo.signalSemaphoreCount = 1;
 		submitInfo.pSignalSemaphores = signalSemaphores;
 
-		//submit commandbuffers
 		if (vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, m_Fences[m_CurrentFrame]) != VK_SUCCESS)
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to submit CommandBuffers\n");
 		}
-
-		//Present
-		Present();
+		else
+		{
+			Present();
+		}
 	}
     
     
@@ -1182,6 +1154,7 @@ namespace Lambda
 
 		m_pSwapChain->AquireNextImage(m_Device, m_ImageSemaphores[m_CurrentFrame]);
         
+		//if we use MSAA we want to set a texture that we can resolve onto, in this case the current backbuffer since we render to the window
         if (m_pMSAABuffer)
         {
             VulkanTexture* pResolveResource = reinterpret_cast<VulkanTexture*>(m_pSwapChain->GetCurrentBuffer());
@@ -1204,7 +1177,6 @@ namespace Lambda
     {
         //LOG_DEBUG_INFO("VulkanGraphicsDevice::WaitForGPU\n");
         vkQueueWaitIdle(m_GraphicsQueue);
-        //vkDeviceWaitIdle(m_Device);
     }
 
     
@@ -1264,8 +1236,7 @@ namespace Lambda
             
             //Syncronize the GPU so no operations are in flight when recreating swapchain
             WaitForGPU();
-            
-            //Resize the swapchain
+           
             m_pSwapChain->ResizeBuffers(this, m_ImageSemaphores[m_CurrentFrame], event.WindowResize.Width, event.WindowResize.Height);
 
 			//Recreate depthstencil
@@ -1306,11 +1277,18 @@ namespace Lambda
     }
     
     
-    VkDeviceMemory VulkanGraphicsDevice::AllocateImage(VkImage image, VkMemoryPropertyFlags properties) const
+    VkDeviceMemory VulkanGraphicsDevice::AllocateImage(VkImage image, ResourceUsage usage) const
     {
         VkMemoryRequirements memRequirements = {};
         vkGetImageMemoryRequirements(m_Device, image, &memRequirements);
         
+		//Set memoryproperty based on resource usage
+		VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+		if (usage == RESOURCE_USAGE_DYNAMIC)
+		{
+			properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+		}
+
         //Allocate memory
         uint32 memoryType = FindMemoryType(m_PhysicalDevice, memRequirements.memoryTypeBits, properties);
         VkMemoryAllocateInfo allocInfo = {};
@@ -1327,17 +1305,24 @@ namespace Lambda
         }
         else
         {
-            LOG_DEBUG_INFO("Vulkan: Allocated memory for texture\n");
+            LOG_DEBUG_INFO("Vulkan: Allocated '%d' bytes for texture\n", allocInfo.allocationSize);
             return memory;
         }
     }
     
     
-    VkDeviceMemory VulkanGraphicsDevice::AllocateBuffer(VkBuffer buffer, VkMemoryPropertyFlags properties) const
+    VkDeviceMemory VulkanGraphicsDevice::AllocateBuffer(VkBuffer buffer, ResourceUsage usage) const
     {
         VkMemoryRequirements memRequirements = {};
         vkGetBufferMemoryRequirements(m_Device, buffer, &memRequirements);
         
+		//Set memoryproperty based on resource usage
+		VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+		if (usage == RESOURCE_USAGE_DYNAMIC)
+		{
+			properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+		}
+
         //Allocate memory
         uint32 memoryType = FindMemoryType(m_PhysicalDevice, memRequirements.memoryTypeBits, properties);
         VkMemoryAllocateInfo allocInfo = {};
@@ -1349,13 +1334,47 @@ namespace Lambda
         VkDeviceMemory memory = VK_NULL_HANDLE;
         if (vkAllocateMemory(m_Device, &allocInfo, nullptr, &memory) != VK_SUCCESS)
         {
-            LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for texture\n");
+            LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for buffer\n");
             return VK_NULL_HANDLE;
         }
         else
         {
-            LOG_DEBUG_INFO("Vulkan: Allocated memory for texture\n");
+            LOG_DEBUG_INFO("Vulkan: Allocated '%d' bytes for buffer\n", allocInfo.allocationSize);
             return memory;
         }
     }
+
+
+	VKAPI_ATTR VkBool32 VKAPI_CALL VulkanGraphicsDevice::VulkanDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, 
+		VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
+	{
+		//Get severity
+		LogSeverity severity = LOG_SEVERITY_UNKNOWN;
+		switch (messageSeverity)
+		{
+		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:      severity = LOG_SEVERITY_INFO;       break;
+		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:   severity = LOG_SEVERITY_WARNING;    break;
+		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:     severity = LOG_SEVERITY_ERROR;      break;
+		default: return VK_FALSE;
+		}
+
+
+		//Get type of message
+		const char* pTypeStr = nullptr;
+		if (messageType == VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT)
+			pTypeStr = "GENERAL";
+		else if (messageType == VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT)
+			pTypeStr = "VALIDATION";
+		else if (messageType == VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT)
+			pTypeStr = "PERFORMANCE";
+
+
+		//Get objectinfo
+		uint64 object = (pCallbackData->objectCount != 0) ? pCallbackData->pObjects->objectHandle : 0;
+		const char* pObjectName = (pCallbackData->objectCount != 0) ? pCallbackData->pObjects->pObjectName : "";
+
+
+		Log::GetDebugLog().Print(severity, "[Vulkan Validation Layer - type=%s, object=0x%llx, objectname=%s] %s\n", pTypeStr, object, pObjectName, pCallbackData->pMessage);
+		return VK_FALSE;
+	}
 }

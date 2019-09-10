@@ -17,9 +17,8 @@ namespace Lambda
 		DX12Shader(const ShaderDesc& desc);
 		~DX12Shader() = default;
 
-		virtual ShaderStage GetType() const override final;
 		virtual void* GetNativeHandle() const override final;
-		virtual const char* GetEntryPoint() const override final;
+		virtual ShaderDesc GetDesc() const override final;
 
 	private:
 		void Init(const ShaderDesc& desc);

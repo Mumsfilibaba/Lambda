@@ -23,6 +23,7 @@ namespace Lambda
         virtual void* GetNativeHandle() const override final;
         virtual TextureDesc GetDesc() const override final;
         
+		void Release(VkDevice device);
         void Destroy(VkDevice device);
 
         void SetResolveResource(VulkanTexture* pResolveResource) const;

@@ -36,6 +36,7 @@ namespace Lambda
         VkBuffer m_Buffer;
         VkDeviceMemory m_Memory;
 		uint64 m_SizeInBytes;
+		bool m_IsMapped;
     };
     
     

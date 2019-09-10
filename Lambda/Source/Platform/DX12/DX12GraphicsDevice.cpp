@@ -343,6 +343,7 @@ namespace Lambda
 		LAMBDA_ASSERT(ppRenderPass);
 	}
 
+
 	void DX12GraphicsDevice::DestroyResourceState(IPipelineResourceState** ppResourceState) const
 	{
 	}

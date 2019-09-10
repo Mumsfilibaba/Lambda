@@ -12,8 +12,8 @@ namespace Lambda
         VulkanSamplerState(VkDevice device, const SamplerStateDesc& desc);
         ~VulkanSamplerState() = default;
         
-        virtual SamplerStateDesc GetDesc() const override final;
         virtual void* GetNativeHandle() const override final;
+        virtual SamplerStateDesc GetDesc() const override final;
         
         void Destroy(VkDevice device);
         

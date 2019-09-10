@@ -39,4 +39,5 @@
 #include <memory>
 #include <string>
 #include <sstream>
+#include <set>
 #include <unordered_map>

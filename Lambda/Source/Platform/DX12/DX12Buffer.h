@@ -21,7 +21,6 @@ namespace Lambda
 		virtual void Unmap() override final;
 
 		virtual void* GetNativeHandle() const override final;
-		virtual uint64 GetSizeInBytes() const override final;
 		virtual BufferDesc GetDesc() const override final;
 
 	private:

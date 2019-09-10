@@ -10,12 +10,7 @@ namespace Lambda
 	{
 		Init(desc);
 	}
-    
-
-	ShaderStage DX12Shader::GetType() const
-	{
-		return m_Type;
-	}
+  
 
 	void* DX12Shader::GetNativeHandle() const
 	{
@@ -23,9 +18,9 @@ namespace Lambda
 	}
 
 
-	const char* DX12Shader::GetEntryPoint() const
+	ShaderDesc DX12Shader::GetDesc() const
 	{
-		return m_EntryPoint.c_str();
+		return ShaderDesc();
 	}
 
 

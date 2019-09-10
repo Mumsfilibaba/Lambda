@@ -42,9 +42,8 @@ namespace Lambda
 		IShader() = default;
 		~IShader() = default;
 
-		virtual ShaderStage GetType() const = 0;
         virtual void* GetNativeHandle() const = 0;
-        virtual const char* GetEntryPoint() const = 0;
+        virtual ShaderDesc GetDesc() const = 0;
 
 	public:
 		static IShader* CreateShaderFromFile(const IGraphicsDevice* pDevice, const char* pFilename, const char* pEntryPoint, ShaderStage type, ShaderLang languange = SHADER_LANG_HLSL);

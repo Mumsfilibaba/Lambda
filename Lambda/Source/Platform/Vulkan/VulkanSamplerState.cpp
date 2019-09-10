@@ -8,6 +8,7 @@ namespace Lambda
         : m_Sampler(VK_NULL_HANDLE),
         m_Desc()
     {
+		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
         Init(device, desc);
     }
     

@@ -24,7 +24,6 @@ namespace Lambda
 		virtual void Unmap() = 0;
 
         virtual void* GetNativeHandle() const = 0;
-        virtual uint64 GetSizeInBytes() const = 0;
         virtual BufferDesc GetDesc() const = 0;
 	};
 }

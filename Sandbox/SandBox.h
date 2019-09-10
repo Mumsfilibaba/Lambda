@@ -12,7 +12,6 @@
 
 namespace Lambda
 {
-    //Buffer for camera
 	struct CameraBuffer
 	{
         glm::mat4 View;
@@ -20,14 +19,12 @@ namespace Lambda
 	};
     
     
-    //Buffer for transform
     struct TransformBuffer
     {
         glm::mat4 Model;
     };
 
 
-    //Sandbox application
 	class SandBox final : public Application
 	{
 	public:

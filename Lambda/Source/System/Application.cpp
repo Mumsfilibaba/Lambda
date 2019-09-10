@@ -4,14 +4,16 @@
 #include "System/Log.h"
 #include "System/Input.h"
 #include "System/JoystickManager.h"
-#include <thread>
 
 namespace Lambda
 {
 	Application* Application::s_pInstance = nullptr;
 
+
 	Application::Application(const EngineParams& params)
 		: m_pWindow(nullptr),
+		m_Params(),
+		m_ExitCode(0),
 		m_Running(true),
 		m_HasFocus(false)
 	{
@@ -38,6 +40,7 @@ namespace Lambda
 		while (m_Running)
 		{
 			clock.Tick();
+
             
 			//Logic update
 			accumulator += clock.GetDeltaTime();

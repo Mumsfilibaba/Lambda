@@ -153,17 +153,9 @@ namespace Lambda
             m_IsOwner = true;
         }
         
-        
-        //Set memoryproperty based on resource usage
-        VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-        if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
-        {
-            properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-        }
-        
-        
+               
         //Allocate memory
-        m_DeviceMemory = pVkDevice->AllocateImage(m_Image, properties);
+        m_DeviceMemory = pVkDevice->AllocateImage(m_Image, desc.Usage);
         if (m_DeviceMemory != VK_NULL_HANDLE)
         {
             vkBindImageMemory(device, m_Image, m_DeviceMemory, 0);
@@ -219,36 +211,41 @@ namespace Lambda
     }
     
     
-    void VulkanTexture::Destroy(VkDevice device)
-    {
+	void VulkanTexture::Release(VkDevice device)
+	{
 		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
-        
-        LOG_DEBUG_INFO("Vulkan: Destroying Texture2D '%p'\n", this);
-        
-        //Remove associated framebuffer if there is any
-        VulkanFramebufferCache::ReleaseAllContainingTexture(device, this);
-        
-        if (m_View != VK_NULL_HANDLE)
-        {
-            vkDestroyImageView(device, m_View, nullptr);
-            m_View = VK_NULL_HANDLE;
-        }
-        
-        //Destroy if texture was created from init
-        if (m_IsOwner)
-        {
-            if (m_Image != VK_NULL_HANDLE)
-            {
-                vkDestroyImage(device, m_Image, nullptr);
-                m_Image = VK_NULL_HANDLE;
-            }
-            if (m_DeviceMemory != VK_NULL_HANDLE)
-            {
-                vkFreeMemory(device, m_DeviceMemory, nullptr);
-                m_DeviceMemory = VK_NULL_HANDLE;
-            }
-        }
-        
+
+		//Remove associated framebuffer if there is any
+		VulkanFramebufferCache::ReleaseAllContainingTexture(device, this);
+
+		if (m_View != VK_NULL_HANDLE)
+		{
+			vkDestroyImageView(device, m_View, nullptr);
+			m_View = VK_NULL_HANDLE;
+		}
+
+		//Destroy if texture was created from init
+		if (m_IsOwner)
+		{
+			if (m_Image != VK_NULL_HANDLE)
+			{
+				vkDestroyImage(device, m_Image, nullptr);
+				m_Image = VK_NULL_HANDLE;
+			}
+			if (m_DeviceMemory != VK_NULL_HANDLE)
+			{
+				vkFreeMemory(device, m_DeviceMemory, nullptr);
+				m_DeviceMemory = VK_NULL_HANDLE;
+			}
+		}
+	}
+
+
+	void VulkanTexture::Destroy(VkDevice device)
+    {
+		LOG_DEBUG_INFO("Vulkan: Destroying Texture2D '%p'\n", this);
+		
+		Release(device);
         delete this;
     }
 }

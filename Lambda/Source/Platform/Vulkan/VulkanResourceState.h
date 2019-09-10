@@ -12,13 +12,6 @@ namespace Lambda
 	class VulkanPipelineResourceState final : public IPipelineResourceState
 	{
 	public:
-		union VulkanResourceBinding
-		{
-			VkDescriptorBufferInfo BufferBinding;
-			VkDescriptorImageInfo ImageBinding;
-		};
-
-	public:
 		LAMBDA_NO_COPY(VulkanPipelineResourceState);
 
 		VulkanPipelineResourceState(VkDevice device, const PipelineResourceStateDesc& desc);

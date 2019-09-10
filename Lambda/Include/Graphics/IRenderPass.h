@@ -44,5 +44,6 @@ namespace Lambda
 		virtual void SetRenderTargets(const ITexture* const* const ppRenderTargets, uint32 numRenderTargets, const ITexture* pDepthStencil) = 0;
 		virtual void SetClearValues(float color[4], float depth, uint8 stencil) = 0;
 		virtual void* GetNativeHandle() const = 0;
+		virtual RenderPassDesc GetDesc() const = 0;
 	};
 }
