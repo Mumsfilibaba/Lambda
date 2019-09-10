@@ -133,7 +133,7 @@ namespace Lambda
 			colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 			colorAttachment.finalLayout = ConvertResourceStateToImageLayout(desc.RenderTargets[i].FinalState);
             
-            if (desc.RenderTargets[i].Flags & RENDER_PASS_ATTACHMENT_FLAG_RESOLVE)
+            if (desc.RenderTargets[i].Flags & RENDER_PASS_ATTACHMENT_FLAG_RESOLVE && sampleCount > VK_SAMPLE_COUNT_1_BIT)
             {
                 VkAttachmentDescription resolveAttachment = colorAttachment;
                 resolveAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;

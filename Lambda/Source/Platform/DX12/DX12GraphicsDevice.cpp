@@ -154,9 +154,9 @@ namespace Lambda
 		if (pInitalData != nullptr)
 		{
 			//Copy data
-			m_pCommandList->TransitionTexture(pTexture, RESOURCE_STATE_COPY_DEST);
+			m_pCommandList->TransitionTexture(pTexture, RESOURCE_STATE_COPY_DEST, 0, LAMBDA_TRANSITION_ALL_MIPS);
 			m_pCommandList->UpdateTexture(pTexture, pInitalData, 0);
-			m_pCommandList->TransitionTexture(pTexture, RESOURCE_STATE_RENDERTARGET_PRESENT);
+			m_pCommandList->TransitionTexture(pTexture, RESOURCE_STATE_RENDERTARGET_PRESENT, 0, LAMBDA_TRANSITION_ALL_MIPS);
 
 			//Execute and wait for GPU before creating
 			m_pCommandList->Close();
@@ -410,12 +410,6 @@ namespace Lambda
 	ITexture* DX12GraphicsDevice::GetRenderTarget() const
 	{
 		return m_BackBuffers[m_SwapChain->GetCurrentBackBufferIndex()];
-	}
-
-
-	ITexture* DX12GraphicsDevice::GetResolveTarget() const
-	{
-		return nullptr;
 	}
 
 

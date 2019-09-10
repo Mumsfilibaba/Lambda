@@ -163,7 +163,7 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::TransitionTexture(const ITexture* pResource, ResourceState resourceState)
+	void DX12CommandList::TransitionTexture(const ITexture* pResource, ResourceState resourceState, uint32 startMipLevel, uint32 numMipLevels)
 	{
 		const DX12Texture* pTexture = reinterpret_cast<const DX12Texture*>(pResource);
 		m_ResourceTracker.TransitionResource(pTexture->GetResource(), D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, ConvertResourceState(resourceState));

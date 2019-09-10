@@ -48,7 +48,6 @@ namespace Lambda
 		virtual void* GetNativeHandle() const override final;
 		virtual ITexture* GetDepthStencil() const override final;
 		virtual ITexture* GetRenderTarget() const override final;
-		virtual ITexture* GetResolveTarget() const override final;
 		virtual ResourceFormat GetBackBufferFormat() const override final;
 		virtual uint32 GetBackBufferIndex() const override final;
 		virtual uint32 GetSwapChainWidth() const override final;

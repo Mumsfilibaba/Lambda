@@ -72,12 +72,12 @@ namespace Lambda
 			D3D12_CLEAR_VALUE* pClearValue = nullptr;
 			D3D12_CLEAR_VALUE clearValue = {};
 			clearValue.Format = format;
-			clearValue.Color[0] = desc.ClearValue.Color[0];
-			clearValue.Color[1] = desc.ClearValue.Color[1];
-			clearValue.Color[2] = desc.ClearValue.Color[2];
-			clearValue.Color[3] = desc.ClearValue.Color[3];
-			clearValue.DepthStencil.Depth = desc.ClearValue.Depth;
-			clearValue.DepthStencil.Stencil = desc.ClearValue.Stencil;
+			clearValue.Color[0] = 0.0f;
+			clearValue.Color[1] = 0.0f;
+			clearValue.Color[2] = 0.0f;
+			clearValue.Color[3] = 0.0f;
+			clearValue.DepthStencil.Depth = 1.0f;
+			clearValue.DepthStencil.Stencil = 0;
 
 			//only if we support rendertargets or depthstencil
 			if (flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET || flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL)

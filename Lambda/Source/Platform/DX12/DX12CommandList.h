@@ -35,7 +35,7 @@ namespace Lambda
 		virtual CommandListType GetType() const override final;
 
 		virtual void TransitionBuffer(const IBuffer* pResource, ResourceState resourceState) override final;
-		virtual void TransitionTexture(const ITexture* pResource, ResourceState resourceState) override final;
+		virtual void TransitionTexture(const ITexture* pResource, ResourceState resourceState, uint32 startMipLevel, uint32 numMipLevels) override final;
 
 		virtual void VSSetConstantBuffers(const IBuffer* const* ppBuffers, uint32 numBuffers, uint32 startSlot);
 		virtual void VSSetTextures(const ITexture* const* ppTextures, uint32 numTextures, uint32 startSlot);
