@@ -16,15 +16,15 @@ namespace Lambda
 		m_CurrentBufferIndex(0),
 		m_Buffers()
 	{
-		assert(pVkDevice != nullptr);
+		LAMBDA_ASSERT(pVkDevice != nullptr);
 		Init(pVkDevice, desc);
 	}
 
 
 	void VulkanSwapChain::Init(const VulkanGraphicsDevice* pVkDevice, const VulkanSwapChainDesc& desc)
 	{
-		assert(desc.Adapter != VK_NULL_HANDLE);
-		assert(desc.Surface != VK_NULL_HANDLE);
+		LAMBDA_ASSERT(desc.Adapter != VK_NULL_HANDLE);
+		LAMBDA_ASSERT(desc.Surface != VK_NULL_HANDLE);
 
         //Get the swapchain capabilities from the adapter
         m_Cap = QuerySwapChainSupport(desc.Adapter, desc.Surface);
@@ -281,7 +281,7 @@ namespace Lambda
 
 	void VulkanSwapChain::Destroy(VkDevice device)
 	{
-		assert(device != VK_NULL_HANDLE);
+		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
 
 		Release(device);
 		delete this;

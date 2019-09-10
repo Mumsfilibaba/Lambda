@@ -78,7 +78,7 @@ namespace Lambda
 
 	VkFramebuffer VulkanFramebufferCache::GetFramebuffer(VkDevice device, const VulkanFramebufferCacheKey& fbKey, uint32 width, uint32 height)
 	{
-		assert(device != VK_NULL_HANDLE);
+		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
 
 		//Check if a framebuffer exists
 		auto fb = s_Framebuffers.find(fbKey);

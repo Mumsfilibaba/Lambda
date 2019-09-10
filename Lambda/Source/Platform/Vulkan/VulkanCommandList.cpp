@@ -1,6 +1,7 @@
 #include "LambdaPch.h"
 #include "VulkanCommandList.h"
 #include "VulkanGraphicsDevice.h"
+#include "VulkanUploadBuffer.h"
 #include "VulkanPipelineState.h"
 #include "VulkanSamplerState.h"
 #include "VulkanTexture.h"
@@ -16,11 +17,13 @@ namespace Lambda
         : m_Device(VK_NULL_HANDLE),
         m_CommandPool(VK_NULL_HANDLE),
         m_CommandBuffer(VK_NULL_HANDLE),
+		m_pBufferUpload(nullptr),
+		m_pTextureUpload(nullptr),
         m_pResourceState(nullptr),
         m_pRenderPass(nullptr),
         m_Type(COMMAND_LIST_TYPE_UNKNOWN)
     {
-		assert(pVkDevice != VK_NULL_HANDLE);
+		LAMBDA_ASSERT(pVkDevice != VK_NULL_HANDLE);
         Init(pVkDevice, type);
     }
 
@@ -76,16 +79,8 @@ namespace Lambda
 
 
         //Init upload buffers
-        if (!m_BufferUpload.Init(pVkDevice, MB(128)))
-        {
-            LOG_DEBUG_ERROR("Vulkan: Failed to create Buffer-UploadBuffer\n");
-            return;
-        }
-        if (!m_TextureUpload.Init(pVkDevice, MB(128)))
-        {
-            LOG_DEBUG_ERROR("Vulkan: Failed to create Texture-UploadBuffer\n");
-            return;
-        }
+		m_pBufferUpload = DBG_NEW VulkanUploadBuffer(pVkDevice, MB(128));
+		m_pTextureUpload = DBG_NEW VulkanUploadBuffer(pVkDevice, MB(128));
     }
     
     
@@ -111,12 +106,18 @@ namespace Lambda
     
     void VulkanCommandList::Destroy(VkDevice device)
     {
-        assert(device != VK_NULL_HANDLE);
+		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
         
-
-        m_BufferUpload.Destroy(device);
-        m_TextureUpload.Destroy(device);
-        
+		if (m_pBufferUpload)
+		{
+			m_pBufferUpload->Destroy(device);
+			m_pBufferUpload = nullptr;
+		}
+		if (m_pTextureUpload)
+		{
+			m_pTextureUpload->Destroy(device);
+			m_pTextureUpload = nullptr;
+		}
         if (m_CommandBuffer != VK_NULL_HANDLE)
         {
             vkFreeCommandBuffers(device, m_CommandPool, 1, &m_CommandBuffer);
@@ -199,9 +200,9 @@ namespace Lambda
     }
     
     
-    void VulkanCommandList::SetGraphicsPipelineState(IGraphicsPipelineState* pPSO)
+    void VulkanCommandList::SetGraphicsPipelineState(IGraphicsPipelineState* pPipelineState)
     {
-        VkPipeline pipeline = reinterpret_cast<VkPipeline>(pPSO->GetNativeHandle());
+        VkPipeline pipeline = reinterpret_cast<VkPipeline>(pPipelineState->GetNativeHandle());
         vkCmdBindPipeline(m_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
     }
     
@@ -223,9 +224,9 @@ namespace Lambda
     }
 
 
-	void VulkanCommandList::SetResourceState(IResourceState* pResourceState)
+	void VulkanCommandList::SetGraphicsPipelineResourceState(IPipelineResourceState* pResourceState)
 	{
-		VulkanResourceState* pVkResourceState = reinterpret_cast<VulkanResourceState*>(pResourceState);
+		VulkanPipelineResourceState* pVkResourceState = reinterpret_cast<VulkanPipelineResourceState*>(pResourceState);
 		m_pResourceState = pVkResourceState;
 		pVkResourceState->CommitBindings(m_Device);
 
@@ -242,13 +243,13 @@ namespace Lambda
     
     void* VulkanCommandList::GetNativeHandle() const
     {
-        return (void*)m_CommandBuffer;
+        return reinterpret_cast<void*>(m_CommandBuffer);
     }
     
     
     void VulkanCommandList::TransitionBuffer(const IBuffer* pBuffer, ResourceState state)
     {
-		assert(pBuffer && state);
+		LAMBDA_ASSERT(pBuffer && state);
     }
     
     
@@ -370,18 +371,19 @@ namespace Lambda
         
         
         vkCmdPipelineBarrier(m_CommandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-        pVkTexture->SetCurrentResourceState(barrier.newLayout);
+        pVkTexture->SetGraphicsPipelineResourceState(barrier.newLayout);
     }
     
     
     void VulkanCommandList::UpdateBuffer(IBuffer* pResource, const ResourceData* pData)
     {        
+		LAMBDA_ASSERT(pData != nullptr);
+
         //Get offset before allocating
-        uint64 offset = m_BufferUpload.GetOffset();
+        uint64 offset = m_pBufferUpload->GetOffset(); 
         
-        //Allocate memory in the uploadbuffer
-        void* pMem = m_BufferUpload.Allocate(pData->SizeInBytes);
-        
+		//Allocate memory in the uploadbuffer
+        void* pMem = m_pBufferUpload->Allocate(pData->SizeInBytes);
         memcpy(pMem, pData->pData, pData->SizeInBytes);
         
         //Copy buffer
@@ -390,39 +392,41 @@ namespace Lambda
         copyRegion.dstOffset = 0;
         copyRegion.size = pData->SizeInBytes;
         
-        vkCmdCopyBuffer(m_CommandBuffer, m_BufferUpload.GetBuffer(), reinterpret_cast<VkBuffer>(pResource->GetNativeHandle()), 1, &copyRegion);
+		VkBuffer srcBuffer = m_pBufferUpload->GetBuffer();
+		VkBuffer dstBuffer = reinterpret_cast<VkBuffer>(pResource->GetNativeHandle());
+        vkCmdCopyBuffer(m_CommandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
     }
     
     
-    void VulkanCommandList::UpdateTexture(ITexture* pResource, const ResourceData* pData, uint32 subresource)
+    void VulkanCommandList::UpdateTexture(ITexture* pResource, const ResourceData* pData, uint32 mipLevel)
     {
-        VulkanTexture* pVkResource = reinterpret_cast<VulkanTexture*>(pResource);
+		LAMBDA_ASSERT(pData != nullptr);
+
         TransitionTexture(pResource, RESOURCE_STATE_COPY_DEST, 0, LAMBDA_TRANSITION_ALL_MIPS);
-        TextureDesc textureDesc = pVkResource->GetDesc();
+        VulkanTexture* pVkResource = reinterpret_cast<VulkanTexture*>(pResource);
         
         //Get offset before allocating
-        uint64 offset = m_TextureUpload.GetOffset();
+        uint64 offset = m_pTextureUpload->GetOffset();
         
         //Allocate memory in the uploadbuffer
-        void* pMem = m_TextureUpload.Allocate(pData->SizeInBytes);
-        
+        void* pMem = m_pTextureUpload->Allocate(pData->SizeInBytes);
         memcpy(pMem, pData->pData, pData->SizeInBytes);
         
+		//Perform copy
+        TextureDesc textureDesc = pVkResource->GetDesc();
         VkBufferImageCopy region = {};
         region.bufferOffset                     = offset;
         region.bufferRowLength                  = 0;
         region.bufferImageHeight                = 0;
         region.imageSubresource.aspectMask      = pVkResource->GetAspectFlags();
-        region.imageSubresource.mipLevel        = 0;
+        region.imageSubresource.mipLevel        = mipLevel;
         region.imageSubresource.baseArrayLayer  = 0;
         region.imageSubresource.layerCount      = 1;
         region.imageOffset                      = { 0, 0, 0 };
         region.imageExtent                      = { textureDesc.Width, textureDesc.Height, textureDesc.Depth };
         
-        //Get native resources
-        VkBuffer buffer = m_TextureUpload.GetBuffer();
+        VkBuffer buffer = m_pTextureUpload->GetBuffer();
         VkImage image = reinterpret_cast<VkImage>(pResource->GetNativeHandle());
-        
         vkCmdCopyBufferToImage(m_CommandBuffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
     }
     
@@ -434,7 +438,9 @@ namespace Lambda
         copyRegion.dstOffset = 0;
         copyRegion.size = pDst->GetDesc().SizeInBytes;
         
-        vkCmdCopyBuffer(m_CommandBuffer, reinterpret_cast<VkBuffer>(pSrc->GetNativeHandle()), reinterpret_cast<VkBuffer>(pDst->GetNativeHandle()), 1, &copyRegion);
+		VkBuffer srcBuffer = reinterpret_cast<VkBuffer>(pSrc->GetNativeHandle());
+		VkBuffer dstBuffer = reinterpret_cast<VkBuffer>(pDst->GetNativeHandle());
+        vkCmdCopyBuffer(m_CommandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
     }
     
     
@@ -463,6 +469,10 @@ namespace Lambda
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to End CommandBuffer\n");
         }
+
+		//Do not keep map during present calls
+		m_pBufferUpload->Unmap(m_Device);
+		m_pTextureUpload->Unmap(m_Device);
     }
     
     
@@ -487,7 +497,8 @@ namespace Lambda
         }
         
 		//Reset dependencies
-        m_BufferUpload.Reset();
+        m_pBufferUpload->Map(m_Device);
+		m_pTextureUpload->Map(m_Device);
     }
     
     

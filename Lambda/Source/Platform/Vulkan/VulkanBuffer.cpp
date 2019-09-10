@@ -18,7 +18,7 @@ namespace Lambda
         m_BufferMemory(VK_NULL_HANDLE),
         m_Desc()
     {
-        assert(device != VK_NULL_HANDLE);
+		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
         Init(device, adapter, desc);
     }
     
@@ -89,8 +89,8 @@ namespace Lambda
     
     void VulkanBuffer::Map(void** ppMem)
     {
-        assert(ppMem != nullptr);
-        assert(IGraphicsDevice::GetInstance() != nullptr);
+		LAMBDA_ASSERT(ppMem != nullptr);
+		LAMBDA_ASSERT(IGraphicsDevice::GetInstance() != nullptr);
         
         VkDevice device = reinterpret_cast<VkDevice>(IGraphicsDevice::GetInstance()->GetNativeHandle());
         vkMapMemory(device, m_BufferMemory, 0, m_Desc.SizeInBytes, 0, ppMem);
@@ -99,7 +99,7 @@ namespace Lambda
     
     void VulkanBuffer::Unmap()
     {
-        assert(IGraphicsDevice::GetInstance() != nullptr);
+		LAMBDA_ASSERT(IGraphicsDevice::GetInstance() != nullptr);
         
         VkDevice device = reinterpret_cast<VkDevice>(IGraphicsDevice::GetInstance()->GetNativeHandle());
         vkUnmapMemory(device, m_BufferMemory);
@@ -126,7 +126,7 @@ namespace Lambda
     
     void VulkanBuffer::Release(VkDevice device)
     {
-        assert(device != VK_NULL_HANDLE);
+		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
         
         if (m_Buffer != VK_NULL_HANDLE)
         {

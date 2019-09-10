@@ -12,12 +12,8 @@ namespace Lambda
 		m_Desc(),
 		m_Adress(0)
 	{
-		assert(pDevice != nullptr);
-
-		//Init Desc
+		LAMBDA_ASSERT(pDevice != nullptr);
 		memset(&m_Desc, 0, sizeof(m_Desc));
-
-		//Init
 		Init(pDevice, desc);
 	}
 

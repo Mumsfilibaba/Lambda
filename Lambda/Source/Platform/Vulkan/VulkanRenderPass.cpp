@@ -13,15 +13,15 @@ namespace Lambda
 		m_FramebufferExtent(),
 		m_ClearValues()
 	{
-		assert(device != VK_NULL_HANDLE);
+		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
 		Init(device, desc);
 	}
 	
 	
 	void VulkanRenderPass::SetRenderTargets(const ITexture* const* const ppRenderTargets, uint32 numRenderTargets, const ITexture* pDepthStencil)
 	{
-		assert(m_Device != VK_NULL_HANDLE);
-		assert(numRenderTargets == m_Desc.NumRenderTargets);
+		LAMBDA_ASSERT(m_Device != VK_NULL_HANDLE);
+		LAMBDA_ASSERT(numRenderTargets == m_Desc.NumRenderTargets);
 
 		VulkanFramebufferCacheKey key = {};
 		key.RenderPass = m_RenderPass;
@@ -96,7 +96,7 @@ namespace Lambda
 	
 	void VulkanRenderPass::Destroy(VkDevice device)
 	{
-		assert(device != VK_NULL_HANDLE);
+		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
 
 		if (m_RenderPass != VK_NULL_HANDLE)
 		{

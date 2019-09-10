@@ -16,7 +16,7 @@ namespace Lambda
 
 	void DX12ResourceStateTracker::TransitionResource(ID3D12Resource* pResource, uint32 subresource, D3D12_RESOURCE_STATES toState)
 	{
-		assert(pResource != nullptr);
+		LAMBDA_ASSERT(pResource != nullptr);
 
 		D3D12_RESOURCE_BARRIER barrier = {};
 		barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
@@ -81,7 +81,7 @@ namespace Lambda
 
 	void DX12ResourceStateTracker::FlushBarriers(ID3D12GraphicsCommandList* pCommandList)
 	{
-		assert(pCommandList != nullptr);
+		LAMBDA_ASSERT(pCommandList != nullptr);
 		std::lock_guard<std::mutex> lock(s_GlobalMutex);
 
 		//Make sure the states are still valid
@@ -137,7 +137,7 @@ namespace Lambda
 
 	D3D12_RESOURCE_STATES DX12ResourceStateTracker::GetState(ID3D12Resource* pResource, uint32 subresource) const
 	{
-		assert(pResource != nullptr);
+		LAMBDA_ASSERT(pResource != nullptr);
 
 		//Get state
 		auto pair = m_ResourceStates.find(pResource);
@@ -157,7 +157,7 @@ namespace Lambda
 
 	DX12ResourceState& DX12ResourceStateTracker::GetGlobalState(ID3D12Resource* pResource)
 	{
-		assert(pResource != nullptr);
+		LAMBDA_ASSERT(pResource != nullptr);
 
 		//Return the state
 		auto resourceState = s_GlobalResourceStates.find(pResource);
@@ -167,7 +167,7 @@ namespace Lambda
 
 	bool DX12ResourceStateTracker::HasGlobalState(ID3D12Resource* pResource)
 	{
-		assert(pResource != nullptr);
+		LAMBDA_ASSERT(pResource != nullptr);
 
 		//Does the resource have a state
 		auto resourceState = s_GlobalResourceStates.find(pResource);
@@ -177,7 +177,7 @@ namespace Lambda
 
 	void DX12ResourceStateTracker::AddGlobalState(ID3D12Resource* pResource, const DX12ResourceState& state)
 	{
-		assert(pResource != nullptr);
+		LAMBDA_ASSERT(pResource != nullptr);
 
 		//Add a new globalstate
 		auto resourceState = s_GlobalResourceStates.find(pResource);
@@ -188,7 +188,7 @@ namespace Lambda
 
 	void DX12ResourceStateTracker::RemoveGlobalState(ID3D12Resource* pResource)
 	{
-		assert(pResource != nullptr);
+		LAMBDA_ASSERT(pResource != nullptr);
 
 		std::lock_guard<std::mutex> lock(s_GlobalMutex);
 		s_GlobalResourceStates.erase(pResource);

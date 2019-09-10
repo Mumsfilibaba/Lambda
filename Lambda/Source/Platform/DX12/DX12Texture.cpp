@@ -20,7 +20,7 @@ namespace Lambda
 		m_hDescriptor(),
 		m_Desc()
 	{
-		assert(pDevice != nullptr);
+		LAMBDA_ASSERT(pDevice != nullptr);
 
 		//Init
 		memset(&m_Desc, 0, sizeof(m_Desc));

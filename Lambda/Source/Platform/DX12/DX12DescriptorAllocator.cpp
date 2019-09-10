@@ -57,7 +57,7 @@ namespace Lambda
 
 	void DX12DescriptorAllocator::Init(ID3D12Device* pDevice, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32 count, bool isShaderVisible)
 	{
-		assert(pDevice != nullptr);
+		LAMBDA_ASSERT(pDevice != nullptr);
 
 		//Create heap
 		D3D12_DESCRIPTOR_HEAP_DESC desc = {};

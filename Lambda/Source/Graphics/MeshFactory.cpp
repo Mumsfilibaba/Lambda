@@ -653,7 +653,7 @@ namespace Lambda
 
 		uint32 vertexSize = (uint32)data.Vertices.size();
 		uint32 indexSize = (uint32)data.Indices.size();
-		assert(startVertex < (uint32)data.Vertices.size());
+		LAMBDA_ASSERT(startVertex < (uint32)data.Vertices.size());
 		uint32 k = 0;
 		uint32 j = 0;
 

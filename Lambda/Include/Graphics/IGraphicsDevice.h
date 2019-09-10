@@ -12,7 +12,7 @@ namespace Lambda
 	class IShader;
 	class IGraphicsPipelineState;
 	class IRenderPass;
-	class IResourceState;
+	class IPipelineResourceState;
 
 	struct BufferDesc;
 	struct TextureDesc;
@@ -20,7 +20,7 @@ namespace Lambda
 	struct SamplerStateDesc;
 	struct GraphicsPipelineStateDesc;
 	struct RenderPassDesc;
-	struct ResourceStateDesc;
+	struct PipelineResourceStateDesc;
 
     
     struct GraphicsDeviceDesc
@@ -46,7 +46,7 @@ namespace Lambda
 		virtual void CreateSamplerState(ISamplerState** ppSamplerState, const SamplerStateDesc& desc) const = 0;
 		virtual void CreateGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc) const = 0;
 		virtual void CreateRenderPass(IRenderPass** ppRenderPass, const RenderPassDesc& desc) const = 0;
-		virtual void CreateResourceState(IResourceState** ppResourceState, const ResourceStateDesc& desc) const = 0;
+		virtual void CreateResourceState(IPipelineResourceState** ppResourceState, const PipelineResourceStateDesc& desc) const = 0;
 
 		virtual void DestroyCommandList(ICommandList** ppList) const = 0;
 		virtual void DestroyBuffer(IBuffer** ppBuffer) const = 0;
@@ -55,7 +55,7 @@ namespace Lambda
 		virtual void DestroySamplerState(ISamplerState** ppSamplerState) const = 0;
 		virtual void DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState) const = 0;
 		virtual void DestroyRenderPass(IRenderPass** ppRenderPass) const = 0;
-		virtual void DestroyResourceState(IResourceState** ppResourceState) const = 0;
+		virtual void DestroyResourceState(IPipelineResourceState** ppResourceState) const = 0;
 		virtual void Destroy() const = 0;
 
 		virtual void ExecuteCommandList(ICommandList* const * ppLists, uint32 numLists) const = 0;

@@ -34,8 +34,7 @@ namespace Lambda
 		m_ResourceDescriptorSize(0),
 		m_Type(COMMAND_LIST_TYPE_UNKNOWN)
 	{
-		assert(pDevice != nullptr);
-
+		LAMBDA_ASSERT(pDevice != nullptr);
 		Init(pDevice, type, nullSampler, nullSRV, nullUAV, nullCBV);
 	}
 
@@ -64,7 +63,7 @@ namespace Lambda
 
 	void DX12CommandList::BeginRenderPass(IRenderPass* pRenderPass)
 	{
-		assert(pRenderPass);
+		LAMBDA_ASSERT(pRenderPass);
 	}
 
 
@@ -145,7 +144,7 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::SetResourceState(IResourceState* pResourceState)
+	void DX12CommandList::SetGraphicsPipelineResourceState(IPipelineResourceState* pResourceState)
 	{
 	}
 

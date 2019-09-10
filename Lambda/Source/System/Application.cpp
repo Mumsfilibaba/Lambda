@@ -15,7 +15,7 @@ namespace Lambda
 		m_Running(true),
 		m_HasFocus(false)
 	{
-		assert(s_pInstance == nullptr);
+		LAMBDA_ASSERT(s_pInstance == nullptr);
 		s_pInstance = this;
 
 		Init(params);
@@ -147,7 +147,7 @@ namespace Lambda
 
 	Application& Application::GetInstance()
 	{
-		assert(s_pInstance != nullptr);
+		LAMBDA_ASSERT(s_pInstance != nullptr);
 		return *s_pInstance;
 	}
 	

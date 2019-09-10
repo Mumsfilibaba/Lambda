@@ -16,7 +16,7 @@ namespace Lambda
         m_Desc(),
         m_CurrentResourceState(VK_IMAGE_LAYOUT_UNDEFINED)
     {
-        assert(pVkDevice != nullptr);
+		LAMBDA_ASSERT(pVkDevice != nullptr);
         Init(pVkDevice, desc);
     }
     
@@ -30,8 +30,8 @@ namespace Lambda
         m_Desc(),
         m_CurrentResourceState(VK_IMAGE_LAYOUT_UNDEFINED)
     {
-        assert(pVkDevice != nullptr);
-        assert(image != VK_NULL_HANDLE);
+		LAMBDA_ASSERT(pVkDevice != nullptr);
+		LAMBDA_ASSERT(image != VK_NULL_HANDLE);
         InitFromResource(pVkDevice, image, desc);
     }
     
@@ -221,7 +221,7 @@ namespace Lambda
     
     void VulkanTexture::Destroy(VkDevice device)
     {
-        assert(device != VK_NULL_HANDLE);
+		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
         
         LOG_DEBUG_INFO("Vulkan: Destroying Texture2D '%p'\n", this);
         

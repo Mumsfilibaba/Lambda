@@ -6,12 +6,12 @@
 
 namespace Lambda
 {
-	VulkanResourceState::VulkanResourceState(VkDevice device, const ResourceStateDesc& desc)
+	VulkanPipelineResourceState::VulkanPipelineResourceState(VkDevice device, const PipelineResourceStateDesc& desc)
 		: m_PipelineLayout(VK_NULL_HANDLE),
 		m_DescriptorSetLayout(VK_NULL_HANDLE),
 		m_DescriptorPool(VK_NULL_HANDLE)
 	{
-		assert(device != VK_NULL_HANDLE);
+		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
 
 		m_ImageBindings.reserve(32);
 		m_BufferBindings.reserve(32);
@@ -20,7 +20,7 @@ namespace Lambda
 	}
 
 
-	void VulkanResourceState::SetTextures(ITexture** ppTextures, uint32 numTextures, uint32 startSlot)
+	void VulkanPipelineResourceState::SetTextures(ITexture** ppTextures, uint32 numTextures, uint32 startSlot)
 	{
 		VkWriteDescriptorSet writeInfo = {};
 		writeInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -98,7 +98,7 @@ namespace Lambda
 	}
 
 
-	void VulkanResourceState::SetSamplerStates(ISamplerState** ppSamplerStates, uint32 numSamplerStates, uint32 startSlot)
+	void VulkanPipelineResourceState::SetSamplerStates(ISamplerState** ppSamplerStates, uint32 numSamplerStates, uint32 startSlot)
 	{
 		VkWriteDescriptorSet writeInfo = {};
 		writeInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -176,7 +176,7 @@ namespace Lambda
 	}
 
 
-	void VulkanResourceState::SetConstantBuffers(IBuffer** ppBuffers, uint32 numBuffers, uint32 startSlot)
+	void VulkanPipelineResourceState::SetConstantBuffers(IBuffer** ppBuffers, uint32 numBuffers, uint32 startSlot)
 	{
 		VkWriteDescriptorSet writeInfo = {};
 		writeInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -254,25 +254,25 @@ namespace Lambda
 	}
 
 	
-	void* VulkanResourceState::GetNativeHandle() const
+	void* VulkanPipelineResourceState::GetNativeHandle() const
 	{
 		return reinterpret_cast<void*>(m_PipelineLayout);
 	}
 
 	
-	VkPipelineLayout VulkanResourceState::GetPipelineLayout() const
+	VkPipelineLayout VulkanPipelineResourceState::GetPipelineLayout() const
 	{
 		return m_PipelineLayout;
 	}
 
 
-	VkDescriptorSet VulkanResourceState::GetDescriptorSet() const
+	VkDescriptorSet VulkanPipelineResourceState::GetDescriptorSet() const
 	{
 		return m_DescriptorSet;
 	}
 
 	
-	void VulkanResourceState::CommitBindings(VkDevice device)
+	void VulkanPipelineResourceState::CommitBindings(VkDevice device)
 	{
 		if (m_DescriptorWrites.size() > 0)
 		{
@@ -287,7 +287,7 @@ namespace Lambda
 	}
 
 
-	void VulkanResourceState::Destroy(VkDevice device)
+	void VulkanPipelineResourceState::Destroy(VkDevice device)
 	{
 		if (m_DescriptorPool != VK_NULL_HANDLE)
 		{
@@ -309,7 +309,7 @@ namespace Lambda
 	}
 
 
-	void VulkanResourceState::Init(VkDevice device, const ResourceStateDesc& desc)
+	void VulkanPipelineResourceState::Init(VkDevice device, const PipelineResourceStateDesc& desc)
 	{
 		//Number of resources that can be bound
 		m_CurrentBindings.resize(desc.NumResourceSlots);

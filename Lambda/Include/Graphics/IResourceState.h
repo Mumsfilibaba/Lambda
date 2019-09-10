@@ -17,20 +17,20 @@ namespace Lambda
     };
     
     
-    struct ResourceStateDesc
+    struct PipelineResourceStateDesc
     {
         uint32 NumResourceSlots = 0;
         const ResourceSlot* pResourceSlots = nullptr;
     };
     
     
-    class LAMBDA_API IResourceState
+    class LAMBDA_API IPipelineResourceState
     {
     public:
-        LAMBDA_INTERFACE(IResourceState);
+        LAMBDA_INTERFACE(IPipelineResourceState);
         
-        IResourceState() = default;
-        ~IResourceState() = default;
+        IPipelineResourceState() = default;
+        ~IPipelineResourceState() = default;
         
 		virtual void SetTextures(ITexture** ppTextures, uint32 numTextures, uint32 startSlot) = 0;
 		virtual void SetSamplerStates(ISamplerState** ppSamplerStates, uint32 numSamplerStates, uint32 startSlot) = 0;

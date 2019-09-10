@@ -5,7 +5,7 @@ namespace Lambda
 {    
 	class IShader;
 	class IRenderPass;
-	class IResourceState;
+	class IPipelineResourceState;
 
     
     struct InputElement
@@ -38,7 +38,7 @@ namespace Lambda
         //RenderPass defines the framebuffer
 		IRenderPass* pRenderPass = nullptr;
 		//Resourcestate hold info about what resources will be bound to the pipeline
-		IResourceState* pResourceState = nullptr;
+		IPipelineResourceState* pResourceState = nullptr;
 	};
 
 

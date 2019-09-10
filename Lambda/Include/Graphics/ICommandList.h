@@ -10,7 +10,7 @@ namespace Lambda
 	class ISamplerState;
 	class IGraphicsPipelineState;
 	class IRenderPass;
-	class IResourceState;
+	class IPipelineResourceState;
 
 
 	class LAMBDA_API ICommandList
@@ -29,13 +29,13 @@ namespace Lambda
 
 		virtual void SetViewport(const Viewport& viewport) = 0;
 		virtual void SetScissorRect(const Rectangle& scissorRect) = 0;
-		virtual void SetGraphicsPipelineState(IGraphicsPipelineState* pPSO) = 0;
 		virtual void SetVertexBuffer(IBuffer* pBuffer, uint32 slot) = 0;
         virtual void SetIndexBuffer(IBuffer* pBuffer) = 0;
-		virtual void SetResourceState(IResourceState* pResourceState) = 0;
+		virtual void SetGraphicsPipelineState(IGraphicsPipelineState* pPiplineState) = 0;
+		virtual void SetGraphicsPipelineResourceState(IPipelineResourceState* pPipelineResourceState) = 0;
 
 		virtual void UpdateBuffer(IBuffer* pResource, const ResourceData* pData) = 0;
-		virtual void UpdateTexture(ITexture* pResource, const ResourceData* pData, uint32 subresource) = 0;
+		virtual void UpdateTexture(ITexture* pResource, const ResourceData* pData, uint32 mipLevel) = 0;
 
         virtual void TransitionBuffer(const IBuffer* pBuffer, ResourceState state) = 0;
         virtual void TransitionTexture(const ITexture* pTexture, ResourceState state, uint32 startMipLevel, uint32 numMipLevels) = 0;

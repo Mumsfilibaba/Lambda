@@ -8,7 +8,7 @@ namespace Lambda
 		: m_Desc(),
 		m_Descriptor()
 	{
-		assert(pDevice != nullptr);
+		LAMBDA_ASSERT(pDevice != nullptr);
 		Init(pDevice, hDescriptor, desc);
 	}
 
@@ -27,7 +27,7 @@ namespace Lambda
 
 	void DX12SamplerState::Init(ID3D12Device* pDevice, DX12DescriptorHandle hDescriptor, const SamplerStateDesc& desc)
 	{
-		assert(&desc != nullptr);
+		LAMBDA_ASSERT(&desc != nullptr);
 
 		//Create sampler
 		D3D12_SAMPLER_DESC sDesc = {};

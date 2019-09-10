@@ -113,7 +113,7 @@ namespace Lambda
 				slots[4].Stage = SHADER_STAGE_PIXEL;
 				slots[4].Type = RESOURCE_TYPE_SAMPLER;
 
-				ResourceStateDesc desc = {};
+				PipelineResourceStateDesc desc = {};
 				desc.NumResourceSlots = 5;
 				desc.pResourceSlots = slots;
 
@@ -233,7 +233,7 @@ namespace Lambda
             }
 
             //Create texture
-            m_pTexture = ITexture::CreateTextureFromFile(pDevice, "chalet.jpg", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
+            m_pTexture = ITexture::CreateTextureFromFile(pDevice, "texture.jpg", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
 			m_pCurrentList->TransitionTexture(m_pTexture, RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0, LAMBDA_TRANSITION_ALL_MIPS);
 
             //Create samplerstate
@@ -351,7 +351,7 @@ namespace Lambda
 		m_pResourceState->SetConstantBuffers(buffers, 3, 0);
 		m_pResourceState->SetTextures(&m_pTexture, 1, 3);
 		m_pResourceState->SetSamplerStates(&m_pSamplerState, 1, 4);
-		m_pCurrentList->SetResourceState(m_pResourceState);
+		m_pCurrentList->SetGraphicsPipelineResourceState(m_pResourceState);
         
         //Set vertex- and indexbuffer
         m_pCurrentList->SetVertexBuffer(m_pVertexBuffer, 0);

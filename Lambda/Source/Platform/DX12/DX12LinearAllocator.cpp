@@ -12,8 +12,7 @@ namespace Lambda
 		m_Offset(0),
 		m_Size(size)
 	{
-		assert(pDevice != nullptr);
-		
+		LAMBDA_ASSERT(pDevice != nullptr);
 		Init(pDevice, size);
 	}
 
@@ -94,7 +93,7 @@ namespace Lambda
 
 	void DX12LinearAllocator::Init(ID3D12Device* pDevice, uint64 pageSize)
 	{
-		assert(pDevice != nullptr);
+		LAMBDA_ASSERT(pDevice != nullptr);
 
 		m_PageSize = pageSize;
 		m_Device = pDevice;

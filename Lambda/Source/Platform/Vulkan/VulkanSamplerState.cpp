@@ -63,7 +63,7 @@ namespace Lambda
     
     void VulkanSamplerState::Destroy(VkDevice device)
     {
-        assert(device != VK_NULL_HANDLE);
+		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
         
         if (m_Sampler != VK_NULL_HANDLE)
         {

@@ -26,7 +26,7 @@ namespace Lambda
         void Destroy(VkDevice device);
 
         void SetResolveResource(VulkanTexture* pResolveResource) const;
-        void SetCurrentResourceState(VkImageLayout resourceState) const;
+        void SetGraphicsPipelineResourceState(VkImageLayout resourceState) const;
         VulkanTexture* GetResolveResource() const;
         VkImageAspectFlags GetAspectFlags() const;
         VkImage GetImage() const;
@@ -80,7 +80,7 @@ namespace Lambda
     }
     
     
-    inline void VulkanTexture::SetCurrentResourceState(VkImageLayout resourceState) const
+    inline void VulkanTexture::SetGraphicsPipelineResourceState(VkImageLayout resourceState) const
     {
         m_CurrentResourceState = resourceState;
     }

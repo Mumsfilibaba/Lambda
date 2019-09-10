@@ -9,7 +9,7 @@ namespace Lambda
 	class VulkanSamplerState;
 
 
-	class VulkanResourceState final : public IResourceState
+	class VulkanPipelineResourceState final : public IPipelineResourceState
 	{
 	public:
 		union VulkanResourceBinding
@@ -19,10 +19,10 @@ namespace Lambda
 		};
 
 	public:
-		LAMBDA_NO_COPY(VulkanResourceState);
+		LAMBDA_NO_COPY(VulkanPipelineResourceState);
 
-		VulkanResourceState(VkDevice device, const ResourceStateDesc& desc);
-		~VulkanResourceState() = default;
+		VulkanPipelineResourceState(VkDevice device, const PipelineResourceStateDesc& desc);
+		~VulkanPipelineResourceState() = default;
 
 		virtual void SetTextures(ITexture** ppTextures, uint32 numTextures, uint32 startSlot) override final;
 		virtual void SetSamplerStates(ISamplerState** ppSamplerStates, uint32 numSamplerStates, uint32 startSlot) override final;
@@ -37,7 +37,7 @@ namespace Lambda
 		void Destroy(VkDevice device);
 
 	private:
-		void Init(VkDevice device, const ResourceStateDesc& desc);
+		void Init(VkDevice device, const PipelineResourceStateDesc& desc);
 
 	private:
 		VkPipelineLayout m_PipelineLayout;

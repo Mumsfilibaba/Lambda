@@ -81,7 +81,7 @@ namespace Lambda
 		m_pMSAABuffer(nullptr),
 		m_CurrentFrame(0)
     {       
-        assert(s_pInstance == nullptr);
+		LAMBDA_ASSERT(s_pInstance == nullptr);
         s_pInstance = this;
         
         Init(pWindow, desc);
@@ -149,7 +149,7 @@ namespace Lambda
     
     void VulkanGraphicsDevice::Init(IWindow* pWindow, const GraphicsDeviceDesc& desc)
     {
-        assert(pWindow != nullptr);
+		LAMBDA_ASSERT(pWindow != nullptr);
         
 		VkApplicationInfo applicationInfo = {};
 		applicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -839,14 +839,14 @@ namespace Lambda
     
     void VulkanGraphicsDevice::CreateCommandList(ICommandList** ppList, CommandListType type) const
     {
-        assert(ppList != nullptr);
+		LAMBDA_ASSERT(ppList != nullptr);
         (*ppList) = DBG_NEW VulkanCommandList(this, type);
     }
     
     
     void VulkanGraphicsDevice::CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) const
     {
-        assert(ppBuffer != nullptr);
+		LAMBDA_ASSERT(ppBuffer != nullptr);
         
         //Create buffer
         VulkanBuffer* pBuffer = DBG_NEW VulkanBuffer(m_Device, m_PhysicalDevice, desc);
@@ -885,7 +885,7 @@ namespace Lambda
     
     void VulkanGraphicsDevice::CreateTexture(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc) const
     {
-        assert(ppTexture != nullptr);
+		LAMBDA_ASSERT(ppTexture != nullptr);
         
         //Create texture object
         VulkanTexture* pVkTexture = DBG_NEW VulkanTexture(this, desc);
@@ -944,42 +944,42 @@ namespace Lambda
     
     void VulkanGraphicsDevice::CreateShader(IShader** ppShader, const ShaderDesc& desc) const
     {
-        assert(ppShader != nullptr);
+		LAMBDA_ASSERT(ppShader != nullptr);
         (*ppShader) = DBG_NEW VulkanShader(m_Device, desc);
     }
     
     
     void VulkanGraphicsDevice::CreateSamplerState(ISamplerState** ppSamplerState, const SamplerStateDesc& desc) const
     {
-        assert(ppSamplerState != nullptr);
+		LAMBDA_ASSERT(ppSamplerState != nullptr);
         (*ppSamplerState) = DBG_NEW VulkanSamplerState(m_Device, desc);
     }
     
     
     void VulkanGraphicsDevice::CreateGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc) const
     {
-        assert(ppPipelineState != nullptr);
+		LAMBDA_ASSERT(ppPipelineState != nullptr);
         (*ppPipelineState) = DBG_NEW VulkanGraphicsPipelineState(m_Device, desc);
     }
 
 
 	void VulkanGraphicsDevice::CreateRenderPass(IRenderPass** ppRenderPass, const RenderPassDesc& desc) const
 	{
-		assert(ppRenderPass != nullptr);
+		LAMBDA_ASSERT(ppRenderPass != nullptr);
 		(*ppRenderPass) = DBG_NEW VulkanRenderPass(m_Device, desc);
 	}
 
 
-	void VulkanGraphicsDevice::CreateResourceState(IResourceState** ppResourceState, const ResourceStateDesc& desc) const
+	void VulkanGraphicsDevice::CreateResourceState(IPipelineResourceState** ppResourceState, const PipelineResourceStateDesc& desc) const
 	{
-		assert(ppResourceState != nullptr);
-		(*ppResourceState) = DBG_NEW VulkanResourceState(m_Device, desc);
+		LAMBDA_ASSERT(ppResourceState != nullptr);
+		(*ppResourceState) = DBG_NEW VulkanPipelineResourceState(m_Device, desc);
 	}
     
     
     void VulkanGraphicsDevice::DestroyCommandList(ICommandList** ppList) const
     {
-        assert(ppList != nullptr);
+		LAMBDA_ASSERT(ppList != nullptr);
         
         //Delete list
         VulkanCommandList* pList = reinterpret_cast<VulkanCommandList*>(*ppList);
@@ -993,7 +993,7 @@ namespace Lambda
     
     void VulkanGraphicsDevice::DestroyBuffer(IBuffer** ppBuffer) const
     {
-        assert(ppBuffer != nullptr);
+		LAMBDA_ASSERT(ppBuffer != nullptr);
         
         //Delete buffer
         VulkanBuffer* pBuffer = reinterpret_cast<VulkanBuffer*>(*ppBuffer);
@@ -1009,7 +1009,7 @@ namespace Lambda
     
     void VulkanGraphicsDevice::DestroyTexture(ITexture** ppTexture) const
     {
-        assert(ppTexture != nullptr);
+		LAMBDA_ASSERT(ppTexture != nullptr);
         
         //Delete texture
         VulkanTexture* pTexture = reinterpret_cast<VulkanTexture*>(*ppTexture);
@@ -1025,7 +1025,7 @@ namespace Lambda
     
     void VulkanGraphicsDevice::DestroyShader(IShader** ppShader) const
     {
-        assert(ppShader != nullptr);
+		LAMBDA_ASSERT(ppShader != nullptr);
         
         //Delete shader
         VulkanShader* pShader = reinterpret_cast<VulkanShader*>(*ppShader);
@@ -1041,7 +1041,7 @@ namespace Lambda
     
     void VulkanGraphicsDevice::DestroySamplerState(ISamplerState** ppSamplerState) const
     {
-        assert(ppSamplerState != nullptr);
+		LAMBDA_ASSERT(ppSamplerState != nullptr);
         
         //Delete SamplerState
         VulkanSamplerState* pSamplerState = reinterpret_cast<VulkanSamplerState*>(*ppSamplerState);
@@ -1057,7 +1057,7 @@ namespace Lambda
     
     void VulkanGraphicsDevice::DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState) const
     {
-        assert(ppPipelineState != nullptr);
+		LAMBDA_ASSERT(ppPipelineState != nullptr);
         
         //Delete PipelineState
         VulkanGraphicsPipelineState* pPipelineState = reinterpret_cast<VulkanGraphicsPipelineState*>(*ppPipelineState);
@@ -1073,7 +1073,7 @@ namespace Lambda
 
 	void VulkanGraphicsDevice::DestroyRenderPass(IRenderPass** ppRenderPass) const
 	{
-		assert(ppRenderPass != nullptr);
+		LAMBDA_ASSERT(ppRenderPass != nullptr);
 
 		//Delete PipelineState
 		VulkanRenderPass* pRenderPass = reinterpret_cast<VulkanRenderPass*>(*ppRenderPass);
@@ -1087,12 +1087,12 @@ namespace Lambda
 	}
 
 
-	void VulkanGraphicsDevice::DestroyResourceState(IResourceState** ppResourceState) const
+	void VulkanGraphicsDevice::DestroyResourceState(IPipelineResourceState** ppResourceState) const
 	{
-		assert(ppResourceState != nullptr);
+		LAMBDA_ASSERT(ppResourceState != nullptr);
 
 		//Delete PipelineState
-		VulkanResourceState* pResourceState = reinterpret_cast<VulkanResourceState*>(*ppResourceState);
+		VulkanPipelineResourceState* pResourceState = reinterpret_cast<VulkanPipelineResourceState*>(*ppResourceState);
 		if (pResourceState != nullptr)
 		{
 			pResourceState->Destroy(m_Device);

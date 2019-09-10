@@ -71,7 +71,7 @@ namespace Lambda
 		IRenderPass* m_pRenderPass;
         
         //ResourceState
-        IResourceState* m_pResourceState;
+        IPipelineResourceState* m_pResourceState;
 		
         //Other
         float m_Width;

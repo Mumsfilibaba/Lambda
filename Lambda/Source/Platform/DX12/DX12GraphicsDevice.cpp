@@ -37,7 +37,7 @@ namespace Lambda
 		m_BackBufferHeight(0),
 		m_BackBufferWidth(0)
 	{
-		assert(s_pInstance == nullptr);
+		LAMBDA_ASSERT(s_pInstance == nullptr);
 		s_pInstance = this;
 
 		LOG_SYSTEM_INFO("Creating DX12GraphicsDevice\n");
@@ -233,17 +233,17 @@ namespace Lambda
 
 	void DX12GraphicsDevice::CreateRenderPass(IRenderPass** ppRenderPass, const RenderPassDesc& desc) const
 	{
-		assert(ppRenderPass && &desc);
+		LAMBDA_ASSERT(ppRenderPass && &desc);
 	}
 
-	void DX12GraphicsDevice::CreateResourceState(IResourceState** ppResourceState, const ResourceStateDesc& desc) const
+	void DX12GraphicsDevice::CreateResourceState(IPipelineResourceState** ppResourceState, const PipelineResourceStateDesc& desc) const
 	{
 	}
 
 
 	void DX12GraphicsDevice::DestroyCommandList(ICommandList** ppList) const
 	{
-		assert(ppList != nullptr);
+		LAMBDA_ASSERT(ppList != nullptr);
 
 		DX12CommandList* pList = reinterpret_cast<DX12CommandList*>(*ppList);
 		delete pList;
@@ -253,7 +253,7 @@ namespace Lambda
 
 	void DX12GraphicsDevice::DestroyBuffer(IBuffer** ppBuffer) const
 	{
-		assert(ppBuffer != nullptr);
+		LAMBDA_ASSERT(ppBuffer != nullptr);
 
 		DX12Buffer* pBuffer = reinterpret_cast<DX12Buffer*>(*ppBuffer);
 		
@@ -275,7 +275,7 @@ namespace Lambda
 
 	void DX12GraphicsDevice::DestroyTexture(ITexture** ppTexture) const
 	{
-		assert(ppTexture != nullptr);
+		LAMBDA_ASSERT(ppTexture != nullptr);
 
 		DX12Texture* pTexture = reinterpret_cast<DX12Texture*>(*ppTexture);
 		TextureDesc desc = pTexture->GetDesc();
@@ -305,7 +305,7 @@ namespace Lambda
 
 	void DX12GraphicsDevice::DestroyShader(IShader** ppShader) const
 	{
-		assert(ppShader != nullptr);
+		LAMBDA_ASSERT(ppShader != nullptr);
 
 		DX12Shader* pShader = reinterpret_cast<DX12Shader*>(*ppShader);
 		delete pShader;
@@ -315,7 +315,7 @@ namespace Lambda
 
 	void DX12GraphicsDevice::DestroySamplerState(ISamplerState** ppSamplerState) const
 	{
-		assert(ppSamplerState != nullptr);
+		LAMBDA_ASSERT(ppSamplerState != nullptr);
 
 		DX12SamplerState* pSamplerState = reinterpret_cast<DX12SamplerState*>(*ppSamplerState);
 
@@ -330,7 +330,7 @@ namespace Lambda
 
 	void DX12GraphicsDevice::DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState) const
 	{
-		assert(ppPipelineState != nullptr);
+		LAMBDA_ASSERT(ppPipelineState != nullptr);
 
 		DX12GraphicsPipelineState* pPipelineState = reinterpret_cast<DX12GraphicsPipelineState*>(*ppPipelineState);
 		delete pPipelineState;
@@ -340,10 +340,10 @@ namespace Lambda
 
 	void DX12GraphicsDevice::DestroyRenderPass(IRenderPass** ppRenderPass) const
 	{
-		assert(ppRenderPass);
+		LAMBDA_ASSERT(ppRenderPass);
 	}
 
-	void DX12GraphicsDevice::DestroyResourceState(IResourceState** ppResourceState) const
+	void DX12GraphicsDevice::DestroyResourceState(IPipelineResourceState** ppResourceState) const
 	{
 	}
 

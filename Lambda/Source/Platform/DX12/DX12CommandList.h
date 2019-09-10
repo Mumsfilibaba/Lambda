@@ -27,10 +27,10 @@ namespace Lambda
 
 		virtual void SetViewport(const Viewport& viewport) override final;
 		virtual void SetScissorRect(const Rectangle& scissorRect) override final;
-		virtual void SetGraphicsPipelineState(IGraphicsPipelineState* pPSO) override final;
 		virtual void SetVertexBuffer(IBuffer* pBuffer, uint32 slot) override final; 
 		virtual void SetIndexBuffer(IBuffer* pIndexBuffer) override final;
-		virtual void SetResourceState(IResourceState* pResourceState) override final;
+		virtual void SetGraphicsPipelineState(IGraphicsPipelineState* pPiplineState) override final;
+		virtual void SetGraphicsPipelineResourceState(IPipelineResourceState* pResourceState) override final;
 
 		virtual CommandListType GetType() const override final;
 
@@ -58,7 +58,7 @@ namespace Lambda
 		virtual void PSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot);
 
 		virtual void UpdateBuffer(IBuffer* pResource, const ResourceData* pData) override final;
-		virtual void UpdateTexture(ITexture* pResource, const ResourceData* pData, uint32 subresource) override final;
+		virtual void UpdateTexture(ITexture* pResource, const ResourceData* pData, uint32 mipLevel) override final;
 
 		virtual void CopyBuffer(IBuffer* pDst, IBuffer* pSrc) override final;
 

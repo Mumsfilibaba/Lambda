@@ -164,7 +164,7 @@ namespace Lambda
 	void WindowsWindow::Init(const WindowDesc& desc)
 	{
 		//Should only be called once
-		assert(m_hWindow == 0);
+		LAMBDA_ASSERT(m_hWindow == 0);
 
 		int32 error = 0;
 		{

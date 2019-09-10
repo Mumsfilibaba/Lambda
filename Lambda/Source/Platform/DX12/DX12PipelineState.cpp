@@ -9,7 +9,7 @@ namespace Lambda
 		: m_State(nullptr),
 		m_RootSignature(nullptr)
 	{
-		assert(pDevice != nullptr);
+		LAMBDA_ASSERT(pDevice != nullptr);
 		Init(pDevice, desc);
 	}
 

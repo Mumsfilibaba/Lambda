@@ -14,11 +14,12 @@ namespace Lambda
     public:
         LAMBDA_NO_COPY(VulkanUploadBuffer);
         
-        VulkanUploadBuffer();
         VulkanUploadBuffer(const VulkanGraphicsDevice* pVkDevice, uint64 sizeInBytes);
         ~VulkanUploadBuffer() = default;
         
-        bool Init(const VulkanGraphicsDevice* pVkDevice, uint64 sizeInBytes);
+		void Map(VkDevice device);
+		void Unmap(VkDevice device);
+
         void* Allocate(uint64 bytesToAllocate);
         void Reset();
         void Destroy(VkDevice device);
@@ -26,7 +27,10 @@ namespace Lambda
         uint64 GetOffset() const;
         VkBuffer GetBuffer() const;
         
-    private:
+	private:
+        bool Init(const VulkanGraphicsDevice* pVkDevice, uint64 sizeInBytes);
+    
+	private:
         uint8* m_pStart;
         uint8* m_pCurrent;
         VkBuffer m_Buffer;

@@ -251,7 +251,7 @@ namespace Lambda
     
     void VulkanGraphicsPipelineState::Destroy(VkDevice device)
     {
-        assert(device != VK_NULL_HANDLE);
+		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
         
         //Destroy pipelinestate
         if (m_Pipeline != VK_NULL_HANDLE)

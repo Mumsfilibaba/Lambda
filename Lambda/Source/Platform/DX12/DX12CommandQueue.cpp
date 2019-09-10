@@ -33,7 +33,7 @@ namespace Lambda
 
 	bool DX12CommandQueue::Init(ID3D12Device* pDevice, D3D12_COMMAND_LIST_TYPE type, uint64 initalFence)
 	{
-		assert(pDevice != nullptr);
+		LAMBDA_ASSERT(pDevice != nullptr);
 
 		//Create commandqueue
 		D3D12_COMMAND_QUEUE_DESC qDesc = {};

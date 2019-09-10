@@ -51,7 +51,7 @@ namespace Lambda
     
     void VulkanShader::Destroy(VkDevice device)
     {
-		assert(device != VK_NULL_HANDLE);
+		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
 
         if (m_Shader != VK_NULL_HANDLE)
         {

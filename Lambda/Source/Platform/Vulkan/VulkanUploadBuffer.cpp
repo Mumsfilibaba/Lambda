@@ -4,17 +4,7 @@
 #include "VulkanUtilities.h"
 
 namespace Lambda
-{
-    VulkanUploadBuffer::VulkanUploadBuffer()
-		: m_pStart(nullptr),
-		m_pCurrent(nullptr),
-		m_Buffer(VK_NULL_HANDLE),
-		m_Memory(VK_NULL_HANDLE),
-		m_SizeInBytes(0)
-    {
-    }
-    
-    
+{    
     VulkanUploadBuffer::VulkanUploadBuffer(const VulkanGraphicsDevice* pVkDevice, uint64 sizeInBytes)
         : m_pStart(nullptr),
         m_pCurrent(nullptr),
@@ -22,9 +12,22 @@ namespace Lambda
         m_Memory(VK_NULL_HANDLE),
         m_SizeInBytes(0)
     {
-        assert(pVkDevice != nullptr);
+		LAMBDA_ASSERT(pVkDevice != nullptr);
         Init(pVkDevice, sizeInBytes);
     }
+
+
+	void VulkanUploadBuffer::Map(VkDevice device)
+	{
+		vkMapMemory(device, m_Memory, 0, m_SizeInBytes, 0, reinterpret_cast<void**>(&m_pStart));
+		Reset();
+	}
+
+
+	void VulkanUploadBuffer::Unmap(VkDevice device)
+	{
+		vkUnmapMemory(device, m_Memory);
+	}
 
     
     bool VulkanUploadBuffer::Init(const VulkanGraphicsDevice* pVkDevice, uint64 sizeInBytes)
@@ -60,10 +63,7 @@ namespace Lambda
             LOG_DEBUG_INFO("Vulkan: Allocated '%u' bytes for UploadBuffer\n", m_SizeInBytes);
             
             vkBindBufferMemory(device, m_Buffer, m_Memory, 0);
-            
-            vkMapMemory(device, m_Memory, 0, m_SizeInBytes, 0, reinterpret_cast<void**>(&m_pStart));
-            m_pCurrent = m_pStart;
-            
+			Map(device);
             return true;
         }
         else
@@ -100,7 +100,7 @@ namespace Lambda
     
     void VulkanUploadBuffer::Destroy(VkDevice device)
     {
-        assert(device != VK_NULL_HANDLE);
+		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
         
         //Destroy buffer
         if (m_Buffer != VK_NULL_HANDLE)
@@ -117,5 +117,7 @@ namespace Lambda
         }
         
         LOG_DEBUG_INFO("Vulkan: Destroyed UploadBuffer\n");
+
+		delete this;
     }
 }
