@@ -5,6 +5,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #define SINGLE_CUBE
+#define RGB_F(r, g, b) float(r) / 255.0f, float(g) / 255.0f, float(b) / 255.0f 
 
 namespace Lambda
 {   
@@ -35,8 +36,8 @@ namespace Lambda
 		EventDispatcher::PushEventLayer(sandboxLayer);
 
 		//Init size
-		m_Width = (float)GetWindow()->GetWidth();
-		m_Height = (float)GetWindow()->GetHeight();
+		m_Width		= (float)GetWindow()->GetWidth();
+		m_Height	= (float)GetWindow()->GetHeight();
 
 		IGraphicsDevice* pDevice = IGraphicsDevice::GetInstance();
         if (pDevice)
@@ -74,18 +75,18 @@ namespace Lambda
 			//Create RenderPass
 			{
 				RenderPassDesc desc = {};
-				desc.SampleCount = GetEngineParams().SampleCount;
-				desc.NumRenderTargets = 1;
-				desc.RenderTargets[0].Format = pDevice->GetBackBufferFormat();
-                desc.RenderTargets[0].Flags = RENDER_PASS_ATTACHMENT_FLAG_RESOLVE;
-                desc.RenderTargets[0].LoadOperation = LOAD_OP_CLEAR;
-                desc.RenderTargets[0].StoreOperation = STORE_OP_STORE;
-                desc.RenderTargets[0].FinalState = RESOURCE_STATE_RENDERTARGET_PRESENT;
-				desc.DepthStencil.Format = depthFormat;
-                desc.DepthStencil.Flags = 0;
-                desc.DepthStencil.LoadOperation = LOAD_OP_CLEAR;
-                desc.DepthStencil.StoreOperation = STORE_OP_UNKNOWN;
-                desc.DepthStencil.FinalState = RESOURCE_STATE_DEPTH_STENCIL;
+				desc.SampleCount						= GetEngineParams().SampleCount;
+				desc.NumRenderTargets					= 1;
+				desc.RenderTargets[0].Format			= pDevice->GetBackBufferFormat();
+                desc.RenderTargets[0].Flags				= RENDER_PASS_ATTACHMENT_FLAG_RESOLVE;
+                desc.RenderTargets[0].LoadOperation		= LOAD_OP_CLEAR;
+                desc.RenderTargets[0].StoreOperation	= STORE_OP_STORE;
+                desc.RenderTargets[0].FinalState		= RESOURCE_STATE_RENDERTARGET_PRESENT;
+				desc.DepthStencil.Format				= depthFormat;
+                desc.DepthStencil.Flags					= 0;
+                desc.DepthStencil.LoadOperation			= LOAD_OP_CLEAR;
+                desc.DepthStencil.StoreOperation		= STORE_OP_UNKNOWN;
+                desc.DepthStencil.FinalState			= RESOURCE_STATE_DEPTH_STENCIL;
 				pDevice->CreateRenderPass(&m_pRenderPass, desc);
 			}
 
@@ -93,31 +94,35 @@ namespace Lambda
 			//Create ResourceState
 			{
 				ResourceSlot slots[5];
-				slots[0].Slot = 0;
-				slots[0].Stage = SHADER_STAGE_VERTEX;
-				slots[0].Type = RESOURCE_TYPE_CONSTANT_BUFFER;
-				
-				slots[1].Slot = 1;
-				slots[1].Stage = SHADER_STAGE_VERTEX;
-				slots[1].Type = RESOURCE_TYPE_CONSTANT_BUFFER;
+				slots[0].Slot	= 0;
+				slots[0].Stage	= SHADER_STAGE_VERTEX;
+				slots[0].Type	= RESOURCE_TYPE_CONSTANT_BUFFER;
+				slots[0].Usage	= RESOURCE_USAGE_DEFAULT;
 
-				slots[2].Slot = 2;
-				slots[2].Stage = SHADER_STAGE_PIXEL;
-				slots[2].Type = RESOURCE_TYPE_CONSTANT_BUFFER;
+				slots[1].Slot	= 1;
+				slots[1].Stage	= SHADER_STAGE_VERTEX;
+				slots[1].Type	= RESOURCE_TYPE_CONSTANT_BUFFER;
+				slots[1].Usage	= RESOURCE_USAGE_DYNAMIC;
 
-				slots[3].Slot = 3;
-				slots[3].Stage = SHADER_STAGE_PIXEL;
-				slots[3].Type = RESOURCE_TYPE_TEXTURE;
+				slots[2].Slot	= 2;
+				slots[2].Stage	= SHADER_STAGE_PIXEL;
+				slots[2].Type	= RESOURCE_TYPE_CONSTANT_BUFFER;
+				slots[2].Usage	= RESOURCE_USAGE_DEFAULT;
 
-				slots[4].Slot = 4;
-				slots[4].Stage = SHADER_STAGE_PIXEL;
-				slots[4].Type = RESOURCE_TYPE_SAMPLER;
+				slots[3].Slot	= 3;
+				slots[3].Stage	= SHADER_STAGE_PIXEL;
+				slots[3].Type	= RESOURCE_TYPE_TEXTURE;
+				slots[3].Usage	= RESOURCE_USAGE_DEFAULT;
+
+				slots[4].Slot	= 4;
+				slots[4].Stage	= SHADER_STAGE_PIXEL;
+				slots[4].Type	= RESOURCE_TYPE_SAMPLER;
+				slots[4].Usage	= RESOURCE_USAGE_DEFAULT;
 
 				PipelineResourceStateDesc desc = {};
-				desc.NumResourceSlots = 5;
-				desc.pResourceSlots = slots;
-
-				pDevice->CreateResourceState(&m_pResourceState, desc);
+				desc.NumResourceSlots	= 5;
+				desc.pResourceSlots		= slots;
+				pDevice->CreatePipelineResourceState(&m_pResourceState, desc);
 			}
 
 
@@ -131,22 +136,22 @@ namespace Lambda
                 };
                 
                 GraphicsPipelineStateDesc desc = {};
-                desc.pVertexShader = m_pVS;
-                desc.pPixelShader = m_pPS;
-                desc.pInputElements = elements;
-                desc.InputElementCount = sizeof(elements) / sizeof(InputElement);
-                desc.Cull = CULL_MODE_BACK;
-				desc.Mode = POLYGON_MODE_FILL;
-                desc.Topology = PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-				desc.pRenderPass = m_pRenderPass;
-				desc.pResourceState = m_pResourceState;
-                desc.DepthTest = true;
+                desc.pVertexShader		= m_pVS;
+                desc.pPixelShader		= m_pPS;
+                desc.pInputElements		= elements;
+                desc.InputElementCount	= sizeof(elements) / sizeof(InputElement);
+                desc.Cull				= CULL_MODE_BACK;
+				desc.Mode				= POLYGON_MODE_FILL;
+                desc.Topology			= PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+				desc.pRenderPass		= m_pRenderPass;
+				desc.pResourceState		= m_pResourceState;
+                desc.DepthTest			= true;
                 
                 pDevice->CreateGraphicsPipelineState(&m_pPipelineState, desc);
             }
 
             //Create vertexbuffer
-			MeshData mesh = MeshFactory::CreateCube(); //MeshFactory::CreateFromFile("chalet.obj");
+			MeshData mesh = MeshFactory::CreateSphere(3);// MeshFactory::CreateFromFile("chalet.obj");
 			m_IndexCount = uint32(mesh.Indices.size());
 			{
                 BufferDesc desc = {};
@@ -182,14 +187,14 @@ namespace Lambda
                 glm::vec4 color = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
 
                 BufferDesc desc = {};
-                desc.Usage = RESOURCE_USAGE_DEFAULT;
-                desc.Flags = BUFFER_FLAGS_CONSTANT_BUFFER;
-                desc.SizeInBytes = sizeof(glm::vec4);//(uint32)Math::AlignUp(sizeof(Vec4f), 256);
-                desc.StrideInBytes = sizeof(glm::vec4);
+                desc.Usage			= RESOURCE_USAGE_DEFAULT;
+                desc.Flags			= BUFFER_FLAGS_CONSTANT_BUFFER;
+                desc.SizeInBytes	= sizeof(glm::vec4);
+                desc.StrideInBytes	= sizeof(glm::vec4);
 
                 ResourceData data = {};
-                data.pData = &color;
-                data.SizeInBytes = sizeof(color);
+                data.pData			= &color;
+                data.SizeInBytes	= sizeof(color);
 
                 pDevice->CreateBuffer(&m_pColorBuffer, &data, desc);
             }
@@ -202,14 +207,14 @@ namespace Lambda
                 m_Camera.CreateView();
                 
                 BufferDesc desc = {};
-                desc.Usage = RESOURCE_USAGE_DEFAULT;
-                desc.Flags = BUFFER_FLAGS_CONSTANT_BUFFER;
-                desc.SizeInBytes = sizeof(CameraBuffer);
-                desc.StrideInBytes = sizeof(CameraBuffer);
+                desc.Usage			= RESOURCE_USAGE_DEFAULT;
+                desc.Flags			= BUFFER_FLAGS_CONSTANT_BUFFER;
+                desc.SizeInBytes	= sizeof(CameraBuffer);
+                desc.StrideInBytes	= sizeof(CameraBuffer);
 
                 ResourceData data = {};
-                data.pData = &m_Camera;
-                data.SizeInBytes = desc.SizeInBytes;
+                data.pData			= &m_Camera;
+                data.SizeInBytes	= desc.SizeInBytes;
 
                 pDevice->CreateBuffer(&m_pCameraBuffer, &data, desc);
             }
@@ -220,20 +225,20 @@ namespace Lambda
             //Create TransformBuffer
             {
                 BufferDesc desc = {};
-                desc.Usage = RESOURCE_USAGE_DEFAULT;
-                desc.Flags = BUFFER_FLAGS_CONSTANT_BUFFER;
-                desc.SizeInBytes = sizeof(TransformBuffer);
-                desc.StrideInBytes = sizeof(TransformBuffer);
+                desc.Usage			= RESOURCE_USAGE_DYNAMIC;
+                desc.Flags			= BUFFER_FLAGS_CONSTANT_BUFFER;
+                desc.SizeInBytes	= sizeof(TransformBuffer);
+                desc.StrideInBytes	= sizeof(TransformBuffer);
                 
                 ResourceData data = {};
-                data.pData = &m_TransformBuffer;
-                data.SizeInBytes = desc.SizeInBytes;
+                data.pData			= &m_TransformBuffer;
+                data.SizeInBytes	= desc.SizeInBytes;
                 
                 pDevice->CreateBuffer(&m_pTransformBuffer, &data, desc);
             }
 
             //Create texture
-            m_pTexture = ITexture::CreateTextureFromFile(pDevice, "texture.jpg", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
+            m_pTexture = ITexture::CreateTextureFromFile(pDevice, "chalet.jpg", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
 			m_pCurrentList->TransitionTexture(m_pTexture, RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0, LAMBDA_TRANSITION_ALL_MIPS);
 
             //Create samplerstate
@@ -242,9 +247,9 @@ namespace Lambda
                 
                 SamplerStateDesc desc = {};
                 desc.AdressMode = SAMPLER_ADDRESS_MODE_REPEAT;
-				desc.MinMipLOD = 0.0f;
-				desc.MaxMipLOD = textureDesc.MipLevels;
-				desc.MipLODBias = 0.0f;
+				desc.MinMipLOD	= 0.0f;
+				desc.MaxMipLOD	= textureDesc.MipLevels;
+				desc.MipLODBias	= 0.0f;
                 
                 pDevice->CreateSamplerState(&m_pSamplerState, desc);
             }
@@ -306,7 +311,7 @@ namespace Lambda
         //Set and clear rendertarget
         float color[] = { 0.392f, 0.584f, 0.929f, 1.0f };
         ITexture* pRenderTarget = pDevice->GetRenderTarget();
-        ITexture* pDepthBuffer = pDevice->GetDepthStencil();
+        ITexture* pDepthBuffer	= pDevice->GetDepthStencil();
                 
         //Set scissor and viewport
         Rectangle scissorrect;
@@ -330,11 +335,11 @@ namespace Lambda
         m_pCurrentList->SetGraphicsPipelineState(m_pPipelineState);
         
         //Update Colorbuffer
-        glm::vec4 colorBuff = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+        glm::vec4 colorBuff = glm::vec4(RGB_F(178, 34, 34), 1.0f);
         
         ResourceData data = {};
-        data.pData = &colorBuff;
-        data.SizeInBytes = sizeof(glm::vec4);
+        data.pData			= &colorBuff;
+        data.SizeInBytes	= sizeof(glm::vec4);
         
         m_pCurrentList->UpdateBuffer(m_pColorBuffer, &data);
         
@@ -362,8 +367,8 @@ namespace Lambda
 		m_pRenderPass->SetClearValues(color, 1.0f, 0);
 
         //Setup rotation
-        static glm::mat4 rotation = glm::rotate(glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)), glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));;
-        //rotation = glm::rotate(rotation, glm::radians(45.0f) * dt.AsSeconds(), glm::vec3(0.0f, 0.0f, 1.0f));
+		static glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));//glm::rotate(glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)), glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));;
+        rotation = glm::rotate(rotation, glm::radians(45.0f) * dt.AsSeconds(), glm::vec3(0.0f, 1.0f, 0.0f));
         
 #if !defined(SINGLE_CUBE)
         //Draw cubes
@@ -390,16 +395,26 @@ namespace Lambda
         }
 #else
 		//Update transforms
-		m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)) * rotation;
-
-		data.pData = &m_TransformBuffer;
-		data.SizeInBytes = sizeof(TransformBuffer);
+		m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(-1.0f, 0.0f, 0.0f)) * rotation;
+		data.pData			= &m_TransformBuffer;
+		data.SizeInBytes	= sizeof(TransformBuffer);
 		m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);
 
 		//Begin renderpass
 		m_pCurrentList->BeginRenderPass(m_pRenderPass);
 
-		//Draw
+		//Draw first
+		m_pCurrentList->DrawIndexedInstanced(m_IndexCount, 1, 0, 0, 0);
+
+		//Update transform
+		m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 0.0f)) * rotation;
+		data.pData = &m_TransformBuffer;
+		data.SizeInBytes = sizeof(TransformBuffer);
+		m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);
+
+		m_pCurrentList->SetGraphicsPipelineResourceState(m_pResourceState);
+
+		//Draw second
 		m_pCurrentList->DrawIndexedInstanced(m_IndexCount, 1, 0, 0, 0);
 
 		//End renderpass

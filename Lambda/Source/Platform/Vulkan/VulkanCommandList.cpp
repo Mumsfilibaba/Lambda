@@ -91,23 +91,30 @@ namespace Lambda
     
     void VulkanCommandList::BlitTexture(VulkanTexture* pDst, uint32 dstWidth, uint32 dstHeight, uint32 dstMipLevel, VulkanTexture* pSrc, uint32 srcWidth, uint32 srcHeight, uint32 srcMipLevel)
     {
-        VkImageBlit blitInfo = {};
-        blitInfo.srcOffsets[0] = { 0, 0, 0 };
-        blitInfo.srcOffsets[1] = { int32(srcWidth), int32(srcHeight), 1 };
-        blitInfo.srcSubresource.aspectMask = pSrc->GetAspectFlags();
-        blitInfo.srcSubresource.mipLevel = srcMipLevel;
-        blitInfo.srcSubresource.baseArrayLayer = 0;
-        blitInfo.srcSubresource.layerCount = 1;
-        blitInfo.dstOffsets[0] = { 0, 0, 0 };
-        blitInfo.dstOffsets[1] = { int32(dstWidth), int32(dstHeight), 1 };
-        blitInfo.dstSubresource.aspectMask = pDst->GetAspectFlags();
-        blitInfo.dstSubresource.mipLevel = dstMipLevel;
-        blitInfo.dstSubresource.baseArrayLayer = 0;
-        blitInfo.dstSubresource.layerCount = 1;
+		if (!m_pRenderPass)
+		{
+			VkImageBlit blitInfo = {};
+			blitInfo.srcOffsets[0] = { 0, 0, 0 };
+			blitInfo.srcOffsets[1] = { int32(srcWidth), int32(srcHeight), 1 };
+			blitInfo.srcSubresource.aspectMask = pSrc->GetAspectFlags();
+			blitInfo.srcSubresource.mipLevel = srcMipLevel;
+			blitInfo.srcSubresource.baseArrayLayer = 0;
+			blitInfo.srcSubresource.layerCount = 1;
+			blitInfo.dstOffsets[0] = { 0, 0, 0 };
+			blitInfo.dstOffsets[1] = { int32(dstWidth), int32(dstHeight), 1 };
+			blitInfo.dstSubresource.aspectMask = pDst->GetAspectFlags();
+			blitInfo.dstSubresource.mipLevel = dstMipLevel;
+			blitInfo.dstSubresource.baseArrayLayer = 0;
+			blitInfo.dstSubresource.layerCount = 1;
         
-		VkImage srcImage = reinterpret_cast<VkImage>(pSrc->GetNativeHandle());
-		VkImage dstImage = reinterpret_cast<VkImage>(pDst->GetNativeHandle());
-        vkCmdBlitImage(m_CommandBuffer, srcImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blitInfo, VK_FILTER_LINEAR);
+			VkImage srcImage = reinterpret_cast<VkImage>(pSrc->GetNativeHandle());
+			VkImage dstImage = reinterpret_cast<VkImage>(pDst->GetNativeHandle());
+			vkCmdBlitImage(m_CommandBuffer, srcImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blitInfo, VK_FILTER_LINEAR);
+		}
+		else
+		{
+			LOG_DEBUG_ERROR("Vulkan: BlitTexture must be called outside a RenderPass instance");
+		}
     }
     
     
@@ -144,38 +151,52 @@ namespace Lambda
     
     void VulkanCommandList::ClearRenderTarget(ITexture* pRenderTarget, float color[4])
     {
-        VkClearColorValue col = {};
-		memcpy(col.float32, color, sizeof(float) * 4);
+		if (!m_pRenderPass)
+		{
+			VkClearColorValue col = {};
+			memcpy(col.float32, color, sizeof(float) * 4);
         
-		//Specify what part of an image that is going to be cleared
-        VkImageSubresourceRange imageSubresourceRange = {};
-        imageSubresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-        imageSubresourceRange.baseMipLevel   = 0;
-        imageSubresourceRange.levelCount     = 1;
-        imageSubresourceRange.baseArrayLayer = 0;
-        imageSubresourceRange.layerCount     = 1;
+			//Specify what part of an image that is going to be cleared
+			VkImageSubresourceRange imageSubresourceRange = {};
+			imageSubresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+			imageSubresourceRange.baseMipLevel   = 0;
+			imageSubresourceRange.levelCount     = 1;
+			imageSubresourceRange.baseArrayLayer = 0;
+			imageSubresourceRange.layerCount     = 1;
 
-		VkImage vkRenderTarget = reinterpret_cast<VkImage>(pRenderTarget->GetNativeHandle());
-        vkCmdClearColorImage(m_CommandBuffer, vkRenderTarget, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &col, 1, &imageSubresourceRange);
+			VkImage vkRenderTarget = reinterpret_cast<VkImage>(pRenderTarget->GetNativeHandle());
+			vkCmdClearColorImage(m_CommandBuffer, vkRenderTarget, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &col, 1, &imageSubresourceRange);
+		}
+		else
+		{
+			LOG_DEBUG_ERROR("Vulkan: ClearRenderTarget must be called outside a RenderPass instance");
+		}
     }
     
     
     void VulkanCommandList::ClearDepthStencil(ITexture* pDepthStencil, float depth, uint8 stencil)
     {
-        VkClearDepthStencilValue value = {};
-        value.depth     = depth;
-        value.stencil   = stencil;
+		if (!m_pRenderPass)
+		{
+			VkClearDepthStencilValue value = {};
+			value.depth     = depth;
+			value.stencil   = stencil;
 
-        //Specify what part of an image that is going to be cleared
-        VkImageSubresourceRange imageSubresourceRange = {};
-        imageSubresourceRange.aspectMask     = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
-        imageSubresourceRange.baseMipLevel   = 0;
-        imageSubresourceRange.levelCount     = 1;
-        imageSubresourceRange.baseArrayLayer = 0;
-        imageSubresourceRange.layerCount     = 1;
+			//Specify what part of an image that is going to be cleared
+			VkImageSubresourceRange imageSubresourceRange = {};
+			imageSubresourceRange.aspectMask     = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+			imageSubresourceRange.baseMipLevel   = 0;
+			imageSubresourceRange.levelCount     = 1;
+			imageSubresourceRange.baseArrayLayer = 0;
+			imageSubresourceRange.layerCount     = 1;
         
-		VkImage vkDepthStencil = reinterpret_cast<VkImage>(pDepthStencil->GetNativeHandle());
-        vkCmdClearDepthStencilImage(m_CommandBuffer, vkDepthStencil, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &value, 1, &imageSubresourceRange);
+			VkImage vkDepthStencil = reinterpret_cast<VkImage>(pDepthStencil->GetNativeHandle());
+			vkCmdClearDepthStencilImage(m_CommandBuffer, vkDepthStencil, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &value, 1, &imageSubresourceRange);
+		}
+		else
+		{
+			LOG_DEBUG_ERROR("Vulkan: ClearDepthStencil must be called outside a RenderPass instance");
+		}
     }
     
     
@@ -235,8 +256,12 @@ namespace Lambda
 		m_pResourceState = pVkResourceState;
 		pVkResourceState->CommitBindings(m_Device);
 
+		static uint32 offsets = 0;
+
 		VkDescriptorSet descriptorSet = pVkResourceState->GetDescriptorSet();
-		vkCmdBindDescriptorSets(m_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pVkResourceState->GetPipelineLayout(), 0, 1, &descriptorSet, 0, nullptr);
+		vkCmdBindDescriptorSets(m_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pVkResourceState->GetPipelineLayout(), 0, 1, &descriptorSet, 1, &offsets);
+		
+		offsets = (offsets + 64) % (64 * 1024);
 	}
 
     
@@ -384,22 +409,47 @@ namespace Lambda
     {        
 		LAMBDA_ASSERT(pData != nullptr);
 
-        //Get offset before allocating
-        uint64 offset = m_pBufferUpload->GetOffset(); 
-        
-		//Allocate memory in the uploadbuffer
-        void* pMem = m_pBufferUpload->Allocate(pData->SizeInBytes);
-        memcpy(pMem, pData->pData, pData->SizeInBytes);
-        
-        //Copy buffer
-        VkBufferCopy copyRegion = {};
-        copyRegion.srcOffset = offset;
-        copyRegion.dstOffset = 0;
-        copyRegion.size = pData->SizeInBytes;
-        
-		VkBuffer srcBuffer = m_pBufferUpload->GetBuffer();
-		VkBuffer dstBuffer = reinterpret_cast<VkBuffer>(pResource->GetNativeHandle());
-        vkCmdCopyBuffer(m_CommandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+		VulkanBuffer* pVkResource = reinterpret_cast<VulkanBuffer*>(pResource);
+		
+		//Update dynamic resource with dynamic offset
+		BufferDesc bufferDesc = pResource->GetDesc();
+		if (bufferDesc.Usage == RESOURCE_USAGE_DYNAMIC)
+		{
+			uint64 dynamicOffset = pVkResource->GetDynamicOffset();
+			dynamicOffset += pData->SizeInBytes;
+			pVkResource->SetDynamicOffset(dynamicOffset);
+
+			void* pMappedMemory = nullptr;
+			pVkResource->Map(&pMappedMemory);
+
+			memcpy(pMappedMemory, pData->pData, bufferDesc.SizeInBytes);
+		}
+		else
+		{
+			if (!m_pRenderPass)
+			{
+				//Get offset before allocating
+				uint64 offset = m_pBufferUpload->GetOffset();
+
+				//Allocate memory in the uploadbuffer
+				void* pMem = m_pBufferUpload->Allocate(pData->SizeInBytes);
+				memcpy(pMem, pData->pData, pData->SizeInBytes);
+
+				//Copy buffer
+				VkBufferCopy copyRegion = {};
+				copyRegion.srcOffset = offset;
+				copyRegion.dstOffset = pVkResource->GetDynamicOffset();
+				copyRegion.size = pData->SizeInBytes;
+
+				VkBuffer srcBuffer = m_pBufferUpload->GetBuffer();
+				VkBuffer dstBuffer = reinterpret_cast<VkBuffer>(pVkResource->GetNativeHandle());
+				vkCmdCopyBuffer(m_CommandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+			}
+			else
+			{
+				LOG_DEBUG_ERROR("Vulkan: Only buffers with 'usage=RESOURCE_USAGE_DYNAMIC' can be updated during a RenderPass instance\n");
+			}
+		}
     }
     
     
@@ -407,57 +457,85 @@ namespace Lambda
     {
 		LAMBDA_ASSERT(pData != nullptr);
 
-        TransitionTexture(pResource, RESOURCE_STATE_COPY_DEST, 0, LAMBDA_TRANSITION_ALL_MIPS);
-        VulkanTexture* pVkResource = reinterpret_cast<VulkanTexture*>(pResource);
+		if (!m_pRenderPass)
+		{
+			TransitionTexture(pResource, RESOURCE_STATE_COPY_DEST, 0, LAMBDA_TRANSITION_ALL_MIPS);
+			VulkanTexture* pVkResource = reinterpret_cast<VulkanTexture*>(pResource);
         
-        //Get offset before allocating
-        uint64 offset = m_pTextureUpload->GetOffset();
+			//Get offset before allocating
+			uint64 offset = m_pTextureUpload->GetOffset();
         
-        //Allocate memory in the uploadbuffer
-        void* pMappedMemory = m_pTextureUpload->Allocate(pData->SizeInBytes);
-        memcpy(pMappedMemory, pData->pData, pData->SizeInBytes);
+			//Allocate memory in the uploadbuffer
+			void* pMappedMemory = m_pTextureUpload->Allocate(pData->SizeInBytes);
+			memcpy(pMappedMemory, pData->pData, pData->SizeInBytes);
         
-		//Perform copy
-        TextureDesc textureDesc = pVkResource->GetDesc();
-        VkBufferImageCopy region = {};
-        region.bufferOffset                     = offset;
-        region.bufferRowLength                  = 0;
-        region.bufferImageHeight                = 0;
-        region.imageSubresource.aspectMask      = pVkResource->GetAspectFlags();
-        region.imageSubresource.mipLevel        = mipLevel;
-        region.imageSubresource.baseArrayLayer  = 0;
-        region.imageSubresource.layerCount      = 1;
-        region.imageOffset                      = { 0, 0, 0 };
-        region.imageExtent                      = { textureDesc.Width, textureDesc.Height, textureDesc.Depth };
+			//Perform copy
+			TextureDesc textureDesc = pVkResource->GetDesc();
+			VkBufferImageCopy region = {};
+			region.bufferOffset                     = offset;
+			region.bufferRowLength                  = 0;
+			region.bufferImageHeight                = 0;
+			region.imageSubresource.aspectMask      = pVkResource->GetAspectFlags();
+			region.imageSubresource.mipLevel        = mipLevel;
+			region.imageSubresource.baseArrayLayer  = 0;
+			region.imageSubresource.layerCount      = 1;
+			region.imageOffset                      = { 0, 0, 0 };
+			region.imageExtent                      = { textureDesc.Width, textureDesc.Height, textureDesc.Depth };
         
-        VkBuffer buffer = m_pTextureUpload->GetBuffer();
-        VkImage image = reinterpret_cast<VkImage>(pResource->GetNativeHandle());
-        vkCmdCopyBufferToImage(m_CommandBuffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+			VkBuffer buffer = m_pTextureUpload->GetBuffer();
+			VkImage image = reinterpret_cast<VkImage>(pResource->GetNativeHandle());
+			vkCmdCopyBufferToImage(m_CommandBuffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+		}
+		else
+		{
+			LOG_DEBUG_ERROR("Vulkan: UpdateTexture must be called outside a RenderPass instance\n");
+		}
     }
     
     
     void VulkanCommandList::CopyBuffer(IBuffer* pDst, IBuffer* pSrc)
     {
-        VkBufferCopy copyRegion = {};
-        copyRegion.srcOffset = 0;
-        copyRegion.dstOffset = 0;
-        copyRegion.size = pDst->GetDesc().SizeInBytes;
+		if (!m_pRenderPass)
+		{
+			VkBufferCopy copyRegion = {};
+			copyRegion.srcOffset = 0;
+			copyRegion.dstOffset = 0;
+			copyRegion.size = pDst->GetDesc().SizeInBytes;
         
-		VkBuffer srcBuffer = reinterpret_cast<VkBuffer>(pSrc->GetNativeHandle());
-		VkBuffer dstBuffer = reinterpret_cast<VkBuffer>(pDst->GetNativeHandle());
-        vkCmdCopyBuffer(m_CommandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+			VkBuffer srcBuffer = reinterpret_cast<VkBuffer>(pSrc->GetNativeHandle());
+			VkBuffer dstBuffer = reinterpret_cast<VkBuffer>(pDst->GetNativeHandle());
+			vkCmdCopyBuffer(m_CommandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+		}
+		else
+		{
+			LOG_DEBUG_ERROR("Vulkan: CopyBuffer must be called outside a RenderPass instance");
+		}
     }
     
     
     void VulkanCommandList::DrawInstanced(uint32 vertexCountPerInstance, uint32 instanceCount, uint32 startVertexLocation, uint32 startInstanceLocation)
     {        
-        vkCmdDraw(m_CommandBuffer, vertexCountPerInstance, instanceCount, startVertexLocation, startInstanceLocation);
+		if (m_pRenderPass)
+		{
+			vkCmdDraw(m_CommandBuffer, vertexCountPerInstance, instanceCount, startVertexLocation, startInstanceLocation);
+		}
+		else
+		{
+			LOG_DEBUG_ERROR("Vulkan: DrawInstanced must be called inside a RenderPass instance");
+		}
     }
     
     
     void VulkanCommandList::DrawIndexedInstanced(uint32 indexCountPerInstance, uint32 instanceCount, uint32 startIndexLocation, uint32 baseVertexLocation, uint32 startInstanceLocation)
     {
-        vkCmdDrawIndexed(m_CommandBuffer, indexCountPerInstance, instanceCount, startIndexLocation, baseVertexLocation, startInstanceLocation);
+		if (m_pRenderPass)
+		{
+			vkCmdDrawIndexed(m_CommandBuffer, indexCountPerInstance, instanceCount, startIndexLocation, baseVertexLocation, startInstanceLocation);
+		}
+		else
+		{
+			LOG_DEBUG_ERROR("Vulkan: DrawIndexedInstanced must be called inside a RenderPass instance");
+		}
     }
     
     
@@ -510,23 +588,40 @@ namespace Lambda
     
 	void VulkanCommandList::BeginRenderPass(IRenderPass* pRenderPass)
 	{
-		VulkanRenderPass* pVkRenderPass = reinterpret_cast<VulkanRenderPass*>(pRenderPass);
-		VkRenderPassBeginInfo info = {};
-		info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		info.pNext = nullptr;
-		info.renderPass = pVkRenderPass->GetRenderPass();
-		info.framebuffer = pVkRenderPass->GetFramebuffer();
-		info.renderArea.offset = { 0, 0 };
-		info.renderArea.extent = pVkRenderPass->GetFramebufferExtent();
-		info.clearValueCount = pVkRenderPass->GetAttachmentCount();
-		info.pClearValues = pVkRenderPass->GetClearValues();
+		if (!m_pRenderPass)
+		{
+			VulkanRenderPass* pVkRenderPass = reinterpret_cast<VulkanRenderPass*>(pRenderPass);
+			VkRenderPassBeginInfo info = {};
+			info.sType				= VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+			info.pNext				= nullptr;
+			info.renderPass			= pVkRenderPass->GetRenderPass();
+			info.framebuffer		= pVkRenderPass->GetFramebuffer();
+			info.renderArea.offset	= { 0, 0 };
+			info.renderArea.extent	= pVkRenderPass->GetFramebufferExtent();
+			info.clearValueCount	= pVkRenderPass->GetAttachmentCount();
+			info.pClearValues		= pVkRenderPass->GetClearValues();
 
-		vkCmdBeginRenderPass(m_CommandBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
+			//Set renderpass
+			m_pRenderPass = pVkRenderPass;
+			vkCmdBeginRenderPass(m_CommandBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
+		}
+		else
+		{
+			LOG_DEBUG_ERROR("Vulkan: BeginRenderPass must be called outside a RenderPass instance");
+		}
 	}
 
 
 	void VulkanCommandList::EndRenderPass()
 	{
-		vkCmdEndRenderPass(m_CommandBuffer);
+		if (m_pRenderPass)
+		{
+			vkCmdEndRenderPass(m_CommandBuffer);
+			m_pRenderPass = nullptr;
+		}
+		else
+		{
+			LOG_DEBUG_ERROR("Vulkan: EndRenderPass must be called inside a RenderPass instance");
+		}
 	}
 }

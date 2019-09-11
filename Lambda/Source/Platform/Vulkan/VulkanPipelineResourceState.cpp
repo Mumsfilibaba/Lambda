@@ -189,18 +189,19 @@ namespace Lambda
 	void VulkanPipelineResourceState::SetConstantBuffers(IBuffer** ppBuffers, uint32 numBuffers, uint32 startSlot)
 	{
 		VkWriteDescriptorSet writeInfo = {};
-		writeInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		writeInfo.pNext = nullptr;
-		writeInfo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		writeInfo.dstArrayElement = 0;
-		writeInfo.dstSet = m_DescriptorSet;
-		writeInfo.pImageInfo = nullptr;
-		writeInfo.pTexelBufferView = nullptr;
+		writeInfo.sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		writeInfo.pNext				= nullptr;
+		writeInfo.descriptorType	= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		writeInfo.dstArrayElement	= 0;
+		writeInfo.dstSet			= m_DescriptorSet;
+		writeInfo.pImageInfo		= nullptr;
+		writeInfo.pTexelBufferView	= nullptr;
 
 		uint32 writeSlot = startSlot;
-		uint32 numDescriptors = 0;
+		uint32 numDescriptors	= 0;
 		uint32 numBufferBindings = uint32(m_BufferBindings.size());
 		ShaderStage writingStage = m_ResourceSlots[startSlot].Stage;
+		ResourceUsage usage = m_ResourceSlots[startSlot].Usage;
 		for (uint32 i = 0; i < numBuffers; i++)
 		{
 			//If the buffer is already bound then do not bind again, flush and move on
@@ -222,8 +223,8 @@ namespace Lambda
 				continue;
 			}
 
-			//If the buffer is not supposed to be in the same stage as the others, flush
-			if (m_ResourceSlots[startSlot + i].Stage != writingStage)
+			//If the buffer is not supposed to be in the same stage as the others or the usage is not the same, flush
+			if (m_ResourceSlots[startSlot + i].Stage != writingStage || m_ResourceSlots[startSlot + i].Usage != usage)
 			{
 				if (numDescriptors > 0)
 				{
@@ -249,6 +250,12 @@ namespace Lambda
 			bufferInfo.range = bufferDesc.SizeInBytes;
 			m_BufferBindings.emplace_back(bufferInfo);
 
+			usage = m_ResourceSlots[startSlot + i].Usage;
+			if (usage == RESOURCE_USAGE_DYNAMIC)
+				writeInfo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+			else
+				writeInfo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+
 			numDescriptors++;
 			m_CurrentBindings[startSlot + i] = ppBuffers[i];
 		}
@@ -257,9 +264,9 @@ namespace Lambda
 		//Before returning, flush
 		if (numDescriptors > 0)
 		{
-			writeInfo.descriptorCount = numDescriptors;
-			writeInfo.dstBinding = writeSlot;
-			writeInfo.pBufferInfo = m_BufferBindings.data() + numBufferBindings;
+			writeInfo.descriptorCount	= numDescriptors;
+			writeInfo.dstBinding		= writeSlot;
+			writeInfo.pBufferInfo		= m_BufferBindings.data() + numBufferBindings;
 			m_DescriptorWrites.emplace_back(writeInfo);
 		}
 	}
@@ -328,6 +335,12 @@ namespace Lambda
 		//Copy the resourceslots
 		m_ResourceSlots = std::vector<ResourceSlot>(desc.pResourceSlots, desc.pResourceSlots + desc.NumResourceSlots);
 		
+		//Number of each type
+		uint32 uniformBufferCount			= 0;
+		uint32 dynamicUniformBufferCount	= 0;
+		uint32 samplerCount					= 0;
+		uint32 sampledImageCount			= 0;
+
 		//Create descriptor bindings for each resourceslot
 		std::vector<VkDescriptorSetLayoutBinding> layoutBindings;
 		for (uint32 i = 0; i < desc.NumResourceSlots; i++)
@@ -339,11 +352,28 @@ namespace Lambda
 			//Set type
 			layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM;
 			if (desc.pResourceSlots[i].Type == RESOURCE_TYPE_CONSTANT_BUFFER)
-				layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			{
+				if (desc.pResourceSlots[i].Usage == RESOURCE_USAGE_DYNAMIC)
+				{
+					layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+					dynamicUniformBufferCount++;
+				}
+				else
+				{
+					layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+					uniformBufferCount++;
+				}
+			}
 			else if (desc.pResourceSlots[i].Type == RESOURCE_TYPE_TEXTURE)
+			{
 				layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+				sampledImageCount++;
+			}
 			else if (desc.pResourceSlots[i].Type == RESOURCE_TYPE_SAMPLER)
+			{
 				layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+				samplerCount++;
+			}
 
 			//Set stage
 			layoutBinding.stageFlags = 0;
@@ -360,19 +390,19 @@ namespace Lambda
 			else if (desc.pResourceSlots[i].Stage == SHADER_STAGE_COMPUTE)
 				layoutBinding.stageFlags |= VK_SHADER_STAGE_COMPUTE_BIT;
 
-			layoutBinding.descriptorCount = 1;
-			layoutBinding.binding = desc.pResourceSlots[i].Slot;
-			layoutBinding.pImmutableSamplers = nullptr;
+			layoutBinding.descriptorCount		= 1;
+			layoutBinding.binding				= desc.pResourceSlots[i].Slot;
+			layoutBinding.pImmutableSamplers	= nullptr;
 			layoutBindings.push_back(layoutBinding);
 		}
 
 		//Create descriptorsetlayout
 		VkDescriptorSetLayoutCreateInfo descriptorLayoutInfo = {};
-		descriptorLayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		descriptorLayoutInfo.pNext = nullptr;
-		descriptorLayoutInfo.flags = 0;
-		descriptorLayoutInfo.bindingCount = uint32(layoutBindings.size());
-		descriptorLayoutInfo.pBindings = layoutBindings.data();
+		descriptorLayoutInfo.sType			= VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		descriptorLayoutInfo.pNext			= nullptr;
+		descriptorLayoutInfo.flags			= 0;
+		descriptorLayoutInfo.bindingCount	= uint32(layoutBindings.size());
+		descriptorLayoutInfo.pBindings		= layoutBindings.data();
 
 		//Create layout for shaderstage
 		if (vkCreateDescriptorSetLayout(device, &descriptorLayoutInfo, nullptr, &m_DescriptorSetLayout) != VK_SUCCESS)
@@ -388,15 +418,14 @@ namespace Lambda
 
 		//Create pipelinelayout
 		VkPipelineLayoutCreateInfo layoutInfo = {};
-		layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		layoutInfo.flags = 0;
-		layoutInfo.pNext = nullptr;
-		layoutInfo.setLayoutCount = 1;
-		layoutInfo.pSetLayouts = &m_DescriptorSetLayout;
-		layoutInfo.pushConstantRangeCount = 0;
-		layoutInfo.pPushConstantRanges = nullptr;
+		layoutInfo.sType					= VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+		layoutInfo.flags					= 0;
+		layoutInfo.pNext					= nullptr;
+		layoutInfo.setLayoutCount			= 1;
+		layoutInfo.pSetLayouts				= &m_DescriptorSetLayout;
+		layoutInfo.pushConstantRangeCount	= 0;
+		layoutInfo.pPushConstantRanges		= nullptr;
 
-		//Create pipelinelayout
 		if (vkCreatePipelineLayout(device, &layoutInfo, nullptr, &m_PipelineLayout) != VK_SUCCESS)
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to create default PipelineLayout\n");
@@ -409,23 +438,27 @@ namespace Lambda
 
 
 		//Describe how many descriptors we want to create
-		VkDescriptorPoolSize poolSizes[3] = {};
-		poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		poolSizes[0].descriptorCount = 64;
-		poolSizes[1].type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-		poolSizes[1].descriptorCount = 64;
-		poolSizes[2].type = VK_DESCRIPTOR_TYPE_SAMPLER;
-		poolSizes[2].descriptorCount = 64;
+		constexpr uint32 maxSets = 64;
+		constexpr uint32 poolCount = 4;
+		VkDescriptorPoolSize poolSizes[poolCount] = {};
+		poolSizes[0].type				= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		poolSizes[0].descriptorCount	= uniformBufferCount * maxSets;
+		poolSizes[1].type				= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+		poolSizes[1].descriptorCount	= uniformBufferCount * maxSets;
+		poolSizes[2].type				= VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+		poolSizes[2].descriptorCount	= sampledImageCount * maxSets;
+		poolSizes[3].type				= VK_DESCRIPTOR_TYPE_SAMPLER;
+		poolSizes[3].descriptorCount	= samplerCount * maxSets;
 
 
 		//Create descriptorpool
 		VkDescriptorPoolCreateInfo descriptorPoolInfo = {};
-		descriptorPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		descriptorPoolInfo.flags = 0;
-		descriptorPoolInfo.pNext = nullptr;
-		descriptorPoolInfo.poolSizeCount = 3;
-		descriptorPoolInfo.pPoolSizes = poolSizes;
-		descriptorPoolInfo.maxSets = 64;
+		descriptorPoolInfo.sType			= VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+		descriptorPoolInfo.flags			= 0;
+		descriptorPoolInfo.pNext			= nullptr;
+		descriptorPoolInfo.poolSizeCount	= poolCount;
+		descriptorPoolInfo.pPoolSizes		= poolSizes;
+		descriptorPoolInfo.maxSets			= maxSets;
 
 		if (vkCreateDescriptorPool(device, &descriptorPoolInfo, nullptr, &m_DescriptorPool) != VK_SUCCESS)
 		{
@@ -439,11 +472,11 @@ namespace Lambda
 
 		//Allocate descriptorsets
 		VkDescriptorSetAllocateInfo descriptorAllocInfo = {};
-		descriptorAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		descriptorAllocInfo.pNext = nullptr;
-		descriptorAllocInfo.descriptorPool = m_DescriptorPool;
-		descriptorAllocInfo.descriptorSetCount = 1;
-		descriptorAllocInfo.pSetLayouts = &m_DescriptorSetLayout;
+		descriptorAllocInfo.sType				= VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		descriptorAllocInfo.pNext				= nullptr;
+		descriptorAllocInfo.descriptorPool		= m_DescriptorPool;
+		descriptorAllocInfo.descriptorSetCount	= 1;
+		descriptorAllocInfo.pSetLayouts			= &m_DescriptorSetLayout;
 
 		if (vkAllocateDescriptorSets(device, &descriptorAllocInfo, &m_DescriptorSet))
 		{

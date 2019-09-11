@@ -13,6 +13,7 @@ namespace Lambda
     {
         ResourceType Type = RESOURCE_TYPE_UNKNOWN;
         ShaderStage Stage = SHADER_STAGE_UNKNOWN;
+		ResourceUsage Usage = RESOURCE_USAGE_UNKNOWN;
         uint32 Slot = 0;
     };
     

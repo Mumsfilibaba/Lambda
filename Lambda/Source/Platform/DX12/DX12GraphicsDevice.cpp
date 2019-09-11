@@ -235,7 +235,7 @@ namespace Lambda
 		LAMBDA_ASSERT(ppRenderPass && &desc);
 	}
 
-	void DX12GraphicsDevice::CreateResourceState(IPipelineResourceState** ppResourceState, const PipelineResourceStateDesc& desc)
+	void DX12GraphicsDevice::CreatePipelineResourceState(IPipelineResourceState** ppResourceState, const PipelineResourceStateDesc& desc)
 	{
 	}
 

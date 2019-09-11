@@ -284,7 +284,7 @@ namespace Lambda
 	{
 		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
 
-		LOG_SYSTEM(LOG_SEVERITY_WARNING, "Vulkan: Deleteing DeviceAllocator. Number of chunks: %u\n", m_Chunks.size());
+		LOG_SYSTEM(LOG_SEVERITY_WARNING, "Vulkan: Deleting DeviceAllocator. Number of chunks: %u\n", m_Chunks.size());
 		for (auto chunk : m_Chunks)
 		{
 			if (chunk)

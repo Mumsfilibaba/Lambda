@@ -18,6 +18,9 @@ namespace Lambda
         virtual void* GetNativeHandle() const override final;
         virtual BufferDesc GetDesc() const override final;
         
+		void SetDynamicOffset(uint64 dynamicOffset);
+		uint64 GetDynamicOffset() const;
+
         //Release releases vulkan resources while destroy also calls 'delete this'
         void Release(VkDevice device);
         void Destroy(VkDevice device);
@@ -30,5 +33,6 @@ namespace Lambda
         VulkanMemory m_Memory;
         VkBuffer m_Buffer;
         BufferDesc m_Desc;
+		uint64 m_DynamicOffset;
     };
 }

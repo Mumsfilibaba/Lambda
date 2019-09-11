@@ -46,7 +46,7 @@ namespace Lambda
         virtual void CreateSamplerState(ISamplerState** ppSamplerState, const SamplerStateDesc& desc) override final;
         virtual void CreateGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc) override final;
 		virtual void CreateRenderPass(IRenderPass** ppRenderPass, const RenderPassDesc& desc) override final;
-		virtual void CreateResourceState(IPipelineResourceState** ppResourceState, const PipelineResourceStateDesc& desc) override final;
+		virtual void CreatePipelineResourceState(IPipelineResourceState** ppResourceState, const PipelineResourceStateDesc& desc) override final;
 		void CreateUploadBuffer(VulkanUploadBuffer** ppUploadBuffer, uint64 sizeInBytes);
 
         virtual void DestroyCommandList(ICommandList** ppList) override final;

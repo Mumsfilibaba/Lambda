@@ -25,6 +25,6 @@ void main()
     float lightStrength = max(dot(lightDir, g_Normal), 0.0f);
     const float ambientLight = 0.15f;
     
-    vec4 col = tex * u_Material.Color;
+    vec4 col = u_Material.Color;
     g_OutColor = min(vec4(1.0f), (ambientLight + lightStrength) * col);
 }

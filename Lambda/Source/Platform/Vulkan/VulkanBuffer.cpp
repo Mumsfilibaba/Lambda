@@ -13,7 +13,8 @@ namespace Lambda
 		: m_pAllocator(pAllocator),
 		m_Buffer(VK_NULL_HANDLE),
 		m_Memory(),
-		m_Desc()
+		m_Desc(),
+		m_DynamicOffset(0)
     {
 		LAMBDA_ASSERT(pAllocator != nullptr);
 		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
@@ -23,24 +24,40 @@ namespace Lambda
     
     void VulkanBuffer::Init(VkDevice device, const BufferDesc& desc)
     {
-        //Create buffer
         VkBufferCreateInfo info = {};
-        info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        info.pNext = nullptr;
-        info.flags = 0;
-        info.queueFamilyIndexCount = 0;
-        info.pQueueFamilyIndices = nullptr;
-        info.size = desc.SizeInBytes;
-        info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        info.sType					= VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        info.pNext					= nullptr;
+        info.flags					= 0;
+        info.queueFamilyIndexCount	= 0;
+        info.pQueueFamilyIndices	= nullptr;
+        info.sharingMode			= VK_SHARING_MODE_EXCLUSIVE;
+
+		//If dynamic we allocate extra size so we can use dynamic offsets
+		if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
+		{
+			info.size = uint64(desc.SizeInBytes) * 1024;
+		}
+		else
+		{
+			info.size = desc.SizeInBytes;
+		}
         
+		//Set usage
 		info.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-        if (desc.Flags & BUFFER_FLAGS_VERTEX_BUFFER)
+		if (desc.Flags & BUFFER_FLAGS_VERTEX_BUFFER)
+		{
             info.usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-        if (desc.Flags & BUFFER_FLAGS_INDEX_BUFFER)
+		}
+		if (desc.Flags & BUFFER_FLAGS_INDEX_BUFFER)
+		{
             info.usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-        if (desc.Flags & BUFFER_FLAGS_CONSTANT_BUFFER)
+		}
+		if (desc.Flags & BUFFER_FLAGS_CONSTANT_BUFFER)
+		{
             info.usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+		}
         
+		//Create buffer
 		if (vkCreateBuffer(device, &info, nullptr, &m_Buffer) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create Buffer\n");
@@ -67,7 +84,7 @@ namespace Lambda
     void VulkanBuffer::Map(void** ppMem)
     {
 		LAMBDA_ASSERT(ppMem != nullptr);
-		(*ppMem) = m_Memory.pMemory;
+		(*ppMem) = m_Memory.pMemory + m_DynamicOffset;
     }
     
     
@@ -87,6 +104,18 @@ namespace Lambda
     {
         return m_Desc;
     }
+
+
+	void VulkanBuffer::SetDynamicOffset(uint64 dynamicOffset)
+	{
+		m_DynamicOffset = dynamicOffset % (m_Desc.SizeInBytes * 1024);
+	}
+
+
+	uint64 VulkanBuffer::GetDynamicOffset() const
+	{
+		return m_DynamicOffset;
+	}
     
     
     void VulkanBuffer::Release(VkDevice device)

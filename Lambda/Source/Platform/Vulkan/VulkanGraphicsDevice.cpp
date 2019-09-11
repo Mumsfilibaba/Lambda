@@ -956,7 +956,7 @@ namespace Lambda
 	}
 
 
-	void VulkanGraphicsDevice::CreateResourceState(IPipelineResourceState** ppResourceState, const PipelineResourceStateDesc& desc)
+	void VulkanGraphicsDevice::CreatePipelineResourceState(IPipelineResourceState** ppResourceState, const PipelineResourceStateDesc& desc)
 	{
 		LAMBDA_ASSERT(ppResourceState != nullptr);
 		(*ppResourceState) = DBG_NEW VulkanPipelineResourceState(m_Device, desc);
