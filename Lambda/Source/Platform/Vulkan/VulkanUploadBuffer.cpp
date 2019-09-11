@@ -5,38 +5,30 @@
 
 namespace Lambda
 {    
-    VulkanUploadBuffer::VulkanUploadBuffer(const VulkanGraphicsDevice* pVkDevice, uint64 sizeInBytes)
-        : m_pStart(nullptr),
+    VulkanUploadBuffer::VulkanUploadBuffer(const VulkanGraphicsDevice* pVkDevice, IVulkanAllocator* pAllocator, uint64 sizeInBytes)
+        : m_pAllocator(pAllocator),
+		m_pStart(nullptr),
         m_pCurrent(nullptr),
         m_Buffer(VK_NULL_HANDLE),
-        m_Memory(VK_NULL_HANDLE),
-        m_SizeInBytes(0),
-		m_IsMapped(false)
+        m_Memory(),
+        m_SizeInBytes(0)
     {
 		LAMBDA_ASSERT(pVkDevice != nullptr);
+		LAMBDA_ASSERT(pAllocator != nullptr);
         Init(pVkDevice, sizeInBytes);
     }
 
 
-	void VulkanUploadBuffer::Map(VkDevice device)
+	void VulkanUploadBuffer::Map()
 	{
-		if (!m_IsMapped)
-		{
-			vkMapMemory(device, m_Memory, 0, m_SizeInBytes, 0, reinterpret_cast<void**>(&m_pStart));
-			m_IsMapped = true;
-
-			Reset();
-		}
+		m_pAllocator->Map(m_Memory, reinterpret_cast<void**>(&m_pStart));
+		Reset();
 	}
 
 
-	void VulkanUploadBuffer::Unmap(VkDevice device)
+	void VulkanUploadBuffer::Unmap()
 	{
-		if (m_IsMapped)
-		{
-			vkUnmapMemory(device, m_Memory);
-			m_IsMapped = false;
-		}
+		m_pAllocator->Unmap(m_Memory);
 	}
 
     
@@ -66,18 +58,27 @@ namespace Lambda
         }
         
         
-        //Allocate memory
-        m_Memory = pVkDevice->AllocateBuffer(m_Buffer, RESOURCE_USAGE_DYNAMIC);
-        if (m_Memory != VK_NULL_HANDLE)
-        {
-            vkBindBufferMemory(device, m_Buffer, m_Memory, 0);
-			Map(device);
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+		//Allocate memory
+		VkPhysicalDevice physicalDevice = pVkDevice->GetPhysicalDevice();
+
+		VkMemoryRequirements memRequirements = {};
+		vkGetBufferMemoryRequirements(device, m_Buffer, &memRequirements);
+
+		VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+		uint32 memoryType = FindMemoryType(physicalDevice, memRequirements.memoryTypeBits, properties);
+		
+		m_Memory = m_pAllocator->Allocate(memRequirements.size, memRequirements.alignment, memoryType);
+		if (m_Memory.Memory != VK_NULL_HANDLE)
+		{
+			vkBindBufferMemory(device, m_Buffer, m_Memory.Memory, m_Memory.Offset);
+			
+			Map();
+			return true;
+		}
+		else
+		{
+			return false;
+		}
     }
     
     
@@ -93,6 +94,7 @@ namespace Lambda
         {
             void* pMem = reinterpret_cast<void*>(m_pCurrent);
             m_pCurrent += bytesToAllocate;
+
             return pMem;
         }
     }
@@ -109,22 +111,15 @@ namespace Lambda
     {
 		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
         
-        //Destroy buffer
         if (m_Buffer != VK_NULL_HANDLE)
         {
+			m_pAllocator->Deallocate(m_Memory);
+
             vkDestroyBuffer(device, m_Buffer, nullptr);
             m_Buffer = VK_NULL_HANDLE;
         }
-        if (m_Memory != VK_NULL_HANDLE)
-        {
-			Unmap(device);
-
-			vkFreeMemory(device, m_Memory, nullptr);
-            m_Memory = VK_NULL_HANDLE;
-        }
         
         LOG_DEBUG_INFO("Vulkan: Destroyed UploadBuffer\n");
-
 		delete this;
     }
 }

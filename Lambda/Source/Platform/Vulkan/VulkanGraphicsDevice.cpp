@@ -9,7 +9,8 @@
 #include "VulkanBuffer.h"
 #include "VulkanSwapChain.h"
 #include "VulkanRenderPass.h"
-#include "VulkanResourceState.h"
+#include "VulkanPipelineResourceState.h"
+#include "VulkanUploadBuffer.h"
 #include "VulkanUtilities.h"
 #include "VulkanConversions.inl"
 #if defined(LAMBDA_PLAT_MACOS)
@@ -47,6 +48,7 @@ namespace Lambda
 		m_pDepthStencil(nullptr),
 		m_pMSAABuffer(nullptr),
 		m_pCommandList(nullptr),
+		m_pDeviceAllocator(nullptr),
 		m_CurrentFrame(0)
     {       
 		LAMBDA_ASSERT(s_pInstance == nullptr);
@@ -86,6 +88,14 @@ namespace Lambda
 		m_pSwapChain->Destroy(m_Device);
         ReleaseDepthStencil();
 		ReleaseMSAABuffer();
+
+
+		if (m_pDeviceAllocator)
+		{
+			m_pDeviceAllocator->Destroy(m_Device);
+			m_pDeviceAllocator = nullptr;
+		}
+
 
         if (m_Device != VK_NULL_HANDLE)
         {
@@ -341,8 +351,7 @@ namespace Lambda
 
 
 			//Get max MSAA we can use on the device
-			VkSampleCountFlags sampleCount = std::min(m_AdapterProperties.limits.framebufferStencilSampleCounts,
-				std::min(m_AdapterProperties.limits.framebufferColorSampleCounts, m_AdapterProperties.limits.framebufferDepthSampleCounts));
+			VkSampleCountFlags sampleCount = std::min(m_AdapterProperties.limits.framebufferStencilSampleCounts, std::min(m_AdapterProperties.limits.framebufferColorSampleCounts, m_AdapterProperties.limits.framebufferDepthSampleCounts));
 
 			if (sampleCount & VK_SAMPLE_COUNT_64_BIT) { m_DeviceLimits.MaxSampleCount = VK_SAMPLE_COUNT_64_BIT; }
 			else if (sampleCount & VK_SAMPLE_COUNT_32_BIT) { m_DeviceLimits.MaxSampleCount = VK_SAMPLE_COUNT_32_BIT; }
@@ -490,6 +499,10 @@ namespace Lambda
         
         LOG_DEBUG_INFO("Vulkan: Created Semaphores and fences\n");
         
+
+		//Create allocator
+		m_pDeviceAllocator = DBG_NEW VulkanDeviceAllocator(m_Device, m_PhysicalDevice);
+
         
         //Create swapchain
         VulkanSwapChainDesc swapChainInfo = {};
@@ -756,7 +769,7 @@ namespace Lambda
         depthBufferDesc.MipLevels = 1;
 		depthBufferDesc.Depth = 1;
         
-        m_pDepthStencil = DBG_NEW VulkanTexture(this, depthBufferDesc);
+        m_pDepthStencil = DBG_NEW VulkanTexture(this, m_pDeviceAllocator, depthBufferDesc);
         return true;
     }
 
@@ -776,7 +789,7 @@ namespace Lambda
 		msaaBufferDesc.MipLevels = 1;
 		msaaBufferDesc.Depth = 1;
 
-		m_pMSAABuffer = DBG_NEW VulkanTexture(this, msaaBufferDesc);
+		m_pMSAABuffer = DBG_NEW VulkanTexture(this, m_pDeviceAllocator, msaaBufferDesc);
 		return true;
 	}
     
@@ -808,18 +821,18 @@ namespace Lambda
     }
     
     
-    void VulkanGraphicsDevice::CreateCommandList(ICommandList** ppList, CommandListType type) const
+    void VulkanGraphicsDevice::CreateCommandList(ICommandList** ppList, CommandListType type)
     {
 		LAMBDA_ASSERT(ppList != nullptr);
         (*ppList) = DBG_NEW VulkanCommandList(this, type);
     }
     
     
-    void VulkanGraphicsDevice::CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) const
+    void VulkanGraphicsDevice::CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc)
     {
 		LAMBDA_ASSERT(ppBuffer != nullptr);
         
-        VulkanBuffer* pVkBuffer = DBG_NEW VulkanBuffer(this, desc);
+        VulkanBuffer* pVkBuffer = DBG_NEW VulkanBuffer(this, m_pDeviceAllocator, desc);
 
         //Upload inital data
         if (pInitalData)
@@ -852,12 +865,12 @@ namespace Lambda
     }
     
     
-    void VulkanGraphicsDevice::CreateTexture(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc) const
+    void VulkanGraphicsDevice::CreateTexture(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc)
     {
 		LAMBDA_ASSERT(ppTexture != nullptr);
         
         //Create texture object
-        VulkanTexture* pVkTexture = DBG_NEW VulkanTexture(this, desc);
+        VulkanTexture* pVkTexture = DBG_NEW VulkanTexture(this, m_pDeviceAllocator, desc);
         
         //Handle inital data
         if (pInitalData)
@@ -911,42 +924,49 @@ namespace Lambda
     }
     
     
-    void VulkanGraphicsDevice::CreateShader(IShader** ppShader, const ShaderDesc& desc) const
+    void VulkanGraphicsDevice::CreateShader(IShader** ppShader, const ShaderDesc& desc)
     {
 		LAMBDA_ASSERT(ppShader != nullptr);
         (*ppShader) = DBG_NEW VulkanShader(m_Device, desc);
     }
     
     
-    void VulkanGraphicsDevice::CreateSamplerState(ISamplerState** ppSamplerState, const SamplerStateDesc& desc) const
+    void VulkanGraphicsDevice::CreateSamplerState(ISamplerState** ppSamplerState, const SamplerStateDesc& desc)
     {
 		LAMBDA_ASSERT(ppSamplerState != nullptr);
         (*ppSamplerState) = DBG_NEW VulkanSamplerState(m_Device, desc);
     }
     
     
-    void VulkanGraphicsDevice::CreateGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc) const
+    void VulkanGraphicsDevice::CreateGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc)
     {
 		LAMBDA_ASSERT(ppPipelineState != nullptr);
         (*ppPipelineState) = DBG_NEW VulkanGraphicsPipelineState(m_Device, desc);
     }
 
 
-	void VulkanGraphicsDevice::CreateRenderPass(IRenderPass** ppRenderPass, const RenderPassDesc& desc) const
+	void VulkanGraphicsDevice::CreateRenderPass(IRenderPass** ppRenderPass, const RenderPassDesc& desc)
 	{
 		LAMBDA_ASSERT(ppRenderPass != nullptr);
 		(*ppRenderPass) = DBG_NEW VulkanRenderPass(m_Device, desc);
 	}
 
 
-	void VulkanGraphicsDevice::CreateResourceState(IPipelineResourceState** ppResourceState, const PipelineResourceStateDesc& desc) const
+	void VulkanGraphicsDevice::CreateResourceState(IPipelineResourceState** ppResourceState, const PipelineResourceStateDesc& desc)
 	{
 		LAMBDA_ASSERT(ppResourceState != nullptr);
 		(*ppResourceState) = DBG_NEW VulkanPipelineResourceState(m_Device, desc);
 	}
+
+
+	void VulkanGraphicsDevice::CreateUploadBuffer(VulkanUploadBuffer** ppUploadBuffer, uint64 sizeInBytes)
+	{
+		LAMBDA_ASSERT(ppUploadBuffer != nullptr);
+		(*ppUploadBuffer) = DBG_NEW VulkanUploadBuffer(this, m_pDeviceAllocator, sizeInBytes);
+	}
     
     
-    void VulkanGraphicsDevice::DestroyCommandList(ICommandList** ppList) const
+    void VulkanGraphicsDevice::DestroyCommandList(ICommandList** ppList)
     {
 		LAMBDA_ASSERT(ppList != nullptr);
         
@@ -960,7 +980,7 @@ namespace Lambda
     }
     
     
-    void VulkanGraphicsDevice::DestroyBuffer(IBuffer** ppBuffer) const
+    void VulkanGraphicsDevice::DestroyBuffer(IBuffer** ppBuffer)
     {
 		LAMBDA_ASSERT(ppBuffer != nullptr);
         
@@ -976,7 +996,7 @@ namespace Lambda
     }
     
     
-    void VulkanGraphicsDevice::DestroyTexture(ITexture** ppTexture) const
+    void VulkanGraphicsDevice::DestroyTexture(ITexture** ppTexture)
     {
 		LAMBDA_ASSERT(ppTexture != nullptr);
         
@@ -992,7 +1012,7 @@ namespace Lambda
     }
     
     
-    void VulkanGraphicsDevice::DestroyShader(IShader** ppShader) const
+    void VulkanGraphicsDevice::DestroyShader(IShader** ppShader)
     {
 		LAMBDA_ASSERT(ppShader != nullptr);
         
@@ -1008,7 +1028,7 @@ namespace Lambda
     }
     
     
-    void VulkanGraphicsDevice::DestroySamplerState(ISamplerState** ppSamplerState) const
+    void VulkanGraphicsDevice::DestroySamplerState(ISamplerState** ppSamplerState)
     {
 		LAMBDA_ASSERT(ppSamplerState != nullptr);
         
@@ -1024,7 +1044,7 @@ namespace Lambda
     }
     
     
-    void VulkanGraphicsDevice::DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState) const
+    void VulkanGraphicsDevice::DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState)
     {
 		LAMBDA_ASSERT(ppPipelineState != nullptr);
         
@@ -1040,7 +1060,7 @@ namespace Lambda
     }
 
 
-	void VulkanGraphicsDevice::DestroyRenderPass(IRenderPass** ppRenderPass) const
+	void VulkanGraphicsDevice::DestroyRenderPass(IRenderPass** ppRenderPass)
 	{
 		LAMBDA_ASSERT(ppRenderPass != nullptr);
 
@@ -1056,7 +1076,7 @@ namespace Lambda
 	}
 
 
-	void VulkanGraphicsDevice::DestroyResourceState(IPipelineResourceState** ppResourceState) const
+	void VulkanGraphicsDevice::DestroyResourceState(IPipelineResourceState** ppResourceState)
 	{
 		LAMBDA_ASSERT(ppResourceState != nullptr);
 
@@ -1273,74 +1293,6 @@ namespace Lambda
             {
                 LOG_DEBUG_ERROR("Vulkan: Failed to set name '%s'\n", info.pObjectName);
             }
-        }
-    }
-    
-    
-    VkDeviceMemory VulkanGraphicsDevice::AllocateImage(VkImage image, ResourceUsage usage) const
-    {
-        VkMemoryRequirements memRequirements = {};
-        vkGetImageMemoryRequirements(m_Device, image, &memRequirements);
-        
-		//Set memoryproperty based on resource usage
-		VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-		if (usage == RESOURCE_USAGE_DYNAMIC)
-		{
-			properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-		}
-
-        //Allocate memory
-        uint32 memoryType = FindMemoryType(m_PhysicalDevice, memRequirements.memoryTypeBits, properties);
-        VkMemoryAllocateInfo allocInfo = {};
-        allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-        allocInfo.pNext = nullptr;
-        allocInfo.allocationSize = memRequirements.size;
-        allocInfo.memoryTypeIndex = memoryType;
-        
-        VkDeviceMemory memory = VK_NULL_HANDLE;
-        if (vkAllocateMemory(m_Device, &allocInfo, nullptr, &memory) != VK_SUCCESS)
-        {
-            LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for texture\n");
-            return VK_NULL_HANDLE;
-        }
-        else
-        {
-            LOG_DEBUG_INFO("Vulkan: Allocated '%d' bytes for texture\n", allocInfo.allocationSize);
-            return memory;
-        }
-    }
-    
-    
-    VkDeviceMemory VulkanGraphicsDevice::AllocateBuffer(VkBuffer buffer, ResourceUsage usage) const
-    {
-        VkMemoryRequirements memRequirements = {};
-        vkGetBufferMemoryRequirements(m_Device, buffer, &memRequirements);
-        
-		//Set memoryproperty based on resource usage
-		VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-		if (usage == RESOURCE_USAGE_DYNAMIC)
-		{
-			properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-		}
-
-        //Allocate memory
-        uint32 memoryType = FindMemoryType(m_PhysicalDevice, memRequirements.memoryTypeBits, properties);
-        VkMemoryAllocateInfo allocInfo = {};
-        allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-        allocInfo.pNext = nullptr;
-        allocInfo.allocationSize = memRequirements.size;
-        allocInfo.memoryTypeIndex = memoryType;
-        
-        VkDeviceMemory memory = VK_NULL_HANDLE;
-        if (vkAllocateMemory(m_Device, &allocInfo, nullptr, &memory) != VK_SUCCESS)
-        {
-            LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for buffer\n");
-            return VK_NULL_HANDLE;
-        }
-        else
-        {
-            LOG_DEBUG_INFO("Vulkan: Allocated '%d' bytes for buffer\n", allocInfo.allocationSize);
-            return memory;
         }
     }
 

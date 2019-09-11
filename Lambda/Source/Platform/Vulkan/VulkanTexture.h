@@ -1,8 +1,7 @@
 #pragma once
 #include "Graphics/ITexture.h"
-#include <vulkan/vulkan.h>
+#include "VulkanAllocator.h"
 #include "VulkanConversions.inl"
-#include <vector>
 
 namespace Lambda
 {
@@ -16,7 +15,7 @@ namespace Lambda
     public:
         LAMBDA_NO_COPY(VulkanTexture);
 
-        VulkanTexture(const VulkanGraphicsDevice* pVkDevice, const TextureDesc& desc);
+        VulkanTexture(const VulkanGraphicsDevice* pVkDevice, IVulkanAllocator* pAllocator, const TextureDesc& desc);
         VulkanTexture(const VulkanGraphicsDevice* pVkDevice, VkImage image, const TextureDesc& desc);
         ~VulkanTexture() = default;
         
@@ -41,9 +40,10 @@ namespace Lambda
         void CreateImageView(VkDevice device);
         
     private:
+		IVulkanAllocator* const m_pAllocator;
+		VulkanAllocation m_Memory;
         VkImage m_Image;
         VkImageView m_View;
-        VkDeviceMemory m_DeviceMemory;
         VkImageAspectFlags m_AspectFlags;
         bool m_IsOwner;
         mutable TextureDesc m_Desc;

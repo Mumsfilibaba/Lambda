@@ -23,6 +23,8 @@
 #endif
 
 #if !defined(LAMBDA_NO_LOGS)
+	#define LOG_DEBUG(...) Log::GetDebugLog().Print(__VA_ARGS__)
+	#define LOG_SYSTEM(...) Log::GetSystemLog().Print(__VA_ARGS__)
 	#define LOG_DEBUG_PRINT(...) Log::GetDebugLog().Print(LOG_SEVERITY_INFO, __VA_ARGS__)
 	#define LOG_SYSTEM_PRINT(...) Log::GetSystemLog().Print(LOG_SEVERITY_INFO, __VA_ARGS__)
 #endif

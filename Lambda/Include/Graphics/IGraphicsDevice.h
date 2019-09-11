@@ -39,23 +39,23 @@ namespace Lambda
 		IGraphicsDevice() = default;
 		~IGraphicsDevice() = default;
 
-		virtual void CreateCommandList(ICommandList** ppList, CommandListType type) const = 0;
-		virtual void CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) const = 0;
-		virtual void CreateTexture(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc) const = 0;
-		virtual void CreateShader(IShader** ppShader, const ShaderDesc& desc) const = 0;
-		virtual void CreateSamplerState(ISamplerState** ppSamplerState, const SamplerStateDesc& desc) const = 0;
-		virtual void CreateGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc) const = 0;
-		virtual void CreateRenderPass(IRenderPass** ppRenderPass, const RenderPassDesc& desc) const = 0;
-		virtual void CreateResourceState(IPipelineResourceState** ppResourceState, const PipelineResourceStateDesc& desc) const = 0;
+		virtual void CreateCommandList(ICommandList** ppList, CommandListType type) = 0;
+		virtual void CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) = 0;
+		virtual void CreateTexture(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc) = 0;
+		virtual void CreateShader(IShader** ppShader, const ShaderDesc& desc) = 0;
+		virtual void CreateSamplerState(ISamplerState** ppSamplerState, const SamplerStateDesc& desc) = 0;
+		virtual void CreateGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc) = 0;
+		virtual void CreateRenderPass(IRenderPass** ppRenderPass, const RenderPassDesc& desc) = 0;
+		virtual void CreateResourceState(IPipelineResourceState** ppResourceState, const PipelineResourceStateDesc& desc) = 0;
 
-		virtual void DestroyCommandList(ICommandList** ppList) const = 0;
-		virtual void DestroyBuffer(IBuffer** ppBuffer) const = 0;
-		virtual void DestroyTexture(ITexture** ppTexture) const = 0;
-		virtual void DestroyShader(IShader** ppShader) const = 0;
-		virtual void DestroySamplerState(ISamplerState** ppSamplerState) const = 0;
-		virtual void DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState) const = 0;
-		virtual void DestroyRenderPass(IRenderPass** ppRenderPass) const = 0;
-		virtual void DestroyResourceState(IPipelineResourceState** ppResourceState) const = 0;
+		virtual void DestroyCommandList(ICommandList** ppList) = 0;
+		virtual void DestroyBuffer(IBuffer** ppBuffer) = 0;
+		virtual void DestroyTexture(ITexture** ppTexture) = 0;
+		virtual void DestroyShader(IShader** ppShader) = 0;
+		virtual void DestroySamplerState(ISamplerState** ppSamplerState) = 0;
+		virtual void DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState) = 0;
+		virtual void DestroyRenderPass(IRenderPass** ppRenderPass) = 0;
+		virtual void DestroyResourceState(IPipelineResourceState** ppResourceState) = 0;
 		virtual void Destroy() const = 0;
 
 		virtual void ExecuteCommandList(ICommandList* const * ppLists, uint32 numLists) const = 0;

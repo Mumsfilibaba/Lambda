@@ -1,7 +1,6 @@
 #pragma once
 #include "Graphics/IBuffer.h"
-#include <vulkan/vulkan.h>
-#include <vector>
+#include "VulkanAllocator.h"
 
 namespace Lambda
 {
@@ -13,7 +12,7 @@ namespace Lambda
     public:
         LAMBDA_NO_COPY(VulkanBuffer);
         
-        VulkanBuffer(const VulkanGraphicsDevice* pVkDevice, const BufferDesc& desc);
+        VulkanBuffer(const VulkanGraphicsDevice* pVkDevice, IVulkanAllocator* pAllocator, const BufferDesc& desc);
         ~VulkanBuffer() = default;
         
         virtual void Map(void** ppMem) override final;
@@ -30,9 +29,10 @@ namespace Lambda
         void Init(const VulkanGraphicsDevice* pVkDevice, const BufferDesc& desc);
         
     private:
+		IVulkanAllocator* const m_pAllocator;
+        VulkanAllocation m_Memory;
 		VkDevice m_Device;
         VkBuffer m_Buffer;
-        VkDeviceMemory m_BufferMemory;
         BufferDesc m_Desc;
     };
 }

@@ -19,7 +19,7 @@ namespace Lambda
     public:
         LAMBDA_NO_COPY(VulkanCommandList);
         
-        VulkanCommandList(const VulkanGraphicsDevice* pVkDevice, CommandListType type);
+        VulkanCommandList(VulkanGraphicsDevice* pVkDevice, CommandListType type);
         ~VulkanCommandList() = default;
         
         virtual void ClearRenderTarget(ITexture* pRenderTarget, float color[4]) override final;
@@ -58,7 +58,7 @@ namespace Lambda
         void Destroy(VkDevice device);
         
     private:
-        void Init(const VulkanGraphicsDevice* pVkDevice, CommandListType type);
+        void Init(VulkanGraphicsDevice* pVkDevice, CommandListType type);
 
     private:
         VkDevice m_Device;

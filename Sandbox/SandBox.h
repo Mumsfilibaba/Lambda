@@ -7,7 +7,7 @@
 #include "Graphics/ITexture.h"
 #include "Graphics/ISamplerState.h"
 #include "Graphics/IRenderPass.h"
-#include "Graphics/IResourceState.h"
+#include "Graphics/IPipelineResourceState.h"
 #include "Graphics/Camera.h"
 
 namespace Lambda

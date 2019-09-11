@@ -46,6 +46,6 @@ namespace Lambda
         virtual ShaderDesc GetDesc() const = 0;
 
 	public:
-		static IShader* CreateShaderFromFile(const IGraphicsDevice* pDevice, const char* pFilename, const char* pEntryPoint, ShaderStage type, ShaderLang languange = SHADER_LANG_HLSL);
+		static IShader* CreateShaderFromFile(IGraphicsDevice* pDevice, const char* pFilename, const char* pEntryPoint, ShaderStage type, ShaderLang languange = SHADER_LANG_HLSL);
 	};
 }

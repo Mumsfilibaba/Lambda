@@ -3,6 +3,7 @@
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#define VK_USE_PLATFORM_WIN32_KHR
 #endif
+#include "VulkanAllocator.h"
 #include "VulkanUtilities.h"
 
 #define FRAMES_AHEAD 3
@@ -14,6 +15,8 @@ namespace Lambda
     class VulkanCommandList;
     class VulkanSamplerState;
 	class VulkanSwapChain;
+	class VulkanUploadBuffer;
+	class VulkanDeviceAllocator;
 
 
 	struct DeviceLimits
@@ -36,23 +39,23 @@ namespace Lambda
         VulkanGraphicsDevice(IWindow* pWindow, const GraphicsDeviceDesc& desc);
         ~VulkanGraphicsDevice();
         
-        virtual void CreateCommandList(ICommandList** ppList, CommandListType type) const override final;
-        virtual void CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) const override final;
-        virtual void CreateTexture(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc) const override final;
-        virtual void CreateShader(IShader** ppShader, const ShaderDesc& desc) const override final;
-        virtual void CreateSamplerState(ISamplerState** ppSamplerState, const SamplerStateDesc& desc) const override final;
-        virtual void CreateGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc) const override final;
-		virtual void CreateRenderPass(IRenderPass** ppRenderPass, const RenderPassDesc& desc) const override final;
-		virtual void CreateResourceState(IPipelineResourceState** ppResourceState, const PipelineResourceStateDesc& desc) const override final;
+        virtual void CreateCommandList(ICommandList** ppList, CommandListType type) override final;
+        virtual void CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) override final;
+        virtual void CreateTexture(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc) override final;
+        virtual void CreateShader(IShader** ppShader, const ShaderDesc& desc) override final;
+        virtual void CreateSamplerState(ISamplerState** ppSamplerState, const SamplerStateDesc& desc) override final;
+        virtual void CreateGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc) override final;
+		virtual void CreateRenderPass(IRenderPass** ppRenderPass, const RenderPassDesc& desc) override final;
+		virtual void CreateResourceState(IPipelineResourceState** ppResourceState, const PipelineResourceStateDesc& desc) override final;
 
-        virtual void DestroyCommandList(ICommandList** ppList) const override final;
-        virtual void DestroyBuffer(IBuffer** ppBuffer) const override final;
-        virtual void DestroyTexture(ITexture** ppTexture) const override final;
-        virtual void DestroyShader(IShader** ppShader) const override final;
-        virtual void DestroySamplerState(ISamplerState** ppSamplerState) const override final;
-        virtual void DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState) const override final;
-		virtual void DestroyRenderPass(IRenderPass** ppRenderPass) const override final;
-		virtual void DestroyResourceState(IPipelineResourceState** ppResourceState) const override final;
+        virtual void DestroyCommandList(ICommandList** ppList) override final;
+        virtual void DestroyBuffer(IBuffer** ppBuffer) override final;
+        virtual void DestroyTexture(ITexture** ppTexture) override final;
+        virtual void DestroyShader(IShader** ppShader) override final;
+        virtual void DestroySamplerState(ISamplerState** ppSamplerState) override final;
+        virtual void DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState) override final;
+		virtual void DestroyRenderPass(IRenderPass** ppRenderPass) override final;
+		virtual void DestroyResourceState(IPipelineResourceState** ppResourceState) override final;
         virtual void Destroy() const override final;
         
         virtual void ExecuteCommandList(ICommandList* const * ppLists, uint32 numLists) const override final;
@@ -69,8 +72,7 @@ namespace Lambda
         virtual uint32 GetSwapChainWidth() const override final;
         virtual uint32 GetSwapChainHeight() const override final;
     
-        VkDeviceMemory AllocateImage(VkImage image, ResourceUsage usage) const;
-        VkDeviceMemory AllocateBuffer(VkBuffer buffer, ResourceUsage usage) const;
+		void CreateUploadBuffer(VulkanUploadBuffer** ppUploadBuffer, uint64 sizeInBytes);
         
         void SetVulkanObjectName(VkObjectType type, uint64 objectHandle, const std::string& name);
         VkPhysicalDevice GetPhysicalDevice() const;
@@ -117,10 +119,11 @@ namespace Lambda
         
         VkSurfaceKHR m_Surface;
 
-		VulkanSwapChain* m_pSwapChain;
 		VulkanTexture* m_pDepthStencil;
 		VulkanTexture* m_pMSAABuffer;
+		VulkanSwapChain* m_pSwapChain;
 		VulkanCommandList* m_pCommandList;
+		VulkanDeviceAllocator* m_pDeviceAllocator;
 
         mutable uint64 m_CurrentFrame;
         

@@ -1,7 +1,6 @@
 #include "LambdaPch.h"
 #include "Utilities/StringHelper.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
-
 	#pragma comment(lib, "dxguid.lib")
 
 	#include "DX12GraphicsDevice.h"
@@ -79,13 +78,13 @@ namespace Lambda
 	}
 
 
-	void DX12GraphicsDevice::CreateCommandList(ICommandList** ppList, CommandListType type) const
+	void DX12GraphicsDevice::CreateCommandList(ICommandList** ppList, CommandListType type)
 	{
 		*ppList = DBG_NEW DX12CommandList(m_Device.Get(), type, m_NullSampler, m_NullSRV, m_NullUAV, m_NullCBV);
 	}
 
 
-	void DX12GraphicsDevice::CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) const
+	void DX12GraphicsDevice::CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc)
 	{
 		//Create resource
 		DX12Buffer* pBuffer = DBG_NEW DX12Buffer(m_Device.Get(), desc);
@@ -137,7 +136,7 @@ namespace Lambda
 	}
 
 
-	void DX12GraphicsDevice::CreateTexture(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc) const
+	void DX12GraphicsDevice::CreateTexture(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc)
 	{
 		//Return early if errors
 		if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
@@ -212,36 +211,36 @@ namespace Lambda
 	}
 
 
-	void DX12GraphicsDevice::CreateShader(IShader** ppShader, const ShaderDesc& desc) const
+	void DX12GraphicsDevice::CreateShader(IShader** ppShader, const ShaderDesc& desc)
 	{
 		(*ppShader) = DBG_NEW DX12Shader(desc);
 	}
 
 
-	void DX12GraphicsDevice::CreateSamplerState(ISamplerState** ppSamplerState, const SamplerStateDesc& desc) const
+	void DX12GraphicsDevice::CreateSamplerState(ISamplerState** ppSamplerState, const SamplerStateDesc& desc)
 	{
 		DX12DescriptorHandle hDescriptor = m_SamplerAllocator.Allocate();
 		(*ppSamplerState) = DBG_NEW DX12SamplerState(m_Device.Get(), hDescriptor, desc);
 	}
 
 
-	void DX12GraphicsDevice::CreateGraphicsPipelineState(IGraphicsPipelineState** ppPSO, const GraphicsPipelineStateDesc& desc) const
+	void DX12GraphicsDevice::CreateGraphicsPipelineState(IGraphicsPipelineState** ppPSO, const GraphicsPipelineStateDesc& desc)
 	{
 		(*ppPSO) = DBG_NEW DX12GraphicsPipelineState(m_Device.Get(), desc);
 	}
 
 
-	void DX12GraphicsDevice::CreateRenderPass(IRenderPass** ppRenderPass, const RenderPassDesc& desc) const
+	void DX12GraphicsDevice::CreateRenderPass(IRenderPass** ppRenderPass, const RenderPassDesc& desc)
 	{
 		LAMBDA_ASSERT(ppRenderPass && &desc);
 	}
 
-	void DX12GraphicsDevice::CreateResourceState(IPipelineResourceState** ppResourceState, const PipelineResourceStateDesc& desc) const
+	void DX12GraphicsDevice::CreateResourceState(IPipelineResourceState** ppResourceState, const PipelineResourceStateDesc& desc)
 	{
 	}
 
 
-	void DX12GraphicsDevice::DestroyCommandList(ICommandList** ppList) const
+	void DX12GraphicsDevice::DestroyCommandList(ICommandList** ppList)
 	{
 		LAMBDA_ASSERT(ppList != nullptr);
 
@@ -251,7 +250,7 @@ namespace Lambda
 	}
 
 
-	void DX12GraphicsDevice::DestroyBuffer(IBuffer** ppBuffer) const
+	void DX12GraphicsDevice::DestroyBuffer(IBuffer** ppBuffer)
 	{
 		LAMBDA_ASSERT(ppBuffer != nullptr);
 
@@ -273,7 +272,7 @@ namespace Lambda
 	}
 
 
-	void DX12GraphicsDevice::DestroyTexture(ITexture** ppTexture) const
+	void DX12GraphicsDevice::DestroyTexture(ITexture** ppTexture)
 	{
 		LAMBDA_ASSERT(ppTexture != nullptr);
 
@@ -303,7 +302,7 @@ namespace Lambda
 	}
 
 
-	void DX12GraphicsDevice::DestroyShader(IShader** ppShader) const
+	void DX12GraphicsDevice::DestroyShader(IShader** ppShader)
 	{
 		LAMBDA_ASSERT(ppShader != nullptr);
 
@@ -313,7 +312,7 @@ namespace Lambda
 	}
 
 
-	void DX12GraphicsDevice::DestroySamplerState(ISamplerState** ppSamplerState) const
+	void DX12GraphicsDevice::DestroySamplerState(ISamplerState** ppSamplerState)
 	{
 		LAMBDA_ASSERT(ppSamplerState != nullptr);
 
@@ -328,7 +327,7 @@ namespace Lambda
 	}
 
 
-	void DX12GraphicsDevice::DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState) const
+	void DX12GraphicsDevice::DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState)
 	{
 		LAMBDA_ASSERT(ppPipelineState != nullptr);
 
@@ -338,13 +337,13 @@ namespace Lambda
 	}
 
 
-	void DX12GraphicsDevice::DestroyRenderPass(IRenderPass** ppRenderPass) const
+	void DX12GraphicsDevice::DestroyRenderPass(IRenderPass** ppRenderPass)
 	{
 		LAMBDA_ASSERT(ppRenderPass);
 	}
 
 
-	void DX12GraphicsDevice::DestroyResourceState(IPipelineResourceState** ppResourceState) const
+	void DX12GraphicsDevice::DestroyResourceState(IPipelineResourceState** ppResourceState)
 	{
 	}
 

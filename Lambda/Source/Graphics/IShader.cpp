@@ -5,7 +5,7 @@
 
 namespace Lambda
 {
-	IShader* IShader::CreateShaderFromFile(const IGraphicsDevice* pDevice, const char* pFilename, const char* pEntryPoint, ShaderStage type, ShaderLang languange)
+	IShader* IShader::CreateShaderFromFile(IGraphicsDevice* pDevice, const char* pFilename, const char* pEntryPoint, ShaderStage type, ShaderLang languange)
 	{
 		LAMBDA_ASSERT(pDevice != nullptr);
 

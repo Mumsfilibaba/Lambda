@@ -5,13 +5,15 @@
 
 namespace Lambda
 {
-    VulkanBuffer::VulkanBuffer(const VulkanGraphicsDevice* pVkDevice, const BufferDesc& desc)
-		: m_Device(VK_NULL_HANDLE),
+    VulkanBuffer::VulkanBuffer(const VulkanGraphicsDevice* pVkDevice, IVulkanAllocator* pAllocator, const BufferDesc& desc)
+		: m_pAllocator(pAllocator),
+		m_Device(VK_NULL_HANDLE),
 		m_Buffer(VK_NULL_HANDLE),
-		m_BufferMemory(VK_NULL_HANDLE),
+		m_Memory(),
 		m_Desc()
     {
-		LAMBDA_ASSERT(pVkDevice != VK_NULL_HANDLE);
+		LAMBDA_ASSERT(pVkDevice != nullptr);
+		LAMBDA_ASSERT(pAllocator != nullptr);
         Init(pVkDevice, desc);
     }
     
@@ -48,12 +50,25 @@ namespace Lambda
             m_Desc = desc;
 			m_Device = device;
         }
-         
+        
 
-		m_BufferMemory = pVkDevice->AllocateBuffer(m_Buffer, desc.Usage);
-        if (m_BufferMemory != VK_NULL_HANDLE)
+		//Allocate memory
+		VkMemoryRequirements memRequirements = {};
+		vkGetBufferMemoryRequirements(m_Device, m_Buffer, &memRequirements);
+
+		//Set memoryproperty based on resource usage
+		VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+		if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
 		{
-            vkBindBufferMemory(device, m_Buffer, m_BufferMemory, 0);
+			properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+		}
+
+		VkPhysicalDevice physicalDevice = pVkDevice->GetPhysicalDevice();
+		uint32 memoryType = FindMemoryType(physicalDevice, memRequirements.memoryTypeBits, properties);
+		m_Memory = m_pAllocator->Allocate(memRequirements.size, memRequirements.alignment, memoryType);
+        if (m_Memory.Memory != VK_NULL_HANDLE)
+		{
+            vkBindBufferMemory(m_Device, m_Buffer, m_Memory.Memory, m_Memory.Offset);
         }
     }
     
@@ -61,13 +76,13 @@ namespace Lambda
     void VulkanBuffer::Map(void** ppMem)
     {
 		LAMBDA_ASSERT(ppMem != nullptr);
-        vkMapMemory(m_Device, m_BufferMemory, 0, m_Desc.SizeInBytes, 0, ppMem);
+		m_pAllocator->Map(m_Memory, ppMem);
     }
     
     
     void VulkanBuffer::Unmap()
     {
-        vkUnmapMemory(m_Device, m_BufferMemory);
+		m_pAllocator->Unmap(m_Memory);
     }
     
     
@@ -89,13 +104,10 @@ namespace Lambda
         
         if (m_Buffer != VK_NULL_HANDLE)
         {
+			m_pAllocator->Deallocate(m_Memory);
+
             vkDestroyBuffer(device, m_Buffer, nullptr);
             m_Buffer = VK_NULL_HANDLE;
-        }
-        if (m_BufferMemory != VK_NULL_HANDLE)
-        {
-            vkFreeMemory(device, m_BufferMemory, nullptr);
-            m_BufferMemory = VK_NULL_HANDLE;
         }
     }
     

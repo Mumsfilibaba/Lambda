@@ -1,5 +1,5 @@
 #pragma once
-#include "Graphics/IResourceState.h"
+#include "Graphics/IPipelineResourceState.h"
 #include <vulkan/vulkan.h>
 
 namespace Lambda

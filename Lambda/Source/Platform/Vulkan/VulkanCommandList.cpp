@@ -8,12 +8,12 @@
 #include "VulkanFramebuffer.h"
 #include "VulkanBuffer.h"
 #include "VulkanRenderPass.h"
-#include "VulkanResourceState.h"
+#include "VulkanPipelineResourceState.h"
 #include "VulkanConversions.inl"
 
 namespace Lambda
 {
-    VulkanCommandList::VulkanCommandList(const VulkanGraphicsDevice* pVkDevice, CommandListType type)
+    VulkanCommandList::VulkanCommandList(VulkanGraphicsDevice* pVkDevice, CommandListType type)
         : m_Device(VK_NULL_HANDLE),
         m_CommandPool(VK_NULL_HANDLE),
         m_CommandBuffer(VK_NULL_HANDLE),
@@ -29,7 +29,7 @@ namespace Lambda
     }
 
     
-    void VulkanCommandList::Init(const VulkanGraphicsDevice* pVkDevice, CommandListType type)
+    void VulkanCommandList::Init(VulkanGraphicsDevice* pVkDevice, CommandListType type)
     {
         //Get queuefamiliy indices
         QueueFamilyIndices familyIndices = pVkDevice->GetQueueFamilyIndices();
@@ -80,8 +80,8 @@ namespace Lambda
 
 
         //Init upload buffers
-		m_pBufferUpload = DBG_NEW VulkanUploadBuffer(pVkDevice, MB(128));
-		m_pTextureUpload = DBG_NEW VulkanUploadBuffer(pVkDevice, MB(128));
+		pVkDevice->CreateUploadBuffer(&m_pBufferUpload, MB(64));
+		pVkDevice->CreateUploadBuffer(&m_pTextureUpload, MB(128));
     }
     
     
@@ -477,8 +477,8 @@ namespace Lambda
         }
 
 		//Do not keep map during present calls
-		m_pBufferUpload->Unmap(m_Device);
-		m_pTextureUpload->Unmap(m_Device);
+		m_pBufferUpload->Unmap();
+		m_pTextureUpload->Unmap();
     }
     
     
@@ -502,9 +502,9 @@ namespace Lambda
             LOG_DEBUG_ERROR("Vulkan: Failed to Begin CommandBuffer\n");
         }
         
-		//Reset dependencies
-        m_pBufferUpload->Map(m_Device);
-		m_pTextureUpload->Map(m_Device);
+		//Reset dependencies, when mapping a UploadBuffer, reset is called aswell
+        m_pBufferUpload->Map();
+		m_pTextureUpload->Map();
     }
     
     

@@ -1,5 +1,5 @@
 #include "LambdaPch.h"
-#include "VulkanResourceState.h"
+#include "VulkanPipelineResourceState.h"
 #include "VulkanBuffer.h"
 #include "VulkanTexture.h"
 #include "VulkanSamplerState.h"
@@ -407,11 +407,12 @@ namespace Lambda
 		//Describe how many descriptors we want to create
 		VkDescriptorPoolSize poolSizes[3] = {};
 		poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		poolSizes[0].descriptorCount = 1024;
+		poolSizes[0].descriptorCount = 64;
 		poolSizes[1].type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-		poolSizes[1].descriptorCount = 1024;
+		poolSizes[1].descriptorCount = 64;
 		poolSizes[2].type = VK_DESCRIPTOR_TYPE_SAMPLER;
-		poolSizes[2].descriptorCount = 1024;
+		poolSizes[2].descriptorCount = 64;
+
 
 		//Create descriptorpool
 		VkDescriptorPoolCreateInfo descriptorPoolInfo = {};
@@ -420,7 +421,7 @@ namespace Lambda
 		descriptorPoolInfo.pNext = nullptr;
 		descriptorPoolInfo.poolSizeCount = 3;
 		descriptorPoolInfo.pPoolSizes = poolSizes;
-		descriptorPoolInfo.maxSets = 1024;
+		descriptorPoolInfo.maxSets = 64;
 
 		if (vkCreateDescriptorPool(device, &descriptorPoolInfo, nullptr, &m_DescriptorPool) != VK_SUCCESS)
 		{

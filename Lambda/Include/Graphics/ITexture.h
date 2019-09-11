@@ -49,6 +49,6 @@ namespace Lambda
 		virtual TextureDesc GetDesc() const = 0;
 
 	public:
-		static ITexture* CreateTextureFromFile(const IGraphicsDevice* pDevice, const char* pFileName, uint32 flags, ResourceUsage Usage, ResourceFormat Format);
+		static ITexture* CreateTextureFromFile(IGraphicsDevice* pDevice, const char* pFileName, uint32 flags, ResourceUsage Usage, ResourceFormat Format);
 	};
 }

@@ -7,10 +7,11 @@
 
 namespace Lambda
 {
-    VulkanTexture::VulkanTexture(const VulkanGraphicsDevice* pVkDevice, const TextureDesc& desc)
-        : m_Image(VK_NULL_HANDLE),
+    VulkanTexture::VulkanTexture(const VulkanGraphicsDevice* pVkDevice, IVulkanAllocator* pAllocator, const TextureDesc& desc)
+        : m_pAllocator(pAllocator),
+		m_Memory(),
+		m_Image(VK_NULL_HANDLE),
         m_View(VK_NULL_HANDLE),
-        m_DeviceMemory(VK_NULL_HANDLE),
         m_AspectFlags(0),
         m_IsOwner(false),
         m_Desc(),
@@ -22,9 +23,10 @@ namespace Lambda
     
     
     VulkanTexture::VulkanTexture(const VulkanGraphicsDevice* pVkDevice, VkImage image, const TextureDesc& desc)
-        : m_Image(VK_NULL_HANDLE),
+        : m_pAllocator(nullptr),
+		m_Memory(),
+		m_Image(VK_NULL_HANDLE),
         m_View(VK_NULL_HANDLE),
-        m_DeviceMemory(VK_NULL_HANDLE),
         m_AspectFlags(0),
         m_IsOwner(false),
         m_Desc(),
@@ -69,6 +71,8 @@ namespace Lambda
     
     void VulkanTexture::Init(const VulkanGraphicsDevice* pVkDevice, const TextureDesc& desc)
     {
+		LAMBDA_ASSERT(m_pAllocator != nullptr);
+
         //Set miplevels
         uint32 mipLevels = desc.MipLevels;
         if (desc.Flags & TEXTURE_FLAGS_GENEATE_MIPS)
@@ -153,14 +157,26 @@ namespace Lambda
             m_IsOwner = true;
         }
         
-               
-        //Allocate memory
-        m_DeviceMemory = pVkDevice->AllocateImage(m_Image, desc.Usage);
-        if (m_DeviceMemory != VK_NULL_HANDLE)
-        {
-            vkBindImageMemory(device, m_Image, m_DeviceMemory, 0);
-        }
-        
+
+		//Allocate memory
+		VkMemoryRequirements memRequirements = {};
+		vkGetImageMemoryRequirements(device, m_Image, &memRequirements);
+
+		//Set memoryproperty based on resource usage
+		VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+		if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
+		{
+			properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+		}
+
+		VkPhysicalDevice physicalDevice = pVkDevice->GetPhysicalDevice();
+		uint32 memoryType = FindMemoryType(physicalDevice, memRequirements.memoryTypeBits, properties);
+		m_Memory = m_pAllocator->Allocate(memRequirements.size, memRequirements.alignment, memoryType);
+		if (m_Memory.Memory != VK_NULL_HANDLE)
+		{
+			vkBindImageMemory(device, m_Image, m_Memory.Memory, m_Memory.Offset);
+		}
+
         
         //Create the view
         CreateImageView(device);
@@ -229,13 +245,10 @@ namespace Lambda
 		{
 			if (m_Image != VK_NULL_HANDLE)
 			{
+				m_pAllocator->Deallocate(m_Memory);
+
 				vkDestroyImage(device, m_Image, nullptr);
 				m_Image = VK_NULL_HANDLE;
-			}
-			if (m_DeviceMemory != VK_NULL_HANDLE)
-			{
-				vkFreeMemory(device, m_DeviceMemory, nullptr);
-				m_DeviceMemory = VK_NULL_HANDLE;
 			}
 		}
 	}
