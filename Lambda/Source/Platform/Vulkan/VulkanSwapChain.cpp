@@ -7,6 +7,10 @@
 
 namespace Lambda
 {
+	//---------------
+	//VulkanSwapChain
+	//---------------
+
 	VulkanSwapChain::VulkanSwapChain(VkDevice device, const VulkanSwapChainDesc& desc)
 		: m_Adapter(VK_NULL_HANDLE),
 		m_Surface(VK_NULL_HANDLE),

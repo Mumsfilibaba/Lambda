@@ -7,6 +7,10 @@
 
 namespace Lambda
 {
+	//-------------
+	//VulkanTexture
+	//-------------
+
     VulkanTexture::VulkanTexture(VkDevice device, IVulkanAllocator* pAllocator, const TextureDesc& desc)
         : m_pAllocator(pAllocator),
 		m_Memory(),

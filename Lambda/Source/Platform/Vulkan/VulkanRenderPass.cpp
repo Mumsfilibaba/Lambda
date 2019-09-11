@@ -6,6 +6,10 @@
 
 namespace Lambda
 {
+	//----------------
+	//VulkanRenderPass
+	//----------------
+
 	VulkanRenderPass::VulkanRenderPass(VkDevice device, const RenderPassDesc& desc)
 		: m_Device(VK_NULL_HANDLE),
 		m_RenderPass(VK_NULL_HANDLE),

@@ -5,6 +5,10 @@
 
 namespace Lambda
 {    
+	//------------------
+	//VulkanUploadBuffer
+	//------------------
+
     VulkanUploadBuffer::VulkanUploadBuffer(VkDevice device, IVulkanAllocator* pAllocator, uint64 sizeInBytes)
         : m_pAllocator(pAllocator),
         m_pCurrent(nullptr),

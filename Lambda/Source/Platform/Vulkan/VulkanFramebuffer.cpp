@@ -5,8 +5,9 @@
 
 namespace Lambda
 {
-	std::unordered_map<VulkanFramebufferCacheKey, VkFramebuffer, VulkanFramebufferCacheKeyHash> VulkanFramebufferCache::s_Framebuffers = std::unordered_map<VulkanFramebufferCacheKey, VkFramebuffer, VulkanFramebufferCacheKeyHash>();
-
+	//----------
+	//HashHelper
+	//----------
 
     template<typename T>
     inline void HashCombine(size_t& hash, const T& value)
@@ -14,8 +15,11 @@ namespace Lambda
         std::hash<T> hasher;
         hash ^= hasher(value) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
     }
-    
-    
+
+	//-------------------------
+	//VulkanFramebufferCacheKey
+	//-------------------------
+
 	VulkanFramebufferCacheKey::VulkanFramebufferCacheKey()
 		: Hash(0),
 		RenderPass(VK_NULL_HANDLE),
@@ -74,6 +78,12 @@ namespace Lambda
 
 		return false;
 	}
+
+	//----------------------
+	//VulkanFramebufferCache
+	//----------------------
+
+	std::unordered_map<VulkanFramebufferCacheKey, VkFramebuffer, VulkanFramebufferCacheKeyHash> VulkanFramebufferCache::s_Framebuffers = std::unordered_map<VulkanFramebufferCacheKey, VkFramebuffer, VulkanFramebufferCacheKeyHash>();
 
 
 	VkFramebuffer VulkanFramebufferCache::GetFramebuffer(VkDevice device, const VulkanFramebufferCacheKey& fbKey, uint32 width, uint32 height)

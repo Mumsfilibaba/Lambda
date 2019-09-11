@@ -9,6 +9,10 @@
 
 namespace Lambda
 {
+	//---------------------------
+	//VulkanGraphicsPipelineState
+	//---------------------------
+
     VulkanGraphicsPipelineState::VulkanGraphicsPipelineState(VkDevice device, const GraphicsPipelineStateDesc& desc)
         : m_Pipeline(VK_NULL_HANDLE)
     {

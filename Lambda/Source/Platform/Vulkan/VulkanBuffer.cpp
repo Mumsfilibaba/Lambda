@@ -5,6 +5,10 @@
 
 namespace Lambda
 {
+	//------------
+	//VulkanBuffer
+	//------------
+
     VulkanBuffer::VulkanBuffer(VkDevice device, IVulkanAllocator* pAllocator, const BufferDesc& desc)
 		: m_pAllocator(pAllocator),
 		m_Buffer(VK_NULL_HANDLE),

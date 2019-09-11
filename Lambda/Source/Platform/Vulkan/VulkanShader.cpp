@@ -3,6 +3,10 @@
 
 namespace Lambda
 {
+	//------------
+	//VulkanShader
+	//------------
+
 	VulkanShader::VulkanShader(VkDevice device, const ShaderDesc& desc)
 		: m_Shader(VK_NULL_HANDLE),
 		m_ByteCode(),

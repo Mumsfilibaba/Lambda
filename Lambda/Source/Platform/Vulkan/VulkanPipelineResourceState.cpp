@@ -6,6 +6,10 @@
 
 namespace Lambda
 {
+	//---------------------------
+	//VulkanPipelineResourceState
+	//---------------------------
+
 	VulkanPipelineResourceState::VulkanPipelineResourceState(VkDevice device, const PipelineResourceStateDesc& desc)
 		: m_PipelineLayout(VK_NULL_HANDLE),
 		m_DescriptorSetLayout(VK_NULL_HANDLE),

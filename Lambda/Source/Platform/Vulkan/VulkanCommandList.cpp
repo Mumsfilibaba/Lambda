@@ -13,6 +13,10 @@
 
 namespace Lambda
 {
+	//-----------------
+	//VulkanCommandList
+	//-----------------
+
     VulkanCommandList::VulkanCommandList(VulkanGraphicsDevice* pVkDevice, CommandListType type)
         : m_Device(VK_NULL_HANDLE),
         m_CommandPool(VK_NULL_HANDLE),

@@ -4,6 +4,10 @@
 
 namespace Lambda
 {
+	//------------------
+	//VulkanSamplerState
+	//------------------
+
     VulkanSamplerState::VulkanSamplerState(VkDevice device, const SamplerStateDesc& desc)
         : m_Sampler(VK_NULL_HANDLE),
         m_Desc()
