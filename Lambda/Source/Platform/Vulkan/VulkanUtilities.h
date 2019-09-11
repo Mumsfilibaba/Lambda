@@ -1,6 +1,7 @@
 #pragma once
 #include "Defines.h"
 #include "Types.h"
+#include "Utilities/TextureHelper.h"
 #include <vector>
 #include <vulkan/vulkan.h>
 
@@ -31,6 +32,41 @@ namespace Lambda
             return !Formats.empty() && !PresentModes.empty() && (Capabilities.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_DST_BIT);
         }
     };
+
+
+	//Function calculates size in bytes of a texture
+	inline uint64 CalculateSizeInBytes(uint32 width, uint32 height, uint32 depth, uint32 arraySize, uint32 miplevels, ResourceFormat format)
+	{
+		uint32 stride = StrideInBytesFromResourceFormat(format);
+		if (depth > 1)
+		{
+			return width * height * depth * stride;
+		}
+		else if (arraySize > 1)
+		{
+			return width * height * arraySize * stride;
+		}
+		else
+		{
+			uint64 size = 0;
+			uint32 w = width;
+			uint32 h = width;
+			for (uint32 i = 0; i < miplevels; i++)
+			{
+				size += w * h * stride;
+				if (w > 1)
+				{
+					w /= 2;
+				}
+				if (h > 1)
+				{
+					h /= 2;
+				}
+			}
+
+			return size;
+		}
+	}
     
     
     //Helper function to retrive information about the device's swapchain capabilities

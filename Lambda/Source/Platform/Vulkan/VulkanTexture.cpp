@@ -7,38 +7,38 @@
 
 namespace Lambda
 {
-    VulkanTexture::VulkanTexture(const VulkanGraphicsDevice* pVkDevice, IVulkanAllocator* pAllocator, const TextureDesc& desc)
+    VulkanTexture::VulkanTexture(VkDevice device, IVulkanAllocator* pAllocator, const TextureDesc& desc)
         : m_pAllocator(pAllocator),
 		m_Memory(),
+        m_IsOwner(false),
 		m_Image(VK_NULL_HANDLE),
         m_View(VK_NULL_HANDLE),
         m_AspectFlags(0),
-        m_IsOwner(false),
         m_Desc(),
-        m_CurrentResourceState(VK_IMAGE_LAYOUT_UNDEFINED)
+        m_ResourceState(VK_IMAGE_LAYOUT_UNDEFINED)
     {
-		LAMBDA_ASSERT(pVkDevice != nullptr);
-        Init(pVkDevice, desc);
+		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
+        Init(device, desc);
     }
     
     
-    VulkanTexture::VulkanTexture(const VulkanGraphicsDevice* pVkDevice, VkImage image, const TextureDesc& desc)
-        : m_pAllocator(nullptr),
+    VulkanTexture::VulkanTexture(VkDevice device, VkImage image, const TextureDesc& desc)
+		: m_pAllocator(nullptr),
 		m_Memory(),
+		m_IsOwner(false),
 		m_Image(VK_NULL_HANDLE),
-        m_View(VK_NULL_HANDLE),
-        m_AspectFlags(0),
-        m_IsOwner(false),
-        m_Desc(),
-        m_CurrentResourceState(VK_IMAGE_LAYOUT_UNDEFINED)
+		m_View(VK_NULL_HANDLE),
+		m_AspectFlags(0),
+		m_Desc(),
+		m_ResourceState(VK_IMAGE_LAYOUT_UNDEFINED)
     {
-		LAMBDA_ASSERT(pVkDevice != nullptr);
 		LAMBDA_ASSERT(image != VK_NULL_HANDLE);
-        InitFromResource(pVkDevice, image, desc);
+		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
+        InitFromResource(device, image, desc);
     }
     
     
-    void VulkanTexture::InitFromResource(const VulkanGraphicsDevice* pVkDevice, VkImage image, const TextureDesc& desc)
+    void VulkanTexture::InitFromResource(VkDevice device, VkImage image, const TextureDesc& desc)
     {
         //Init data
         m_Desc = desc;
@@ -63,13 +63,12 @@ namespace Lambda
         }
         
         //Create view
-        VkDevice device = reinterpret_cast<VkDevice>(pVkDevice->GetNativeHandle());
         CreateImageView(device);
         
     }
     
     
-    void VulkanTexture::Init(const VulkanGraphicsDevice* pVkDevice, const TextureDesc& desc)
+    void VulkanTexture::Init(VkDevice device, const TextureDesc& desc)
     {
 		LAMBDA_ASSERT(m_pAllocator != nullptr);
 
@@ -140,7 +139,6 @@ namespace Lambda
         }
 
 
-        VkDevice device = reinterpret_cast<VkDevice>(pVkDevice->GetNativeHandle());
         if (vkCreateImage(device, &info, nullptr, &m_Image) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create image\n");
@@ -159,19 +157,10 @@ namespace Lambda
         
 
 		//Allocate memory
-		VkMemoryRequirements memRequirements = {};
-		vkGetImageMemoryRequirements(device, m_Image, &memRequirements);
+		VkMemoryRequirements memoryRequirements = {};
+		vkGetImageMemoryRequirements(device, m_Image, &memoryRequirements);
 
-		//Set memoryproperty based on resource usage
-		VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-		if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
-		{
-			properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-		}
-
-		VkPhysicalDevice physicalDevice = pVkDevice->GetPhysicalDevice();
-		uint32 memoryType = FindMemoryType(physicalDevice, memRequirements.memoryTypeBits, properties);
-		m_Memory = m_pAllocator->Allocate(memRequirements.size, memRequirements.alignment, memoryType);
+		m_Memory = m_pAllocator->Allocate(memoryRequirements, desc.Usage);
 		if (m_Memory.Memory != VK_NULL_HANDLE)
 		{
 			vkBindImageMemory(device, m_Image, m_Memory.Memory, m_Memory.Offset);

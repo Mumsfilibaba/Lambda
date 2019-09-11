@@ -7,7 +7,7 @@
 
 namespace Lambda
 {
-	VulkanSwapChain::VulkanSwapChain(const VulkanGraphicsDevice* pVkDevice, const VulkanSwapChainDesc& desc)
+	VulkanSwapChain::VulkanSwapChain(VkDevice device, const VulkanSwapChainDesc& desc)
 		: m_Adapter(VK_NULL_HANDLE),
 		m_Surface(VK_NULL_HANDLE),
 		m_SwapChain(VK_NULL_HANDLE),
@@ -20,12 +20,12 @@ namespace Lambda
 		m_CurrentBufferIndex(0),
 		m_Buffers()
 	{
-		LAMBDA_ASSERT(pVkDevice != nullptr);
-		Init(pVkDevice, desc);
+		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
+		Init(device, desc);
 	}
 
 
-	void VulkanSwapChain::Init(const VulkanGraphicsDevice* pVkDevice, const VulkanSwapChainDesc& desc)
+	void VulkanSwapChain::Init(VkDevice device, const VulkanSwapChainDesc& desc)
 	{
 		LAMBDA_ASSERT(desc.Adapter != VK_NULL_HANDLE);
 		LAMBDA_ASSERT(desc.Surface != VK_NULL_HANDLE);
@@ -85,11 +85,11 @@ namespace Lambda
         m_Adapter = desc.Adapter;
         m_Surface = desc.Surface;
 
-        InitSwapChain(pVkDevice, desc.SignalSemaphore, desc.Extent);
+        InitSwapChain(device, desc.SignalSemaphore, desc.Extent);
 	}
     
     
-    void VulkanSwapChain::InitSwapChain(const VulkanGraphicsDevice* pVkDevice, VkSemaphore signalSemaphore, VkExtent2D extent)
+    void VulkanSwapChain::InitSwapChain(VkDevice device, VkSemaphore signalSemaphore, VkExtent2D extent)
     {
         m_Cap = QuerySwapChainSupport(m_Adapter, m_Surface);
         
@@ -142,7 +142,6 @@ namespace Lambda
             info.pQueueFamilyIndices     = nullptr;
         }
 
-        VkDevice device = reinterpret_cast<VkDevice>(pVkDevice->GetNativeHandle());
         if (vkCreateSwapchainKHR(device, &info, nullptr, &m_SwapChain) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create SwapChain\n");
@@ -180,7 +179,7 @@ namespace Lambda
             desc.MipLevels = 1;
             desc.SampleCount = 1;
             desc.Usage = RESOURCE_USAGE_DEFAULT;
-            m_Buffers.push_back(DBG_NEW VulkanTexture(pVkDevice, textures[i], desc));
+            m_Buffers.push_back(DBG_NEW VulkanTexture(device, textures[i], desc));
         }
         
         //Aquire the first swapchain image
@@ -232,15 +231,14 @@ namespace Lambda
 	}
 
 
-	void VulkanSwapChain::ResizeBuffers(const VulkanGraphicsDevice* pVkDevice, VkSemaphore signalSemaphore, uint32 width, uint32 height)
+	void VulkanSwapChain::ResizeBuffers(VkDevice device, VkSemaphore signalSemaphore, uint32 width, uint32 height)
     {
         //Relase the old resources
-        VkDevice device = reinterpret_cast<VkDevice>(pVkDevice->GetNativeHandle());
         Release(device);
         
         //Create swapchain again
         VkExtent2D extent = { width, height };
-        InitSwapChain(pVkDevice, signalSemaphore, extent);
+        InitSwapChain(device, signalSemaphore, extent);
 	}
 
 

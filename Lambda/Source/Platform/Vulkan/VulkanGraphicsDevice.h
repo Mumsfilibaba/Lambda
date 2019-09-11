@@ -47,6 +47,7 @@ namespace Lambda
         virtual void CreateGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc) override final;
 		virtual void CreateRenderPass(IRenderPass** ppRenderPass, const RenderPassDesc& desc) override final;
 		virtual void CreateResourceState(IPipelineResourceState** ppResourceState, const PipelineResourceStateDesc& desc) override final;
+		void CreateUploadBuffer(VulkanUploadBuffer** ppUploadBuffer, uint64 sizeInBytes);
 
         virtual void DestroyCommandList(ICommandList** ppList) override final;
         virtual void DestroyBuffer(IBuffer** ppBuffer) override final;
@@ -72,8 +73,6 @@ namespace Lambda
         virtual uint32 GetSwapChainWidth() const override final;
         virtual uint32 GetSwapChainHeight() const override final;
     
-		void CreateUploadBuffer(VulkanUploadBuffer** ppUploadBuffer, uint64 sizeInBytes);
-        
         void SetVulkanObjectName(VkObjectType type, uint64 objectHandle, const std::string& name);
         VkPhysicalDevice GetPhysicalDevice() const;
         QueueFamilyIndices GetQueueFamilyIndices() const;

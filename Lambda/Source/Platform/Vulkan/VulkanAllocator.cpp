@@ -1,98 +1,17 @@
 #include "LambdaPch.h"
 #include "Utilities/MathHelper.h"
 #include "VulkanAllocator.h"
-#include "VulkanGraphicsDevice.h"
 #include "VulkanUtilities.h"
 
 namespace Lambda
 {
-	VulkanDeviceAllocator::VulkanDeviceAllocator(VkDevice device, VkPhysicalDevice physicalDevice)
-		: m_Device(device),
-		m_MaxAllocations(0),
-		m_Chunks()
-	{
-		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
-		LAMBDA_ASSERT(physicalDevice != VK_NULL_HANDLE);
+	//-----------------
+	//VulkanMemoryChunk
+	//-----------------
 
-		VkPhysicalDeviceProperties properties = {};
-		vkGetPhysicalDeviceProperties(physicalDevice, &properties);
-
-		m_MaxAllocations = properties.limits.maxMemoryAllocationCount;
-	}
-
-
-	VulkanAllocation VulkanDeviceAllocator::Allocate(uint64 sizeInBytes, uint64 alignment, uint64 memoryType)
-	{
-		LAMBDA_ASSERT_PRINT(sizeInBytes < MB(256), "Allocations must be smaller than 256MB\n");
-
-		//Try allocating from existing chunk
-		for (auto chunk : m_Chunks)
-		{
-			if (chunk->GetMemoryType() == memoryType)
-			{
-				if (chunk->CanAllocate(sizeInBytes, alignment))
-				{
-					return chunk->Allocate(sizeInBytes, alignment);
-				}
-			}
-		}
-
-		//Allocate new chunk
-		LAMBDA_ASSERT_PRINT(m_Chunks.size() < m_MaxAllocations, "Max number of allocations already reached\n");
-		m_Chunks.emplace_back(DBG_NEW VulkanMemoryChunk(m_Device, uint32(m_Chunks.size()), MB(256), memoryType));
-		
-		LOG_SYSTEM(LOG_SEVERITY_WARNING, "Allocated Memory chunk. Number of allocations: '%llu'. Max allocations: '%llu'. Memory type: %d\n", m_Chunks.size(), m_MaxAllocations, memoryType);
-
-		return m_Chunks.back()->Allocate(sizeInBytes, alignment);
-	}
-
-
-	void VulkanDeviceAllocator::Map(const VulkanAllocation& allocation, void** ppMem)
-	{
-		VulkanMemoryChunk* pChunk = m_Chunks[allocation.ID];
-		pChunk->Map(m_Device, allocation, ppMem);
-	}
-
-
-	void VulkanDeviceAllocator::Unmap(const VulkanAllocation& allocation)
-	{
-#if defined(LAMBDA_DEBUG)
-		static bool print = true;
-		if (print)
-		{
-			LOG_DEBUG_WARNING("Vulkan: VulkanDeviceAllocator does not support Unmap yet\n");
-			print = false;
-		}
-#endif
-	}
-
-
-	void VulkanDeviceAllocator::Deallocate(const VulkanAllocation& allocation)
-	{
-		VulkanMemoryChunk* pChunk = m_Chunks[allocation.ID];
-		pChunk->Deallocate(allocation);
-	}
-
-
-	void VulkanDeviceAllocator::Destroy(VkDevice device)
-	{
-		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
-
-		LOG_SYSTEM(LOG_SEVERITY_WARNING, "Vulkan: Deleteing DeviceAllocator. Number of chunks: %u\n", m_Chunks.size());
-		for (auto chunk : m_Chunks)
-		{
-			if (chunk)
-			{
-				chunk->Destroy(device);
-			}
-		}
-
-		delete this;
-	}
-	
-	
-	VulkanMemoryChunk::VulkanMemoryChunk(VkDevice device, uint32 id, uint64 sizeInBytes, uint64 memoryType)
+	VulkanMemoryChunk::VulkanMemoryChunk(VkDevice device, uint32 id, uint64 sizeInBytes, uint64 memoryType, ResourceUsage usage)
 		: m_Memory(VK_NULL_HANDLE),
+		m_Usage(usage),
 		m_ID(id),
 		m_MemoryType(memoryType),
 		m_SizeInBytes(sizeInBytes),
@@ -109,10 +28,10 @@ namespace Lambda
 	{
 		//Allocate device memory
 		VkMemoryAllocateInfo allocInfo = {};
-		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		allocInfo.pNext = nullptr;
-		allocInfo.allocationSize = m_SizeInBytes;
-		allocInfo.memoryTypeIndex = m_MemoryType;
+		allocInfo.sType				= VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		allocInfo.pNext				= nullptr;
+		allocInfo.allocationSize	= m_SizeInBytes;
+		allocInfo.memoryTypeIndex	= m_MemoryType;
 
 		if (vkAllocateMemory(device, &allocInfo, nullptr, &m_Memory) != VK_SUCCESS)
 		{
@@ -125,11 +44,22 @@ namespace Lambda
 		}
 
 		//Setup first block
-		VulkanAllocation allocation = {};
-		allocation.ID = m_ID;
-		allocation.Size = m_SizeInBytes;
-		allocation.Offset = 0;
-		allocation.Memory = m_Memory;
+		VulkanMemory allocation = {};
+		allocation.ID		= m_ID;
+		allocation.Size		= m_SizeInBytes;
+		allocation.Offset	= 0;
+		allocation.Memory	= m_Memory;
+
+		if (m_Usage == RESOURCE_USAGE_DYNAMIC)
+		{
+			Map(device);
+		}
+		else
+		{
+			m_pMemory = nullptr;
+		}
+
+		allocation.pMemory = m_pMemory;
 		m_Blocks.push_back(allocation);
 	}
 
@@ -150,7 +80,7 @@ namespace Lambda
 	}
 
 
-	VulkanAllocation VulkanMemoryChunk::Allocate(uint64 sizeInBytes, uint64 alignment)
+	VulkanMemory VulkanMemoryChunk::Allocate(uint64 sizeInBytes, uint64 alignment)
 	{
 		//Find enough free space
 		int32 blockIndex = -1;
@@ -165,43 +95,54 @@ namespace Lambda
 		}
 
 		//Did we find a block?
-		VulkanAllocation allocation = {};
+		VulkanMemory allocation = {};
 		if (blockIndex < 0)
 		{
 			LOG_DEBUG_ERROR("Vulkan: Not enough space in allocation\n");
 
-			allocation.ID = -1;
-			allocation.Offset = 0;
-			allocation.Memory = VK_NULL_HANDLE;
+			allocation.ID		= -1;
+			allocation.Size		= 0;
+			allocation.Offset	= 0;
+			allocation.Memory	= VK_NULL_HANDLE;
+			allocation.pMemory	= nullptr;
 			return allocation;
 		}
 
-		//Remove memory from block
-		allocation.ID = m_ID;
-		allocation.Size = sizeInBytes;
-		allocation.Offset = Math::AlignUp<uint64>(m_Blocks[blockIndex].Offset, alignment);
-		allocation.Memory = m_Memory;
-		
+		//Setup memory from block
+		allocation.ID		= m_ID;
+		allocation.Size		= sizeInBytes;
+		allocation.Offset	= Math::AlignUp<uint64>(m_Blocks[blockIndex].Offset, alignment);
+		allocation.Memory	= m_Memory;
+		if (m_Usage == RESOURCE_USAGE_DYNAMIC)
+		{
+			allocation.pMemory = m_pMemory + allocation.Offset;
+		}
+
 		//Add padding as a new block
 		uint64 alignmentPadding = allocation.Offset - m_Blocks[blockIndex].Offset;
 		if (alignmentPadding > 0)
 		{
-			VulkanAllocation newBlock = {};
-			newBlock.ID = m_ID;
-			newBlock.Memory = m_Memory;
-			newBlock.Size = alignmentPadding;
+			VulkanMemory newBlock = {};
+			newBlock.ID		= m_ID;
+			newBlock.Memory	= m_Memory;
+			newBlock.Size	= alignmentPadding;
 			newBlock.Offset = m_Blocks[blockIndex].Offset;
+			if (m_Usage == RESOURCE_USAGE_DYNAMIC)
+			{
+				newBlock.pMemory = m_pMemory + newBlock.Offset;
+			}
+
 			m_Blocks.push_back(newBlock);
 		}
 
 		//Change size of block
-		m_Blocks[blockIndex].Size -= alignmentPadding + allocation.Size;
+		m_Blocks[blockIndex].Size	-= alignmentPadding + allocation.Size;
 		m_Blocks[blockIndex].Offset = allocation.Offset + allocation.Size;
 		return allocation;
 	}
 
 
-	void VulkanMemoryChunk::Map(VkDevice device, const VulkanAllocation& allocation, void** ppMem)
+	void VulkanMemoryChunk::Map(VkDevice device)
 	{
 		//If not mapped -> map
 		if (!m_IsMapped)
@@ -212,12 +153,23 @@ namespace Lambda
 			m_pMemory = reinterpret_cast<uint8*>(pMemory);
 			m_IsMapped = true;
 		}
-
-		(*ppMem) = reinterpret_cast<void*>(m_pMemory + allocation.Offset);
 	}
 
 
-	void VulkanMemoryChunk::Deallocate(const VulkanAllocation& allocation)
+	void VulkanMemoryChunk::Unmap(VkDevice device)
+	{
+		//If mapped -> unmap
+		if (m_IsMapped)
+		{
+			vkUnmapMemory(device, m_Memory);
+
+			m_pMemory = nullptr;
+			m_IsMapped = false;
+		}
+	}
+
+
+	void VulkanMemoryChunk::Deallocate(const VulkanMemory& allocation)
 	{
 		//Search through the blocks and see if they come after or before eachother
 		for (auto& block : m_Blocks)
@@ -229,8 +181,8 @@ namespace Lambda
 			}
 			else if (allocation.Offset + allocation.Size == block.Offset)
 			{
-				block.Size += allocation.Size;
-				block.Offset -= allocation.Size;
+				block.Size		+= allocation.Size;
+				block.Offset	-= allocation.Size;
 				return;
 			}
 		}
@@ -246,11 +198,7 @@ namespace Lambda
 
 		if (m_Memory != VK_NULL_HANDLE)
 		{
-			if (m_IsMapped)
-			{
-				vkUnmapMemory(device, m_Memory);
-				m_IsMapped = false;
-			}
+			Unmap(device);
 
 			vkFreeMemory(device, m_Memory, nullptr);
 			m_Memory = VK_NULL_HANDLE;
@@ -265,5 +213,86 @@ namespace Lambda
 	uint32 VulkanMemoryChunk::GetMemoryType() const
 	{
 		return m_MemoryType;
+	}
+
+
+	//---------------------
+	//VulkanDeviceAllocator
+	//---------------------
+
+
+	VulkanDeviceAllocator::VulkanDeviceAllocator(VkDevice device, VkPhysicalDevice physicalDevice)
+		: m_Device(device),
+		m_PhysicalDevice(physicalDevice),
+		m_MaxAllocations(0),
+		m_Chunks()
+	{
+		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
+		LAMBDA_ASSERT(physicalDevice != VK_NULL_HANDLE);
+
+		VkPhysicalDeviceProperties properties = {};
+		vkGetPhysicalDeviceProperties(m_PhysicalDevice, &properties);
+
+		m_MaxAllocations = properties.limits.maxMemoryAllocationCount;
+	}
+
+
+	VulkanMemory VulkanDeviceAllocator::Allocate(const VkMemoryRequirements& memoryRequirements, ResourceUsage usage)
+	{
+		LAMBDA_ASSERT_PRINT(memoryRequirements.size < MB(256), "Allocations must be smaller than 256MB\n");
+
+		//Set memoryproperty based on resource usage
+		VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+		if (usage == RESOURCE_USAGE_DYNAMIC)
+		{
+			properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+		}
+
+		//Try allocating from existing chunk
+		uint32 memoryType = FindMemoryType(m_PhysicalDevice, memoryRequirements.memoryTypeBits, properties);
+		for (auto chunk : m_Chunks)
+		{
+			if (chunk->GetMemoryType() == memoryType)
+			{
+				if (chunk->CanAllocate(memoryRequirements.size, memoryRequirements.alignment))
+				{
+					return chunk->Allocate(memoryRequirements.size, memoryRequirements.alignment);
+				}
+			}
+		}
+
+		//Allocate new chunk
+		LAMBDA_ASSERT_PRINT(m_Chunks.size() < m_MaxAllocations, "Max number of allocations already reached\n");
+
+		VulkanMemoryChunk* pChunk = DBG_NEW VulkanMemoryChunk(m_Device, uint32(m_Chunks.size()), MB(256), memoryType, usage);
+		m_Chunks.emplace_back(pChunk);
+		
+		LOG_SYSTEM(LOG_SEVERITY_WARNING, " [DEVICE ALLOCATOR] Allocated Memory chunk. Number of allocations: '%llu'. Max allocations: '%llu'. Memory type: %d, \n", m_Chunks.size(), m_MaxAllocations, memoryType);
+
+		return m_Chunks.back()->Allocate(memoryRequirements.size, memoryRequirements.alignment);
+	}
+
+
+	void VulkanDeviceAllocator::Deallocate(const VulkanMemory& allocation)
+	{
+		VulkanMemoryChunk* pChunk = m_Chunks[allocation.ID];
+		pChunk->Deallocate(allocation);
+	}
+
+
+	void VulkanDeviceAllocator::Destroy(VkDevice device)
+	{
+		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
+
+		LOG_SYSTEM(LOG_SEVERITY_WARNING, "Vulkan: Deleteing DeviceAllocator. Number of chunks: %u\n", m_Chunks.size());
+		for (auto chunk : m_Chunks)
+		{
+			if (chunk)
+			{
+				chunk->Destroy(device);
+			}
+		}
+
+		delete this;
 	}
 }

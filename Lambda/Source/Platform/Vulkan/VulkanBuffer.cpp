@@ -5,20 +5,19 @@
 
 namespace Lambda
 {
-    VulkanBuffer::VulkanBuffer(const VulkanGraphicsDevice* pVkDevice, IVulkanAllocator* pAllocator, const BufferDesc& desc)
+    VulkanBuffer::VulkanBuffer(VkDevice device, IVulkanAllocator* pAllocator, const BufferDesc& desc)
 		: m_pAllocator(pAllocator),
-		m_Device(VK_NULL_HANDLE),
 		m_Buffer(VK_NULL_HANDLE),
 		m_Memory(),
 		m_Desc()
     {
-		LAMBDA_ASSERT(pVkDevice != nullptr);
 		LAMBDA_ASSERT(pAllocator != nullptr);
-        Init(pVkDevice, desc);
+		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
+        Init(device, desc);
     }
     
     
-    void VulkanBuffer::Init(const VulkanGraphicsDevice* pVkDevice, const BufferDesc& desc)
+    void VulkanBuffer::Init(VkDevice device, const BufferDesc& desc)
     {
         //Create buffer
         VkBufferCreateInfo info = {};
@@ -38,8 +37,7 @@ namespace Lambda
         if (desc.Flags & BUFFER_FLAGS_CONSTANT_BUFFER)
             info.usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
         
-		VkDevice device = reinterpret_cast<VkDevice>(pVkDevice->GetNativeHandle());
-        if (vkCreateBuffer(device, &info, nullptr, &m_Buffer) != VK_SUCCESS)
+		if (vkCreateBuffer(device, &info, nullptr, &m_Buffer) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create Buffer\n");
             return;
@@ -48,27 +46,16 @@ namespace Lambda
         {
             LOG_DEBUG_INFO("Vulkan: Created Buffer\n");
             m_Desc = desc;
-			m_Device = device;
         }
         
-
 		//Allocate memory
-		VkMemoryRequirements memRequirements = {};
-		vkGetBufferMemoryRequirements(m_Device, m_Buffer, &memRequirements);
+		VkMemoryRequirements memoryRequirements = {};
+		vkGetBufferMemoryRequirements(device, m_Buffer, &memoryRequirements);
 
-		//Set memoryproperty based on resource usage
-		VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-		if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
-		{
-			properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-		}
-
-		VkPhysicalDevice physicalDevice = pVkDevice->GetPhysicalDevice();
-		uint32 memoryType = FindMemoryType(physicalDevice, memRequirements.memoryTypeBits, properties);
-		m_Memory = m_pAllocator->Allocate(memRequirements.size, memRequirements.alignment, memoryType);
+		m_Memory = m_pAllocator->Allocate(memoryRequirements, desc.Usage);
         if (m_Memory.Memory != VK_NULL_HANDLE)
 		{
-            vkBindBufferMemory(m_Device, m_Buffer, m_Memory.Memory, m_Memory.Offset);
+            vkBindBufferMemory(device, m_Buffer, m_Memory.Memory, m_Memory.Offset);
         }
     }
     
@@ -76,13 +63,13 @@ namespace Lambda
     void VulkanBuffer::Map(void** ppMem)
     {
 		LAMBDA_ASSERT(ppMem != nullptr);
-		m_pAllocator->Map(m_Memory, ppMem);
+		(*ppMem) = m_Memory.pMemory;
     }
     
     
     void VulkanBuffer::Unmap()
     {
-		m_pAllocator->Unmap(m_Memory);
+		//Unmapping a vulkan buffer does nothing since a whole memoryblock is mapped and stays mapped during its lifetime.
     }
     
     

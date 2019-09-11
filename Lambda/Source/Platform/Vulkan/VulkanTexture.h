@@ -5,9 +5,6 @@
 
 namespace Lambda
 {
-    class VulkanGraphicsDevice;
-    
-    
     class VulkanTexture final : public ITexture
     {
         friend class VulkanGraphicsDevice;
@@ -15,8 +12,8 @@ namespace Lambda
     public:
         LAMBDA_NO_COPY(VulkanTexture);
 
-        VulkanTexture(const VulkanGraphicsDevice* pVkDevice, IVulkanAllocator* pAllocator, const TextureDesc& desc);
-        VulkanTexture(const VulkanGraphicsDevice* pVkDevice, VkImage image, const TextureDesc& desc);
+        VulkanTexture(VkDevice device, IVulkanAllocator* pAllocator, const TextureDesc& desc);
+        VulkanTexture(VkDevice device, VkImage image, const TextureDesc& desc);
         ~VulkanTexture() = default;
         
         virtual void* GetNativeHandle() const override final;
@@ -26,28 +23,27 @@ namespace Lambda
         void Destroy(VkDevice device);
 
         void SetResolveResource(VulkanTexture* pResolveResource) const;
-        void SetGraphicsPipelineResourceState(VkImageLayout resourceState) const;
+        void SetResourceState(VkImageLayout resourceState) const;
         VulkanTexture* GetResolveResource() const;
         VkImageAspectFlags GetAspectFlags() const;
-        VkImage GetImage() const;
         VkImageView GetImageView() const;
-        VkImageLayout GetCurrentResourceState() const;
+        VkImageLayout GetResourceState() const;
         VkFormat GetFormat() const;
         
     private:
-        void Init(const VulkanGraphicsDevice* pVkDevice, const TextureDesc& desc);
-        void InitFromResource(const VulkanGraphicsDevice* pVkDevice, VkImage image, const TextureDesc& desc);
+        void Init(VkDevice device, const TextureDesc& desc);
+        void InitFromResource(VkDevice device, VkImage image, const TextureDesc& desc);
         void CreateImageView(VkDevice device);
         
     private:
 		IVulkanAllocator* const m_pAllocator;
-		VulkanAllocation m_Memory;
+		VulkanMemory m_Memory;
+        bool m_IsOwner;
         VkImage m_Image;
         VkImageView m_View;
         VkImageAspectFlags m_AspectFlags;
-        bool m_IsOwner;
         mutable TextureDesc m_Desc;
-        mutable VkImageLayout m_CurrentResourceState;
+        mutable VkImageLayout m_ResourceState;
     };
     
     
@@ -56,22 +52,16 @@ namespace Lambda
         return m_AspectFlags;
     }
     
-    
-    inline VkImage VulkanTexture::GetImage() const
-    {
-        return m_Image;
-    }
-    
-    
+        
     inline VkImageView VulkanTexture::GetImageView() const
     {
         return m_View;
     }
     
     
-    inline VkImageLayout VulkanTexture::GetCurrentResourceState() const
+    inline VkImageLayout VulkanTexture::GetResourceState() const
     {
-        return m_CurrentResourceState;
+        return m_ResourceState;
     }
     
     
@@ -81,9 +71,9 @@ namespace Lambda
     }
     
     
-    inline void VulkanTexture::SetGraphicsPipelineResourceState(VkImageLayout resourceState) const
+    inline void VulkanTexture::SetResourceState(VkImageLayout resourceState) const
     {
-        m_CurrentResourceState = resourceState;
+        m_ResourceState = resourceState;
     }
     
     

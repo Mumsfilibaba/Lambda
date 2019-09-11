@@ -101,7 +101,9 @@ namespace Lambda
         blitInfo.dstSubresource.baseArrayLayer = 0;
         blitInfo.dstSubresource.layerCount = 1;
         
-        vkCmdBlitImage(m_CommandBuffer, pSrc->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, pDst->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blitInfo, VK_FILTER_LINEAR);
+		VkImage srcImage = reinterpret_cast<VkImage>(pSrc->GetNativeHandle());
+		VkImage dstImage = reinterpret_cast<VkImage>(pDst->GetNativeHandle());
+        vkCmdBlitImage(m_CommandBuffer, srcImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blitInfo, VK_FILTER_LINEAR);
     }
     
     
@@ -141,8 +143,6 @@ namespace Lambda
         VkClearColorValue col = {};
 		memcpy(col.float32, color, sizeof(float) * 4);
         
-        VulkanTexture* pVkRenderTarget = reinterpret_cast<VulkanTexture*>(pRenderTarget);
-        
 		//Specify what part of an image that is going to be cleared
         VkImageSubresourceRange imageSubresourceRange = {};
         imageSubresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -151,7 +151,8 @@ namespace Lambda
         imageSubresourceRange.baseArrayLayer = 0;
         imageSubresourceRange.layerCount     = 1;
 
-        vkCmdClearColorImage(m_CommandBuffer, pVkRenderTarget->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &col, 1, &imageSubresourceRange);
+		VkImage vkRenderTarget = reinterpret_cast<VkImage>(pRenderTarget->GetNativeHandle());
+        vkCmdClearColorImage(m_CommandBuffer, vkRenderTarget, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &col, 1, &imageSubresourceRange);
     }
     
     
@@ -161,8 +162,6 @@ namespace Lambda
         value.depth     = depth;
         value.stencil   = stencil;
 
-        VulkanTexture* pVkDepthStencil = reinterpret_cast<VulkanTexture*>(pDepthStencil);
-    
         //Specify what part of an image that is going to be cleared
         VkImageSubresourceRange imageSubresourceRange = {};
         imageSubresourceRange.aspectMask     = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
@@ -171,7 +170,8 @@ namespace Lambda
         imageSubresourceRange.baseArrayLayer = 0;
         imageSubresourceRange.layerCount     = 1;
         
-        vkCmdClearDepthStencilImage(m_CommandBuffer, pVkDepthStencil->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &value, 1, &imageSubresourceRange);
+		VkImage vkDepthStencil = reinterpret_cast<VkImage>(pDepthStencil->GetNativeHandle());
+        vkCmdClearDepthStencilImage(m_CommandBuffer, vkDepthStencil, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &value, 1, &imageSubresourceRange);
     }
     
     
@@ -258,15 +258,15 @@ namespace Lambda
     {
         const VulkanTexture* pVkTexture = reinterpret_cast<const VulkanTexture*>(pTexture);
         TextureDesc textureDesc = pVkTexture->GetDesc();
-        
+
         //Setup barrier
         VkImageMemoryBarrier barrier = {};
         barrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-        barrier.oldLayout                       = pVkTexture->GetCurrentResourceState();
+        barrier.oldLayout                       = pVkTexture->GetResourceState();
         barrier.newLayout                       = ConvertResourceStateToImageLayout(state);
         barrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
         barrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
-        barrier.image                           = pVkTexture->GetImage();
+        barrier.image                           = reinterpret_cast<VkImage>(pVkTexture->GetNativeHandle());
         barrier.subresourceRange.aspectMask     = pVkTexture->GetAspectFlags();
         barrier.subresourceRange.baseMipLevel   = startMipLevel;
         
@@ -372,7 +372,7 @@ namespace Lambda
         
         
         vkCmdPipelineBarrier(m_CommandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-        pVkTexture->SetGraphicsPipelineResourceState(barrier.newLayout);
+        pVkTexture->SetResourceState(barrier.newLayout);
     }
     
     
@@ -410,8 +410,8 @@ namespace Lambda
         uint64 offset = m_pTextureUpload->GetOffset();
         
         //Allocate memory in the uploadbuffer
-        void* pMem = m_pTextureUpload->Allocate(pData->SizeInBytes);
-        memcpy(pMem, pData->pData, pData->SizeInBytes);
+        void* pMappedMemory = m_pTextureUpload->Allocate(pData->SizeInBytes);
+        memcpy(pMappedMemory, pData->pData, pData->SizeInBytes);
         
 		//Perform copy
         TextureDesc textureDesc = pVkResource->GetDesc();
@@ -475,10 +475,6 @@ namespace Lambda
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to End CommandBuffer\n");
         }
-
-		//Do not keep map during present calls
-		m_pBufferUpload->Unmap();
-		m_pTextureUpload->Unmap();
     }
     
     
@@ -503,8 +499,8 @@ namespace Lambda
         }
         
 		//Reset dependencies, when mapping a UploadBuffer, reset is called aswell
-        m_pBufferUpload->Map();
-		m_pTextureUpload->Map();
+        m_pBufferUpload->Reset();
+		m_pTextureUpload->Reset();
     }
     
     

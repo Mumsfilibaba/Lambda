@@ -514,7 +514,7 @@ namespace Lambda
         swapChainInfo.Format.colorSpace  = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
         swapChainInfo.Extent             = { pWindow->GetWidth(), pWindow->GetHeight() };
         swapChainInfo.ImageCount         = FRAMES_AHEAD;
-        m_pSwapChain = DBG_NEW VulkanSwapChain(this, swapChainInfo);
+        m_pSwapChain = DBG_NEW VulkanSwapChain(m_Device, swapChainInfo);
 
 
 		//If we are using MSAA we need to create a seperate texture
@@ -769,7 +769,7 @@ namespace Lambda
         depthBufferDesc.MipLevels = 1;
 		depthBufferDesc.Depth = 1;
         
-        m_pDepthStencil = DBG_NEW VulkanTexture(this, m_pDeviceAllocator, depthBufferDesc);
+        m_pDepthStencil = DBG_NEW VulkanTexture(m_Device, m_pDeviceAllocator, depthBufferDesc);
         return true;
     }
 
@@ -789,7 +789,7 @@ namespace Lambda
 		msaaBufferDesc.MipLevels = 1;
 		msaaBufferDesc.Depth = 1;
 
-		m_pMSAABuffer = DBG_NEW VulkanTexture(this, m_pDeviceAllocator, msaaBufferDesc);
+		m_pMSAABuffer = DBG_NEW VulkanTexture(m_Device, m_pDeviceAllocator, msaaBufferDesc);
 		return true;
 	}
     
@@ -832,7 +832,7 @@ namespace Lambda
     {
 		LAMBDA_ASSERT(ppBuffer != nullptr);
         
-        VulkanBuffer* pVkBuffer = DBG_NEW VulkanBuffer(this, m_pDeviceAllocator, desc);
+        VulkanBuffer* pVkBuffer = DBG_NEW VulkanBuffer(m_Device, m_pDeviceAllocator, desc);
 
         //Upload inital data
         if (pInitalData)
@@ -870,7 +870,7 @@ namespace Lambda
 		LAMBDA_ASSERT(ppTexture != nullptr);
         
         //Create texture object
-        VulkanTexture* pVkTexture = DBG_NEW VulkanTexture(this, m_pDeviceAllocator, desc);
+        VulkanTexture* pVkTexture = DBG_NEW VulkanTexture(m_Device, m_pDeviceAllocator, desc);
         
         //Handle inital data
         if (pInitalData)
@@ -962,7 +962,7 @@ namespace Lambda
 	void VulkanGraphicsDevice::CreateUploadBuffer(VulkanUploadBuffer** ppUploadBuffer, uint64 sizeInBytes)
 	{
 		LAMBDA_ASSERT(ppUploadBuffer != nullptr);
-		(*ppUploadBuffer) = DBG_NEW VulkanUploadBuffer(this, m_pDeviceAllocator, sizeInBytes);
+		(*ppUploadBuffer) = DBG_NEW VulkanUploadBuffer(m_Device, m_pDeviceAllocator, sizeInBytes);
 	}
     
     
@@ -1257,7 +1257,7 @@ namespace Lambda
             //Syncronize the GPU so no operations are in flight when recreating swapchain
             WaitForGPU();
            
-            m_pSwapChain->ResizeBuffers(this, m_ImageSemaphores[m_CurrentFrame], event.WindowResize.Width, event.WindowResize.Height);
+            m_pSwapChain->ResizeBuffers(m_Device, m_ImageSemaphores[m_CurrentFrame], event.WindowResize.Width, event.WindowResize.Height);
 
 			//Recreate depthstencil
             ReleaseDepthStencil();

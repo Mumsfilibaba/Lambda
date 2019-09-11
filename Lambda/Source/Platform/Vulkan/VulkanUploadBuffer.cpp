@@ -5,34 +5,20 @@
 
 namespace Lambda
 {    
-    VulkanUploadBuffer::VulkanUploadBuffer(const VulkanGraphicsDevice* pVkDevice, IVulkanAllocator* pAllocator, uint64 sizeInBytes)
+    VulkanUploadBuffer::VulkanUploadBuffer(VkDevice device, IVulkanAllocator* pAllocator, uint64 sizeInBytes)
         : m_pAllocator(pAllocator),
-		m_pStart(nullptr),
         m_pCurrent(nullptr),
         m_Buffer(VK_NULL_HANDLE),
         m_Memory(),
         m_SizeInBytes(0)
     {
-		LAMBDA_ASSERT(pVkDevice != nullptr);
 		LAMBDA_ASSERT(pAllocator != nullptr);
-        Init(pVkDevice, sizeInBytes);
+		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
+        Init(device, sizeInBytes);
     }
 
-
-	void VulkanUploadBuffer::Map()
-	{
-		m_pAllocator->Map(m_Memory, reinterpret_cast<void**>(&m_pStart));
-		Reset();
-	}
-
-
-	void VulkanUploadBuffer::Unmap()
-	{
-		m_pAllocator->Unmap(m_Memory);
-	}
-
     
-    bool VulkanUploadBuffer::Init(const VulkanGraphicsDevice* pVkDevice, uint64 sizeInBytes)
+    bool VulkanUploadBuffer::Init(VkDevice device, uint64 sizeInBytes)
     {
 		//Create buffer
         VkBufferCreateInfo info = {};
@@ -45,7 +31,6 @@ namespace Lambda
         info.size = sizeInBytes;
         info.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
         
-        VkDevice device = reinterpret_cast<VkDevice>(pVkDevice->GetNativeHandle());
         if (vkCreateBuffer(device, &info, nullptr, &m_Buffer) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create buffer for UploadBuffer\n");
@@ -59,20 +44,13 @@ namespace Lambda
         
         
 		//Allocate memory
-		VkPhysicalDevice physicalDevice = pVkDevice->GetPhysicalDevice();
+		VkMemoryRequirements memoryRequirements = {};
+		vkGetBufferMemoryRequirements(device, m_Buffer, &memoryRequirements);
 
-		VkMemoryRequirements memRequirements = {};
-		vkGetBufferMemoryRequirements(device, m_Buffer, &memRequirements);
-
-		VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-		uint32 memoryType = FindMemoryType(physicalDevice, memRequirements.memoryTypeBits, properties);
-		
-		m_Memory = m_pAllocator->Allocate(memRequirements.size, memRequirements.alignment, memoryType);
+		m_Memory = m_pAllocator->Allocate(memoryRequirements, RESOURCE_USAGE_DYNAMIC);
 		if (m_Memory.Memory != VK_NULL_HANDLE)
 		{
 			vkBindBufferMemory(device, m_Buffer, m_Memory.Memory, m_Memory.Offset);
-			
-			Map();
 			return true;
 		}
 		else
@@ -85,17 +63,17 @@ namespace Lambda
     void* VulkanUploadBuffer::Allocate(uint64 bytesToAllocate)
     {
         //Do we have enough space?
-        if ((m_pStart + m_SizeInBytes) - (m_pCurrent + bytesToAllocate) < 0)
+        if (m_pCurrent + bytesToAllocate > m_Memory.pMemory + m_SizeInBytes)
         {
-            LOG_DEBUG_ERROR("Vulkan: UploadBuffer has no space. Current space left is '%u' bytes, allocation requested '%u' bytes\n", uint64((m_pStart + m_SizeInBytes) - m_pCurrent), bytesToAllocate);
+            LOG_DEBUG_ERROR("Vulkan: UploadBuffer has no space. Current space left is '%u' bytes, allocation requested '%u' bytes\n", uint64((m_Memory.pMemory + m_SizeInBytes) - m_pCurrent), bytesToAllocate);
             return nullptr;
         }
         else
         {
-            void* pMem = reinterpret_cast<void*>(m_pCurrent);
+            void* pAllocation = reinterpret_cast<void*>(m_pCurrent);
             m_pCurrent += bytesToAllocate;
 
-            return pMem;
+            return pAllocation;
         }
     }
     
@@ -103,7 +81,7 @@ namespace Lambda
     void VulkanUploadBuffer::Reset()
     {
         //Reset buffer by resetting current to the start
-        m_pCurrent = m_pStart;
+        m_pCurrent = m_Memory.pMemory;
     }
     
     

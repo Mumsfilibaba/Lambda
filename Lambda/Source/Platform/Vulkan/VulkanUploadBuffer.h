@@ -5,19 +5,13 @@
 
 namespace Lambda
 {
-    class VulkanGraphicsDevice;
-    
-    
     class VulkanUploadBuffer final
     {
     public:
         LAMBDA_NO_COPY(VulkanUploadBuffer);
         
-        VulkanUploadBuffer(const VulkanGraphicsDevice* pVkDevice, IVulkanAllocator* pAllocator, uint64 sizeInBytes);
+        VulkanUploadBuffer(VkDevice device, IVulkanAllocator* pAllocator, uint64 sizeInBytes);
         ~VulkanUploadBuffer() = default;
-        
-		void Map();
-		void Unmap();
 
         void* Allocate(uint64 bytesToAllocate);
         void Reset();
@@ -27,12 +21,11 @@ namespace Lambda
         VkBuffer GetBuffer() const;
         
 	private:
-        bool Init(const VulkanGraphicsDevice* pVkDevice, uint64 sizeInBytes);
+        bool Init(VkDevice device, uint64 sizeInBytes);
     
 	private:
 		IVulkanAllocator* const m_pAllocator;
-		VulkanAllocation m_Memory;
-        uint8* m_pStart;
+		VulkanMemory m_Memory;
         uint8* m_pCurrent;
         VkBuffer m_Buffer;
 		uint64 m_SizeInBytes;
@@ -47,6 +40,6 @@ namespace Lambda
     
     inline uint64 VulkanUploadBuffer::GetOffset() const
     {
-        return uint64(m_pCurrent - m_pStart);
+        return uint64(m_pCurrent - m_Memory.pMemory);
     }
 }
