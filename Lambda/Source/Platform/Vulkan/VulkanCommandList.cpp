@@ -1,4 +1,5 @@
 #include "LambdaPch.h"
+#include "Utilities/MathHelper.h"
 #include "VulkanCommandList.h"
 #include "VulkanGraphicsDevice.h"
 #include "VulkanUploadBuffer.h"
@@ -261,7 +262,7 @@ namespace Lambda
 		VkDescriptorSet descriptorSet = pVkResourceState->GetDescriptorSet();
 		vkCmdBindDescriptorSets(m_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pVkResourceState->GetPipelineLayout(), 0, 1, &descriptorSet, 1, &offsets);
 		
-		offsets = (offsets + 64) % (64 * 1024);
+        offsets = Math::AlignUp<uint64>(offsets + 64, 256) % (64 * 1024);
 	}
 
     

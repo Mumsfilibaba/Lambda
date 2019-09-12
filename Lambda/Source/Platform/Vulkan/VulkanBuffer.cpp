@@ -1,4 +1,5 @@
 #include "LambdaPch.h"
+#include "Utilities/MathHelper.h"
 #include "VulkanBuffer.h"
 #include "VulkanUtilities.h"
 #include "VulkanGraphicsDevice.h"
@@ -9,16 +10,22 @@ namespace Lambda
 	//VulkanBuffer
 	//------------
 
-    VulkanBuffer::VulkanBuffer(VkDevice device, IVulkanAllocator* pAllocator, const BufferDesc& desc)
+    VulkanBuffer::VulkanBuffer(VkDevice device, VkPhysicalDevice physicalDevice, IVulkanAllocator* pAllocator, const BufferDesc& desc)
 		: m_pAllocator(pAllocator),
 		m_Buffer(VK_NULL_HANDLE),
 		m_Memory(),
 		m_Desc(),
-		m_DynamicOffset(0)
+		m_DynamicOffset(0),
+        m_DynamicAlignment(0)
     {
 		LAMBDA_ASSERT(pAllocator != nullptr);
 		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
         Init(device, desc);
+        
+        VkPhysicalDeviceProperties properties = {};
+        vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+        
+        m_DynamicAlignment = properties.limits.minUniformBufferOffsetAlignment;
     }
     
     
@@ -108,7 +115,7 @@ namespace Lambda
 
 	void VulkanBuffer::SetDynamicOffset(uint64 dynamicOffset)
 	{
-		m_DynamicOffset = dynamicOffset % (m_Desc.SizeInBytes * 1024);
+        m_DynamicOffset = Math::AlignUp<uint64>(dynamicOffset, m_DynamicAlignment) % (m_Desc.SizeInBytes * 1024);
 	}
 
 

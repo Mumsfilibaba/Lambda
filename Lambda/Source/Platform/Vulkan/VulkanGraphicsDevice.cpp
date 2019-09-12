@@ -836,7 +836,7 @@ namespace Lambda
     {
 		LAMBDA_ASSERT(ppBuffer != nullptr);
         
-        VulkanBuffer* pVkBuffer = DBG_NEW VulkanBuffer(m_Device, m_pDeviceAllocator, desc);
+        VulkanBuffer* pVkBuffer = DBG_NEW VulkanBuffer(m_Device, m_PhysicalDevice, m_pDeviceAllocator, desc);
 
         //Upload inital data
         if (pInitalData)

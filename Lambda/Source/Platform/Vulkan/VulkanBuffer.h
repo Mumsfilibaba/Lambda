@@ -9,7 +9,7 @@ namespace Lambda
     public:
         LAMBDA_NO_COPY(VulkanBuffer);
         
-        VulkanBuffer(VkDevice device, IVulkanAllocator* pAllocator, const BufferDesc& desc);
+        VulkanBuffer(VkDevice device, VkPhysicalDevice physicalDevice, IVulkanAllocator* pAllocator, const BufferDesc& desc);
         ~VulkanBuffer() = default;
         
         virtual void Map(void** ppMem) override final;
@@ -34,5 +34,6 @@ namespace Lambda
         VkBuffer m_Buffer;
         BufferDesc m_Desc;
 		uint64 m_DynamicOffset;
+        uint64 m_DynamicAlignment;
     };
 }
