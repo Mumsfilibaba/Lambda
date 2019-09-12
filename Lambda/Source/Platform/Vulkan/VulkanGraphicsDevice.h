@@ -17,17 +17,21 @@ namespace Lambda
 	class VulkanSwapChain;
 	class VulkanUploadBuffer;
 	class VulkanDeviceAllocator;
+	class VulkanFramebufferCache;
+	class VulkanDynamicBufferManager;
 
 
 	struct DeviceLimits
 	{
 		VkSampleCountFlagBits MaxSampleCount = VK_SAMPLE_COUNT_1_BIT;
+		uint64 UniformBufferAlignment = 0;
 	};
 
 
 	struct DeviceSettings
 	{
 		VkSampleCountFlagBits SampleCount = VK_SAMPLE_COUNT_1_BIT;
+		uint32 FramesAhead = 0;
 	};
     
     
@@ -74,9 +78,12 @@ namespace Lambda
         virtual uint32 GetSwapChainHeight() const override final;
     
         void SetVulkanObjectName(VkObjectType type, uint64 objectHandle, const std::string& name);
-        VkPhysicalDevice GetPhysicalDevice() const;
-        QueueFamilyIndices GetQueueFamilyIndices() const;
         
+		VkPhysicalDevice GetPhysicalDevice() const;
+        QueueFamilyIndices GetQueueFamilyIndices() const;
+		DeviceLimits GetDeviceLimits() const;
+		DeviceSettings GetDeviceSettings() const;
+
     private:
         void Init(IWindow* pWindow, const GraphicsDeviceDesc& desc);
         void InitDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo);
@@ -118,6 +125,8 @@ namespace Lambda
         
         VkSurfaceKHR m_Surface;
 
+		VulkanDynamicBufferManager* m_pDynamicBufferManager;
+		VulkanFramebufferCache* m_pFramebufferCache;
 		VulkanTexture* m_pDepthStencil;
 		VulkanTexture* m_pMSAABuffer;
 		VulkanSwapChain* m_pSwapChain;
@@ -127,8 +136,7 @@ namespace Lambda
         mutable uint64 m_CurrentFrame;
         
     public:
-        static VkDevice GetCurrentDevice();
-        static VkPhysicalDevice GetCurrentPhysicalDevice();
+		static VulkanGraphicsDevice& GetInstance();
         
     private:
         static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
@@ -153,18 +161,16 @@ namespace Lambda
     {
         return m_FamiliyIndices;
     }
-
-    
-    inline VkDevice VulkanGraphicsDevice::GetCurrentDevice()
-    {
-		LAMBDA_ASSERT(IGraphicsDevice::GetInstance() != nullptr);
-        return reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance())->m_Device;
-    }
-    
-    
-    inline VkPhysicalDevice VulkanGraphicsDevice::GetCurrentPhysicalDevice()
-    {
-		LAMBDA_ASSERT(IGraphicsDevice::GetInstance() != nullptr);
-        return reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance())->m_PhysicalDevice;
-    }
+	
+	
+	inline DeviceLimits VulkanGraphicsDevice::GetDeviceLimits() const
+	{
+		return m_DeviceLimits;
+	}
+	
+	
+	inline DeviceSettings VulkanGraphicsDevice::GetDeviceSettings() const
+	{
+		return m_DeviceSettings;
+	}
 }

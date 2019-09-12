@@ -151,7 +151,7 @@ namespace Lambda
             }
 
             //Create vertexbuffer
-			MeshData mesh = MeshFactory::CreateSphere(3);// MeshFactory::CreateFromFile("chalet.obj");
+			MeshData mesh = MeshFactory::CreateCube();// MeshFactory::CreateFromFile("chalet.obj");
 			m_IndexCount = uint32(mesh.Indices.size());
 			{
                 BufferDesc desc = {};
@@ -395,10 +395,11 @@ namespace Lambda
         }
 #else
 		//Update transforms
-		m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(-1.0f, 0.0f, 0.0f)) * rotation;
+		m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(-1.0f, 0.0f, -1.0f)) * rotation;
 		data.pData			= &m_TransformBuffer;
 		data.SizeInBytes	= sizeof(TransformBuffer);
 		m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);
+		m_pCurrentList->SetGraphicsPipelineResourceState(m_pResourceState);
 
 		//Begin renderpass
 		m_pCurrentList->BeginRenderPass(m_pRenderPass);
@@ -407,11 +408,30 @@ namespace Lambda
 		m_pCurrentList->DrawIndexedInstanced(m_IndexCount, 1, 0, 0, 0);
 
 		//Update transform
-		m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 0.0f)) * rotation;
+		m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, -1.0f)) * rotation;
 		data.pData = &m_TransformBuffer;
 		data.SizeInBytes = sizeof(TransformBuffer);
 		m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);
+		m_pCurrentList->SetGraphicsPipelineResourceState(m_pResourceState);
 
+		//Draw second
+		m_pCurrentList->DrawIndexedInstanced(m_IndexCount, 1, 0, 0, 0);
+
+		//Update transform
+		m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(-1.0f, 0.0f, 1.0f)) * rotation;
+		data.pData = &m_TransformBuffer;
+		data.SizeInBytes = sizeof(TransformBuffer);
+		m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);
+		m_pCurrentList->SetGraphicsPipelineResourceState(m_pResourceState);
+
+		//Draw second
+		m_pCurrentList->DrawIndexedInstanced(m_IndexCount, 1, 0, 0, 0);
+
+		//Update transform
+		m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 1.0f)) * rotation;
+		data.pData = &m_TransformBuffer;
+		data.SizeInBytes = sizeof(TransformBuffer);
+		m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);
 		m_pCurrentList->SetGraphicsPipelineResourceState(m_pResourceState);
 
 		//Draw second

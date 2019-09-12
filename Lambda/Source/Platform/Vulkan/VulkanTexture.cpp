@@ -225,7 +225,7 @@ namespace Lambda
 		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
 
 		//Remove associated framebuffer if there is any
-		VulkanFramebufferCache::ReleaseAllContainingTexture(device, this);
+		VulkanFramebufferCache::GetInstance().ReleaseAllContainingTexture(device, this);
 
 		if (m_View != VK_NULL_HANDLE)
 		{

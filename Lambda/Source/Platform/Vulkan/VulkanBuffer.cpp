@@ -10,22 +10,19 @@ namespace Lambda
 	//VulkanBuffer
 	//------------
 
-    VulkanBuffer::VulkanBuffer(VkDevice device, VkPhysicalDevice physicalDevice, IVulkanAllocator* pAllocator, const BufferDesc& desc)
+    VulkanBuffer::VulkanBuffer(VkDevice device, IVulkanAllocator* pAllocator, const BufferDesc& desc)
 		: m_pAllocator(pAllocator),
 		m_Buffer(VK_NULL_HANDLE),
 		m_Memory(),
 		m_Desc(),
+		m_CurrentFrame(0),
+		m_FrameCount(0),
 		m_DynamicOffset(0),
         m_DynamicAlignment(0)
     {
 		LAMBDA_ASSERT(pAllocator != nullptr);
 		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
         Init(device, desc);
-        
-        VkPhysicalDeviceProperties properties = {};
-        vkGetPhysicalDeviceProperties(physicalDevice, &properties);
-        
-        m_DynamicAlignment = properties.limits.minUniformBufferOffsetAlignment;
     }
     
     
@@ -42,7 +39,14 @@ namespace Lambda
 		//If dynamic we allocate extra size so we can use dynamic offsets
 		if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
 		{
-			info.size = uint64(desc.SizeInBytes) * 1024;
+			DeviceLimits limits = VulkanGraphicsDevice::GetInstance().GetDeviceLimits();
+			m_DynamicAlignment = limits.UniformBufferAlignment;
+
+			DeviceSettings settings = VulkanGraphicsDevice::GetInstance().GetDeviceSettings();
+			m_FrameCount = settings.FramesAhead;
+			
+			//If dynamic we allocate extra space (1024 updates per frame)
+			info.size = uint64(desc.SizeInBytes) * 1024 * m_FrameCount;		
 		}
 		else
 		{
@@ -113,13 +117,27 @@ namespace Lambda
     }
 
 
-	void VulkanBuffer::SetDynamicOffset(uint64 dynamicOffset)
+	void VulkanBuffer::AdvanceFrame()
 	{
-        m_DynamicOffset = Math::AlignUp<uint64>(dynamicOffset, m_DynamicAlignment) % (m_Desc.SizeInBytes * 1024);
+		m_CurrentFrame = (m_CurrentFrame + 1) % m_FrameCount;
 	}
 
 
-	uint64 VulkanBuffer::GetDynamicOffset() const
+	void VulkanBuffer::DynamicUpdate(const ResourceData* pData)
+	{
+		//Calculate offset in buffer
+		uint32 sizeInBytes = m_Desc.SizeInBytes * 1024;		//Total size of buffer
+		uint32 frameOffset = m_CurrentFrame * sizeInBytes;	//Offset of the current frame
+		uint32 dynamicOffset = Math::AlignUp<uint32>(m_DynamicOffset + m_Desc.SizeInBytes, m_DynamicAlignment) % sizeInBytes; //Ringbuffer-offset per frame
+		m_DynamicOffset = frameOffset + dynamicOffset;
+
+		//Update buffer
+		uint8* pCurrent = m_Memory.pMemory + m_DynamicOffset;
+		memcpy(pCurrent, pData->pData, pData->SizeInBytes);
+	}
+
+
+	uint32 VulkanBuffer::GetDynamicOffset() const
 	{
 		return m_DynamicOffset;
 	}
@@ -144,4 +162,69 @@ namespace Lambda
         Release(device);
         delete this;
     }
+
+	//--------------------------
+	//VulkanDynamicBufferManager
+	//--------------------------
+
+	VulkanDynamicBufferManager* VulkanDynamicBufferManager::s_pInstance = nullptr;
+
+	VulkanDynamicBufferManager::VulkanDynamicBufferManager()
+		: m_Buffers()
+	{
+		LAMBDA_ASSERT(s_pInstance == nullptr);
+		s_pInstance = this;
+	}
+
+
+	VulkanDynamicBufferManager::~VulkanDynamicBufferManager()
+	{
+		if (s_pInstance == this)
+			s_pInstance = nullptr;
+	}
+
+
+	void VulkanDynamicBufferManager::MoveToNextFrame()
+	{
+		for (auto buffer : m_Buffers)
+			buffer->AdvanceFrame();
+	}
+
+
+	void VulkanDynamicBufferManager::RegisterBuffer(VulkanBuffer* pBuffer)
+	{
+		for (auto buffer : m_Buffers)
+		{
+			if (buffer == pBuffer)
+			{
+				return;
+			}
+		}
+
+		LOG_DEBUG_INFO("Vulkan: Registered buffer\n");
+
+		m_Buffers.emplace_back(pBuffer);
+	}
+
+
+	void VulkanDynamicBufferManager::UnregisterBuffer(VulkanBuffer* pBuffer)
+	{
+		for (auto i = m_Buffers.begin(); i < m_Buffers.end(); i++)
+		{
+			if (*i == pBuffer)
+			{
+				LOG_DEBUG_INFO("Vulkan: Unregistered buffer\n");
+
+				m_Buffers.erase(i);
+				return;
+			}
+		}
+	}
+	
+	
+	VulkanDynamicBufferManager& VulkanDynamicBufferManager::GetInstance()
+	{
+		LAMBDA_ASSERT(s_pInstance != nullptr);
+		return *s_pInstance;
+	}
 }

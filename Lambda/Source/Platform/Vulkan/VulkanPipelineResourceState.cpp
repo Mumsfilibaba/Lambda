@@ -19,7 +19,9 @@ namespace Lambda
 		m_DescriptorWrites(),
 		m_BufferBindings(),
 		m_ImageBindings(),
-		m_CurrentBindings()
+		m_CurrentBindings(),
+		m_DynamicOffsets(),
+		m_DynamicBuffers()
 	{
 		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
 
@@ -188,6 +190,8 @@ namespace Lambda
 
 	void VulkanPipelineResourceState::SetConstantBuffers(IBuffer** ppBuffers, uint32 numBuffers, uint32 startSlot)
 	{
+		m_DynamicBuffers.clear();
+
 		VkWriteDescriptorSet writeInfo = {};
 		writeInfo.sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		writeInfo.pNext				= nullptr;
@@ -204,9 +208,17 @@ namespace Lambda
 		ResourceUsage usage = m_ResourceSlots[startSlot].Usage;
 		for (uint32 i = 0; i < numBuffers; i++)
 		{
+			VulkanBuffer* pVkBuffer = reinterpret_cast<VulkanBuffer*>(ppBuffers[i]);
+			BufferDesc bufferDesc = pVkBuffer->GetDesc();
+
 			//If the buffer is already bound then do not bind again, flush and move on
 			if (m_CurrentBindings[startSlot + i] == ppBuffers[i])
 			{
+				if (bufferDesc.Usage == RESOURCE_USAGE_DYNAMIC)
+				{
+					m_DynamicBuffers.push_back(pVkBuffer);
+				}
+
 				if (numDescriptors > 0)
 				{
 					writeInfo.descriptorCount = numDescriptors;
@@ -243,18 +255,22 @@ namespace Lambda
 			}
 
 			//Add this buffer to the bindings
-			BufferDesc bufferDesc = ppBuffers[i]->GetDesc();
 			VkDescriptorBufferInfo bufferInfo = {};
-			bufferInfo.buffer = reinterpret_cast<VkBuffer>(ppBuffers[i]->GetNativeHandle());
+			bufferInfo.buffer = reinterpret_cast<VkBuffer>(pVkBuffer->GetNativeHandle());
 			bufferInfo.offset = 0;
 			bufferInfo.range = bufferDesc.SizeInBytes;
 			m_BufferBindings.emplace_back(bufferInfo);
 
 			usage = m_ResourceSlots[startSlot + i].Usage;
 			if (usage == RESOURCE_USAGE_DYNAMIC)
+			{
 				writeInfo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+				m_DynamicBuffers.push_back(pVkBuffer);
+			}
 			else
+			{
 				writeInfo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			}
 
 			numDescriptors++;
 			m_CurrentBindings[startSlot + i] = ppBuffers[i];
@@ -289,6 +305,18 @@ namespace Lambda
 		return m_DescriptorSet;
 	}
 
+
+	const uint32* VulkanPipelineResourceState::GetDynamicOffsets() const
+	{
+		return m_DynamicOffsets.data();
+	}
+
+
+	uint32 VulkanPipelineResourceState::GetDynamicOffsetCount() const
+	{
+		return uint64(m_DynamicOffsets.size());
+	}
+
 	
 	void VulkanPipelineResourceState::CommitBindings(VkDevice device)
 	{
@@ -301,6 +329,13 @@ namespace Lambda
 			m_BufferBindings.clear();
 			m_ImageBindings.clear();
 			m_DescriptorWrites.clear();
+		}
+
+		//Update bufferoffsets
+		m_DynamicOffsets.clear();
+		for (auto buffer : m_DynamicBuffers)
+		{
+			m_DynamicOffsets.push_back(buffer->GetDynamicOffset());
 		}
 	}
 

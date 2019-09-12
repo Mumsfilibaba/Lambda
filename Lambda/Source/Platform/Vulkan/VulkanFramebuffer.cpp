@@ -83,7 +83,21 @@ namespace Lambda
 	//VulkanFramebufferCache
 	//----------------------
 
-	std::unordered_map<VulkanFramebufferCacheKey, VkFramebuffer, VulkanFramebufferCacheKeyHash> VulkanFramebufferCache::s_Framebuffers = std::unordered_map<VulkanFramebufferCacheKey, VkFramebuffer, VulkanFramebufferCacheKeyHash>();
+	VulkanFramebufferCache* VulkanFramebufferCache::s_pInstance = nullptr;
+
+	VulkanFramebufferCache::VulkanFramebufferCache()
+		: m_Framebuffers()
+	{
+		LAMBDA_ASSERT(s_pInstance == nullptr);
+		s_pInstance = this;
+	}
+
+	
+	VulkanFramebufferCache::~VulkanFramebufferCache()
+	{
+		if (s_pInstance == this)
+			s_pInstance = nullptr;
+	}
 
 
 	VkFramebuffer VulkanFramebufferCache::GetFramebuffer(VkDevice device, const VulkanFramebufferCacheKey& fbKey, uint32 width, uint32 height)
@@ -91,8 +105,8 @@ namespace Lambda
 		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
 
 		//Check if a framebuffer exists
-		auto fb = s_Framebuffers.find(fbKey);
-		if (fb != s_Framebuffers.end())
+		auto fb = m_Framebuffers.find(fbKey);
+		if (fb != m_Framebuffers.end())
 		{
 			return fb->second;
 		}
@@ -118,7 +132,7 @@ namespace Lambda
 		{
 			LOG_SYSTEM_PRINT("Vulkan: Created new Framebuffer\n");
 
-			s_Framebuffers.insert(std::pair<VulkanFramebufferCacheKey, VkFramebuffer>(fbKey, framebuffer));
+			m_Framebuffers.insert(std::pair<VulkanFramebufferCacheKey, VkFramebuffer>(fbKey, framebuffer));
 			return framebuffer;
 		}
 	}
@@ -127,7 +141,7 @@ namespace Lambda
 	void VulkanFramebufferCache::ReleaseAllContainingTexture(VkDevice device, const VulkanTexture* pTexture)
 	{
 		//Find all framebuffers containing this texture
-		for (auto it = s_Framebuffers.begin(); it != s_Framebuffers.end();)
+		for (auto it = m_Framebuffers.begin(); it != m_Framebuffers.end();)
 		{
 			if (it->first.ContainsTexture(pTexture))
 			{
@@ -135,7 +149,7 @@ namespace Lambda
 				vkDestroyFramebuffer(device, it->second, nullptr);
 				it->second = VK_NULL_HANDLE;
 
-				it = s_Framebuffers.erase(it);
+				it = m_Framebuffers.erase(it);
 			}
             else
             {
@@ -148,13 +162,20 @@ namespace Lambda
 	void VulkanFramebufferCache::ReleaseAll(VkDevice device)
 	{
 		//Destroy all framebuffers
-		for (auto& buffer : s_Framebuffers)
+		for (auto& buffer : m_Framebuffers)
 		{
 			VkFramebuffer fb = buffer.second;
 			vkDestroyFramebuffer(device, fb, nullptr);
 			fb = VK_NULL_HANDLE;
 		}
 
-		s_Framebuffers.clear();
+		m_Framebuffers.clear();
+	}
+	
+	
+	VulkanFramebufferCache& VulkanFramebufferCache::GetInstance()
+	{
+		LAMBDA_ASSERT(s_pInstance != nullptr);
+		return *s_pInstance;
 	}
 }

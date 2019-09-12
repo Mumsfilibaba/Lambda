@@ -6,7 +6,10 @@ namespace Lambda
 {
     class VulkanTexture;
     
-    
+	//-------------------------
+	//VulkanFramebufferCacheKey
+	//-------------------------
+
     struct VulkanFramebufferCacheKey
     {
 	public:
@@ -25,7 +28,10 @@ namespace Lambda
         VkImageView AttachmentViews[(LAMBDA_MAX_RENDERTARGET_COUNT + 1) * 2];
     };
     
-    
+	//-----------------------------
+	//VulkanFramebufferCacheKeyHash
+	//-----------------------------
+
     struct VulkanFramebufferCacheKeyHash
     {
         size_t operator()(const VulkanFramebufferCacheKey& key) const
@@ -34,17 +40,29 @@ namespace Lambda
         }
     };
 
+	//----------------------
+	//VulkanFramebufferCache
+	//----------------------
 
     class VulkanFramebufferCache final
     {
     public:
-        LAMBDA_STATIC_CLASS(VulkanFramebufferCache);
+        LAMBDA_NO_COPY(VulkanFramebufferCache);
         
-        static VkFramebuffer GetFramebuffer(VkDevice device, const VulkanFramebufferCacheKey& key, uint32 width, uint32 height);
-        static void ReleaseAllContainingTexture(VkDevice device, const VulkanTexture* pTexture);
-        static void ReleaseAll(VkDevice device);
+		VulkanFramebufferCache();
+		~VulkanFramebufferCache();
+
+        void ReleaseAll(VkDevice device);
+        void ReleaseAllContainingTexture(VkDevice device, const VulkanTexture* pTexture);
+        VkFramebuffer GetFramebuffer(VkDevice device, const VulkanFramebufferCacheKey& key, uint32 width, uint32 height);
         
     private:
-        static std::unordered_map<VulkanFramebufferCacheKey, VkFramebuffer, VulkanFramebufferCacheKeyHash> s_Framebuffers;
+        std::unordered_map<VulkanFramebufferCacheKey, VkFramebuffer, VulkanFramebufferCacheKeyHash> m_Framebuffers;
+
+	public:
+		static VulkanFramebufferCache& GetInstance();
+
+	private:
+		static VulkanFramebufferCache* s_pInstance;
     };
 }

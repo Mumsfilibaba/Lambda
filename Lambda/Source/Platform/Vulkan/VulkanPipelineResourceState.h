@@ -26,6 +26,9 @@ namespace Lambda
 		VkPipelineLayout GetPipelineLayout() const;
 		VkDescriptorSet GetDescriptorSet() const;
 
+		const uint32* GetDynamicOffsets() const;
+		uint32 GetDynamicOffsetCount() const;
+
 		void CommitBindings(VkDevice device);
 		void Destroy(VkDevice device);
 
@@ -42,6 +45,8 @@ namespace Lambda
 		std::vector<VkDescriptorBufferInfo> m_BufferBindings;
 		std::vector<VkDescriptorImageInfo> m_ImageBindings;
 		std::vector<void*> m_CurrentBindings;
+		std::vector<uint32> m_DynamicOffsets;
+		std::vector<VulkanBuffer*> m_DynamicBuffers;
 	};
 }
 

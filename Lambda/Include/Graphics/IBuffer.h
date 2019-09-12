@@ -7,8 +7,8 @@ namespace Lambda
 	{
 		ResourceUsage Usage     = RESOURCE_USAGE_UNKNOWN;
 		uint32 Flags            = BUFFER_FLAGS_NONE;
+		uint64 SizeInBytes      = 0;
 		uint32 StrideInBytes    = 0;
-		uint32 SizeInBytes      = 0;
 	};
 
 

@@ -77,7 +77,7 @@ namespace Lambda
 			}
 		}
 
-		m_Framebuffer = VulkanFramebufferCache::GetFramebuffer(m_Device, key, m_FramebufferExtent.width, m_FramebufferExtent.height);
+		m_Framebuffer = VulkanFramebufferCache::GetInstance().GetFramebuffer(m_Device, key, m_FramebufferExtent.width, m_FramebufferExtent.height);
 	}
 
 

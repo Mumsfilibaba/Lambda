@@ -48,6 +48,8 @@ namespace Lambda
         m_PhysicalDevice(VK_NULL_HANDLE),
         m_AdapterProperties(),
         m_Surface(VK_NULL_HANDLE),
+		m_pDynamicBufferManager(nullptr),
+		m_pFramebufferCache(nullptr),
 		m_pSwapChain(nullptr),
 		m_pDepthStencil(nullptr),
 		m_pMSAABuffer(nullptr),
@@ -84,16 +86,27 @@ namespace Lambda
                 vkDestroyFence(m_Device, m_Fences[i], nullptr);
                 m_Fences[i] = VK_NULL_HANDLE;
             }
-        }
-        
+        }        
 
-        VulkanFramebufferCache::ReleaseAll(m_Device);
-        
+
+		//Release all framebuffers
+		if (m_pFramebufferCache)
+		{
+			m_pFramebufferCache->ReleaseAll(m_Device);
+		}
+
+
+		//Destroy window framebuffer
 		m_pSwapChain->Destroy(m_Device);
         ReleaseDepthStencil();
 		ReleaseMSAABuffer();
 
 
+		SafeDelete(m_pFramebufferCache);
+		SafeDelete(m_pDynamicBufferManager);
+
+
+		//Release all memory
 		if (m_pDeviceAllocator)
 		{
 			m_pDeviceAllocator->Destroy(m_Device);
@@ -363,6 +376,9 @@ namespace Lambda
 			else if (sampleCount & VK_SAMPLE_COUNT_8_BIT) { m_DeviceLimits.MaxSampleCount = VK_SAMPLE_COUNT_8_BIT; }
 			else if (sampleCount & VK_SAMPLE_COUNT_4_BIT) { m_DeviceLimits.MaxSampleCount = VK_SAMPLE_COUNT_4_BIT; }
 			else if (sampleCount & VK_SAMPLE_COUNT_2_BIT) { m_DeviceLimits.MaxSampleCount = VK_SAMPLE_COUNT_2_BIT; }
+
+			//Get other limits
+			m_DeviceLimits.UniformBufferAlignment = m_AdapterProperties.limits.minUniformBufferOffsetAlignment;
 		}
 
 
@@ -456,6 +472,8 @@ namespace Lambda
 				m_DeviceSettings.SampleCount = m_DeviceLimits.MaxSampleCount;
 				LOG_DEBUG_WARNING("Vulkan: SampleCount (= %u) is higher  than the device's maximum of %u. SampleCount was set to the device's maximum.\n", uint32(m_DeviceSettings.SampleCount), uint32(m_DeviceLimits.MaxSampleCount));
 			}
+
+			m_DeviceSettings.FramesAhead = FRAMES_AHEAD;
 		}
 
 
@@ -506,6 +524,14 @@ namespace Lambda
 
 		//Create allocator
 		m_pDeviceAllocator = DBG_NEW VulkanDeviceAllocator(m_Device, m_PhysicalDevice);
+
+
+		//Create dynamic buffer manager
+		m_pDynamicBufferManager = DBG_NEW VulkanDynamicBufferManager();
+
+
+		//Create framebuffercache
+		m_pFramebufferCache = DBG_NEW VulkanFramebufferCache();
 
         
         //Create swapchain
@@ -822,6 +848,7 @@ namespace Lambda
     {
         //Advance current frame counter
         m_CurrentFrame = (m_CurrentFrame + 1) % FRAMES_AHEAD;
+		m_pDynamicBufferManager->MoveToNextFrame();
     }
     
     
@@ -836,7 +863,7 @@ namespace Lambda
     {
 		LAMBDA_ASSERT(ppBuffer != nullptr);
         
-        VulkanBuffer* pVkBuffer = DBG_NEW VulkanBuffer(m_Device, m_PhysicalDevice, m_pDeviceAllocator, desc);
+        VulkanBuffer* pVkBuffer = DBG_NEW VulkanBuffer(m_Device, m_pDeviceAllocator, desc);
 
         //Upload inital data
         if (pInitalData)
@@ -844,12 +871,14 @@ namespace Lambda
             if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
             {
                 //Upload directly to buffer if it is dynamic
-                void* pData = nullptr;
-                pVkBuffer->Map(&pData);
+                void* pMappedData = nullptr;
                 
-                memcpy(pData, pInitalData->pData, pInitalData->SizeInBytes);
-                
+				pVkBuffer->Map(&pMappedData);
+                memcpy(pMappedData, pInitalData->pData, pInitalData->SizeInBytes);
                 pVkBuffer->Unmap();
+
+				//Register dynamic buffer
+				m_pDynamicBufferManager->RegisterBuffer(pVkBuffer);
             }
             else if (desc.Usage == RESOURCE_USAGE_DEFAULT)
             {
@@ -992,6 +1021,14 @@ namespace Lambda
         VulkanBuffer* pVkBuffer = reinterpret_cast<VulkanBuffer*>(*ppBuffer);
         if (pVkBuffer != nullptr)
         {
+			//If buffer is dynamic, unregister
+			BufferDesc bufferDesc = pVkBuffer->GetDesc();
+			if (bufferDesc.Usage == RESOURCE_USAGE_DYNAMIC)
+			{
+				m_pDynamicBufferManager->UnregisterBuffer(pVkBuffer);
+			}
+
+			//Then destroy buffer
             pVkBuffer->Destroy(m_Device);
             *ppBuffer = nullptr;
             
@@ -1301,7 +1338,16 @@ namespace Lambda
     }
 
 
-	VKAPI_ATTR VkBool32 VKAPI_CALL VulkanGraphicsDevice::VulkanDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, 
+	VulkanGraphicsDevice& VulkanGraphicsDevice::GetInstance()
+	{
+		LAMBDA_ASSERT(s_pInstance != nullptr);
+		
+		VulkanGraphicsDevice* pVkDevice = reinterpret_cast<VulkanGraphicsDevice*>(s_pInstance);
+		return *pVkDevice;
+	}
+
+
+	VKAPI_ATTR VkBool32 VKAPI_CALL VulkanGraphicsDevice::VulkanDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 		VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
 	{
 		//Get severity

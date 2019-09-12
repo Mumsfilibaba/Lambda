@@ -257,12 +257,11 @@ namespace Lambda
 		m_pResourceState = pVkResourceState;
 		pVkResourceState->CommitBindings(m_Device);
 
-		static uint32 offsets = 0;
+		const uint32* pOffsets = pVkResourceState->GetDynamicOffsets();
+		uint32 offsetCount = pVkResourceState->GetDynamicOffsetCount();
 
 		VkDescriptorSet descriptorSet = pVkResourceState->GetDescriptorSet();
-		vkCmdBindDescriptorSets(m_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pVkResourceState->GetPipelineLayout(), 0, 1, &descriptorSet, 1, &offsets);
-		
-        offsets = Math::AlignUp<uint64>(offsets + 64, 256) % (64 * 1024);
+		vkCmdBindDescriptorSets(m_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pVkResourceState->GetPipelineLayout(), 0, 1, &descriptorSet, offsetCount, pOffsets);
 	}
 
     
@@ -416,14 +415,7 @@ namespace Lambda
 		BufferDesc bufferDesc = pResource->GetDesc();
 		if (bufferDesc.Usage == RESOURCE_USAGE_DYNAMIC)
 		{
-			uint64 dynamicOffset = pVkResource->GetDynamicOffset();
-			dynamicOffset += pData->SizeInBytes;
-			pVkResource->SetDynamicOffset(dynamicOffset);
-
-			void* pMappedMemory = nullptr;
-			pVkResource->Map(&pMappedMemory);
-
-			memcpy(pMappedMemory, pData->pData, bufferDesc.SizeInBytes);
+			pVkResource->DynamicUpdate(pData);
 		}
 		else
 		{
@@ -439,7 +431,7 @@ namespace Lambda
 				//Copy buffer
 				VkBufferCopy copyRegion = {};
 				copyRegion.srcOffset = offset;
-				copyRegion.dstOffset = pVkResource->GetDynamicOffset();
+				copyRegion.dstOffset = 0;
 				copyRegion.size = pData->SizeInBytes;
 
 				VkBuffer srcBuffer = m_pBufferUpload->GetBuffer();
