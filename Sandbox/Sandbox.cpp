@@ -4,7 +4,7 @@
 #include "Graphics/MeshFactory.h"
 #include <glm/gtc/matrix_transform.hpp>
 
-#define SINGLE_CUBE
+//#define SINGLE_CUBE
 #define RGB_F(r, g, b) float(r) / 255.0f, float(g) / 255.0f, float(b) / 255.0f 
 
 namespace Lambda
@@ -371,70 +371,38 @@ namespace Lambda
         rotation = glm::rotate(rotation, glm::radians(45.0f) * dt.AsSeconds(), glm::vec3(0.0f, 1.0f, 0.0f));
         
 #if !defined(SINGLE_CUBE)
+        //Begin renderpass
+        m_pCurrentList->BeginRenderPass(m_pRenderPass);
+
         //Draw cubes
-        for (uint32 y = 0; y < 20; y++)
+        for (uint32 y = 0; y < 32; y++)
         {
-            for (uint32 x = 0; x < 20; x++)
+            for (uint32 x = 0; x < 32; x++)
             {
                 //Update transforms
-                m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(-20.0f + x * 2.0f, 0.0f, -8.0f + y * 2.0f)) * rotation;
-                
+                m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(-32.0f + x * 2.0f, 0.0f, -32.0f + y * 2.0f)) * rotation;
                 data.pData = &m_TransformBuffer;
                 data.SizeInBytes = sizeof(TransformBuffer);
                 m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);
-                
-				//Begin renderpass
-				m_pCurrentList->BeginRenderPass(m_pRenderPass);
-
+            
 				//Draw
-				m_pCurrentList->DrawIndexedInstanced(36, 1, 0, 0, 0);
-
-				//End renderpass
-				m_pCurrentList->EndRenderPass();
+				m_pCurrentList->DrawIndexedInstanced(m_IndexCount, 1, 0, 0, 0);
             }
         }
+        
+        //End renderpass
+        m_pCurrentList->EndRenderPass();
 #else
 		//Update transforms
-		m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(-1.0f, 0.0f, -1.0f)) * rotation;
+		m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)) * rotation;
 		data.pData			= &m_TransformBuffer;
 		data.SizeInBytes	= sizeof(TransformBuffer);
 		m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);
-		m_pCurrentList->SetGraphicsPipelineResourceState(m_pResourceState);
 
 		//Begin renderpass
 		m_pCurrentList->BeginRenderPass(m_pRenderPass);
 
 		//Draw first
-		m_pCurrentList->DrawIndexedInstanced(m_IndexCount, 1, 0, 0, 0);
-
-		//Update transform
-		m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, -1.0f)) * rotation;
-		data.pData = &m_TransformBuffer;
-		data.SizeInBytes = sizeof(TransformBuffer);
-		m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);
-		m_pCurrentList->SetGraphicsPipelineResourceState(m_pResourceState);
-
-		//Draw second
-		m_pCurrentList->DrawIndexedInstanced(m_IndexCount, 1, 0, 0, 0);
-
-		//Update transform
-		m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(-1.0f, 0.0f, 1.0f)) * rotation;
-		data.pData = &m_TransformBuffer;
-		data.SizeInBytes = sizeof(TransformBuffer);
-		m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);
-		m_pCurrentList->SetGraphicsPipelineResourceState(m_pResourceState);
-
-		//Draw second
-		m_pCurrentList->DrawIndexedInstanced(m_IndexCount, 1, 0, 0, 0);
-
-		//Update transform
-		m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 1.0f)) * rotation;
-		data.pData = &m_TransformBuffer;
-		data.SizeInBytes = sizeof(TransformBuffer);
-		m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);
-		m_pCurrentList->SetGraphicsPipelineResourceState(m_pResourceState);
-
-		//Draw second
 		m_pCurrentList->DrawIndexedInstanced(m_IndexCount, 1, 0, 0, 0);
 
 		//End renderpass

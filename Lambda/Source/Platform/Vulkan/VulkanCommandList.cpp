@@ -249,19 +249,27 @@ namespace Lambda
         VkBuffer buffer = reinterpret_cast<VkBuffer>(pBuffer->GetNativeHandle());
         vkCmdBindIndexBuffer(m_CommandBuffer, buffer, 0, VK_INDEX_TYPE_UINT32);
     }
+    
+    
+    void VulkanCommandList::CommitResources()
+    {
+        m_pResourceState->CommitBindings(m_Device);
+        
+        const uint32* pOffsets = m_pResourceState->GetDynamicOffsets();
+        uint32 offsetCount = m_pResourceState->GetDynamicOffsetCount();
+        
+        VkDescriptorSet descriptorSet = m_pResourceState->GetDescriptorSet();
+        VkPipelineLayout pipelineLayout = m_pResourceState->GetPipelineLayout();
+        vkCmdBindDescriptorSets(m_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, offsetCount, pOffsets);
+    }
 
 
 	void VulkanCommandList::SetGraphicsPipelineResourceState(IPipelineResourceState* pResourceState)
 	{
 		VulkanPipelineResourceState* pVkResourceState = reinterpret_cast<VulkanPipelineResourceState*>(pResourceState);
 		m_pResourceState = pVkResourceState;
-		pVkResourceState->CommitBindings(m_Device);
 
-		const uint32* pOffsets = pVkResourceState->GetDynamicOffsets();
-		uint32 offsetCount = pVkResourceState->GetDynamicOffsetCount();
-
-		VkDescriptorSet descriptorSet = pVkResourceState->GetDescriptorSet();
-		vkCmdBindDescriptorSets(m_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pVkResourceState->GetPipelineLayout(), 0, 1, &descriptorSet, offsetCount, pOffsets);
+        CommitResources();
 	}
 
     
@@ -510,6 +518,15 @@ namespace Lambda
     {        
 		if (m_pRenderPass)
 		{
+            if (m_pResourceState)
+            {
+                CommitResources();
+            }
+            else
+            {
+                LOG_DEBUG_ERROR("Vulkan: DrawInstanced must have a valid PipelineResourceState bound when called\n");
+            }
+            
 			vkCmdDraw(m_CommandBuffer, vertexCountPerInstance, instanceCount, startVertexLocation, startInstanceLocation);
 		}
 		else
@@ -523,6 +540,15 @@ namespace Lambda
     {
 		if (m_pRenderPass)
 		{
+            if (m_pResourceState)
+            {
+                CommitResources();
+            }
+            else
+            {
+                LOG_DEBUG_ERROR("Vulkan: DrawInstanced must have a valid PipelineResourceState bound when called\n");
+            }
+            
 			vkCmdDrawIndexed(m_CommandBuffer, indexCountPerInstance, instanceCount, startIndexLocation, baseVertexLocation, startInstanceLocation);
 		}
 		else

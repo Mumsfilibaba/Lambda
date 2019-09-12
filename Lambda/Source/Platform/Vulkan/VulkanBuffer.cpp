@@ -4,6 +4,8 @@
 #include "VulkanUtilities.h"
 #include "VulkanGraphicsDevice.h"
 
+#define NUM_UPDATES 4096
+
 namespace Lambda
 {
 	//------------
@@ -46,7 +48,8 @@ namespace Lambda
 			m_FrameCount = settings.FramesAhead;
 			
 			//If dynamic we allocate extra space (1024 updates per frame)
-			info.size = uint64(desc.SizeInBytes) * 1024 * m_FrameCount;		
+            uint64 sizePerUpdate = Math::AlignUp<uint64>(uint64(desc.SizeInBytes), m_DynamicAlignment);
+            info.size = sizePerUpdate * NUM_UPDATES * m_FrameCount;
 		}
 		else
 		{
@@ -126,9 +129,10 @@ namespace Lambda
 	void VulkanBuffer::DynamicUpdate(const ResourceData* pData)
 	{
 		//Calculate offset in buffer
-		uint32 sizeInBytes = m_Desc.SizeInBytes * 1024;		//Total size of buffer
-		uint32 frameOffset = m_CurrentFrame * sizeInBytes;	//Offset of the current frame
-		uint32 dynamicOffset = Math::AlignUp<uint32>(m_DynamicOffset + m_Desc.SizeInBytes, m_DynamicAlignment) % sizeInBytes; //Ringbuffer-offset per frame
+        uint64 sizePerUpdate = Math::AlignUp<uint64>(uint64(m_Desc.SizeInBytes), m_DynamicAlignment); //Size specified during creation complete with alignment
+		uint32 sizeInBytes = sizePerUpdate * NUM_UPDATES;		    //Total size of buffer
+		uint32 frameOffset = m_CurrentFrame * sizeInBytes;	        //Offset of the current frame
+		uint32 dynamicOffset = (m_DynamicOffset + sizePerUpdate) % sizeInBytes; //Ringbuffer-offset per frame
 		m_DynamicOffset = frameOffset + dynamicOffset;
 
 		//Update buffer
