@@ -151,7 +151,7 @@ namespace Lambda
             }
 
             //Create vertexbuffer
-			MeshData mesh = MeshFactory::CreateCube();// MeshFactory::CreateFromFile("chalet.obj");
+			MeshData mesh = MeshFactory::CreateSphere(3, 0.85f);// MeshFactory::CreateFromFile("chalet.obj");
 			m_IndexCount = uint32(mesh.Indices.size());
 			{
                 BufferDesc desc = {};
