@@ -1,5 +1,6 @@
 #pragma once
 #include "Graphics/IPipelineResourceState.h"
+#include <unordered_map>
 #include <vulkan/vulkan.h>
 
 namespace Lambda
@@ -8,13 +9,36 @@ namespace Lambda
 	class VulkanTexture;
 	class VulkanSamplerState;
 
+	//----------
+	//VulkanSlot
+	//----------
+
+	struct VulkanSlot
+	{
+		ResourceSlot			Slot;
+		union
+		{
+			VulkanBuffer*		pBuffer;
+			VulkanTexture*		pTexture;
+			VulkanSamplerState* pSamplerState;
+		};
+		union 
+		{
+			VkDescriptorBufferInfo	BufferInfo;
+			VkDescriptorImageInfo	ImageInfo;
+		};
+	};
+
+	//---------------------------
+	//VulkanPipelineResourceState
+	//---------------------------
 
 	class VulkanPipelineResourceState final : public IPipelineResourceState
 	{
 	public:
 		LAMBDA_NO_COPY(VulkanPipelineResourceState);
 
-		VulkanPipelineResourceState(VkDevice device, const PipelineResourceStateDesc& desc);
+		VulkanPipelineResourceState(const PipelineResourceStateDesc& desc);
 		~VulkanPipelineResourceState() = default;
 
 		virtual void SetTextures(ITexture** ppTextures, uint32 numTextures, uint32 startSlot) override final;
@@ -23,30 +47,28 @@ namespace Lambda
 
 		virtual void* GetNativeHandle() const override final;
 		
-		VkPipelineLayout GetPipelineLayout() const;
-		VkDescriptorSet GetDescriptorSet() const;
-
-		const uint32* GetDynamicOffsets() const;
-		uint32 GetDynamicOffsetCount() const;
+		const uint32*		GetDynamicOffsets() const;
+		uint32				GetDynamicOffsetCount() const;
+		VkDescriptorSet		GetDescriptorSet() const;
+		VkPipelineLayout	GetPipelineLayout() const;
 
 		void CommitBindings(VkDevice device);
 		void Destroy(VkDevice device);
 
 	private:
-		void Init(VkDevice device, const PipelineResourceStateDesc& desc);
+		void Init(const PipelineResourceStateDesc& desc);
+		void AllocateDescriptorSet();
 
 	private:
-		VkPipelineLayout m_PipelineLayout;
-		VkDescriptorSetLayout m_DescriptorSetLayout;
-		VkDescriptorSet m_DescriptorSet;
-		VkDescriptorPool m_DescriptorPool;
-		std::vector<ResourceSlot> m_ResourceSlots;
-		std::vector<VkWriteDescriptorSet> m_DescriptorWrites;
-		std::vector<VkDescriptorBufferInfo> m_BufferBindings;
-		std::vector<VkDescriptorImageInfo> m_ImageBindings;
-		std::vector<void*> m_CurrentBindings;
-		std::vector<uint32> m_DynamicOffsets;
-		std::vector<VulkanBuffer*> m_DynamicBuffers;
+		VkPipelineLayout						m_PipelineLayout;
+		VkDescriptorSetLayout					m_DescriptorSetLayout;
+		VkDescriptorSet							m_DescriptorSet;
+		VkDescriptorPool						m_DescriptorPool;
+		std::unordered_map<uint32, VulkanSlot>	m_ResourceBindings;
+		std::vector<VkWriteDescriptorSet>		m_DescriptorWrites;
+		std::vector<uint32>						m_DynamicOffsets;
+		std::vector<VulkanBuffer*>				m_DynamicBuffers;
+		bool									m_IsDirty;
 	};
 }
 

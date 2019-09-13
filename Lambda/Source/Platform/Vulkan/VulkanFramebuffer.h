@@ -16,16 +16,16 @@ namespace Lambda
 		VulkanFramebufferCacheKey();
 		~VulkanFramebufferCacheKey() = default;
 
-		size_t GetHash() const;
-		bool ContainsTexture(const VulkanTexture* pTexture) const;
+		size_t	GetHash() const;
+		bool	ContainsTexture(const VulkanTexture* pTexture) const;
 
-		bool operator==(const VulkanFramebufferCacheKey& other) const;
+		bool	operator==(const VulkanFramebufferCacheKey& other) const;
 
 	public:
-		mutable size_t Hash;
-        VkRenderPass RenderPass;
-        uint32 NumAttachmentViews;
-        VkImageView AttachmentViews[(LAMBDA_MAX_RENDERTARGET_COUNT + 1) * 2];
+		mutable size_t	Hash;
+        VkRenderPass	RenderPass;
+        uint32			NumAttachmentViews;
+        VkImageView		AttachmentViews[(LAMBDA_MAX_RENDERTARGET_COUNT + 1) * 2];
     };
     
 	//-----------------------------
@@ -52,9 +52,9 @@ namespace Lambda
 		VulkanFramebufferCache();
 		~VulkanFramebufferCache();
 
-        void ReleaseAll(VkDevice device);
-        void ReleaseAllContainingTexture(VkDevice device, const VulkanTexture* pTexture);
-        VkFramebuffer GetFramebuffer(VkDevice device, const VulkanFramebufferCacheKey& key, uint32 width, uint32 height);
+        void			ReleaseAll(VkDevice device);
+        void			ReleaseAllContainingTexture(VkDevice device, const VulkanTexture* pTexture);
+        VkFramebuffer	GetFramebuffer(VkDevice device, const VulkanFramebufferCacheKey& key, uint32 width, uint32 height);
         
     private:
         std::unordered_map<VulkanFramebufferCacheKey, VkFramebuffer, VulkanFramebufferCacheKeyHash> m_Framebuffers;

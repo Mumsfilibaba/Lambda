@@ -18,9 +18,8 @@ namespace Lambda
 	//VulkanCommandList
 	//-----------------
 
-    VulkanCommandList::VulkanCommandList(VulkanGraphicsDevice* pVkDevice, CommandListType type)
-        : m_Device(VK_NULL_HANDLE),
-        m_CommandPool(VK_NULL_HANDLE),
+    VulkanCommandList::VulkanCommandList(CommandListType type)
+        : m_CommandPool(VK_NULL_HANDLE),
         m_CommandBuffer(VK_NULL_HANDLE),
 		m_pBufferUpload(nullptr),
 		m_pTextureUpload(nullptr),
@@ -29,15 +28,16 @@ namespace Lambda
         m_Type(COMMAND_LIST_TYPE_UNKNOWN),
 		m_Name()
     {
-		LAMBDA_ASSERT(pVkDevice != VK_NULL_HANDLE);
-        Init(pVkDevice, type);
+        Init(type);
     }
 
     
-    void VulkanCommandList::Init(VulkanGraphicsDevice* pVkDevice, CommandListType type)
+    void VulkanCommandList::Init(CommandListType type)
     {
+		VulkanGraphicsDevice& device = VulkanGraphicsDevice::GetInstance();
+
         //Get queuefamiliy indices
-        QueueFamilyIndices familyIndices = pVkDevice->GetQueueFamilyIndices();
+        QueueFamilyIndices familyIndices = device.GetQueueFamilyIndices();
         
 		//Create commandpool
         VkCommandPoolCreateInfo poolInfo = {};
@@ -54,8 +54,8 @@ namespace Lambda
             poolInfo.queueFamilyIndex = uint32(-1);
         }
         
-        VkDevice device = reinterpret_cast<VkDevice>(pVkDevice->GetNativeHandle());
-        if (vkCreateCommandPool(device, &poolInfo, nullptr, &m_CommandPool) != VK_SUCCESS)
+
+        if (vkCreateCommandPool(device.GetDevice(), &poolInfo, nullptr, &m_CommandPool) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create commandpool\n");
             return;
@@ -72,7 +72,7 @@ namespace Lambda
         allocInfo.level					= VK_COMMAND_BUFFER_LEVEL_PRIMARY;
         allocInfo.commandBufferCount	= 1;
         
-        if (vkAllocateCommandBuffers(device, &allocInfo, &m_CommandBuffer) != VK_SUCCESS)
+        if (vkAllocateCommandBuffers(device.GetDevice(), &allocInfo, &m_CommandBuffer) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create commandbuffer\n");
             return;
@@ -80,13 +80,12 @@ namespace Lambda
         else
         {
             LOG_DEBUG_INFO("Vulkan: Created commandbuffer\n");
-            m_Device = device;
         }
 
 
         //Init upload buffers
-		pVkDevice->CreateUploadBuffer(&m_pBufferUpload, MB(64));
-		pVkDevice->CreateUploadBuffer(&m_pTextureUpload, MB(128));
+		device.CreateUploadBuffer(&m_pBufferUpload, MB(64));
+		device.CreateUploadBuffer(&m_pTextureUpload, MB(128));
     }
     
     
@@ -253,7 +252,8 @@ namespace Lambda
     
     void VulkanCommandList::CommitResources()
     {
-        m_pResourceState->CommitBindings(m_Device);
+		VulkanGraphicsDevice& device = VulkanGraphicsDevice::GetInstance();
+        m_pResourceState->CommitBindings(device.GetDevice());
         
         const uint32* pOffsets = m_pResourceState->GetDynamicOffsets();
         uint32 offsetCount = m_pResourceState->GetDynamicOffsetCount();
@@ -581,8 +581,10 @@ namespace Lambda
     
     void VulkanCommandList::Reset()
     {
+		VulkanGraphicsDevice& device = VulkanGraphicsDevice::GetInstance();
+
         //Reset commandbuffer
-        if (vkResetCommandPool(m_Device, m_CommandPool, VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT) != VK_SUCCESS)
+        if (vkResetCommandPool(device.GetDevice(), m_CommandPool, VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to Reset CommandBuffer\n");
         }

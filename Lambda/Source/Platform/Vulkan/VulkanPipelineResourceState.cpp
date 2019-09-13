@@ -1,5 +1,6 @@
 #include "LambdaPch.h"
 #include "VulkanPipelineResourceState.h"
+#include "VulkanGraphicsDevice.h"
 #include "VulkanBuffer.h"
 #include "VulkanTexture.h"
 #include "VulkanSamplerState.h"
@@ -10,280 +11,259 @@ namespace Lambda
 	//VulkanPipelineResourceState
 	//---------------------------
 
-	VulkanPipelineResourceState::VulkanPipelineResourceState(VkDevice device, const PipelineResourceStateDesc& desc)
+	VulkanPipelineResourceState::VulkanPipelineResourceState(const PipelineResourceStateDesc& desc)
 		: m_PipelineLayout(VK_NULL_HANDLE),
 		m_DescriptorSetLayout(VK_NULL_HANDLE),
 		m_DescriptorPool(VK_NULL_HANDLE),
 		m_DescriptorSet(VK_NULL_HANDLE),
-		m_ResourceSlots(),
+		m_ResourceBindings(),
 		m_DescriptorWrites(),
-		m_BufferBindings(),
-		m_ImageBindings(),
-		m_CurrentBindings(),
 		m_DynamicOffsets(),
-		m_DynamicBuffers()
+		m_DynamicBuffers(),
+		m_IsDirty(false)
 	{
-		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
+		Init(desc);
+	}
 
-		m_ImageBindings.reserve(32);
-		m_BufferBindings.reserve(32);
 
-		Init(device, desc);
+	void VulkanPipelineResourceState::Init(const PipelineResourceStateDesc& desc)
+	{
+		//Copy the resourceslots
+		for (uint32 i = 0; i < desc.NumResourceSlots; i++)
+		{
+			auto& slot		= m_ResourceBindings[desc.pResourceSlots[i].Slot];
+			slot.Slot		= desc.pResourceSlots[i];
+			slot.pBuffer	= nullptr;
+		}
+		
+
+		//Number of each type
+		uint32 uniformBufferCount			= 0;
+		uint32 dynamicUniformBufferCount	= 0;
+		uint32 samplerCount					= 0;
+		uint32 sampledImageCount			= 0;
+
+		//Create descriptor bindings for each resourceslot
+		std::vector<VkDescriptorSetLayoutBinding> layoutBindings;
+		for (uint32 i = 0; i < desc.NumResourceSlots; i++)
+		{
+			VkDescriptorSetLayoutBinding layoutBinding	= {};
+			layoutBinding.descriptorCount				= 1;
+			layoutBinding.binding						= desc.pResourceSlots[i].Slot;
+			layoutBinding.pImmutableSamplers			= nullptr;
+			
+			//Set type
+			layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM;
+			if (desc.pResourceSlots[i].Type == RESOURCE_TYPE_CONSTANT_BUFFER)
+			{
+				if (desc.pResourceSlots[i].Usage == RESOURCE_USAGE_DYNAMIC)
+				{
+					layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+					dynamicUniformBufferCount++;
+				}
+				else
+				{
+					layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+					uniformBufferCount++;
+				}
+			}
+			else if (desc.pResourceSlots[i].Type == RESOURCE_TYPE_TEXTURE)
+			{
+				layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+				sampledImageCount++;
+			}
+			else if (desc.pResourceSlots[i].Type == RESOURCE_TYPE_SAMPLER_STATE)
+			{
+				layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+				samplerCount++;
+			}
+
+			//Set stage
+			layoutBinding.stageFlags = 0;
+			if (desc.pResourceSlots[i].Stage == SHADER_STAGE_VERTEX)
+				layoutBinding.stageFlags |= VK_SHADER_STAGE_VERTEX_BIT;
+			else if (desc.pResourceSlots[i].Stage == SHADER_STAGE_HULL)
+				layoutBinding.stageFlags |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+			else if (desc.pResourceSlots[i].Stage == SHADER_STAGE_DOMAIN)
+				layoutBinding.stageFlags |= VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+			else if (desc.pResourceSlots[i].Stage == SHADER_STAGE_GEOMETRY)
+				layoutBinding.stageFlags |= VK_SHADER_STAGE_GEOMETRY_BIT;
+			else if (desc.pResourceSlots[i].Stage == SHADER_STAGE_PIXEL)
+				layoutBinding.stageFlags |= VK_SHADER_STAGE_FRAGMENT_BIT;
+			else if (desc.pResourceSlots[i].Stage == SHADER_STAGE_COMPUTE)
+				layoutBinding.stageFlags |= VK_SHADER_STAGE_COMPUTE_BIT;
+
+			layoutBindings.push_back(layoutBinding);
+		}
+
+		//Create descriptorsetlayout
+		VkDescriptorSetLayoutCreateInfo descriptorLayoutInfo = {};
+		descriptorLayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		descriptorLayoutInfo.pNext = nullptr;
+		descriptorLayoutInfo.flags = 0;
+		descriptorLayoutInfo.bindingCount = uint32(layoutBindings.size());
+		descriptorLayoutInfo.pBindings = layoutBindings.data();
+
+		VulkanGraphicsDevice& device = VulkanGraphicsDevice::GetInstance();
+		if (vkCreateDescriptorSetLayout(device.GetDevice(), &descriptorLayoutInfo, nullptr, &m_DescriptorSetLayout) != VK_SUCCESS)
+		{
+			LOG_DEBUG_ERROR("Vulkan: Failed to create DescriptorSetLayout\n");
+			return;
+		}
+		else
+		{
+			LOG_DEBUG_INFO("Vulkan: Created DescriptorSetLayout\n");
+		}
+
+
+		//Create pipelinelayout
+		VkPipelineLayoutCreateInfo layoutInfo = {};
+		layoutInfo.sType					= VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+		layoutInfo.flags					= 0;
+		layoutInfo.pNext					= nullptr;
+		layoutInfo.setLayoutCount			= 1;
+		layoutInfo.pSetLayouts				= &m_DescriptorSetLayout;
+		layoutInfo.pushConstantRangeCount	= 0;
+		layoutInfo.pPushConstantRanges		= nullptr;
+
+		if (vkCreatePipelineLayout(device.GetDevice(), &layoutInfo, nullptr, &m_PipelineLayout) != VK_SUCCESS)
+		{
+			LOG_DEBUG_ERROR("Vulkan: Failed to create default PipelineLayout\n");
+			return;
+		}
+		else
+		{
+			LOG_DEBUG_INFO("Vulkan: Created default PipelineLayout\n");
+		}
+
+
+		//Describe how many descriptors we want to create
+		constexpr uint32 maxSets = 64;
+		constexpr uint32 poolCount = 4;
+		VkDescriptorPoolSize poolSizes[poolCount] = {};
+		poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		poolSizes[0].descriptorCount = uniformBufferCount * maxSets;
+		poolSizes[1].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+		poolSizes[1].descriptorCount = uniformBufferCount * maxSets;
+		poolSizes[2].type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+		poolSizes[2].descriptorCount = sampledImageCount * maxSets;
+		poolSizes[3].type = VK_DESCRIPTOR_TYPE_SAMPLER;
+		poolSizes[3].descriptorCount = samplerCount * maxSets;
+
+
+		//Create descriptorpool
+		VkDescriptorPoolCreateInfo descriptorPoolInfo = {};
+		descriptorPoolInfo.sType			= VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+		descriptorPoolInfo.flags			= 0;
+		descriptorPoolInfo.pNext			= nullptr;
+		descriptorPoolInfo.poolSizeCount	= poolCount;
+		descriptorPoolInfo.pPoolSizes		= poolSizes;
+		descriptorPoolInfo.maxSets			= maxSets;
+
+		if (vkCreateDescriptorPool(device.GetDevice(), &descriptorPoolInfo, nullptr, &m_DescriptorPool) != VK_SUCCESS)
+		{
+			LOG_DEBUG_ERROR("Vulkan: Failed to create DescriptorPool\n");
+			return;
+		}
+		else
+		{
+			LOG_DEBUG_INFO("Vulkan: Created DescriptorPool\n");
+		}
+	}
+
+
+	void VulkanPipelineResourceState::AllocateDescriptorSet()
+	{
+		//Allocate descriptorsets
+		VkDescriptorSetAllocateInfo descriptorAllocInfo = {};
+		descriptorAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		descriptorAllocInfo.pNext = nullptr;
+		descriptorAllocInfo.descriptorPool = m_DescriptorPool;
+		descriptorAllocInfo.descriptorSetCount = 1;
+		descriptorAllocInfo.pSetLayouts = &m_DescriptorSetLayout;
+
+		VulkanGraphicsDevice& device = VulkanGraphicsDevice::GetInstance();
+		if (vkAllocateDescriptorSets(device.GetDevice(), &descriptorAllocInfo, &m_DescriptorSet))
+		{
+			LOG_DEBUG_ERROR("Vulkan: Failed to allocate DescriptorSets\n");
+		}
+		else
+		{
+			LOG_DEBUG_INFO("Vulkan: Allocated DescriptorSets\n");
+		}
 	}
 
 
 	void VulkanPipelineResourceState::SetTextures(ITexture** ppTextures, uint32 numTextures, uint32 startSlot)
 	{
-		VkWriteDescriptorSet writeInfo = {};
-		writeInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		writeInfo.pNext = nullptr;
-		writeInfo.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-		writeInfo.dstArrayElement = 0;
-		writeInfo.dstSet = m_DescriptorSet;
-		writeInfo.pBufferInfo = nullptr;
-		writeInfo.pTexelBufferView = nullptr;
-
-		uint32 writeSlot = startSlot;
-		uint32 numDescriptors = 0;
-		uint32 numImageBindings = uint32(m_ImageBindings.size());
-		ShaderStage writingStage = m_ResourceSlots[startSlot].Stage;
 		for (uint32 i = 0; i < numTextures; i++)
 		{
-			//If the texture is already bound then do not bind again, flush and move on
-			if (m_CurrentBindings[startSlot + i] == ppTextures[i])
+			auto& resourceBinding = m_ResourceBindings[startSlot + i];
+			if (resourceBinding.Slot.Type == RESOURCE_TYPE_TEXTURE)
 			{
-				if (numDescriptors > 0)
+				if (resourceBinding.pTexture != ppTextures[i])
 				{
-					writeInfo.descriptorCount = numDescriptors;
-					writeInfo.dstBinding = writeSlot;
-					writeInfo.pImageInfo = m_ImageBindings.data() + numImageBindings;
-					m_DescriptorWrites.emplace_back(writeInfo);
-
-					//Increase the next slot to write to
-					writeSlot += numDescriptors;
-					numDescriptors = 0;
-					numImageBindings = uint32(m_ImageBindings.size());
-				}
-
-				continue;
-			}
-
-			//If the texture is not supposed to be in the same stage as the others, flush
-			if (m_ResourceSlots[startSlot + i].Stage != writingStage)
-			{
-				if (numDescriptors > 0)
-				{
-					writeInfo.descriptorCount = numDescriptors;
-					writeInfo.dstBinding = writeSlot;
-					writeInfo.pImageInfo = m_ImageBindings.data() + numImageBindings;
-					m_DescriptorWrites.emplace_back(writeInfo);
-
-					//Increase the next slot to write to
-					writeSlot += numDescriptors;
-					numDescriptors = 0;
-
-					//Update offset
-					numImageBindings = uint32(m_ImageBindings.size());
+					resourceBinding.pTexture				= reinterpret_cast<VulkanTexture*>(ppTextures[i]);
+					resourceBinding.ImageInfo.imageView		= resourceBinding.pTexture->GetImageView();
+					resourceBinding.ImageInfo.imageLayout	= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+					resourceBinding.ImageInfo.sampler		= VK_NULL_HANDLE;
+					m_IsDirty = true;
 				}
 			}
-
-			//Add this texture to the bindings
-			VkDescriptorImageInfo imageInfo = {};
-			imageInfo.imageView = reinterpret_cast<VulkanTexture*>(ppTextures[i])->GetImageView();
-			imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			imageInfo.sampler = VK_NULL_HANDLE;
-			m_ImageBindings.emplace_back(imageInfo);
-
-			numDescriptors++;
-			m_CurrentBindings[startSlot + i] = ppTextures[i];
-		}
-
-
-		//Before returning, flush
-		if (numDescriptors > 0)
-		{
-			writeInfo.descriptorCount = numDescriptors;
-			writeInfo.dstBinding = writeSlot;
-			writeInfo.pImageInfo = m_ImageBindings.data() + numImageBindings;
-			m_DescriptorWrites.emplace_back(writeInfo);
+			else
+			{
+				LOG_DEBUG_ERROR("Vulkan: Slot at '%u' is not set to bind a Texture\n", startSlot + i);
+			}
 		}
 	}
 
 
 	void VulkanPipelineResourceState::SetSamplerStates(ISamplerState** ppSamplerStates, uint32 numSamplerStates, uint32 startSlot)
 	{
-		VkWriteDescriptorSet writeInfo = {};
-		writeInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		writeInfo.pNext = nullptr;
-		writeInfo.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-		writeInfo.dstArrayElement = 0;
-		writeInfo.dstSet = m_DescriptorSet;
-		writeInfo.pBufferInfo = nullptr;
-		writeInfo.pTexelBufferView = nullptr;
-
-		uint32 writeSlot = startSlot;
-		uint32 numDescriptors = 0;
-		uint32 numImageBindings = uint32(m_ImageBindings.size());
-		ShaderStage writingStage = m_ResourceSlots[startSlot].Stage;
 		for (uint32 i = 0; i < numSamplerStates; i++)
 		{
-			//If the samplerstate is already bound then do not bind again, flush and move on
-			if (m_CurrentBindings[startSlot + i] == ppSamplerStates[i])
+			auto& resourceBinding = m_ResourceBindings[startSlot + i];
+			if (resourceBinding.Slot.Type == RESOURCE_TYPE_SAMPLER_STATE)
 			{
-				if (numDescriptors > 0)
+				if (resourceBinding.pSamplerState != ppSamplerStates[i])
 				{
-					writeInfo.descriptorCount = numDescriptors;
-					writeInfo.dstBinding = writeSlot;
-					writeInfo.pImageInfo = m_ImageBindings.data() + numImageBindings;
-					m_DescriptorWrites.emplace_back(writeInfo);
-
-					//Increase the next slot to write to
-					writeSlot += numDescriptors;
-					numDescriptors = 0;
-					numImageBindings = uint32(m_ImageBindings.size());
-				}
-
-				continue;
-			}
-
-			//If the samplerstate is not supposed to be in the same stage as the others, flush
-			if (m_ResourceSlots[startSlot + i].Stage != writingStage)
-			{
-				if (numDescriptors > 0)
-				{
-					writeInfo.descriptorCount = numDescriptors;
-					writeInfo.dstBinding = writeSlot;
-					writeInfo.pImageInfo = m_ImageBindings.data() + numImageBindings;
-					m_DescriptorWrites.emplace_back(writeInfo);
-
-					//Increase the next slot to write to
-					writeSlot += numDescriptors;
-					numDescriptors = 0;
-
-					//Update offset
-					numImageBindings = uint32(m_ImageBindings.size());
+					resourceBinding.pSamplerState			= reinterpret_cast<VulkanSamplerState*>(ppSamplerStates[i]);
+					resourceBinding.ImageInfo.imageView		= VK_NULL_HANDLE;
+					resourceBinding.ImageInfo.imageLayout	= VK_IMAGE_LAYOUT_UNDEFINED;
+					resourceBinding.ImageInfo.sampler		= reinterpret_cast<VkSampler>(ppSamplerStates[i]->GetNativeHandle());
+					m_IsDirty = true;
 				}
 			}
-
-			//Add this samplerstate to the bindings
-			VkDescriptorImageInfo imageInfo = {};
-			imageInfo.imageView = VK_NULL_HANDLE;
-			imageInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			imageInfo.sampler = reinterpret_cast<VkSampler>(ppSamplerStates[i]->GetNativeHandle());
-			m_ImageBindings.emplace_back(imageInfo);
-
-			numDescriptors++;
-			m_CurrentBindings[startSlot + i] = ppSamplerStates[i];
-		}
-
-
-		//Before returning, flush
-		if (numDescriptors > 0)
-		{
-			writeInfo.descriptorCount = numDescriptors;
-			writeInfo.dstBinding = writeSlot;
-			writeInfo.pImageInfo = m_ImageBindings.data() + numImageBindings;
-			m_DescriptorWrites.emplace_back(writeInfo);
+			else
+			{
+				LOG_DEBUG_ERROR("Vulkan: Slot at '%u' is not set to bind a SamplerState\n", startSlot + i);
+			}
 		}
 	}
 
 
 	void VulkanPipelineResourceState::SetConstantBuffers(IBuffer** ppBuffers, uint32 numBuffers, uint32 startSlot)
 	{
-		m_DynamicBuffers.clear();
-
-		VkWriteDescriptorSet writeInfo = {};
-		writeInfo.sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		writeInfo.pNext				= nullptr;
-		writeInfo.descriptorType	= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		writeInfo.dstArrayElement	= 0;
-		writeInfo.dstSet			= m_DescriptorSet;
-		writeInfo.pImageInfo		= nullptr;
-		writeInfo.pTexelBufferView	= nullptr;
-
-		uint32 writeSlot = startSlot;
-		uint32 numDescriptors	= 0;
-		uint32 numBufferBindings = uint32(m_BufferBindings.size());
-		ShaderStage writingStage = m_ResourceSlots[startSlot].Stage;
-		ResourceUsage usage = m_ResourceSlots[startSlot].Usage;
 		for (uint32 i = 0; i < numBuffers; i++)
 		{
-			VulkanBuffer* pVkBuffer = reinterpret_cast<VulkanBuffer*>(ppBuffers[i]);
-			BufferDesc bufferDesc = pVkBuffer->GetDesc();
-
-			//If the buffer is already bound then do not bind again, flush and move on
-			if (m_CurrentBindings[startSlot + i] == ppBuffers[i])
+			auto& resourceBinding = m_ResourceBindings[startSlot + i];
+			if (resourceBinding.Slot.Type == RESOURCE_TYPE_CONSTANT_BUFFER)
 			{
-				if (bufferDesc.Usage == RESOURCE_USAGE_DYNAMIC)
+				if (resourceBinding.pBuffer != ppBuffers[i])
 				{
-					m_DynamicBuffers.push_back(pVkBuffer);
+					resourceBinding.pBuffer				= reinterpret_cast<VulkanBuffer*>(ppBuffers[i]);
+					
+					BufferDesc bufferDesc				= resourceBinding.pBuffer->GetDesc();
+					resourceBinding.BufferInfo.buffer	= reinterpret_cast<VkBuffer>(resourceBinding.pBuffer->GetNativeHandle());
+					resourceBinding.BufferInfo.offset	= 0;
+					resourceBinding.BufferInfo.range	= bufferDesc.SizeInBytes;
+					m_IsDirty = true;
 				}
-
-				if (numDescriptors > 0)
-				{
-					writeInfo.descriptorCount = numDescriptors;
-					writeInfo.dstBinding = writeSlot;
-					writeInfo.pBufferInfo = m_BufferBindings.data() + numBufferBindings;
-					m_DescriptorWrites.emplace_back(writeInfo);
-
-					//Increase the next slot to write to
-					writeSlot += numDescriptors;
-					numDescriptors = 0;
-					numBufferBindings = uint32(m_BufferBindings.size());
-				}
-
-				continue;
-			}
-
-			//If the buffer is not supposed to be in the same stage as the others or the usage is not the same, flush
-			if (m_ResourceSlots[startSlot + i].Stage != writingStage || m_ResourceSlots[startSlot + i].Usage != usage)
-			{
-				if (numDescriptors > 0)
-				{
-					writeInfo.descriptorCount = numDescriptors;
-					writeInfo.dstBinding = writeSlot;
-					writeInfo.pBufferInfo = m_BufferBindings.data() + numBufferBindings;
-					m_DescriptorWrites.emplace_back(writeInfo);
-
-					//Increase the next slot to write to
-					writeSlot += numDescriptors;
-					numDescriptors = 0;
-
-					//Update offset
-					numBufferBindings = uint32(m_BufferBindings.size());
-				}
-			}
-
-			//Add this buffer to the bindings
-			VkDescriptorBufferInfo bufferInfo = {};
-			bufferInfo.buffer = reinterpret_cast<VkBuffer>(pVkBuffer->GetNativeHandle());
-			bufferInfo.offset = 0;
-			bufferInfo.range = bufferDesc.SizeInBytes;
-			m_BufferBindings.emplace_back(bufferInfo);
-
-			usage = m_ResourceSlots[startSlot + i].Usage;
-			if (usage == RESOURCE_USAGE_DYNAMIC)
-			{
-				writeInfo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-				m_DynamicBuffers.push_back(pVkBuffer);
 			}
 			else
 			{
-				writeInfo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				LOG_DEBUG_ERROR("Vulkan: Slot at '%u' is not set to bind a ConstantBuffer\n", startSlot + i);
 			}
-
-			numDescriptors++;
-			m_CurrentBindings[startSlot + i] = ppBuffers[i];
-		}
-
-
-		//Before returning, flush
-		if (numDescriptors > 0)
-		{
-			writeInfo.descriptorCount	= numDescriptors;
-			writeInfo.dstBinding		= writeSlot;
-			writeInfo.pBufferInfo		= m_BufferBindings.data() + numBufferBindings;
-			m_DescriptorWrites.emplace_back(writeInfo);
 		}
 	}
 
@@ -320,22 +300,89 @@ namespace Lambda
 	
 	void VulkanPipelineResourceState::CommitBindings(VkDevice device)
 	{
-		if (m_DescriptorWrites.size() > 0)
+		//Update bufferoffsets
+		for (auto pBuffer : m_DynamicBuffers)
 		{
-			//Write all descriptors
-			vkUpdateDescriptorSets(device, uint32(m_DescriptorWrites.size()), m_DescriptorWrites.data(), 0, nullptr);
-
-			//Clear bindings and writes
-			m_BufferBindings.clear();
-			m_ImageBindings.clear();
-			m_DescriptorWrites.clear();
+			if (pBuffer->IsDirty())
+			{
+				m_IsDirty = true;
+				pBuffer->SetIsClean();
+				break;
+			}
 		}
 
-		//Update bufferoffsets
-		m_DynamicOffsets.clear();
-		for (auto buffer : m_DynamicBuffers)
+
+		//Update descriptorset
+		if (m_IsDirty)
 		{
-			m_DynamicOffsets.push_back(buffer->GetDynamicOffset());
+			AllocateDescriptorSet();
+
+			m_DynamicBuffers.clear();
+			m_DynamicOffsets.clear();
+
+			VkWriteDescriptorSet writeInfo = {};
+			writeInfo.sType					= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			writeInfo.pNext					= nullptr;
+			writeInfo.dstArrayElement		= 0;
+			writeInfo.dstSet				= m_DescriptorSet;
+			writeInfo.pImageInfo			= nullptr;
+			writeInfo.pTexelBufferView		= nullptr;
+
+			//Setup writing slots
+			for (auto& resourceBinding : m_ResourceBindings)
+			{
+				VulkanSlot& binding			= resourceBinding.second;
+				writeInfo.descriptorCount	= 1;
+				writeInfo.dstBinding		= binding.Slot.Slot;
+
+				if (binding.Slot.Type == RESOURCE_TYPE_CONSTANT_BUFFER)
+				{
+					writeInfo.pBufferInfo = &binding.BufferInfo;
+					if (binding.Slot.Usage == RESOURCE_USAGE_DYNAMIC)
+					{
+						BufferDesc bufferDesc = binding.pBuffer->GetDesc();
+						binding.BufferInfo.buffer	= reinterpret_cast<VkBuffer>(binding.pBuffer->GetNativeHandle());
+						binding.BufferInfo.offset	= 0;
+						binding.BufferInfo.range	= bufferDesc.SizeInBytes;
+
+						writeInfo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+						m_DynamicBuffers.push_back(binding.pBuffer);
+					}
+					else
+					{
+						writeInfo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+					}
+				}
+				else if (binding.Slot.Type == RESOURCE_TYPE_TEXTURE)
+				{
+					writeInfo.descriptorType	= VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+					writeInfo.pImageInfo		= &binding.ImageInfo;
+				}
+				else if (binding.Slot.Type == RESOURCE_TYPE_SAMPLER_STATE)
+				{
+					writeInfo.descriptorType	= VK_DESCRIPTOR_TYPE_SAMPLER;
+					writeInfo.pImageInfo		= &binding.ImageInfo;
+				}
+
+				m_DescriptorWrites.emplace_back(writeInfo);
+			}
+
+			//Write all descriptors
+			if (m_DescriptorWrites.size() > 0)
+			{
+				vkUpdateDescriptorSets(device, uint32(m_DescriptorWrites.size()), m_DescriptorWrites.data(), 0, nullptr);
+				m_DescriptorWrites.clear();
+			}
+
+			m_DynamicOffsets.resize(m_DynamicBuffers.size());
+			m_IsDirty = false;
+		}
+
+
+		//Update bufferoffsets
+		for (size_t i = 0; i < m_DynamicBuffers.size(); i++)
+		{
+			m_DynamicOffsets[i] = m_DynamicBuffers[i]->GetDynamicOffset();
 		}
 	}
 
@@ -359,167 +406,5 @@ namespace Lambda
 		}
 
 		delete this;
-	}
-
-
-	void VulkanPipelineResourceState::Init(VkDevice device, const PipelineResourceStateDesc& desc)
-	{
-		//Number of resources that can be bound
-		m_CurrentBindings.resize(desc.NumResourceSlots);
-
-		//Copy the resourceslots
-		m_ResourceSlots = std::vector<ResourceSlot>(desc.pResourceSlots, desc.pResourceSlots + desc.NumResourceSlots);
-		
-		//Number of each type
-		uint32 uniformBufferCount			= 0;
-		uint32 dynamicUniformBufferCount	= 0;
-		uint32 samplerCount					= 0;
-		uint32 sampledImageCount			= 0;
-
-		//Create descriptor bindings for each resourceslot
-		std::vector<VkDescriptorSetLayoutBinding> layoutBindings;
-		for (uint32 i = 0; i < desc.NumResourceSlots; i++)
-		{
-			//Set current resources to nullptr
-			m_CurrentBindings[i] = nullptr;
-
-			VkDescriptorSetLayoutBinding layoutBinding = {};
-			//Set type
-			layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM;
-			if (desc.pResourceSlots[i].Type == RESOURCE_TYPE_CONSTANT_BUFFER)
-			{
-				if (desc.pResourceSlots[i].Usage == RESOURCE_USAGE_DYNAMIC)
-				{
-					layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-					dynamicUniformBufferCount++;
-				}
-				else
-				{
-					layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-					uniformBufferCount++;
-				}
-			}
-			else if (desc.pResourceSlots[i].Type == RESOURCE_TYPE_TEXTURE)
-			{
-				layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-				sampledImageCount++;
-			}
-			else if (desc.pResourceSlots[i].Type == RESOURCE_TYPE_SAMPLER)
-			{
-				layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-				samplerCount++;
-			}
-
-			//Set stage
-			layoutBinding.stageFlags = 0;
-			if (desc.pResourceSlots[i].Stage == SHADER_STAGE_VERTEX)
-				layoutBinding.stageFlags |= VK_SHADER_STAGE_VERTEX_BIT;
-			else if (desc.pResourceSlots[i].Stage == SHADER_STAGE_HULL)
-				layoutBinding.stageFlags |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
-			else if (desc.pResourceSlots[i].Stage == SHADER_STAGE_DOMAIN)
-				layoutBinding.stageFlags |= VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
-			else if (desc.pResourceSlots[i].Stage == SHADER_STAGE_GEOMETRY)
-				layoutBinding.stageFlags |= VK_SHADER_STAGE_GEOMETRY_BIT;
-			else if (desc.pResourceSlots[i].Stage == SHADER_STAGE_PIXEL)
-				layoutBinding.stageFlags |= VK_SHADER_STAGE_FRAGMENT_BIT;
-			else if (desc.pResourceSlots[i].Stage == SHADER_STAGE_COMPUTE)
-				layoutBinding.stageFlags |= VK_SHADER_STAGE_COMPUTE_BIT;
-
-			layoutBinding.descriptorCount		= 1;
-			layoutBinding.binding				= desc.pResourceSlots[i].Slot;
-			layoutBinding.pImmutableSamplers	= nullptr;
-			layoutBindings.push_back(layoutBinding);
-		}
-
-		//Create descriptorsetlayout
-		VkDescriptorSetLayoutCreateInfo descriptorLayoutInfo = {};
-		descriptorLayoutInfo.sType			= VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		descriptorLayoutInfo.pNext			= nullptr;
-		descriptorLayoutInfo.flags			= 0;
-		descriptorLayoutInfo.bindingCount	= uint32(layoutBindings.size());
-		descriptorLayoutInfo.pBindings		= layoutBindings.data();
-
-		//Create layout for shaderstage
-		if (vkCreateDescriptorSetLayout(device, &descriptorLayoutInfo, nullptr, &m_DescriptorSetLayout) != VK_SUCCESS)
-		{
-			LOG_DEBUG_ERROR("Vulkan: Failed to create DescriptorSetLayout\n");
-			return;
-		}
-		else
-		{
-			LOG_DEBUG_INFO("Vulkan: Created DescriptorSetLayout\n");
-		}
-
-
-		//Create pipelinelayout
-		VkPipelineLayoutCreateInfo layoutInfo = {};
-		layoutInfo.sType					= VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		layoutInfo.flags					= 0;
-		layoutInfo.pNext					= nullptr;
-		layoutInfo.setLayoutCount			= 1;
-		layoutInfo.pSetLayouts				= &m_DescriptorSetLayout;
-		layoutInfo.pushConstantRangeCount	= 0;
-		layoutInfo.pPushConstantRanges		= nullptr;
-
-		if (vkCreatePipelineLayout(device, &layoutInfo, nullptr, &m_PipelineLayout) != VK_SUCCESS)
-		{
-			LOG_DEBUG_ERROR("Vulkan: Failed to create default PipelineLayout\n");
-			return;
-		}
-		else
-		{
-			LOG_DEBUG_INFO("Vulkan: Created default PipelineLayout\n");
-		}
-
-
-		//Describe how many descriptors we want to create
-		constexpr uint32 maxSets = 64;
-		constexpr uint32 poolCount = 4;
-		VkDescriptorPoolSize poolSizes[poolCount] = {};
-		poolSizes[0].type				= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		poolSizes[0].descriptorCount	= uniformBufferCount * maxSets;
-		poolSizes[1].type				= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-		poolSizes[1].descriptorCount	= uniformBufferCount * maxSets;
-		poolSizes[2].type				= VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-		poolSizes[2].descriptorCount	= sampledImageCount * maxSets;
-		poolSizes[3].type				= VK_DESCRIPTOR_TYPE_SAMPLER;
-		poolSizes[3].descriptorCount	= samplerCount * maxSets;
-
-
-		//Create descriptorpool
-		VkDescriptorPoolCreateInfo descriptorPoolInfo = {};
-		descriptorPoolInfo.sType			= VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		descriptorPoolInfo.flags			= 0;
-		descriptorPoolInfo.pNext			= nullptr;
-		descriptorPoolInfo.poolSizeCount	= poolCount;
-		descriptorPoolInfo.pPoolSizes		= poolSizes;
-		descriptorPoolInfo.maxSets			= maxSets;
-
-		if (vkCreateDescriptorPool(device, &descriptorPoolInfo, nullptr, &m_DescriptorPool) != VK_SUCCESS)
-		{
-			LOG_DEBUG_ERROR("Vulkan: Failed to create DescriptorPool\n");
-			return;
-		}
-		else
-		{
-			LOG_DEBUG_INFO("Vulkan: Created DescriptorPool\n");
-		}
-
-		//Allocate descriptorsets
-		VkDescriptorSetAllocateInfo descriptorAllocInfo = {};
-		descriptorAllocInfo.sType				= VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		descriptorAllocInfo.pNext				= nullptr;
-		descriptorAllocInfo.descriptorPool		= m_DescriptorPool;
-		descriptorAllocInfo.descriptorSetCount	= 1;
-		descriptorAllocInfo.pSetLayouts			= &m_DescriptorSetLayout;
-
-		if (vkAllocateDescriptorSets(device, &descriptorAllocInfo, &m_DescriptorSet))
-		{
-			LOG_DEBUG_ERROR("Vulkan: Failed to allocate DescriptorSets\n");
-		}
-		else
-		{
-			LOG_DEBUG_INFO("Vulkan: Allocated DescriptorSets\n");
-		}
 	}
 }

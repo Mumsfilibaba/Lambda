@@ -47,7 +47,11 @@
 #endif
 
 #if !defined(SafeDelete)
-#define SafeDelete(x) if (x != nullptr) { delete x; x = nullptr; }
+	#define SafeDelete(x) if (x != nullptr) { delete x; x = nullptr; }
+#endif
+
+#if !defined(SafeDeleteArr)
+	#define SafeDeleteArr(x) if (x != nullptr) { delete[] x; x = nullptr; }
 #endif
 
 

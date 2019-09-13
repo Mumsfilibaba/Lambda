@@ -42,11 +42,10 @@ namespace Lambda
 		m_Fences(),
         m_RenderSemaphores(),
 		m_ImageSemaphores(),
-		m_DeviceLimits(),
 		m_DeviceSettings(),
         m_FamiliyIndices(),
         m_PhysicalDevice(VK_NULL_HANDLE),
-        m_AdapterProperties(),
+        m_PhysicalDeviceProperties(),
         m_Surface(VK_NULL_HANDLE),
 		m_pDynamicBufferManager(nullptr),
 		m_pFramebufferCache(nullptr),
@@ -147,13 +146,13 @@ namespace Lambda
 		LAMBDA_ASSERT(pWindow != nullptr);
         
 		VkApplicationInfo applicationInfo = {};
-		applicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-		applicationInfo.pNext = nullptr;
-		applicationInfo.pApplicationName = "Lambda Engine";
-		applicationInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-		applicationInfo.pEngineName = "Lambda Engine";
-		applicationInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-		applicationInfo.apiVersion = VK_API_VERSION_1_0;
+		applicationInfo.sType				= VK_STRUCTURE_TYPE_APPLICATION_INFO;
+		applicationInfo.pNext				= nullptr;
+		applicationInfo.pApplicationName	= "Lambda Engine";
+		applicationInfo.applicationVersion	= VK_MAKE_VERSION(1, 0, 0);
+		applicationInfo.pEngineName			= "Lambda Engine";
+		applicationInfo.engineVersion		= VK_MAKE_VERSION(1, 0, 0);
+		applicationInfo.apiVersion			= VK_API_VERSION_1_0;
 
 
 		//Get all the available extensions
@@ -267,14 +266,14 @@ namespace Lambda
 
 		//Create instance
 		VkInstanceCreateInfo instanceInfo = {};
-		instanceInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-		instanceInfo.pNext = (desc.Flags & GRAPHICS_CONTEXT_FLAG_DEBUG) ? (VkDebugUtilsMessengerCreateInfoEXT*)& dInfo : nullptr;
-		instanceInfo.flags = 0;
-		instanceInfo.pApplicationInfo = &applicationInfo;
-		instanceInfo.enabledExtensionCount = uint32(requiredExtensions.size());
-		instanceInfo.ppEnabledExtensionNames = requiredExtensions.data();
-		instanceInfo.enabledLayerCount = uint32(requiredLayers.size());
-		instanceInfo.ppEnabledLayerNames = requiredLayers.data();
+		instanceInfo.sType						= VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+		instanceInfo.pNext						= (desc.Flags & GRAPHICS_CONTEXT_FLAG_DEBUG) ? (VkDebugUtilsMessengerCreateInfoEXT*)& dInfo : nullptr;
+		instanceInfo.flags						= 0;
+		instanceInfo.pApplicationInfo			= &applicationInfo;
+		instanceInfo.enabledExtensionCount		= uint32(requiredExtensions.size());
+		instanceInfo.ppEnabledExtensionNames	= requiredExtensions.data();
+		instanceInfo.enabledLayerCount			= uint32(requiredLayers.size());
+		instanceInfo.ppEnabledLayerNames		= requiredLayers.data();
 
 		VkResult res = vkCreateInstance(&instanceInfo, nullptr, &m_Instance);
 		if (res != VK_SUCCESS)
@@ -350,7 +349,7 @@ namespace Lambda
 		}
 		else
 		{
-			vkGetPhysicalDeviceProperties(m_PhysicalDevice, &m_AdapterProperties);
+			vkGetPhysicalDeviceProperties(m_PhysicalDevice, &m_PhysicalDeviceProperties);
 			m_FamiliyIndices = FindQueueFamilies(m_PhysicalDevice, m_Surface);
 
 			VkPhysicalDeviceMemoryProperties memoryProperties = {};
@@ -364,21 +363,7 @@ namespace Lambda
 			}
 
 			vram = vram / (1024 * 1024);
-			LOG_SYSTEM_PRINT("Vulkan: Selected GPU '%s'\n        VRAM: %llu MB\n", m_AdapterProperties.deviceName, vram);
-
-
-			//Get max MSAA we can use on the device
-			VkSampleCountFlags sampleCount = std::min(m_AdapterProperties.limits.framebufferStencilSampleCounts, std::min(m_AdapterProperties.limits.framebufferColorSampleCounts, m_AdapterProperties.limits.framebufferDepthSampleCounts));
-
-			if (sampleCount & VK_SAMPLE_COUNT_64_BIT) { m_DeviceLimits.MaxSampleCount = VK_SAMPLE_COUNT_64_BIT; }
-			else if (sampleCount & VK_SAMPLE_COUNT_32_BIT) { m_DeviceLimits.MaxSampleCount = VK_SAMPLE_COUNT_32_BIT; }
-			else if (sampleCount & VK_SAMPLE_COUNT_16_BIT) { m_DeviceLimits.MaxSampleCount = VK_SAMPLE_COUNT_16_BIT; }
-			else if (sampleCount & VK_SAMPLE_COUNT_8_BIT) { m_DeviceLimits.MaxSampleCount = VK_SAMPLE_COUNT_8_BIT; }
-			else if (sampleCount & VK_SAMPLE_COUNT_4_BIT) { m_DeviceLimits.MaxSampleCount = VK_SAMPLE_COUNT_4_BIT; }
-			else if (sampleCount & VK_SAMPLE_COUNT_2_BIT) { m_DeviceLimits.MaxSampleCount = VK_SAMPLE_COUNT_2_BIT; }
-
-			//Get other limits
-			m_DeviceLimits.UniformBufferAlignment = m_AdapterProperties.limits.minUniformBufferOffsetAlignment;
+			LOG_SYSTEM_PRINT("Vulkan: Selected GPU '%s'\n        VRAM: %llu MB\n", m_PhysicalDeviceProperties.deviceName, vram);
 		}
 
 
@@ -396,12 +381,12 @@ namespace Lambda
 		for (int32 queueFamiliy : uniqueQueueFamilies)
 		{
 			VkDeviceQueueCreateInfo queueInfo = {};
-			queueInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-			queueInfo.pNext = nullptr;
-			queueInfo.flags = 0;
-			queueInfo.pQueuePriorities = &priority;
-			queueInfo.queueFamilyIndex = queueFamiliy;
-			queueInfo.queueCount = 1;
+			queueInfo.sType				= VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+			queueInfo.pNext				= nullptr;
+			queueInfo.flags				= 0;
+			queueInfo.pQueuePriorities	= &priority;
+			queueInfo.queueFamilyIndex	= queueFamiliy;
+			queueInfo.queueCount		= 1;
 
 			queueCreateInfos.push_back(queueInfo);
 		}
@@ -436,20 +421,19 @@ namespace Lambda
 		}
 
 
-		//Setup the device
-		VkDeviceCreateInfo info = {};
-		info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-		info.pNext = nullptr;
-		info.flags = 0;
-		info.enabledExtensionCount = uint32(deviceExtensions.size());
-		info.ppEnabledExtensionNames = deviceExtensions.data();
-		info.enabledLayerCount = uint32(requiredLayers.size());
-		info.ppEnabledLayerNames = requiredLayers.data(); //Same as for the instance
-		info.pEnabledFeatures = &deviceFeatures;
-		info.queueCreateInfoCount = uint32(queueCreateInfos.size());
-		info.pQueueCreateInfos = queueCreateInfos.data();
-
 		//Create device
+		VkDeviceCreateInfo info = {};
+		info.sType						= VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+		info.pNext						= nullptr;
+		info.flags						= 0;
+		info.enabledExtensionCount		= uint32(deviceExtensions.size());
+		info.ppEnabledExtensionNames	= deviceExtensions.data();
+		info.enabledLayerCount			= uint32(requiredLayers.size());
+		info.ppEnabledLayerNames		= requiredLayers.data(); //Same as for the instance
+		info.pEnabledFeatures			= &deviceFeatures;
+		info.queueCreateInfoCount		= uint32(queueCreateInfos.size());
+		info.pQueueCreateInfos			= queueCreateInfos.data();
+
 		if (vkCreateDevice(m_PhysicalDevice, &info, nullptr, &m_Device) != VK_SUCCESS)
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to create device\n");
@@ -460,20 +444,33 @@ namespace Lambda
 		else
 		{
 			LOG_SYSTEM_PRINT("Vulkan: Created device and retrived queues\n");
+		}
 
-			//Get queues
-			vkGetDeviceQueue(m_Device, m_FamiliyIndices.GraphicsFamily, 0, &m_GraphicsQueue);
-			vkGetDeviceQueue(m_Device, m_FamiliyIndices.PresentFamily, 0, &m_PresentationQueue);
 
-			//Set devicesettings
-			m_DeviceSettings.SampleCount = ConvertSampleCount(desc.SampleCount);
-			if (m_DeviceSettings.SampleCount > m_DeviceLimits.MaxSampleCount)
-			{
-				m_DeviceSettings.SampleCount = m_DeviceLimits.MaxSampleCount;
-				LOG_DEBUG_WARNING("Vulkan: SampleCount (= %u) is higher  than the device's maximum of %u. SampleCount was set to the device's maximum.\n", uint32(m_DeviceSettings.SampleCount), uint32(m_DeviceLimits.MaxSampleCount));
-			}
+		//Get queues
+		vkGetDeviceQueue(m_Device, m_FamiliyIndices.GraphicsFamily, 0, &m_GraphicsQueue);
+		vkGetDeviceQueue(m_Device, m_FamiliyIndices.PresentFamily, 0, &m_PresentationQueue);
 
-			m_DeviceSettings.FramesAhead = FRAMES_AHEAD;
+
+		//Get max MSAA we can use on the device
+		VkSampleCountFlags		sampleCountFlags = std::min(m_PhysicalDeviceProperties.limits.framebufferStencilSampleCounts, 
+			std::min(m_PhysicalDeviceProperties.limits.framebufferColorSampleCounts, m_PhysicalDeviceProperties.limits.framebufferDepthSampleCounts));
+		VkSampleCountFlagBits	sampleCount;
+
+		if		(sampleCountFlags & VK_SAMPLE_COUNT_64_BIT)	{ sampleCount = VK_SAMPLE_COUNT_64_BIT; }
+		else if (sampleCountFlags & VK_SAMPLE_COUNT_32_BIT) { sampleCount = VK_SAMPLE_COUNT_32_BIT; }
+		else if (sampleCountFlags & VK_SAMPLE_COUNT_16_BIT) { sampleCount = VK_SAMPLE_COUNT_16_BIT; }
+		else if (sampleCountFlags & VK_SAMPLE_COUNT_8_BIT)	{ sampleCount = VK_SAMPLE_COUNT_8_BIT; }
+		else if (sampleCountFlags & VK_SAMPLE_COUNT_4_BIT)	{ sampleCount = VK_SAMPLE_COUNT_4_BIT; }
+		else if (sampleCountFlags & VK_SAMPLE_COUNT_2_BIT)	{ sampleCount = VK_SAMPLE_COUNT_2_BIT; }
+
+		//Set devicesettings
+		m_DeviceSettings.FramesAhead = FRAMES_AHEAD;
+		m_DeviceSettings.SampleCount = ConvertSampleCount(desc.SampleCount);
+		if (m_DeviceSettings.SampleCount > sampleCount)
+		{
+			m_DeviceSettings.SampleCount = sampleCount;
+			LOG_DEBUG_WARNING("Vulkan: SampleCount (= %u) is higher  than the device's maximum of %u. SampleCount was set to the device's maximum.\n", uint32(m_DeviceSettings.SampleCount), uint32(sampleCount));
 		}
 
 
@@ -523,7 +520,7 @@ namespace Lambda
         
 
 		//Create allocator
-		m_pDeviceAllocator = DBG_NEW VulkanDeviceAllocator(m_Device, m_PhysicalDevice);
+		m_pDeviceAllocator = DBG_NEW VulkanDeviceAllocator();
 
 
 		//Create dynamic buffer manager
@@ -786,18 +783,18 @@ namespace Lambda
     
     bool VulkanGraphicsDevice::CreateDepthStencil()
     {
-        TextureDesc depthBufferDesc = {};
-        depthBufferDesc.pResolveResource = nullptr;
-        depthBufferDesc.Flags = TEXTURE_FLAGS_DEPTH_STENCIL;
-        depthBufferDesc.Type = TEXTURE_TYPE_2D;
-        depthBufferDesc.Usage = RESOURCE_USAGE_DEFAULT;
-        depthBufferDesc.ArraySize = 1;
-        depthBufferDesc.Width = m_pSwapChain->GetWidth();
-        depthBufferDesc.Height = m_pSwapChain->GetHeight();
-        depthBufferDesc.Format = FORMAT_D24_UNORM_S8_UINT;
-        depthBufferDesc.SampleCount = uint32(m_DeviceSettings.SampleCount);
-        depthBufferDesc.MipLevels = 1;
-		depthBufferDesc.Depth = 1;
+        TextureDesc depthBufferDesc			= {};
+        depthBufferDesc.pResolveResource	= nullptr;
+        depthBufferDesc.Flags				= TEXTURE_FLAGS_DEPTH_STENCIL;
+        depthBufferDesc.Type				= TEXTURE_TYPE_2D;
+        depthBufferDesc.Usage				= RESOURCE_USAGE_DEFAULT;
+        depthBufferDesc.ArraySize			= 1;
+        depthBufferDesc.Width				= m_pSwapChain->GetWidth();
+        depthBufferDesc.Height				= m_pSwapChain->GetHeight();
+        depthBufferDesc.Format				= FORMAT_D24_UNORM_S8_UINT;
+        depthBufferDesc.SampleCount			= uint32(m_DeviceSettings.SampleCount);
+        depthBufferDesc.MipLevels			= 1;
+		depthBufferDesc.Depth				= 1;
         
         m_pDepthStencil = DBG_NEW VulkanTexture(m_Device, m_pDeviceAllocator, depthBufferDesc);
         return true;
@@ -806,18 +803,18 @@ namespace Lambda
 
 	bool VulkanGraphicsDevice::CreateMSAABuffer()
 	{
-		TextureDesc msaaBufferDesc = {};
+		TextureDesc msaaBufferDesc		= {};
         msaaBufferDesc.pResolveResource = m_pSwapChain->GetCurrentBuffer();
-		msaaBufferDesc.Type = TEXTURE_TYPE_2D;
-		msaaBufferDesc.Usage = RESOURCE_USAGE_DEFAULT;
-		msaaBufferDesc.Flags = TEXTURE_FLAGS_RENDER_TARGET;
-		msaaBufferDesc.ArraySize = 1;
-		msaaBufferDesc.Width = m_pSwapChain->GetWidth();
-		msaaBufferDesc.Height = m_pSwapChain->GetHeight();
-		msaaBufferDesc.Format = FORMAT_B8G8R8A8_UNORM;
-		msaaBufferDesc.SampleCount = uint32(m_DeviceSettings.SampleCount);
-		msaaBufferDesc.MipLevels = 1;
-		msaaBufferDesc.Depth = 1;
+		msaaBufferDesc.Type				= TEXTURE_TYPE_2D;
+		msaaBufferDesc.Usage			= RESOURCE_USAGE_DEFAULT;
+		msaaBufferDesc.Flags			= TEXTURE_FLAGS_RENDER_TARGET;
+		msaaBufferDesc.ArraySize		= 1;
+		msaaBufferDesc.Width			= m_pSwapChain->GetWidth();
+		msaaBufferDesc.Height			= m_pSwapChain->GetHeight();
+		msaaBufferDesc.Format			= FORMAT_B8G8R8A8_UNORM;
+		msaaBufferDesc.SampleCount		= uint32(m_DeviceSettings.SampleCount);
+		msaaBufferDesc.MipLevels		= 1;
+		msaaBufferDesc.Depth			= 1;
 
 		m_pMSAABuffer = DBG_NEW VulkanTexture(m_Device, m_pDeviceAllocator, msaaBufferDesc);
 		return true;
@@ -849,13 +846,16 @@ namespace Lambda
         //Advance current frame counter
         m_CurrentFrame = (m_CurrentFrame + 1) % FRAMES_AHEAD;
 		m_pDynamicBufferManager->MoveToNextFrame();
+
+		//Cleanup memory
+		m_pDeviceAllocator->CleanGarbageMemory(m_CurrentFrame);
     }
     
     
     void VulkanGraphicsDevice::CreateCommandList(ICommandList** ppList, CommandListType type)
     {
 		LAMBDA_ASSERT(ppList != nullptr);
-        (*ppList) = DBG_NEW VulkanCommandList(this, type);
+        (*ppList) = DBG_NEW VulkanCommandList(type);
     }
     
     
@@ -863,7 +863,7 @@ namespace Lambda
     {
 		LAMBDA_ASSERT(ppBuffer != nullptr);
         
-        VulkanBuffer* pVkBuffer = DBG_NEW VulkanBuffer(m_Device, m_pDeviceAllocator, desc);
+        VulkanBuffer* pVkBuffer = DBG_NEW VulkanBuffer(m_pDeviceAllocator, desc);
 
         //Upload inital data
         if (pInitalData)
@@ -921,9 +921,9 @@ namespace Lambda
                 if (formatProperties.linearTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)
                 {
                     TextureDesc textureDesc = pVkTexture->GetDesc();
-                    uint32 mipLevels = textureDesc.MipLevels;
-                    int32 mipWidth = textureDesc.Width;
-                    int32 mipHeight = textureDesc.Height;
+                    int32 mipWidth			= textureDesc.Width;
+                    int32 mipHeight			= textureDesc.Height;
+                    uint32 mipLevels		= textureDesc.MipLevels;
                     for (uint32 i = 1; i < mipLevels; i++)
                     {
                         m_pCommandList->TransitionTexture(pVkTexture, RESOURCE_STATE_COPY_SRC, i-1, 1);
@@ -988,7 +988,7 @@ namespace Lambda
 	void VulkanGraphicsDevice::CreatePipelineResourceState(IPipelineResourceState** ppResourceState, const PipelineResourceStateDesc& desc)
 	{
 		LAMBDA_ASSERT(ppResourceState != nullptr);
-		(*ppResourceState) = DBG_NEW VulkanPipelineResourceState(m_Device, desc);
+		(*ppResourceState) = DBG_NEW VulkanPipelineResourceState(desc);
 	}
 
 
@@ -1179,21 +1179,21 @@ namespace Lambda
 		}
 
 		//Setup "syncobjects"
-		VkSemaphore waitSemaphores[] = { m_ImageSemaphores[m_CurrentFrame] };
-		VkSemaphore signalSemaphores[] = { m_RenderSemaphores[m_CurrentFrame] };
-		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+		VkSemaphore waitSemaphores[]		= { m_ImageSemaphores[m_CurrentFrame] };
+		VkSemaphore signalSemaphores[]		= { m_RenderSemaphores[m_CurrentFrame] };
+		VkPipelineStageFlags waitStages[]	= { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
 		//submit commandbuffers
 		VkSubmitInfo submitInfo = {};
-		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submitInfo.pNext = nullptr;
-		submitInfo.waitSemaphoreCount = 1;
-		submitInfo.pWaitSemaphores = waitSemaphores;
-		submitInfo.pWaitDstStageMask = waitStages;
-		submitInfo.commandBufferCount = numLists;
-		submitInfo.pCommandBuffers = buffers.data();
+		submitInfo.sType				= VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submitInfo.pNext				= nullptr;
+		submitInfo.waitSemaphoreCount	= 1;
+		submitInfo.pWaitSemaphores		= waitSemaphores;
+		submitInfo.pWaitDstStageMask	= waitStages;
+		submitInfo.commandBufferCount	= numLists;
+		submitInfo.pCommandBuffers		= buffers.data();
 		submitInfo.signalSemaphoreCount = 1;
-		submitInfo.pSignalSemaphores = signalSemaphores;
+		submitInfo.pSignalSemaphores	= signalSemaphores;
 
 		if (vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, m_Fences[m_CurrentFrame]) != VK_SUCCESS)
 		{
@@ -1230,6 +1230,7 @@ namespace Lambda
         vkWaitForFences(m_Device, 1, &m_Fences[m_CurrentFrame], VK_TRUE, std::numeric_limits<uint64_t>::max());
         vkResetFences(m_Device, 1, &m_Fences[m_CurrentFrame]);
         
+		//Move to next frame
         GetNextFrame();
     }
     
@@ -1324,11 +1325,11 @@ namespace Lambda
         {
             //Set name on object
             VkDebugUtilsObjectNameInfoEXT info = {};
-            info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
-            info.pNext = nullptr;
-            info.objectType = type;
-            info.pObjectName = name.c_str();
-            info.objectHandle = objectHandle;
+            info.sType			= VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+            info.pNext			= nullptr;
+            info.objectType		= type;
+            info.pObjectName	= name.c_str();
+            info.objectHandle	= objectHandle;
             
             if (SetDebugUtilsObjectNameEXT(m_Device, &info) != VK_SUCCESS)
             {

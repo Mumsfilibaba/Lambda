@@ -361,7 +361,7 @@ namespace Lambda
     {
         RESOURCE_TYPE_UNKNOWN = 0,
         RESOURCE_TYPE_TEXTURE = 1,
-        RESOURCE_TYPE_SAMPLER = 2,
+        RESOURCE_TYPE_SAMPLER_STATE = 2,
         RESOURCE_TYPE_CONSTANT_BUFFER = 3
     };
 

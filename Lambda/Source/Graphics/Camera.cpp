@@ -88,6 +88,6 @@ namespace Lambda
     
     void Camera::CreateProjection()
     {
-        m_Projection = glm::perspective(glm::radians(90.0f), m_Aspect, 0.1f, 100.0f);
+        m_Projection = glm::perspective(glm::radians(90.0f), m_Aspect, 0.01f, 10000.0f);
     }
 }

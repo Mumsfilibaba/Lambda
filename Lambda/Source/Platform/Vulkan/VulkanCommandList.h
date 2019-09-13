@@ -19,7 +19,7 @@ namespace Lambda
     public:
         LAMBDA_NO_COPY(VulkanCommandList);
         
-        VulkanCommandList(VulkanGraphicsDevice* pVkDevice, CommandListType type);
+        VulkanCommandList(CommandListType type);
         ~VulkanCommandList() = default;
         
         virtual void ClearRenderTarget(ITexture* pRenderTarget, float color[4]) override final;
@@ -52,26 +52,23 @@ namespace Lambda
         virtual void Reset() override final;
         
         virtual CommandListType GetType() const override final;
-        virtual void* GetNativeHandle() const override final;
+        virtual void*			GetNativeHandle() const override final;
         
         void CommitResources();
         void BlitTexture(VulkanTexture* pDst, uint32 dstWidth, uint32 dstHeight, uint32 dstMipLevel, VulkanTexture* pSrc, uint32 srcWidth, uint32 srcHeight, uint32 srcMipLevel);
         void Destroy(VkDevice device);
         
     private:
-        void Init(VulkanGraphicsDevice* pVkDevice, CommandListType type);
+        void Init(CommandListType type);
 
     private:
-        VkDevice m_Device;
-        VkCommandPool m_CommandPool;
-        VkCommandBuffer m_CommandBuffer;
-        
-        VulkanUploadBuffer* m_pBufferUpload;
-        VulkanUploadBuffer* m_pTextureUpload;
-        VulkanRenderPass* m_pRenderPass;
-		VulkanPipelineResourceState* m_pResourceState;
-        
-        CommandListType m_Type;
-        std::string m_Name;
+        VkCommandPool					m_CommandPool;
+        VkCommandBuffer					m_CommandBuffer;  
+        VulkanUploadBuffer*				m_pBufferUpload;
+        VulkanUploadBuffer*				m_pTextureUpload;
+        VulkanRenderPass*				m_pRenderPass;
+		VulkanPipelineResourceState*	m_pResourceState;
+        CommandListType					m_Type;
+        std::string						m_Name;
     };
 }

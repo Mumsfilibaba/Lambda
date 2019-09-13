@@ -4,31 +4,32 @@
 #include "VulkanUtilities.h"
 #include "VulkanGraphicsDevice.h"
 
-#define NUM_UPDATES 4096
-
 namespace Lambda
 {
 	//------------
 	//VulkanBuffer
 	//------------
 
-    VulkanBuffer::VulkanBuffer(VkDevice device, IVulkanAllocator* pAllocator, const BufferDesc& desc)
+    VulkanBuffer::VulkanBuffer(IVulkanAllocator* pAllocator, const BufferDesc& desc)
 		: m_pAllocator(pAllocator),
 		m_Buffer(VK_NULL_HANDLE),
 		m_Memory(),
 		m_Desc(),
 		m_CurrentFrame(0),
 		m_FrameCount(0),
+		m_SizePerFrame(0),
+		m_SizePerUpdate(0),
 		m_DynamicOffset(0),
-        m_DynamicAlignment(0)
+		m_TotalDynamicOffset(0),
+        m_DynamicAlignment(0),
+		m_IsDirty(false)
     {
 		LAMBDA_ASSERT(pAllocator != nullptr);
-		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
-        Init(device, desc);
+        Init(desc);
     }
     
     
-    void VulkanBuffer::Init(VkDevice device, const BufferDesc& desc)
+    void VulkanBuffer::Init(const BufferDesc& desc)
     {
         VkBufferCreateInfo info = {};
         info.sType					= VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -41,15 +42,18 @@ namespace Lambda
 		//If dynamic we allocate extra size so we can use dynamic offsets
 		if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
 		{
-			DeviceLimits limits = VulkanGraphicsDevice::GetInstance().GetDeviceLimits();
-			m_DynamicAlignment = limits.UniformBufferAlignment;
+			VulkanGraphicsDevice& vkDevice			= VulkanGraphicsDevice::GetInstance();
+			VkPhysicalDeviceProperties properties	= vkDevice.GetPhysicalDeviceProperties();
+			m_DynamicAlignment						= properties.limits.minUniformBufferOffsetAlignment;
 
 			DeviceSettings settings = VulkanGraphicsDevice::GetInstance().GetDeviceSettings();
-			m_FrameCount = settings.FramesAhead;
+			m_FrameCount			= settings.FramesAhead;
 			
-			//If dynamic we allocate extra space (1024 updates per frame)
-            uint64 sizePerUpdate = Math::AlignUp<uint64>(uint64(desc.SizeInBytes), m_DynamicAlignment);
-            info.size = sizePerUpdate * NUM_UPDATES * m_FrameCount;
+			//If dynamic we allocate extra space (NUM_UPDATES updates per frame)
+			constexpr uint32 numUpdatesPerFrame = 16;
+			m_SizePerUpdate = Math::AlignUp<uint32>(uint32(desc.SizeInBytes), m_DynamicAlignment);
+			m_SizePerFrame	= m_SizePerUpdate * numUpdatesPerFrame;
+            info.size		= VkDeviceSize(m_SizePerFrame * m_FrameCount);
 		}
 		else
 		{
@@ -72,7 +76,8 @@ namespace Lambda
 		}
         
 		//Create buffer
-		if (vkCreateBuffer(device, &info, nullptr, &m_Buffer) != VK_SUCCESS)
+		VulkanGraphicsDevice& device = VulkanGraphicsDevice::GetInstance();
+		if (vkCreateBuffer(device.GetDevice(), &info, nullptr, &m_Buffer) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create Buffer\n");
             return;
@@ -85,12 +90,12 @@ namespace Lambda
         
 		//Allocate memory
 		VkMemoryRequirements memoryRequirements = {};
-		vkGetBufferMemoryRequirements(device, m_Buffer, &memoryRequirements);
+		vkGetBufferMemoryRequirements(device.GetDevice(), m_Buffer, &memoryRequirements);
 
-		m_Memory = m_pAllocator->Allocate(memoryRequirements, desc.Usage);
+		m_Memory = m_pAllocator->Allocate(memoryRequirements, m_Desc.Usage);
         if (m_Memory.Memory != VK_NULL_HANDLE)
 		{
-            vkBindBufferMemory(device, m_Buffer, m_Memory.Memory, m_Memory.Offset);
+            vkBindBufferMemory(device.GetDevice(), m_Buffer, m_Memory.Memory, m_Memory.Offset);
         }
     }
     
@@ -120,30 +125,120 @@ namespace Lambda
     }
 
 
+	bool VulkanBuffer::IsDirty() const
+	{
+		return m_IsDirty;
+	}
+
+
+	void VulkanBuffer::SetIsClean()
+	{
+		m_IsDirty = false;
+	}
+
+
 	void VulkanBuffer::AdvanceFrame()
 	{
-		m_CurrentFrame = (m_CurrentFrame + 1) % m_FrameCount;
+		//Move on a frame
+		m_CurrentFrame	= (m_CurrentFrame + 1) % m_FrameCount;
+		//Reset offset
+		m_DynamicOffset = 0;
 	}
 
 
 	void VulkanBuffer::DynamicUpdate(const ResourceData* pData)
 	{
+		//Calculate offset and see if there are enough space
+		uint32 offset = m_DynamicOffset + m_SizePerUpdate;
+		if (offset >= m_SizePerFrame)
+		{
+			Reallocate(m_SizePerFrame * 2);
+			offset = 0;
+		}
+
 		//Calculate offset in buffer
-        uint64 sizePerUpdate = Math::AlignUp<uint64>(uint64(m_Desc.SizeInBytes), m_DynamicAlignment); //Size specified during creation complete with alignment
-		uint32 sizeInBytes = sizePerUpdate * NUM_UPDATES;		    //Total size of buffer
-		uint32 frameOffset = m_CurrentFrame * sizeInBytes;	        //Offset of the current frame
-		uint32 dynamicOffset = (m_DynamicOffset + sizePerUpdate) % sizeInBytes; //Ringbuffer-offset per frame
-		m_DynamicOffset = frameOffset + dynamicOffset;
+		uint32 frameOffset		= m_CurrentFrame * m_SizePerFrame;	//Offset of the current frame
+		m_DynamicOffset			= (offset) % m_SizePerFrame;		//Ringbuffer-offset per frame
+		m_TotalDynamicOffset	= frameOffset + m_DynamicOffset;						
 
 		//Update buffer
-		uint8* pCurrent = m_Memory.pMemory + m_DynamicOffset;
+		uint8* pCurrent = m_Memory.pMemory + m_TotalDynamicOffset;
 		memcpy(pCurrent, pData->pData, pData->SizeInBytes);
+	}
+
+
+	void VulkanBuffer::Reallocate(uint32 sizeInBytes)
+	{
+		VkBufferCreateInfo info = {};
+		info.sType					= VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		info.pNext					= nullptr;
+		info.flags					= 0;
+		info.queueFamilyIndexCount	= 0;
+		info.pQueueFamilyIndices	= nullptr;
+		info.sharingMode			= VK_SHARING_MODE_EXCLUSIVE;
+
+		//Set new size
+		m_SizePerFrame	= sizeInBytes;
+		info.size		= VkDeviceSize(m_SizePerFrame * m_FrameCount);
+
+		LOG_DEBUG_WARNING("Vulkan: Reallocated buffer. Old size: %llu bytes, New size: %llu\n", m_Memory.Size, info.size);
+		
+		//Set usage
+		info.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+		if (m_Desc.Flags & BUFFER_FLAGS_VERTEX_BUFFER)
+		{
+			info.usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+		}
+		if (m_Desc.Flags & BUFFER_FLAGS_INDEX_BUFFER)
+		{
+			info.usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+		}
+		if (m_Desc.Flags & BUFFER_FLAGS_CONSTANT_BUFFER)
+		{
+			info.usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+		}
+
+		//Create buffer
+		VkBuffer newBuffer = VK_NULL_HANDLE;
+		VulkanGraphicsDevice& device = VulkanGraphicsDevice::GetInstance();
+		if (vkCreateBuffer(device.GetDevice(), &info, nullptr, &newBuffer) != VK_SUCCESS)
+		{
+			LOG_DEBUG_ERROR("Vulkan: Failed to create Buffer\n");
+			return;
+		}
+		else
+		{
+			LOG_DEBUG_INFO("Vulkan: Created Buffer\n");
+		}
+
+		//Allocate memory
+		VkMemoryRequirements memoryRequirements = {};
+		vkGetBufferMemoryRequirements(device.GetDevice(), newBuffer, &memoryRequirements);
+
+		VulkanMemory newMemory = m_pAllocator->Allocate(memoryRequirements, m_Desc.Usage);
+		if (newMemory.Memory != VK_NULL_HANDLE)
+		{
+			vkBindBufferMemory(device.GetDevice(), newBuffer, newMemory.Memory, newMemory.Offset);
+		}
+		else
+		{
+			return;
+		}
+
+		//Set the new handles and delete the old ones
+		m_pAllocator->DefferedDeallocate(m_Memory, m_CurrentFrame);
+
+		m_Buffer = newBuffer;
+		m_Memory = newMemory;
+
+		//Set to dirty
+		m_IsDirty = true;
 	}
 
 
 	uint32 VulkanBuffer::GetDynamicOffset() const
 	{
-		return m_DynamicOffset;
+		return m_TotalDynamicOffset;
 	}
     
     

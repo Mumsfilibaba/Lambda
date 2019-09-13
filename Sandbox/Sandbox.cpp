@@ -107,7 +107,7 @@ namespace Lambda
 				slots[2].Slot	= 2;
 				slots[2].Stage	= SHADER_STAGE_PIXEL;
 				slots[2].Type	= RESOURCE_TYPE_CONSTANT_BUFFER;
-				slots[2].Usage	= RESOURCE_USAGE_DEFAULT;
+				slots[2].Usage	= RESOURCE_USAGE_DYNAMIC;
 
 				slots[3].Slot	= 3;
 				slots[3].Stage	= SHADER_STAGE_PIXEL;
@@ -116,7 +116,7 @@ namespace Lambda
 
 				slots[4].Slot	= 4;
 				slots[4].Stage	= SHADER_STAGE_PIXEL;
-				slots[4].Type	= RESOURCE_TYPE_SAMPLER;
+				slots[4].Type	= RESOURCE_TYPE_SAMPLER_STATE;
 				slots[4].Usage	= RESOURCE_USAGE_DEFAULT;
 
 				PipelineResourceStateDesc desc = {};
@@ -187,7 +187,7 @@ namespace Lambda
                 glm::vec4 color = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
 
                 BufferDesc desc = {};
-                desc.Usage			= RESOURCE_USAGE_DEFAULT;
+                desc.Usage			= RESOURCE_USAGE_DYNAMIC;
                 desc.Flags			= BUFFER_FLAGS_CONSTANT_BUFFER;
                 desc.SizeInBytes	= sizeof(glm::vec4);
                 desc.StrideInBytes	= sizeof(glm::vec4);
@@ -336,19 +336,18 @@ namespace Lambda
         
         //Update Colorbuffer
         glm::vec4 colorBuff = glm::vec4(RGB_F(178, 34, 34), 1.0f);
-        
+
         ResourceData data = {};
         data.pData			= &colorBuff;
-        data.SizeInBytes	= sizeof(glm::vec4);
-        
+        data.SizeInBytes	= sizeof(glm::vec4); 
         m_pCurrentList->UpdateBuffer(m_pColorBuffer, &data);
         
         //Update camera buffer
         m_CameraBuffer.View = m_Camera.GetView();
         m_CameraBuffer.Proj = m_Camera.GetProjection();
 
-        data.pData = &m_CameraBuffer;
-        data.SizeInBytes = sizeof(CameraBuffer);
+        data.pData			= &m_CameraBuffer;
+        data.SizeInBytes	= sizeof(CameraBuffer);
         m_pCurrentList->UpdateBuffer(m_pCameraBuffer, &data);
         
         //Set resources
@@ -367,7 +366,7 @@ namespace Lambda
 		m_pRenderPass->SetClearValues(color, 1.0f, 0);
 
         //Setup rotation
-		static glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));//glm::rotate(glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f)), glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));;
+		static glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         rotation = glm::rotate(rotation, glm::radians(45.0f) * dt.AsSeconds(), glm::vec3(0.0f, 1.0f, 0.0f));
         
 #if !defined(SINGLE_CUBE)
@@ -375,15 +374,28 @@ namespace Lambda
         m_pCurrentList->BeginRenderPass(m_pRenderPass);
 
         //Draw cubes
-        for (uint32 y = 0; y < 32; y++)
+		glm::vec4 colors[4];
+		colors[0] = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
+		colors[1] = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+		colors[2] = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
+		colors[3] = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+
+		constexpr uint32 cubes = 768;
+        for (uint32 y = 0; y < cubes; y++)
         {
-            for (uint32 x = 0; x < 32; x++)
+            for (uint32 x = 0; x < cubes; x++)
             {
                 //Update transforms
-                m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(-32.0f + x * 2.0f, 0.0f, -32.0f + y * 2.0f)) * rotation;
-                data.pData = &m_TransformBuffer;
-                data.SizeInBytes = sizeof(TransformBuffer);
+                m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(-float(cubes) + x * 2.0f, 0.0f, -float(cubes) + y * 2.0f)) * rotation;
+                data.pData				= &m_TransformBuffer;
+                data.SizeInBytes		= sizeof(TransformBuffer);
                 m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);
+
+				//Update color
+				glm::vec4 col		= colors[x % 4];
+				data.pData			= &col;
+				data.SizeInBytes	= sizeof(glm::vec4);
+				m_pCurrentList->UpdateBuffer(m_pColorBuffer, &data);
             
 				//Draw
 				m_pCurrentList->DrawIndexedInstanced(m_IndexCount, 1, 0, 0, 0);

@@ -11,17 +11,17 @@ namespace Lambda
 
     struct ResourceSlot
     {
-        ResourceType Type = RESOURCE_TYPE_UNKNOWN;
-        ShaderStage Stage = SHADER_STAGE_UNKNOWN;
+        ResourceType Type	= RESOURCE_TYPE_UNKNOWN;
+        ShaderStage Stage	= SHADER_STAGE_UNKNOWN;
 		ResourceUsage Usage = RESOURCE_USAGE_UNKNOWN;
-        uint32 Slot = 0;
+        uint32 Slot			= 0;
     };
     
     
     struct PipelineResourceStateDesc
     {
-        uint32 NumResourceSlots = 0;
-        const ResourceSlot* pResourceSlots = nullptr;
+        uint32 NumResourceSlots				= 0;
+        const ResourceSlot* pResourceSlots	= nullptr;
     };
     
     
