@@ -306,8 +306,7 @@ namespace Lambda
 			if (pBuffer->IsDirty())
 			{
 				m_IsDirty = true;
-				pBuffer->SetIsClean();
-				break;
+                break;
 			}
 		}
 
@@ -347,7 +346,9 @@ namespace Lambda
 						binding.BufferInfo.range	= bufferDesc.SizeInBytes;
 
 						writeInfo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+                        
 						m_DynamicBuffers.push_back(binding.pBuffer);
+                        binding.pBuffer->SetIsClean();
 					}
 					else
 					{
@@ -384,6 +385,10 @@ namespace Lambda
 		for (size_t i = 0; i < m_DynamicBuffers.size(); i++)
 		{
 			m_DynamicOffsets[i] = m_DynamicBuffers[i]->GetDynamicOffset();
+            if (m_DynamicOffsets[i] >= 18688)
+            {
+                LOG_DEBUG_ERROR("WTF\n");
+            }
 		}
 	}
 

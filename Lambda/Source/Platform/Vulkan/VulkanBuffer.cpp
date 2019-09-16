@@ -156,7 +156,7 @@ namespace Lambda
 		m_DynamicOffset			= (offset) % m_SizePerFrame;		//Ringbuffer-offset per frame
 		m_TotalDynamicOffset	= frameOffset + m_DynamicOffset;						
 
-        if (m_TotalDynamicOffset >= 12288)
+        if (m_TotalDynamicOffset >= m_SizePerFrame * 3)
         {
             LOG_DEBUG_ERROR("WTF");
         }
@@ -184,7 +184,7 @@ namespace Lambda
         m_SizePerFrame       = sizeInBytes;
         m_DynamicOffset      = 0;
         m_TotalDynamicOffset = 0;
-        info.size            = VkDeviceSize(m_SizePerFrame * desc.BackBufferCount);
+        info.size            = VkDeviceSize(sizeInBytes * desc.BackBufferCount);
 
         LOG_DEBUG_WARNING("Vulkan: Reallocated buffer. Old size: %llu bytes, New size: %llu\n", m_Memory.Size, info.size);
         
