@@ -7,8 +7,12 @@ int main()
 	DBG_MEMLEAK_CHECK();
 
 	EngineParams params = {};
-	params.pTitle               = "Lambda Engine - Sandbox [Vulkan]";
-	params.GraphicsDeviceApi    = GRAPHICS_API_VULKAN;
+	params.pTitle               = "Lambda Engine - Sandbox";
+#if defined(LAMBDA_PLAT_WINDOWS)
+	params.GraphicsDeviceApi    = GRAPHICS_API_D3D12;
+#else
+	params.GraphicsDeviceApi	= GRAPHICS_API_VULKAN;
+#endif
 	params.SampleCount          = 1;
 	params.WindowWidth          = 1920;
 	params.WindowHeight         = 1080;

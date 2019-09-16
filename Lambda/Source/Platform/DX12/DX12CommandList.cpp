@@ -1,26 +1,29 @@
 #include "LambdaPch.h"
-#include "DX12GraphicsDevice.h"
 #include "DX12CommandList.h"
-#include "DX12PipelineState.h"
-#include "DX12Buffer.h"
-#include "DX12Texture.h"
-#include "DX12SamplerState.h"
 #include "Utilities/TextureHelper.h"
 #include "Utilities/StringHelper.h"
 #include "Utilities/MathHelper.h"
 
 #if defined(LAMBDA_PLAT_WINDOWS)
-#define SAMPLER_DESCRIPTOR_INDEX 0
-#define SRV_DESCRIPTOR_INDEX 1
-#define CBV_DESCRIPTOR_INDEX 2
-#define UAV_DESCRIPTOR_INDEX 3
+	#include "DX12GraphicsDevice.h"
+	#include "DX12PipelineState.h"
+	#include "DX12Buffer.h"
+	#include "DX12Texture.h"
+	#include "DX12SamplerState.h"
+	#define SAMPLER_DESCRIPTOR_INDEX 0
+	#define SRV_DESCRIPTOR_INDEX 1
+	#define CBV_DESCRIPTOR_INDEX 2
+	#define UAV_DESCRIPTOR_INDEX 3
 
 namespace Lambda
 {
-	DX12CommandList::DX12CommandList(ID3D12Device* pDevice, CommandListType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV)
+	//---------------
+	//DX12CommandList
+	//---------------
+
+	DX12CommandList::DX12CommandList(CommandListType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV)
 		: m_Allocator(nullptr),
 		m_List(nullptr),
-		m_Device(nullptr),
 		m_BufferAllocator(),
 		m_TextureAllocator(),
 		m_ResourceAllocator(),
@@ -34,8 +37,75 @@ namespace Lambda
 		m_ResourceDescriptorSize(0),
 		m_Type(COMMAND_LIST_TYPE_UNKNOWN)
 	{
-		LAMBDA_ASSERT(pDevice != nullptr);
-		Init(pDevice, type, nullSampler, nullSRV, nullUAV, nullCBV);
+		Init(type, nullSampler, nullSRV, nullUAV, nullCBV);
+	}
+
+
+	void DX12CommandList::Init(CommandListType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV)
+	{
+		using namespace Microsoft::WRL;
+
+		DX12GraphicsDevice& device = DX12GraphicsDevice::GetInstance();
+		D3D12_COMMAND_LIST_TYPE listType = ConvertCommandListType(type);
+
+		//Create commandallocator
+		HRESULT hr = device.GetDevice()->CreateCommandAllocator(listType, IID_PPV_ARGS(&m_Allocator));
+		if (FAILED(hr))
+		{
+			LOG_DEBUG_ERROR("DX12: Failed to create CommandAllocator.\n");
+			return;
+		}
+		else
+		{
+			LOG_DEBUG_INFO("DX12: Created CommandList.\n");
+		}
+
+		//Create commandlist
+		ComPtr<ID3D12GraphicsCommandList> commandList = nullptr;
+		hr = device.GetDevice()->CreateCommandList(1, listType, m_Allocator.Get(), nullptr, IID_PPV_ARGS(&commandList));
+		if (FAILED(hr))
+		{
+			LOG_DEBUG_ERROR("DX12: Failed to create CommandList.\n");
+			return;
+		}
+		else
+		{
+			hr = commandList.As<ID3D12GraphicsCommandList4>(&m_List);
+			if (FAILED(hr))
+			{
+				LOG_DEBUG_ERROR("DX12: Failed to retrive ID3D12GraphicsCommandList4.\n");
+				return;
+			}
+			else
+			{
+				//Set type
+				m_Type = type;
+
+				//Start list in a closed state
+				m_List->Close();
+
+				//Create uploadallocators
+				m_BufferAllocator.Init(device.GetDevice());
+				m_TextureAllocator.Init(device.GetDevice(), MB(16));
+
+				//Create frame descriptor allocators
+				m_ResourceAllocator.Init(device.GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 256, true);
+				m_SamplerAllocator.Init(device.GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, 256, true);
+
+				//Cache descriptor size
+				m_ResourceDescriptorSize = m_ResourceAllocator.GetDescriptorSize();
+				m_SamplerDescriptorSize = m_SamplerAllocator.GetDescriptorSize();
+
+				//Set nulldescriptors
+				m_NullDescriptors[SAMPLER_DESCRIPTOR_INDEX] = nullSampler;
+				m_NullDescriptors[CBV_DESCRIPTOR_INDEX] = nullCBV;
+				m_NullDescriptors[SRV_DESCRIPTOR_INDEX] = nullSRV;
+				m_NullDescriptors[UAV_DESCRIPTOR_INDEX] = nullUAV;
+
+				//Allocate new descriptors
+				AllocateDescriptors();
+			}
+		}
 	}
 
 
@@ -326,30 +396,30 @@ namespace Lambda
 		memcpy(allocation.pCPU, pData->pData, pData->SizeInBytes);
 		
 		//Setup texture copy info
-		DX12Texture* pDX12Texture = reinterpret_cast<DX12Texture*>(pResource);
-		TextureDesc desc = pDX12Texture->GetDesc();
+		DX12Texture* pDXTexture	= reinterpret_cast<DX12Texture*>(pResource);
+		TextureDesc desc		= pDXTexture->GetDesc();
 
 		//Setup dst
 		D3D12_TEXTURE_COPY_LOCATION dst = {};
-		dst.pResource = pDX12Texture->GetResource();
-		dst.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
-		dst.SubresourceIndex = subresource;
+		dst.pResource			= pDXTexture->GetResource();
+		dst.Type				= D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+		dst.SubresourceIndex	= subresource;
 
 		//Setup src
 		D3D12_SUBRESOURCE_FOOTPRINT srcPitchedDesc = { };
-		srcPitchedDesc.Format = ConvertFormat(desc.Format);
-		srcPitchedDesc.Width = desc.Width;
-		srcPitchedDesc.Height = desc.Height;
-		srcPitchedDesc.Depth = 1;
-		srcPitchedDesc.RowPitch = Math::AlignUp(srcPitchedDesc.Width * StrideInBytesFromResourceFormat(desc.Format), D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
+		srcPitchedDesc.Format	= ConvertFormat(desc.Format);
+		srcPitchedDesc.Width	= desc.Width;
+		srcPitchedDesc.Height	= desc.Height;
+		srcPitchedDesc.Depth	= 1;
+		srcPitchedDesc.RowPitch	= Math::AlignUp(srcPitchedDesc.Width * StrideInBytesFromResourceFormat(desc.Format), D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
 
 		D3D12_PLACED_SUBRESOURCE_FOOTPRINT placedTexture2D = { 0 };
-		placedTexture2D.Offset = allocation.Offset;
-		placedTexture2D.Footprint = srcPitchedDesc;
+		placedTexture2D.Offset		= allocation.Offset;
+		placedTexture2D.Footprint	= srcPitchedDesc;
 
 		D3D12_TEXTURE_COPY_LOCATION src = {};
-		src.pResource = allocation.pPageResource;
-		src.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+		src.pResource		= allocation.pPageResource;
+		src.Type			= D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
 		src.PlacedFootprint = placedTexture2D;
 		
 		//Perform GPU copy
@@ -424,82 +494,6 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::Init(ID3D12Device* pDevice, CommandListType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV)
-	{
-		using namespace Microsoft::WRL;
-
-		//Create commandallocator
-		D3D12_COMMAND_LIST_TYPE cType = D3D12_COMMAND_LIST_TYPE_DIRECT;
-		if (type == COMMAND_LIST_TYPE_GRAPHICS)
-			cType = D3D12_COMMAND_LIST_TYPE_DIRECT;
-		else if (type == COMMAND_LIST_TYPE_COMPUTE)
-			cType = D3D12_COMMAND_LIST_TYPE_COMPUTE;
-		else if (type == COMMAND_LIST_TYPE_COPY)
-			cType = D3D12_COMMAND_LIST_TYPE_COPY;
-
-		HRESULT hr = pDevice->CreateCommandAllocator(cType, IID_PPV_ARGS(&m_Allocator));
-		if (FAILED(hr))
-		{
-			LOG_DEBUG_ERROR("DX12: Failed to create CommandAllocator.\n");
-			return;
-		}
-		else
-		{
-			LOG_DEBUG_INFO("DX12: Created CommandList.\n");
-		}
-
-		//Create commandlist
-		ComPtr<ID3D12GraphicsCommandList> commandList = nullptr;
-		hr = pDevice->CreateCommandList(1, cType, m_Allocator.Get(), nullptr, IID_PPV_ARGS(&commandList));
-		if (FAILED(hr))
-		{
-			LOG_DEBUG_ERROR("DX12: Failed to create CommandList.\n");
-			return;
-		}
-		else
-		{
-			hr = commandList.As<ID3D12GraphicsCommandList4>(&m_List);
-			if (FAILED(hr))
-			{
-				LOG_DEBUG_ERROR("DX12: Failed to retrive ID3D12GraphicsCommandList4.\n");
-				return;
-			}
-			else
-			{
-				//Set device
-				m_Device = pDevice;
-
-				//Set type
-				m_Type = type;
-
-				//Start list in a closed state
-				m_List->Close();
-
-				//Create uploadallocators
-				m_BufferAllocator.Init(pDevice);
-				m_TextureAllocator.Init(pDevice, MB(16));
-
-				//Create frame descriptor allocators
-				m_ResourceAllocator.Init(pDevice, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 256, true);
-				m_SamplerAllocator.Init(pDevice, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, 256, true);
-
-				//Cache descriptor size
-				m_ResourceDescriptorSize = m_ResourceAllocator.GetDescriptorSize();
-				m_SamplerDescriptorSize = m_SamplerAllocator.GetDescriptorSize();
-
-				//Set nulldescriptors
-				m_NullDescriptors[SAMPLER_DESCRIPTOR_INDEX] = nullSampler;
-				m_NullDescriptors[CBV_DESCRIPTOR_INDEX] = nullCBV;
-				m_NullDescriptors[SRV_DESCRIPTOR_INDEX] = nullSRV;
-				m_NullDescriptors[UAV_DESCRIPTOR_INDEX] = nullUAV;
-
-				//Allocate new descriptors
-				AllocateDescriptors();
-			}
-		}
-	}
-
-
 	void DX12CommandList::AllocateDescriptors()
 	{
 		//Allocate descriptors
@@ -531,8 +525,9 @@ namespace Lambda
 	void DX12CommandList::InternalCopyAndSetDescriptors()
 	{
 		//Perform copy of resourcedescriptors
-		m_ResourceCache.CopyDescriptors(m_Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-		m_SamplerCache.CopyDescriptors(m_Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+		DX12GraphicsDevice& device = DX12GraphicsDevice::GetInstance();
+		m_ResourceCache.CopyDescriptors(device.GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_SamplerCache.CopyDescriptors(device.GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 
 		//Set heap and descriptortables at predefine slots. (See default rootsignature in DX12PipelineState)
 		ID3D12DescriptorHeap* ppHeaps[] = { m_ResourceAllocator.GetHeap(), m_SamplerAllocator.GetHeap() };

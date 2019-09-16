@@ -6,30 +6,31 @@
 
 namespace Lambda
 {
+	//----------
+	//DX12Shader
+	//----------
+
 	class DX12Shader final : public IShader
 	{
-		friend class DX12GraphicsDevice;
-		friend class DX12GraphicsPipelineState;
-
 	public:
 		LAMBDA_NO_COPY(DX12Shader);
 
 		DX12Shader(const ShaderDesc& desc);
 		~DX12Shader() = default;
 
-		virtual void* GetNativeHandle() const override final;
-		virtual ShaderDesc GetDesc() const override final;
+		virtual void*		GetNativeHandle() const override final;
+		virtual ShaderDesc	GetDesc() const override final;
+
+		const void* GetShaderBlobData() const;
+		uint64		GetShaderBlobSize() const;
 
 	private:
 		void Init(const ShaderDesc& desc);
 
-		const void* GetShaderBlobData() const;
-		uint64 GetShaderBlobSize() const;
-
 	private:
-		std::vector<uint8> m_ShaderBlob;
-		std::string m_EntryPoint;
-		ShaderStage m_Type;
+		std::string			m_EntryPoint;
+		std::vector<uint8>	m_ShaderBlob;
+		ShaderStage			m_Type;
 
 	private:
 		static const char* GetTarget(ShaderStage type);

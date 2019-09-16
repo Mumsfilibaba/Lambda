@@ -4,6 +4,10 @@
 
 namespace Lambda
 {
+	//----------
+	//DX12Shader
+	//----------
+
 	DX12Shader::DX12Shader(const ShaderDesc& desc)
 		: m_ShaderBlob(),
 		m_Type(SHADER_STAGE_UNKNOWN)
@@ -48,7 +52,7 @@ namespace Lambda
 				flags |= D3DCOMPILE_OPTIMIZATION_LEVEL3;
 
 			//Compile shader
-			ComPtr<ID3DBlob> error = nullptr;
+			ComPtr<ID3DBlob> error		= nullptr;
 			ComPtr<ID3DBlob> shaderBlob = nullptr;
 			HRESULT hr = D3DCompile2(desc.pSource, strlen(desc.pSource), nullptr, nullptr, nullptr, desc.pEntryPoint, GetTarget(desc.Type), flags, 0, 0, 0, 0, &shaderBlob, &error);
 			if (FAILED(hr))
@@ -76,12 +80,12 @@ namespace Lambda
 	{
 		switch (type)
 		{
-		case SHADER_STAGE_VERTEX: return "vs_5_0";
-		case SHADER_STAGE_HULL: return "hs_5_0";
-		case SHADER_STAGE_DOMAIN: return "ds_5_0";
+		case SHADER_STAGE_VERTEX:	return "vs_5_0";
+		case SHADER_STAGE_HULL:		return "hs_5_0";
+		case SHADER_STAGE_DOMAIN:	return "ds_5_0";
 		case SHADER_STAGE_GEOMETRY: return "gs_5_0";
-		case SHADER_STAGE_PIXEL: return "ps_5_0";
-		case SHADER_STAGE_COMPUTE: return "cs_5_0";
+		case SHADER_STAGE_PIXEL:	return "ps_5_0";
+		case SHADER_STAGE_COMPUTE:	return "cs_5_0";
 		case SHADER_STAGE_UNKNOWN:
 		default: return nullptr;
 		}

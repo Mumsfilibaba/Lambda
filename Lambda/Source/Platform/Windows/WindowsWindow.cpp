@@ -169,26 +169,37 @@ namespace Lambda
 		int32 error = 0;
 		{
 			WNDCLASSEX wc = {};
-			wc.cbSize = sizeof(WNDCLASSEX);
-			wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-			wc.lpfnWndProc = WindowEventCallback;
-			wc.cbClsExtra = 0;
-			wc.cbWndExtra = 0;
-			wc.hInstance = static_cast<HINSTANCE>(GetModuleHandle(NULL));
-			wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
-			wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-			wc.hbrBackground = reinterpret_cast<HBRUSH>(GetStockObject(BLACK_BRUSH));
-			wc.lpszMenuName = NULL;
-			wc.lpszClassName = NAME_APPWINDOW;
+			wc.cbSize			= sizeof(WNDCLASSEX);
+			wc.style			= CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+			wc.lpfnWndProc		= WindowEventCallback;
+			wc.cbClsExtra		= 0;
+			wc.cbWndExtra		= 0;
+			wc.hInstance		= static_cast<HINSTANCE>(GetModuleHandle(NULL));
+			wc.hIcon			= LoadIcon(NULL, IDI_APPLICATION);
+			wc.hCursor			= LoadCursor(NULL, IDC_ARROW);
+			wc.hbrBackground	= reinterpret_cast<HBRUSH>(GetStockObject(BLACK_BRUSH));
+			wc.lpszMenuName		= NULL;
+			wc.lpszClassName	= NAME_APPWINDOW;
 			wc.hIconSm = 0;
 
 			WindowClass::Register(wc);
 
 			//Set client area size
-			m_Style = WS_OVERLAPPEDWINDOW;
-			m_ExStyle = 0;
-			RECT rect = { 0, 0, static_cast<LONG>(desc.Width), static_cast<LONG>(desc.Height) };
+			m_Style		= WS_OVERLAPPEDWINDOW;
+			m_ExStyle	= 0;
+			RECT rect	= { 0, 0, static_cast<LONG>(desc.Width), static_cast<LONG>(desc.Height) };
 			AdjustWindowRect(&rect, m_Style, false);
+
+			//Set name
+			std::string name;
+			if (desc.pTitle)
+			{
+				name = std::string(desc.pTitle);
+				if (desc.GraphicsDeviceAPI == GRAPHICS_API_D3D12)
+					name += " - [D3D12] 64-bit";
+				else if (desc.GraphicsDeviceAPI == GRAPHICS_API_VULKAN)
+					name += " - [VULKAN] 64-bit";
+			}
 
 			//Create window
 			SetLastError(0);
@@ -199,8 +210,8 @@ namespace Lambda
 			}
 			else
 			{
-				m_Width = desc.Width;
-				m_Height = desc.Height;
+				m_Width		= desc.Width;
+				m_Height	= desc.Height;
 
 				//Set userdata so we can retrive this-pointer when handling events
 				SetWindowLongPtr(m_hWindow, GWLP_USERDATA, reinterpret_cast<uintptr_t>(this));

@@ -111,12 +111,12 @@ namespace Lambda
 		//Create window
 		{
 			WindowDesc desc = {};
-			desc.pTitle		= params.pTitle;
-			desc.Width		= params.WindowWidth;
-			desc.Height		= params.WindowHeight;
-			desc.GraphicsDeviceAPI = params.GraphicsDeviceApi;
-			desc.SampleCount = params.SampleCount;
-			desc.Fullscreen = params.Fullscreen;
+			desc.pTitle				= params.pTitle;
+			desc.Width				= params.WindowWidth;
+			desc.Height				= params.WindowHeight;
+			desc.GraphicsDeviceAPI	= params.GraphicsDeviceApi;
+			desc.SampleCount		= params.SampleCount;
+			desc.Fullscreen			= params.Fullscreen;
 
 			m_pWindow = IWindow::Create(desc);
 			m_pWindow->SetEventCallback(EventDispatcher::SendEvent);

@@ -12,12 +12,16 @@ namespace Lambda
 {
 	class DX12Texture;
 
+	//------------------
+	//DX12GraphicsDevice
+	//------------------
+
 	class DX12GraphicsDevice final : public IGraphicsDevice
 	{
 	public:
 		LAMBDA_NO_COPY(DX12GraphicsDevice);
 
-		DX12GraphicsDevice(IWindow* pWindow, const GraphicsDeviceDesc& desc);
+		DX12GraphicsDevice(const GraphicsDeviceDesc& desc);
 		~DX12GraphicsDevice();
 
 		virtual void CreateCommandList(ICommandList** ppList, CommandListType type) override final;
@@ -45,64 +49,66 @@ namespace Lambda
 		virtual void GPUWaitForFrame() const override final;
 		virtual void WaitForGPU() const override final;
 
-		virtual GraphicsDeviceDesc GetDesc() const override final;
-		virtual void* GetNativeHandle() const override final;
-		virtual ITexture* GetDepthStencil() const override final;
-		virtual ITexture* GetRenderTarget() const override final;
-		virtual ResourceFormat GetBackBufferFormat() const override final;
-		virtual uint32 GetBackBufferIndex() const override final;
-		virtual uint32 GetSwapChainWidth() const override final;
-		virtual uint32 GetSwapChainHeight() const override final;
+		virtual GraphicsDeviceDesc	GetDesc() const override final;
+		virtual void*				GetNativeHandle() const override final;
+		virtual ITexture*			GetDepthStencil() const override final;
+		virtual ITexture*			GetRenderTarget() const override final;
+		virtual ResourceFormat		GetBackBufferFormat() const override final;
+		virtual uint32				GetBackBufferIndex() const override final;
+		virtual uint32				GetSwapChainWidth() const override final;
+		virtual uint32				GetSwapChainHeight() const override final;
+
+		ID3D12Device* GetDevice() const;
 
 	private:
-		void Init(IWindow* pWindow, const GraphicsDeviceDesc& desc);
+		void Init(const GraphicsDeviceDesc& desc);
+		bool InitBackBuffers();
+
 		void ReleaseBackBuffers();
 		
 		bool QueryAdaper(uint32 flags);
-		bool CreateFactory(uint32 flags);
-		bool CreateDeviceAndCommandQueues(uint32 flags);
-		bool CreateCommandList();
-		bool CreateSwapChain(IWindow* pWindow);
-		bool CreateDescriptorHeaps();
-		bool InitBackBuffers();
-
 		bool IsDXRSupported(ID3D12Device* pDevice);
 
 		virtual bool InternalOnEvent(const Event& event) override final;
 
 	private:
-		Microsoft::WRL::ComPtr<IDXGIFactory5> m_Factory;
-		Microsoft::WRL::ComPtr<IDXGIAdapter3> m_Adapter;
-		Microsoft::WRL::ComPtr<IDXGISwapChain3> m_SwapChain;
-		Microsoft::WRL::ComPtr<ID3D12Device> m_Device;
-		Microsoft::WRL::ComPtr<ID3D12Device5> m_DXRDevice;
-		Microsoft::WRL::ComPtr<ID3D12Debug> m_Debug;
+		Microsoft::WRL::ComPtr<IDXGIFactory5>	m_Factory;
+		Microsoft::WRL::ComPtr<IDXGIAdapter3>	m_Adapter;
+		Microsoft::WRL::ComPtr<ID3D12Device>	m_Device;
+		Microsoft::WRL::ComPtr<ID3D12Device5>	m_DXRDevice;
+		Microsoft::WRL::ComPtr<ID3D12Debug>		m_Debug;
+		Microsoft::WRL::ComPtr<IDXGISwapChain3>	m_SwapChain;
+		DX12CommandList*						m_pCommandList;
+		DX12CommandQueue						m_DirectQueue;
+		DX12CommandQueue						m_ComputeQueue;
+		DX12CommandQueue						m_CopyQueue;
+		mutable DX12DescriptorAllocator			m_RTAllocator;
+		mutable DX12DescriptorAllocator			m_DSAllocator;
+		mutable DX12DescriptorAllocator			m_ResourceAllocator;
+		mutable DX12DescriptorAllocator			m_SamplerAllocator;
+		DX12DescriptorHandle					m_NullSampler;
+		DX12DescriptorHandle					m_NullSRV;
+		DX12DescriptorHandle					m_NullCBV;
+		DX12DescriptorHandle					m_NullUAV;
+		std::vector<DX12Texture*>				m_BackBuffers;
+		mutable std::vector<uint64>				m_FenceValues;
+		DXGI_FORMAT								m_BackBufferFormat;
+		uint32									m_BackBufferFlags;
+		uint32									m_BackBufferHeight;
+		uint32									m_BackBufferWidth;
+		mutable uint32							m_CurrentBackBuffer;
+		uint32									m_NumBackbuffers;
+		bool									m_DXRSupported;
+		GraphicsDeviceDesc						m_Desc;
 
-		DX12CommandList* m_pCommandList;
-
-		DX12CommandQueue m_DirectQueue;
-		DX12CommandQueue m_ComputeQueue;
-		DX12CommandQueue m_CopyQueue;
-
-		mutable DX12DescriptorAllocator m_RTAllocator;
-		mutable DX12DescriptorAllocator m_DSAllocator;
-		mutable DX12DescriptorAllocator m_ResourceAllocator;
-		mutable DX12DescriptorAllocator m_SamplerAllocator;
-		DX12DescriptorHandle m_NullSampler;
-		DX12DescriptorHandle m_NullSRV;
-		DX12DescriptorHandle m_NullCBV;
-		DX12DescriptorHandle m_NullUAV;
-		std::vector<DX12Texture*> m_BackBuffers;
-		mutable std::vector<uint64> m_FenceValues;
-
-		DXGI_FORMAT m_BackBufferFormat;
-		uint32 m_BackBufferFlags;
-		uint32 m_BackBufferHeight;
-		uint32 m_BackBufferWidth;
-		mutable uint32 m_CurrentBackBuffer;
-		uint32 m_NumBackbuffers;
-		bool m_DXRSupported;
-		GraphicsDeviceDesc m_Desc;
+	public:
+		static DX12GraphicsDevice& GetInstance();
 	};
+
+
+	inline ID3D12Device* DX12GraphicsDevice::GetDevice() const
+	{
+		return m_Device.Get();
+	}
 }
 #endif

@@ -8,6 +8,10 @@
 
 namespace Lambda
 {
+	//---------------
+	//DX12CommandList
+	//---------------
+
 	class DX12CommandList final : public ICommandList
 	{
 		friend class DX12GraphicsDevice;
@@ -16,7 +20,7 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(DX12CommandList);
 
-		DX12CommandList(ID3D12Device* pDevice, CommandListType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV);
+		DX12CommandList(CommandListType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV);
 		~DX12CommandList() = default;
 	
 		virtual void ClearRenderTarget(ITexture* pRenderTarget, float color[4]) override final;
@@ -31,8 +35,6 @@ namespace Lambda
 		virtual void SetIndexBuffer(IBuffer* pIndexBuffer) override final;
 		virtual void SetGraphicsPipelineState(IGraphicsPipelineState* pPiplineState) override final;
 		virtual void SetGraphicsPipelineResourceState(IPipelineResourceState* pResourceState) override final;
-
-		virtual CommandListType GetType() const override final;
 
 		virtual void TransitionBuffer(const IBuffer* pResource, ResourceState resourceState) override final;
 		virtual void TransitionTexture(const ITexture* pResource, ResourceState resourceState, uint32 startMipLevel, uint32 numMipLevels) override final;
@@ -67,13 +69,14 @@ namespace Lambda
 
 		virtual void SetName(const char* pName) override final;
 
-		virtual void* GetNativeHandle() const override final;
+		virtual void*			GetNativeHandle() const override final;
+		virtual	CommandListType GetType() const override final;
 
 		virtual void Close() override final;
 		virtual void Reset() override final;
 
 	private:
-		void Init(ID3D12Device* pDevice, CommandListType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV);
+		void Init(CommandListType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV);
 		void AllocateDescriptors();
 		void InternalCopyAndSetDescriptors();
 		void InternalSetResourceDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE hDest, D3D12_CPU_DESCRIPTOR_HANDLE hSrc, uint32 slot, uint32 range);
@@ -82,27 +85,21 @@ namespace Lambda
 		ID3D12CommandList* GetList() const;
 
 	private:
-		Microsoft::WRL::ComPtr<ID3D12Device> m_Device;
-		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_Allocator;
-		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> m_List;
-		
-		DX12DescriptorHandle m_hResourceDescriptorTables[5];
-		DX12DescriptorHandle m_hSamplerDescriptorTables[5];
-		DX12DescriptorHandle m_NullDescriptors[4];
-
-		DX12ResourceStateTracker m_ResourceTracker;
-
-		DX12LinearAllocator m_BufferAllocator;
-		DX12LinearAllocator m_TextureAllocator;
-		DX12LinearDescriptorAllocator m_ResourceAllocator;
-		DX12LinearDescriptorAllocator m_SamplerAllocator;
-
-		DX12DescriptorCache m_ResourceCache;
-		DX12DescriptorCache m_SamplerCache;
-		
-		CommandListType m_Type;
-		uint32 m_SamplerDescriptorSize;
-		uint32 m_ResourceDescriptorSize;
+		Microsoft::WRL::ComPtr<ID3D12CommandAllocator>		m_Allocator;
+		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4>	m_List;
+		DX12DescriptorHandle								m_hResourceDescriptorTables[5];
+		DX12DescriptorHandle								m_hSamplerDescriptorTables[5];
+		DX12DescriptorHandle								m_NullDescriptors[4];
+		DX12ResourceStateTracker							m_ResourceTracker;
+		DX12LinearAllocator									m_BufferAllocator;
+		DX12LinearAllocator									m_TextureAllocator;
+		DX12LinearDescriptorAllocator						m_ResourceAllocator;
+		DX12LinearDescriptorAllocator						m_SamplerAllocator;
+		DX12DescriptorCache									m_ResourceCache;
+		DX12DescriptorCache									m_SamplerCache;
+		uint32												m_SamplerDescriptorSize;
+		uint32												m_ResourceDescriptorSize;
+		CommandListType										m_Type;
 	};
 
 

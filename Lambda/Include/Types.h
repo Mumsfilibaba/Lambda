@@ -275,7 +275,7 @@ namespace Lambda
 		RESOURCE_STATE_RENDERTARGET                 = 1,
         RESOURCE_STATE_RENDERTARGET_CLEAR           = 2,
         RESORUCE_STATE_DEPTH_STENCIL_CLEAR          = 3,
-		RESOURCE_STATE_DEPTH_STENCIL                  = 4,
+		RESOURCE_STATE_DEPTH_STENCIL                = 4,
 		RESOURCE_STATE_DEPTH_READ                   = 5,
         RESOURCE_STATE_RENDERTARGET_PRESENT         = 6,
 		RESOURCE_STATE_COPY_DEST                    = 7,
@@ -359,20 +359,20 @@ namespace Lambda
     //Type of resource in a resourcestate
     enum ResourceType
     {
-        RESOURCE_TYPE_UNKNOWN = 0,
-        RESOURCE_TYPE_TEXTURE = 1,
-        RESOURCE_TYPE_SAMPLER_STATE = 2,
-        RESOURCE_TYPE_CONSTANT_BUFFER = 3
+        RESOURCE_TYPE_UNKNOWN			= 0,
+        RESOURCE_TYPE_TEXTURE			= 1,
+        RESOURCE_TYPE_SAMPLER_STATE		= 2,
+        RESOURCE_TYPE_CONSTANT_BUFFER	= 3
     };
 
 
 	//Enum describing a commandlisttype
 	enum CommandListType : uint32
 	{
-		COMMAND_LIST_TYPE_UNKNOWN = 0,
-		COMMAND_LIST_TYPE_GRAPHICS = 1,
-		COMMAND_LIST_TYPE_COMPUTE = 2,
-		COMMAND_LIST_TYPE_COPY = 2,
+		COMMAND_LIST_TYPE_UNKNOWN	= 0,
+		COMMAND_LIST_TYPE_GRAPHICS	= 1,
+		COMMAND_LIST_TYPE_COMPUTE	= 2,
+		COMMAND_LIST_TYPE_COPY		= 3,
 	};
     
 
