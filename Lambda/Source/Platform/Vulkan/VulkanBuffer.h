@@ -40,12 +40,12 @@ namespace Lambda
 		IVulkanAllocator* const m_pAllocator;
         VulkanMemory			m_Memory;
         VkBuffer				m_Buffer;
-        BufferDesc				m_Desc;
 		uint32					m_CurrentFrame;
 		uint32					m_SizePerFrame;
 		uint32					m_SizePerUpdate;
 		uint32					m_DynamicOffset;
 		uint32					m_TotalDynamicOffset;
+        BufferDesc				m_Desc;
 		bool					m_IsDirty;
     };
 
