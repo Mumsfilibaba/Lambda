@@ -385,10 +385,6 @@ namespace Lambda
 		for (size_t i = 0; i < m_DynamicBuffers.size(); i++)
 		{
 			m_DynamicOffsets[i] = m_DynamicBuffers[i]->GetDynamicOffset();
-            if (m_DynamicOffsets[i] >= 18688)
-            {
-                LOG_DEBUG_ERROR("WTF\n");
-            }
 		}
 	}
 

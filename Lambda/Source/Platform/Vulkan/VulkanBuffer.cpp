@@ -155,11 +155,6 @@ namespace Lambda
 		uint32 frameOffset		= m_CurrentFrame * m_SizePerFrame;	//Offset of the current frame
 		m_DynamicOffset			= (offset) % m_SizePerFrame;		//Ringbuffer-offset per frame
 		m_TotalDynamicOffset	= frameOffset + m_DynamicOffset;						
-
-        if (m_TotalDynamicOffset >= m_SizePerFrame * 3)
-        {
-            LOG_DEBUG_ERROR("WTF");
-        }
         
 		//Update buffer
 		uint8* pCurrent = m_Memory.pHostMemory + m_TotalDynamicOffset;
