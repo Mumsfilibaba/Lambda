@@ -443,6 +443,12 @@ namespace Lambda
 	}
 
 
+	GraphicsDeviceDesc DX12GraphicsDevice::GetDesc() const
+	{
+		return m_Desc;
+	}
+
+
 	void* DX12GraphicsDevice::GetNativeHandle() const
 	{
 		//Return the ID3D12Device-ptr

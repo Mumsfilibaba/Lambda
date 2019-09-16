@@ -46,13 +46,14 @@ namespace Lambda
 
 		//Setup first block
         m_pBlockHead = DBG_NEW VulkanMemoryBlock();
-        m_pBlockHead->pNext     = nullptr;
-        m_pBlockHead->pPrevious = nullptr;
-        m_pBlockHead->IsFree    = true;
-        m_pBlockHead->ID        = m_BlockCount++;
-		m_pBlockHead->Size	    = m_SizeInBytes;
+        m_pBlockHead->pNext					= nullptr;
+        m_pBlockHead->pPrevious				= nullptr;
+        m_pBlockHead->IsFree				= true;
+        m_pBlockHead->ID					= m_BlockCount++;
+		m_pBlockHead->Size					= m_SizeInBytes;
 		m_pBlockHead->DeviceMemoryOffset    = 0;
-
+		
+		//If this is CPU visible -> Map
 		if (m_Usage == RESOURCE_USAGE_DYNAMIC)
 		{
 			Map();
@@ -103,23 +104,24 @@ namespace Lambda
         //Create a block for the padding (Allocating a texture in a block can result in a padding of 256 bytes which is enough for a buffer)
         if (padding > 0)
         {
-            VulkanMemoryBlock* pPadding = DBG_NEW VulkanMemoryBlock();
-            pPadding->ID                    = m_BlockCount++;
-            pPadding->DeviceMemoryOffset    = offset;
-            pPadding->Size                  = padding;
-            pPadding->IsFree                = true;
+			//Save the old block (Will be padding)
+            VulkanMemoryBlock* pPadding		= pBestFit;
+
+			//Create a new block that fill house the allocation
+			pBestFit						= DBG_NEW VulkanMemoryBlock();
+			pBestFit->ID                    = m_BlockCount++;
+			pBestFit->DeviceMemoryOffset    = offset;
+			pBestFit->Size                  = pPadding->Size - padding;
+			pBestFit->IsFree                = true;
             
-            pPadding->pPrevious = pBestFit->pPrevious;
+			//Resize padding block
+			pPadding->Size = padding;
+
+			//Set pointers
+			pBestFit->pNext		= pPadding->pNext;
+			pBestFit->pPrevious = pPadding;
+
             pPadding->pNext     = pBestFit;
-            
-            
-            pBestFit->Size                  = pBestFit->Size - padding;
-            pBestFit->DeviceMemoryOffset    = Math::AlignUp<uint64>(pBestFit->DeviceMemoryOffset, alignment);
-            if (pBestFit->pPrevious)
-            {
-                pBestFit->pPrevious->pNext  = pPadding;
-            }
-            pBestFit->pPrevious             = pPadding;
         }
         
         
@@ -132,6 +134,7 @@ namespace Lambda
             pBlock->DeviceMemoryOffset  = pBestFit->DeviceMemoryOffset + sizeInBytes;
             pBlock->IsFree              = true;
             
+			//Set pointers
             pBlock->pNext       = pBestFit->pNext;
             pBlock->pPrevious   = pBestFit;
             

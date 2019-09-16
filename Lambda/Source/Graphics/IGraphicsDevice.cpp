@@ -20,7 +20,7 @@ namespace Lambda
 
 		if (desc.Api == GRAPHICS_API_D3D12)
 		{
-			return DBG_NEW DX12GraphicsDevice(pWindow, desc);
+			return DBG_NEW DX12GraphicsDevice(nullptr, desc);
 		}
 		else if (desc.Api == GRAPHICS_API_VULKAN)
 		{

@@ -214,14 +214,16 @@ namespace Lambda
 		//Create graphics context
 		{
 			GraphicsDeviceDesc gcDesc = {};
-			gcDesc.Api = desc.GraphicsDeviceAPI;
-			gcDesc.SampleCount = desc.SampleCount;
+			gcDesc.pWindow			= this;
+			gcDesc.Api				= desc.GraphicsDeviceAPI;
+			gcDesc.SampleCount		= desc.SampleCount;
+			gcDesc.BackBufferCount	= 3;
 #if LAMBDA_DEBUG
 			gcDesc.Flags = GRAPHICS_CONTEXT_FLAG_DEBUG;
 #else
 			gcDesc.Flags = GRAPHICS_CONTEXT_FLAG_NONE;
 #endif
-			m_pGraphicsDevice = IGraphicsDevice::Create(this, gcDesc);
+			m_pGraphicsDevice = IGraphicsDevice::Create(gcDesc);
 		}
 	}
 

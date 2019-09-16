@@ -45,6 +45,7 @@ namespace Lambda
 		virtual void GPUWaitForFrame() const override final;
 		virtual void WaitForGPU() const override final;
 
+		virtual GraphicsDeviceDesc GetDesc() const override final;
 		virtual void* GetNativeHandle() const override final;
 		virtual ITexture* GetDepthStencil() const override final;
 		virtual ITexture* GetRenderTarget() const override final;
@@ -101,6 +102,7 @@ namespace Lambda
 		mutable uint32 m_CurrentBackBuffer;
 		uint32 m_NumBackbuffers;
 		bool m_DXRSupported;
+		GraphicsDeviceDesc m_Desc;
 	};
 }
 #endif
