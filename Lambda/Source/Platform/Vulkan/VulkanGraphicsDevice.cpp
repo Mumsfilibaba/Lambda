@@ -871,15 +871,15 @@ namespace Lambda
         {
             if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
             {
+                //Register dynamic buffer
+                m_pDynamicBufferManager->RegisterBuffer(pVkBuffer);
+                
                 //Upload directly to buffer if it is dynamic
                 void* pMappedData = nullptr;
                 
-				pVkBuffer->Map(&pMappedData);
+                pVkBuffer->Map(&pMappedData);
                 memcpy(pMappedData, pInitalData->pData, pInitalData->SizeInBytes);
                 pVkBuffer->Unmap();
-
-				//Register dynamic buffer
-				m_pDynamicBufferManager->RegisterBuffer(pVkBuffer);
             }
             else if (desc.Usage == RESOURCE_USAGE_DEFAULT)
             {

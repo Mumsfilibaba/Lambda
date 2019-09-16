@@ -155,6 +155,7 @@ namespace Lambda
 			m_IndexCount = uint32(mesh.Indices.size());
 			{
                 BufferDesc desc = {};
+                desc.pName          = "VertexBuffer";
                 desc.Usage          = RESOURCE_USAGE_DEFAULT;
                 desc.Flags          = BUFFER_FLAGS_VERTEX_BUFFER;
                 desc.SizeInBytes    = sizeof(Vertex) * uint32(mesh.Vertices.size());
@@ -170,6 +171,7 @@ namespace Lambda
             //Create indexbuffer
             {
                 BufferDesc desc = {};
+                desc.pName          = "IndexBuffer";
                 desc.Usage          = RESOURCE_USAGE_DEFAULT;
                 desc.Flags          = BUFFER_FLAGS_INDEX_BUFFER;
                 desc.SizeInBytes    = sizeof(uint32) * uint32(mesh.Indices.size());
@@ -187,6 +189,7 @@ namespace Lambda
                 glm::vec4 color = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
 
                 BufferDesc desc = {};
+                desc.pName          = "ColorBuffer";
                 desc.Usage			= RESOURCE_USAGE_DYNAMIC;
                 desc.Flags			= BUFFER_FLAGS_CONSTANT_BUFFER;
                 desc.SizeInBytes	= sizeof(glm::vec4);
@@ -207,6 +210,7 @@ namespace Lambda
                 m_Camera.CreateView();
                 
                 BufferDesc desc = {};
+                desc.pName          = "CameraBuffer";
                 desc.Usage			= RESOURCE_USAGE_DEFAULT;
                 desc.Flags			= BUFFER_FLAGS_CONSTANT_BUFFER;
                 desc.SizeInBytes	= sizeof(CameraBuffer);
@@ -225,6 +229,7 @@ namespace Lambda
             //Create TransformBuffer
             {
                 BufferDesc desc = {};
+                desc.pName          = "TransformBuffer";
                 desc.Usage			= RESOURCE_USAGE_DYNAMIC;
                 desc.Flags			= BUFFER_FLAGS_CONSTANT_BUFFER;
                 desc.SizeInBytes	= sizeof(TransformBuffer);
@@ -337,9 +342,15 @@ namespace Lambda
         //Update Colorbuffer
         glm::vec4 colorBuff = glm::vec4(RGB_F(178, 34, 34), 1.0f);
 
-        ResourceData data = {};
+        ResourceData data   = {};
         data.pData			= &colorBuff;
         data.SizeInBytes	= sizeof(glm::vec4); 
+        m_pCurrentList->UpdateBuffer(m_pColorBuffer, &data);
+        
+        //Update Colorbuffer
+        colorBuff           = glm::vec4(RGB_F(0, 0, 0), 1.0f);
+        data.pData          = &colorBuff;
+        data.SizeInBytes    = sizeof(glm::vec4);
         m_pCurrentList->UpdateBuffer(m_pColorBuffer, &data);
         
         //Update camera buffer
@@ -380,13 +391,13 @@ namespace Lambda
 		colors[2] = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
 		colors[3] = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
-		constexpr uint32 cubes = 5;
-        for (uint32 y = 0; y < cubes; y++)
+		constexpr uint32 cubes = 16;
+        for (uint32 y = 0; y < 1; y++)
         {
             for (uint32 x = 0; x < cubes; x++)
             {
                 //Update transforms
-                m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(-float(cubes) + x * 2.0f, 0.0f, -float(cubes) + y * 2.0f)) * rotation;
+                m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(-float(cubes) + x * 2.0f, 0.0f, 0.0f/*-float(cubes) + y * 2.0f*/)) * rotation;
                 data.pData				= &m_TransformBuffer;
                 data.SizeInBytes		= sizeof(TransformBuffer);
                 m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);
@@ -395,7 +406,7 @@ namespace Lambda
 				glm::vec4 col		= colors[x % 4];
 				data.pData			= &col;
 				data.SizeInBytes	= sizeof(glm::vec4);
-				m_pCurrentList->UpdateBuffer(m_pColorBuffer, &data);
+				//m_pCurrentList->UpdateBuffer(m_pColorBuffer, &data);
             
 				//Draw
 				m_pCurrentList->DrawIndexedInstanced(m_IndexCount, 1, 0, 0, 0);

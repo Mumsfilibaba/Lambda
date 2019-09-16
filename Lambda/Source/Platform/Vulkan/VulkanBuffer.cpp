@@ -80,6 +80,8 @@ namespace Lambda
         {
             LOG_DEBUG_INFO("Vulkan: Created Buffer\n");
             m_Desc = desc;
+            
+            device.SetVulkanObjectName(VK_OBJECT_TYPE_BUFFER, uint64(m_Buffer), std::string(m_Desc.pName));
         }
         
 		//Allocate memory
@@ -154,6 +156,11 @@ namespace Lambda
 		m_DynamicOffset			= (offset) % m_SizePerFrame;		//Ringbuffer-offset per frame
 		m_TotalDynamicOffset	= frameOffset + m_DynamicOffset;						
 
+        if (m_TotalDynamicOffset >= 12288)
+        {
+            LOG_DEBUG_ERROR("WTF");
+        }
+        
 		//Update buffer
 		uint8* pCurrent = m_Memory.pHostMemory + m_TotalDynamicOffset;
 		memcpy(pCurrent, pData->pData, pData->SizeInBytes);
@@ -174,9 +181,10 @@ namespace Lambda
         GraphicsDeviceDesc desc         = device.GetDesc();
         
         //Set new size
-        m_SizePerFrame  = sizeInBytes;
-        m_DynamicOffset = 0;
-        info.size       = VkDeviceSize(m_SizePerFrame * desc.BackBufferCount);
+        m_SizePerFrame       = sizeInBytes;
+        m_DynamicOffset      = 0;
+        m_TotalDynamicOffset = 0;
+        info.size            = VkDeviceSize(m_SizePerFrame * desc.BackBufferCount);
 
         LOG_DEBUG_WARNING("Vulkan: Reallocated buffer. Old size: %llu bytes, New size: %llu\n", m_Memory.Size, info.size);
         
@@ -205,6 +213,7 @@ namespace Lambda
 		else
 		{
 			LOG_DEBUG_INFO("Vulkan: Created Buffer\n");
+            device.SetVulkanObjectName(VK_OBJECT_TYPE_BUFFER, uint64(m_Buffer), std::string(m_Desc.pName));
 		}
 
 		//Allocate memory

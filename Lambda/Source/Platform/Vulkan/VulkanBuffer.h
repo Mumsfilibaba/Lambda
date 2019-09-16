@@ -1,5 +1,6 @@
 #pragma once
 #include "Graphics/IBuffer.h"
+#include <string>
 #include "VulkanAllocator.h"
 
 namespace Lambda

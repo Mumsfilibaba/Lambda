@@ -317,18 +317,19 @@ namespace Lambda
 		{
 			AllocateDescriptorSet();
 
+            //Clear dynamic buffers
 			m_DynamicBuffers.clear();
 			m_DynamicOffsets.clear();
 
-			VkWriteDescriptorSet writeInfo = {};
-			writeInfo.sType					= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			writeInfo.pNext					= nullptr;
-			writeInfo.dstArrayElement		= 0;
-			writeInfo.dstSet				= m_DescriptorSet;
-			writeInfo.pImageInfo			= nullptr;
-			writeInfo.pTexelBufferView		= nullptr;
+            //Setup writinginfos
+            VkWriteDescriptorSet writeInfo = {};
+            writeInfo.sType                 = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            writeInfo.pNext                 = nullptr;
+            writeInfo.dstArrayElement       = 0;
+            writeInfo.dstSet                = m_DescriptorSet;
+            writeInfo.pImageInfo            = nullptr;
+            writeInfo.pTexelBufferView      = nullptr;
 
-			//Setup writing slots
 			for (auto& resourceBinding : m_ResourceBindings)
 			{
 				VulkanSlot& binding			= resourceBinding.second;

@@ -356,6 +356,9 @@ namespace Lambda
 	
 	void VulkanDeviceAllocator::DefferedDeallocate(VulkanMemory* pAllocation, uint64 frameCount)
 	{
+        pAllocation->DeviceMemory   = VK_NULL_HANDLE;
+        pAllocation->pHostMemory    = nullptr;
+        
         if (size_t(pAllocation->ChunkID) < m_Chunks.size() && pAllocation->DeviceMemory != VK_NULL_HANDLE)
         {
             //m_MemoryToDeallocate[frameCount].emplace_back(pAllocation);
