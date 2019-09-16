@@ -1,17 +1,17 @@
 #include "LambdaPch.h"
-#include "VulkanPipelineResourceState.h"
-#include "VulkanGraphicsDevice.h"
-#include "VulkanBuffer.h"
-#include "VulkanTexture.h"
-#include "VulkanSamplerState.h"
+#include "VKNPipelineResourceState.h"
+#include "VKNDevice.h"
+#include "VKNBuffer.h"
+#include "VKNTexture.h"
+#include "VKNSamplerState.h"
 
 namespace Lambda
 {
 	//---------------------------
-	//VulkanPipelineResourceState
+	//VKNPipelineResourceState
 	//---------------------------
 
-	VulkanPipelineResourceState::VulkanPipelineResourceState(const PipelineResourceStateDesc& desc)
+	VKNPipelineResourceState::VKNPipelineResourceState(const PipelineResourceStateDesc& desc)
 		: m_PipelineLayout(VK_NULL_HANDLE),
 		m_DescriptorSetLayout(VK_NULL_HANDLE),
 		m_DescriptorPool(VK_NULL_HANDLE),
@@ -26,7 +26,7 @@ namespace Lambda
 	}
 
 
-	void VulkanPipelineResourceState::Init(const PipelineResourceStateDesc& desc)
+	void VKNPipelineResourceState::Init(const PipelineResourceStateDesc& desc)
 	{
 		//Copy the resourceslots
 		for (uint32 i = 0; i < desc.NumResourceSlots; i++)
@@ -104,7 +104,7 @@ namespace Lambda
 		descriptorLayoutInfo.bindingCount = uint32(layoutBindings.size());
 		descriptorLayoutInfo.pBindings = layoutBindings.data();
 
-		VulkanGraphicsDevice& device = VulkanGraphicsDevice::GetInstance();
+		VKNDevice& device = VKNDevice::GetInstance();
 		if (vkCreateDescriptorSetLayout(device.GetDevice(), &descriptorLayoutInfo, nullptr, &m_DescriptorSetLayout) != VK_SUCCESS)
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to create DescriptorSetLayout\n");
@@ -172,7 +172,7 @@ namespace Lambda
 	}
 
 
-	void VulkanPipelineResourceState::AllocateDescriptorSet()
+	void VKNPipelineResourceState::AllocateDescriptorSet()
 	{
 		//Allocate descriptorsets
 		VkDescriptorSetAllocateInfo descriptorAllocInfo = {};
@@ -182,7 +182,7 @@ namespace Lambda
 		descriptorAllocInfo.descriptorSetCount = 1;
 		descriptorAllocInfo.pSetLayouts = &m_DescriptorSetLayout;
 
-		VulkanGraphicsDevice& device = VulkanGraphicsDevice::GetInstance();
+		VKNDevice& device = VKNDevice::GetInstance();
 		if (vkAllocateDescriptorSets(device.GetDevice(), &descriptorAllocInfo, &m_DescriptorSet))
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to allocate DescriptorSets\n");
@@ -194,7 +194,7 @@ namespace Lambda
 	}
 
 
-	void VulkanPipelineResourceState::SetTextures(ITexture** ppTextures, uint32 numTextures, uint32 startSlot)
+	void VKNPipelineResourceState::SetTextures(ITexture** ppTextures, uint32 numTextures, uint32 startSlot)
 	{
 		for (uint32 i = 0; i < numTextures; i++)
 		{
@@ -203,7 +203,7 @@ namespace Lambda
 			{
 				if (resourceBinding.pTexture != ppTextures[i])
 				{
-					resourceBinding.pTexture				= reinterpret_cast<VulkanTexture*>(ppTextures[i]);
+					resourceBinding.pTexture				= reinterpret_cast<VKNTexture*>(ppTextures[i]);
 					resourceBinding.ImageInfo.imageView		= resourceBinding.pTexture->GetImageView();
 					resourceBinding.ImageInfo.imageLayout	= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 					resourceBinding.ImageInfo.sampler		= VK_NULL_HANDLE;
@@ -218,7 +218,7 @@ namespace Lambda
 	}
 
 
-	void VulkanPipelineResourceState::SetSamplerStates(ISamplerState** ppSamplerStates, uint32 numSamplerStates, uint32 startSlot)
+	void VKNPipelineResourceState::SetSamplerStates(ISamplerState** ppSamplerStates, uint32 numSamplerStates, uint32 startSlot)
 	{
 		for (uint32 i = 0; i < numSamplerStates; i++)
 		{
@@ -227,7 +227,7 @@ namespace Lambda
 			{
 				if (resourceBinding.pSamplerState != ppSamplerStates[i])
 				{
-					resourceBinding.pSamplerState			= reinterpret_cast<VulkanSamplerState*>(ppSamplerStates[i]);
+					resourceBinding.pSamplerState			= reinterpret_cast<VKNSamplerState*>(ppSamplerStates[i]);
 					resourceBinding.ImageInfo.imageView		= VK_NULL_HANDLE;
 					resourceBinding.ImageInfo.imageLayout	= VK_IMAGE_LAYOUT_UNDEFINED;
 					resourceBinding.ImageInfo.sampler		= reinterpret_cast<VkSampler>(ppSamplerStates[i]->GetNativeHandle());
@@ -242,7 +242,7 @@ namespace Lambda
 	}
 
 
-	void VulkanPipelineResourceState::SetConstantBuffers(IBuffer** ppBuffers, uint32 numBuffers, uint32 startSlot)
+	void VKNPipelineResourceState::SetConstantBuffers(IBuffer** ppBuffers, uint32 numBuffers, uint32 startSlot)
 	{
 		for (uint32 i = 0; i < numBuffers; i++)
 		{
@@ -251,7 +251,7 @@ namespace Lambda
 			{
 				if (resourceBinding.pBuffer != ppBuffers[i])
 				{
-					resourceBinding.pBuffer				= reinterpret_cast<VulkanBuffer*>(ppBuffers[i]);
+					resourceBinding.pBuffer				= reinterpret_cast<VKNBuffer*>(ppBuffers[i]);
 					
 					BufferDesc bufferDesc				= resourceBinding.pBuffer->GetDesc();
 					resourceBinding.BufferInfo.buffer	= reinterpret_cast<VkBuffer>(resourceBinding.pBuffer->GetNativeHandle());
@@ -268,13 +268,13 @@ namespace Lambda
 	}
 
 	
-	void* VulkanPipelineResourceState::GetNativeHandle() const
+	void* VKNPipelineResourceState::GetNativeHandle() const
 	{
 		return reinterpret_cast<void*>(m_PipelineLayout);
 	}
 
 	
-	void VulkanPipelineResourceState::CommitBindings()
+	void VKNPipelineResourceState::CommitBindings()
 	{
 		//Update bufferoffsets
 		for (auto pBuffer : m_DynamicBuffers)
@@ -307,7 +307,7 @@ namespace Lambda
 
 			for (auto& resourceBinding : m_ResourceBindings)
 			{
-				VulkanSlot& binding			= resourceBinding.second;
+				VKNSlot& binding			= resourceBinding.second;
 				writeInfo.descriptorCount	= 1;
 				writeInfo.dstBinding		= binding.Slot.Slot;
 
@@ -348,7 +348,7 @@ namespace Lambda
 			//Write all descriptors
 			if (m_DescriptorWrites.size() > 0)
 			{
-				VulkanGraphicsDevice& device = VulkanGraphicsDevice::GetInstance();
+				VKNDevice& device = VKNDevice::GetInstance();
 				vkUpdateDescriptorSets(device.GetDevice(), uint32(m_DescriptorWrites.size()), m_DescriptorWrites.data(), 0, nullptr);
 				m_DescriptorWrites.clear();
 			}
@@ -366,7 +366,7 @@ namespace Lambda
 	}
 
 
-	void VulkanPipelineResourceState::Destroy(VkDevice device)
+	void VKNPipelineResourceState::Destroy(VkDevice device)
 	{
 		if (m_DescriptorPool != VK_NULL_HANDLE)
 		{

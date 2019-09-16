@@ -1,26 +1,26 @@
 #include "LambdaPch.h"
-#include "VulkanPipelineState.h"
-#include "VulkanShader.h"
-#include "VulkanRenderPass.h"
-#include "VulkanPipelineResourceState.h"
-#include "VulkanGraphicsDevice.h"
-#include "VulkanUtilities.h"
-#include "VulkanConversions.inl"
+#include "VKNPipelineState.h"
+#include "VKNShader.h"
+#include "VKNRenderPass.h"
+#include "VKNPipelineResourceState.h"
+#include "VKNDevice.h"
+#include "VKNUtilities.h"
+#include "VKNConversions.inl"
 
 namespace Lambda
 {
-	//---------------------------
-	//VulkanGraphicsPipelineState
-	//---------------------------
+	//------------------------
+	//VKNGraphicsPipelineState
+	//------------------------
 
-    VulkanGraphicsPipelineState::VulkanGraphicsPipelineState(VkDevice device, const GraphicsPipelineStateDesc& desc)
+    VKNGraphicsPipelineState::VKNGraphicsPipelineState(const GraphicsPipelineStateDesc& desc)
         : m_Pipeline(VK_NULL_HANDLE)
     {
-        Init(device, desc);
+        Init(desc);
     }
 
     
-    void VulkanGraphicsPipelineState::Init(VkDevice device, const GraphicsPipelineStateDesc& desc)
+    void VKNGraphicsPipelineState::Init(const GraphicsPipelineStateDesc& desc)
     {       
         //Describe shaderstages
         std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
@@ -95,20 +95,20 @@ namespace Lambda
         
         //Set inputlayout
         VkPipelineVertexInputStateCreateInfo inputLayout = {};
-        inputLayout.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-        inputLayout.pNext = nullptr;
-        inputLayout.flags = 0;
-        inputLayout.vertexBindingDescriptionCount = uint32(bindingDescriptions.size());
-        inputLayout.pVertexBindingDescriptions = bindingDescriptions.data();
+        inputLayout.sType							= VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+        inputLayout.pNext							= nullptr;
+        inputLayout.flags							= 0;
+        inputLayout.vertexBindingDescriptionCount	= uint32(bindingDescriptions.size());
+        inputLayout.pVertexBindingDescriptions		= bindingDescriptions.data();
         inputLayout.vertexAttributeDescriptionCount = uint32(attributeDescriptions.size());
-        inputLayout.pVertexAttributeDescriptions = attributeDescriptions.data();
+        inputLayout.pVertexAttributeDescriptions	= attributeDescriptions.data();
         
         VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
-        inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-        inputAssembly.pNext = nullptr;
-        inputAssembly.flags = 0;
-        inputAssembly.topology = ConvertPrimitiveTopology(desc.Topology);
-        inputAssembly.primitiveRestartEnable = VK_FALSE;
+        inputAssembly.sType						= VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+        inputAssembly.pNext						= nullptr;
+        inputAssembly.flags						= 0;
+        inputAssembly.topology					= ConvertPrimitiveTopology(desc.Topology);
+        inputAssembly.primitiveRestartEnable	= VK_FALSE;
         
         
         //Setup dynamic states
@@ -119,22 +119,22 @@ namespace Lambda
         };
         
         VkPipelineDynamicStateCreateInfo dynamicState = {};
-        dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-        dynamicState.flags = 0;
-        dynamicState.pNext = nullptr;
-        dynamicState.pDynamicStates = dynamicStates;
-        dynamicState.dynamicStateCount = 2;
+        dynamicState.sType				= VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+        dynamicState.flags				= 0;
+        dynamicState.pNext				= nullptr;
+        dynamicState.pDynamicStates		= dynamicStates;
+        dynamicState.dynamicStateCount	= 2;
         
         
         //Setup viewportstate
         VkPipelineViewportStateCreateInfo viewportState = {};
-        viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-        viewportState.flags = 0;
-        viewportState.pNext = nullptr;
-        viewportState.viewportCount = 1;
-        viewportState.pViewports = nullptr;
-        viewportState.scissorCount = 1;
-        viewportState.pScissors = nullptr;
+        viewportState.sType			= VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+        viewportState.flags			= 0;
+        viewportState.pNext			= nullptr;
+        viewportState.viewportCount	= 1;
+        viewportState.pViewports	= nullptr;
+        viewportState.scissorCount	= 1;
+        viewportState.pScissors		= nullptr;
         
         
         //RasterizerState
@@ -165,7 +165,7 @@ namespace Lambda
         VkPipelineMultisampleStateCreateInfo multisampling = {};
         multisampling.sType                 = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
         multisampling.sampleShadingEnable   = VK_FALSE;
-        multisampling.rasterizationSamples  = reinterpret_cast<VulkanRenderPass*>(desc.pRenderPass)->GetSampleCount();
+        multisampling.rasterizationSamples  = reinterpret_cast<VKNRenderPass*>(desc.pRenderPass)->GetSampleCount();
         multisampling.minSampleShading      = 1.0f;
         multisampling.pSampleMask           = nullptr;
         multisampling.alphaToCoverageEnable = VK_FALSE;
@@ -232,7 +232,8 @@ namespace Lambda
         pipelineInfo.basePipelineHandle     = VK_NULL_HANDLE;
         pipelineInfo.basePipelineIndex      = -1;
         
-        if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_Pipeline) != VK_SUCCESS)
+		VKNDevice& device = VKNDevice::GetInstance();
+        if (vkCreateGraphicsPipelines(device.GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_Pipeline) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create GraphicsPipelineState\n");
             return;
@@ -245,13 +246,13 @@ namespace Lambda
     }
     
     
-    void* VulkanGraphicsPipelineState::GetNativeHandle() const
+    void* VKNGraphicsPipelineState::GetNativeHandle() const
     {
         return reinterpret_cast<void*>(m_Pipeline);
     }
     
     
-    void VulkanGraphicsPipelineState::Destroy(VkDevice device)
+    void VKNGraphicsPipelineState::Destroy(VkDevice device)
     {
 		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
 
@@ -265,14 +266,14 @@ namespace Lambda
     }
     
     
-    void VulkanGraphicsPipelineState::SetName(const char* pName)
+    void VKNGraphicsPipelineState::SetName(const char* pName)
     {
 		if (pName != nullptr)
 		{
 			std::string name(pName);
 
-			VulkanGraphicsDevice* pVkDevice = reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance());
-			pVkDevice->SetVulkanObjectName(VK_OBJECT_TYPE_PIPELINE, (uint64)m_Pipeline, name);    
+			VKNDevice& device = VKNDevice::GetInstance();
+			device.SetVulkanObjectName(VK_OBJECT_TYPE_PIPELINE, (uint64)m_Pipeline, name);
 		}
     }
 }

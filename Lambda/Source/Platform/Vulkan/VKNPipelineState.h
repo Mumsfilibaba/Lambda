@@ -4,13 +4,17 @@
 
 namespace Lambda
 {
-    class VulkanGraphicsPipelineState final : public IGraphicsPipelineState
+	//------------------------
+	//VKNGraphicsPipelineState
+	//------------------------
+
+    class VKNGraphicsPipelineState final : public IGraphicsPipelineState
     {
     public:
-        LAMBDA_NO_COPY(VulkanGraphicsPipelineState);
+        LAMBDA_NO_COPY(VKNGraphicsPipelineState);
         
-        VulkanGraphicsPipelineState(VkDevice device, const GraphicsPipelineStateDesc& desc);
-        VulkanGraphicsPipelineState() = default;
+        VKNGraphicsPipelineState(const GraphicsPipelineStateDesc& desc);
+        VKNGraphicsPipelineState() = default;
         
         virtual void SetName(const char* pName) override final;
         virtual void* GetNativeHandle() const override final;
@@ -18,7 +22,7 @@ namespace Lambda
         void Destroy(VkDevice device);
         
     private:
-        void Init(VkDevice device, const GraphicsPipelineStateDesc& desc);
+        void Init(const GraphicsPipelineStateDesc& desc);
         
     private:
         VkPipeline m_Pipeline;

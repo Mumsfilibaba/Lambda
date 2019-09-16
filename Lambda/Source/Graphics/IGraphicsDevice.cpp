@@ -3,7 +3,7 @@
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include "../Platform/DX12/DX12GraphicsDevice.h"
 #endif
-#include "../Platform/Vulkan/VulkanGraphicsDevice.h"
+#include "../Platform/Vulkan/VKNGraphicsDevice.h"
 
 namespace Lambda
 {
@@ -24,7 +24,7 @@ namespace Lambda
 		}
 		else if (desc.Api == GRAPHICS_API_VULKAN)
 		{
-			return DBG_NEW VulkanGraphicsDevice(desc);
+			return DBG_NEW VKNGraphicsDevice(desc);
 		}
 
 		return nullptr;

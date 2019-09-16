@@ -1,24 +1,24 @@
 #include "LambdaPch.h"
-#include "VulkanShader.h"
+#include "VKNDevice.h"
+#include "VKNShader.h"
 
 namespace Lambda
 {
-	//------------
-	//VulkanShader
-	//------------
+	//---------
+	//VKNShader
+	//---------
 
-	VulkanShader::VulkanShader(VkDevice device, const ShaderDesc& desc)
+	VKNShader::VKNShader(const ShaderDesc& desc)
 		: m_Shader(VK_NULL_HANDLE),
 		m_ByteCode(),
 		m_EntryPoint(),
 		m_Desc()
 	{
-		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
-        Init(device, desc);
+        Init(desc);
     }
     
     
-    void VulkanShader::Init(VkDevice device, const ShaderDesc& desc)
+    void VKNShader::Init(const ShaderDesc& desc)
     {
         //Get the bytecode
         if (desc.Languange == SHADER_LANG_SPIRV)
@@ -38,7 +38,8 @@ namespace Lambda
         info.codeSize = desc.SourceLength;
         info.pCode = reinterpret_cast<const uint32_t*>(m_ByteCode.data());
         
-        if (vkCreateShaderModule(device, &info, nullptr, &m_Shader) != VK_SUCCESS)
+		VKNDevice& device = VKNDevice::GetInstance();
+        if (vkCreateShaderModule(device.GetDevice(), &info, nullptr, &m_Shader) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create shadermodule\n");
             m_Shader = VK_NULL_HANDLE;
@@ -55,7 +56,7 @@ namespace Lambda
     }
     
     
-    void VulkanShader::Destroy(VkDevice device)
+    void VKNShader::Destroy(VkDevice device)
     {
 		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
 
@@ -69,13 +70,13 @@ namespace Lambda
     }
     
     
-    void* VulkanShader::GetNativeHandle() const
+    void* VKNShader::GetNativeHandle() const
     {
         return reinterpret_cast<void*>(m_Shader);
     }
 	
 	
-	ShaderDesc VulkanShader::GetDesc() const
+	ShaderDesc VKNShader::GetDesc() const
 	{
 		return m_Desc;
 	}

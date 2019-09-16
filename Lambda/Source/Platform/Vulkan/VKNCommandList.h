@@ -1,29 +1,29 @@
 #pragma once
 #include <string>
 #include "Graphics/ICommandList.h"
-#include "VulkanUtilities.h"
+#include "VKNUtilities.h"
 
 namespace Lambda
 {
-    class VulkanTexture;
-    class VulkanRenderPass;
-	class VulkanUploadBuffer;
-    class VulkanGraphicsDevice;
-	class VulkanPipelineResourceState;
+    class VKNTexture;
+    class VKNRenderPass;
+	class VKNUploadBuffer;
+    class VKNGraphicsDevice;
+	class VKNPipelineResourceState;
 
-	//-----------------
-	//VulkanCommandList
-	//-----------------
+	//--------------
+	//VKNCommandList
+	//--------------
 
-    class VulkanCommandList final : public ICommandList
+    class VKNCommandList final : public ICommandList
     {
-        friend class VulkanGraphicsDevice;
+        friend class VKNGraphicsDevice;
         
     public:
-        LAMBDA_NO_COPY(VulkanCommandList);
+        LAMBDA_NO_COPY(VKNCommandList);
         
-        VulkanCommandList(CommandListType type);
-        ~VulkanCommandList() = default;
+        VKNCommandList(CommandListType type);
+        ~VKNCommandList() = default;
         
         virtual void ClearRenderTarget(ITexture* pRenderTarget, float color[4]) override final;
         virtual void ClearDepthStencil(ITexture* pDepthStencil, float depth, uint8 stencil) override final;
@@ -58,20 +58,20 @@ namespace Lambda
         virtual void*			GetNativeHandle() const override final;
         
         void CommitResources();
-        void BlitTexture(VulkanTexture* pDst, uint32 dstWidth, uint32 dstHeight, uint32 dstMipLevel, VulkanTexture* pSrc, uint32 srcWidth, uint32 srcHeight, uint32 srcMipLevel);
+        void BlitTexture(VKNTexture* pDst, uint32 dstWidth, uint32 dstHeight, uint32 dstMipLevel, VKNTexture* pSrc, uint32 srcWidth, uint32 srcHeight, uint32 srcMipLevel);
         void Destroy(VkDevice device);
         
     private:
         void Init(CommandListType type);
 
     private:
-        VkCommandPool					m_CommandPool;
-        VkCommandBuffer					m_CommandBuffer;  
-        VulkanUploadBuffer*				m_pBufferUpload;
-        VulkanUploadBuffer*				m_pTextureUpload;
-        VulkanRenderPass*				m_pRenderPass;
-		VulkanPipelineResourceState*	m_pResourceState;
-        CommandListType					m_Type;
-        std::string						m_Name;
+        VkCommandPool				m_CommandPool;
+        VkCommandBuffer				m_CommandBuffer;  
+        VKNUploadBuffer*			m_pBufferUpload;
+        VKNUploadBuffer*			m_pTextureUpload;
+        VKNRenderPass*				m_pRenderPass;
+		VKNPipelineResourceState*	m_pResourceState;
+        CommandListType				m_Type;
+        std::string					m_Name;
     };
 }

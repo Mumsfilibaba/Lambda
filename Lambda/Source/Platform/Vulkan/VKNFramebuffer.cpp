@@ -1,7 +1,7 @@
 #include "LambdaPch.h"
-#include "VulkanFramebuffer.h"
-#include "VulkanGraphicsDevice.h"
-#include "VulkanTexture.h"
+#include "VKNFramebuffer.h"
+#include "VKNDevice.h"
+#include "VKNTexture.h"
 
 namespace Lambda
 {
@@ -16,11 +16,11 @@ namespace Lambda
         hash ^= hasher(value) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
     }
 
-	//-------------------------
-	//VulkanFramebufferCacheKey
-	//-------------------------
+	//----------------------
+	//VKNFramebufferCacheKey
+	//----------------------
 
-	VulkanFramebufferCacheKey::VulkanFramebufferCacheKey()
+	VKNFramebufferCacheKey::VKNFramebufferCacheKey()
 		: Hash(0),
 		RenderPass(VK_NULL_HANDLE),
 		NumAttachmentViews(0),
@@ -31,7 +31,7 @@ namespace Lambda
 	}
 
 
-	bool VulkanFramebufferCacheKey::operator==(const VulkanFramebufferCacheKey& other) const
+	bool VKNFramebufferCacheKey::operator==(const VKNFramebufferCacheKey& other) const
 	{
 		if (RenderPass != other.RenderPass ||
 			NumAttachmentViews != other.NumAttachmentViews)
@@ -51,7 +51,7 @@ namespace Lambda
 	}
 
 
-	std::size_t VulkanFramebufferCacheKey::GetHash() const
+	std::size_t VKNFramebufferCacheKey::GetHash() const
 	{
 		if (Hash == 0)
 		{
@@ -65,7 +65,7 @@ namespace Lambda
 	}
 
 
-	bool VulkanFramebufferCacheKey::ContainsTexture(const VulkanTexture* pTexture) const
+	bool VKNFramebufferCacheKey::ContainsTexture(const VKNTexture* pTexture) const
 	{
 		VkImageView view = pTexture->GetImageView();
 		for (uint32 i = 0; i < NumAttachmentViews; i++)
@@ -79,13 +79,13 @@ namespace Lambda
 		return false;
 	}
 
-	//----------------------
-	//VulkanFramebufferCache
-	//----------------------
+	//-------------------
+	//VKNFramebufferCache
+	//-------------------
 
-	VulkanFramebufferCache* VulkanFramebufferCache::s_pInstance = nullptr;
+	VKNFramebufferCache* VKNFramebufferCache::s_pInstance = nullptr;
 
-	VulkanFramebufferCache::VulkanFramebufferCache()
+	VKNFramebufferCache::VKNFramebufferCache()
 		: m_Framebuffers()
 	{
 		LAMBDA_ASSERT(s_pInstance == nullptr);
@@ -93,17 +93,15 @@ namespace Lambda
 	}
 
 	
-	VulkanFramebufferCache::~VulkanFramebufferCache()
+	VKNFramebufferCache::~VKNFramebufferCache()
 	{
 		if (s_pInstance == this)
 			s_pInstance = nullptr;
 	}
 
 
-	VkFramebuffer VulkanFramebufferCache::GetFramebuffer(VkDevice device, const VulkanFramebufferCacheKey& fbKey, uint32 width, uint32 height)
+	VkFramebuffer VKNFramebufferCache::GetFramebuffer(const VKNFramebufferCacheKey& fbKey, uint32 width, uint32 height)
 	{
-		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
-
 		//Check if a framebuffer exists
 		auto fb = m_Framebuffers.find(fbKey);
 		if (fb != m_Framebuffers.end())
@@ -123,7 +121,9 @@ namespace Lambda
 		info.layers = 1;
 
 		VkFramebuffer framebuffer = VK_NULL_HANDLE;
-		if (vkCreateFramebuffer(device, &info, nullptr, &framebuffer) != VK_SUCCESS)
+		
+		VKNDevice& device = VKNDevice::GetInstance();
+		if (vkCreateFramebuffer(device.GetDevice(), &info, nullptr, &framebuffer) != VK_SUCCESS)
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to create Framebuffer\n");
 			return VK_NULL_HANDLE;
@@ -132,13 +132,13 @@ namespace Lambda
 		{
 			LOG_SYSTEM_PRINT("Vulkan: Created new Framebuffer\n");
 
-			m_Framebuffers.insert(std::pair<VulkanFramebufferCacheKey, VkFramebuffer>(fbKey, framebuffer));
+			m_Framebuffers.insert(std::pair<VKNFramebufferCacheKey, VkFramebuffer>(fbKey, framebuffer));
 			return framebuffer;
 		}
 	}
 
 
-	void VulkanFramebufferCache::ReleaseAllContainingTexture(VkDevice device, const VulkanTexture* pTexture)
+	void VKNFramebufferCache::ReleaseAllContainingTexture(VkDevice device, const VKNTexture* pTexture)
 	{
 		//Find all framebuffers containing this texture
 		for (auto it = m_Framebuffers.begin(); it != m_Framebuffers.end();)
@@ -159,7 +159,7 @@ namespace Lambda
 	}
 
 
-	void VulkanFramebufferCache::ReleaseAll(VkDevice device)
+	void VKNFramebufferCache::ReleaseAll(VkDevice device)
 	{
 		//Destroy all framebuffers
 		for (auto& buffer : m_Framebuffers)
@@ -173,7 +173,7 @@ namespace Lambda
 	}
 	
 	
-	VulkanFramebufferCache& VulkanFramebufferCache::GetInstance()
+	VKNFramebufferCache& VKNFramebufferCache::GetInstance()
 	{
 		LAMBDA_ASSERT(s_pInstance != nullptr);
 		return *s_pInstance;

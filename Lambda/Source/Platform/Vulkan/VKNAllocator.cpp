@@ -1,16 +1,16 @@
 #include "LambdaPch.h"
 #include "Utilities/MathHelper.h"
-#include "VulkanGraphicsDevice.h"
-#include "VulkanAllocator.h"
-#include "VulkanUtilities.h"
+#include "VKNDevice.h"
+#include "VKNAllocator.h"
+#include "VKNUtilities.h"
 
 namespace Lambda
 {
-	//-----------------
-	//VulkanMemoryChunk
-	//-----------------
+	//--------------
+	//VKNMemoryChunk
+	//--------------
 
-	VulkanMemoryChunk::VulkanMemoryChunk(uint32 id, uint64 sizeInBytes, uint64 memoryType, ResourceUsage usage)
+	VKNMemoryChunk::VKNMemoryChunk(uint32 id, uint64 sizeInBytes, uint32 memoryType, ResourceUsage usage)
 		: m_Usage(usage),
 		m_ID(id),
 		m_MemoryType(memoryType),
@@ -24,7 +24,7 @@ namespace Lambda
 	}
 
 
-	void VulkanMemoryChunk::Init()
+	void VKNMemoryChunk::Init()
 	{
 		//Allocate device memory
 		VkMemoryAllocateInfo allocInfo  = {};
@@ -33,7 +33,7 @@ namespace Lambda
 		allocInfo.allocationSize	    = m_SizeInBytes;
 		allocInfo.memoryTypeIndex	    = m_MemoryType;
 
-		VulkanGraphicsDevice& device = VulkanGraphicsDevice::GetInstance();
+		VKNDevice& device = VKNDevice::GetInstance();
 		if (vkAllocateMemory(device.GetDevice(), &allocInfo, nullptr, &m_DeviceMemory) != VK_SUCCESS)
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to allocate MemoryChunk\n");
@@ -45,7 +45,7 @@ namespace Lambda
 		}
 
 		//Setup first block
-        m_pBlockHead = DBG_NEW VulkanMemoryBlock();
+        m_pBlockHead = DBG_NEW VKNMemoryBlock();
         m_pBlockHead->pNext					= nullptr;
         m_pBlockHead->pPrevious				= nullptr;
         m_pBlockHead->IsFree				= true;
@@ -61,16 +61,16 @@ namespace Lambda
 	}
 
 
-	bool VulkanMemoryChunk::Allocate(VulkanMemory* pAllocation, uint64 sizeInBytes, uint64 alignment)
+	bool VKNMemoryChunk::Allocate(VKNMemory* pAllocation, uint64 sizeInBytes, uint64 alignment)
 	{
         LAMBDA_ASSERT(pAllocation != nullptr);
         
         VkDeviceSize offset         = 0;
         VkDeviceSize padding        = 0;
-        VulkanMemoryBlock* pBestFit = nullptr;
+        VKNMemoryBlock* pBestFit = nullptr;
         
         //Find enough free space, and find the block that best fits
-        for (VulkanMemoryBlock* pCurrent = m_pBlockHead; pCurrent != nullptr; pCurrent = pCurrent->pNext)
+        for (VKNMemoryBlock* pCurrent = m_pBlockHead; pCurrent != nullptr; pCurrent = pCurrent->pNext)
         {
             //Check if the block is allocated or not
             if (!pCurrent->IsFree)
@@ -105,10 +105,10 @@ namespace Lambda
         if (padding > 0)
         {
 			//Save the old block (Will be padding)
-            VulkanMemoryBlock* pPadding		= pBestFit;
+            VKNMemoryBlock* pPadding		= pBestFit;
 
 			//Create a new block that fill house the allocation
-			pBestFit						= DBG_NEW VulkanMemoryBlock();
+			pBestFit						= DBG_NEW VKNMemoryBlock();
 			pBestFit->ID                    = m_BlockCount++;
 			pBestFit->DeviceMemoryOffset    = offset;
 			pBestFit->Size                  = pPadding->Size - padding;
@@ -128,7 +128,7 @@ namespace Lambda
         if (pBestFit->Size > sizeInBytes)
         {
             //Create a new block after allocation
-            VulkanMemoryBlock* pBlock = DBG_NEW VulkanMemoryBlock();
+            VKNMemoryBlock* pBlock = DBG_NEW VKNMemoryBlock();
             pBlock->ID                  = m_BlockCount++;
             pBlock->Size                = pBestFit->Size - sizeInBytes;
             pBlock->DeviceMemoryOffset  = pBestFit->DeviceMemoryOffset + sizeInBytes;
@@ -166,12 +166,12 @@ namespace Lambda
 	}
 
 
-	void VulkanMemoryChunk::Map()
+	void VKNMemoryChunk::Map()
 	{
 		//If not mapped -> map
 		if (!m_IsMapped)
 		{
-			VulkanGraphicsDevice& device = VulkanGraphicsDevice::GetInstance();
+			VKNDevice& device = VKNDevice::GetInstance();
 
 			void* pMemory = nullptr;
 			vkMapMemory(device.GetDevice(), m_DeviceMemory, 0, VK_WHOLE_SIZE, 0, &pMemory);
@@ -182,12 +182,12 @@ namespace Lambda
 	}
 
 
-	void VulkanMemoryChunk::Unmap()
+	void VKNMemoryChunk::Unmap()
 	{
 		//If mapped -> unmap
 		if (m_IsMapped)
 		{
-			VulkanGraphicsDevice& device = VulkanGraphicsDevice::GetInstance();
+			VKNDevice& device = VKNDevice::GetInstance();
 			vkUnmapMemory(device.GetDevice(), m_DeviceMemory);
 
 			m_pHostMemory   = nullptr;
@@ -196,13 +196,13 @@ namespace Lambda
 	}
 
 
-	void VulkanMemoryChunk::Deallocate(VulkanMemory* pAllocation)
+	void VKNMemoryChunk::Deallocate(VKNMemory* pAllocation)
 	{
         //Try to find the correct block
-        VulkanMemoryBlock* pCurrent = m_pBlockHead;
+        VKNMemoryBlock* pCurrent = m_pBlockHead;
 		while (pCurrent)
         {
-			if (pCurrent->ID == pAllocation->BlockID)
+			if (pCurrent->ID == uint32(pAllocation->BlockID))
 			{
 				break;
 			}
@@ -219,8 +219,8 @@ namespace Lambda
 		pCurrent->IsFree = true;
 
 		//Try to merge blocks
-		VulkanMemoryBlock* pNext		= pCurrent->pNext;
-		VulkanMemoryBlock* pPrevious	= pCurrent->pPrevious;
+		VKNMemoryBlock* pNext		= pCurrent->pNext;
+		VKNMemoryBlock* pPrevious	= pCurrent->pPrevious;
 		if (pNext)
 		{
 			//Merge blocks
@@ -278,7 +278,7 @@ namespace Lambda
 	}
 
 
-	void VulkanMemoryChunk::Destroy(VkDevice device)
+	void VKNMemoryChunk::Destroy(VkDevice device)
 	{
 		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
 
@@ -289,7 +289,7 @@ namespace Lambda
 
 			//Print memoryleaks
 #if defined(LAMBDA_DEBUG)
-			VulkanMemoryBlock* pDebug = m_pBlockHead;
+			VKNMemoryBlock* pDebug = m_pBlockHead;
 			LOG_DEBUG_WARNING("Allocated blocks left in MemoryChunk %u:\n", m_ID);
 			while (pDebug)
 			{
@@ -312,33 +312,33 @@ namespace Lambda
 	}
 
 
-	uint32 VulkanMemoryChunk::GetMemoryType() const
+	uint32 VKNMemoryChunk::GetMemoryType() const
 	{
 		return m_MemoryType;
 	}
 
 
-	//---------------------
-	//VulkanDeviceAllocator
-	//---------------------
+	//------------
+	//VKNAllocator
+	//------------
 
 
-	VulkanDeviceAllocator::VulkanDeviceAllocator()
+	VKNAllocator::VKNAllocator()
 		: m_MaxAllocations(0),
 		m_Chunks(),
 		m_MemoryToDeallocate()
 	{
-		VulkanGraphicsDevice& vkDevice = VulkanGraphicsDevice::GetInstance();
+		VKNDevice& device = VKNDevice::GetInstance();
 
-		uint32 frameCount = vkDevice.GetDeviceSettings().FramesAhead;
+		uint32 frameCount = device.GetDeviceSettings().FramesAhead;
 		m_MemoryToDeallocate.resize(frameCount);
 
-		VkPhysicalDeviceProperties properties = vkDevice.GetPhysicalDeviceProperties();
+		VkPhysicalDeviceProperties properties = device.GetPhysicalDeviceProperties();
 		m_MaxAllocations = properties.limits.maxMemoryAllocationCount;
 	}
 
 
-	bool VulkanDeviceAllocator::Allocate(VulkanMemory* pAllocation, const VkMemoryRequirements& memoryRequirements, ResourceUsage usage)
+	bool VKNAllocator::Allocate(VKNMemory* pAllocation, const VkMemoryRequirements& memoryRequirements, ResourceUsage usage)
 	{
 		LAMBDA_ASSERT_PRINT(memoryRequirements.size < MB(256), "Allocations must be smaller than 256MB\n");
 
@@ -351,7 +351,7 @@ namespace Lambda
 		}
 
 		//Get needed memorytype
-		VulkanGraphicsDevice& device = VulkanGraphicsDevice::GetInstance();
+		VKNDevice& device = VKNDevice::GetInstance();
 		uint32 memoryType = FindMemoryType(device.GetPhysicalDevice(), memoryRequirements.memoryTypeBits, properties);
 
 		//Try allocating from existing chunk
@@ -371,7 +371,7 @@ namespace Lambda
 
         
 		//Allocate new chunk
-		VulkanMemoryChunk* pChunk = DBG_NEW VulkanMemoryChunk(uint32(m_Chunks.size()), MB(256), memoryType, usage);
+		VKNMemoryChunk* pChunk = DBG_NEW VKNMemoryChunk(uint32(m_Chunks.size()), MB(256), memoryType, usage);
 		m_Chunks.emplace_back(pChunk);
 		
         
@@ -382,17 +382,17 @@ namespace Lambda
 	}
 
 
-	void VulkanDeviceAllocator::Deallocate(VulkanMemory* pAllocation)
+	void VKNAllocator::Deallocate(VKNMemory* pAllocation)
 	{
         if (size_t(pAllocation->ChunkID) < m_Chunks.size() && pAllocation->DeviceMemory != VK_NULL_HANDLE)
         {
-            VulkanMemoryChunk* pChunk = m_Chunks[pAllocation->ChunkID];
+            VKNMemoryChunk* pChunk = m_Chunks[pAllocation->ChunkID];
             pChunk->Deallocate(pAllocation);
         }
 	}
 
 	
-	void VulkanDeviceAllocator::DefferedDeallocate(VulkanMemory* pAllocation, uint64 frameCount)
+	void VKNAllocator::DefferedDeallocate(VKNMemory* pAllocation, uint64 frameCount)
 	{
 		//Set it to be removed
         if (size_t(pAllocation->ChunkID) < m_Chunks.size() && pAllocation->DeviceMemory != VK_NULL_HANDLE)
@@ -410,7 +410,7 @@ namespace Lambda
 	}
 
 
-	void VulkanDeviceAllocator::CleanGarbageMemory(uint64 frameCount)
+	void VKNAllocator::CleanGarbageMemory(uint64 frameCount)
 	{
 		auto& memoryBlocks = m_MemoryToDeallocate[frameCount];
 		if (memoryBlocks.size() > 0)
@@ -425,7 +425,7 @@ namespace Lambda
 	}
 
 
-	void VulkanDeviceAllocator::Destroy(VkDevice device)
+	void VKNAllocator::Destroy(VkDevice device)
 	{
 		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
 

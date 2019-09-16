@@ -5,22 +5,22 @@
 
 namespace Lambda
 {
-	class VulkanBuffer;
-	class VulkanTexture;
-	class VulkanSamplerState;
+	class VKNBuffer;
+	class VKNTexture;
+	class VKNSamplerState;
 
-	//----------
-	//VulkanSlot
-	//----------
+	//-------
+	//VKNSlot
+	//-------
 
-	struct VulkanSlot
+	struct VKNSlot
 	{
 		ResourceSlot			Slot;
 		union
 		{
-			VulkanBuffer*		pBuffer;
-			VulkanTexture*		pTexture;
-			VulkanSamplerState* pSamplerState;
+			VKNBuffer*			pBuffer;
+			VKNTexture*		pTexture;
+			VKNSamplerState* pSamplerState;
 		};
 		union 
 		{
@@ -29,17 +29,17 @@ namespace Lambda
 		};
 	};
 
-	//---------------------------
-	//VulkanPipelineResourceState
-	//---------------------------
+	//------------------------
+	//VKNPipelineResourceState
+	//------------------------
 
-	class VulkanPipelineResourceState final : public IPipelineResourceState
+	class VKNPipelineResourceState final : public IPipelineResourceState
 	{
 	public:
-		LAMBDA_NO_COPY(VulkanPipelineResourceState);
+		LAMBDA_NO_COPY(VKNPipelineResourceState);
 
-		VulkanPipelineResourceState(const PipelineResourceStateDesc& desc);
-		~VulkanPipelineResourceState() = default;
+		VKNPipelineResourceState(const PipelineResourceStateDesc& desc);
+		~VKNPipelineResourceState() = default;
 
 		virtual void SetTextures(ITexture** ppTextures, uint32 numTextures, uint32 startSlot) override final;
 		virtual void SetSamplerStates(ISamplerState** ppSamplerStates, uint32 numSamplerStates, uint32 startSlot) override final;
@@ -64,35 +64,35 @@ namespace Lambda
 		VkDescriptorSetLayout			    m_DescriptorSetLayout;
 		VkDescriptorSet					    m_DescriptorSet;
 		VkDescriptorPool				    m_DescriptorPool;
-		std::map<uint32, VulkanSlot>	    m_ResourceBindings;
+		std::map<uint32, VKNSlot>			m_ResourceBindings;
 		std::vector<VkWriteDescriptorSet>   m_DescriptorWrites;
 		std::vector<uint32>				    m_DynamicOffsets;
-		std::vector<VulkanBuffer*>		    m_DynamicBuffers;
+		std::vector<VKNBuffer*>				m_DynamicBuffers;
 		bool							    m_IsDirty;
 	};
 
 
-	inline VkPipelineLayout VulkanPipelineResourceState::GetPipelineLayout() const
+	inline VkPipelineLayout VKNPipelineResourceState::GetPipelineLayout() const
 	{
 		return m_PipelineLayout;
 	}
 
 
-	inline VkDescriptorSet VulkanPipelineResourceState::GetDescriptorSet() const
+	inline VkDescriptorSet VKNPipelineResourceState::GetDescriptorSet() const
 	{
 		return m_DescriptorSet;
 	}
 
 
-	inline const uint32* VulkanPipelineResourceState::GetDynamicOffsets() const
+	inline const uint32* VKNPipelineResourceState::GetDynamicOffsets() const
 	{
 		return m_DynamicOffsets.data();
 	}
 
 
-	inline uint32 VulkanPipelineResourceState::GetDynamicOffsetCount() const
+	inline uint32 VKNPipelineResourceState::GetDynamicOffsetCount() const
 	{
-		return uint64(m_DynamicOffsets.size());
+		return uint32(m_DynamicOffsets.size());
 	}
 }
 

@@ -1,24 +1,25 @@
 #include "LambdaPch.h"
 #include "Utilities/MathHelper.h"
-#include "VulkanCommandList.h"
-#include "VulkanGraphicsDevice.h"
-#include "VulkanUploadBuffer.h"
-#include "VulkanPipelineState.h"
-#include "VulkanSamplerState.h"
-#include "VulkanTexture.h"
-#include "VulkanFramebuffer.h"
-#include "VulkanBuffer.h"
-#include "VulkanRenderPass.h"
-#include "VulkanPipelineResourceState.h"
-#include "VulkanConversions.inl"
+#include "VKNCommandList.h"
+#include "VKNDevice.h"
+#include "VKNGraphicsDevice.h"
+#include "VKNUploadBuffer.h"
+#include "VKNPipelineState.h"
+#include "VKNSamplerState.h"
+#include "VKNTexture.h"
+#include "VKNFramebuffer.h"
+#include "VKNBuffer.h"
+#include "VKNRenderPass.h"
+#include "VKNPipelineResourceState.h"
+#include "VKNConversions.inl"
 
 namespace Lambda
 {
-	//-----------------
-	//VulkanCommandList
-	//-----------------
+	//--------------
+	//VKNCommandList
+	//--------------
 
-    VulkanCommandList::VulkanCommandList(CommandListType type)
+    VKNCommandList::VKNCommandList(CommandListType type)
         : m_CommandPool(VK_NULL_HANDLE),
         m_CommandBuffer(VK_NULL_HANDLE),
 		m_pBufferUpload(nullptr),
@@ -32,9 +33,9 @@ namespace Lambda
     }
 
     
-    void VulkanCommandList::Init(CommandListType type)
+    void VKNCommandList::Init(CommandListType type)
     {
-		VulkanGraphicsDevice& device = VulkanGraphicsDevice::GetInstance();
+		VKNDevice& device = VKNDevice::GetInstance();
 
         //Get queuefamiliy indices
         QueueFamilyIndices familyIndices = device.GetQueueFamilyIndices();
@@ -84,12 +85,13 @@ namespace Lambda
 
 
         //Init upload buffers
-		device.CreateUploadBuffer(&m_pBufferUpload, MB(64));
-		device.CreateUploadBuffer(&m_pTextureUpload, MB(128));
+		VKNGraphicsDevice& gd = VKNGraphicsDevice::GetInstance();
+		gd.CreateUploadBuffer(&m_pBufferUpload, MB(64));
+		gd.CreateUploadBuffer(&m_pTextureUpload, MB(128));
     }
 
 
-	inline void VulkanCommandList::CommitResources()
+	inline void VKNCommandList::CommitResources()
 	{
 		m_pResourceState->CommitBindings();
 
@@ -102,7 +104,7 @@ namespace Lambda
 	}
     
     
-    void VulkanCommandList::BlitTexture(VulkanTexture* pDst, uint32 dstWidth, uint32 dstHeight, uint32 dstMipLevel, VulkanTexture* pSrc, uint32 srcWidth, uint32 srcHeight, uint32 srcMipLevel)
+    void VKNCommandList::BlitTexture(VKNTexture* pDst, uint32 dstWidth, uint32 dstHeight, uint32 dstMipLevel, VKNTexture* pSrc, uint32 srcWidth, uint32 srcHeight, uint32 srcMipLevel)
     {
 		if (!m_pRenderPass)
 		{
@@ -131,7 +133,7 @@ namespace Lambda
     }
     
     
-    void VulkanCommandList::Destroy(VkDevice device)
+    void VKNCommandList::Destroy(VkDevice device)
     {
 		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
         
@@ -162,7 +164,7 @@ namespace Lambda
     }
     
     
-    void VulkanCommandList::ClearRenderTarget(ITexture* pRenderTarget, float color[4])
+    void VKNCommandList::ClearRenderTarget(ITexture* pRenderTarget, float color[4])
     {
 		if (!m_pRenderPass)
 		{
@@ -187,7 +189,7 @@ namespace Lambda
     }
     
     
-    void VulkanCommandList::ClearDepthStencil(ITexture* pDepthStencil, float depth, uint8 stencil)
+    void VKNCommandList::ClearDepthStencil(ITexture* pDepthStencil, float depth, uint8 stencil)
     {
 		if (!m_pRenderPass)
 		{
@@ -213,7 +215,7 @@ namespace Lambda
     }
     
     
-    void VulkanCommandList::SetViewport(const Viewport& viewport)
+    void VKNCommandList::SetViewport(const Viewport& viewport)
     {
         VkViewport view = {};
         view.width      = viewport.Width;
@@ -227,7 +229,7 @@ namespace Lambda
     }
     
     
-    void VulkanCommandList::SetScissorRect(const Rectangle& scissorRect)
+    void VKNCommandList::SetScissorRect(const Rectangle& scissorRect)
     {
         VkRect2D rect = {};
         rect.extent.height  = uint32(scissorRect.Height);
@@ -239,14 +241,14 @@ namespace Lambda
     }
     
     
-    void VulkanCommandList::SetGraphicsPipelineState(IGraphicsPipelineState* pPipelineState)
+    void VKNCommandList::SetGraphicsPipelineState(IGraphicsPipelineState* pPipelineState)
     {
         VkPipeline pipeline = reinterpret_cast<VkPipeline>(pPipelineState->GetNativeHandle());
         vkCmdBindPipeline(m_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
     }
     
     
-    void VulkanCommandList::SetVertexBuffer(IBuffer* pBuffer, uint32 slot)
+    void VKNCommandList::SetVertexBuffer(IBuffer* pBuffer, uint32 slot)
     {
         VkBuffer buffers[] = { reinterpret_cast<VkBuffer>(pBuffer->GetNativeHandle()) };
 
@@ -255,7 +257,7 @@ namespace Lambda
     }
     
     
-    void VulkanCommandList::SetIndexBuffer(IBuffer* pBuffer)
+    void VKNCommandList::SetIndexBuffer(IBuffer* pBuffer)
     {
 		//Force uint32 for indices
         VkBuffer buffer = reinterpret_cast<VkBuffer>(pBuffer->GetNativeHandle());
@@ -263,36 +265,36 @@ namespace Lambda
     }
 
 
-	void VulkanCommandList::SetGraphicsPipelineResourceState(IPipelineResourceState* pResourceState)
+	void VKNCommandList::SetGraphicsPipelineResourceState(IPipelineResourceState* pResourceState)
 	{
-		VulkanPipelineResourceState* pVkResourceState = reinterpret_cast<VulkanPipelineResourceState*>(pResourceState);
+		VKNPipelineResourceState* pVkResourceState = reinterpret_cast<VKNPipelineResourceState*>(pResourceState);
 		m_pResourceState = pVkResourceState;
 
         CommitResources();
 	}
 
     
-    CommandListType VulkanCommandList::GetType() const
+    CommandListType VKNCommandList::GetType() const
     {
         return m_Type;
     }
     
     
-    void* VulkanCommandList::GetNativeHandle() const
+    void* VKNCommandList::GetNativeHandle() const
     {
         return reinterpret_cast<void*>(m_CommandBuffer);
     }
     
     
-    void VulkanCommandList::TransitionBuffer(const IBuffer* pBuffer, ResourceState state)
+    void VKNCommandList::TransitionBuffer(const IBuffer* pBuffer, ResourceState state)
     {
 		LAMBDA_ASSERT(pBuffer && state);
     }
     
     
-    void VulkanCommandList::TransitionTexture(const ITexture* pTexture, ResourceState state, uint32 startMipLevel, uint32 numMipLevels)
+    void VKNCommandList::TransitionTexture(const ITexture* pTexture, ResourceState state, uint32 startMipLevel, uint32 numMipLevels)
     {
-        const VulkanTexture* pVkTexture = reinterpret_cast<const VulkanTexture*>(pTexture);
+        const VKNTexture* pVkTexture = reinterpret_cast<const VKNTexture*>(pTexture);
         TextureDesc textureDesc = pVkTexture->GetDesc();
 
         //Setup barrier
@@ -412,11 +414,11 @@ namespace Lambda
     }
     
     
-    void VulkanCommandList::UpdateBuffer(IBuffer* pResource, const ResourceData* pData)
+    void VKNCommandList::UpdateBuffer(IBuffer* pResource, const ResourceData* pData)
     {        
 		LAMBDA_ASSERT(pData != nullptr);
 
-		VulkanBuffer* pVkResource = reinterpret_cast<VulkanBuffer*>(pResource);
+		VKNBuffer* pVkResource = reinterpret_cast<VKNBuffer*>(pResource);
 		
 		//Update dynamic resource with dynamic offset
 		BufferDesc bufferDesc = pResource->GetDesc();
@@ -453,14 +455,14 @@ namespace Lambda
     }
     
     
-    void VulkanCommandList::UpdateTexture(ITexture* pResource, const ResourceData* pData, uint32 mipLevel)
+    void VKNCommandList::UpdateTexture(ITexture* pResource, const ResourceData* pData, uint32 mipLevel)
     {
 		LAMBDA_ASSERT(pData != nullptr);
 
 		if (!m_pRenderPass)
 		{
 			TransitionTexture(pResource, RESOURCE_STATE_COPY_DEST, 0, LAMBDA_TRANSITION_ALL_MIPS);
-			VulkanTexture* pVkResource = reinterpret_cast<VulkanTexture*>(pResource);
+			VKNTexture* pVkResource = reinterpret_cast<VKNTexture*>(pResource);
         
 			//Get offset before allocating
 			uint64 offset = m_pTextureUpload->GetOffset();
@@ -493,7 +495,7 @@ namespace Lambda
     }
     
     
-    void VulkanCommandList::CopyBuffer(IBuffer* pDst, IBuffer* pSrc)
+    void VKNCommandList::CopyBuffer(IBuffer* pDst, IBuffer* pSrc)
     {
 		if (!m_pRenderPass)
 		{
@@ -513,7 +515,7 @@ namespace Lambda
     }
     
     
-    void VulkanCommandList::DrawInstanced(uint32 vertexCountPerInstance, uint32 instanceCount, uint32 startVertexLocation, uint32 startInstanceLocation)
+    void VKNCommandList::DrawInstanced(uint32 vertexCountPerInstance, uint32 instanceCount, uint32 startVertexLocation, uint32 startInstanceLocation)
     {        
 		if (m_pRenderPass)
 		{
@@ -535,7 +537,7 @@ namespace Lambda
     }
     
     
-    void VulkanCommandList::DrawIndexedInstanced(uint32 indexCountPerInstance, uint32 instanceCount, uint32 startIndexLocation, uint32 baseVertexLocation, uint32 startInstanceLocation)
+    void VKNCommandList::DrawIndexedInstanced(uint32 indexCountPerInstance, uint32 instanceCount, uint32 startIndexLocation, uint32 baseVertexLocation, uint32 startInstanceLocation)
     {
 		if (m_pRenderPass)
 		{
@@ -557,19 +559,19 @@ namespace Lambda
     }
     
     
-    void VulkanCommandList::SetName(const char* pName)
+    void VKNCommandList::SetName(const char* pName)
     {
 		if (pName != nullptr)
 		{
 			m_Name = std::string(pName);
 
-			VulkanGraphicsDevice* pVkDevice = reinterpret_cast<VulkanGraphicsDevice*>(IGraphicsDevice::GetInstance());
-			pVkDevice->SetVulkanObjectName(VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64)m_CommandBuffer, m_Name);
+			VKNDevice& device = VKNDevice::GetInstance();
+			device.SetVulkanObjectName(VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64)m_CommandBuffer, m_Name);
 		}
     }
     
     
-    void VulkanCommandList::Close()
+    void VKNCommandList::Close()
     {
         if (vkEndCommandBuffer(m_CommandBuffer) != VK_SUCCESS)
         {
@@ -578,9 +580,9 @@ namespace Lambda
     }
     
     
-    void VulkanCommandList::Reset()
+    void VKNCommandList::Reset()
     {
-		VulkanGraphicsDevice& device = VulkanGraphicsDevice::GetInstance();
+		VKNDevice& device = VKNDevice::GetInstance();
 
         //Reset commandbuffer
         if (vkResetCommandPool(device.GetDevice(), m_CommandPool, VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT) != VK_SUCCESS)
@@ -606,11 +608,11 @@ namespace Lambda
     }
     
     
-	void VulkanCommandList::BeginRenderPass(IRenderPass* pRenderPass)
+	void VKNCommandList::BeginRenderPass(IRenderPass* pRenderPass)
 	{
 		if (!m_pRenderPass)
 		{
-			VulkanRenderPass* pVkRenderPass = reinterpret_cast<VulkanRenderPass*>(pRenderPass);
+			VKNRenderPass* pVkRenderPass = reinterpret_cast<VKNRenderPass*>(pRenderPass);
 			VkRenderPassBeginInfo info = {};
 			info.sType				= VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 			info.pNext				= nullptr;
@@ -632,7 +634,7 @@ namespace Lambda
 	}
 
 
-	void VulkanCommandList::EndRenderPass()
+	void VKNCommandList::EndRenderPass()
 	{
 		if (m_pRenderPass)
 		{

@@ -1,15 +1,15 @@
 #include "LambdaPch.h"
-#include "VulkanUploadBuffer.h"
-#include "VulkanGraphicsDevice.h"
-#include "VulkanUtilities.h"
+#include "VKNUploadBuffer.h"
+#include "VKNDevice.h"
+#include "VKNUtilities.h"
 
 namespace Lambda
 {    
 	//------------------
-	//VulkanUploadBuffer
+	//VKNUploadBuffer
 	//------------------
 
-    VulkanUploadBuffer::VulkanUploadBuffer(VkDevice device, IVulkanAllocator* pAllocator, uint64 sizeInBytes)
+    VKNUploadBuffer::VKNUploadBuffer(IVKNAllocator* pAllocator, uint64 sizeInBytes)
         : m_pAllocator(pAllocator),
         m_pCurrent(nullptr),
         m_Buffer(VK_NULL_HANDLE),
@@ -17,12 +17,11 @@ namespace Lambda
         m_SizeInBytes(0)
     {
 		LAMBDA_ASSERT(pAllocator != nullptr);
-		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
-        Init(device, sizeInBytes);
+        Init(sizeInBytes);
     }
 
     
-    bool VulkanUploadBuffer::Init(VkDevice device, uint64 sizeInBytes)
+    bool VKNUploadBuffer::Init(uint64 sizeInBytes)
     {
 		//Create buffer
         VkBufferCreateInfo info = {};
@@ -35,7 +34,8 @@ namespace Lambda
         info.size                   = sizeInBytes;
         info.usage                  = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
         
-        if (vkCreateBuffer(device, &info, nullptr, &m_Buffer) != VK_SUCCESS)
+		VKNDevice& device = VKNDevice::GetInstance();
+        if (vkCreateBuffer(device.GetDevice(), &info, nullptr, &m_Buffer) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create buffer for UploadBuffer\n");
             return false;
@@ -49,10 +49,10 @@ namespace Lambda
         
 		//Allocate memory
 		VkMemoryRequirements memoryRequirements = {};
-		vkGetBufferMemoryRequirements(device, m_Buffer, &memoryRequirements);
+		vkGetBufferMemoryRequirements(device.GetDevice(), m_Buffer, &memoryRequirements);
 		if (m_pAllocator->Allocate(&m_Memory, memoryRequirements, RESOURCE_USAGE_DYNAMIC))
 		{
-			vkBindBufferMemory(device, m_Buffer, m_Memory.DeviceMemory, m_Memory.DeviceMemoryOffset);
+			vkBindBufferMemory(device.GetDevice(), m_Buffer, m_Memory.DeviceMemory, m_Memory.DeviceMemoryOffset);
             Reset();
             return true;
 		}
@@ -63,7 +63,7 @@ namespace Lambda
     }
     
     
-    void* VulkanUploadBuffer::Allocate(uint64 bytesToAllocate)
+    void* VKNUploadBuffer::Allocate(uint64 bytesToAllocate)
     {
         //Do we have enough space?
         if (m_pCurrent + bytesToAllocate > m_Memory.pHostMemory + m_SizeInBytes)
@@ -80,14 +80,14 @@ namespace Lambda
     }
     
     
-    void VulkanUploadBuffer::Reset()
+    void VKNUploadBuffer::Reset()
     {
         //Reset buffer by resetting current to the start
         m_pCurrent = m_Memory.pHostMemory;
     }
     
     
-    void VulkanUploadBuffer::Destroy(VkDevice device)
+    void VKNUploadBuffer::Destroy(VkDevice device)
     {
 		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
         

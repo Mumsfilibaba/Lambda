@@ -1,35 +1,35 @@
 #include "LambdaPch.h"
-#include "VulkanSamplerState.h"
-#include "VulkanConversions.inl"
+#include "VKNSamplerState.h"
+#include "VKNDevice.h"
+#include "VKNConversions.inl"
 
 namespace Lambda
 {
-	//------------------
-	//VulkanSamplerState
-	//------------------
+	//---------------
+	//VKNSamplerState
+	//---------------
 
-    VulkanSamplerState::VulkanSamplerState(VkDevice device, const SamplerStateDesc& desc)
+    VKNSamplerState::VKNSamplerState(const SamplerStateDesc& desc)
         : m_Sampler(VK_NULL_HANDLE),
         m_Desc()
     {
-		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
-        Init(device, desc);
+        Init(desc);
     }
     
     
-	SamplerStateDesc VulkanSamplerState::GetDesc() const
+	SamplerStateDesc VKNSamplerState::GetDesc() const
     {
         return m_Desc;
     }
     
     
-    void* VulkanSamplerState::GetNativeHandle() const
+    void* VKNSamplerState::GetNativeHandle() const
     {
         return reinterpret_cast<VkSampler>(m_Sampler);
     }
     
     
-    void VulkanSamplerState::Init(VkDevice device, const SamplerStateDesc& desc)
+    void VKNSamplerState::Init(const SamplerStateDesc& desc)
     {
         //Get adress mode
         VkSamplerAddressMode adressMode = ConvertSamplerAdressMode(desc.AdressMode);
@@ -55,7 +55,8 @@ namespace Lambda
         info.maxLod                     = desc.MaxMipLOD;
         info.mipLodBias                 = desc.MipLODBias;
         
-        if (vkCreateSampler(device, &info, nullptr, &m_Sampler) != VK_SUCCESS)
+		VKNDevice& device = VKNDevice::GetInstance();
+        if (vkCreateSampler(device.GetDevice(), &info, nullptr, &m_Sampler) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create samplerstate\n");
         }
@@ -66,7 +67,7 @@ namespace Lambda
     }
     
     
-    void VulkanSamplerState::Destroy(VkDevice device)
+    void VKNSamplerState::Destroy(VkDevice device)
     {
 		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
         

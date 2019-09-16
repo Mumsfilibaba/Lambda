@@ -1,21 +1,21 @@
 #pragma once
 #include "Graphics/IBuffer.h"
 #include <string>
-#include "VulkanAllocator.h"
+#include "VKNAllocator.h"
 
 namespace Lambda
 {
-	//------------
-	//VulkanBuffer
-	//------------
+	//---------
+	//VKNBuffer
+	//---------
 
-    class VulkanBuffer final : public IBuffer
+    class VKNBuffer final : public IBuffer
     {
     public:
-        LAMBDA_NO_COPY(VulkanBuffer);
+        LAMBDA_NO_COPY(VKNBuffer);
         
-        VulkanBuffer(IVulkanAllocator* pAllocator, const BufferDesc& desc);
-        ~VulkanBuffer() = default;
+        VKNBuffer(IVKNAllocator* pAllocator, const BufferDesc& desc);
+        ~VKNBuffer() = default;
         
         virtual void		Map(void** ppMem) override final;
         virtual void		Unmap() override final;
@@ -37,8 +37,8 @@ namespace Lambda
         void Init(const BufferDesc& desc);
         
     private:
-		IVulkanAllocator* const m_pAllocator;
-        VulkanMemory			m_Memory;
+		IVKNAllocator* const	m_pAllocator;
+        VKNMemory				m_Memory;
         VkBuffer				m_Buffer;
 		uint32					m_CurrentFrame;
 		uint32					m_SizePerFrame;
@@ -50,49 +50,53 @@ namespace Lambda
     };
 
 
-	inline bool VulkanBuffer::IsDirty() const
+	inline bool VKNBuffer::IsDirty() const
 	{
 		return m_IsDirty;
 	}
 
 
-	inline void VulkanBuffer::SetIsClean()
+	inline void VKNBuffer::SetIsClean()
 	{
 		m_IsDirty = false;
 	}
 
 
-	inline uint32 VulkanBuffer::GetDynamicOffset() const
+	inline uint32 VKNBuffer::GetDynamicOffset() const
 	{
 		return m_TotalDynamicOffset;
 	}
 
 
-	//--------------------------
-	//VulkanDynamicBufferManager
-	//--------------------------
+	//----------------
+	//VKNBufferManager
+	//----------------
 
-	class VulkanDynamicBufferManager final
+
+	class VKNBufferManager final
 	{
 	public:
-		LAMBDA_NO_COPY(VulkanDynamicBufferManager);
+		LAMBDA_NO_COPY(VKNBufferManager);
 
-		VulkanDynamicBufferManager();
-		~VulkanDynamicBufferManager();
+		VKNBufferManager();
+		~VKNBufferManager();
 
 		void MoveToNextFrame(uint32 frameCount);
-        void DestroyBuffer(VkBuffer, uint32 frameCount);
-		void RegisterBuffer(VulkanBuffer* pBuffer);
-		void UnregisterBuffer(VulkanBuffer* pBuffer);
+        void DestroyBuffer(VkBuffer buffer, uint32 frameCount);
+		void RegisterBuffer(VKNBuffer* pBuffer);
+		void UnregisterBuffer(VKNBuffer* pBuffer);
 
 	private:
-        std::vector<VulkanBuffer*>          m_Buffers;
+		void CleanupBuffers(uint32 frameCount);
+
+	private:
+        std::vector<VKNBuffer*>				m_Buffers;
         std::vector<std::vector<VkBuffer>>  m_BuffersToDelete;
 
 	public:
-		static VulkanDynamicBufferManager& GetInstance();
+		static VKNBufferManager& GetInstance();
 
 	private:
-		static VulkanDynamicBufferManager* s_pInstance;
+		static VKNBufferManager* s_pInstance;
 	};
 }

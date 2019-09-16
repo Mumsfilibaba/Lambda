@@ -1,17 +1,21 @@
 #pragma once
 #include "Defines.h"
 #include "Types.h"
-#include "VulkanAllocator.h"
+#include "VKNAllocator.h"
 
 namespace Lambda
 {
-    class VulkanUploadBuffer final
+	//---------------
+	//VKNUploadBuffer
+	//---------------
+
+    class VKNUploadBuffer final
     {
     public:
-        LAMBDA_NO_COPY(VulkanUploadBuffer);
+        LAMBDA_NO_COPY(VKNUploadBuffer);
         
-        VulkanUploadBuffer(VkDevice device, IVulkanAllocator* pAllocator, uint64 sizeInBytes);
-        ~VulkanUploadBuffer() = default;
+        VKNUploadBuffer(IVKNAllocator* pAllocator, uint64 sizeInBytes);
+        ~VKNUploadBuffer() = default;
 
         void*   Allocate(uint64 bytesToAllocate);
         void    Reset();
@@ -21,24 +25,24 @@ namespace Lambda
         VkBuffer    GetBuffer() const;
         
 	private:
-        bool Init(VkDevice device, uint64 sizeInBytes);
+        bool Init(uint64 sizeInBytes);
     
 	private:
-		IVulkanAllocator* const m_pAllocator;
-		VulkanMemory            m_Memory;
-        uint8*                  m_pCurrent;
+		IVKNAllocator* const	m_pAllocator;
+		VKNMemory				m_Memory;
+        uint8*					m_pCurrent;
         VkBuffer                m_Buffer;
 		uint64                  m_SizeInBytes;
     };
     
     
-    inline VkBuffer VulkanUploadBuffer::GetBuffer() const
+    inline VkBuffer VKNUploadBuffer::GetBuffer() const
     {
         return m_Buffer;
     }
     
     
-    inline uint64 VulkanUploadBuffer::GetOffset() const
+    inline uint64 VKNUploadBuffer::GetOffset() const
     {
         return uint64(m_pCurrent - m_Memory.pHostMemory);
     }
