@@ -151,7 +151,7 @@ namespace Lambda
             }
 
             //Create vertexbuffer
-			MeshData mesh = MeshFactory::CreateCube();
+			MeshData mesh = MeshFactory::CreateCube();//MeshFactory::CreateFromFile("chalet.obj");
 			m_IndexCount = uint32(mesh.Indices.size());
 			{
                 BufferDesc desc = {};
@@ -243,7 +243,7 @@ namespace Lambda
             }
 
             //Create texture
-            m_pTexture = ITexture::CreateTextureFromFile(pDevice, "chalet.jpg", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
+            m_pTexture = ITexture::CreateTextureFromFile(pDevice, "texture.jpg", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
 			m_pCurrentList->TransitionTexture(m_pTexture, RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0, LAMBDA_TRANSITION_ALL_MIPS);
 
             //Create samplerstate
@@ -340,7 +340,7 @@ namespace Lambda
         m_pCurrentList->SetGraphicsPipelineState(m_pPipelineState);
         
         //Update Colorbuffer
-        glm::vec4 colorBuff = glm::vec4(RGB_F(178, 34, 34), 1.0f);
+        glm::vec4 colorBuff = glm::vec4(RGB_F(255, 255, 255), 1.0f);
 
         ResourceData data   = {};
         data.pData			= &colorBuff;
@@ -378,29 +378,16 @@ namespace Lambda
         //Begin renderpass
         m_pCurrentList->BeginRenderPass(m_pRenderPass);
 
-        //Draw cubes
-		glm::vec4 colors[4];
-		colors[0] = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-		colors[1] = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
-		colors[2] = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
-		colors[3] = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-
-		constexpr uint32 cubes = 128;
+		constexpr uint32 cubes = 2;
         for (uint32 y = 0; y < cubes; y++)
         {
             for (uint32 x = 0; x < cubes; x++)
             {
                 //Update transforms
-				m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(-float(cubes) + x * 2.0f, 0.0f, -float(cubes) + y * 2.0f));// *rotation;
+				m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(-float(cubes) + x * 2.0f, 0.0f, -float(cubes) + y * 2.0f)) * rotation;
                 data.pData				= &m_TransformBuffer;
                 data.SizeInBytes		= sizeof(TransformBuffer);
                 m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);
-
-				//Update color
-				glm::vec4 col		= colors[x % 4];
-				data.pData			= &col;
-				data.SizeInBytes	= sizeof(glm::vec4);
-				m_pCurrentList->UpdateBuffer(m_pColorBuffer, &data);
             
 				//Draw
 				m_pCurrentList->DrawIndexedInstanced(m_IndexCount, 1, 0, 0, 0);
