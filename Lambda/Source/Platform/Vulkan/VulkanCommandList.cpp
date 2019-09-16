@@ -87,6 +87,19 @@ namespace Lambda
 		device.CreateUploadBuffer(&m_pBufferUpload, MB(64));
 		device.CreateUploadBuffer(&m_pTextureUpload, MB(128));
     }
+
+
+	inline void VulkanCommandList::CommitResources()
+	{
+		m_pResourceState->CommitBindings();
+
+		const uint32* pOffsets = m_pResourceState->GetDynamicOffsets();
+		uint32 offsetCount = m_pResourceState->GetDynamicOffsetCount();
+
+		VkDescriptorSet descriptorSet = m_pResourceState->GetDescriptorSet();
+		VkPipelineLayout pipelineLayout = m_pResourceState->GetPipelineLayout();
+		vkCmdBindDescriptorSets(m_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, offsetCount, pOffsets);
+	}
     
     
     void VulkanCommandList::BlitTexture(VulkanTexture* pDst, uint32 dstWidth, uint32 dstHeight, uint32 dstMipLevel, VulkanTexture* pSrc, uint32 srcWidth, uint32 srcHeight, uint32 srcMipLevel)
@@ -247,20 +260,6 @@ namespace Lambda
 		//Force uint32 for indices
         VkBuffer buffer = reinterpret_cast<VkBuffer>(pBuffer->GetNativeHandle());
         vkCmdBindIndexBuffer(m_CommandBuffer, buffer, 0, VK_INDEX_TYPE_UINT32);
-    }
-    
-    
-    void VulkanCommandList::CommitResources()
-    {
-		VulkanGraphicsDevice& device = VulkanGraphicsDevice::GetInstance();
-        m_pResourceState->CommitBindings(device.GetDevice());
-        
-        const uint32* pOffsets = m_pResourceState->GetDynamicOffsets();
-        uint32 offsetCount = m_pResourceState->GetDynamicOffsetCount();
-        
-        VkDescriptorSet descriptorSet = m_pResourceState->GetDescriptorSet();
-        VkPipelineLayout pipelineLayout = m_pResourceState->GetPipelineLayout();
-        vkCmdBindDescriptorSets(m_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, offsetCount, pOffsets);
     }
 
 

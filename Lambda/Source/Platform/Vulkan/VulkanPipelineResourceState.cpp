@@ -274,31 +274,7 @@ namespace Lambda
 	}
 
 	
-	VkPipelineLayout VulkanPipelineResourceState::GetPipelineLayout() const
-	{
-		return m_PipelineLayout;
-	}
-
-
-	VkDescriptorSet VulkanPipelineResourceState::GetDescriptorSet() const
-	{
-		return m_DescriptorSet;
-	}
-
-
-	const uint32* VulkanPipelineResourceState::GetDynamicOffsets() const
-	{
-		return m_DynamicOffsets.data();
-	}
-
-
-	uint32 VulkanPipelineResourceState::GetDynamicOffsetCount() const
-	{
-		return uint64(m_DynamicOffsets.size());
-	}
-
-	
-	void VulkanPipelineResourceState::CommitBindings(VkDevice device)
+	void VulkanPipelineResourceState::CommitBindings()
 	{
 		//Update bufferoffsets
 		for (auto pBuffer : m_DynamicBuffers)
@@ -372,7 +348,8 @@ namespace Lambda
 			//Write all descriptors
 			if (m_DescriptorWrites.size() > 0)
 			{
-				vkUpdateDescriptorSets(device, uint32(m_DescriptorWrites.size()), m_DescriptorWrites.data(), 0, nullptr);
+				VulkanGraphicsDevice& device = VulkanGraphicsDevice::GetInstance();
+				vkUpdateDescriptorSets(device.GetDevice(), uint32(m_DescriptorWrites.size()), m_DescriptorWrites.data(), 0, nullptr);
 				m_DescriptorWrites.clear();
 			}
 

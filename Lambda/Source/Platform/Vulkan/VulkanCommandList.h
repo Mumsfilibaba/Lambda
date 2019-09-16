@@ -9,8 +9,11 @@ namespace Lambda
     class VulkanRenderPass;
 	class VulkanUploadBuffer;
     class VulkanGraphicsDevice;
-    class VulkanPipelineResourceState;
+	class VulkanPipelineResourceState;
 
+	//-----------------
+	//VulkanCommandList
+	//-----------------
 
     class VulkanCommandList final : public ICommandList
     {

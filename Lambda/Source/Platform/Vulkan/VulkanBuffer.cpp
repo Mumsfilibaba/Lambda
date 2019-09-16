@@ -78,10 +78,17 @@ namespace Lambda
         }
         else
         {
-            LOG_DEBUG_INFO("Vulkan: Created Buffer\n");
+			if (m_Desc.pName)
+			{
+				LOG_DEBUG_INFO("Vulkan: Created Buffer. Name=\"%s\"\n", m_Desc.pName);
+				device.SetVulkanObjectName(VK_OBJECT_TYPE_BUFFER, uint64(m_Buffer), std::string(m_Desc.pName));
+			}
+			else
+			{
+				LOG_DEBUG_INFO("Vulkan: Created Buffer\n");
+			}
+
             m_Desc = desc;
-            
-            device.SetVulkanObjectName(VK_OBJECT_TYPE_BUFFER, uint64(m_Buffer), std::string(m_Desc.pName));
         }
         
 		//Allocate memory
@@ -119,18 +126,6 @@ namespace Lambda
     }
 
 
-	bool VulkanBuffer::IsDirty() const
-	{
-		return m_IsDirty;
-	}
-
-
-	void VulkanBuffer::SetIsClean()
-	{
-		m_IsDirty = false;
-	}
-
-
 	void VulkanBuffer::AdvanceFrame(uint32 frameCount)
 	{
 		//Move on a frame
@@ -152,10 +147,10 @@ namespace Lambda
 		}
 
 		//Calculate offset in buffer
-		uint32 frameOffset		= m_CurrentFrame * m_SizePerFrame;	//Offset of the current frame
-		m_DynamicOffset			= (offset) % m_SizePerFrame;		//Ringbuffer-offset per frame
-		m_TotalDynamicOffset	= frameOffset + m_DynamicOffset;						
-        
+		uint32 frameOffset = m_CurrentFrame * m_SizePerFrame;	//Offset of the current frame
+		m_DynamicOffset = offset;							//Offset per frame
+		m_TotalDynamicOffset = frameOffset + m_DynamicOffset;
+
 		//Update buffer
 		uint8* pCurrent = m_Memory.pHostMemory + m_TotalDynamicOffset;
 		memcpy(pCurrent, pData->pData, pData->SizeInBytes);
@@ -202,13 +197,20 @@ namespace Lambda
         VkBuffer newBuffer = VK_NULL_HANDLE;
 		if (vkCreateBuffer(device.GetDevice(), &info, nullptr, &newBuffer) != VK_SUCCESS)
 		{
-			LOG_DEBUG_ERROR("Vulkan: Failed to create Buffer\n");
+			LOG_DEBUG_ERROR("Vulkan: Failed to recreate Buffer\n");
 			return;
 		}
 		else
 		{
-			LOG_DEBUG_INFO("Vulkan: Created Buffer\n");
-            device.SetVulkanObjectName(VK_OBJECT_TYPE_BUFFER, uint64(m_Buffer), std::string(m_Desc.pName));
+			if (m_Desc.pName)
+			{
+				LOG_DEBUG_INFO("Vulkan: Recreated Buffer. Name=\"%s\"\n", m_Desc.pName);
+				device.SetVulkanObjectName(VK_OBJECT_TYPE_BUFFER, uint64(m_Buffer), std::string(m_Desc.pName));
+			}
+			else
+			{
+				LOG_DEBUG_INFO("Vulkan: Recreated Buffer\n");
+			}
 		}
 
 		//Allocate memory
@@ -236,12 +238,6 @@ namespace Lambda
 
 		//Set to dirty
 		m_IsDirty = true;
-	}
-
-
-	uint32 VulkanBuffer::GetDynamicOffset() const
-	{
-		return m_TotalDynamicOffset;
 	}
     
     

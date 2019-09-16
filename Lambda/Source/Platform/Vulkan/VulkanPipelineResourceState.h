@@ -52,7 +52,7 @@ namespace Lambda
 		VkDescriptorSet		GetDescriptorSet() const;
 		VkPipelineLayout	GetPipelineLayout() const;
 
-		void CommitBindings(VkDevice device);
+		void CommitBindings();
 		void Destroy(VkDevice device);
 
 	private:
@@ -70,5 +70,29 @@ namespace Lambda
 		std::vector<VulkanBuffer*>		    m_DynamicBuffers;
 		bool							    m_IsDirty;
 	};
+
+
+	inline VkPipelineLayout VulkanPipelineResourceState::GetPipelineLayout() const
+	{
+		return m_PipelineLayout;
+	}
+
+
+	inline VkDescriptorSet VulkanPipelineResourceState::GetDescriptorSet() const
+	{
+		return m_DescriptorSet;
+	}
+
+
+	inline const uint32* VulkanPipelineResourceState::GetDynamicOffsets() const
+	{
+		return m_DynamicOffsets.data();
+	}
+
+
+	inline uint32 VulkanPipelineResourceState::GetDynamicOffsetCount() const
+	{
+		return uint64(m_DynamicOffsets.size());
+	}
 }
 

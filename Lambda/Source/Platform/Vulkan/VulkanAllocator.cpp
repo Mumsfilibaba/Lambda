@@ -162,15 +162,6 @@ namespace Lambda
         //Set bestfit to be used
         pBestFit->IsFree = false;
         
-        
-        VulkanMemoryBlock* pCurrent = m_pBlockHead;
-        LOG_DEBUG_WARNING("Allocated blocks in chunk %u:\n", m_ID);
-        while (pCurrent)
-        {
-            LOG_DEBUG_WARNING("    VulkanBlock: ID=%u, Offset=%u, Size=%u, IsFree=%s\n", pCurrent->ID, pCurrent->DeviceMemoryOffset, pCurrent->Size, pCurrent->IsFree ? "True" : "False");
-            pCurrent = pCurrent->pNext;
-        }
-        
 		return true;
 	}
 
@@ -207,52 +198,83 @@ namespace Lambda
 
 	void VulkanMemoryChunk::Deallocate(VulkanMemory* pAllocation)
 	{
-        /*VulkanMemoryBlock* pCurrent = m_pBlockHead;
-        while (!pCurrent)
+        //Try to find the correct block
+        VulkanMemoryBlock* pCurrent = m_pBlockHead;
+		while (pCurrent)
         {
-            VulkanMemory& current = pCurrent->Memory;
-            if (current.Offset + current.Size == allocation.Offset)
-            {
-                current.Size = current.Size + allocation.Size;
-                if (pCurrent->pNext)
-                {
-                    VulkanMemoryBlock* pNext = pCurrent->pNext;
-                    VulkanMemory& next = pNext->Memory;
-                    
-                    if (next.Offset == allocation.Offset + allocation.Size)
-                    {
-                        // |current|allocation|next|
-                        // |-------|          |----|   |---|
-                        // |-------|??????????|----|   |---|
-                        // |-----------------------|   |---|
-                        
-                        // Remove the next block since pCurrent now stretes over it
-                        current.Size = current.Size + allocation.Size
-                        
-                    }
-                }
-            }
-        }
-        
-        
-		//Search through the blocks and see if they come after or before eachother
-        for (auto block = m_Blocks.begin(); block != m_Blocks.end(); block += 2)
-        {
-            if (block->Offset + block->Size == allocation.Offset)
-            {
-                block->Size += allocation.Size;
-                return;
-            }
-            else if (allocation.Offset + allocation.Size == block->Offset)
-            {
-                block->Size        += allocation.Size;
-                block->Offset    -= allocation.Size;
-                return;
-            }
+			if (pCurrent->ID == pAllocation->BlockID)
+			{
+				break;
+			}
+			
+			pCurrent = pCurrent->pNext;
         }
 
-        //Otherwise just push block
-        m_Blocks.push_back(allocation);*/
+		if (!pCurrent)
+		{
+			return;
+		}
+		
+		//Set this block to free
+		pCurrent->IsFree = true;
+
+		//Try to merge blocks
+		VulkanMemoryBlock* pNext		= pCurrent->pNext;
+		VulkanMemoryBlock* pPrevious	= pCurrent->pPrevious;
+		if (pNext)
+		{
+			//Merge blocks
+			if (pNext->IsFree)
+			{
+				//Set size
+				pNext->Size					= pNext->Size + pCurrent->Size;
+				pNext->DeviceMemoryOffset	= pNext->DeviceMemoryOffset - pCurrent->Size;
+
+				//Set pointers
+				pNext->pPrevious = pPrevious;
+				if (pPrevious)
+					pPrevious->pNext = pNext;	
+				if (m_pBlockHead == pCurrent)
+					m_pBlockHead = pNext;
+
+				//Remove block
+				delete pCurrent;
+
+				//Set values to continue the function
+				pCurrent	= pNext;
+				pNext		= pCurrent->pNext;
+			}
+		}
+		if (pPrevious)
+		{
+			//Merge blocks
+			if (pPrevious->IsFree)
+			{
+				//Set size
+				pPrevious->Size = pPrevious->Size + pCurrent->Size;
+
+				//Set pointers
+				pPrevious->pNext = pNext;
+				if (pNext)
+					pNext->pPrevious = pPrevious;
+				if (m_pBlockHead == pCurrent)
+					m_pBlockHead = pPrevious;
+
+				//Remove block
+				delete pCurrent;
+
+				//Set values to continue the function
+				pCurrent = nullptr;
+			}
+		}
+
+		//Invalidate memory
+		pAllocation->BlockID			= -1;
+		pAllocation->ChunkID			= -1;
+		pAllocation->DeviceMemoryOffset = 0;
+		pAllocation->Size				= 0;
+		pAllocation->DeviceMemory		= VK_NULL_HANDLE;
+		pAllocation->pHostMemory		= nullptr;
 	}
 
 
@@ -262,8 +284,24 @@ namespace Lambda
 
 		if (m_DeviceMemory != VK_NULL_HANDLE)
 		{
+			//Unmap
 			Unmap();
 
+			//Print memoryleaks
+#if defined(LAMBDA_DEBUG)
+			VulkanMemoryBlock* pDebug = m_pBlockHead;
+			LOG_DEBUG_WARNING("Allocated blocks left in MemoryChunk %u:\n", m_ID);
+			while (pDebug)
+			{
+				LOG_DEBUG_WARNING("    VulkanBlock: ID=%u, Offset=%u, Size=%u, IsFree=%s\n", pDebug->ID, pDebug->DeviceMemoryOffset, pDebug->Size, pDebug->IsFree ? "True" : "False");
+				pDebug = pDebug->pNext;
+			}
+#endif
+
+			//Delete first block
+			SafeDelete(m_pBlockHead);
+
+			//Free memory
 			vkFreeMemory(device, m_DeviceMemory, nullptr);
 			m_DeviceMemory = VK_NULL_HANDLE;
 
@@ -356,13 +394,19 @@ namespace Lambda
 	
 	void VulkanDeviceAllocator::DefferedDeallocate(VulkanMemory* pAllocation, uint64 frameCount)
 	{
-        pAllocation->DeviceMemory   = VK_NULL_HANDLE;
-        pAllocation->pHostMemory    = nullptr;
-        
+		//Set it to be removed
         if (size_t(pAllocation->ChunkID) < m_Chunks.size() && pAllocation->DeviceMemory != VK_NULL_HANDLE)
         {
-            //m_MemoryToDeallocate[frameCount].emplace_back(pAllocation);
+            m_MemoryToDeallocate[frameCount].emplace_back(*pAllocation);
         }
+
+		//Invalidate memory
+		pAllocation->BlockID			= -1;
+		pAllocation->ChunkID			= -1;
+		pAllocation->DeviceMemoryOffset = 0;
+		pAllocation->Size				= 0;
+		pAllocation->DeviceMemory		= VK_NULL_HANDLE;
+		pAllocation->pHostMemory		= nullptr;
 	}
 
 
@@ -373,7 +417,7 @@ namespace Lambda
 		{
 			for (auto& memory : memoryBlocks)
 			{
-				//Deallocate(memory);
+				Deallocate(&memory);
 			}
 
 			memoryBlocks.clear();
@@ -385,6 +429,20 @@ namespace Lambda
 	{
 		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
 
+		//Cleanup all garbage memory before deleting
+		for (auto& memoryBlocks : m_MemoryToDeallocate)
+		{
+			if (memoryBlocks.size() > 0)
+			{
+				for (auto& memory : memoryBlocks)
+				{
+					Deallocate(&memory);
+				}
+				memoryBlocks.clear();
+			}
+		}
+
+		//Delete allocator
 		LOG_SYSTEM(LOG_SEVERITY_WARNING, "Vulkan: Deleting DeviceAllocator. Number of chunks: %u\n", m_Chunks.size());
 		for (auto chunk : m_Chunks)
 		{

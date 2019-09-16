@@ -49,6 +49,25 @@ namespace Lambda
 		bool					m_IsDirty;
     };
 
+
+	inline bool VulkanBuffer::IsDirty() const
+	{
+		return m_IsDirty;
+	}
+
+
+	inline void VulkanBuffer::SetIsClean()
+	{
+		m_IsDirty = false;
+	}
+
+
+	inline uint32 VulkanBuffer::GetDynamicOffset() const
+	{
+		return m_TotalDynamicOffset;
+	}
+
+
 	//--------------------------
 	//VulkanDynamicBufferManager
 	//--------------------------
