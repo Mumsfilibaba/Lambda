@@ -45,7 +45,7 @@ namespace Lambda
 		}
 		else if (desc.Api == GRAPHICS_API_VULKAN)
 		{
-			return DBG_NEW VulkanGraphicsDevice(desc);
+			return DBG_NEW VKNGraphicsDevice(desc);
 		}
 
 		return nullptr;
