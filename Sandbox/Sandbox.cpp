@@ -345,7 +345,7 @@ namespace Lambda
         ResourceData data   = {};
         data.pData			= &colorBuff;
         data.SizeInBytes	= sizeof(glm::vec4); 
-        //m_pCurrentList->UpdateBuffer(m_pColorBuffer, &data);
+        m_pCurrentList->UpdateBuffer(m_pColorBuffer, &data);
         
         //Update camera buffer
         m_CameraBuffer.View = m_Camera.GetView();
@@ -400,7 +400,7 @@ namespace Lambda
 				glm::vec4 col		= colors[x % 4];
 				data.pData			= &col;
 				data.SizeInBytes	= sizeof(glm::vec4);
-				m_pCurrentList->UpdateBuffer(m_pColorBuffer, &data);
+				//m_pCurrentList->UpdateBuffer(m_pColorBuffer, &data);
             
 				//Draw
 				m_pCurrentList->DrawIndexedInstanced(m_IndexCount, 1, 0, 0, 0);

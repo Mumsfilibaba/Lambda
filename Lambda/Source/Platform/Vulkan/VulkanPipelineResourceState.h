@@ -1,6 +1,6 @@
 #pragma once
 #include "Graphics/IPipelineResourceState.h"
-#include <unordered_map>
+#include <map>
 #include <vulkan/vulkan.h>
 
 namespace Lambda
@@ -60,15 +60,15 @@ namespace Lambda
 		void AllocateDescriptorSet();
 
 	private:
-		VkPipelineLayout						m_PipelineLayout;
-		VkDescriptorSetLayout					m_DescriptorSetLayout;
-		VkDescriptorSet							m_DescriptorSet;
-		VkDescriptorPool						m_DescriptorPool;
-		std::unordered_map<uint32, VulkanSlot>	m_ResourceBindings;
-		std::vector<VkWriteDescriptorSet>		m_DescriptorWrites;
-		std::vector<uint32>						m_DynamicOffsets;
-		std::vector<VulkanBuffer*>				m_DynamicBuffers;
-		bool									m_IsDirty;
+		VkPipelineLayout				    m_PipelineLayout;
+		VkDescriptorSetLayout			    m_DescriptorSetLayout;
+		VkDescriptorSet					    m_DescriptorSet;
+		VkDescriptorPool				    m_DescriptorPool;
+		std::map<uint32, VulkanSlot>	    m_ResourceBindings;
+		std::vector<VkWriteDescriptorSet>   m_DescriptorWrites;
+		std::vector<uint32>				    m_DynamicOffsets;
+		std::vector<VulkanBuffer*>		    m_DynamicBuffers;
+		bool							    m_IsDirty;
 	};
 }
 
