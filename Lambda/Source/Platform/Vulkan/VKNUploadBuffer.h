@@ -26,13 +26,17 @@ namespace Lambda
         
 	private:
         bool Init(uint64 sizeInBytes);
+		void Reallocate(uint64 sizeInBytes);
     
 	private:
 		IVKNAllocator* const	m_pAllocator;
-		VKNMemory				m_Memory;
         uint8*					m_pCurrent;
+		VKNMemory				m_Memory;
         VkBuffer                m_Buffer;
+		uint64                  m_BytesLeft;
 		uint64                  m_SizeInBytes;
+		std::vector<VkBuffer>	m_OldBuffers;
+		std::vector<VKNMemory>	m_OldMemory;
     };
     
     

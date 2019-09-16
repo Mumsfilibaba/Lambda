@@ -148,7 +148,7 @@ namespace Lambda
 
 		//Calculate offset in buffer
 		uint32 frameOffset = m_CurrentFrame * m_SizePerFrame;	//Offset of the current frame
-		m_DynamicOffset = offset;							//Offset per frame
+		m_DynamicOffset = offset;								//Offset per frame
 		m_TotalDynamicOffset = frameOffset + m_DynamicOffset;
 
 		//Update buffer

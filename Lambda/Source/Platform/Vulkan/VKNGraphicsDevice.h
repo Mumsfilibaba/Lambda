@@ -78,6 +78,7 @@ namespace Lambda
     private:
 		VKNDevice*					m_pDevice;
 		VKNBufferManager*			m_pDynamicBufferManager;
+		VKNDescriptorPoolManager*	m_pDescriptorPoolManager;
 		VKNFramebufferCache*		m_pFramebufferCache;
 		VKNTexture*					m_pDepthStencil;
 		VKNTexture*					m_pMSAABuffer;

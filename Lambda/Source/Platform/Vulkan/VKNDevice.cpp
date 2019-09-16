@@ -61,6 +61,8 @@ namespace Lambda
 			vkDestroyInstance(m_Instance, nullptr);
 			m_Instance = VK_NULL_HANDLE;
 		}
+
+		delete this;
 	}
 
 

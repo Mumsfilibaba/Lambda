@@ -32,11 +32,13 @@ namespace Lambda
 		IVKNAllocator() = default;
 		~IVKNAllocator() = default;
 
-		virtual bool Allocate(VKNMemory* pAllocation, const VkMemoryRequirements& memoryRequirements, ResourceUsage usage) = 0;
-		virtual void Deallocate(VKNMemory* pAllocation) = 0;
-		virtual void DefferedDeallocate(VKNMemory* pAllocation, uint64 frameCount) = 0;
-		virtual void CleanGarbageMemory(uint64 frameCount) = 0;
-		virtual void Destroy(VkDevice device) = 0;
+		virtual bool	Allocate(VKNMemory* pAllocation, const VkMemoryRequirements& memoryRequirements, ResourceUsage usage) = 0;
+		virtual void	Deallocate(VKNMemory* pAllocation) = 0;
+		virtual void	DefferedDeallocate(VKNMemory* pAllocation, uint64 frameCount) = 0;
+		virtual void	CleanGarbageMemory(uint64 frameCount) = 0;
+		virtual void	Destroy(VkDevice device) = 0;
+		virtual uint64	GetTotalReserved() const = 0;
+		virtual uint64	GetTotalAllocated() const = 0;
 	};
 
     //--------------
@@ -99,15 +101,74 @@ namespace Lambda
 		VKNAllocator();
 		~VKNAllocator() = default;
 
-		virtual bool Allocate(VKNMemory* pAllocation, const VkMemoryRequirements& memoryRequirements, ResourceUsage usage) override final;
-		virtual void Deallocate(VKNMemory* pAllocation) override final;
-		virtual void DefferedDeallocate(VKNMemory* pAllocation, uint64 frameCount) override final;
-		virtual void CleanGarbageMemory(uint64 frameCount) override final;
-		virtual void Destroy(VkDevice device) override final;
+		virtual bool	Allocate(VKNMemory* pAllocation, const VkMemoryRequirements& memoryRequirements, ResourceUsage usage) override final;
+		virtual void	Deallocate(VKNMemory* pAllocation) override final;
+		virtual void	DefferedDeallocate(VKNMemory* pAllocation, uint64 frameCount) override final;
+		virtual void	CleanGarbageMemory(uint64 frameCount) override final;
+		virtual void	Destroy(VkDevice device) override final;
+		virtual uint64	GetTotalReserved() const override final;
+		virtual uint64	GetTotalAllocated() const override final;
 
 	private:
 		uint64								m_MaxAllocations;
+		uint64								m_TotalReserved;
+		uint64								m_TotalAllocated;
 		std::vector<VKNMemoryChunk*>		m_Chunks;
 		std::vector<std::vector<VKNMemory>>	m_MemoryToDeallocate;
+	};
+
+	//-------------------------
+	//VKNDescriptorSetAllocator
+	//-------------------------
+
+	class VKNDescriptorSetAllocator
+	{
+	public:
+		LAMBDA_NO_COPY(VKNDescriptorSetAllocator);
+
+		VKNDescriptorSetAllocator(uint32 uniformBufferCount, uint32 dynamicUniformBufferCount, uint32 samplerCount, uint32 sampledImageCount, uint32 numSets);
+		~VKNDescriptorSetAllocator() = default;
+
+		VkDescriptorSet Allocate(VkDescriptorSetLayout descriptorSetLayout);
+		void			Destroy(VkDevice device);
+		
+	private:
+		void Init();
+
+	private:
+		VkDescriptorPool				m_Pool;
+		uint32							m_NumSets;
+		uint32							m_UniformBufferCount;
+		uint32							m_DynamicUniformBufferCount;
+		uint32							m_SamplerCount;
+		uint32							m_SampledImageCount;
+		uint32							m_SetCount;
+	};
+
+	//------------------------
+	//VKNDescriptorPoolManager
+	//------------------------
+
+	class VKNDescriptorPoolManager
+	{
+	public:
+		LAMBDA_NO_COPY(VKNDescriptorPoolManager);
+
+		VKNDescriptorPoolManager();
+		~VKNDescriptorPoolManager() = default;
+
+		void DeallocatePool(VkDescriptorPool pool);
+		void Cleanup();
+
+	private:
+		uint32										m_FrameCount;
+		uint32										m_CurrentFrame;
+		std::vector<std::vector<VkDescriptorPool>>	m_OldPools;
+
+	private:
+		static VKNDescriptorPoolManager* s_pInstance;
+
+	public:
+		static VKNDescriptorPoolManager& GetInstance();
 	};
 }

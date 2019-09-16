@@ -151,7 +151,7 @@ namespace Lambda
             }
 
             //Create vertexbuffer
-			MeshData mesh = MeshFactory::CreateSphere(3, 0.85f);
+			MeshData mesh = MeshFactory::CreateCube();
 			m_IndexCount = uint32(mesh.Indices.size());
 			{
                 BufferDesc desc = {};
@@ -385,7 +385,7 @@ namespace Lambda
 		colors[2] = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
 		colors[3] = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
-		constexpr uint32 cubes = 768;
+		constexpr uint32 cubes = 128;
         for (uint32 y = 0; y < cubes; y++)
         {
             for (uint32 x = 0; x < cubes; x++)

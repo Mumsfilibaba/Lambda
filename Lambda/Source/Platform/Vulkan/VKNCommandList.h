@@ -6,6 +6,7 @@
 namespace Lambda
 {
     class VKNTexture;
+	class IVKNAllocator;
     class VKNRenderPass;
 	class VKNUploadBuffer;
     class VKNGraphicsDevice;
@@ -22,7 +23,7 @@ namespace Lambda
     public:
         LAMBDA_NO_COPY(VKNCommandList);
         
-        VKNCommandList(CommandListType type);
+        VKNCommandList(IVKNAllocator* pAllocator, CommandListType type);
         ~VKNCommandList() = default;
         
         virtual void ClearRenderTarget(ITexture* pRenderTarget, float color[4]) override final;
@@ -62,11 +63,12 @@ namespace Lambda
         void Destroy(VkDevice device);
         
     private:
-        void Init(CommandListType type);
+        void Init(IVKNAllocator* pAllocator, CommandListType type);
 
     private:
         VkCommandPool				m_CommandPool;
         VkCommandBuffer				m_CommandBuffer;  
+		IVKNAllocator*				m_pAllocator;
         VKNUploadBuffer*			m_pBufferUpload;
         VKNUploadBuffer*			m_pTextureUpload;
         VKNRenderPass*				m_pRenderPass;

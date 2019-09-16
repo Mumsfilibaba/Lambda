@@ -151,12 +151,10 @@ namespace Lambda
             m_Extent = newExtent;
         }
         
-        
         //Get SwapChain images
         uint32 imageCount = 0;
         vkGetSwapchainImagesKHR(device.GetDevice(), m_SwapChain, &imageCount, nullptr);
         m_ImageCount = imageCount;
-        
         
         //Init textures
         std::vector<VkImage> textures(imageCount);
@@ -164,22 +162,24 @@ namespace Lambda
         for (uint32 i = 0; i < imageCount; i++)
         {
             TextureDesc desc = {};
-            desc.Type = TEXTURE_TYPE_2D;
-            desc.pResolveResource = nullptr;
-            desc.Flags = TEXTURE_FLAGS_RENDER_TARGET;
-            desc.Format = ConvertVkFormat(m_Format.format);
-            desc.Width = m_Extent.width;
-            desc.Height = m_Extent.height;
-            desc.Depth = 1;
-            desc.ArraySize = 1;
-            desc.MipLevels = 1;
-            desc.SampleCount = 1;
-            desc.Usage = RESOURCE_USAGE_DEFAULT;
+            desc.Type				= TEXTURE_TYPE_2D;
+            desc.pResolveResource	= nullptr;
+            desc.Flags				= TEXTURE_FLAGS_RENDER_TARGET;
+            desc.Format				= ConvertVkFormat(m_Format.format);
+            desc.Width				= m_Extent.width;
+            desc.Height				= m_Extent.height;
+            desc.Depth				= 1;
+            desc.ArraySize			= 1;
+            desc.MipLevels			= 1;
+            desc.SampleCount		= 1;
+            desc.Usage				= RESOURCE_USAGE_DEFAULT;
+
             m_Buffers.push_back(DBG_NEW VKNTexture(textures[i], desc));
         }
         
         //Aquire the first swapchain image
         AquireNextImage(signalSemaphore);
+
         LOG_DEBUG_INFO("Vulkan: Created ImageViews\n");
     }
 

@@ -69,23 +69,20 @@ namespace Lambda
             }
         }        
 
-
 		//Release all framebuffers
 		if (m_pFramebufferCache)
 		{
 			m_pFramebufferCache->ReleaseAll(m_pDevice->GetDevice());
 		}
 
-
 		//Destroy window framebuffer
 		m_pSwapChain->Destroy(m_pDevice->GetDevice());
         ReleaseDepthStencil();
 		ReleaseMSAABuffer();
 
-
 		SafeDelete(m_pFramebufferCache);
 		SafeDelete(m_pDynamicBufferManager);
-
+		SafeDelete(m_pDescriptorPoolManager);
 
 		//Release all memory
 		if (m_pDeviceAllocator)
@@ -94,13 +91,11 @@ namespace Lambda
 			m_pDeviceAllocator = nullptr;
 		}
 
-
 		if (m_pDevice)
 		{
 			m_pDevice->Destroy();
 			m_pDevice = nullptr;
 		}
-
 
 		//Set global instance to nullptr
 		if (s_pInstance == this)
@@ -120,7 +115,6 @@ namespace Lambda
 		vkGetDeviceQueue(m_pDevice->GetDevice(), familiyIndices.GraphicsFamily, 0, &m_GraphicsQueue);
 		vkGetDeviceQueue(m_pDevice->GetDevice(), familiyIndices.PresentFamily, 0, &m_PresentationQueue);
 
-
         //Setup semaphore structure
         VkSemaphoreCreateInfo semaphoreInfo = {};
         semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -131,7 +125,6 @@ namespace Lambda
         VkFenceCreateInfo fenceInfo = {};
         fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
         
-
         //Create sync-objects
         m_Fences.resize(desc.BackBufferCount);
         m_ImageSemaphores.resize(desc.BackBufferCount);
@@ -165,18 +158,14 @@ namespace Lambda
         
         LOG_DEBUG_INFO("Vulkan: Created Semaphores and fences\n");
         
-
 		//Create allocator
-		m_pDeviceAllocator = DBG_NEW VKNAllocator();
-
-
+		m_pDeviceAllocator			= DBG_NEW VKNAllocator();
+		//Create descriptorpoolmanager
+		m_pDescriptorPoolManager	= DBG_NEW VKNDescriptorPoolManager();
 		//Create dynamic buffer manager
-		m_pDynamicBufferManager = DBG_NEW VKNBufferManager();
-
-
+		m_pDynamicBufferManager		= DBG_NEW VKNBufferManager();
 		//Create framebuffercache
-		m_pFramebufferCache = DBG_NEW VKNFramebufferCache();
-
+		m_pFramebufferCache			= DBG_NEW VKNFramebufferCache();
         
         //Create swapchain
         VKNSwapChainDesc swapChainInfo = {};
@@ -187,7 +176,6 @@ namespace Lambda
         swapChainInfo.Extent             = { desc.pWindow->GetWidth(), desc.pWindow->GetHeight() };
         swapChainInfo.ImageCount         = desc.BackBufferCount;
         m_pSwapChain = DBG_NEW VKNSwapChain(swapChainInfo);
-
 
 		//If we are using MSAA we need to create a seperate texture
 		DeviceSettings settings = m_pDevice->GetDeviceSettings();
@@ -200,7 +188,6 @@ namespace Lambda
 			}
 		}
 
-        
         //Create depthbuffer
         if (!CreateDepthStencil())
         {
@@ -208,7 +195,6 @@ namespace Lambda
             return;
         }
          
-
         //Init internal commandlist, used for copying from staging buffers to final resource etc.
 		ICommandList* pList = nullptr;
         CreateCommandList(&pList, COMMAND_LIST_TYPE_GRAPHICS);
@@ -293,13 +279,15 @@ namespace Lambda
 
 		//Cleanup memory
 		m_pDeviceAllocator->CleanGarbageMemory(m_CurrentFrame);
+		//Cleanup descriptorpool
+		m_pDescriptorPoolManager->Cleanup();
     }
     
     
     void VKNGraphicsDevice::CreateCommandList(ICommandList** ppList, CommandListType type)
     {
 		LAMBDA_ASSERT(ppList != nullptr);
-        (*ppList) = DBG_NEW VKNCommandList(type);
+        (*ppList) = DBG_NEW VKNCommandList(m_pDeviceAllocator, type);
     }
     
     

@@ -8,6 +8,7 @@ namespace Lambda
 	class VKNBuffer;
 	class VKNTexture;
 	class VKNSamplerState;
+	class VKNDescriptorSetAllocator;
 
 	//-------
 	//VKNSlot
@@ -57,9 +58,9 @@ namespace Lambda
 
 	private:
 		void Init(const PipelineResourceStateDesc& desc);
-		void AllocateDescriptorSet();
 
 	private:
+		VKNDescriptorSetAllocator*			m_pAllocator;
 		VkPipelineLayout				    m_PipelineLayout;
 		VkDescriptorSetLayout			    m_DescriptorSetLayout;
 		VkDescriptorSet					    m_DescriptorSet;

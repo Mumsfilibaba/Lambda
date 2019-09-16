@@ -2,7 +2,6 @@
 #include "Utilities/MathHelper.h"
 #include "VKNCommandList.h"
 #include "VKNDevice.h"
-#include "VKNGraphicsDevice.h"
 #include "VKNUploadBuffer.h"
 #include "VKNPipelineState.h"
 #include "VKNSamplerState.h"
@@ -19,7 +18,7 @@ namespace Lambda
 	//VKNCommandList
 	//--------------
 
-    VKNCommandList::VKNCommandList(CommandListType type)
+    VKNCommandList::VKNCommandList(IVKNAllocator* pAllocator, CommandListType type)
         : m_CommandPool(VK_NULL_HANDLE),
         m_CommandBuffer(VK_NULL_HANDLE),
 		m_pBufferUpload(nullptr),
@@ -29,11 +28,11 @@ namespace Lambda
         m_Type(COMMAND_LIST_TYPE_UNKNOWN),
 		m_Name()
     {
-        Init(type);
+        Init(pAllocator, type);
     }
 
     
-    void VKNCommandList::Init(CommandListType type)
+    void VKNCommandList::Init(IVKNAllocator* pAllocator, CommandListType type)
     {
 		VKNDevice& device = VKNDevice::GetInstance();
 
@@ -83,11 +82,9 @@ namespace Lambda
             LOG_DEBUG_INFO("Vulkan: Created commandbuffer\n");
         }
 
-
-        //Init upload buffers
-		VKNGraphicsDevice& gd = VKNGraphicsDevice::GetInstance();
-		gd.CreateUploadBuffer(&m_pBufferUpload, MB(64));
-		gd.CreateUploadBuffer(&m_pTextureUpload, MB(128));
+        //Init uploadbuffers
+		m_pBufferUpload		= DBG_NEW VKNUploadBuffer(pAllocator, MB(1));
+		m_pTextureUpload	= DBG_NEW VKNUploadBuffer(pAllocator, MB(16));
     }
 
 

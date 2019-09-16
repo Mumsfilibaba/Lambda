@@ -1,18 +1,20 @@
 #include "LambdaPch.h"
 #include "VKNPipelineResourceState.h"
 #include "VKNDevice.h"
+#include "VKNAllocator.h"
 #include "VKNBuffer.h"
 #include "VKNTexture.h"
 #include "VKNSamplerState.h"
 
 namespace Lambda
 {
-	//---------------------------
+	//------------------------
 	//VKNPipelineResourceState
-	//---------------------------
+	//------------------------
 
 	VKNPipelineResourceState::VKNPipelineResourceState(const PipelineResourceStateDesc& desc)
-		: m_PipelineLayout(VK_NULL_HANDLE),
+		: m_pAllocator(nullptr),
+		m_PipelineLayout(VK_NULL_HANDLE),
 		m_DescriptorSetLayout(VK_NULL_HANDLE),
 		m_DescriptorPool(VK_NULL_HANDLE),
 		m_DescriptorSet(VK_NULL_HANDLE),
@@ -128,68 +130,14 @@ namespace Lambda
 
 		if (vkCreatePipelineLayout(device.GetDevice(), &layoutInfo, nullptr, &m_PipelineLayout) != VK_SUCCESS)
 		{
-			LOG_DEBUG_ERROR("Vulkan: Failed to create default PipelineLayout\n");
+			LOG_DEBUG_ERROR("Vulkan: Failed to create PipelineLayout\n");
 			return;
 		}
 		else
 		{
-			LOG_DEBUG_INFO("Vulkan: Created default PipelineLayout\n");
-		}
+			LOG_DEBUG_INFO("Vulkan: Created PipelineLayout\n");
 
-
-		//Describe how many descriptors we want to create
-		constexpr uint32 maxSets = 64;
-		constexpr uint32 poolCount = 4;
-		VkDescriptorPoolSize poolSizes[poolCount] = {};
-		poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		poolSizes[0].descriptorCount = uniformBufferCount * maxSets;
-		poolSizes[1].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-		poolSizes[1].descriptorCount = uniformBufferCount * maxSets;
-		poolSizes[2].type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-		poolSizes[2].descriptorCount = sampledImageCount * maxSets;
-		poolSizes[3].type = VK_DESCRIPTOR_TYPE_SAMPLER;
-		poolSizes[3].descriptorCount = samplerCount * maxSets;
-
-
-		//Create descriptorpool
-		VkDescriptorPoolCreateInfo descriptorPoolInfo = {};
-		descriptorPoolInfo.sType			= VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		descriptorPoolInfo.flags			= 0;
-		descriptorPoolInfo.pNext			= nullptr;
-		descriptorPoolInfo.poolSizeCount	= poolCount;
-		descriptorPoolInfo.pPoolSizes		= poolSizes;
-		descriptorPoolInfo.maxSets			= maxSets;
-
-		if (vkCreateDescriptorPool(device.GetDevice(), &descriptorPoolInfo, nullptr, &m_DescriptorPool) != VK_SUCCESS)
-		{
-			LOG_DEBUG_ERROR("Vulkan: Failed to create DescriptorPool\n");
-			return;
-		}
-		else
-		{
-			LOG_DEBUG_INFO("Vulkan: Created DescriptorPool\n");
-		}
-	}
-
-
-	void VKNPipelineResourceState::AllocateDescriptorSet()
-	{
-		//Allocate descriptorsets
-		VkDescriptorSetAllocateInfo descriptorAllocInfo = {};
-		descriptorAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		descriptorAllocInfo.pNext = nullptr;
-		descriptorAllocInfo.descriptorPool = m_DescriptorPool;
-		descriptorAllocInfo.descriptorSetCount = 1;
-		descriptorAllocInfo.pSetLayouts = &m_DescriptorSetLayout;
-
-		VKNDevice& device = VKNDevice::GetInstance();
-		if (vkAllocateDescriptorSets(device.GetDevice(), &descriptorAllocInfo, &m_DescriptorSet))
-		{
-			LOG_DEBUG_ERROR("Vulkan: Failed to allocate DescriptorSets\n");
-		}
-		else
-		{
-			LOG_DEBUG_INFO("Vulkan: Allocated DescriptorSets\n");
+			m_pAllocator = DBG_NEW VKNDescriptorSetAllocator(uniformBufferCount, dynamicUniformBufferCount, samplerCount, sampledImageCount, 2);
 		}
 	}
 
@@ -273,7 +221,7 @@ namespace Lambda
 		return reinterpret_cast<void*>(m_PipelineLayout);
 	}
 
-	
+
 	void VKNPipelineResourceState::CommitBindings()
 	{
 		//Update bufferoffsets
@@ -286,11 +234,11 @@ namespace Lambda
 			}
 		}
 
-
 		//Update descriptorset
 		if (m_IsDirty)
 		{
-			AllocateDescriptorSet();
+			//Allocate descriptorset
+			m_DescriptorSet = m_pAllocator->Allocate(m_DescriptorSetLayout);
 
             //Clear dynamic buffers
 			m_DynamicBuffers.clear();
@@ -368,6 +316,11 @@ namespace Lambda
 
 	void VKNPipelineResourceState::Destroy(VkDevice device)
 	{
+		if (m_pAllocator)
+		{
+			m_pAllocator->Destroy(device);
+			m_pAllocator = nullptr;
+		}
 		if (m_DescriptorPool != VK_NULL_HANDLE)
 		{
 			vkDestroyDescriptorPool(device, m_DescriptorPool, nullptr);
