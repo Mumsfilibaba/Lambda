@@ -33,7 +33,7 @@ namespace Lambda
     PFN_vkDestroyDebugUtilsMessengerEXT VulkanGraphicsDevice::DestroyDebugUtilsMessengerEXT = nullptr;
 
 
-    VulkanGraphicsDevice::VulkanGraphicsDevice(IWindow* pWindow, const GraphicsDeviceDesc& desc)
+    VulkanGraphicsDevice::VulkanGraphicsDevice(const GraphicsDeviceDesc& desc)
         : m_Instance(VK_NULL_HANDLE),
         m_DebugMessenger(VK_NULL_HANDLE),
         m_Device(VK_NULL_HANDLE),
@@ -59,7 +59,7 @@ namespace Lambda
 		LAMBDA_ASSERT(s_pInstance == nullptr);
         s_pInstance = this;
         
-        Init(pWindow, desc);
+        Init(desc);
     }
     
     
@@ -68,7 +68,7 @@ namespace Lambda
         ICommandList* pDirectCommandList = m_pCommandList;
         DestroyCommandList(&pDirectCommandList);
                
-        for (uint32 i = 0; i < FRAMES_AHEAD; i++)
+        for (uint32 i = 0; i < m_Desc.BackBufferCount; i++)
         {
 			if (m_ImageSemaphores[i] != VK_NULL_HANDLE)
 			{
@@ -141,9 +141,9 @@ namespace Lambda
     }
     
     
-    void VulkanGraphicsDevice::Init(IWindow* pWindow, const GraphicsDeviceDesc& desc)
+    void VulkanGraphicsDevice::Init(const GraphicsDeviceDesc& desc)
     {
-		LAMBDA_ASSERT(pWindow != nullptr);
+		LAMBDA_ASSERT(desc.pWindow != nullptr);
         
 		VkApplicationInfo applicationInfo = {};
 		applicationInfo.sType				= VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -328,7 +328,7 @@ namespace Lambda
 
 
         //Create window surface
-		m_Surface = CreateSurface(pWindow);
+		m_Surface = CreateSurface(desc.pWindow);
 		if (m_Surface == VK_NULL_HANDLE)
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to create surface\n");
@@ -444,6 +444,7 @@ namespace Lambda
 		else
 		{
 			LOG_SYSTEM_PRINT("Vulkan: Created device and retrived queues\n");
+            m_Desc = desc;
 		}
 
 
@@ -465,7 +466,7 @@ namespace Lambda
 		else if (sampleCountFlags & VK_SAMPLE_COUNT_2_BIT)	{ sampleCount = VK_SAMPLE_COUNT_2_BIT; }
 
 		//Set devicesettings
-		m_DeviceSettings.FramesAhead = FRAMES_AHEAD;
+		m_DeviceSettings.FramesAhead = desc.BackBufferCount;
 		m_DeviceSettings.SampleCount = ConvertSampleCount(desc.SampleCount);
 		if (m_DeviceSettings.SampleCount > sampleCount)
 		{
@@ -486,10 +487,10 @@ namespace Lambda
         
 
         //Create sync-objects
-        m_Fences.resize(FRAMES_AHEAD);        
-        m_ImageSemaphores.resize(FRAMES_AHEAD);
-        m_RenderSemaphores.resize(FRAMES_AHEAD);
-        for (uint32 i = 0; i < FRAMES_AHEAD; i++)
+        m_Fences.resize(desc.BackBufferCount);
+        m_ImageSemaphores.resize(desc.BackBufferCount);
+        m_RenderSemaphores.resize(desc.BackBufferCount);
+        for (uint32 i = 0; i < desc.BackBufferCount; i++)
         {
             //Create semaphores
             if (vkCreateSemaphore(m_Device, &semaphoreInfo, nullptr, &m_ImageSemaphores[i]) != VK_SUCCESS ||
@@ -539,8 +540,8 @@ namespace Lambda
         swapChainInfo.PresentationMode   = VK_PRESENT_MODE_MAILBOX_KHR;
         swapChainInfo.Format.format      = VK_FORMAT_B8G8R8A8_UNORM;
         swapChainInfo.Format.colorSpace  = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
-        swapChainInfo.Extent             = { pWindow->GetWidth(), pWindow->GetHeight() };
-        swapChainInfo.ImageCount         = FRAMES_AHEAD;
+        swapChainInfo.Extent             = { desc.pWindow->GetWidth(), desc.pWindow->GetHeight() };
+        swapChainInfo.ImageCount         = desc.BackBufferCount;
         m_pSwapChain = DBG_NEW VulkanSwapChain(m_Device, swapChainInfo);
 
 
@@ -844,8 +845,8 @@ namespace Lambda
     void VulkanGraphicsDevice::GetNextFrame() const
     {
         //Advance current frame counter
-        m_CurrentFrame = (m_CurrentFrame + 1) % FRAMES_AHEAD;
-		m_pDynamicBufferManager->MoveToNextFrame();
+        m_CurrentFrame = (m_CurrentFrame + 1) % m_Desc.BackBufferCount;
+		m_pDynamicBufferManager->MoveToNextFrame(m_CurrentFrame);
 
 		//Cleanup memory
 		m_pDeviceAllocator->CleanGarbageMemory(m_CurrentFrame);
@@ -1251,6 +1252,12 @@ namespace Lambda
     void* VulkanGraphicsDevice::GetNativeHandle() const
     {
         return reinterpret_cast<void*>(m_Device);
+    }
+    
+    
+    GraphicsDeviceDesc VulkanGraphicsDevice::GetDesc() const
+    {
+        return m_Desc;
     }
     
     

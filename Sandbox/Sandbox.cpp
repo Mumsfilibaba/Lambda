@@ -5,7 +5,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 //#define SINGLE_CUBE
-#define RGB_F(r, g, b) float(r) / 255.0f, float(g) / 255.0f, float(b) / 255.0f 
+#define RGB_F(r, g, b) float(r) / 255.0f, float(g) / 255.0f, float(b) / 255.0f
 
 namespace Lambda
 {   
@@ -151,7 +151,7 @@ namespace Lambda
             }
 
             //Create vertexbuffer
-			MeshData mesh = MeshFactory::CreateCube();// MeshFactory::CreateFromFile("chalet.obj");
+			MeshData mesh = MeshFactory::CreateFromFile("chalet.obj");
 			m_IndexCount = uint32(mesh.Indices.size());
 			{
                 BufferDesc desc = {};
@@ -375,12 +375,12 @@ namespace Lambda
 
         //Draw cubes
 		glm::vec4 colors[4];
-		colors[0] = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
-		colors[1] = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+		colors[0] = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+		colors[1] = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
 		colors[2] = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
 		colors[3] = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
-		constexpr uint32 cubes = 64;
+		constexpr uint32 cubes = 5;
         for (uint32 y = 0; y < cubes; y++)
         {
             for (uint32 x = 0; x < cubes; x++)

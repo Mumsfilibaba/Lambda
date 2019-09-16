@@ -88,7 +88,6 @@ namespace Lambda
         info.sType                  = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
         info.pNext                  = nullptr;
         info.flags                  = 0;
-
 		//Set type
 		if (desc.Type == TEXTURE_TYPE_2D)
 		{
@@ -99,7 +98,6 @@ namespace Lambda
 			LOG_DEBUG_ERROR("Vulkan: Unknown Texture-Type\n");
 			return;
 		}
-        
 		info.extent.width           = desc.Width;
         info.extent.height          = desc.Height;
         info.extent.depth           = desc.Depth;
@@ -112,8 +110,6 @@ namespace Lambda
         info.initialLayout          = VK_IMAGE_LAYOUT_UNDEFINED;
         info.sharingMode            = VK_SHARING_MODE_EXCLUSIVE;
         info.samples                = ConvertSampleCount(desc.SampleCount);
-
-
         //Set special usage
         if (desc.Flags & TEXTURE_FLAGS_GENEATE_MIPS)
         {
@@ -163,11 +159,9 @@ namespace Lambda
 		//Allocate memory
 		VkMemoryRequirements memoryRequirements = {};
 		vkGetImageMemoryRequirements(device, m_Image, &memoryRequirements);
-
-		m_Memory = m_pAllocator->Allocate(memoryRequirements, desc.Usage);
-		if (m_Memory.Memory != VK_NULL_HANDLE)
+		if (m_pAllocator->Allocate(&m_Memory, memoryRequirements, desc.Usage))
 		{
-			vkBindImageMemory(device, m_Image, m_Memory.Memory, m_Memory.Offset);
+			vkBindImageMemory(device, m_Image, m_Memory.DeviceMemory, m_Memory.DeviceMemoryOffset);
 		}
 
         
@@ -184,13 +178,16 @@ namespace Lambda
         viewInfo.pNext      = nullptr;
         viewInfo.flags      = 0;
         viewInfo.image      = m_Image;
-        
+        viewInfo.format     = GetFormat();
         if (m_Desc.Type == TEXTURE_TYPE_2D)
         {
             viewInfo.viewType   = VK_IMAGE_VIEW_TYPE_2D;
         }
-        
-        viewInfo.format     = GetFormat();
+        else
+        {
+            LOG_DEBUG_ERROR("Vulkan: Unknown Texture-Type\n");
+            return;
+        }
         viewInfo.subresourceRange.aspectMask        = m_AspectFlags;
         viewInfo.subresourceRange.baseMipLevel      = 0;
         viewInfo.subresourceRange.levelCount        = m_Desc.MipLevels;
@@ -238,7 +235,7 @@ namespace Lambda
 		{
 			if (m_Image != VK_NULL_HANDLE)
 			{
-				m_pAllocator->Deallocate(m_Memory);
+				m_pAllocator->Deallocate(&m_Memory);
 
 				vkDestroyImage(device, m_Image, nullptr);
 				m_Image = VK_NULL_HANDLE;

@@ -10,7 +10,7 @@ namespace Lambda
 	IGraphicsDevice* IGraphicsDevice::s_pInstance = nullptr;
 
 #if defined(LAMBDA_PLAT_WINDOWS)
-	IGraphicsDevice* IGraphicsDevice::Create(IWindow* pWindow, const GraphicsDeviceDesc& desc)
+	IGraphicsDevice* IGraphicsDevice::Create(const GraphicsDeviceDesc& desc)
 	{
 		if (s_pInstance)
 		{
@@ -24,13 +24,13 @@ namespace Lambda
 		}
 		else if (desc.Api == GRAPHICS_API_VULKAN)
 		{
-			return DBG_NEW VulkanGraphicsDevice(pWindow, desc);
+			return DBG_NEW VulkanGraphicsDevice(desc);
 		}
 
 		return nullptr;
 	}
 #elif defined(LAMBDA_PLAT_MACOS)
-	IGraphicsDevice* IGraphicsDevice::Create(IWindow* pWindow, const GraphicsDeviceDesc& desc)
+	IGraphicsDevice* IGraphicsDevice::Create(const GraphicsDeviceDesc& desc)
 	{
 		if (s_pInstance)
 		{
@@ -45,7 +45,7 @@ namespace Lambda
 		}
 		else if (desc.Api == GRAPHICS_API_VULKAN)
 		{
-			return DBG_NEW VulkanGraphicsDevice(pWindow, desc);
+			return DBG_NEW VulkanGraphicsDevice(desc);
 		}
 
 		return nullptr;

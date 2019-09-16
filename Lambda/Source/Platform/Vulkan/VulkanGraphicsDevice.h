@@ -39,7 +39,7 @@ namespace Lambda
     public:
         LAMBDA_NO_COPY(VulkanGraphicsDevice);
         
-        VulkanGraphicsDevice(IWindow* pWindow, const GraphicsDeviceDesc& desc);
+        VulkanGraphicsDevice(const GraphicsDeviceDesc& desc);
         ~VulkanGraphicsDevice();
         
         virtual void CreateCommandList(ICommandList** ppList, CommandListType type) override final;
@@ -68,13 +68,14 @@ namespace Lambda
         virtual void GPUWaitForFrame() const override final;
         virtual void WaitForGPU() const override final;
         
-        virtual void*			GetNativeHandle() const override final;
-        virtual ITexture*		GetDepthStencil() const override final;
-        virtual ITexture*		GetRenderTarget() const override final;
-        virtual ResourceFormat	GetBackBufferFormat() const override final;
-        virtual uint32			GetBackBufferIndex() const override final;
-        virtual uint32			GetSwapChainWidth() const override final;
-        virtual uint32			GetSwapChainHeight() const override final;
+        virtual void*			    GetNativeHandle() const override final;
+        virtual GraphicsDeviceDesc  GetDesc() const override final;
+        virtual ITexture*		    GetDepthStencil() const override final;
+        virtual ITexture*		    GetRenderTarget() const override final;
+        virtual ResourceFormat	    GetBackBufferFormat() const override final;
+        virtual uint32			    GetBackBufferIndex() const override final;
+        virtual uint32			    GetSwapChainWidth() const override final;
+        virtual uint32			    GetSwapChainHeight() const override final;
     
         void SetVulkanObjectName(VkObjectType type, uint64 objectHandle, const std::string& name);
         
@@ -86,7 +87,7 @@ namespace Lambda
 		DeviceSettings				GetDeviceSettings() const;
 
     private:
-        void Init(IWindow* pWindow, const GraphicsDeviceDesc& desc);
+        void Init(const GraphicsDeviceDesc& desc);
         void InitDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo);
         
         bool				CreateDepthStencil();
@@ -128,6 +129,7 @@ namespace Lambda
 		VulkanCommandList*			m_pCommandList;
 		VulkanDeviceAllocator*		m_pDeviceAllocator;
         mutable uint64				m_CurrentFrame;
+        GraphicsDeviceDesc          m_Desc;
         
     public:
 		static VulkanGraphicsDevice& GetInstance();

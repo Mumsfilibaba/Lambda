@@ -23,7 +23,7 @@ namespace Lambda
 
 		bool	IsDirty() const;
 		void	SetIsClean();
-		void	AdvanceFrame();
+		void	AdvanceFrame(uint32 frameCount);
 		void	DynamicUpdate(const ResourceData* pData);
 		void	Reallocate(uint32 sizeInBytes);
 		uint32	GetDynamicOffset() const;
@@ -41,12 +41,10 @@ namespace Lambda
         VkBuffer				m_Buffer;
         BufferDesc				m_Desc;
 		uint32					m_CurrentFrame;
-		uint32					m_FrameCount;
 		uint32					m_SizePerFrame;
 		uint32					m_SizePerUpdate;
 		uint32					m_DynamicOffset;
 		uint32					m_TotalDynamicOffset;
-        uint64					m_DynamicAlignment;
 		bool					m_IsDirty;
     };
 
@@ -62,12 +60,14 @@ namespace Lambda
 		VulkanDynamicBufferManager();
 		~VulkanDynamicBufferManager();
 
-		void MoveToNextFrame();
+		void MoveToNextFrame(uint32 frameCount);
+        void DestroyBuffer(VkBuffer, uint32 frameCount);
 		void RegisterBuffer(VulkanBuffer* pBuffer);
 		void UnregisterBuffer(VulkanBuffer* pBuffer);
 
 	private:
-		std::vector<VulkanBuffer*> m_Buffers;
+        std::vector<VulkanBuffer*>          m_Buffers;
+        std::vector<std::vector<VkBuffer>>  m_BuffersToDelete;
 
 	public:
 		static VulkanDynamicBufferManager& GetInstance();

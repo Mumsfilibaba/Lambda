@@ -98,15 +98,17 @@ namespace Lambda
             
             //Create graphics context
             {
-                GraphicsDeviceDesc gcDesc = {};
-                gcDesc.Api = desc.GraphicsDeviceAPI;
-                gcDesc.SampleCount = desc.SampleCount;
+                GraphicsDeviceDesc gdDesc = {};
+                gdDesc.pWindow          = this;
+                gdDesc.BackBufferCount  = 3;
+                gdDesc.Api              = desc.GraphicsDeviceAPI;
+                gdDesc.SampleCount      = desc.SampleCount;
 #if LAMBDA_DEBUG
-                gcDesc.Flags = GRAPHICS_CONTEXT_FLAG_DEBUG;
+                gdDesc.Flags = GRAPHICS_CONTEXT_FLAG_DEBUG;
 #else
-                gcDesc.Flags = GRAPHICS_CONTEXT_FLAG_NONE;
+                gdDesc.Flags = GRAPHICS_CONTEXT_FLAG_NONE;
 #endif
-                m_pGraphicsDevice = IGraphicsDevice::Create(this, gcDesc);
+                m_pGraphicsDevice = IGraphicsDevice::Create(gdDesc);
             }
         }
         else

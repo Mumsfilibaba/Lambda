@@ -16,12 +16,10 @@ namespace Lambda
 		m_Memory(),
 		m_Desc(),
 		m_CurrentFrame(0),
-		m_FrameCount(0),
 		m_SizePerFrame(0),
 		m_SizePerUpdate(0),
 		m_DynamicOffset(0),
 		m_TotalDynamicOffset(0),
-        m_DynamicAlignment(0),
 		m_IsDirty(false)
     {
 		LAMBDA_ASSERT(pAllocator != nullptr);
@@ -40,20 +38,17 @@ namespace Lambda
         info.sharingMode			= VK_SHARING_MODE_EXCLUSIVE;
 
 		//If dynamic we allocate extra size so we can use dynamic offsets
+        VulkanGraphicsDevice& device = VulkanGraphicsDevice::GetInstance();
 		if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
 		{
-			VulkanGraphicsDevice& vkDevice			= VulkanGraphicsDevice::GetInstance();
-			VkPhysicalDeviceProperties properties	= vkDevice.GetPhysicalDeviceProperties();
-			m_DynamicAlignment						= properties.limits.minUniformBufferOffsetAlignment;
+            DeviceSettings settings                  = device.GetDeviceSettings();
+            VkPhysicalDeviceProperties properties    = device.GetPhysicalDeviceProperties();
 
-			DeviceSettings settings = VulkanGraphicsDevice::GetInstance().GetDeviceSettings();
-			m_FrameCount			= settings.FramesAhead;
-			
 			//If dynamic we allocate extra space (NUM_UPDATES updates per frame)
 			constexpr uint32 numUpdatesPerFrame = 16;
-			m_SizePerUpdate = Math::AlignUp<uint32>(uint32(desc.SizeInBytes), m_DynamicAlignment);
+			m_SizePerUpdate = Math::AlignUp<uint32>(uint32(desc.SizeInBytes), properties.limits.minUniformBufferOffsetAlignment);
 			m_SizePerFrame	= m_SizePerUpdate * numUpdatesPerFrame;
-            info.size		= VkDeviceSize(m_SizePerFrame * m_FrameCount);
+            info.size		= VkDeviceSize(m_SizePerFrame * settings.FramesAhead);
 		}
 		else
 		{
@@ -76,7 +71,6 @@ namespace Lambda
 		}
         
 		//Create buffer
-		VulkanGraphicsDevice& device = VulkanGraphicsDevice::GetInstance();
 		if (vkCreateBuffer(device.GetDevice(), &info, nullptr, &m_Buffer) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create Buffer\n");
@@ -91,11 +85,9 @@ namespace Lambda
 		//Allocate memory
 		VkMemoryRequirements memoryRequirements = {};
 		vkGetBufferMemoryRequirements(device.GetDevice(), m_Buffer, &memoryRequirements);
-
-		m_Memory = m_pAllocator->Allocate(memoryRequirements, m_Desc.Usage);
-        if (m_Memory.Memory != VK_NULL_HANDLE)
+        if (m_pAllocator->Allocate(&m_Memory, memoryRequirements, m_Desc.Usage))
 		{
-            vkBindBufferMemory(device.GetDevice(), m_Buffer, m_Memory.Memory, m_Memory.Offset);
+            vkBindBufferMemory(device.GetDevice(), m_Buffer, m_Memory.DeviceMemory, m_Memory.DeviceMemoryOffset);
         }
     }
     
@@ -103,7 +95,7 @@ namespace Lambda
     void VulkanBuffer::Map(void** ppMem)
     {
 		LAMBDA_ASSERT(ppMem != nullptr);
-		(*ppMem) = m_Memory.pMemory + m_DynamicOffset;
+        (*ppMem) = m_Memory.pHostMemory + m_TotalDynamicOffset;
     }
     
     
@@ -137,12 +129,13 @@ namespace Lambda
 	}
 
 
-	void VulkanBuffer::AdvanceFrame()
+	void VulkanBuffer::AdvanceFrame(uint32 frameCount)
 	{
 		//Move on a frame
-		m_CurrentFrame	= (m_CurrentFrame + 1) % m_FrameCount;
+		m_CurrentFrame	= frameCount;
 		//Reset offset
-		m_DynamicOffset = 0;
+		m_DynamicOffset      = 0;
+        m_TotalDynamicOffset = 0;
 	}
 
 
@@ -162,7 +155,7 @@ namespace Lambda
 		m_TotalDynamicOffset	= frameOffset + m_DynamicOffset;						
 
 		//Update buffer
-		uint8* pCurrent = m_Memory.pMemory + m_TotalDynamicOffset;
+		uint8* pCurrent = m_Memory.pHostMemory + m_TotalDynamicOffset;
 		memcpy(pCurrent, pData->pData, pData->SizeInBytes);
 	}
 
@@ -177,30 +170,33 @@ namespace Lambda
 		info.pQueueFamilyIndices	= nullptr;
 		info.sharingMode			= VK_SHARING_MODE_EXCLUSIVE;
 
-		//Set new size
-		m_SizePerFrame	= sizeInBytes;
-		info.size		= VkDeviceSize(m_SizePerFrame * m_FrameCount);
+        VulkanGraphicsDevice& device    = VulkanGraphicsDevice::GetInstance();
+        GraphicsDeviceDesc desc         = device.GetDesc();
+        
+        //Set new size
+        m_SizePerFrame  = sizeInBytes;
+        m_DynamicOffset = 0;
+        info.size       = VkDeviceSize(m_SizePerFrame * desc.BackBufferCount);
 
-		LOG_DEBUG_WARNING("Vulkan: Reallocated buffer. Old size: %llu bytes, New size: %llu\n", m_Memory.Size, info.size);
-		
-		//Set usage
-		info.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-		if (m_Desc.Flags & BUFFER_FLAGS_VERTEX_BUFFER)
-		{
-			info.usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-		}
-		if (m_Desc.Flags & BUFFER_FLAGS_INDEX_BUFFER)
-		{
-			info.usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-		}
-		if (m_Desc.Flags & BUFFER_FLAGS_CONSTANT_BUFFER)
-		{
-			info.usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-		}
+        LOG_DEBUG_WARNING("Vulkan: Reallocated buffer. Old size: %llu bytes, New size: %llu\n", m_Memory.Size, info.size);
+        
+        //Set usage
+        info.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+        if (m_Desc.Flags & BUFFER_FLAGS_VERTEX_BUFFER)
+        {
+            info.usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+        }
+        if (m_Desc.Flags & BUFFER_FLAGS_INDEX_BUFFER)
+        {
+            info.usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+        }
+        if (m_Desc.Flags & BUFFER_FLAGS_CONSTANT_BUFFER)
+        {
+            info.usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+        }
 
-		//Create buffer
-		VkBuffer newBuffer = VK_NULL_HANDLE;
-		VulkanGraphicsDevice& device = VulkanGraphicsDevice::GetInstance();
+        //Create buffer
+        VkBuffer newBuffer = VK_NULL_HANDLE;
 		if (vkCreateBuffer(device.GetDevice(), &info, nullptr, &newBuffer) != VK_SUCCESS)
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to create Buffer\n");
@@ -215,10 +211,10 @@ namespace Lambda
 		VkMemoryRequirements memoryRequirements = {};
 		vkGetBufferMemoryRequirements(device.GetDevice(), newBuffer, &memoryRequirements);
 
-		VulkanMemory newMemory = m_pAllocator->Allocate(memoryRequirements, m_Desc.Usage);
-		if (newMemory.Memory != VK_NULL_HANDLE)
+        VulkanMemory newMemory = {};
+		if (m_pAllocator->Allocate(&newMemory, memoryRequirements, m_Desc.Usage))
 		{
-			vkBindBufferMemory(device.GetDevice(), newBuffer, newMemory.Memory, newMemory.Offset);
+			vkBindBufferMemory(device.GetDevice(), newBuffer, newMemory.DeviceMemory, newMemory.DeviceMemoryOffset);
 		}
 		else
 		{
@@ -226,8 +222,11 @@ namespace Lambda
 		}
 
 		//Set the new handles and delete the old ones
-		m_pAllocator->DefferedDeallocate(m_Memory, m_CurrentFrame);
-
+		m_pAllocator->DefferedDeallocate(&m_Memory, m_CurrentFrame);
+        
+        VulkanDynamicBufferManager& bufferManager = VulkanDynamicBufferManager::GetInstance();
+        bufferManager.DestroyBuffer(m_Buffer, m_CurrentFrame);
+        
 		m_Buffer = newBuffer;
 		m_Memory = newMemory;
 
@@ -248,7 +247,7 @@ namespace Lambda
         
         if (m_Buffer != VK_NULL_HANDLE)
         {
-			m_pAllocator->Deallocate(m_Memory);
+			m_pAllocator->Deallocate(&m_Memory);
 
             vkDestroyBuffer(device, m_Buffer, nullptr);
             m_Buffer = VK_NULL_HANDLE;
@@ -273,6 +272,11 @@ namespace Lambda
 	{
 		LAMBDA_ASSERT(s_pInstance == nullptr);
 		s_pInstance = this;
+        
+        VulkanGraphicsDevice& device = VulkanGraphicsDevice::GetInstance();
+        GraphicsDeviceDesc desc = device.GetDesc();
+        
+        m_BuffersToDelete.resize(desc.BackBufferCount);
 	}
 
 
@@ -281,12 +285,34 @@ namespace Lambda
 		if (s_pInstance == this)
 			s_pInstance = nullptr;
 	}
+    
+    
+    void VulkanDynamicBufferManager::DestroyBuffer(VkBuffer buffer, uint32 frameCount)
+    {
+        if (buffer != VK_NULL_HANDLE)
+        {
+            auto& buffers = m_BuffersToDelete[frameCount];
+            buffers.push_back(buffer);
+        }
+    }
 
 
-	void VulkanDynamicBufferManager::MoveToNextFrame()
+	void VulkanDynamicBufferManager::MoveToNextFrame(uint32 frameCount)
 	{
+        VulkanGraphicsDevice& device = VulkanGraphicsDevice::GetInstance();
+        
+        //Delete all buffers to delete
+        auto& buffers = m_BuffersToDelete[frameCount];
+        for (auto& buffer : buffers)
+        {
+            vkDestroyBuffer(device.GetDevice(), buffer, nullptr);
+            buffer = VK_NULL_HANDLE;
+        }
+        buffers.clear();
+        
+        //Update dynamic buffers
 		for (auto buffer : m_Buffers)
-			buffer->AdvanceFrame();
+			buffer->AdvanceFrame(frameCount);
 	}
 
 

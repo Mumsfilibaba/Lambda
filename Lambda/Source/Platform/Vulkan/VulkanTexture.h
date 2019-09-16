@@ -5,6 +5,10 @@
 
 namespace Lambda
 {
+    //-------------
+    //VulkanTexture
+    //-------------
+    
     class VulkanTexture final : public ITexture
     {
         friend class VulkanGraphicsDevice;
@@ -16,7 +20,7 @@ namespace Lambda
         VulkanTexture(VkDevice device, VkImage image, const TextureDesc& desc);
         ~VulkanTexture() = default;
         
-        virtual void* GetNativeHandle() const override final;
+        virtual void*       GetNativeHandle() const override final;
         virtual TextureDesc GetDesc() const override final;
         
 		void Release(VkDevice device);
@@ -24,11 +28,11 @@ namespace Lambda
 
         void SetResolveResource(VulkanTexture* pResolveResource) const;
         void SetResourceState(VkImageLayout resourceState) const;
-        VulkanTexture* GetResolveResource() const;
-        VkImageAspectFlags GetAspectFlags() const;
-        VkImageView GetImageView() const;
-        VkImageLayout GetResourceState() const;
-        VkFormat GetFormat() const;
+        VkFormat            GetFormat() const;
+        VulkanTexture*      GetResolveResource() const;
+        VkImageAspectFlags  GetAspectFlags() const;
+        VkImageView         GetImageView() const;
+        VkImageLayout       GetResourceState() const;
         
     private:
         void Init(VkDevice device, const TextureDesc& desc);
@@ -37,13 +41,13 @@ namespace Lambda
         
     private:
 		IVulkanAllocator* const m_pAllocator;
-		VulkanMemory m_Memory;
-        bool m_IsOwner;
-        VkImage m_Image;
-        VkImageView m_View;
-        VkImageAspectFlags m_AspectFlags;
-        mutable TextureDesc m_Desc;
-        mutable VkImageLayout m_ResourceState;
+		VulkanMemory            m_Memory;
+        VkImage                 m_Image;
+        VkImageView             m_View;
+        VkImageAspectFlags      m_AspectFlags;
+        mutable TextureDesc     m_Desc;
+        mutable VkImageLayout   m_ResourceState;
+        bool                    m_IsOwner;
     };
     
     

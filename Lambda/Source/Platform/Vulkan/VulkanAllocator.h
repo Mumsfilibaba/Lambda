@@ -12,11 +12,12 @@ namespace Lambda
 
 	struct VulkanMemory
 	{
-		int32			ID = 0;
-		uint64			Size = 0;
-		uint64			Offset = 0;
-		VkDeviceMemory	Memory = VK_NULL_HANDLE;
-		uint8*			pMemory = nullptr;
+        int32			ChunkID             = -1;
+        int32           BlockID             = -1;
+        uint8*          pHostMemory         = nullptr;
+        uint64          Size                = 0;
+        uint64          DeviceMemoryOffset  = 0;
+        VkDeviceMemory  DeviceMemory        = VK_NULL_HANDLE;
 	};
 
 	//----------------
@@ -31,13 +32,27 @@ namespace Lambda
 		IVulkanAllocator() = default;
 		~IVulkanAllocator() = default;
 
-		virtual VulkanMemory Allocate(const VkMemoryRequirements& memoryRequirements, ResourceUsage usage) = 0;
-		virtual void Deallocate(const VulkanMemory& allocation) = 0;
-		virtual void DefferedDeallocate(const VulkanMemory& allocation, uint64 frameCount) = 0;
+		virtual bool Allocate(VulkanMemory* pAllocation, const VkMemoryRequirements& memoryRequirements, ResourceUsage usage) = 0;
+		virtual void Deallocate(VulkanMemory* pAllocation) = 0;
+		virtual void DefferedDeallocate(VulkanMemory* pAllocation, uint64 frameCount) = 0;
 		virtual void CleanGarbageMemory(uint64 frameCount) = 0;
 		virtual void Destroy(VkDevice device) = 0;
 	};
 
+    //-----------------
+    //VulkanMemoryBlock
+    //-----------------
+    
+    struct VulkanMemoryBlock
+    {
+        VulkanMemoryBlock*  pNext               = nullptr;
+        VulkanMemoryBlock*  pPrevious           = nullptr;
+        uint32              ID                  = 0;
+        uint32              Size                = 0;
+        uint32              DeviceMemoryOffset  = 0;
+        bool                IsFree              = true;
+    };
+    
 	//-----------------
 	//VulkanMemoryChunk
 	//-----------------
@@ -50,11 +65,10 @@ namespace Lambda
 		VulkanMemoryChunk(uint32 id, uint64 sizeInBytes, uint64 memoryType, ResourceUsage usage);
 		~VulkanMemoryChunk() = default;
 
-		bool		 CanAllocate(uint64 sizeInBytes, uint64 alignment);
-		VulkanMemory Allocate(uint64 sizeInBytes, uint64 alignment);
-		void		 Deallocate(const VulkanMemory& allocation);
-		void		 Destroy(VkDevice device);
-		uint32		 GetMemoryType() const;
+		bool    Allocate(VulkanMemory* pAllocation, uint64 sizeInBytes, uint64 alignment);
+		void    Deallocate(VulkanMemory* pAllocation);
+		void	Destroy(VkDevice device);
+		uint32  GetMemoryType() const;
 
 	private:
 		void Init();
@@ -62,14 +76,15 @@ namespace Lambda
 		void Unmap();
 
 	private:
-		uint8*						m_pMemory;
-		VkDeviceMemory				m_Memory;
-		const ResourceUsage			m_Usage;
-		const uint32				m_ID;
-		const uint32				m_MemoryType;
-		const uint64				m_SizeInBytes;
-		std::vector<VulkanMemory>	m_Blocks;
-		bool						m_IsMapped;
+		uint8*				m_pHostMemory;
+		VkDeviceMemory		m_DeviceMemory;
+		const ResourceUsage	m_Usage;
+		const uint32		m_ID;
+		const uint32		m_MemoryType;
+		const uint64		m_SizeInBytes;
+        uint32              m_BlockCount;
+		VulkanMemoryBlock*  m_pBlockHead;
+		bool				m_IsMapped;
 	};
 
 	//---------------------
@@ -84,9 +99,9 @@ namespace Lambda
 		VulkanDeviceAllocator();
 		~VulkanDeviceAllocator() = default;
 
-		virtual VulkanMemory Allocate(const VkMemoryRequirements& memoryRequirements, ResourceUsage usage) override final;
-		virtual void Deallocate(const VulkanMemory& allocation) override final;
-		virtual void DefferedDeallocate(const VulkanMemory& allocation, uint64 frameCount) override final;
+		virtual bool Allocate(VulkanMemory* pAllocation, const VkMemoryRequirements& memoryRequirements, ResourceUsage usage) override final;
+		virtual void Deallocate(VulkanMemory* pAllocation) override final;
+		virtual void DefferedDeallocate(VulkanMemory* pAllocation, uint64 frameCount) override final;
 		virtual void CleanGarbageMemory(uint64 frameCount) override final;
 		virtual void Destroy(VkDevice device) override final;
 

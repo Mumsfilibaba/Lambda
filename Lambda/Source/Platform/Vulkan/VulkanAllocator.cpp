@@ -15,8 +15,9 @@ namespace Lambda
 		m_ID(id),
 		m_MemoryType(memoryType),
 		m_SizeInBytes(sizeInBytes),
-		m_Blocks(),
-		m_pMemory(nullptr),
+        m_BlockCount(0),
+		m_pBlockHead(nullptr),
+		m_pHostMemory(nullptr),
 		m_IsMapped(false)
 	{
 		Init();
@@ -26,14 +27,14 @@ namespace Lambda
 	void VulkanMemoryChunk::Init()
 	{
 		//Allocate device memory
-		VkMemoryAllocateInfo allocInfo = {};
-		allocInfo.sType				= VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		allocInfo.pNext				= nullptr;
-		allocInfo.allocationSize	= m_SizeInBytes;
-		allocInfo.memoryTypeIndex	= m_MemoryType;
+		VkMemoryAllocateInfo allocInfo  = {};
+		allocInfo.sType				    = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		allocInfo.pNext				    = nullptr;
+		allocInfo.allocationSize	    = m_SizeInBytes;
+		allocInfo.memoryTypeIndex	    = m_MemoryType;
 
 		VulkanGraphicsDevice& device = VulkanGraphicsDevice::GetInstance();
-		if (vkAllocateMemory(device.GetDevice(), &allocInfo, nullptr, &m_Memory) != VK_SUCCESS)
+		if (vkAllocateMemory(device.GetDevice(), &allocInfo, nullptr, &m_DeviceMemory) != VK_SUCCESS)
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to allocate MemoryChunk\n");
 			return;
@@ -44,101 +45,130 @@ namespace Lambda
 		}
 
 		//Setup first block
-		VulkanMemory allocation = {};
-		allocation.ID		= m_ID;
-		allocation.Size		= m_SizeInBytes;
-		allocation.Offset	= 0;
-		allocation.Memory	= m_Memory;
+        m_pBlockHead = DBG_NEW VulkanMemoryBlock();
+        m_pBlockHead->pNext     = nullptr;
+        m_pBlockHead->pPrevious = nullptr;
+        m_pBlockHead->IsFree    = true;
+        m_pBlockHead->ID        = m_BlockCount++;
+		m_pBlockHead->Size	    = m_SizeInBytes;
+		m_pBlockHead->DeviceMemoryOffset    = 0;
 
 		if (m_Usage == RESOURCE_USAGE_DYNAMIC)
 		{
 			Map();
 		}
-		else
-		{
-			m_pMemory = nullptr;
-		}
-
-		allocation.pMemory = m_pMemory;
-		m_Blocks.push_back(allocation);
 	}
 
 
-	bool VulkanMemoryChunk::CanAllocate(uint64 sizeInBytes, uint64 alignment)
+	bool VulkanMemoryChunk::Allocate(VulkanMemory* pAllocation, uint64 sizeInBytes, uint64 alignment)
 	{
-		//Check if this block can satisfy an allocation
-		for (auto& block : m_Blocks)
-		{
-			uint64 requiredOffset = Math::AlignUp<uint64>(block.Offset, alignment);
-			if ((requiredOffset + sizeInBytes) <= (block.Offset + block.Size))
-			{
-				return true;
-			}
+        LAMBDA_ASSERT(pAllocation != nullptr);
+        
+        VkDeviceSize offset         = 0;
+        VkDeviceSize padding        = 0;
+        VulkanMemoryBlock* pBestFit = nullptr;
+        
+        //Find enough free space, and find the block that best fits
+        for (VulkanMemoryBlock* pCurrent = m_pBlockHead; pCurrent != nullptr; pCurrent = pCurrent->pNext)
+        {
+            //Check if the block is allocated or not
+            if (!pCurrent->IsFree)
+                continue;
+            
+            //Align the offset
+            offset  = Math::AlignUp<uint64>(pCurrent->DeviceMemoryOffset, alignment);
+            padding = offset - pCurrent->DeviceMemoryOffset;
+            
+            if (pCurrent->Size <= padding + sizeInBytes)
+                continue;
+            
+            //Set bestfit
+            if (pBestFit)
+            {
+                if (pBestFit->Size <= pCurrent->Size)
+                    continue;
+            }
+            
+            pBestFit = pCurrent;
+        }
+        
+
+        //Did we find a suitable block to make the allocation?
+        if (!pBestFit)
+        {
+            return false;
 		}
 
-		return false;
-	}
+        
+        //Create a block for the padding (Allocating a texture in a block can result in a padding of 256 bytes which is enough for a buffer)
+        if (padding > 0)
+        {
+            VulkanMemoryBlock* pPadding = DBG_NEW VulkanMemoryBlock();
+            pPadding->ID                    = m_BlockCount++;
+            pPadding->DeviceMemoryOffset    = offset;
+            pPadding->Size                  = padding;
+            pPadding->IsFree                = true;
+            
+            pPadding->pPrevious = pBestFit->pPrevious;
+            pPadding->pNext     = pBestFit;
+            
+            
+            pBestFit->Size                  = pBestFit->Size - padding;
+            pBestFit->DeviceMemoryOffset    = Math::AlignUp<uint64>(pBestFit->DeviceMemoryOffset, alignment);
+            if (pBestFit->pPrevious)
+            {
+                pBestFit->pPrevious->pNext  = pPadding;
+            }
+            pBestFit->pPrevious             = pPadding;
+        }
+        
+        
+        if (pBestFit->Size > sizeInBytes)
+        {
+            //Create a new block after allocation
+            VulkanMemoryBlock* pBlock = DBG_NEW VulkanMemoryBlock();
+            pBlock->ID                  = m_BlockCount++;
+            pBlock->Size                = pBestFit->Size - sizeInBytes;
+            pBlock->DeviceMemoryOffset  = pBestFit->DeviceMemoryOffset + sizeInBytes;
+            pBlock->IsFree              = true;
+            
+            pBlock->pNext       = pBestFit->pNext;
+            pBlock->pPrevious   = pBestFit;
+            
+            pBestFit->Size      = sizeInBytes;
+            pBestFit->pNext     = pBlock;
+        }
 
+        
+        //Setup allocation
+        pAllocation->BlockID            = pBestFit->ID;
+        pAllocation->ChunkID            = m_ID;
+        pAllocation->DeviceMemory       = m_DeviceMemory;
+        pAllocation->DeviceMemoryOffset = pBestFit->DeviceMemoryOffset;
+        pAllocation->Size               = pBestFit->Size;
+        if (m_Usage == RESOURCE_USAGE_DYNAMIC)
+        {
+            pAllocation->pHostMemory = m_pHostMemory + pAllocation->DeviceMemoryOffset;
+        }
+        else
+        {
+            pAllocation->pHostMemory = nullptr;
+        }
 
-	VulkanMemory VulkanMemoryChunk::Allocate(uint64 sizeInBytes, uint64 alignment)
-	{
-		//Find enough free space
-		int32 blockIndex = -1;
-		for (size_t i = 0; i < m_Blocks.size(); i++)
-		{
-			uint64 requiredOffset = Math::AlignUp<uint64>(m_Blocks[i].Offset, alignment);
-			if ((requiredOffset + sizeInBytes) <= (m_Blocks[i].Offset + m_Blocks[i].Size))
-			{
-				blockIndex = i;
-				break;
-			}
-		}
-
-		//Did we find a block?
-		VulkanMemory allocation = {};
-		if (blockIndex < 0)
-		{
-			LOG_DEBUG_ERROR("Vulkan: Not enough space in allocation\n");
-
-			allocation.ID		= -1;
-			allocation.Size		= 0;
-			allocation.Offset	= 0;
-			allocation.Memory	= VK_NULL_HANDLE;
-			allocation.pMemory	= nullptr;
-			return allocation;
-		}
-
-		//Setup memory from block
-		allocation.ID		= m_ID;
-		allocation.Size		= sizeInBytes;
-		allocation.Offset	= Math::AlignUp<uint64>(m_Blocks[blockIndex].Offset, alignment);
-		allocation.Memory	= m_Memory;
-		if (m_Usage == RESOURCE_USAGE_DYNAMIC)
-		{
-			allocation.pMemory = m_pMemory + allocation.Offset;
-		}
-
-		//Add padding as a new block
-		uint64 alignmentPadding = allocation.Offset - m_Blocks[blockIndex].Offset;
-		if (alignmentPadding > 0)
-		{
-			VulkanMemory newBlock = {};
-			newBlock.ID		= m_ID;
-			newBlock.Memory	= m_Memory;
-			newBlock.Size	= alignmentPadding;
-			newBlock.Offset = m_Blocks[blockIndex].Offset;
-			if (m_Usage == RESOURCE_USAGE_DYNAMIC)
-			{
-				newBlock.pMemory = m_pMemory + newBlock.Offset;
-			}
-
-			m_Blocks.push_back(newBlock);
-		}
-
-		//Change size of block
-		m_Blocks[blockIndex].Size	-= alignmentPadding + allocation.Size;
-		m_Blocks[blockIndex].Offset = allocation.Offset + allocation.Size;
-		return allocation;
+        
+        //Set bestfit to be used
+        pBestFit->IsFree = false;
+        
+        
+        VulkanMemoryBlock* pCurrent = m_pBlockHead;
+        LOG_DEBUG_WARNING("Allocated blocks in chunk %u:\n", m_ID);
+        while (pCurrent)
+        {
+            LOG_DEBUG_WARNING("    VulkanBlock: ID=%u, Offset=%u, Size=%u, IsFree=%s\n", pCurrent->ID, pCurrent->DeviceMemoryOffset, pCurrent->Size, pCurrent->IsFree ? "True" : "False");
+            pCurrent = pCurrent->pNext;
+        }
+        
+		return true;
 	}
 
 
@@ -150,10 +180,10 @@ namespace Lambda
 			VulkanGraphicsDevice& device = VulkanGraphicsDevice::GetInstance();
 
 			void* pMemory = nullptr;
-			vkMapMemory(device.GetDevice(), m_Memory, 0, VK_WHOLE_SIZE, 0, &pMemory);
+			vkMapMemory(device.GetDevice(), m_DeviceMemory, 0, VK_WHOLE_SIZE, 0, &pMemory);
 
-			m_pMemory = reinterpret_cast<uint8*>(pMemory);
-			m_IsMapped = true;
+			m_pHostMemory   = reinterpret_cast<uint8*>(pMemory);
+			m_IsMapped      = true;
 		}
 	}
 
@@ -164,34 +194,62 @@ namespace Lambda
 		if (m_IsMapped)
 		{
 			VulkanGraphicsDevice& device = VulkanGraphicsDevice::GetInstance();
-			vkUnmapMemory(device.GetDevice(), m_Memory);
+			vkUnmapMemory(device.GetDevice(), m_DeviceMemory);
 
-			m_pMemory = nullptr;
-			m_IsMapped = false;
+			m_pHostMemory   = nullptr;
+			m_IsMapped      = false;
 		}
 	}
 
 
-	void VulkanMemoryChunk::Deallocate(const VulkanMemory& allocation)
+	void VulkanMemoryChunk::Deallocate(VulkanMemory* pAllocation)
 	{
+        /*VulkanMemoryBlock* pCurrent = m_pBlockHead;
+        while (!pCurrent)
+        {
+            VulkanMemory& current = pCurrent->Memory;
+            if (current.Offset + current.Size == allocation.Offset)
+            {
+                current.Size = current.Size + allocation.Size;
+                if (pCurrent->pNext)
+                {
+                    VulkanMemoryBlock* pNext = pCurrent->pNext;
+                    VulkanMemory& next = pNext->Memory;
+                    
+                    if (next.Offset == allocation.Offset + allocation.Size)
+                    {
+                        // |current|allocation|next|
+                        // |-------|          |----|   |---|
+                        // |-------|??????????|----|   |---|
+                        // |-----------------------|   |---|
+                        
+                        // Remove the next block since pCurrent now stretes over it
+                        current.Size = current.Size + allocation.Size
+                        
+                    }
+                }
+            }
+        }
+        
+        
 		//Search through the blocks and see if they come after or before eachother
-		for (auto& block : m_Blocks)
-		{
-			if (block.Offset + block.Size == allocation.Offset)
-			{
-				block.Size += allocation.Size;
-				return;
-			}
-			else if (allocation.Offset + allocation.Size == block.Offset)
-			{
-				block.Size		+= allocation.Size;
-				block.Offset	-= allocation.Size;
-				return;
-			}
-		}
+        for (auto block = m_Blocks.begin(); block != m_Blocks.end(); block += 2)
+        {
+            if (block->Offset + block->Size == allocation.Offset)
+            {
+                block->Size += allocation.Size;
+                return;
+            }
+            else if (allocation.Offset + allocation.Size == block->Offset)
+            {
+                block->Size        += allocation.Size;
+                block->Offset    -= allocation.Size;
+                return;
+            }
+        }
 
-		//Otherwise just push block
-		m_Blocks.push_back(allocation);
+        //Otherwise just push block
+        m_Blocks.push_back(allocation);*/
 	}
 
 
@@ -199,12 +257,12 @@ namespace Lambda
 	{
 		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
 
-		if (m_Memory != VK_NULL_HANDLE)
+		if (m_DeviceMemory != VK_NULL_HANDLE)
 		{
 			Unmap();
 
-			vkFreeMemory(device, m_Memory, nullptr);
-			m_Memory = VK_NULL_HANDLE;
+			vkFreeMemory(device, m_DeviceMemory, nullptr);
+			m_DeviceMemory = VK_NULL_HANDLE;
 
 			LOG_SYSTEM(LOG_SEVERITY_WARNING, "Vulkan: Deallocated MemoryChunk\n");
 		}
@@ -239,7 +297,7 @@ namespace Lambda
 	}
 
 
-	VulkanMemory VulkanDeviceAllocator::Allocate(const VkMemoryRequirements& memoryRequirements, ResourceUsage usage)
+	bool VulkanDeviceAllocator::Allocate(VulkanMemory* pAllocation, const VkMemoryRequirements& memoryRequirements, ResourceUsage usage)
 	{
 		LAMBDA_ASSERT_PRINT(memoryRequirements.size < MB(256), "Allocations must be smaller than 256MB\n");
 
@@ -260,35 +318,45 @@ namespace Lambda
 		{
 			if (chunk->GetMemoryType() == memoryType)
 			{
-				if (chunk->CanAllocate(memoryRequirements.size, memoryRequirements.alignment))
+				if (chunk->Allocate(pAllocation, memoryRequirements.size, memoryRequirements.alignment))
 				{
-					return chunk->Allocate(memoryRequirements.size, memoryRequirements.alignment);
+					return true;
 				}
 			}
 		}
 
+        
 		LAMBDA_ASSERT_PRINT(m_Chunks.size() < m_MaxAllocations, "Max number of allocations already reached\n");
 
+        
 		//Allocate new chunk
 		VulkanMemoryChunk* pChunk = DBG_NEW VulkanMemoryChunk(uint32(m_Chunks.size()), MB(256), memoryType, usage);
 		m_Chunks.emplace_back(pChunk);
 		
+        
 		LOG_SYSTEM(LOG_SEVERITY_WARNING, " [DEVICE ALLOCATOR] Allocated Memory chunk. Number of allocations: '%llu'. Max allocations: '%llu'. Memory type: %d, \n", m_Chunks.size(), m_MaxAllocations, memoryType);
 
-		return m_Chunks.back()->Allocate(memoryRequirements.size, memoryRequirements.alignment);
+        
+		return m_Chunks.back()->Allocate(pAllocation, memoryRequirements.size, memoryRequirements.alignment);
 	}
 
 
-	void VulkanDeviceAllocator::Deallocate(const VulkanMemory& allocation)
+	void VulkanDeviceAllocator::Deallocate(VulkanMemory* pAllocation)
 	{
-		VulkanMemoryChunk* pChunk = m_Chunks[allocation.ID];
-		pChunk->Deallocate(allocation);
+        if (size_t(pAllocation->ChunkID) < m_Chunks.size() && pAllocation->DeviceMemory != VK_NULL_HANDLE)
+        {
+            VulkanMemoryChunk* pChunk = m_Chunks[pAllocation->ChunkID];
+            pChunk->Deallocate(pAllocation);
+        }
 	}
 
 	
-	void VulkanDeviceAllocator::DefferedDeallocate(const VulkanMemory& allocation, uint64 frameCount)
+	void VulkanDeviceAllocator::DefferedDeallocate(VulkanMemory* pAllocation, uint64 frameCount)
 	{
-		m_MemoryToDeallocate[frameCount].emplace_back(allocation);
+        if (size_t(pAllocation->ChunkID) < m_Chunks.size() && pAllocation->DeviceMemory != VK_NULL_HANDLE)
+        {
+            //m_MemoryToDeallocate[frameCount].emplace_back(pAllocation);
+        }
 	}
 
 
@@ -299,7 +367,7 @@ namespace Lambda
 		{
 			for (auto& memory : memoryBlocks)
 			{
-				Deallocate(memory);
+				//Deallocate(memory);
 			}
 
 			memoryBlocks.clear();
