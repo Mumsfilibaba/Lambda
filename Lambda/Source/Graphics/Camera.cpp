@@ -7,7 +7,7 @@ namespace Lambda
 {
     constexpr glm::vec3 FORWARD = glm::vec3(0.0f, 0.0f, 1.0f);
     constexpr glm::vec3 RIGHT   = glm::vec3(1.0f, 0.0f, 0.0f);
-    constexpr glm::vec3 UP      = glm::vec3(0.0f, -1.0f, 0.0f);
+    constexpr glm::vec3 UP      = glm::vec3(0.0f, 1.0f, 0.0f);
     
     
     Camera::Camera()
@@ -37,10 +37,8 @@ namespace Lambda
         
         //Rotate forward vector
         m_Forward = rotationMat * glm::vec4(m_Forward, 0.0f);
-        
         //Rotate right vector
         m_Right = rotationMat * glm::vec4(m_Right, 0.0f);
-        
         //Rotate up vector
         m_Up = rotationMat * glm::vec4(m_Up, 0.0f);
     }
@@ -64,8 +62,8 @@ namespace Lambda
         m_Rotation = rotation;
         
         //Rotate forward vector
-        glm::mat3 rotationMat = glm::eulerAngleYXZ(glm::radians(m_Rotation.y), glm::radians(m_Rotation.x), glm::radians(m_Rotation.z));
-        m_Forward = rotationMat * FORWARD;
+        glm::mat3 rotationMat   = glm::eulerAngleYXZ(glm::radians(m_Rotation.y), glm::radians(m_Rotation.x), glm::radians(m_Rotation.z));
+        m_Forward               = rotationMat * FORWARD;
         
         //Rotate right vector
         m_Right = rotationMat * RIGHT;
@@ -81,8 +79,8 @@ namespace Lambda
     void Camera::CreateView()
     {
         //Calculate new lookat
-        glm::vec3 lookAt = m_Position + m_Forward;
-        m_View = glm::lookAt(m_Position, lookAt, m_Up);
+        glm::vec3 lookAt    = m_Position + m_Forward;
+        m_View              = glm::lookAt(m_Position, lookAt, m_Up);
     }
     
     

@@ -1,12 +1,14 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-     layout(location = 0) in     vec2 g_TexCoord;
-     layout(location = 1) in     vec3 g_Normal;
-     layout(location = 2) in     vec3 g_WorldPosition;
-flat layout(location = 3) in    vec3 g_ViewPosition;
-
 layout(location = 0) out vec4 g_OutColor;
+
+layout(location = 0) in    vec2 g_TexCoord;
+layout(location = 1) in    vec3 g_Normal;
+layout(location = 2) in    vec3 g_Tangent;
+layout(location = 3) in    vec3 g_BiTangent;
+layout(location = 4) in    vec3 g_WorldPosition;
+layout(location = 5) in    vec3 g_ViewPosition;
 
 //Materialbuffer
 layout(set = 0, binding = 2) uniform ColorBuffer
@@ -20,29 +22,36 @@ layout(set = 0, binding = 3) uniform LightBuffer
     vec3 Position;
 } u_PointLight;
 //Diffuse texture
-layout(set = 0, binding = 4) uniform texture2D u_Texture;
-layout(set = 0, binding = 5) uniform sampler u_Sampler;
+layout(set = 0, binding = 4) uniform texture2D  u_Albedo;
+layout(set = 0, binding = 5) uniform texture2D  u_Normal;
+layout(set = 0, binding = 6) uniform sampler    u_Sampler;
 
 const vec3  g_LightDir          = vec3(0.0f, 1.0f, -1.0f);
 const float g_SpecularStrength  = 0.5f;
+
 void main()
 {
-    vec4 tex = texture(sampler2D(u_Texture, u_Sampler), g_TexCoord);
+    vec4 albedo     = texture(sampler2D(u_Albedo, u_Sampler), g_TexCoord);
+    vec4 normalMap  = texture(sampler2D(u_Normal, u_Sampler), g_TexCoord);
+    vec3 normal     = normalize(normalMap.rgb * 2 - 1.0f);
+    normal          = normalize(mat3(g_Tangent, g_BiTangent, g_Normal) * normal);
+
     //Calculate lightning
     float   distance        = length(u_PointLight.Position - g_WorldPosition);
     float   attenuation     = 1.0f / (distance * distance);
     vec3    lightDir        = normalize(u_PointLight.Position - g_WorldPosition);
-    float   lightStrength   = max(dot(lightDir, g_Normal), 0.0f);
+    float   lightStrength   = max(dot(lightDir, normal), 0.0f);
 
     vec3    viewDir         = normalize(g_ViewPosition - g_WorldPosition);
-    vec3    reflectedDir    = reflect(-lightDir, g_Normal);
+    vec3    halfDir         = normalize(lightDir+viewDir);
 
-    float   specularPow     = pow(max(dot(viewDir, reflectedDir), 0.0f), 128.0f);
+    float   specularPow     = pow(max(dot(normal, halfDir), 0.0f), 256.0f);
     vec3    specularColor   = g_SpecularStrength * specularPow * u_PointLight.Color.rgb * attenuation;
+
     //Set output color
     vec3 lightColor     = u_PointLight.Color.rgb * lightStrength * attenuation;
-    vec3 ambientLight   = vec3(0.15f);
-    vec3 objectColor    = tex.rgb * u_Material.Color.rgb;
+    vec3 ambientLight   = vec3(0.1f);
+    vec3 objectColor    = albedo.rgb * u_Material.Color.rgb;
     vec3 resultColor    = objectColor * (ambientLight + lightColor + specularColor);
     g_OutColor = min(vec4(1.0f), vec4(resultColor, 1.0f));
 }

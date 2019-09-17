@@ -100,7 +100,7 @@ namespace Lambda
 
 			//Create ResourceState
 			{
-				ResourceSlot slots[6];
+				ResourceSlot slots[7];
 				slots[0].Slot	= 0;
 				slots[0].Stage	= SHADER_STAGE_VERTEX;
 				slots[0].Type	= RESOURCE_TYPE_CONSTANT_BUFFER;
@@ -125,14 +125,19 @@ namespace Lambda
 				slots[4].Stage	= SHADER_STAGE_PIXEL;
 				slots[4].Type	= RESOURCE_TYPE_TEXTURE;
 				slots[4].Usage	= RESOURCE_USAGE_DEFAULT;
+                
+                slots[5].Slot   = 5;
+                slots[5].Stage  = SHADER_STAGE_PIXEL;
+                slots[5].Type   = RESOURCE_TYPE_TEXTURE;
+                slots[5].Usage  = RESOURCE_USAGE_DEFAULT;
 
-				slots[5].Slot	= 5;
-				slots[5].Stage	= SHADER_STAGE_PIXEL;
-				slots[5].Type	= RESOURCE_TYPE_SAMPLER_STATE;
-				slots[5].Usage	= RESOURCE_USAGE_DEFAULT;
+				slots[6].Slot	= 6;
+				slots[6].Stage	= SHADER_STAGE_PIXEL;
+				slots[6].Type	= RESOURCE_TYPE_SAMPLER_STATE;
+				slots[6].Usage	= RESOURCE_USAGE_DEFAULT;
 
 				PipelineResourceStateDesc desc = {};
-				desc.NumResourceSlots	= 6;
+				desc.NumResourceSlots	= 7;
 				desc.pResourceSlots		= slots;
 				pDevice->CreatePipelineResourceState(&m_pResourceState, desc);
 			}
@@ -144,7 +149,8 @@ namespace Lambda
                 {
                     { "POSITION",   FORMAT_R32G32B32_FLOAT, 0, 0, sizeof(Vertex), 0,                     false },
                     { "NORMAL",     FORMAT_R32G32B32_FLOAT, 0, 1, sizeof(Vertex), sizeof(glm::vec3),     false },
-                    { "TEXCOORD",   FORMAT_R32G32_FLOAT,    0, 2, sizeof(Vertex), sizeof(glm::vec3) * 2, false }
+                    { "TANGENT",    FORMAT_R32G32B32_FLOAT, 0, 2, sizeof(Vertex), sizeof(glm::vec3) * 2, false },
+                    { "TEXCOORD",   FORMAT_R32G32_FLOAT,    0, 3, sizeof(Vertex), sizeof(glm::vec3) * 3, false },
                 };
                 
                 GraphicsPipelineStateDesc desc = {};
@@ -163,7 +169,7 @@ namespace Lambda
             }
 
             //Create vertexbuffer
-			MeshData mesh = MeshFactory::CreateCube();//MeshFactory::CreateFromFile("chalet.obj");
+            MeshData mesh = MeshFactory::CreateCube();//MeshFactory::CreateFromFile("chalet.obj");
 			m_IndexCount = uint32(mesh.Indices.size());
 			{
                 BufferDesc desc     = {};
@@ -235,8 +241,8 @@ namespace Lambda
             //Create camerabuffer
             {
                 //Set camera
-                m_Camera.SetPosition(glm::vec3(0.0f, 2.0f, -2.0f));
-                m_Camera.SetRotation(glm::vec3(45.0f, 0.0f, 0.0f));
+                m_Camera.SetPosition(glm::vec3(0.0f, 0.0f, -2.0f));
+                m_Camera.SetRotation(glm::vec3(0.0f, 0.0f, 0.0f));
                 m_Camera.CreateView();
                 
                 BufferDesc desc = {};
@@ -273,12 +279,14 @@ namespace Lambda
             }
 
             //Create texture
-            m_pTexture = ITexture::CreateTextureFromFile(pDevice, "CastleGate_albedo.tif", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
-			m_pCurrentList->TransitionTexture(m_pTexture, RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0, LAMBDA_TRANSITION_ALL_MIPS);
+            m_pAlbedo = ITexture::CreateTextureFromFile(pDevice, "CastleGate_albedo.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
+            m_pNormal = ITexture::CreateTextureFromFile(pDevice, "CastleGate_normal.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
+			m_pCurrentList->TransitionTexture(m_pAlbedo, RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0, LAMBDA_TRANSITION_ALL_MIPS);
+            m_pCurrentList->TransitionTexture(m_pNormal, RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0, LAMBDA_TRANSITION_ALL_MIPS);
 
             //Create samplerstate
             {
-                TextureDesc textureDesc = m_pTexture->GetDesc();
+                TextureDesc textureDesc = m_pAlbedo->GetDesc();
                 
                 SamplerStateDesc desc = {};
                 desc.AdressMode = SAMPLER_ADDRESS_MODE_REPEAT;
@@ -309,16 +317,21 @@ namespace Lambda
             m_Camera.Translate(glm::vec3(0.0f, 0.0f, -speed) * dt.AsSeconds());
         
         if (Input::IsKeyDown(KEY_A))
-            m_Camera.Translate(glm::vec3(-speed, 0.0f, 0.0f) * dt.AsSeconds());
-        else if (Input::IsKeyDown(KEY_D))
             m_Camera.Translate(glm::vec3(speed, 0.0f, 0.0f) * dt.AsSeconds());
+        else if (Input::IsKeyDown(KEY_D))
+            m_Camera.Translate(glm::vec3(-speed, 0.0f, 0.0f) * dt.AsSeconds());
+        
+        if (Input::IsKeyDown(KEY_SPACE))
+            m_Camera.Translate(glm::vec3(0.0f, speed, 0.0f) * dt.AsSeconds());
+        else if (Input::IsKeyDown(KEY_LEFT_SHIFT))
+            m_Camera.Translate(glm::vec3(0.0f, -speed, 0.0f) * dt.AsSeconds());
         
         //Rotate camera
          constexpr float rotation = 30.0f;
         if (Input::IsKeyDown(KEY_UP))
-            m_Camera.Rotate(glm::vec3(-rotation, 0.0f, 0.0f) * dt.AsSeconds());
-        else if (Input::IsKeyDown(KEY_DOWN))
             m_Camera.Rotate(glm::vec3(rotation, 0.0f, 0.0f) * dt.AsSeconds());
+        else if (Input::IsKeyDown(KEY_DOWN))
+            m_Camera.Rotate(glm::vec3(-rotation, 0.0f, 0.0f) * dt.AsSeconds());
         
         if (Input::IsKeyDown(KEY_RIGHT))
             m_Camera.Rotate(glm::vec3(0.0f, -rotation, 0.0f) * dt.AsSeconds());
@@ -390,17 +403,21 @@ namespace Lambda
         static LightBuffer lightBuffer  =
         {
             glm::vec4(RGB_F(255, 241, 224), 1.0f),
-            glm::vec3(0.0f, 0.0f, -1.5f)
+            glm::vec3(0.0f, -0.75f, -1.25f)
         };
+        
+        LOG_DEBUG_INFO("Speed: %.4f\n", lightBuffer.Position.y);
+        
         data.pData          = &lightBuffer;
         data.SizeInBytes    = sizeof(LightBuffer);
         m_pCurrentList->UpdateBuffer(m_pLightBuffer, &data);
         
         //Set resources
 		IBuffer* buffers[] = { m_pCameraBuffer, m_pTransformBuffer, m_pColorBuffer, m_pLightBuffer };
+        ITexture* textures[] = { m_pAlbedo, m_pNormal };
 		m_pResourceState->SetConstantBuffers(buffers, 4, 0);
-		m_pResourceState->SetTextures(&m_pTexture, 1, 4);
-		m_pResourceState->SetSamplerStates(&m_pSamplerState, 1, 5);
+		m_pResourceState->SetTextures(textures, 2, 4);
+		m_pResourceState->SetSamplerStates(&m_pSamplerState, 1, 6);
 		m_pCurrentList->SetGraphicsPipelineResourceState(m_pResourceState);
         
         //Set vertex- and indexbuffer
@@ -412,8 +429,8 @@ namespace Lambda
 		m_pRenderPass->SetClearValues(color, 1.0f, 0);
 
         //Setup rotation
-		static glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        rotation = glm::rotate(rotation, glm::radians(45.0f) * dt.AsSeconds(), glm::vec3(0.0f, 1.0f, 0.0f));
+		static glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        rotation = glm::rotate(rotation, glm::radians(30.0f) * dt.AsSeconds(), glm::vec3(0.0f, 1.0f, 0.0f));
         
 #if !defined(SINGLE_CUBE)
         //Begin renderpass
@@ -482,9 +499,11 @@ namespace Lambda
             pDevice->DestroyBuffer(&m_pVertexBuffer);
             pDevice->DestroyBuffer(&m_pIndexBuffer);
             pDevice->DestroyBuffer(&m_pColorBuffer);
+            pDevice->DestroyBuffer(&m_pLightBuffer);
             pDevice->DestroyBuffer(&m_pCameraBuffer);
             pDevice->DestroyBuffer(&m_pTransformBuffer);
-            pDevice->DestroyTexture(&m_pTexture);
+            pDevice->DestroyTexture(&m_pAlbedo);
+            pDevice->DestroyTexture(&m_pNormal);
             pDevice->DestroySamplerState(&m_pSamplerState);
         }
 	}
@@ -512,7 +531,7 @@ namespace Lambda
                 
             case EVENT_TYPE_KEYDOWN:
                 //LOG_DEBUG_INFO("Key pressed\n");
-                if (event.KeyEvent.KeyCode == KEY_SPACE)
+                if (event.KeyEvent.KeyCode == KEY_1)
                 {
                     GetWindow()->SetFullscreen(!GetWindow()->GetFullscreen());
                 }

@@ -119,40 +119,40 @@ namespace Lambda
 		data.Vertices =
 		{
 			//FRONT FACE
-			{ vec3(-w,  h, -d), vec3(0.0f,  0.0f, -1.0f), vec2(0.0f, 0.0f) },
-			{ vec3( w,  h, -d), vec3(0.0f,  0.0f, -1.0f), vec2(1.0f, 0.0f) },
-			{ vec3(-w, -h, -d), vec3(0.0f,  0.0f, -1.0f), vec2(0.0f, 1.0f) },
-			{ vec3( w, -h, -d), vec3(0.0f,  0.0f, -1.0f), vec2(1.0f, 1.0f) },
+			{ vec3(-w,  h, -d), vec3(0.0f,  0.0f, -1.0f), vec3(1.0f,  0.0f, 0.0f), vec2(0.0f, 0.0f) },
+			{ vec3( w,  h, -d), vec3(0.0f,  0.0f, -1.0f), vec3(1.0f,  0.0f, 0.0f), vec2(1.0f, 0.0f) },
+			{ vec3(-w, -h, -d), vec3(0.0f,  0.0f, -1.0f), vec3(1.0f,  0.0f, 0.0f), vec2(0.0f, 1.0f) },
+			{ vec3( w, -h, -d), vec3(0.0f,  0.0f, -1.0f), vec3(1.0f,  0.0f, 0.0f), vec2(1.0f, 1.0f) },
 
 			//BACK FACE
-			{ vec3( w,  h,  d), vec3(0.0f,  0.0f,  1.0f), vec2(0.0f, 0.0f) },
-			{ vec3(-w,  h,  d), vec3(0.0f,  0.0f,  1.0f), vec2(1.0f, 0.0f) },
-			{ vec3( w, -h,  d), vec3(0.0f,  0.0f,  1.0f), vec2(0.0f, 1.0f) },
-			{ vec3(-w, -h,  d), vec3(0.0f,  0.0f,  1.0f), vec2(1.0f, 1.0f) },
+			{ vec3( w,  h,  d), vec3(0.0f,  0.0f,  1.0f), vec3(-1.0f,  0.0f, 0.0f), vec2(0.0f, 0.0f) },
+			{ vec3(-w,  h,  d), vec3(0.0f,  0.0f,  1.0f), vec3(-1.0f,  0.0f, 0.0f), vec2(1.0f, 0.0f) },
+			{ vec3( w, -h,  d), vec3(0.0f,  0.0f,  1.0f), vec3(-1.0f,  0.0f, 0.0f), vec2(0.0f, 1.0f) },
+			{ vec3(-w, -h,  d), vec3(0.0f,  0.0f,  1.0f), vec3(-1.0f,  0.0f, 0.0f), vec2(1.0f, 1.0f) },
 
 			//RIGHT FACE
-			{ vec3( w,  h, -d), vec3(1.0f,  0.0f,  0.0f), vec2(0.0f, 0.0f) },
-			{ vec3( w,  h,  d), vec3(1.0f,  0.0f,  0.0f), vec2(1.0f, 0.0f) },
-			{ vec3( w, -h, -d), vec3(1.0f,  0.0f,  0.0f), vec2(0.0f, 1.0f) },
-			{ vec3( w, -h,  d), vec3(1.0f,  0.0f,  0.0f), vec2(1.0f, 1.0f) },
+			{ vec3( w,  h, -d), vec3(1.0f,  0.0f,  0.0f), vec3(0.0f,  0.0f, 1.0f), vec2(0.0f, 0.0f) },
+			{ vec3( w,  h,  d), vec3(1.0f,  0.0f,  0.0f), vec3(0.0f,  0.0f, 1.0f), vec2(1.0f, 0.0f) },
+			{ vec3( w, -h, -d), vec3(1.0f,  0.0f,  0.0f), vec3(0.0f,  0.0f, 1.0f), vec2(0.0f, 1.0f) },
+			{ vec3( w, -h,  d), vec3(1.0f,  0.0f,  0.0f), vec3(0.0f,  0.0f, 1.0f), vec2(1.0f, 1.0f) },
 
 			//LEFT FACE
-			{ vec3(-w,  h, -d), vec3(-1.0f,  0.0f,  0.0f), vec2(0.0f, 0.0f) },
-			{ vec3(-w,  h,  d), vec3(-1.0f,  0.0f,  0.0f), vec2(1.0f, 0.0f) },
-			{ vec3(-w, -h, -d), vec3(-1.0f,  0.0f,  0.0f), vec2(0.0f, 1.0f) },
-			{ vec3(-w, -h,  d), vec3(-1.0f,  0.0f,  0.0f), vec2(1.0f, 1.0f) },
+			{ vec3(-w,  h, -d), vec3(-1.0f,  0.0f,  0.0f), vec3(0.0f,  0.0f, -1.0f), vec2(0.0f, 0.0f) },
+			{ vec3(-w,  h,  d), vec3(-1.0f,  0.0f,  0.0f), vec3(0.0f,  0.0f, -1.0f), vec2(1.0f, 0.0f) },
+			{ vec3(-w, -h, -d), vec3(-1.0f,  0.0f,  0.0f), vec3(0.0f,  0.0f, -1.0f), vec2(0.0f, 1.0f) },
+			{ vec3(-w, -h,  d), vec3(-1.0f,  0.0f,  0.0f), vec3(0.0f,  0.0f, -1.0f), vec2(1.0f, 1.0f) },
 
 			//ROOF FACE
-			{ vec3(-w,  h,  d), vec3(0.0f,  1.0f,  0.0f), vec2(0.0f, 0.0f) },
-			{ vec3( w,  h,  d), vec3(0.0f,  1.0f,  0.0f), vec2(1.0f, 0.0f) },
-			{ vec3(-w,  h, -d), vec3(0.0f,  1.0f,  0.0f), vec2(0.0f, 1.0f) },
-			{ vec3( w,  h, -d), vec3(0.0f,  1.0f,  0.0f), vec2(1.0f, 1.0f) },
+			{ vec3(-w,  h,  d), vec3(0.0f,  1.0f,  0.0f), vec3(1.0f,  0.0f, 0.0f), vec2(0.0f, 0.0f) },
+			{ vec3( w,  h,  d), vec3(0.0f,  1.0f,  0.0f), vec3(1.0f,  0.0f, 0.0f), vec2(1.0f, 0.0f) },
+			{ vec3(-w,  h, -d), vec3(0.0f,  1.0f,  0.0f), vec3(1.0f,  0.0f, 0.0f), vec2(0.0f, 1.0f) },
+			{ vec3( w,  h, -d), vec3(0.0f,  1.0f,  0.0f), vec3(1.0f,  0.0f, 0.0f), vec2(1.0f, 1.0f) },
 
 			//FLOOR FACE
-			{ vec3(-w, -h, -d), vec3(0.0f, -1.0f,  0.0f), vec2(0.0f, 0.0f) },
-			{ vec3( w, -h, -d), vec3(0.0f, -1.0f,  0.0f), vec2(1.0f, 0.0f) },
-			{ vec3(-w, -h,  d), vec3(0.0f, -1.0f,  0.0f), vec2(0.0f, 1.0f) },
-			{ vec3( w, -h,  d), vec3(0.0f, -1.0f,  0.0f), vec2(1.0f, 1.0f) },
+			{ vec3(-w, -h, -d), vec3(0.0f, -1.0f,  0.0f), vec3(-1.0f,  0.0f, 0.0f), vec2(0.0f, 0.0f) },
+			{ vec3( w, -h, -d), vec3(0.0f, -1.0f,  0.0f), vec3(-1.0f,  0.0f, 0.0f), vec2(1.0f, 0.0f) },
+			{ vec3(-w, -h,  d), vec3(0.0f, -1.0f,  0.0f), vec3(-1.0f,  0.0f, 0.0f), vec2(0.0f, 1.0f) },
+			{ vec3( w, -h,  d), vec3(0.0f, -1.0f,  0.0f), vec3(-1.0f,  0.0f, 0.0f), vec2(1.0f, 1.0f) },
 		};
 
 		data.Indices =
@@ -212,6 +212,7 @@ namespace Lambda
 				int32 v = ((1 + height) * x) + y;
 				data.Vertices[v].Position	= vec3(0.5f - (quadSize.x * x), 0.5f - (quadSize.y * y), 0.0f);
 				data.Vertices[v].Normal		= vec3(0.0f, 0.0f, 1.0f);
+                data.Vertices[v].Tangent    = vec3(1.0f, 0.0f, 0.0f);
 				data.Vertices[v].TexCoord	= vec2(0.0f + (uvQuadSize.x * x), 0.0f + (uvQuadSize.y * y));
 			}
 		}
@@ -222,7 +223,7 @@ namespace Lambda
 			for (uint8 y = 0; y < height; y++)
 			{
 				int32 quad = (height * x) + y;
-				data.Indices[quad * 6] = (x * (1 + height)) + y + 1;
+				data.Indices[(quad * 6) + 0] = (x * (1 + height)) + y + 1;
 				data.Indices[(quad * 6) + 1] = (data.Indices[quad * 6] + 2 + (height - 1));
 				data.Indices[(quad * 6) + 2] =  data.Indices[quad * 6] - 1;
 				data.Indices[(quad * 6) + 3] =  data.Indices[(quad * 6) + 1];
@@ -231,8 +232,18 @@ namespace Lambda
 			}
 		}
 
+        //Resize array
 		data.Vertices.shrink_to_fit();
 		data.Indices.shrink_to_fit();
+        
+        //Swap the indices
+        for (size_t i = 0; i < data.Indices.size(); i += 3)
+        {
+            uint32 old          = data.Indices[i+0];
+            data.Indices[i+0]   = data.Indices[i+2];
+            data.Indices[i+2]   = old;
+        }
+        
 		return data;
 	}
 

@@ -13,7 +13,7 @@ int main()
 #else
 	params.GraphicsDeviceApi	= GRAPHICS_API_VULKAN;
 #endif
-	params.SampleCount          = 1;
+	params.SampleCount          = 8;
 	params.WindowWidth          = 1920;
 	params.WindowHeight         = 1080;
 	params.Fullscreen           = false;

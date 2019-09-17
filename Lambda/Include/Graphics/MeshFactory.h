@@ -11,6 +11,7 @@ namespace Lambda
 	{
 		glm::vec3 Position;
 		glm::vec3 Normal;
+        glm::vec3 Tangent;
 		glm::vec2 TexCoord;
 
 		bool operator==(const Vertex& other) const;
@@ -22,6 +23,7 @@ namespace Lambda
 	{
 		return	Position	== other.Position	&&
 				Normal		== other.Normal		&&
+                Tangent     == other.Tangent    &&
 				TexCoord	== other.TexCoord;
 	}
 

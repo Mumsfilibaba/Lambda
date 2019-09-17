@@ -25,14 +25,14 @@ namespace Lambda
         void CreateProjection();
         
     private:
-        glm::mat4 m_View;
-        glm::mat4 m_Projection;
-        glm::vec3 m_Position;
-        glm::vec3 m_Rotation;
-        glm::vec3 m_Forward;
-        glm::vec3 m_Right;
-        glm::vec3 m_Up;
-        float m_Aspect;
+        glm::mat4   m_View;
+        glm::mat4   m_Projection;
+        glm::vec3   m_Position;
+        glm::vec3   m_Rotation;
+        glm::vec3   m_Forward;
+        glm::vec3   m_Right;
+        glm::vec3   m_Up;
+        float       m_Aspect;
     };
     
     

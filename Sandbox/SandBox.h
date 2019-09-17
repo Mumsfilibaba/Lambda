@@ -51,11 +51,9 @@ namespace Lambda
         //Commandlist
 		ICommandList* m_pLists[3];
         ICommandList* m_pCurrentList;
-		
         //Shaders
         IShader* m_pVS;
 		IShader* m_pPS;
-        
         //Buffers
 		IBuffer* m_pVertexBuffer;
         IBuffer* m_pIndexBuffer;
@@ -63,19 +61,15 @@ namespace Lambda
         IBuffer* m_pLightBuffer;
 		IBuffer* m_pCameraBuffer;
         IBuffer* m_pTransformBuffer;
-        
         //Textures
-		ITexture* m_pTexture;
-		
+		ITexture* m_pAlbedo;
+        ITexture* m_pNormal;
         //Samplers
         ISamplerState* m_pSamplerState;
-		
         //Pipelinestates
         IGraphicsPipelineState* m_pPipelineState;
-
 		//RenderPass
 		IRenderPass* m_pRenderPass;
-        
         //ResourceState
         IPipelineResourceState* m_pResourceState;
 		
