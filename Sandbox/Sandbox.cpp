@@ -4,7 +4,7 @@
 #include "Graphics/MeshFactory.h"
 #include <glm/gtc/matrix_transform.hpp>
 
-//#define SINGLE_CUBE
+#define SINGLE_CUBE
 #define RGB_F(r, g, b) float(r) / 255.0f, float(g) / 255.0f, float(b) / 255.0f
 
 namespace Lambda
@@ -100,7 +100,7 @@ namespace Lambda
 
 			//Create ResourceState
 			{
-				ResourceSlot slots[5];
+				ResourceSlot slots[6];
 				slots[0].Slot	= 0;
 				slots[0].Stage	= SHADER_STAGE_VERTEX;
 				slots[0].Type	= RESOURCE_TYPE_CONSTANT_BUFFER;
@@ -115,19 +115,24 @@ namespace Lambda
 				slots[2].Stage	= SHADER_STAGE_PIXEL;
 				slots[2].Type	= RESOURCE_TYPE_CONSTANT_BUFFER;
 				slots[2].Usage	= RESOURCE_USAGE_DYNAMIC;
-
-				slots[3].Slot	= 3;
-				slots[3].Stage	= SHADER_STAGE_PIXEL;
-				slots[3].Type	= RESOURCE_TYPE_TEXTURE;
-				slots[3].Usage	= RESOURCE_USAGE_DEFAULT;
+                
+                slots[3].Slot   = 3;
+                slots[3].Stage  = SHADER_STAGE_PIXEL;
+                slots[3].Type   = RESOURCE_TYPE_CONSTANT_BUFFER;
+                slots[3].Usage  = RESOURCE_USAGE_DEFAULT;
 
 				slots[4].Slot	= 4;
 				slots[4].Stage	= SHADER_STAGE_PIXEL;
-				slots[4].Type	= RESOURCE_TYPE_SAMPLER_STATE;
+				slots[4].Type	= RESOURCE_TYPE_TEXTURE;
 				slots[4].Usage	= RESOURCE_USAGE_DEFAULT;
 
+				slots[5].Slot	= 5;
+				slots[5].Stage	= SHADER_STAGE_PIXEL;
+				slots[5].Type	= RESOURCE_TYPE_SAMPLER_STATE;
+				slots[5].Usage	= RESOURCE_USAGE_DEFAULT;
+
 				PipelineResourceStateDesc desc = {};
-				desc.NumResourceSlots	= 5;
+				desc.NumResourceSlots	= 6;
 				desc.pResourceSlots		= slots;
 				pDevice->CreatePipelineResourceState(&m_pResourceState, desc);
 			}
@@ -161,14 +166,14 @@ namespace Lambda
 			MeshData mesh = MeshFactory::CreateCube();//MeshFactory::CreateFromFile("chalet.obj");
 			m_IndexCount = uint32(mesh.Indices.size());
 			{
-                BufferDesc desc = {};
+                BufferDesc desc     = {};
                 desc.pName          = "VertexBuffer";
                 desc.Usage          = RESOURCE_USAGE_DEFAULT;
                 desc.Flags          = BUFFER_FLAGS_VERTEX_BUFFER;
                 desc.SizeInBytes    = sizeof(Vertex) * uint32(mesh.Vertices.size());
                 desc.StrideInBytes  = sizeof(Vertex);
 
-                ResourceData data = {};
+                ResourceData data   = {};
                 data.pData          = mesh.Vertices.data();
                 data.SizeInBytes    = desc.SizeInBytes;
 
@@ -177,14 +182,14 @@ namespace Lambda
             
             //Create indexbuffer
             {
-                BufferDesc desc = {};
+                BufferDesc desc     = {};
                 desc.pName          = "IndexBuffer";
                 desc.Usage          = RESOURCE_USAGE_DEFAULT;
                 desc.Flags          = BUFFER_FLAGS_INDEX_BUFFER;
                 desc.SizeInBytes    = sizeof(uint32) * uint32(mesh.Indices.size());
                 desc.StrideInBytes  = sizeof(uint32);
                 
-                ResourceData data = {};
+                ResourceData data   = {};
                 data.pData          = mesh.Indices.data();
                 data.SizeInBytes    = desc.SizeInBytes;
                 
@@ -195,18 +200,36 @@ namespace Lambda
             {
                 glm::vec4 color = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
 
-                BufferDesc desc = {};
+                BufferDesc desc     = {};
                 desc.pName          = "ColorBuffer";
                 desc.Usage			= RESOURCE_USAGE_DYNAMIC;
                 desc.Flags			= BUFFER_FLAGS_CONSTANT_BUFFER;
                 desc.SizeInBytes	= sizeof(glm::vec4);
                 desc.StrideInBytes	= sizeof(glm::vec4);
 
-                ResourceData data = {};
+                ResourceData data   = {};
                 data.pData			= &color;
                 data.SizeInBytes	= sizeof(color);
 
                 pDevice->CreateBuffer(&m_pColorBuffer, &data, desc);
+            }
+            
+            //Create lightbuffer
+            {
+                LightBuffer light = {};
+                
+                BufferDesc desc = {};
+                desc.pName            = "LightBuffer";
+                desc.Usage            = RESOURCE_USAGE_DEFAULT;
+                desc.Flags            = BUFFER_FLAGS_CONSTANT_BUFFER;
+                desc.SizeInBytes      = sizeof(LightBuffer);
+                desc.StrideInBytes    = sizeof(LightBuffer);
+                
+                ResourceData data   = {};
+                data.pData          = &light;
+                data.SizeInBytes    = sizeof(LightBuffer);
+                
+                pDevice->CreateBuffer(&m_pLightBuffer, &data, desc);
             }
 
             //Create camerabuffer
@@ -250,7 +273,7 @@ namespace Lambda
             }
 
             //Create texture
-            m_pTexture = ITexture::CreateTextureFromFile(pDevice, "texture.jpg", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
+            m_pTexture = ITexture::CreateTextureFromFile(pDevice, "CastleGate_albedo.tif", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
 			m_pCurrentList->TransitionTexture(m_pTexture, RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0, LAMBDA_TRANSITION_ALL_MIPS);
 
             //Create samplerstate
@@ -355,18 +378,29 @@ namespace Lambda
         m_pCurrentList->UpdateBuffer(m_pColorBuffer, &data);
         
         //Update camera buffer
-        m_CameraBuffer.View = m_Camera.GetView();
-        m_CameraBuffer.Proj = m_Camera.GetProjection();
+        m_CameraBuffer.View         = m_Camera.GetView();
+        m_CameraBuffer.Projection   = m_Camera.GetProjection();
+        m_CameraBuffer.Position     = m_Camera.GetPosition();
 
         data.pData			= &m_CameraBuffer;
         data.SizeInBytes	= sizeof(CameraBuffer);
         m_pCurrentList->UpdateBuffer(m_pCameraBuffer, &data);
         
+        //Update lightbuffer
+        static LightBuffer lightBuffer  =
+        {
+            glm::vec4(RGB_F(255, 241, 224), 1.0f),
+            glm::vec3(0.0f, 0.0f, -1.5f)
+        };
+        data.pData          = &lightBuffer;
+        data.SizeInBytes    = sizeof(LightBuffer);
+        m_pCurrentList->UpdateBuffer(m_pLightBuffer, &data);
+        
         //Set resources
-		IBuffer* buffers[] = { m_pCameraBuffer, m_pTransformBuffer, m_pColorBuffer };
-		m_pResourceState->SetConstantBuffers(buffers, 3, 0);
-		m_pResourceState->SetTextures(&m_pTexture, 1, 3);
-		m_pResourceState->SetSamplerStates(&m_pSamplerState, 1, 4);
+		IBuffer* buffers[] = { m_pCameraBuffer, m_pTransformBuffer, m_pColorBuffer, m_pLightBuffer };
+		m_pResourceState->SetConstantBuffers(buffers, 4, 0);
+		m_pResourceState->SetTextures(&m_pTexture, 1, 4);
+		m_pResourceState->SetSamplerStates(&m_pSamplerState, 1, 5);
 		m_pCurrentList->SetGraphicsPipelineResourceState(m_pResourceState);
         
         //Set vertex- and indexbuffer

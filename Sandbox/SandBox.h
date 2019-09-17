@@ -15,7 +15,8 @@ namespace Lambda
 	struct CameraBuffer
 	{
         glm::mat4 View;
-        glm::mat4 Proj;
+        glm::mat4 Projection;
+        glm::vec3 Position;
 	};
     
     
@@ -24,7 +25,14 @@ namespace Lambda
         glm::mat4 Model;
     };
 
+    
+    struct LightBuffer
+    {
+        glm::vec4 Color;
+        glm::vec3 Position;
+    };
 
+    
 	class SandBox final : public Application
 	{
 	public:
@@ -52,6 +60,7 @@ namespace Lambda
 		IBuffer* m_pVertexBuffer;
         IBuffer* m_pIndexBuffer;
 		IBuffer* m_pColorBuffer;
+        IBuffer* m_pLightBuffer;
 		IBuffer* m_pCameraBuffer;
         IBuffer* m_pTransformBuffer;
         

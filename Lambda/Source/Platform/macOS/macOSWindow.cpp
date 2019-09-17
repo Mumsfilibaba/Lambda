@@ -66,8 +66,15 @@ namespace Lambda
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GL_FALSE);
         
+        //Set name
+        std::string name;
+        if (desc.pTitle)
+            name = std::string(desc.pTitle);
+        if (desc.GraphicsDeviceAPI == GRAPHICS_API_VULKAN)
+            name += " - [Vulkan] 64-bit";
+        
         //Create window
-        m_pWindow = glfwCreateWindow(desc.Width, desc.Height, desc.pTitle, nullptr, nullptr);
+        m_pWindow = glfwCreateWindow(desc.Width, desc.Height, name.c_str(), nullptr, nullptr);
         if (m_pWindow)
         {
             LOG_DEBUG_INFO("macOS: Created window\n");

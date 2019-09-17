@@ -20,8 +20,8 @@ namespace Lambda
 		union
 		{
 			VKNBuffer*			pBuffer;
-			VKNTexture*		pTexture;
-			VKNSamplerState* pSamplerState;
+			VKNTexture*		    pTexture;
+			VKNSamplerState*    pSamplerState;
 		};
 		union 
 		{

@@ -100,11 +100,11 @@ namespace Lambda
 
 		//Create descriptorsetlayout
 		VkDescriptorSetLayoutCreateInfo descriptorLayoutInfo = {};
-		descriptorLayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		descriptorLayoutInfo.pNext = nullptr;
-		descriptorLayoutInfo.flags = 0;
-		descriptorLayoutInfo.bindingCount = uint32(layoutBindings.size());
-		descriptorLayoutInfo.pBindings = layoutBindings.data();
+		descriptorLayoutInfo.sType          = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		descriptorLayoutInfo.pNext          = nullptr;
+		descriptorLayoutInfo.flags          = 0;
+		descriptorLayoutInfo.bindingCount   = uint32(layoutBindings.size());
+		descriptorLayoutInfo.pBindings      = layoutBindings.data();
 
 		VKNDevice& device = VKNDevice::GetInstance();
 		if (vkCreateDescriptorSetLayout(device.GetDevice(), &descriptorLayoutInfo, nullptr, &m_DescriptorSetLayout) != VK_SUCCESS)
