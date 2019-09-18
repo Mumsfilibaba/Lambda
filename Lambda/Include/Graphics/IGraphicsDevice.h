@@ -16,6 +16,7 @@ namespace Lambda
     class IGraphicsPipelineState;
 	class IPipelineResourceState;
 
+    struct QueryDesc;
 	struct BufferDesc;
     struct ShaderDesc;
     struct TextureDesc;
@@ -57,7 +58,7 @@ namespace Lambda
 		virtual void CreateGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc) = 0;
 		virtual void CreateRenderPass(IRenderPass** ppRenderPass, const RenderPassDesc& desc) = 0;
 		virtual void CreatePipelineResourceState(IPipelineResourceState** ppResourceState, const PipelineResourceStateDesc& desc) = 0;
-        virtual void CreateQuery(IQuery** ppQuery) = 0;
+        virtual void CreateQuery(IQuery** ppQuery, const QueryDesc& desc) = 0;
         
 		virtual void DestroyCommandList(ICommandList** ppList) = 0;
 		virtual void DestroyBuffer(IBuffer** ppBuffer) = 0;

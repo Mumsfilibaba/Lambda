@@ -8,6 +8,7 @@
 #include "VKNTexture.h"
 #include "VKNFramebuffer.h"
 #include "VKNBuffer.h"
+#include "VKNQuery.h"
 #include "VKNRenderPass.h"
 #include "VKNPipelineResourceState.h"
 #include "VKNConversions.inl"
@@ -643,4 +644,31 @@ namespace Lambda
 			LOG_DEBUG_ERROR("Vulkan: EndRenderPass must be called inside a RenderPass instance");
 		}
 	}
+    
+    
+    void VKNCommandList::ResetQuery(IQuery* pQuery)
+    {
+        LAMBDA_ASSERT(pQuery != nullptr);
+        
+        VKNQuery* pVkQuery = reinterpret_cast<VKNQuery*>(pQuery);
+        
+        QueryDesc desc          = pVkQuery->GetDesc();
+        VkQueryPool queryPool   = reinterpret_cast<VkQueryPool>(pVkQuery->GetNativeHandle());
+        vkCmdResetQueryPool(m_CommandBuffer, queryPool, 0, desc.QueryCount);
+        
+        pVkQuery->Reset();
+    }
+    
+    
+    void VKNCommandList::WriteTimeStamp(IQuery* pQuery, PipelineStage stage)
+    {
+        LAMBDA_ASSERT(pQuery != nullptr);
+        
+        VKNQuery* pVkQuery = reinterpret_cast<VKNQuery*>(pQuery);
+        
+        VkQueryPool queryPool = reinterpret_cast<VkQueryPool>(pVkQuery->GetNativeHandle());
+        vkCmdWriteTimestamp(m_CommandBuffer, ConvertPipelineStage(stage), queryPool, pVkQuery->GetQueryIndex());
+        
+        pVkQuery->NextQuery();
+    }
 }

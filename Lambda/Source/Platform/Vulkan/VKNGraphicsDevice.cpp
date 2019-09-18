@@ -10,6 +10,7 @@
 #include "VKNBuffer.h"
 #include "VKNSwapChain.h"
 #include "VKNRenderPass.h"
+#include "VKNQuery.h"
 #include "VKNPipelineResourceState.h"
 #include "VKNUploadBuffer.h"
 #include "VKNUtilities.h"
@@ -424,16 +425,11 @@ namespace Lambda
 	}
 
     
-    void VKNGraphicsDevice::CreateQuery(Lambda::IQuery **ppQuery)
+    void VKNGraphicsDevice::CreateQuery(Lambda::IQuery** ppQuery, const QueryDesc& desc)
     {
+        LAMBDA_ASSERT(ppQuery != nullptr);
+        (*ppQuery) = DBG_NEW VKNQuery(desc);
     }
-    
-
-	void VKNGraphicsDevice::CreateUploadBuffer(VKNUploadBuffer** ppUploadBuffer, uint64 sizeInBytes)
-	{
-		LAMBDA_ASSERT(ppUploadBuffer != nullptr);
-		(*ppUploadBuffer) = DBG_NEW VKNUploadBuffer(m_pDeviceAllocator, sizeInBytes);
-	}
     
     
     void VKNGraphicsDevice::DestroyCommandList(ICommandList** ppList)
@@ -570,8 +566,19 @@ namespace Lambda
 	}
     
     
-    void VKNGraphicsDevice::DestroyQuery(Lambda::IQuery **ppQuery)
+    void VKNGraphicsDevice::DestroyQuery(IQuery** ppQuery)
     {
+        LAMBDA_ASSERT(ppQuery != nullptr);
+        
+        //Delete ResourceState
+        VKNQuery* pVkQuery = reinterpret_cast<VKNQuery*>(*ppQuery);
+        if (pVkQuery != nullptr)
+        {
+            pVkQuery->Destroy(m_pDevice->GetDevice());
+            *ppQuery = nullptr;
+            
+            LOG_DEBUG_INFO("Vulkan: Destroyed Query\n");
+        }
     }
     
     

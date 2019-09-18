@@ -8,6 +8,7 @@
 #include "Graphics/ISamplerState.h"
 #include "Graphics/IRenderPass.h"
 #include "Graphics/IPipelineResourceState.h"
+#include "Graphics/IQuery.h"
 #include "Graphics/Camera.h"
 
 namespace Lambda
@@ -51,6 +52,8 @@ namespace Lambda
         //Commandlist
 		ICommandList* m_pLists[3];
         ICommandList* m_pCurrentList;
+        //Querys
+        IQuery* m_pQueries[3];
         //Shaders
         IShader* m_pVS;
 		IShader* m_pPS;

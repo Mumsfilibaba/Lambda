@@ -219,4 +219,19 @@ namespace Lambda
 		default: return VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		}
 	}
+    
+    
+    inline VkPipelineStageFlagBits ConvertPipelineStage(PipelineStage stage)
+    {
+        switch (stage)
+        {
+            case PIPELINE_STAGE_VERTEX:      return VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
+            case PIPELINE_STAGE_HULL:        return VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT;
+            case PIPELINE_STAGE_DOMAIN:      return VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT;
+            case PIPELINE_STAGE_GEOMETRY:    return VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
+            case PIPELINE_STAGE_PIXEL:       return VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+            case PIPELINE_STAGE_COMPUTE:     return VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+            default: return VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        }
+    }
 }

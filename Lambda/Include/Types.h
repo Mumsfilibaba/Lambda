@@ -203,6 +203,19 @@ namespace Lambda
         TEXTURE_FLAGS_GENEATE_MIPS      = (1 << 5),
 	};
 
+    
+    //Stage of pipeline
+    enum PipelineStage : uint32
+    {
+        PIPELINE_STAGE_UNKNOWN   = 0,
+        PIPELINE_STAGE_VERTEX    = 1,
+        PIPELINE_STAGE_HULL      = 2,
+        PIPELINE_STAGE_DOMAIN    = 3,
+        PIPELINE_STAGE_GEOMETRY  = 4,
+        PIPELINE_STAGE_PIXEL     = 5,
+        PIPELINE_STAGE_COMPUTE   = 6,
+    };
+    
 
 	//Types of texture
 	enum TextureType : uint32

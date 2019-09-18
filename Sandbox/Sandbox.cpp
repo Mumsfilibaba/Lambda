@@ -42,7 +42,7 @@ namespace Lambda
 		IGraphicsDevice* pDevice = IGraphicsDevice::GetInstance();
         if (pDevice)
         {
-            //Create commandlist
+            //Create commandlists
             {
                 for (uint32 i = 0; i < 3; i++)
                 {
@@ -61,6 +61,18 @@ namespace Lambda
                 }
             }
 
+            //Create queries
+            {
+                QueryDesc desc = {};
+                desc.Type       = QUERY_TYPE_TIMESTAMP;
+                desc.QueryCount = 2;
+                for (uint32 i = 0; i < 3; i++)
+                {
+                    pDevice->CreateQuery(&m_pQueries[i], desc);
+                    m_pCurrentList->ResetQuery(m_pQueries[i]);
+                }
+            }
+            
             //Create shaders
 			GraphicsDeviceDesc deviceDesc = pDevice->GetDesc();
 			if (deviceDesc.Api == GRAPHICS_API_VULKAN)
@@ -349,12 +361,30 @@ namespace Lambda
 
 	void SandBox::OnRender(Time dt)
 	{
+        static Clock clock;
+        
         //Get current device
         IGraphicsDevice* pDevice = IGraphicsDevice::GetInstance();
         
         //Set commandlist for frame
-        m_pCurrentList = m_pLists[pDevice->GetBackBufferIndex()];
+        uint32 backBufferIndex = pDevice->GetBackBufferIndex();
+        m_pCurrentList = m_pLists[backBufferIndex];
         m_pCurrentList->Reset();
+        
+        //Get values and reset query
+        uint64 values[2] = { 0, 0 };
+        m_pQueries[backBufferIndex]->GetResults(values, 2, 0);
+        m_pCurrentList->ResetQuery(m_pQueries[backBufferIndex]);
+        
+        clock.Tick();
+        if (clock.GetTotalTime().AsSeconds() > 1.0f)
+        {
+            uint64 ns   = values[1] - values[0];
+            float ms    = float(ns) / (1000.0f * 1000.0f);
+            
+            LOG_SYSTEM(LOG_SEVERITY_INFO, "Renderpass time: %.2f\n", ms);
+            clock.Reset();
+        }
         
         //Set and clear rendertarget
         float color[] = { 0.392f, 0.584f, 0.929f, 1.0f };
@@ -459,6 +489,7 @@ namespace Lambda
         m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);
 
 		//Begin renderpass
+        m_pCurrentList->WriteTimeStamp(m_pQueries[backBufferIndex], PIPELINE_STAGE_VERTEX);
 		m_pCurrentList->BeginRenderPass(m_pRenderPass);
         
 		//Draw first
@@ -466,7 +497,9 @@ namespace Lambda
 
 		//End renderpass
 		m_pCurrentList->EndRenderPass();
+        m_pCurrentList->WriteTimeStamp(m_pQueries[backBufferIndex], PIPELINE_STAGE_PIXEL);
 #endif
+     
         //Transition rendertarget to present
         m_pCurrentList->Close();
         
@@ -484,7 +517,8 @@ namespace Lambda
 
             for (uint32 i = 0; i < 3; i++)
             {
-                pDevice->DestroyCommandList(&(m_pLists[i]));
+                pDevice->DestroyCommandList(&m_pLists[i]);
+                pDevice->DestroyQuery(&m_pQueries[i]);
             }
 
             pDevice->DestroyShader(&m_pVS);

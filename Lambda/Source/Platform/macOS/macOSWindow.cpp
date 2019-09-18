@@ -287,6 +287,7 @@ namespace Lambda
     
     bool MacOSWindow::SetFullscreen(bool fullscreen)
     {
+        //glfwMaximizeWindow(m_pWindow);
         if (m_Fullscreen == fullscreen)
         {
             return true;

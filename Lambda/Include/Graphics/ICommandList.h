@@ -5,12 +5,13 @@
 
 namespace Lambda
 {
+    class IQuery;
     class IBuffer;
 	class ITexture;
-	class ISamplerState;
-	class IGraphicsPipelineState;
-	class IRenderPass;
-	class IPipelineResourceState;
+    class IRenderPass;
+    class ISamplerState;
+    class IPipelineResourceState;
+    class IGraphicsPipelineState;
 
     //------------
     //ICommandList
@@ -30,6 +31,9 @@ namespace Lambda
 		virtual void BeginRenderPass(IRenderPass* pRenderPass) = 0;
 		virtual void EndRenderPass() = 0;
 
+        virtual void ResetQuery(IQuery* pQuery) = 0;
+        virtual void WriteTimeStamp(IQuery* pQuery, PipelineStage stage) = 0;
+        
 		virtual void SetViewport(const Viewport& viewport) = 0;
 		virtual void SetScissorRect(const Rectangle& scissorRect) = 0;
 		virtual void SetVertexBuffer(IBuffer* pBuffer, uint32 slot) = 0;
