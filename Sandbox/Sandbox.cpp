@@ -382,7 +382,7 @@ namespace Lambda
             uint64 ns   = values[1] - values[0];
             float ms    = float(ns) / (1000.0f * 1000.0f);
             
-            LOG_SYSTEM(LOG_SEVERITY_INFO, "Renderpass time: %.2f\n", ms);
+            LOG_SYSTEM(LOG_SEVERITY_INFO, "Renderpass time: %.2fms\n", ms);
             clock.Reset();
         }
         

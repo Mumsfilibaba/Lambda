@@ -486,6 +486,10 @@ namespace Lambda
 	{
 	}
 
+	void DX12GraphicsDevice::CreateQuery(IQuery** ppQuery, const QueryDesc& desc)
+	{
+	}
+
 
 	void DX12GraphicsDevice::DestroyCommandList(ICommandList** ppList)
 	{
@@ -591,6 +595,10 @@ namespace Lambda
 
 
 	void DX12GraphicsDevice::DestroyResourceState(IPipelineResourceState** ppResourceState)
+	{
+	}
+
+	void DX12GraphicsDevice::DestroyQuery(IQuery** ppQuery)
 	{
 	}
 

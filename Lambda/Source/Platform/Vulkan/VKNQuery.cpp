@@ -52,15 +52,16 @@ namespace Lambda
         LAMBDA_ASSERT(pResults != nullptr);
         
         VKNDevice& device = VKNDevice::GetInstance();
-        vkGetQueryPoolResults(device.GetDevice(), m_QueryPool, startQuery, numResults, numResults * sizeof(uint64), pResults, sizeof(uint64), VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WITH_AVAILABILITY_BIT);
-        
-        if (m_Desc.Type == QUERY_TYPE_TIMESTAMP)
-        {
-            for (uint32 i = 0; i < numResults; i++)
-            {
-                pResults[i] *= m_TimeStampPeriod;
-            }
-        }
+        if (vkGetQueryPoolResults(device.GetDevice(), m_QueryPool, startQuery, numResults, numResults * sizeof(uint64), pResults, sizeof(uint64), VK_QUERY_RESULT_WITH_AVAILABILITY_BIT) == VK_SUCCESS)
+		{
+			if (m_Desc.Type == QUERY_TYPE_TIMESTAMP)
+			{
+				for (uint32 i = 0; i < numResults; i++)
+				{
+					pResults[i] *= m_TimeStampPeriod;
+				}
+			}
+		}
     }
 
     

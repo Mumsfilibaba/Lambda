@@ -122,7 +122,8 @@ project "Lambda"
 	sysincludedirs
 	{
 		"Dependencies/stb",
-		"Dependencies/glm"
+		"Dependencies/glm",
+		"Dependencies/ImGui"
 	}
 
 	filter { "system:windows", "configurations:Debug" }

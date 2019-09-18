@@ -141,6 +141,14 @@ namespace Lambda
 	{
 	}
 
+	void DX12CommandList::ResetQuery(IQuery* pQuery)
+	{
+	}
+
+	void DX12CommandList::WriteTimeStamp(IQuery* pQuery, PipelineStage stage)
+	{
+	}
+
 
 	/*void DX12CommandList::SetRenderTarget(ITexture2D* pRenderTarget, ITexture2D* pDepthStencil)
 	{

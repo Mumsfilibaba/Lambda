@@ -2,9 +2,14 @@
 #include "IWindow.h"
 #include "Clock.h"
 #include "Graphics/IGraphicsDevice.h"
+#include "Graphics/ImGuiLayer.h"
 
 namespace Lambda
 {
+	//------------
+	//EngineParams
+	//------------
+
 	struct EngineParams
 	{
 		const char* pTitle = nullptr;
@@ -15,6 +20,9 @@ namespace Lambda
 		bool Fullscreen = false;
 	};
 
+	//-----------
+	//Application
+	//-----------
 
 	class LAMBDA_API Application
 	{
@@ -42,6 +50,7 @@ namespace Lambda
 
 	private:
 		IWindow* m_pWindow;
+		ImGuiLayer* m_pImGuiLayer;
 		EngineParams m_Params;
 		int32 m_ExitCode;
 		bool m_Running;

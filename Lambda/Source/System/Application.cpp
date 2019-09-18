@@ -107,7 +107,6 @@ namespace Lambda
 			EventDispatcher::PushEventLayer(applicationLayer);
 		}
 
-
 		//Create window
 		{
 			WindowDesc desc = {};
@@ -120,19 +119,23 @@ namespace Lambda
 
 			m_pWindow = IWindow::Create(desc);
 			m_pWindow->SetEventCallback(EventDispatcher::SendEvent);
-		}
 
-
-		//Push graphics layer
-		{
+			//Push graphics layer
 			EventLayer graphicsLayer = { IGraphicsDevice::OnEvent, "GraphicsLayer" };
 			EventDispatcher::PushEventLayer(graphicsLayer);
 		}
 
+		//Create ImGUI-Layer
+		{
+			m_pImGuiLayer = DBG_NEW ImGuiLayer();
+
+			//Push ImGui-Layer 
+			EventLayer imGuiLayer = { ImGuiLayer::OnEvent, "ImGuiLayer" };
+			EventDispatcher::PushEventLayer(imGuiLayer);
+		}
 
 		//Set joystick-pollingrate
 		JoystickManager::SetPollrate(Time::Seconds(1.0f / 60.0f));
-
 
 		//Set Params
 		m_Params = params;

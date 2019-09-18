@@ -29,6 +29,9 @@ namespace Lambda
 		virtual void BeginRenderPass(IRenderPass* pRenderPass) override final;
 		virtual void EndRenderPass() override final;
 
+		virtual void ResetQuery(IQuery* pQuery) override final;
+		virtual void WriteTimeStamp(IQuery* pQuery, PipelineStage stage) override final;
+
 		virtual void SetViewport(const Viewport& viewport) override final;
 		virtual void SetScissorRect(const Rectangle& scissorRect) override final;
 		virtual void SetVertexBuffer(IBuffer* pBuffer, uint32 slot) override final; 
