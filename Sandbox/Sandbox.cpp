@@ -169,7 +169,7 @@ namespace Lambda
             }
 
             //Create vertexbuffer
-            MeshData mesh = MeshFactory::CreateCube();//MeshFactory::CreateFromFile("chalet.obj");
+			MeshData mesh = MeshFactory::CreateFromFile("revolver.obj");
 			m_IndexCount = uint32(mesh.Indices.size());
 			{
                 BufferDesc desc     = {};
@@ -279,8 +279,8 @@ namespace Lambda
             }
 
             //Create texture
-            m_pAlbedo = ITexture::CreateTextureFromFile(pDevice, "CastleGate_albedo.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
-            m_pNormal = ITexture::CreateTextureFromFile(pDevice, "CastleGate_normal.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
+            m_pAlbedo = ITexture::CreateTextureFromFile(pDevice, "revolver_albedo.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
+            m_pNormal = ITexture::CreateTextureFromFile(pDevice, "revolver_normal.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
 			m_pCurrentList->TransitionTexture(m_pAlbedo, RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0, LAMBDA_TRANSITION_ALL_MIPS);
             m_pCurrentList->TransitionTexture(m_pNormal, RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0, LAMBDA_TRANSITION_ALL_MIPS);
 
@@ -329,9 +329,9 @@ namespace Lambda
         //Rotate camera
          constexpr float rotation = 30.0f;
         if (Input::IsKeyDown(KEY_UP))
-            m_Camera.Rotate(glm::vec3(rotation, 0.0f, 0.0f) * dt.AsSeconds());
-        else if (Input::IsKeyDown(KEY_DOWN))
             m_Camera.Rotate(glm::vec3(-rotation, 0.0f, 0.0f) * dt.AsSeconds());
+        else if (Input::IsKeyDown(KEY_DOWN))
+            m_Camera.Rotate(glm::vec3(rotation, 0.0f, 0.0f) * dt.AsSeconds());
         
         if (Input::IsKeyDown(KEY_RIGHT))
             m_Camera.Rotate(glm::vec3(0.0f, -rotation, 0.0f) * dt.AsSeconds());
@@ -403,18 +403,16 @@ namespace Lambda
         static LightBuffer lightBuffer  =
         {
             glm::vec4(RGB_F(255, 241, 224), 1.0f),
-            glm::vec3(0.0f, -0.75f, -1.25f)
+            glm::vec3(-1.0f, 1.0f, 0.0f)
         };
-        
-        LOG_DEBUG_INFO("Speed: %.4f\n", lightBuffer.Position.y);
         
         data.pData          = &lightBuffer;
         data.SizeInBytes    = sizeof(LightBuffer);
         m_pCurrentList->UpdateBuffer(m_pLightBuffer, &data);
         
         //Set resources
-		IBuffer* buffers[] = { m_pCameraBuffer, m_pTransformBuffer, m_pColorBuffer, m_pLightBuffer };
-        ITexture* textures[] = { m_pAlbedo, m_pNormal };
+		IBuffer* buffers[]		= { m_pCameraBuffer, m_pTransformBuffer, m_pColorBuffer, m_pLightBuffer };
+        ITexture* textures[]	= { m_pAlbedo, m_pNormal };
 		m_pResourceState->SetConstantBuffers(buffers, 4, 0);
 		m_pResourceState->SetTextures(textures, 2, 4);
 		m_pResourceState->SetSamplerStates(&m_pSamplerState, 1, 6);
@@ -430,7 +428,7 @@ namespace Lambda
 
         //Setup rotation
 		static glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        rotation = glm::rotate(rotation, glm::radians(30.0f) * dt.AsSeconds(), glm::vec3(0.0f, 1.0f, 0.0f));
+       //rotation = glm::rotate(rotation, glm::radians(30.0f) * dt.AsSeconds(), glm::vec3(0.0f, 1.0f, 0.0f));
         
 #if !defined(SINGLE_CUBE)
         //Begin renderpass
@@ -456,7 +454,7 @@ namespace Lambda
         m_pCurrentList->EndRenderPass();
 #else
 		//Update transforms
-		m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)) * rotation;
+		m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f)) * rotation;
 		data.pData			= &m_TransformBuffer;
 		data.SizeInBytes	= sizeof(TransformBuffer);
 		m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);

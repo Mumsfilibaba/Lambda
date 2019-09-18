@@ -198,12 +198,12 @@ namespace Lambda
 				if (desc.GraphicsDeviceAPI == GRAPHICS_API_D3D12)
 					name += " - [D3D12] 64-bit";
 				else if (desc.GraphicsDeviceAPI == GRAPHICS_API_VULKAN)
-					name += " - [VULKAN] 64-bit";
+					name += " - [Vulkan] 64-bit";
 			}
 
 			//Create window
 			SetLastError(0);
-			m_hWindow = CreateWindowEx(m_ExStyle, NAME_APPWINDOW, StringToWidestring(desc.pTitle).c_str(), m_Style, 0, 0, rect.right - rect.left, rect.bottom - rect.top, 0, 0, wc.hInstance, 0);
+			m_hWindow = CreateWindowEx(m_ExStyle, NAME_APPWINDOW, StringToWidestring(name).c_str(), m_Style, 0, 0, rect.right - rect.left, rect.bottom - rect.top, 0, 0, wc.hInstance, 0);
 			if (m_hWindow == 0)
 			{
 				error = GetLastError();

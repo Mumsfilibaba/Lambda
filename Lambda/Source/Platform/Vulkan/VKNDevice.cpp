@@ -16,10 +16,10 @@ namespace Lambda
 	//VKNDevice
 	//---------
 
-	VKNDevice*							VKNDevice::s_pInstance = nullptr;
-	PFN_vkSetDebugUtilsObjectNameEXT	VKNDevice::SetDebugUtilsObjectNameEXT = nullptr;
-	PFN_vkCreateDebugUtilsMessengerEXT	VKNDevice::CreateDebugUtilsMessengerEXT = nullptr;
-	PFN_vkDestroyDebugUtilsMessengerEXT	VKNDevice::DestroyDebugUtilsMessengerEXT = nullptr;
+	VKNDevice*							VKNDevice::s_pInstance						= nullptr;
+	PFN_vkSetDebugUtilsObjectNameEXT	VKNDevice::SetDebugUtilsObjectNameEXT		= nullptr;
+	PFN_vkCreateDebugUtilsMessengerEXT	VKNDevice::CreateDebugUtilsMessengerEXT		= nullptr;
+	PFN_vkDestroyDebugUtilsMessengerEXT	VKNDevice::DestroyDebugUtilsMessengerEXT	= nullptr;
 
 
 	VKNDevice::VKNDevice(const GraphicsDeviceDesc& desc)
@@ -71,13 +71,13 @@ namespace Lambda
 		LAMBDA_ASSERT(desc.pWindow != nullptr);
 
 		VkApplicationInfo applicationInfo = {};
-		applicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-		applicationInfo.pNext = nullptr;
-		applicationInfo.pApplicationName = "Lambda Engine";
-		applicationInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-		applicationInfo.pEngineName = "Lambda Engine";
-		applicationInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-		applicationInfo.apiVersion = VK_API_VERSION_1_0;
+		applicationInfo.sType				= VK_STRUCTURE_TYPE_APPLICATION_INFO;
+		applicationInfo.pNext				= nullptr;
+		applicationInfo.pApplicationName	= "Lambda Engine";
+		applicationInfo.applicationVersion	= VK_MAKE_VERSION(1, 0, 0);
+		applicationInfo.pEngineName			= "Lambda Engine";
+		applicationInfo.engineVersion		= VK_MAKE_VERSION(1, 0, 0);
+		applicationInfo.apiVersion			= VK_API_VERSION_1_0;
 
 
 		//Get all the available extensions
@@ -191,14 +191,14 @@ namespace Lambda
 
 		//Create instance
 		VkInstanceCreateInfo instanceInfo = {};
-		instanceInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-		instanceInfo.pNext = (desc.Flags & GRAPHICS_CONTEXT_FLAG_DEBUG) ? (VkDebugUtilsMessengerCreateInfoEXT*)& dInfo : nullptr;
-		instanceInfo.flags = 0;
-		instanceInfo.pApplicationInfo = &applicationInfo;
-		instanceInfo.enabledExtensionCount = uint32(requiredExtensions.size());
-		instanceInfo.ppEnabledExtensionNames = requiredExtensions.data();
-		instanceInfo.enabledLayerCount = uint32(requiredLayers.size());
-		instanceInfo.ppEnabledLayerNames = requiredLayers.data();
+		instanceInfo.sType						= VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+		instanceInfo.pNext						= (desc.Flags & GRAPHICS_CONTEXT_FLAG_DEBUG) ? (VkDebugUtilsMessengerCreateInfoEXT*)& dInfo : nullptr;
+		instanceInfo.flags						= 0;
+		instanceInfo.pApplicationInfo			= &applicationInfo;
+		instanceInfo.enabledExtensionCount		= uint32(requiredExtensions.size());
+		instanceInfo.ppEnabledExtensionNames	= requiredExtensions.data();
+		instanceInfo.enabledLayerCount			= uint32(requiredLayers.size());
+		instanceInfo.ppEnabledLayerNames		= requiredLayers.data();
 
 		VkResult res = vkCreateInstance(&instanceInfo, nullptr, &m_Instance);
 		if (res != VK_SUCCESS)
@@ -305,12 +305,12 @@ namespace Lambda
 		for (int32 queueFamiliy : uniqueQueueFamilies)
 		{
 			VkDeviceQueueCreateInfo queueInfo = {};
-			queueInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-			queueInfo.pNext = nullptr;
-			queueInfo.flags = 0;
-			queueInfo.pQueuePriorities = &priority;
-			queueInfo.queueFamilyIndex = queueFamiliy;
-			queueInfo.queueCount = 1;
+			queueInfo.sType				= VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+			queueInfo.pNext				= nullptr;
+			queueInfo.flags				= 0;
+			queueInfo.pQueuePriorities	= &priority;
+			queueInfo.queueFamilyIndex	= queueFamiliy;
+			queueInfo.queueCount		= 1;
 
 			queueCreateInfos.push_back(queueInfo);
 		}
@@ -347,16 +347,16 @@ namespace Lambda
 
 		//Create device
 		VkDeviceCreateInfo info = {};
-		info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-		info.pNext = nullptr;
-		info.flags = 0;
-		info.enabledExtensionCount = uint32(deviceExtensions.size());
-		info.ppEnabledExtensionNames = deviceExtensions.data();
-		info.enabledLayerCount = uint32(requiredLayers.size());
-		info.ppEnabledLayerNames = requiredLayers.data(); //Same as for the instance
-		info.pEnabledFeatures = &deviceFeatures;
-		info.queueCreateInfoCount = uint32(queueCreateInfos.size());
-		info.pQueueCreateInfos = queueCreateInfos.data();
+		info.sType						= VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+		info.pNext						= nullptr;
+		info.flags						= 0;
+		info.enabledExtensionCount		= uint32(deviceExtensions.size());
+		info.ppEnabledExtensionNames	= deviceExtensions.data();
+		info.enabledLayerCount			= uint32(requiredLayers.size());
+		info.ppEnabledLayerNames		= requiredLayers.data(); //Same as for the instance
+		info.pEnabledFeatures			= &deviceFeatures;
+		info.queueCreateInfoCount		= uint32(queueCreateInfos.size());
+		info.pQueueCreateInfos			= queueCreateInfos.data();
 
 		if (vkCreateDevice(m_PhysicalDevice, &info, nullptr, &m_Device) != VK_SUCCESS)
 		{
@@ -401,11 +401,11 @@ namespace Lambda
 		{
 			//Set name on object
 			VkDebugUtilsObjectNameInfoEXT info = {};
-			info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
-			info.pNext = nullptr;
-			info.objectType = type;
-			info.pObjectName = name.c_str();
-			info.objectHandle = objectHandle;
+			info.sType			= VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+			info.pNext			= nullptr;
+			info.objectType		= type;
+			info.pObjectName	= name.c_str();
+			info.objectHandle	= objectHandle;
 
 			if (SetDebugUtilsObjectNameEXT(m_Device, &info) != VK_SUCCESS)
 			{
@@ -554,6 +554,7 @@ namespace Lambda
 	{
 		std::vector<const char*> requiredExtensions;
 		requiredExtensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+		requiredExtensions.push_back(VK_KHR_MAINTENANCE1_EXTENSION_NAME);
 
 		return requiredExtensions;
 	}
@@ -604,11 +605,11 @@ namespace Lambda
 
 		//Create a surface for windows
 		VkWin32SurfaceCreateInfoKHR info = {};
-		info.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-		info.pNext = nullptr;
-		info.flags = 0;
-		info.hwnd = hWnd;
-		info.hinstance = GetModuleHandle(nullptr);
+		info.sType		= VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+		info.pNext		= nullptr;
+		info.flags		= 0;
+		info.hwnd		= hWnd;
+		info.hinstance	= GetModuleHandle(nullptr);
 
 		if (vkCreateWin32SurfaceKHR(m_Instance, &info, nullptr, &surface) != VK_SUCCESS)
 		{

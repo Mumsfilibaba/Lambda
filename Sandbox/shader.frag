@@ -27,7 +27,6 @@ layout(set = 0, binding = 5) uniform texture2D  u_Normal;
 layout(set = 0, binding = 6) uniform sampler    u_Sampler;
 
 const vec3  g_LightDir          = vec3(0.0f, 1.0f, -1.0f);
-const float g_SpecularStrength  = 0.5f;
 
 void main()
 {
@@ -38,15 +37,15 @@ void main()
 
     //Calculate lightning
     float   distance        = length(u_PointLight.Position - g_WorldPosition);
-    float   attenuation     = 1.0f / (distance * distance);
+    float   attenuation     = 1.0f / (distance);
     vec3    lightDir        = normalize(u_PointLight.Position - g_WorldPosition);
     float   lightStrength   = max(dot(lightDir, normal), 0.0f);
 
     vec3    viewDir         = normalize(g_ViewPosition - g_WorldPosition);
-    vec3    halfDir         = normalize(lightDir+viewDir);
+    vec3    halfDir         = normalize(lightDir + viewDir);
 
     float   specularPow     = pow(max(dot(normal, halfDir), 0.0f), 256.0f);
-    vec3    specularColor   = g_SpecularStrength * specularPow * u_PointLight.Color.rgb * attenuation;
+    vec3    specularColor   = specularPow * u_PointLight.Color.rgb * attenuation;
 
     //Set output color
     vec3 lightColor     = u_PointLight.Color.rgb * lightStrength * attenuation;

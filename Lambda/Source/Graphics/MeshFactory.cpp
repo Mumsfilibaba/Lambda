@@ -8,17 +8,18 @@
 
 namespace Lambda
 {
-	MeshData MeshFactory::CreateFromFile(const std::string& filename, bool mergeMeshes, bool rightHanded) noexcept
+	MeshData MeshFactory::CreateFromFile(const std::string& filename, bool mergeMeshes, bool leftHanded) noexcept
 	{
 		using namespace std;
         using namespace glm;
 
 		//Set import flags
-		uint32 flags = aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_ImproveCacheLocality | aiProcess_GenSmoothNormals;
-		if (rightHanded)
+		uint32 flags = aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_ImproveCacheLocality | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace;
+		if (leftHanded)
 		{
 			flags |= aiProcess_ConvertToLeftHanded;
 		}
+		flags = flags & ~aiProcess_FlipWindingOrder;
 
 		//Load scene
         Assimp::Importer importer;
@@ -52,15 +53,19 @@ namespace Lambda
 						if (pMesh->HasFaces())
 						{
 							//Get number of vertices and resize buffer
-							uint32 vertCount = pMesh->mNumVertices;
+							size_t vertCount = pMesh->mNumVertices;
 							//Vertexoffset is used when there are more than one mesh in the scene and we want to merge all the meshes
 							data.Vertices.resize(vertexOffset + vertCount);
-							for (uint32 i = 0; i < vertCount; i++)
+							for (size_t i = 0; i < vertCount; i++)
 							{
 								data.Vertices[vertexOffset + i].Position = vec3(pMesh->mVertices[i].x, pMesh->mVertices[i].y, pMesh->mVertices[i].z);
 								if (pMesh->HasNormals())
 								{
 									data.Vertices[vertexOffset + i].Normal = vec3(pMesh->mNormals[i].x, pMesh->mNormals[i].y, pMesh->mNormals[i].z);
+								}
+								if (pMesh->HasTangentsAndBitangents())
+								{
+									data.Vertices[vertexOffset + i].Tangent = vec3(pMesh->mTangents[i].x, pMesh->mTangents[i].y, pMesh->mTangents[i].z);
 								}
 								if (pMesh->HasTextureCoords(0))
 								{
@@ -69,10 +74,10 @@ namespace Lambda
 							}
                         
 							//Get number of indices and resize indexbuffer
-							uint32 triCount = pMesh->mNumFaces;
+							size_t triCount = pMesh->mNumFaces;
 							//Indexoffset is used when there are more than one mesh in the scene and we want to merge all the meshes
 							data.Indices.resize(indexOffset + (triCount * 3));
-							for (uint32 i = 0; i < triCount; i++)
+							for (size_t i = 0; i < triCount; i++)
 							{
 								data.Indices[indexOffset + (i*3) + 0] = vertexOffset + pMesh->mFaces[i].mIndices[0];
 								data.Indices[indexOffset + (i*3) + 1] = vertexOffset + pMesh->mFaces[i].mIndices[1];
@@ -158,28 +163,28 @@ namespace Lambda
 		data.Indices =
 		{
 			//FRONT FACE
-			0, 1, 2,
-			1, 3, 2,
+			2, 1, 0,
+			2, 3, 1,
 
 			//BACK FACE
-			4, 5, 6,
-			5, 7, 6,
+			6, 5, 4,
+			6, 7, 5,
 
 			//RIGHT FACE
-			8, 9, 10,
-			9, 11, 10,
+			10, 9, 8,
+			10, 11, 9,
 
 			//LEFT FACE
-			14, 13, 12,
-			14, 15, 13,
+			12, 13, 14,
+			13, 15, 14,
 
 			//ROOF FACE
-			16, 17, 18,
-			17, 19, 18,
+			18, 17, 16,
+			18, 19, 17,
 
 			//FLOOR FACE
-			20, 21, 22,
-			21, 23, 22
+			22, 21, 20,
+			22, 23, 21
 		};
 
 		return data;
@@ -235,15 +240,7 @@ namespace Lambda
         //Resize array
 		data.Vertices.shrink_to_fit();
 		data.Indices.shrink_to_fit();
-        
-        //Swap the indices
-        for (size_t i = 0; i < data.Indices.size(); i += 3)
-        {
-            uint32 old          = data.Indices[i+0];
-            data.Indices[i+0]   = data.Indices[i+2];
-            data.Indices[i+2]   = old;
-        }
-        
+                
 		return data;
 	}
 
@@ -257,47 +254,46 @@ namespace Lambda
 
 		//VERTICES
 		float t = (1.0f + sqrt(5.0f)) / 2.0f;
-		data.Vertices[0].Position = vec3(-1.0f, t, 0.0f);
-		data.Vertices[1].Position = vec3( 1.0f, t, 0.0f);
-		data.Vertices[2].Position = vec3(-1.0f, -t, 0.0f);
-		data.Vertices[3].Position = vec3( 1.0f, -t, 0.0f);
-		data.Vertices[4].Position = vec3(0.0f, -1.0f, t);
-		data.Vertices[5].Position = vec3(0.0f,  1.0f, t);
-		data.Vertices[6].Position = vec3(0.0f, -1.0f, -t);
-		data.Vertices[7].Position = vec3(0.0f,  1.0f, -t);
-		data.Vertices[8].Position = vec3(t, 0.0f, -1.0f);
-		data.Vertices[9].Position = vec3(t, 0.0f, 1.0f);
-		data.Vertices[10].Position = vec3(-t, 0.0f, -1.0f);
-		data.Vertices[11].Position = vec3(-t, 0.0f, 1.0f);
+		data.Vertices[0].Position	= vec3(-1.0f, t, 0.0f);
+		data.Vertices[1].Position	= vec3( 1.0f, t, 0.0f);
+		data.Vertices[2].Position	= vec3(-1.0f, -t, 0.0f);
+		data.Vertices[3].Position	= vec3( 1.0f, -t, 0.0f);
+		data.Vertices[4].Position	= vec3(0.0f, -1.0f, t);
+		data.Vertices[5].Position	= vec3(0.0f,  1.0f, t);
+		data.Vertices[6].Position	= vec3(0.0f, -1.0f, -t);
+		data.Vertices[7].Position	= vec3(0.0f,  1.0f, -t);
+		data.Vertices[8].Position	= vec3(t, 0.0f, -1.0f);
+		data.Vertices[9].Position	= vec3(t, 0.0f, 1.0f);
+		data.Vertices[10].Position	= vec3(-t, 0.0f, -1.0f);
+		data.Vertices[11].Position	= vec3(-t, 0.0f, 1.0f);
 
 		//INDICIES
 		data.Indices =
 		{
-			0, 11, 5,
-			0, 5, 1,
-			0, 1, 7,
-			0, 7, 10,
-			0, 10, 11,
+			5, 11, 0,
+			1, 5, 0,
+			7, 1, 0,
+			10, 7, 0,
+			11, 10, 0,
 
-			1, 5, 9,
-			5, 11, 4,
-			11, 10, 2,
-			10, 7, 6,
-			7, 1, 8,
+			9, 5, 1,
+			4, 11, 5,
+			2, 10, 11,
+			6, 7, 10,
+			8, 1, 7,
 
-			3, 9, 4,
-			3, 4, 2,
-			3, 2, 6,
-			3, 6, 8,
-			3, 8, 9,
+			4, 9, 3,
+			2, 4, 3,
+			6, 2, 3,
+			8, 6, 3,
+			9, 8, 3,
 
-			4, 9, 5,
-			2, 4, 11,
-			6, 2, 10,
-			8, 6, 7,
-			9, 8, 1
+			5, 9, 4,
+			11, 4, 2,
+			10, 2, 6,
+			7, 6, 8,
+			1, 8, 9
 		};
-
 
 		if (subdivisions > 0)
 		{
@@ -306,8 +302,8 @@ namespace Lambda
 
 		for (uint32 i = 0; i < data.Vertices.size(); i++)
 		{
-			data.Vertices[i].Position = normalize(data.Vertices[i].Position);
-			data.Vertices[i].Normal = data.Vertices[i].Position;
+			data.Vertices[i].Position	= normalize(data.Vertices[i].Position);
+			data.Vertices[i].Normal		= data.Vertices[i].Position;
 
 			//Calculate uvs
 			vec2 uv;
@@ -318,6 +314,8 @@ namespace Lambda
 			//Scale down the sphere
 			data.Vertices[i].Position *= radius;
 		}
+
+		CalculateTangents(data);
 
 		data.Indices.shrink_to_fit();
 		data.Vertices.shrink_to_fit();
@@ -379,20 +377,23 @@ namespace Lambda
 		size_t index = 0;
 		for (uint32 i = 0; i < sides; i++)
 		{
-			data.Indices[index + 0] = 0;
+			data.Indices[index + 0] = ((i + 1) % sides) + 10;
 			data.Indices[index + 1] = i + 1;
-			data.Indices[index + 2] = ((i + 1) % sides) + 1;
+			data.Indices[index + 2] = 0;
 			index += 3;
 		}
 
 		//SIDES INDICES
 		for (uint32 i = 0; i < sides; i++)
 		{
-			data.Indices[index + 0] = uint32(topOffset) + i;
+			data.Indices[index + 0] = uint32(offset) + i;
 			data.Indices[index + 1] = uint32(offset) + ((i + 1) % sides);
-			data.Indices[index + 2] = uint32(offset) + i;
+			data.Indices[index + 2] = uint32(topOffset) + i;
 			index += 3;
 		}
+
+		//Get tangents
+		CalculateTangents(data);
 
 		return data;
 	}
@@ -451,37 +452,39 @@ namespace Lambda
 		data.Vertices[15].Position = vec3(0.5f, -0.5f, 0.5f);
 
 		//FLOOR FACE
-		data.Indices[0] = 0;
+		data.Indices[0] = 2;
 		data.Indices[1] = 1;
-		data.Indices[2] = 2;
-		data.Indices[3] = 1;
+		data.Indices[2] = 0;
+		data.Indices[3] = 2;
 		data.Indices[4] = 3;
-		data.Indices[5] = 2;
+		data.Indices[5] = 1;
 
 		//BACK FACE
-		data.Indices[6] = 4;
+		data.Indices[6] = 8;
 		data.Indices[7] = 9;
-		data.Indices[8] = 8;
+		data.Indices[8] = 4;
 
 		//LEFT FACE
-		data.Indices[9] = 5;
+		data.Indices[9] = 13;
 		data.Indices[10] = 12;
-		data.Indices[11] = 13;
+		data.Indices[11] = 5;
 
 		//FRONT FACE
-		data.Indices[12] = 6;
+		data.Indices[12] = 11;
 		data.Indices[13] = 10;
-		data.Indices[14] = 11;
+		data.Indices[14] = 6;
 
 		//RIGHT FACE
-		data.Indices[15] = 7;
+		data.Indices[15] = 14;
 		data.Indices[16] = 15;
-		data.Indices[17] = 14;
+		data.Indices[17] = 7;
 
 		data.Indices.shrink_to_fit();
 		data.Vertices.shrink_to_fit();
 
 		CalculateHardNormals(data);
+		CalculateTangents(data);
+
 		return data;
 	}
 
@@ -556,9 +559,9 @@ namespace Lambda
 		size_t index = 0;
 		for (uint32 i = 0; i < sides; i++)
 		{
-			data.Indices[index + 0] = 0;
+			data.Indices[index + 0] = i + 1;
 			data.Indices[index + 1] = (i + 1) % (sides) + 1;
-			data.Indices[index + 2] = i + 1;
+			data.Indices[index + 2] = 0;
 			index += 3;
 		}
 
@@ -566,9 +569,9 @@ namespace Lambda
 		for (uint32 i = 0; i < sides; i++)
 		{
 			uint32 base = uint32(sides) + 1;
-			data.Indices[index + 0] = base;
+			data.Indices[index + 0] = base + ((i + 1) % (sides)+1);
 			data.Indices[index + 1] = base + i + 1;
-			data.Indices[index + 2] = base + ((i + 1) % (sides)+1);
+			data.Indices[index + 2] = base;
 			index += 3;
 		}
 
@@ -576,15 +579,16 @@ namespace Lambda
 		for (uint32 i = 0; i < sides; i++)
 		{
 			uint32 base = (uint32(sides) + 1) * 2;
-			data.Indices[index + 0] = base + i + sides;
+			data.Indices[index + 0] = base + i + 1;
 			data.Indices[index + 1] = base + i;
-			data.Indices[index + 2] = base + i + 1;
-			data.Indices[index + 3] = (base + sides) + ((i + 1) % sides);
+			data.Indices[index + 2] = base + i + sides;
+			data.Indices[index + 3] = base + ((i + 1) % sides);
 			data.Indices[index + 4] = (base + sides - 1) + ((i + 1) % sides);
-			data.Indices[index + 5] = base + ((i + 1) % sides);
+			data.Indices[index + 5] = (base + sides) + ((i + 1) % sides);
 			index += 6;
 		}
 
+		CalculateTangents(data);
 		return data;
 	}
 
@@ -599,12 +603,12 @@ namespace Lambda
 		}
 
 		Vertex v[3];
-		int32 j = 0;
-		int32 indexCount = 0;
-		int32 vertexCount = 0;
-		int32 oldVertexCount = 0;
-		data.Vertices.reserve((data.Vertices.size() * uint32(pow(2, subdivisions))));
-		data.Indices.reserve((data.Indices.size() * uint32(pow(4, subdivisions))));
+		size_t j = 0;
+		size_t indexCount = 0;
+		size_t vertexCount = 0;
+		size_t oldVertexCount = 0;
+		data.Vertices.reserve((data.Vertices.size() * size_t(pow(2, subdivisions))));
+		data.Indices.reserve((data.Indices.size() * size_t(pow(4, subdivisions))));
 
 		for (uint32 i = 0; i < subdivisions; i++)
 		{
@@ -613,17 +617,21 @@ namespace Lambda
 
 			for (j = 0; j < indexCount; j += 3)
 			{
-				v[0].Position = (data.Vertices[data.Indices[j]].Position + data.Vertices[data.Indices[j + 1]].Position) * 0.5f;
-				v[1].Position = (data.Vertices[data.Indices[j]].Position + data.Vertices[data.Indices[j + 2]].Position) * 0.5f;
-				v[2].Position = (data.Vertices[data.Indices[j + 1]].Position + data.Vertices[data.Indices[j + 2]].Position) * 0.5f;
+				v[0].Position = (data.Vertices[data.Indices[j]].Position + data.Vertices[data.Indices[j+1]].Position) * 0.5f;
+				v[1].Position = (data.Vertices[data.Indices[j]].Position + data.Vertices[data.Indices[j+2]].Position) * 0.5f;
+				v[2].Position = (data.Vertices[data.Indices[j+1]].Position + data.Vertices[data.Indices[j+2]].Position) * 0.5f;
 
-				v[0].TexCoord = (data.Vertices[data.Indices[j]].TexCoord + data.Vertices[data.Indices[j + 1]].TexCoord) * 0.5f;
-				v[1].TexCoord = (data.Vertices[data.Indices[j]].TexCoord + data.Vertices[data.Indices[j + 2]].TexCoord) * 0.5f;
-				v[2].TexCoord = (data.Vertices[data.Indices[j + 1]].TexCoord + data.Vertices[data.Indices[j + 2]].TexCoord) * 0.5f;
+				v[0].TexCoord = (data.Vertices[data.Indices[j]].TexCoord + data.Vertices[data.Indices[j+1]].TexCoord) * 0.5f;
+				v[1].TexCoord = (data.Vertices[data.Indices[j]].TexCoord + data.Vertices[data.Indices[j+2]].TexCoord) * 0.5f;
+				v[2].TexCoord = (data.Vertices[data.Indices[j+1]].TexCoord + data.Vertices[data.Indices[j+2]].TexCoord) * 0.5f;
 
-				v[0].Normal = normalize((data.Vertices[data.Indices[j]].Normal + data.Vertices[data.Indices[j + 1]].Normal) * 0.5f);
-				v[1].Normal = normalize((data.Vertices[data.Indices[j]].Normal + data.Vertices[data.Indices[j + 2]].Normal) * 0.5f);
-				v[2].Normal = normalize((data.Vertices[data.Indices[j + 1]].Normal + data.Vertices[data.Indices[j + 2]].Normal) * 0.5f);
+				v[0].Normal = normalize((data.Vertices[data.Indices[j]].Normal + data.Vertices[data.Indices[j+1]].Normal) * 0.5f);
+				v[1].Normal = normalize((data.Vertices[data.Indices[j]].Normal + data.Vertices[data.Indices[j+2]].Normal) * 0.5f);
+				v[2].Normal = normalize((data.Vertices[data.Indices[j+1]].Normal + data.Vertices[data.Indices[j+2]].Normal) * 0.5f);
+
+				v[0].Tangent = normalize((data.Vertices[data.Indices[j]].Tangent + data.Vertices[data.Indices[j+1]].Tangent) * 0.5f);
+				v[1].Tangent = normalize((data.Vertices[data.Indices[j]].Tangent + data.Vertices[data.Indices[j+2]].Tangent) * 0.5f);
+				v[2].Tangent = normalize((data.Vertices[data.Indices[j+1]].Tangent + data.Vertices[data.Indices[j+2]].Tangent) * 0.5f);
 
 				//Push the new Vertices
 				data.Vertices.emplace_back(v[0]);
@@ -704,17 +712,39 @@ namespace Lambda
 		vec3 e2;
 		vec3 n;
 
-		for (int i = 0; i < data.Indices.size(); i += 3)
+		for (size_t i = 0; i < data.Indices.size(); i += 3)
 		{
-			e1 = data.Vertices[data.Indices[i + 1]].Position - data.Vertices[data.Indices[i]].Position;
-			e2 = data.Vertices[data.Indices[i + 2]].Position - data.Vertices[data.Indices[i]].Position;
+			e1 = data.Vertices[data.Indices[i+2]].Position - data.Vertices[data.Indices[i]].Position;
+			e2 = data.Vertices[data.Indices[i+1]].Position - data.Vertices[data.Indices[i]].Position;
 			n = cross(e1, e2);
 
 			data.Vertices[data.Indices[i]].Normal = n;
-			data.Vertices[data.Indices[i + 1]].Normal = n;
-			data.Vertices[data.Indices[i + 2]].Normal = n;
+			data.Vertices[data.Indices[i+1]].Normal = n;
+			data.Vertices[data.Indices[i+2]].Normal = n;
 		}
 	}
+
+
+	void MeshFactory::CalculateTangents(MeshData& data) noexcept
+	{
+		using namespace glm;
+
+		for (uint32 i = 0; i < data.Indices.size(); i += 3)
+		{
+			vec3 modelVec		= data.Vertices[data.Indices[i + 1]].Position - data.Vertices[data.Indices[i]].Position;
+			vec3 modelVec2		= data.Vertices[data.Indices[i + 2]].Position - data.Vertices[data.Indices[i]].Position;
+			vec2 tangentVec		= data.Vertices[data.Indices[i + 1]].TexCoord - data.Vertices[data.Indices[i]].TexCoord;
+			vec2 tangentVec2	= data.Vertices[data.Indices[i + 2]].TexCoord - data.Vertices[data.Indices[i]].TexCoord;
+
+			float denominator	= 1.0f / ((tangentVec.x * tangentVec2.y) - (tangentVec2.x * tangentVec.y));
+			vec3 tangent		= normalize(((modelVec * tangentVec2.y) - (modelVec2 * tangentVec.y)) * denominator);
+
+			data.Vertices[data.Indices[i+0]].Tangent = tangent;
+			data.Vertices[data.Indices[i+1]].Tangent = tangent;
+			data.Vertices[data.Indices[i+2]].Tangent = tangent;
+		}
+	}
+
 
 	/*void Mesh::calcNormal()
 	{
@@ -756,24 +786,4 @@ namespace Lambda
 		}
 	}*/
 
-	//void Mesh::calcTangent(MeshData& data)
-	//{
-	//	using namespace Math;
-
-	//	for (uint32 i = 0; i < data.Indices.size(); i += 3)
-	//	{
-	//		vec3 modelVec = data.Vertices[data.Indices[i + 1]].Position - data.Vertices[data.Indices[i]].Position;
-	//		vec3 modelVec2 = data.Vertices[data.Indices[i + 2]].Position - data.Vertices[data.Indices[i]].Position;
-	//		vec2 tangentVec = data.Vertices[data.Indices[i + 1]].TexCoord - data.Vertices[data.Indices[i]].TexCoord;
-	//		vec2 tangentVec2 = data.Vertices[data.Indices[i + 2]].TexCoord - data.Vertices[data.Indices[i]].TexCoord;
-
-	//		float denominator = 1.0f / ((tangentVec.x * tangentVec2.y) - (tangentVec2.x * tangentVec.y));
-	//		vec3 tangent = ((modelVec * tangentVec2.y) - (modelVec2 * tangentVec.y)) * denominator;
-	//		tangent.Normalize();
-
-	//		data.Vertices[data.Indices[i]].tangent = tangent;
-	//		data.Vertices[data.Indices[i + 1]].tangent = tangent;
-	//		data.Vertices[data.Indices[i + 2]].tangent = tangent;
-	//	}
-	//}
 }

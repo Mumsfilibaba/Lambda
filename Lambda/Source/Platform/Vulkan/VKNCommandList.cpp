@@ -216,11 +216,11 @@ namespace Lambda
     {
         VkViewport view = {};
         view.width      = viewport.Width;
-        view.height     = viewport.Height;
+        view.height     = -viewport.Height;
         view.minDepth   = viewport.MinDepth;
         view.maxDepth   = viewport.MaxDepth;
         view.x          = viewport.TopX;
-        view.y          = viewport.TopY;
+        view.y          = viewport.TopY + viewport.Height;
         
         vkCmdSetViewport(m_CommandBuffer, 0, 1, &view);
     }
