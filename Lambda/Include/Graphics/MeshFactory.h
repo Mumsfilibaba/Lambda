@@ -7,6 +7,10 @@
 
 namespace Lambda
 {
+    //------
+    //Vertex
+    //------
+    
 	struct Vertex
 	{
 		glm::vec3 Position;
@@ -33,6 +37,9 @@ namespace Lambda
 		return !(*this == other);
 	}
 
+    //--------
+    //MeshData
+    //--------
 
 	struct MeshData
 	{
@@ -40,6 +47,9 @@ namespace Lambda
 		std::vector<uint32> Indices;
 	};
 
+    //-----------
+    //MeshFactory
+    //-----------
 
 	class LAMBDA_API MeshFactory
 	{

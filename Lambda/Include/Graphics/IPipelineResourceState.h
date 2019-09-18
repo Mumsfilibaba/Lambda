@@ -8,6 +8,9 @@ namespace Lambda
 	class ISamplerState;
 	class ITexture;
 
+    //------------
+    //ResourceSlot
+    //------------
 
     struct ResourceSlot
     {
@@ -17,6 +20,9 @@ namespace Lambda
         uint32 Slot			= 0;
     };
     
+    //-------------------------
+    //PipelineResourceStateDesc
+    //-------------------------
     
     struct PipelineResourceStateDesc
     {
@@ -24,6 +30,9 @@ namespace Lambda
         const ResourceSlot* pResourceSlots	= nullptr;
     };
     
+    //----------------------
+    //IPipelineResourceState
+    //----------------------
     
     class LAMBDA_API IPipelineResourceState
     {

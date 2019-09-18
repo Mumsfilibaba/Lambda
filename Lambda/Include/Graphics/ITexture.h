@@ -6,7 +6,10 @@ namespace Lambda
     class ITexture;
 	class IGraphicsDevice;
 
-
+    //-------------------
+    //OptimizedClearValue
+    //-------------------
+    
     struct OptimizedClearValue
     {
         union
@@ -20,6 +23,9 @@ namespace Lambda
         };
     };
     
+    //-----------
+    //TextureDesc
+    //-----------
     
 	struct TextureDesc
 	{
@@ -36,7 +42,10 @@ namespace Lambda
 		uint32 Depth = 1;
 	};
 
-
+    //--------
+    //ITexture
+    //--------
+    
 	class LAMBDA_API ITexture
 	{
 	public:

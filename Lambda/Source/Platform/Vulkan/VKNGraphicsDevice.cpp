@@ -423,6 +423,11 @@ namespace Lambda
 		(*ppResourceState) = DBG_NEW VKNPipelineResourceState(desc);
 	}
 
+    
+    void VKNGraphicsDevice::CreateQuery(Lambda::IQuery **ppQuery)
+    {
+    }
+    
 
 	void VKNGraphicsDevice::CreateUploadBuffer(VKNUploadBuffer** ppUploadBuffer, uint64 sizeInBytes)
 	{
@@ -565,6 +570,11 @@ namespace Lambda
 	}
     
     
+    void VKNGraphicsDevice::DestroyQuery(Lambda::IQuery **ppQuery)
+    {
+    }
+    
+    
     void VKNGraphicsDevice::Destroy() const
     {
 		delete this;
@@ -671,7 +681,8 @@ namespace Lambda
     void VKNGraphicsDevice::WaitForGPU() const
     {
         //LOG_DEBUG_INFO("VKNGraphicsDevice::WaitForGPU\n");
-        vkQueueWaitIdle(m_GraphicsQueue);
+        VKNDevice& device = VKNDevice::GetInstance();
+        vkDeviceWaitIdle(device.GetDevice());
     }
 
     
@@ -766,5 +777,5 @@ namespace Lambda
 		
 		VKNGraphicsDevice* pVkDevice = reinterpret_cast<VKNGraphicsDevice*>(s_pInstance);
 		return *pVkDevice;
-	}
+    }
 }

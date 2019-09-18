@@ -160,7 +160,6 @@ namespace Lambda
             pAllocation->pHostMemory = nullptr;
         }
 
-        
         //Set bestfit to be used
         pBestFit->IsFree = false;
         

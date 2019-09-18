@@ -4,6 +4,10 @@
 
 namespace Lambda
 {
+    //------
+    //Camera
+    //------
+    
     class LAMBDA_API Camera
     {
     public:

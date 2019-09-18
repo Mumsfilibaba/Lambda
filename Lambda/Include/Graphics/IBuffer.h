@@ -3,6 +3,10 @@
 
 namespace Lambda
 {
+    //----------
+    //BufferDesc
+    //----------
+    
 	struct BufferDesc
 	{
         const char*     pName           = nullptr;
@@ -12,6 +16,9 @@ namespace Lambda
 		uint32          StrideInBytes   = 0;
 	};
 
+    //-------
+    //IBuffer
+    //-------
 
 	class LAMBDA_API IBuffer
 	{

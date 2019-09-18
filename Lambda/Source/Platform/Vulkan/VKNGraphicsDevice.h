@@ -38,7 +38,8 @@ namespace Lambda
         virtual void CreateGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc) override final;
 		virtual void CreateRenderPass(IRenderPass** ppRenderPass, const RenderPassDesc& desc) override final;
 		virtual void CreatePipelineResourceState(IPipelineResourceState** ppResourceState, const PipelineResourceStateDesc& desc) override final;
-				void CreateUploadBuffer(VKNUploadBuffer** ppUploadBuffer, uint64 sizeInBytes);
+		virtual void CreateQuery(IQuery** ppQuery) override final;
+                void CreateUploadBuffer(VKNUploadBuffer** ppUploadBuffer, uint64 sizeInBytes);
 
         virtual void DestroyCommandList(ICommandList** ppList) override final;
         virtual void DestroyBuffer(IBuffer** ppBuffer) override final;
@@ -48,6 +49,7 @@ namespace Lambda
         virtual void DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState) override final;
 		virtual void DestroyRenderPass(IRenderPass** ppRenderPass) override final;
 		virtual void DestroyResourceState(IPipelineResourceState** ppResourceState) override final;
+        virtual void DestroyQuery(IQuery** ppQuery) override final;
         virtual void Destroy() const override final;
         
         virtual void ExecuteCommandList(ICommandList* const * ppLists, uint32 numLists) const override final;

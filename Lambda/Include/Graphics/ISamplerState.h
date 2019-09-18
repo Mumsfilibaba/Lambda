@@ -3,6 +3,10 @@
 
 namespace Lambda
 {
+    //----------------
+    //SamplerStateDesc
+    //----------------
+    
 	struct SamplerStateDesc
 	{
         SamplerAddressMode AdressMode = SAMPLER_ADDRESS_MODE_REPEAT;
@@ -11,6 +15,9 @@ namespace Lambda
 		float MipLODBias = 0.0f;
 	};
 
+    //-------------
+    //ISamplerState
+    //-------------
 
 	class LAMBDA_API ISamplerState
 	{

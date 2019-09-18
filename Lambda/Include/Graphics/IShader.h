@@ -6,13 +6,19 @@ namespace Lambda
 {   
 	class IGraphicsDevice;
 
-
+    //-----------
+    //ShaderFlags
+    //-----------
+    
 	enum ShaderFlags
 	{
 		SHADER_FLAG_NONE            = 0,
 		SHADER_FLAG_COMPILE_DEBUG   = 1,
 	};
 
+    //----------
+    //ShaderLang
+    //----------
     
 	enum ShaderLang
 	{
@@ -22,7 +28,10 @@ namespace Lambda
         SHADER_LANG_SPIRV           = 3,
 	};
 
-
+    //----------
+    //ShaderDesc
+    //----------
+    
 	struct ShaderDesc
 	{
 		ShaderStage Type = SHADER_STAGE_UNKNOWN;
@@ -33,7 +42,10 @@ namespace Lambda
 		const char* pSource = nullptr;
 	};
 
-
+    //-------
+    //IShader
+    //-------
+    
 	class LAMBDA_API IShader
 	{
 	public:

@@ -147,15 +147,7 @@ namespace Lambda
 				buffer = VK_NULL_HANDLE;
 			}
 			m_OldBuffers.clear();
-		}
-
-		//DeallocatePool old memory
-		if (m_OldMemory.size() > 0)
-		{
-			for (auto& mem : m_OldMemory)
-				m_pAllocator->Deallocate(&mem);
-			m_OldMemory.clear();
-		}
+        }
     }
     
     
@@ -164,6 +156,16 @@ namespace Lambda
 		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
         
 		Reset();
+        
+        //Deallocate old memory
+        if (m_OldMemory.size() > 0)
+        {
+            for (auto& mem : m_OldMemory)
+            {
+                m_pAllocator->Deallocate(&mem);
+            }
+            m_OldMemory.clear();
+        }
 
         if (m_Buffer != VK_NULL_HANDLE)
         {

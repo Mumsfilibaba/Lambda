@@ -7,6 +7,9 @@ namespace Lambda
 	class IRenderPass;
 	class IPipelineResourceState;
 
+    //------------
+    //InputElement
+    //------------
     
     struct InputElement
     {
@@ -19,6 +22,9 @@ namespace Lambda
         bool IsInstanced        = false;
     };
     
+    //-------------------------
+    //GraphicsPipelineStateDesc
+    //-------------------------
     
 	struct GraphicsPipelineStateDesc
 	{
@@ -41,6 +47,9 @@ namespace Lambda
 		IPipelineResourceState* pResourceState = nullptr;
 	};
 
+    //----------------------
+    //IGraphicsPipelineState
+    //----------------------
 
 	class LAMBDA_API IGraphicsPipelineState
 	{
@@ -54,12 +63,18 @@ namespace Lambda
         virtual void* GetNativeHandle() const = 0;
 	};
 
-
+    //------------------------
+    //ComputePipelineStateDesc
+    //------------------------
+    
 	struct ComputePipelineStateDesc
 	{
 		IShader* pComputeShader = nullptr;
 	};
 
+    //---------------------
+    //IComputePipelineState
+    //---------------------
 
 	class LAMBDA_API IComputePipelineState
 	{

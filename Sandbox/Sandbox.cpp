@@ -169,7 +169,7 @@ namespace Lambda
             }
 
             //Create vertexbuffer
-			MeshData mesh = MeshFactory::CreateFromFile("revolver.obj");
+            MeshData mesh = MeshFactory::CreateFromFile("revolver.obj");
 			m_IndexCount = uint32(mesh.Indices.size());
 			{
                 BufferDesc desc     = {};
@@ -383,18 +383,16 @@ namespace Lambda
         m_pCurrentList->SetGraphicsPipelineState(m_pPipelineState);
         
         //Update Colorbuffer
-        glm::vec4 colorBuff = glm::vec4(RGB_F(255, 255, 255), 1.0f);
-
         ResourceData data   = {};
-        data.pData			= &colorBuff;
-        data.SizeInBytes	= sizeof(glm::vec4); 
+        glm::vec4 colorBuff = glm::vec4(RGB_F(255, 255, 255), 1.0f);
+        data.pData          = &colorBuff;
+        data.SizeInBytes    = sizeof(glm::vec4);
         m_pCurrentList->UpdateBuffer(m_pColorBuffer, &data);
         
         //Update camera buffer
         m_CameraBuffer.View         = m_Camera.GetView();
         m_CameraBuffer.Projection   = m_Camera.GetProjection();
         m_CameraBuffer.Position     = m_Camera.GetPosition();
-
         data.pData			= &m_CameraBuffer;
         data.SizeInBytes	= sizeof(CameraBuffer);
         m_pCurrentList->UpdateBuffer(m_pCameraBuffer, &data);
@@ -411,8 +409,8 @@ namespace Lambda
         m_pCurrentList->UpdateBuffer(m_pLightBuffer, &data);
         
         //Set resources
-		IBuffer* buffers[]		= { m_pCameraBuffer, m_pTransformBuffer, m_pColorBuffer, m_pLightBuffer };
-        ITexture* textures[]	= { m_pAlbedo, m_pNormal };
+		IBuffer*    buffers[]	= { m_pCameraBuffer, m_pTransformBuffer, m_pColorBuffer, m_pLightBuffer };
+        ITexture*   textures[]	= { m_pAlbedo, m_pNormal };
 		m_pResourceState->SetConstantBuffers(buffers, 4, 0);
 		m_pResourceState->SetTextures(textures, 2, 4);
 		m_pResourceState->SetSamplerStates(&m_pSamplerState, 1, 6);
@@ -428,7 +426,7 @@ namespace Lambda
 
         //Setup rotation
 		static glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-       //rotation = glm::rotate(rotation, glm::radians(30.0f) * dt.AsSeconds(), glm::vec3(0.0f, 1.0f, 0.0f));
+        rotation = glm::rotate(rotation, glm::radians(30.0f) * dt.AsSeconds(), glm::vec3(0.0f, 1.0f, 0.0f));
         
 #if !defined(SINGLE_CUBE)
         //Begin renderpass
@@ -453,15 +451,16 @@ namespace Lambda
         //End renderpass
         m_pCurrentList->EndRenderPass();
 #else
-		//Update transforms
-		m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f)) * rotation;
-		data.pData			= &m_TransformBuffer;
-		data.SizeInBytes	= sizeof(TransformBuffer);
-		m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);
+
+        //Update transforms
+        m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f)) * rotation;
+        data.pData            = &m_TransformBuffer;
+        data.SizeInBytes    = sizeof(TransformBuffer);
+        m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);
 
 		//Begin renderpass
 		m_pCurrentList->BeginRenderPass(m_pRenderPass);
-
+        
 		//Draw first
 		m_pCurrentList->DrawIndexedInstanced(m_IndexCount, 1, 0, 0, 0);
 

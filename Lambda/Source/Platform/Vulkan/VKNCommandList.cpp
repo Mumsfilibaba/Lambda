@@ -436,9 +436,9 @@ namespace Lambda
 
 				//Copy buffer
 				VkBufferCopy copyRegion = {};
-				copyRegion.srcOffset = offset;
-				copyRegion.dstOffset = 0;
-				copyRegion.size = pData->SizeInBytes;
+				copyRegion.srcOffset    = offset;
+				copyRegion.dstOffset    = 0;
+				copyRegion.size         = pData->SizeInBytes;
 
 				VkBuffer srcBuffer = m_pBufferUpload->GetBuffer();
 				VkBuffer dstBuffer = reinterpret_cast<VkBuffer>(pVkResource->GetNativeHandle());

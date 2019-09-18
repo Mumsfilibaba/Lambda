@@ -6,23 +6,27 @@
 
 namespace Lambda
 {
+    class IQuery;
     class IWindow;
 	class IBuffer;
-	class ISamplerState;
-	class ITexture;
-	class IShader;
-	class IGraphicsPipelineState;
-	class IRenderPass;
+    class IShader;
+    class ITexture;
+    class IRenderPass;
+    class ISamplerState;
+    class IGraphicsPipelineState;
 	class IPipelineResourceState;
 
 	struct BufferDesc;
-	struct TextureDesc;
-	struct ShaderDesc;
-	struct SamplerStateDesc;
-	struct GraphicsPipelineStateDesc;
-	struct RenderPassDesc;
+    struct ShaderDesc;
+    struct TextureDesc;
+    struct RenderPassDesc;
+    struct SamplerStateDesc;
+    struct GraphicsPipelineStateDesc;
 	struct PipelineResourceStateDesc;
 
+    //------------------
+    //GraphicsDeviceDesc
+    //------------------
     
     struct GraphicsDeviceDesc
     {
@@ -33,6 +37,9 @@ namespace Lambda
         uint32      BackBufferCount = 3;
     };
     
+    //---------------
+    //IGraphicsDevice
+    //---------------
     
 	class LAMBDA_API IGraphicsDevice
 	{
@@ -50,7 +57,8 @@ namespace Lambda
 		virtual void CreateGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc) = 0;
 		virtual void CreateRenderPass(IRenderPass** ppRenderPass, const RenderPassDesc& desc) = 0;
 		virtual void CreatePipelineResourceState(IPipelineResourceState** ppResourceState, const PipelineResourceStateDesc& desc) = 0;
-
+        virtual void CreateQuery(IQuery** ppQuery) = 0;
+        
 		virtual void DestroyCommandList(ICommandList** ppList) = 0;
 		virtual void DestroyBuffer(IBuffer** ppBuffer) = 0;
 		virtual void DestroyTexture(ITexture** ppTexture) = 0;
@@ -59,6 +67,7 @@ namespace Lambda
 		virtual void DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState) = 0;
 		virtual void DestroyRenderPass(IRenderPass** ppRenderPass) = 0;
 		virtual void DestroyResourceState(IPipelineResourceState** ppResourceState) = 0;
+        virtual void DestroyQuery(IQuery** ppQuery) = 0;
 		virtual void Destroy() const = 0;
 
 		virtual void ExecuteCommandList(ICommandList* const * ppLists, uint32 numLists) const = 0;

@@ -12,6 +12,9 @@ namespace Lambda
 	class IRenderPass;
 	class IPipelineResourceState;
 
+    //------------
+    //ICommandList
+    //------------
 
 	class LAMBDA_API ICommandList
 	{
