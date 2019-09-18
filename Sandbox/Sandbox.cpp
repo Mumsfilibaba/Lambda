@@ -403,7 +403,7 @@ namespace Lambda
         static LightBuffer lightBuffer  =
         {
             glm::vec4(RGB_F(255, 241, 224), 1.0f),
-            glm::vec3(-1.0f, 1.0f, 0.0f)
+            glm::vec3(-1.5f, 0.5f, -1.0f)
         };
         
         data.pData          = &lightBuffer;
