@@ -2,199 +2,230 @@ workspace "Lambda"
 	architecture "x64"
 	startproject "Sandbox"
 	warnings "Extra"
+
+	outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
+
 	configurations 
 	{ 
 		"Debug", 
 		"Release" 
 	}	
 
-	outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
-	
-	files 
-	{ 
-		"%{prj.name}/**.hpp",
-		"%{prj.name}/**.h",
-		"%{prj.name}/**.inl",
-		"%{prj.name}/**.cpp",
-		"%{prj.name}/**.c",
-		"%{prj.name}/**.hlsl"
-	}
-	
-	excludes 
-	{	
-		"**.hlsl"
-	}
+	group "Dependencies"
+		include "Dependencies/ImGui"
+	group ""
 
-	filter "configurations:Debug"
-		symbols "On"
-		runtime "Debug"
-		defines 
-		{ 
-			"LAMBDA_DEBUG"
-		}	
-	
-	filter "configurations:Release"
-		symbols "On"
-		runtime "Release"
-		optimize "Full"
-		defines 
-		{ 
-			"LAMBDA_RELEASE" 
-		}
+	project "Lambda"
+		kind "SharedLib"
+		language "C++"
+		cppdialect "C++17"
+		systemversion "latest"
+		location "Lambda"
 
-	filter "action:vs*"
-		defines
-		{
-			"LAMBDA_VISUAL_STUDIO",
-			"_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING"
-		}
-
-	filter { "action:vs*", "configurations:Debug" }
-		defines
-		{
-			"_DEBUG",
-			"_CRTDBG_MAP_ALLOC"
-		}
+		targetdir 	("Build/bin/" .. outputdir .. "/%{prj.name}")
+		objdir 		("Build/bin-int/" .. outputdir .. "/%{prj.name}")	
 		
-	filter { "action:vs*", "configurations:Release" }
-		defines
-		{
-			"NDEBUG"
-		}
-
-	filter "system:windows"
-		links
-		{
-			"d3d12",
-			"dxgi",
-			"d3dcompiler",
-			"vulkan-1"
-		}
-		libdirs
-		{
-			"C:/VulkanSDK/1.1.114.0/Lib"
-		}
-		sysincludedirs
-		{
-			"C:/VulkanSDK/1.1.114.0/Include"
-		}
-		defines
-		{
-			"LAMBDA_PLAT_WINDOWS" 
-		}
-
-	filter "system:macosx"
-		links
-		{
-			"glfw.3.3",
-			"vulkan.1",
-			"vulkan.1.1.114",
-			"assimp"
-		}
-		libdirs
-		{
-			"/usr/local/lib",
-			"../vulkansdk-macos-1.1.114.0/macOS/lib"
-		}
-		sysincludedirs
-		{
-			"/usr/local/include",
-			"../vulkansdk-macos-1.1.114.0/macOS/include"
-		}
-		defines
-		{
-			"LAMBDA_PLAT_MACOS" 
-		}
-
-project "Lambda"
-	kind "SharedLib"
-	language "C++"
-	cppdialect "C++17"
-	systemversion "latest"
-	location "Lambda"
-	targetdir ("Build/bin/" .. outputdir .. "/%{prj.name}")
-	objdir ("Build/bin-int/" .. outputdir .. "/%{prj.name}")
-	
-	includedirs 
-	{ 
-		"%{prj.name}/Include"
-	}
-	sysincludedirs
-	{
-		"Dependencies/stb",
-		"Dependencies/glm",
-		"Dependencies/ImGui"
-	}
-
-	filter { "system:windows", "configurations:Debug" }
-		links
-		{
-			"assimp-vc141-mtd",
-			"IrrXMLd",
-			"zlibstaticd",
-		}
-		libdirs
-		{
-			"Dependencies/Assimp/build/code/Debug/",
-			"Dependencies/Assimp/build/contrib/irrXML/Debug",
-			"Dependencies/Assimp/build/contrib/zlib/Debug"
-		}
-	
-	filter { "system:windows", "configurations:Release" }
-		links
-		{
-			"assimp-vc141-mt",
-			"IrrXML",
-			"zlibstatic",
-		}
-		libdirs
-		{
-			"Dependencies/Assimp/build/code/Release/",
-			"Dependencies/Assimp/build/contrib/irrXML/Release",
-			"Dependencies/Assimp/build/contrib/zlib/Release"
-		}
-	
-	filter "system:windows"
-		pchheader "LambdaPch.h"
-		pchsource "Lambda/Source/LambdaPch.cpp"
-		sysincludedirs
-		{
-			"Dependencies/Assimp/include"
-		}
-		defines 
+		files 
 		{ 
-			"LAMBDA_EXPORT" 
+			"%{prj.name}/**.hpp",
+			"%{prj.name}/**.h",
+			"%{prj.name}/**.inl",
+			"%{prj.name}/**.cpp",
+			"%{prj.name}/**.c",
+			"%{prj.name}/**.hlsl"
 		}
-		postbuildcommands
+		excludes 
+		{	
+			"**.hlsl"
+		}
+		includedirs 
+		{ 
+			"%{prj.name}/Include"
+		}
+		sysincludedirs
 		{
-			("{COPY} %{cfg.buildtarget.relpath} \"../Build/bin/" .. outputdir .. "/Sandbox/\"")
+			"Dependencies/stb",
+			"Dependencies/glm",
+			"Dependencies/ImGui"
 		}
+		filter "configurations:Debug"
+			symbols "On"
+			runtime "Debug"
+			defines 
+			{ 
+				"LAMBDA_DEBUG"
+			}	
+		filter "configurations:Release"
+			symbols "On"
+			runtime "Release"
+			optimize "Full"
+			defines 
+			{ 
+				"LAMBDA_RELEASE" 
+			}
+		-- Visual Studio Specific
+		filter "action:vs*"
+			defines
+			{
+				"LAMBDA_VISUAL_STUDIO",
+				"_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING"
+			}
+		filter { "action:vs*", "configurations:Debug" }
+			defines
+			{
+				"_DEBUG",
+				"_CRTDBG_MAP_ALLOC"
+			}
+		filter { "action:vs*", "configurations:Release" }
+			defines
+			{
+				"NDEBUG"
+			}
+		--	macOS SPECIFIC
+		filter "system:macosx"
+			links
+			{
+				"glfw.3.3",
+				"vulkan.1",
+				"vulkan.1.1.114",
+				"assimp"
+			}
+			libdirs
+			{
+				"/usr/local/lib",
+				"../vulkansdk-macos-1.1.114.0/macOS/lib"
+			}
+			sysincludedirs
+			{
+				"/usr/local/include",
+				"../vulkansdk-macos-1.1.114.0/macOS/include"
+			}
+			defines
+			{
+				"LAMBDA_PLAT_MACOS" 
+			}
+		-- WINDOWS SPECIFIC
+		filter "system:windows"
+			pchheader "LambdaPch.h"
+			pchsource "Lambda/Source/LambdaPch.cpp"
+			links
+			{
+				"d3d12",
+				"dxgi",
+				"d3dcompiler",
+				"vulkan-1"
+			}
+			libdirs
+			{
+				"C:/VulkanSDK/1.1.114.0/Lib"
+			}
+			sysincludedirs
+			{
+				"C:/VulkanSDK/1.1.114.0/Include"
+			}
+			defines
+			{
+				"LAMBDA_PLAT_WINDOWS" 
+			}
+			sysincludedirs
+			{
+				"Dependencies/Assimp/include"
+			}
+			defines 
+			{ 
+				"LAMBDA_EXPORT" 
+			}
+			postbuildcommands
+			{
+				("{COPY} %{cfg.buildtarget.relpath} \"../Build/bin/" .. outputdir .. "/Sandbox/\"")
+			}
+		filter { "system:windows", "configurations:Debug" }
+			links
+			{
+				"assimp-vc141-mtd",
+				"IrrXMLd",
+				"zlibstaticd",
+			}
+			libdirs
+			{
+				"Dependencies/Assimp/build/code/Debug/",
+				"Dependencies/Assimp/build/contrib/irrXML/Debug",
+				"Dependencies/Assimp/build/contrib/zlib/Debug"
+			}
+		filter { "system:windows", "configurations:Release" }
+			links
+			{
+				"assimp-vc141-mt",
+				"IrrXML",
+				"zlibstatic",
+			}
+			libdirs
+			{
+				"Dependencies/Assimp/build/code/Release/",
+				"Dependencies/Assimp/build/contrib/irrXML/Release",
+				"Dependencies/Assimp/build/contrib/zlib/Release"
+			}
 
-project "Sandbox"
-	kind "ConsoleApp"
-	language "C++"
-	cppdialect "C++17"
-	systemversion "latest"
-	
-	location "Sandbox"
-	targetdir ("Build/bin/" .. outputdir .. "/%{prj.name}")
-	objdir ("Build/bin-int/" .. outputdir .. "/%{prj.name}")
-	
-	includedirs
-	{ 
-		"Lambda/Include"
-	}
-	sysincludedirs
-	{
-		"Dependencies/glm"
-	}
-	
-	dependson 
-	{ 
-		"Lambda" 
-	}
-	
-	links 
-	{ 
-		"Lambda"
-	}
+	project "Sandbox"
+		kind "ConsoleApp"
+		language "C++"
+		cppdialect "C++17"
+		systemversion "latest"
+		location "Sandbox"
+		
+		targetdir ("Build/bin/" .. outputdir .. "/%{prj.name}")
+		objdir ("Build/bin-int/" .. outputdir .. "/%{prj.name}")
+		
+		includedirs
+		{ 
+			"Lambda/Include"
+		}
+		sysincludedirs
+		{
+			"Dependencies/glm"
+		}
+		files 
+		{ 
+			"%{prj.name}/**.hpp",
+			"%{prj.name}/**.h",
+			"%{prj.name}/**.inl",
+			"%{prj.name}/**.cpp",
+			"%{prj.name}/**.c",
+			"%{prj.name}/**.hlsl"
+		}
+		excludes 
+		{	
+			"**.hlsl"
+		}
+		dependson 
+		{ 
+			"Lambda" 
+		}
+		links 
+		{ 
+			"Lambda"
+		}
+		-- macOS SPECIFIC
+		filter "system:macosx"
+			defines
+			{
+				"LAMBDA_PLAT_MACOS" 
+			}
+		-- WINDOWS SPECIFIC
+		filter "system:windows"
+			defines
+			{
+				"LAMBDA_PLAT_WINDOWS" 
+			}
+		filter { "action:vs*", "configurations:Debug" }
+			defines
+			{
+				"_DEBUG",
+				"_CRTDBG_MAP_ALLOC"
+			}
+			
+		filter { "action:vs*", "configurations:Release" }
+			defines
+			{
+				"NDEBUG"
+			}
