@@ -1,5 +1,5 @@
 #pragma once
-#include "Time.hpp"
+#include "Timestep.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
     #define WIN32_LEAN_AND_MEAN
     #include <windows.h>
@@ -9,6 +9,10 @@
 
 namespace Lambda
 {
+    //-----
+    //Clock
+    //-----
+    
 	class Clock
 	{
 	public:
@@ -20,14 +24,14 @@ namespace Lambda
 		void Tick();
 		void Reset();
 
-		Time GetDeltaTime() const;
-		Time GetTotalTime() const;
+		Timestep GetDeltaTime() const;
+		Timestep GetTotalTime() const;
 
 	private:
 		uint64 m_Frequency;
-		Time m_LastTime;
-		Time m_TotalTime;
-		Time m_DeltaTime;
+		Timestep m_LastTime;
+		Timestep m_TotalTime;
+		Timestep m_DeltaTime;
 	};
 
     
@@ -83,7 +87,7 @@ namespace Lambda
         auto now        = std::chrono::high_resolution_clock::now();
         auto duration   = now.time_since_epoch();
         auto nanos      = std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
-        Time currentTime = Time::NanoSeconds(nanos);
+        Timestep currentTime = Timestep::NanoSeconds(nanos);
         
         //Update delta- and totaltime
         m_DeltaTime = currentTime - m_LastTime;
@@ -97,18 +101,18 @@ namespace Lambda
 
 	inline void Clock::Reset()
 	{
-		m_DeltaTime = Time(0);
-		m_TotalTime = Time(0);
+		m_DeltaTime = Timestep(0);
+		m_TotalTime = Timestep(0);
 	}
 
 
-	inline Time Clock::GetDeltaTime() const
+	inline Timestep Clock::GetDeltaTime() const
 	{
 		return m_DeltaTime;
 	}
 
 
-	inline Time Clock::GetTotalTime() const
+	inline Timestep Clock::GetTotalTime() const
 	{
 		return m_TotalTime;
 	}

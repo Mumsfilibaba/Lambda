@@ -12,6 +12,10 @@
 
 namespace Lambda
 {
+    //-------
+    //IObject
+    //-------
+    
 	//Baseclass for referencecounted objects. Classes that inherits from IObject should not
 	//have a virtual constructor since they should be deleted with the Release-function
 	class LAMBDA_API IObject
@@ -22,7 +26,7 @@ namespace Lambda
 		IObject() = default;
 		~IObject() = default;
 
-		virtual uint32 Release() = 0;
-		virtual uint32 AddRef() = 0; 
+		virtual uint32 Release()    = 0;
+		virtual uint32 AddRef()     = 0;
 	};
 }

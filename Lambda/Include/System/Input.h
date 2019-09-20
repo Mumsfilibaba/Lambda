@@ -5,6 +5,9 @@ namespace Lambda
 {
 	class IWindow;
 
+    //-----
+    //Input
+    //-----
 
 	class LAMBDA_API Input
 	{

@@ -1,11 +1,15 @@
 #pragma once
 #include "Defines.h"
 #include "Types.h"
-#include "Time.hpp"
+#include "Timestep.h"
 #include <memory>
 
 namespace Lambda
 {
+    //---------------
+    //JoystickManager
+    //---------------
+    
 	class LAMBDA_API JoystickManager
 	{
 	public:
@@ -15,14 +19,14 @@ namespace Lambda
 		virtual ~JoystickManager() = default;
 
 	private:
-		virtual void InternalOnUpdate() = 0;
-		virtual void InternalSetPollrate(const Time& time) = 0;
-		virtual Time InternalGetPollrate() const = 0;
+		virtual void        InternalOnUpdate() = 0;
+		virtual void        InternalSetPollrate(const Timestep& time) = 0;
+		virtual Timestep    InternalGetPollrate() const = 0;
 
 	public:
-		static void OnUpdate();
-		static void SetPollrate(const Time& time);
-		static Time GetPollrate();
+		static void     OnUpdate();
+		static void     SetPollrate(const Timestep& time);
+		static Timestep GetPollrate();
 
 	private:
 		static JoystickManager* Create();

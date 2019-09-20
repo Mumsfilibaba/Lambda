@@ -1,6 +1,6 @@
 #pragma once
 #include "IWindow.h"
-#include "Clock.h"
+#include "Time/Clock.h"
 #include "Graphics/IGraphicsDevice.h"
 #include "Graphics/ImGuiLayer.h"
 
@@ -31,8 +31,8 @@ namespace Lambda
 		virtual ~Application() = default;
 
 		virtual void OnLoad() {}
-		virtual void OnUpdate(Time dt) {}
-		virtual void OnRender(Time dt) {}
+		virtual void OnUpdate(Timestep dt) {}
+		virtual void OnRender(Timestep dt) {}
 		virtual void OnRelease() {}
 
 		int32 Run();
@@ -43,8 +43,8 @@ namespace Lambda
 		void Init(const EngineParams& params);
 		void Quit(int32 exitCode = 0);
 		void InternalOnLoad();
-		void InternalOnUpdate(Time dt);
-		void InternalOnRender(Time dt);
+		void InternalOnUpdate(Timestep dt);
+		void InternalOnRender(Timestep dt);
 		void InternalOnRelease();
 		bool InternalOnEvent(const Event& event);
 

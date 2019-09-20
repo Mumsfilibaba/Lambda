@@ -46,6 +46,10 @@
 
 namespace Lambda
 {
+    //-----------
+    //LogSeverity
+    //-----------
+    
 	enum LogSeverity : uint32
 	{
 		LOG_SEVERITY_UNKNOWN    = 0,
@@ -55,6 +59,9 @@ namespace Lambda
         LOG_SEVERITY_MESSAGE    = 4,
 	};
 
+    //----
+    //ILog
+    //----
     
 	class LAMBDA_API ILog
 	{
@@ -70,6 +77,9 @@ namespace Lambda
 		static ILog* Create();
 	};
 
+    //---
+    //Log
+    //---
 
 	class LAMBDA_API Log
 	{

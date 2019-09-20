@@ -12,13 +12,13 @@ namespace Lambda
 	}
 
     
-	void JoystickManager::SetPollrate(const Time& time)
+	void JoystickManager::SetPollrate(const Timestep& time)
 	{
 		s_Instance->InternalSetPollrate(time);
 	}
 
     
-	Time JoystickManager::GetPollrate()
+	Timestep JoystickManager::GetPollrate()
 	{
 		return s_Instance->InternalGetPollrate();
 	}

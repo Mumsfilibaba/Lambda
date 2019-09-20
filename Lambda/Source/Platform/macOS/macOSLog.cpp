@@ -6,11 +6,18 @@
 
 namespace Lambda
 {
+    //----
+    //ILog
+    //----
+    
     ILog* ILog::Create()
     {
         return DBG_NEW MacOSLog();
     }
     
+    //--------
+    //MacOSLog
+    //--------
     
     void MacOSLog::Print(LogSeverity severity, const char* pFormat, ...)
     {

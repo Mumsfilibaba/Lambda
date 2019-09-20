@@ -5,6 +5,10 @@
 
 namespace Lambda
 {
+    //----------
+    //MacOSInput
+    //----------
+    
     class MacOSInput final : public Input
     {
         friend class MacOSWindow;

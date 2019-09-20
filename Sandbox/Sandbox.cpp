@@ -319,7 +319,7 @@ namespace Lambda
 	}
 
 
-	void SandBox::OnUpdate(Time dt)
+	void SandBox::OnUpdate(Timestep dt)
 	{
         //Move camera
         constexpr float speed = 2.0f;
@@ -359,7 +359,7 @@ namespace Lambda
 	}
 
 
-	void SandBox::OnRender(Time dt)
+	void SandBox::OnRender(Timestep dt)
 	{
         static Clock clock;
         

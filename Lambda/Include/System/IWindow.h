@@ -1,21 +1,27 @@
 #pragma once
-#include "EventDispatcher.h"
+#include "Events/EventDispatcher.h"
 
 namespace Lambda
 {
     class IGraphicsDevice;
     
+    //----------
+    //WindowDesc
+    //----------
     
 	struct WindowDesc
 	{
-		const char* pTitle = nullptr;
-        GraphicsApi GraphicsDeviceAPI = GRAPHICS_API_VULKAN;
-		uint32 Width = 960;
-		uint32 Height = 540;
-		uint32 SampleCount = 1;
-		bool Fullscreen = false;
+		const char* pTitle              = nullptr;
+        GraphicsApi GraphicsDeviceAPI   = GRAPHICS_API_VULKAN;
+		uint32 Width                    = 960;
+		uint32 Height                   = 540;
+		uint32 SampleCount              = 1;
+		bool Fullscreen                 = false;
 	};
 
+    //-------
+    //IWindow
+    //-------
     
 	class LAMBDA_API IWindow
 	{

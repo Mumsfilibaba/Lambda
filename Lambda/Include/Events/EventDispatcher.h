@@ -1,11 +1,14 @@
 #pragma once
-#include "Event.h"
+#include "Events/Event.h"
 #include <vector>
 
 namespace Lambda
 {
 	typedef bool(*EventCallback)(const Event& event);
 
+    //----------
+    //EventLayer
+    //----------
 
 	struct EventLayer
 	{
@@ -13,6 +16,9 @@ namespace Lambda
 		const char* pName;
 	};
 
+    //---------------
+    //EventDispatcher
+    //---------------
 
 	class LAMBDA_API EventDispatcher
 	{

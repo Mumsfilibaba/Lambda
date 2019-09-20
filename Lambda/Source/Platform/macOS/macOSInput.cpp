@@ -5,12 +5,19 @@
 
 namespace Lambda
 {
+    //-----
+    //Input
+    //-----
+    
     Input* Input::Create()
     {
         return DBG_NEW MacOSInput();
     }
     
-    
+    //----------
+    //MacOSInput
+    //----------
+
     MacOSInput::MacOSInput()
         : m_LambdaKeyTable(),
         m_GLFWKeyTable()

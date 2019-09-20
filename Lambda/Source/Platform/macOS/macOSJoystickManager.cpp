@@ -4,11 +4,18 @@
 
 namespace Lambda
 {
+    //---------------
+    //JoystickManager
+    //---------------
+    
     JoystickManager* JoystickManager::Create()
     {
         return DBG_NEW MacOSJoystickManager();
     }
     
+    //--------------------
+    //MacOSJoystickManager
+    //--------------------
     
     void MacOSJoystickManager::InternalOnUpdate()
     {
@@ -16,15 +23,15 @@ namespace Lambda
     }
     
     
-    void MacOSJoystickManager::InternalSetPollrate(const Time& time)
+    void MacOSJoystickManager::InternalSetPollrate(const Timestep& time)
     {
         
     }
     
     
-    Time MacOSJoystickManager::InternalGetPollrate() const
+    Timestep MacOSJoystickManager::InternalGetPollrate() const
     {
-        return Time();
+        return Timestep();
     }
 }
 

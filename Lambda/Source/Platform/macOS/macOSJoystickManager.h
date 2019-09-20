@@ -4,6 +4,10 @@
 
 namespace Lambda
 {
+    //--------------------
+    //MacOSJoystickManager
+    //--------------------
+    
     class MacOSJoystickManager final : public JoystickManager
     {
     public:
@@ -13,8 +17,8 @@ namespace Lambda
         ~MacOSJoystickManager() = default;
         
         virtual void InternalOnUpdate() override final;
-        virtual void InternalSetPollrate(const Time& time) override final;
-        virtual Time InternalGetPollrate() const override final;
+        virtual void InternalSetPollrate(const Timestep& time) override final;
+        virtual Timestep InternalGetPollrate() const override final;
     };
 }
 #endif

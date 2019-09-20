@@ -4,6 +4,10 @@
 #if defined(LAMBDA_PLAT_MACOS)
 namespace Lambda
 {
+    //--------
+    //MacOSLog
+    //--------
+    
     class MacOSLog final : public ILog
     {
     public:

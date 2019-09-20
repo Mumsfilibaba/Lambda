@@ -41,8 +41,8 @@ namespace Lambda
 		~SandBox();
 
 		virtual void OnLoad() override final;
-		virtual void OnUpdate(Time dt) override final;
-		virtual void OnRender(Time dt) override final;
+		virtual void OnUpdate(Timestep dt) override final;
+		virtual void OnRender(Timestep dt) override final;
 		virtual void OnRelease() override final;
 
 		void CreateCamera(uint32 width, uint32 height);

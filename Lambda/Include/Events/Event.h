@@ -4,6 +4,10 @@
 
 namespace Lambda
 {
+    //---------
+    //EventType
+    //---------
+    
 	enum EventType : uint32
 	{
 		EVENT_TYPE_UNKNOWN = 0,
@@ -21,6 +25,9 @@ namespace Lambda
 		EVENT_TYPE_JOYSTICK_CHANGED
 	};
 
+    //-----
+    //Event
+    //-----
 
 	struct Event
 	{

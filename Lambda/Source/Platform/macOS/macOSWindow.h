@@ -5,6 +5,10 @@
 
 namespace Lambda
 {
+    //-----------
+    //MacOSWindow
+    //-----------
+    
     class MacOSWindow : public IWindow
     {
     public:

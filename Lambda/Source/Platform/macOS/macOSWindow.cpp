@@ -2,23 +2,29 @@
 #if defined(LAMBDA_PLAT_MACOS)
     #include "macOSWindow.h"
     #include "macOSInput.h"
-    #include "System/EventDispatcher.h"
+    #include "Events/EventDispatcher.h"
     #include "Graphics/IGraphicsDevice.h"
     #include "System/Input.h"
     #include "System/JoystickManager.h"
     #include "System/Log.h"
 
 namespace Lambda
-{  
+{
+    //-------
+    //IWindow
+    //-------
+    
     IWindow* IWindow::Create(const WindowDesc& desc)
     {
         return DBG_NEW MacOSWindow(desc);
     }
     
-    //Static variable declarations
+    //-----------
+    //MacOSWindow
+    //-----------
+    
     bool MacOSWindow::s_HasGLFW = false;
     
-    //macOS window definition
     MacOSWindow::MacOSWindow(const WindowDesc& desc)
         : m_pWindow(nullptr),
         m_Width(0.0f),

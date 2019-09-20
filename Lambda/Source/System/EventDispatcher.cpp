@@ -1,5 +1,5 @@
 #include "LambdaPch.h"
-#include "System/EventDispatcher.h"
+#include "Events/EventDispatcher.h"
 #include "System/Log.h"
 
 namespace Lambda

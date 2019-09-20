@@ -1,6 +1,6 @@
 #include "LambdaPch.h"
 #include "System/Application.h"
-#include "System/Clock.h"
+#include "Time/Clock.h"
 #include "System/Log.h"
 #include "System/Input.h"
 #include "System/JoystickManager.h"
@@ -31,8 +31,8 @@ namespace Lambda
         LOG_DEBUG_INFO("Lambda Engine: STARTING\n");
         
 		Clock clock;
-		Time accumulator;
-		const Time timestep = Time::Seconds(1.0f / 60.0f);
+		Timestep accumulator;
+		const Timestep timestep = Timestep::Seconds(1.0f / 60.0f);
 		uint32 fps = 0;
 		uint32 ups = 0;
 
@@ -135,7 +135,7 @@ namespace Lambda
 		}
 
 		//Set joystick-pollingrate
-		JoystickManager::SetPollrate(Time::Seconds(1.0f / 60.0f));
+		JoystickManager::SetPollrate(Timestep::Seconds(1.0f / 60.0f));
 
 		//Set Params
 		m_Params = params;
@@ -164,7 +164,7 @@ namespace Lambda
 	}
 	
 
-	void Application::InternalOnUpdate(Time dt)
+	void Application::InternalOnUpdate(Timestep dt)
 	{
         //Window update (Handle events)
         m_pWindow->OnUpdate();
@@ -177,7 +177,7 @@ namespace Lambda
 	}
 
 
-	void Application::InternalOnRender(Time dt)
+	void Application::InternalOnRender(Timestep dt)
 	{
 		OnRender(dt);
 	}
