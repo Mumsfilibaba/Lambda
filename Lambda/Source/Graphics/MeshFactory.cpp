@@ -33,8 +33,8 @@ namespace Lambda
             {
                 LOG_DEBUG_INFO("Loading Scene with '%u' meshes\n", pScene->mNumMeshes);
                 
-				uint32 vertexOffset = 0;
-				uint32 indexOffset = 0;
+				size_t vertexOffset = 0;
+				size_t indexOffset = 0;
 				uint32 numMeshesToLoad = (mergeMeshes) ? pScene->mNumMeshes : 1;
 				for (uint32 m = 0; m < numMeshesToLoad; m++)
 				{
@@ -79,16 +79,16 @@ namespace Lambda
 							data.Indices.resize(indexOffset + (triCount * 3));
 							for (size_t i = 0; i < triCount; i++)
 							{
-								data.Indices[indexOffset + (i*3) + 0] = vertexOffset + pMesh->mFaces[i].mIndices[0];
-								data.Indices[indexOffset + (i*3) + 1] = vertexOffset + pMesh->mFaces[i].mIndices[1];
-								data.Indices[indexOffset + (i*3) + 2] = vertexOffset + pMesh->mFaces[i].mIndices[2];
+								data.Indices[indexOffset + (i*3) + 0] = uint32(vertexOffset + pMesh->mFaces[i].mIndices[0]);
+								data.Indices[indexOffset + (i*3) + 1] = uint32(vertexOffset + pMesh->mFaces[i].mIndices[1]);
+								data.Indices[indexOffset + (i*3) + 2] = uint32(vertexOffset + pMesh->mFaces[i].mIndices[2]);
 							}
 
 							//Increase offsets
 							if (mergeMeshes)
 							{
-								vertexOffset += vertCount;
-								indexOffset += triCount * 3;
+								vertexOffset	+= vertCount;
+								indexOffset		+= triCount * 3;
 							}
 						}
 					}
@@ -604,16 +604,16 @@ namespace Lambda
 
 		Vertex v[3];
 		size_t j = 0;
-		size_t indexCount = 0;
-		size_t vertexCount = 0;
-		size_t oldVertexCount = 0;
+		uint32 indexCount		= 0;
+		uint32 vertexCount		= 0;
+		uint32 oldVertexCount	= 0;
 		data.Vertices.reserve((data.Vertices.size() * size_t(pow(2, subdivisions))));
 		data.Indices.reserve((data.Indices.size() * size_t(pow(4, subdivisions))));
 
 		for (uint32 i = 0; i < subdivisions; i++)
 		{
-			oldVertexCount = int32(data.Vertices.size());
-			indexCount = int32(data.Indices.size());
+			oldVertexCount	= uint32(data.Vertices.size());
+			indexCount		= uint32(data.Indices.size());
 
 			for (j = 0; j < indexCount; j += 3)
 			{
@@ -639,23 +639,23 @@ namespace Lambda
 				data.Vertices.emplace_back(v[2]);
 
 				//Push index of the new triangles
-				vertexCount = int32(data.Vertices.size());
-				data.Indices.emplace_back((vertexCount - 3));
-				data.Indices.emplace_back((vertexCount - 1));
-				data.Indices.emplace_back((vertexCount - 2));
+				vertexCount = uint32(data.Vertices.size());
+				data.Indices.emplace_back(vertexCount - 3);
+				data.Indices.emplace_back(vertexCount - 1);
+				data.Indices.emplace_back(vertexCount - 2);
 
-				data.Indices.emplace_back((vertexCount - 3));
+				data.Indices.emplace_back(vertexCount - 3);
 				data.Indices.emplace_back(data.Indices[j + 1]);
-				data.Indices.emplace_back((vertexCount - 1));
+				data.Indices.emplace_back(vertexCount - 1);
 
-				data.Indices.emplace_back((vertexCount - 2));
-				data.Indices.emplace_back((vertexCount - 1));
+				data.Indices.emplace_back(vertexCount - 2);
+				data.Indices.emplace_back(vertexCount - 1);
 				data.Indices.emplace_back(data.Indices[j + 2]);
 
 
 				//Reassign the old indexes
-				data.Indices[j + 1] = ((vertexCount - 3));
-				data.Indices[j + 2] = ((vertexCount - 2));
+				data.Indices[j + 1] = vertexCount - 3;
+				data.Indices[j + 2] = vertexCount - 2;
 			}
 
 			Optimize(data, oldVertexCount);
@@ -670,8 +670,8 @@ namespace Lambda
 	{
 		using namespace std;
 
-		uint32 vertexSize = (uint32)data.Vertices.size();
-		uint32 indexSize = (uint32)data.Indices.size();
+		uint32 vertexSize	= uint32(data.Vertices.size());
+		uint32 indexSize	= uint32(data.Indices.size());
 		LAMBDA_ASSERT(startVertex < (uint32)data.Vertices.size());
 		uint32 k = 0;
 		uint32 j = 0;

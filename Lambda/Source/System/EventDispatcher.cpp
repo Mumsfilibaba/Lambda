@@ -4,31 +4,47 @@
 
 namespace Lambda
 {
-	std::vector<EventLayer> EventDispatcher::s_LayerStack;
+	//---------------
+	//EventDispatcher
+	//---------------
 
-	bool EventDispatcher::SendEvent(const Event& event)
+	std::vector<EventLayer*> EventDispatcher::s_LayerStack;
+
+	bool EventDispatcher::DispatchEvent(const Event& event)
 	{
-		for (auto& layer : s_LayerStack)
+		for (auto& pLayer : s_LayerStack)
 		{
 			//LOG_DEBUG_INFO("%s:\n", iter->pName);
 			
-			if (layer.OnEvent(event))
-				return true;
+			uint32 categories = pLayer->GetRecivableCategories();
+			if (categories & event.Category)
+			{
+				if (pLayer->OnEvent(event))
+					return true;
+			}
 		}
 
 		return false;
 	}
-    
-	
-	void EventDispatcher::PushEventLayer(const EventLayer& layer)
+
+
+	void EventDispatcher::PushEventLayer(EventLayer* pLayer)
 	{
-		s_LayerStack.push_back(layer);
-		LOG_DEBUG_INFO("Lambda Engine: Added eventlayer %d '%s'.\n", s_LayerStack.size(), layer.pName);
+		LAMBDA_ASSERT(pLayer != nullptr);
+		s_LayerStack.push_back(pLayer);
+		pLayer->OnPush();
+
+		LOG_DEBUG_INFO("Lambda Engine: Pushed eventlayer %d '%s'.\n", s_LayerStack.size(), pLayer->GetName());
 	}
     
 
 	void EventDispatcher::PopEventLayer()
 	{
+		auto pLayer = s_LayerStack.back();
 		s_LayerStack.pop_back();
+
+		pLayer->OnPop();
+
+		LOG_DEBUG_INFO("Lambda Engine: Poped eventlayer '%s'.\n", pLayer->GetName());
 	}
 }

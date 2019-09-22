@@ -303,7 +303,7 @@ namespace Lambda
                 SamplerStateDesc desc = {};
                 desc.AdressMode = SAMPLER_ADDRESS_MODE_REPEAT;
 				desc.MinMipLOD	= 0.0f;
-				desc.MaxMipLOD	= textureDesc.MipLevels;
+				desc.MaxMipLOD	= float(textureDesc.MipLevels);
 				desc.MipLODBias	= 0.0f;
                 
                 pDevice->CreateSamplerState(&m_pSamplerState, desc);
@@ -595,7 +595,7 @@ namespace Lambda
                 }*/
                 return false;
                 
-            case EVENT_TYPE_FOCUS_CHANGED:
+            case EVENT_TYPE_WINDOW_FOCUS_CHANGED:
                 if (event.FocusChanged.HasFocus)
                 {
                     LOG_DEBUG_INFO("Window got focus\n");

@@ -76,7 +76,7 @@ namespace Lambda
 		//Get current time
         uint64 now = 0;
 		QueryPerformanceCounter((LARGE_INTEGER*)&now);
-		Time currentTime = Time((now * 1000000000) / m_Frequency);
+		Timestep currentTime = Timestep((now * 1000000000) / m_Frequency);
 
         //Update delta- and totaltime
 		m_DeltaTime = currentTime - m_LastTime;

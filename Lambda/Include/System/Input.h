@@ -1,5 +1,7 @@
 #pragma once
-#include "LambdaPch.h"
+#include "Defines.h"
+#include "Types.h"
+#include <memory>
 
 namespace Lambda
 {

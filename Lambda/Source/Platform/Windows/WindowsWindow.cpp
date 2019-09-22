@@ -280,7 +280,7 @@ namespace Lambda
 
 		case WM_CHAR:
 		{
-			event.Type = EVENT_TYPE_TEXT;
+			event.Type = EVENT_TYPE_KEYTYPED;
 			event.TextEvent.Character = wchar_t(wParam);
 			break;
 		}
@@ -324,14 +324,14 @@ namespace Lambda
 
 		case WM_SETFOCUS:
 		{
-			event.Type = EVENT_TYPE_FOCUS_CHANGED;
+			event.Type = EVENT_TYPE_WINDOW_FOCUS_CHANGED;
 			event.FocusChanged.HasFocus = true;
 			break;
 		}
 
 		case WM_KILLFOCUS:
 		{
-			event.Type = EVENT_TYPE_FOCUS_CHANGED;
+			event.Type = EVENT_TYPE_WINDOW_FOCUS_CHANGED;
 			event.FocusChanged.HasFocus = false;
 			break;
 		}

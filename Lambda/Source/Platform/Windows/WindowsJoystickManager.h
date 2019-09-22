@@ -1,6 +1,6 @@
 #pragma once
 #include "System/JoystickManager.h"
-#include "System/Clock.h"
+#include "Time/Clock.h"
 
 #if defined(LAMBDA_PLAT_WINDOWS)
 #include <Xinput.h>
@@ -16,13 +16,13 @@ namespace Lambda
 		~WindowsJoystickManager() = default;
 
 		virtual void InternalOnUpdate() override final;
-		virtual void InternalSetPollrate(const Time& time) override final;
-		virtual Time InternalGetPollrate() const override final;
+		virtual void InternalSetPollrate(const Timestep& time) override final;
+		virtual Timestep InternalGetPollrate() const override final;
 
 	private:
 		Clock m_PollingTimer;
-		Time m_PollRate;
-		Time m_CurrentPollRate;
+		Timestep m_PollRate;
+		Timestep m_CurrentPollRate;
 		XINPUT_STATE m_ControllerState[XUSER_MAX_COUNT];
 	};
 }

@@ -210,7 +210,7 @@ namespace Lambda
     void MacOSWindow::TextCallback(GLFWwindow* pWindow, uint32 codepoint)
     {
         Event event;
-        event.Type = EVENT_TYPE_TEXT;
+        event.Type = EVENT_TYPE_KEYTYPED;
         event.TextEvent.Character = codepoint;
         
         MacOSWindow* pUserWindow = reinterpret_cast<MacOSWindow*>(glfwGetWindowUserPointer(pWindow));
@@ -277,7 +277,7 @@ namespace Lambda
     void MacOSWindow::WindowFocusCallback(GLFWwindow* pWindow, int32 focused)
     {
         Event event;
-        event.Type = EVENT_TYPE_FOCUS_CHANGED;
+        event.Type = EVENT_TYPE_WINDOW_FOCUS_CHANGED;
         event.FocusChanged.HasFocus = (focused != 0);
         
         MacOSWindow* pUserWindow = reinterpret_cast<MacOSWindow*>(glfwGetWindowUserPointer(pWindow));

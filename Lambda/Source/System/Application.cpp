@@ -118,7 +118,7 @@ namespace Lambda
 			desc.Fullscreen			= params.Fullscreen;
 
 			m_pWindow = IWindow::Create(desc);
-			m_pWindow->SetEventCallback(EventDispatcher::SendEvent);
+			m_pWindow->SetEventCallback(EventDispatcher::DispatchEvent);
 
 			//Push graphics layer
 			EventLayer graphicsLayer = { IGraphicsDevice::OnEvent, "GraphicsLayer" };
@@ -187,6 +187,8 @@ namespace Lambda
 	{
 		OnRelease();
        
+		//Destroy ImGui-Layer
+		SafeDelete(m_pImGuiLayer);
         //Destroy window
         SafeDelete(m_pWindow);
 	}
@@ -216,7 +218,7 @@ namespace Lambda
 			}
 
 			//When window is out of focus make sure that the rendering-loop pauses
-		case EVENT_TYPE_FOCUS_CHANGED:
+		case EVENT_TYPE_WINDOW_FOCUS_CHANGED:
 			if (IGraphicsDevice::GetInstance())
 			{
 				IGraphicsDevice::GetInstance()->WaitForGPU();

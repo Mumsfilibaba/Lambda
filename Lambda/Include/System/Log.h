@@ -94,10 +94,12 @@ namespace Lambda
 		static std::unique_ptr<ILog> s_SystemLog;
 	};
 
+
 	inline ILog& Log::GetDebugLog()
 	{
 		return *s_DebugLog;
 	}
+
 
 	inline ILog& Log::GetSystemLog()
 	{

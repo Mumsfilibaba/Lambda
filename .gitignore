@@ -1,4 +1,6 @@
 Build/
+Dependencies/ImGui/bin/
+Dependencies/ImGui/bin-int/
 .vs/
 
 *.xcscheme

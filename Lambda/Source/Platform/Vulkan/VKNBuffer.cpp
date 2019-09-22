@@ -286,7 +286,7 @@ namespace Lambda
 			s_pInstance = nullptr;
 
 		//Delete all buffers
-		for (size_t i = 0; i < m_BuffersToDelete.size(); i++)
+		for (uint32 i = 0; i < uint32(m_BuffersToDelete.size()); i++)
 			CleanupBuffers(i);
 	}
     

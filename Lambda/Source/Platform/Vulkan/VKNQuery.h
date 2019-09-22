@@ -30,7 +30,7 @@ namespace Lambda
         
     private:
         uint32      m_CurrentQuery;
-        uint32      m_TimeStampPeriod;
+        float		m_TimeStampPeriod;
         VkQueryPool m_QueryPool;
         QueryDesc   m_Desc;
     };

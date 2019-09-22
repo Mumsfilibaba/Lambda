@@ -1,6 +1,6 @@
 #include "LambdaPch.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
-	#include "System/EventDispatcher.h"
+	#include "Events/EventDispatcher.h"
 	#include "WindowsJoystickManager.h"
 	
 	#pragma comment(lib, "Xinput.lib")
@@ -16,7 +16,7 @@ namespace Lambda
 	WindowsJoystickManager::WindowsJoystickManager()
 	{
 		memset(&m_ControllerState, 0, sizeof(XINPUT_STATE) * XUSER_MAX_COUNT);
-		m_PollRate = Time::Seconds(1.0f / 60.0f);
+		m_PollRate = Timestep::Seconds(1.0f / 60.0f);
 		m_CurrentPollRate = m_PollRate;
 	}
 
@@ -68,7 +68,7 @@ namespace Lambda
 					//Buttons
 					//TODO: Fix buttons
 
-					EventDispatcher::SendEvent(event);
+					EventDispatcher::DispatchEvent(event);
 					memcpy(&(m_ControllerState[i]), &state, sizeof(XINPUT_STATE));
 
 					//We found a controller
@@ -80,7 +80,7 @@ namespace Lambda
 		//Check again in two seconds if we have connnected
 		if (!isConnected)
 		{
-			m_CurrentPollRate = Time::Seconds(2.0f);
+			m_CurrentPollRate = Timestep::Seconds(2.0f);
 		}
 		else
 		{
@@ -89,13 +89,13 @@ namespace Lambda
 	}
 
 
-	void WindowsJoystickManager::InternalSetPollrate(const Time& time)
+	void WindowsJoystickManager::InternalSetPollrate(const Timestep& time)
 	{
 		m_PollRate = time;
 	}
 
 
-	Time WindowsJoystickManager::InternalGetPollrate() const
+	Timestep WindowsJoystickManager::InternalGetPollrate() const
 	{
 		return m_PollRate;
 	}

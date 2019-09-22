@@ -9,12 +9,60 @@ workspace "Lambda"
 	{ 
 		"Debug", 
 		"Release" 
-	}	
+	}
+	filter "configurations:Debug"
+		symbols "On"
+		runtime "Debug"
+		defines 
+		{ 
+			"LAMBDA_DEBUG"
+		}	
+	filter "configurations:Release"
+		symbols "On"
+		runtime "Release"
+		optimize "Full"
+		defines 
+		{ 
+			"LAMBDA_RELEASE" 
+		}
 
+	-- Visual Studio SPECIFIC
+	filter "action:vs*"
+		defines
+		{
+			"LAMBDA_VISUAL_STUDIO",
+			"_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING"
+		}
+	filter { "action:vs*", "configurations:Debug" }
+		defines
+		{
+			"_DEBUG",
+			"_CRTDBG_MAP_ALLOC"
+		}
+	filter { "action:vs*", "configurations:Release" }
+		defines
+		{
+			"NDEBUG"
+		}
+	-- macOS SPECIFIC
+	filter "system:macosx"
+		defines
+		{
+			"LAMBDA_PLAT_MACOS" 
+		}
+	-- WINDOWS SPECIFIC
+	filter "system:windows"
+		defines
+		{
+			"LAMBDA_PLAT_WINDOWS" 
+		}
+
+	-- Dependencies
 	group "Dependencies"
 		include "Dependencies/ImGui"
 	group ""
 
+	-- ENGINE PROJECT
 	project "Lambda"
 		kind "SharedLib"
 		language "C++"
@@ -48,39 +96,6 @@ workspace "Lambda"
 			"Dependencies/glm",
 			"Dependencies/ImGui"
 		}
-		filter "configurations:Debug"
-			symbols "On"
-			runtime "Debug"
-			defines 
-			{ 
-				"LAMBDA_DEBUG"
-			}	
-		filter "configurations:Release"
-			symbols "On"
-			runtime "Release"
-			optimize "Full"
-			defines 
-			{ 
-				"LAMBDA_RELEASE" 
-			}
-		-- Visual Studio Specific
-		filter "action:vs*"
-			defines
-			{
-				"LAMBDA_VISUAL_STUDIO",
-				"_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING"
-			}
-		filter { "action:vs*", "configurations:Debug" }
-			defines
-			{
-				"_DEBUG",
-				"_CRTDBG_MAP_ALLOC"
-			}
-		filter { "action:vs*", "configurations:Release" }
-			defines
-			{
-				"NDEBUG"
-			}
 		--	macOS SPECIFIC
 		filter "system:macosx"
 			links
@@ -100,10 +115,6 @@ workspace "Lambda"
 				"/usr/local/include",
 				"../vulkansdk-macos-1.1.114.0/macOS/include"
 			}
-			defines
-			{
-				"LAMBDA_PLAT_MACOS" 
-			}
 		-- WINDOWS SPECIFIC
 		filter "system:windows"
 			pchheader "LambdaPch.h"
@@ -122,10 +133,6 @@ workspace "Lambda"
 			sysincludedirs
 			{
 				"C:/VulkanSDK/1.1.114.0/Include"
-			}
-			defines
-			{
-				"LAMBDA_PLAT_WINDOWS" 
 			}
 			sysincludedirs
 			{
@@ -166,6 +173,7 @@ workspace "Lambda"
 				"Dependencies/Assimp/build/contrib/zlib/Release"
 			}
 
+	-- EXAMPLE PROJECTS
 	project "Sandbox"
 		kind "ConsoleApp"
 		language "C++"
@@ -205,17 +213,11 @@ workspace "Lambda"
 		{ 
 			"Lambda"
 		}
-		-- macOS SPECIFIC
-		filter "system:macosx"
+		filter "action:vs*"
 			defines
 			{
-				"LAMBDA_PLAT_MACOS" 
-			}
-		-- WINDOWS SPECIFIC
-		filter "system:windows"
-			defines
-			{
-				"LAMBDA_PLAT_WINDOWS" 
+				"LAMBDA_VISUAL_STUDIO",
+				"_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING"
 			}
 		filter { "action:vs*", "configurations:Debug" }
 			defines
@@ -223,7 +225,6 @@ workspace "Lambda"
 				"_DEBUG",
 				"_CRTDBG_MAP_ALLOC"
 			}
-			
 		filter { "action:vs*", "configurations:Release" }
 			defines
 			{

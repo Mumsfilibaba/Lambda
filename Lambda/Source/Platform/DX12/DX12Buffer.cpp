@@ -86,15 +86,15 @@ namespace Lambda
 			//Vertexbuffer
 			if (desc.Flags & BUFFER_FLAGS_VERTEX_BUFFER)
 			{
-				m_VBV.BufferLocation = m_Adress;
-				m_VBV.SizeInBytes = desc.SizeInBytes;
-				m_VBV.StrideInBytes = desc.StrideInBytes;
+				m_VBV.BufferLocation	= m_Adress;
+				m_VBV.SizeInBytes		= UINT(desc.SizeInBytes);
+				m_VBV.StrideInBytes		= desc.StrideInBytes;
 			}
 			//Indexbuffer
 			else if (desc.Flags & BUFFER_FLAGS_INDEX_BUFFER)
 			{
-				m_IBV.BufferLocation = m_Adress;
-				m_IBV.SizeInBytes = desc.SizeInBytes;
+				m_IBV.BufferLocation	= m_Adress;
+				m_IBV.SizeInBytes		= UINT(desc.SizeInBytes);
 				
 				//TODO: Format?
 			}
