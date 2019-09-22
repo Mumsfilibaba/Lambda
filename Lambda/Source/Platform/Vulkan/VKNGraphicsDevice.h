@@ -10,13 +10,13 @@ namespace Lambda
 	class VKNDevice;
     class VKNBuffer;
     class VKNTexture;
+    class VKNSwapChain;
+    class VKNAllocator;
     class VKNCommandList;
     class VKNSamplerState;
-	class VKNSwapChain;
-	class VKNUploadBuffer;
-	class VKNAllocator;
-	class VKNFramebufferCache;
-	class VKNBufferManager;
+    class VKNUploadBuffer;
+    class VKNBufferManager;
+    class VKNFramebufferCache;
     
 	//-----------------
 	//VKNGraphicsDevice
