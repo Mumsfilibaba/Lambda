@@ -33,20 +33,23 @@ namespace Lambda
         glm::vec3 Position;
     };
 
-    
-	class SandBox final : public Application
+
+	class SandBox final : public Application, public EventLayer
 	{
 	public:
 		SandBox(const EngineParams& params = EngineParams());
 		~SandBox();
 
-		virtual void OnLoad() override final;
-		virtual void OnUpdate(Timestep dt) override final;
-		virtual void OnRender(Timestep dt) override final;
-		virtual void OnRelease() override final;
-
+		virtual void    OnLoad() override final;
+		virtual void    OnUpdate(Timestep dt) override final;
+		virtual void    OnRender(Timestep dt) override final;
+		virtual void    OnRelease() override final;
+        virtual void    OnPush() override final;
+        virtual void    OnPop() override final;
+        virtual bool    OnEvent(const Event& event) override final;
+        virtual uint32  GetRecivableCategories() const override final;
+        
 		void CreateCamera(uint32 width, uint32 height);
-        bool EventHandler(const Event& event);
 
 	private:
         //Commandlist
@@ -83,8 +86,5 @@ namespace Lambda
         Camera m_Camera;
 		CameraBuffer m_CameraBuffer;
         TransformBuffer m_TransformBuffer;
-
-	public:
-		static bool OnEvent(const Event& event);
 	};
 }

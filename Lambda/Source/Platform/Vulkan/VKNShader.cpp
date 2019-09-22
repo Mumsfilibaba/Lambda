@@ -38,7 +38,7 @@ namespace Lambda
         info.codeSize = desc.SourceLength;
         info.pCode = reinterpret_cast<const uint32_t*>(m_ByteCode.data());
         
-		VKNDevice& device = VKNDevice::GetInstance();
+		VKNDevice& device = VKNDevice::Get();
         if (vkCreateShaderModule(device.GetDevice(), &info, nullptr, &m_Shader) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create shadermodule\n");

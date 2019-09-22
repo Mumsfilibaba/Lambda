@@ -27,7 +27,7 @@ namespace Lambda
 	void VKNSwapChain::Init(const VKNSwapChainDesc& desc)
 	{
         //Get the swapchain capabilities from the adapter
-		VKNDevice& device					= VKNDevice::GetInstance();
+		VKNDevice& device					= VKNDevice::Get();
         SwapChainCapabilities cap			= QuerySwapChainSupport(device.GetPhysicalDevice(), device.GetSurface());
         QueueFamilyIndices familyIndices	= device.GetQueueFamilyIndices();
         
@@ -85,7 +85,7 @@ namespace Lambda
     
     void VKNSwapChain::InitSwapChain(VkSemaphore signalSemaphore, VkExtent2D extent)
     {
-		VKNDevice& device			= VKNDevice::GetInstance();
+		VKNDevice& device			= VKNDevice::Get();
 		SwapChainCapabilities cap	= QuerySwapChainSupport(device.GetPhysicalDevice(), device.GetSurface());
         
         //Choose swapchain extent (Size)
@@ -188,7 +188,7 @@ namespace Lambda
 	{
 		//LOG_DEBUG_INFO("Vulkan: vkAcquireNextImageKHR with semaphore %x\n", signalSemaphore);
 		
-		VKNDevice& device = VKNDevice::GetInstance();
+		VKNDevice& device = VKNDevice::Get();
 		vkAcquireNextImageKHR(device.GetDevice(), m_SwapChain, 0xffffffffffffffff, signalSemaphore, VK_NULL_HANDLE, &m_CurrentBufferIndex);
 	}
 
@@ -232,7 +232,7 @@ namespace Lambda
 	void VKNSwapChain::ResizeBuffers(VkSemaphore signalSemaphore, uint32 width, uint32 height)
     {
         //Relase the old resources
-		VKNDevice& device = VKNDevice::GetInstance();
+		VKNDevice& device = VKNDevice::Get();
 		Release(device.GetDevice());
         
         //Create swapchain again

@@ -233,7 +233,7 @@ namespace Lambda
 		renderPassInfo.pSubpasses		= &subpass;
 		renderPassInfo.pDependencies	= nullptr;
 
-		VKNDevice& device = VKNDevice::GetInstance();
+		VKNDevice& device = VKNDevice::Get();
 		if (vkCreateRenderPass(device.GetDevice(), &renderPassInfo, nullptr, &m_RenderPass) != VK_SUCCESS)
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to create renderpass\n");

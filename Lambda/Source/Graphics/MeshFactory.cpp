@@ -8,6 +8,10 @@
 
 namespace Lambda
 {
+	//-----------
+	//MeshFactory
+	//-----------
+
 	MeshData MeshFactory::CreateFromFile(const std::string& filename, bool mergeMeshes, bool leftHanded) noexcept
 	{
 		using namespace std;

@@ -36,7 +36,7 @@ namespace Lambda
         info.size                   = sizeInBytes;
         info.usage                  = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
         
-		VKNDevice& device = VKNDevice::GetInstance();
+		VKNDevice& device = VKNDevice::Get();
         if (vkCreateBuffer(device.GetDevice(), &info, nullptr, &m_Buffer) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create buffer for UploadBuffer\n");
@@ -82,7 +82,7 @@ namespace Lambda
 		info.usage					= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
 
-		VKNDevice& device = VKNDevice::GetInstance();
+		VKNDevice& device = VKNDevice::Get();
 		if (vkCreateBuffer(device.GetDevice(), &info, nullptr, &newBuffer) != VK_SUCCESS)
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to reallocate buffer for UploadBuffer\n");
@@ -140,7 +140,7 @@ namespace Lambda
 		//Destroy old buffers
 		if (m_OldBuffers.size() > 0)
 		{
-			VKNDevice& device = VKNDevice::GetInstance();
+			VKNDevice& device = VKNDevice::Get();
 			for (auto& buffer : m_OldBuffers)
 			{
 				vkDestroyBuffer(device.GetDevice(), buffer, nullptr);

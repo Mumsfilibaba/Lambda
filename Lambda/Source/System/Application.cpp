@@ -7,11 +7,47 @@
 
 namespace Lambda
 {
-	Application* Application::s_pInstance = nullptr;
+	//----------------
+	//ApplicationLayer
+	//----------------
 
+	ApplicationLayer::ApplicationLayer()
+		: EventLayer("ApplicationLayer")
+	{
+	}
+
+	void ApplicationLayer::OnPush()
+	{
+	}
+
+
+	void ApplicationLayer::OnPop()
+	{
+	}
+
+
+	bool ApplicationLayer::OnEvent(const Event& event)
+	{
+		Application& application = Application::Get();
+		return application.OnEvent(event);
+	}
+
+
+	uint32 ApplicationLayer::GetRecivableCategories() const
+	{
+		return EVENT_CATEGORY_WINDOW | EVENT_CATEGORY_KEYBOARD;
+	}
+
+	//-----------
+	//Application
+	//-----------
+
+	Application* Application::s_pInstance = nullptr;
 
 	Application::Application(const EngineParams& params)
 		: m_pWindow(nullptr),
+		m_pImGuiLayer(nullptr),
+		m_pApplicationLayer(nullptr),
 		m_Params(),
 		m_ExitCode(0),
 		m_Running(true),
@@ -103,8 +139,8 @@ namespace Lambda
 	{
 		//Setup application layer
 		{
-			EventLayer applicationLayer = { Application::OnEvent, "ApplicationLayer" };
-			EventDispatcher::PushEventLayer(applicationLayer);
+			m_pApplicationLayer = DBG_NEW ApplicationLayer();
+			EventDispatcher::PushEventLayer(m_pApplicationLayer);
 		}
 
 		//Create window
@@ -121,17 +157,15 @@ namespace Lambda
 			m_pWindow->SetEventCallback(EventDispatcher::DispatchEvent);
 
 			//Push graphics layer
-			EventLayer graphicsLayer = { IGraphicsDevice::OnEvent, "GraphicsLayer" };
-			EventDispatcher::PushEventLayer(graphicsLayer);
+            m_pGraphicsLayer = DBG_NEW GraphicsLayer();
+            EventDispatcher::PushEventLayer(m_pGraphicsLayer);
 		}
 
 		//Create ImGUI-Layer
 		{
 			m_pImGuiLayer = DBG_NEW ImGuiLayer();
-
-			//Push ImGui-Layer 
-			EventLayer imGuiLayer = { ImGuiLayer::OnEvent, "ImGuiLayer" };
-			EventDispatcher::PushEventLayer(imGuiLayer);
+			//Push ImGui-Layer
+			EventDispatcher::PushEventLayer(m_pImGuiLayer);
 		}
 
 		//Set joystick-pollingrate
@@ -151,7 +185,7 @@ namespace Lambda
 	}
 
 
-	Application& Application::GetInstance()
+	Application& Application::Get()
 	{
 		LAMBDA_ASSERT(s_pInstance != nullptr);
 		return *s_pInstance;
@@ -189,12 +223,14 @@ namespace Lambda
        
 		//Destroy ImGui-Layer
 		SafeDelete(m_pImGuiLayer);
-        //Destroy window
+        //Destroy applicationlayer
+		SafeDelete(m_pApplicationLayer);
+		//Destroy window
         SafeDelete(m_pWindow);
 	}
 
 
-	bool Application::InternalOnEvent(const Event& event)
+	bool Application::OnEvent(const Event& event)
 	{
 		switch (event.Type)
 		{
@@ -219,9 +255,9 @@ namespace Lambda
 
 			//When window is out of focus make sure that the rendering-loop pauses
 		case EVENT_TYPE_WINDOW_FOCUS_CHANGED:
-			if (IGraphicsDevice::GetInstance())
+			if (IGraphicsDevice::Get())
 			{
-				IGraphicsDevice::GetInstance()->WaitForGPU();
+				IGraphicsDevice::Get()->WaitForGPU();
 			}
 
 			m_HasFocus = event.FocusChanged.HasFocus;
@@ -233,11 +269,5 @@ namespace Lambda
 		default:
 			return false;
 		}
-	}
-
-
-	bool Application::OnEvent(const Event& event)
-	{
-		return Application::GetInstance().InternalOnEvent(event);
 	}
 }

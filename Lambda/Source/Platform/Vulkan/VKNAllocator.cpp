@@ -35,7 +35,7 @@ namespace Lambda
 		allocInfo.allocationSize	    = m_SizeInBytes;
 		allocInfo.memoryTypeIndex	    = m_MemoryType;
 
-		VKNDevice& device = VKNDevice::GetInstance();
+		VKNDevice& device = VKNDevice::Get();
 		if (vkAllocateMemory(device.GetDevice(), &allocInfo, nullptr, &m_DeviceMemory) != VK_SUCCESS)
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to allocate MemoryChunk\n");
@@ -172,7 +172,7 @@ namespace Lambda
 		//If not mapped -> map
 		if (!m_IsMapped)
 		{
-			VKNDevice& device = VKNDevice::GetInstance();
+			VKNDevice& device = VKNDevice::Get();
 
 			void* pMemory = nullptr;
 			vkMapMemory(device.GetDevice(), m_DeviceMemory, 0, VK_WHOLE_SIZE, 0, &pMemory);
@@ -188,7 +188,7 @@ namespace Lambda
 		//If mapped -> unmap
 		if (m_IsMapped)
 		{
-			VKNDevice& device = VKNDevice::GetInstance();
+			VKNDevice& device = VKNDevice::Get();
 			vkUnmapMemory(device.GetDevice(), m_DeviceMemory);
 
 			m_pHostMemory   = nullptr;
@@ -331,7 +331,7 @@ namespace Lambda
 		m_Chunks(),
 		m_MemoryToDeallocate()
 	{
-		VKNDevice& device = VKNDevice::GetInstance();
+		VKNDevice& device = VKNDevice::Get();
 
 		uint32 frameCount = device.GetDeviceSettings().FramesAhead;
 		m_MemoryToDeallocate.resize(frameCount);
@@ -354,7 +354,7 @@ namespace Lambda
 		m_TotalAllocated += memoryRequirements.size;
 
 		//Get needed memorytype
-		VKNDevice& device = VKNDevice::GetInstance();
+		VKNDevice& device = VKNDevice::Get();
 		uint32 memoryType = FindMemoryType(device.GetPhysicalDevice(), memoryRequirements.memoryTypeBits, properties);
 
 		//Try allocating from existing chunk
@@ -513,7 +513,7 @@ namespace Lambda
 		descriptorAllocInfo.descriptorSetCount	= 1;
 		descriptorAllocInfo.pSetLayouts			= &descriptorSetLayout;
 
-		VKNDevice& device = VKNDevice::GetInstance();
+		VKNDevice& device = VKNDevice::Get();
 		if (vkAllocateDescriptorSets(device.GetDevice(), &descriptorAllocInfo, &set))
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to allocate DescriptorSets\n");
@@ -568,7 +568,7 @@ namespace Lambda
 		descriptorPoolInfo.pPoolSizes		= poolSizes;
 		descriptorPoolInfo.maxSets			= m_SetCount;
 
-		VKNDevice& device = VKNDevice::GetInstance();
+		VKNDevice& device = VKNDevice::Get();
 		if (vkCreateDescriptorPool(device.GetDevice(), &descriptorPoolInfo, nullptr, &pool) != VK_SUCCESS)
 		{
 			if (m_Pool == VK_NULL_HANDLE)
@@ -615,7 +615,7 @@ namespace Lambda
 		LAMBDA_ASSERT(s_pInstance == nullptr);
 		s_pInstance = this;
 
-		VKNDevice& device = VKNDevice::GetInstance();
+		VKNDevice& device = VKNDevice::Get();
 
 		DeviceSettings settings = device.GetDeviceSettings();
 		m_FrameCount = settings.FramesAhead;
@@ -643,7 +643,7 @@ namespace Lambda
 		auto& oldpools = m_OldPools[m_CurrentFrame];
 		if (oldpools.size() > 0)
 		{
-			VKNDevice& device = VKNDevice::GetInstance();
+			VKNDevice& device = VKNDevice::Get();
 			for (auto& pool : oldpools)
 			{
 				vkDestroyDescriptorPool(device.GetDevice(), pool, nullptr);

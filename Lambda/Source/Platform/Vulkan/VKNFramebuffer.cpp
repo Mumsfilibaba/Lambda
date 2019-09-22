@@ -122,7 +122,7 @@ namespace Lambda
 
 		VkFramebuffer framebuffer = VK_NULL_HANDLE;
 		
-		VKNDevice& device = VKNDevice::GetInstance();
+		VKNDevice& device = VKNDevice::Get();
 		if (vkCreateFramebuffer(device.GetDevice(), &info, nullptr, &framebuffer) != VK_SUCCESS)
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to create Framebuffer\n");

@@ -106,7 +106,7 @@ namespace Lambda
 		descriptorLayoutInfo.bindingCount   = uint32(layoutBindings.size());
 		descriptorLayoutInfo.pBindings      = layoutBindings.data();
 
-		VKNDevice& device = VKNDevice::GetInstance();
+		VKNDevice& device = VKNDevice::Get();
 		if (vkCreateDescriptorSetLayout(device.GetDevice(), &descriptorLayoutInfo, nullptr, &m_DescriptorSetLayout) != VK_SUCCESS)
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to create DescriptorSetLayout\n");
@@ -296,7 +296,7 @@ namespace Lambda
 			//Write all descriptors
 			if (m_DescriptorWrites.size() > 0)
 			{
-				VKNDevice& device = VKNDevice::GetInstance();
+				VKNDevice& device = VKNDevice::Get();
 				vkUpdateDescriptorSets(device.GetDevice(), uint32(m_DescriptorWrites.size()), m_DescriptorWrites.data(), 0, nullptr);
 				m_DescriptorWrites.clear();
 			}

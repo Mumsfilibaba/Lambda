@@ -1,6 +1,7 @@
 #pragma once
 #include "IWindow.h"
 #include "Time/Clock.h"
+#include "Events/EventDispatcher.h"
 #include "Graphics/IGraphicsDevice.h"
 #include "Graphics/ImGuiLayer.h"
 
@@ -20,6 +21,24 @@ namespace Lambda
 		bool Fullscreen = false;
 	};
 
+	//----------------
+	//ApplicationLayer
+	//----------------
+
+	class ApplicationLayer : public EventLayer
+	{
+	public:
+		LAMBDA_NO_COPY(ApplicationLayer);
+
+		ApplicationLayer();
+		~ApplicationLayer() = default;
+
+		virtual void 	OnPush() override final;
+		virtual void 	OnPop() override final;
+		virtual bool 	OnEvent(const Event& event) override final;
+		virtual uint32	GetRecivableCategories() const override final;
+	};
+
 	//-----------
 	//Application
 	//-----------
@@ -34,10 +53,13 @@ namespace Lambda
 		virtual void OnUpdate(Timestep dt) {}
 		virtual void OnRender(Timestep dt) {}
 		virtual void OnRelease() {}
+				
+		bool OnEvent(const Event& event);
 
 		int32 Run();
+
 		const EngineParams& GetEngineParams() const;
-		IWindow* GetWindow() const;
+		IWindow* 			GetWindow() const;
 
 	private:
 		void Init(const EngineParams& params);
@@ -46,21 +68,19 @@ namespace Lambda
 		void InternalOnUpdate(Timestep dt);
 		void InternalOnRender(Timestep dt);
 		void InternalOnRelease();
-		bool InternalOnEvent(const Event& event);
 
 	private:
-		IWindow* m_pWindow;
-		ImGuiLayer* m_pImGuiLayer;
-		EngineParams m_Params;
-		int32 m_ExitCode;
-		bool m_Running;
-        bool m_HasFocus;
+		IWindow* 			m_pWindow;
+		ImGuiLayer*	 		m_pImGuiLayer;
+		ApplicationLayer* 	m_pApplicationLayer;
+        GraphicsLayer*      m_pGraphicsLayer;
+		EngineParams 		m_Params;
+		int32 				m_ExitCode;
+		bool 				m_Running;
+		bool 				m_HasFocus;
 
 	public:
-		static Application& GetInstance();
-
-	private:
-		static bool OnEvent(const Event& event);
+		static Application& Get();
 
 	private:
 		static Application* s_pInstance;

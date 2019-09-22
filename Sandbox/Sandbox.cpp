@@ -11,6 +11,7 @@ namespace Lambda
 {   
 	SandBox::SandBox(const EngineParams& params)
 		: Application(params),
+        EventLayer("SandBoxLayer"),
 		m_pLists(),
         m_pCurrentList(nullptr),
 		m_pVS(nullptr),
@@ -32,14 +33,13 @@ namespace Lambda
 	void SandBox::OnLoad()
 	{
 		//Add Sandbox-level eventlayer
-		EventLayer sandboxLayer = { SandBox::OnEvent, "SandBox" };
-		EventDispatcher::PushEventLayer(sandboxLayer);
+		EventDispatcher::PushEventLayer(this);
 
 		//Init size
 		m_Width		= (float)GetWindow()->GetWidth();
 		m_Height	= (float)GetWindow()->GetHeight();
 
-		IGraphicsDevice* pDevice = IGraphicsDevice::GetInstance();
+		IGraphicsDevice* pDevice = IGraphicsDevice::Get();
         if (pDevice)
         {
             //Create commandlists
@@ -364,7 +364,7 @@ namespace Lambda
         static Clock clock;
         
         //Get current device
-        IGraphicsDevice* pDevice = IGraphicsDevice::GetInstance();
+        IGraphicsDevice* pDevice = IGraphicsDevice::Get();
         
         //Set commandlist for frame
         uint32 backBufferIndex = pDevice->GetBackBufferIndex();
@@ -510,7 +510,7 @@ namespace Lambda
 
 	void SandBox::OnRelease()
 	{
-		IGraphicsDevice* pDevice = IGraphicsDevice::GetInstance();
+		IGraphicsDevice* pDevice = IGraphicsDevice::Get();
         if (pDevice)
         {
             pDevice->WaitForGPU();
@@ -545,10 +545,26 @@ namespace Lambda
         m_Camera.SetAspect(float(width), float(height));
         m_Camera.CreateProjection();
 	}
+
+
+    void SandBox::OnPush()
+    {
+    }
+
+
+    void SandBox::OnPop()
+    {
+    }
+
+
+    uint32 SandBox::GetRecivableCategories() const
+    {
+        return EVENT_CATEGORY_WINDOW | EVENT_CATEGORY_KEYBOARD | EVENT_CATEGORY_MOUSE;
+    }
     
     
     //Event handler function for the instance
-    bool SandBox::EventHandler(const Event &event)
+    bool SandBox::OnEvent(const Event &event)
     {
         switch (event.Type)
         {
@@ -610,12 +626,4 @@ namespace Lambda
                 return false;
         }
     }
-
-    
-    //Call the instance eventhandler
-	bool SandBox::OnEvent(const Event& event)
-	{
-        SandBox& instance = (SandBox&)GetInstance();
-        return instance.EventHandler(event);
-	}
 }

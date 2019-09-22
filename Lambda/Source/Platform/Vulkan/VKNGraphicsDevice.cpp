@@ -688,7 +688,7 @@ namespace Lambda
     void VKNGraphicsDevice::WaitForGPU() const
     {
         //LOG_DEBUG_INFO("VKNGraphicsDevice::WaitForGPU\n");
-        VKNDevice& device = VKNDevice::GetInstance();
+        VKNDevice& device = VKNDevice::Get();
         vkDeviceWaitIdle(device.GetDevice());
     }
 
@@ -742,7 +742,7 @@ namespace Lambda
     }
     
     
-    bool VKNGraphicsDevice::InternalOnEvent(const Event& event)
+    bool VKNGraphicsDevice::OnEvent(const Event& event)
     {
         //Handle resize event
         if (event.Type == EVENT_TYPE_WINDOW_RESIZE)

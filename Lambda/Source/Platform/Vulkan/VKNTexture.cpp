@@ -136,7 +136,7 @@ namespace Lambda
 			}
         }
 
-		VKNDevice& device = VKNDevice::GetInstance();
+		VKNDevice& device = VKNDevice::Get();
         if (vkCreateImage(device.GetDevice(), &info, nullptr, &m_Image) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create image\n");
@@ -192,7 +192,7 @@ namespace Lambda
         viewInfo.subresourceRange.baseArrayLayer    = 0;
         viewInfo.subresourceRange.layerCount        = 1;
         
-		VKNDevice& device = VKNDevice::GetInstance();
+		VKNDevice& device = VKNDevice::Get();
         if (vkCreateImageView(device.GetDevice(), &viewInfo, nullptr, &m_View) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create image view\n");

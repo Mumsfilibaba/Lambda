@@ -12,7 +12,7 @@ namespace Lambda
     {
         Init(desc);
         
-        VKNDevice& device = VKNDevice::GetInstance();
+        VKNDevice& device = VKNDevice::Get();
         if (m_Desc.Type == QUERY_TYPE_TIMESTAMP)
         {
             m_TimeStampPeriod = device.GetPhysicalDeviceProperties().limits.timestampPeriod;
@@ -34,7 +34,7 @@ namespace Lambda
             queryInfo.queryType = VK_QUERY_TYPE_TIMESTAMP;
         }
         
-        VKNDevice& device = VKNDevice::GetInstance();
+        VKNDevice& device = VKNDevice::Get();
         if (vkCreateQueryPool(device.GetDevice(), &queryInfo, nullptr, &m_QueryPool) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create querypool\n");
@@ -51,7 +51,7 @@ namespace Lambda
     {
         LAMBDA_ASSERT(pResults != nullptr);
         
-        VKNDevice& device = VKNDevice::GetInstance();
+        VKNDevice& device = VKNDevice::Get();
         if (vkGetQueryPoolResults(device.GetDevice(), m_QueryPool, startQuery, numResults, numResults * sizeof(uint64), pResults, sizeof(uint64), VK_QUERY_RESULT_WITH_AVAILABILITY_BIT) == VK_SUCCESS)
 		{
 			if (m_Desc.Type == QUERY_TYPE_TIMESTAMP)

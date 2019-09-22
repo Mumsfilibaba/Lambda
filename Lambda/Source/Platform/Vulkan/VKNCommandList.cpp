@@ -35,7 +35,7 @@ namespace Lambda
     
     void VKNCommandList::Init(IVKNAllocator* pAllocator, CommandListType type)
     {
-		VKNDevice& device = VKNDevice::GetInstance();
+		VKNDevice& device = VKNDevice::Get();
 
         //Get queuefamiliy indices
         QueueFamilyIndices familyIndices = device.GetQueueFamilyIndices();
@@ -563,7 +563,7 @@ namespace Lambda
 		{
 			m_Name = std::string(pName);
 
-			VKNDevice& device = VKNDevice::GetInstance();
+			VKNDevice& device = VKNDevice::Get();
 			device.SetVulkanObjectName(VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64)m_CommandBuffer, m_Name);
 		}
     }
@@ -580,7 +580,7 @@ namespace Lambda
     
     void VKNCommandList::Reset()
     {
-		VKNDevice& device = VKNDevice::GetInstance();
+		VKNDevice& device = VKNDevice::Get();
 
         //Reset commandbuffer
         if (vkResetCommandPool(device.GetDevice(), m_CommandPool, VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT) != VK_SUCCESS)

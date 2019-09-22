@@ -232,7 +232,7 @@ namespace Lambda
         pipelineInfo.basePipelineHandle     = VK_NULL_HANDLE;
         pipelineInfo.basePipelineIndex      = -1;
         
-		VKNDevice& device = VKNDevice::GetInstance();
+		VKNDevice& device = VKNDevice::Get();
         if (vkCreateGraphicsPipelines(device.GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_Pipeline) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create GraphicsPipelineState\n");
@@ -272,7 +272,7 @@ namespace Lambda
 		{
 			std::string name(pName);
 
-			VKNDevice& device = VKNDevice::GetInstance();
+			VKNDevice& device = VKNDevice::Get();
 			device.SetVulkanObjectName(VK_OBJECT_TYPE_PIPELINE, (uint64)m_Pipeline, name);
 		}
     }

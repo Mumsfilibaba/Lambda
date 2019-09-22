@@ -38,7 +38,7 @@ namespace Lambda
         info.sharingMode			= VK_SHARING_MODE_EXCLUSIVE;
 
 		//If dynamic we allocate extra size so we can use dynamic offsets
-        VKNDevice& device = VKNDevice::GetInstance();
+        VKNDevice& device = VKNDevice::Get();
 		if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
 		{
             DeviceSettings settings                  = device.GetDeviceSettings();
@@ -167,7 +167,7 @@ namespace Lambda
 		info.pQueueFamilyIndices	= nullptr;
 		info.sharingMode			= VK_SHARING_MODE_EXCLUSIVE;
 
-		VKNDevice& device		= VKNDevice::GetInstance();
+		VKNDevice& device		= VKNDevice::Get();
         GraphicsDeviceDesc desc = device.GetDesc();
         
         //Set new size
@@ -273,7 +273,7 @@ namespace Lambda
 		LAMBDA_ASSERT(s_pInstance == nullptr);
 		s_pInstance = this;
         
-		VKNDevice& device		= VKNDevice::GetInstance();
+		VKNDevice& device		= VKNDevice::Get();
         GraphicsDeviceDesc desc = device.GetDesc();
         
         m_BuffersToDelete.resize(desc.BackBufferCount);
@@ -345,7 +345,7 @@ namespace Lambda
 	
 	void VKNBufferManager::CleanupBuffers(uint32 frameCount)
 	{
-		VKNDevice& device = VKNDevice::GetInstance();
+		VKNDevice& device = VKNDevice::Get();
 
 		auto& buffers = m_BuffersToDelete[frameCount];
 		for (auto& buffer : buffers)

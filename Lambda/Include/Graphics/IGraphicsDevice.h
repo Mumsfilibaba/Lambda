@@ -31,19 +31,39 @@ namespace Lambda
     
     struct GraphicsDeviceDesc
     {
-        IWindow*    pWindow = nullptr;
-        GraphicsApi Api = GRAPHICS_API_VULKAN;
-        uint32      Flags = GRAPHICS_CONTEXT_FLAG_NONE;
-		uint32      SampleCount = 1;
+        IWindow*    pWindow         = nullptr;
+        GraphicsApi Api             = GRAPHICS_API_VULKAN;
+        uint32      Flags           = GRAPHICS_CONTEXT_FLAG_NONE;
+		uint32      SampleCount     = 1;
         uint32      BackBufferCount = 3;
     };
-    
+
+    //---------------
+    //IGraphicsDevice
+    //---------------
+
+    class LAMBDA_API GraphicsLayer : public EventLayer
+    {
+    public:
+        LAMBDA_NO_COPY(GraphicsLayer);
+        
+        GraphicsLayer();
+        ~GraphicsLayer() = default;
+        
+        virtual void    OnPop() override final;
+        virtual void    OnPush() override final;
+        virtual bool    OnEvent(const Event& event) override final;
+        virtual uint32  GetRecivableCategories() const override final;
+    };
+
     //---------------
     //IGraphicsDevice
     //---------------
     
 	class LAMBDA_API IGraphicsDevice
 	{
+        friend class GraphicsLayer;
+        
 	public:
 		LAMBDA_INTERFACE(IGraphicsDevice);
 
@@ -87,12 +107,11 @@ namespace Lambda
 		virtual uint32              GetSwapChainHeight() const = 0;
 
 	private:
-		virtual bool InternalOnEvent(const Event& event) = 0;
+		virtual bool OnEvent(const Event& event) = 0;
 
 	public:
 		static IGraphicsDevice* Create(const GraphicsDeviceDesc& desc);
-		static IGraphicsDevice* GetInstance();
-		static bool OnEvent(const Event& event);
+		static IGraphicsDevice* Get();
 
 	protected:
 		static IGraphicsDevice* s_pInstance;

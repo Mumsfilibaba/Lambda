@@ -1,5 +1,5 @@
 #pragma once
-#include "Events/Event.h"
+#include "Events/EventDispatcher.h"
 
 namespace Lambda
 {
@@ -7,7 +7,7 @@ namespace Lambda
 	//ImGuiLayer
 	//----------
 
-	class LAMBDA_API ImGuiLayer
+	class LAMBDA_API ImGuiLayer : public EventLayer
 	{
 	public:
 		LAMBDA_NO_COPY(ImGuiLayer);
@@ -15,13 +15,9 @@ namespace Lambda
 		ImGuiLayer();
 		~ImGuiLayer() = default;
 
-	private:
-		bool InternalOnEvent(const Event& event);
-
-	private:
-		static ImGuiLayer* s_pInstance;
-
-	public:
-		static bool OnEvent(const Event& event);
+        virtual void    OnPop() override final;
+        virtual void    OnPush() override final;
+        virtual bool    OnEvent(const Event& event) override final;
+        virtual uint32  GetRecivableCategories() const override final;
 	};
 }

@@ -7,23 +7,30 @@ namespace Lambda
 	//ImGuiLayer
 	//----------
 
-	ImGuiLayer* ImGuiLayer::s_pInstance = nullptr;
-
-	ImGuiLayer::ImGuiLayer()
-	{
-		LAMBDA_ASSERT(s_pInstance == nullptr);
-		s_pInstance = this;
-	}
+    ImGuiLayer::ImGuiLayer()
+        : EventLayer("ImGuiLayer")
+    {
+    }
 
 
-	bool ImGuiLayer::InternalOnEvent(const Event& event)
-	{
-		return false;
-	}
-	
-	
-	bool ImGuiLayer::OnEvent(const Event& event)
-	{
-		return (s_pInstance) ? s_pInstance->InternalOnEvent(event) : false;
-	}
+    void ImGuiLayer::OnPop()
+    {
+    }
+
+
+    void ImGuiLayer::OnPush()
+    {
+    }
+
+
+    bool ImGuiLayer::OnEvent(const Event& event)
+    {
+        return false;
+    }
+
+
+    uint32 ImGuiLayer::GetRecivableCategories() const
+    {
+        return 0;
+    }
 }

@@ -83,7 +83,7 @@ namespace Lambda
 			void* pUserData);
 
 	public:
-		static VKNDevice& GetInstance();
+		static VKNDevice& Get();
 	};
 
 

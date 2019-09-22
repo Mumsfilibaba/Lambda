@@ -7,6 +7,43 @@
 
 namespace Lambda
 {
+
+    //-------------
+    //GraphicsLayer
+    //-------------
+
+    GraphicsLayer::GraphicsLayer()
+        : EventLayer("GraphicsLayer")
+    {
+    }
+
+
+    void GraphicsLayer::OnPop()
+    {
+    }
+
+
+    void GraphicsLayer::OnPush()
+    {
+    }
+
+
+    bool GraphicsLayer::OnEvent(const Event& event)
+    {
+        IGraphicsDevice* pDevice = IGraphicsDevice::Get();
+        return pDevice->OnEvent(event);
+    }
+
+
+    uint32 GraphicsLayer::GetRecivableCategories() const
+    {
+        return EVENT_CATEGORY_WINDOW;
+    }
+
+    //---------------
+    //IGraphicsDevice
+    //---------------
+
 	IGraphicsDevice* IGraphicsDevice::s_pInstance = nullptr;
 
 #if defined(LAMBDA_PLAT_WINDOWS)
@@ -53,14 +90,8 @@ namespace Lambda
 #endif
 
 
-	IGraphicsDevice* IGraphicsDevice::GetInstance()
+	IGraphicsDevice* IGraphicsDevice::Get()
 	{
 		return s_pInstance;
-	}
-
-
-	bool IGraphicsDevice::OnEvent(const Event& event)
-	{
-		return (s_pInstance) ? s_pInstance->InternalOnEvent(event) : false;
 	}
 }

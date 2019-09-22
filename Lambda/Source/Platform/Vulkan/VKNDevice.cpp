@@ -657,7 +657,7 @@ namespace Lambda
 	}
 	
 	
-	VKNDevice& VKNDevice::GetInstance()
+	VKNDevice& VKNDevice::Get()
 	{
 		LAMBDA_ASSERT(s_pInstance != nullptr);
 		return *s_pInstance;

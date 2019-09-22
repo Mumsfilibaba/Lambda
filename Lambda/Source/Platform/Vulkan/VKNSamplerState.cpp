@@ -55,7 +55,7 @@ namespace Lambda
         info.maxLod                     = desc.MaxMipLOD;
         info.mipLodBias                 = desc.MipLODBias;
         
-		VKNDevice& device = VKNDevice::GetInstance();
+		VKNDevice& device = VKNDevice::Get();
         if (vkCreateSampler(device.GetDevice(), &info, nullptr, &m_Sampler) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create samplerstate\n");
