@@ -13,12 +13,12 @@ namespace Lambda
 
 	struct EngineParams
 	{
-		const char* pTitle = nullptr;
-		GraphicsApi GraphicsDeviceApi = GRAPHICS_API_VULKAN;
-		uint32 WindowWidth = 1920;
-		uint32 WindowHeight = 1080;
-		uint32 SampleCount = 1;
-		bool Fullscreen = false;
+		const char* pTitle              = nullptr;
+		GraphicsApi GraphicsDeviceApi   = GRAPHICS_API_VULKAN;
+		uint32 WindowWidth              = 1920;
+		uint32 WindowHeight             = 1080;
+		uint32 SampleCount              = 1;
+		bool Fullscreen                 = false;
 	};
 
 	//----------------
@@ -35,7 +35,7 @@ namespace Lambda
 
 		virtual void 	OnPush() override final;
 		virtual void 	OnPop() override final;
-		virtual bool 	OnEvent(const Event& event) override final;
+		virtual bool 	OnEvent(const Event* pEvent) override final;
 		virtual uint32	GetRecivableCategories() const override final;
 	};
 
@@ -54,7 +54,7 @@ namespace Lambda
 		virtual void OnRender(Timestep dt) {}
 		virtual void OnRelease() {}
 				
-		bool OnEvent(const Event& event);
+		bool OnEvent(const Event* pEvent);
 
 		int32 Run();
 

@@ -19,8 +19,8 @@ namespace Lambda
         MacOSInput();
         ~MacOSInput() = default;
         
-        Key GLFWKeyToLambda(uint32 keycode) const;
-        uint32 LambdaKeyToGLFW(Key keycode) const;
+        Key     GLFWKeyToLambda(uint32 keycode) const;
+        uint32  LambdaKeyToGLFW(Key keycode) const;
         
         virtual bool InternalIsKeyUp(Key keycode) const override final;
         virtual bool InternalIsKeyDown(Key keycode) const override final;
@@ -35,8 +35,8 @@ namespace Lambda
         uint32   m_GLFWKeyTable[KEY_LAST + 1];
         
     private:
-        static Key ConvertGLFWKey(uint32 keycode);
-        static uint32 ConvertLambdaKey(Key keycode);
+        static Key      ConvertGLFWKey(uint32 keycode);
+        static uint32   ConvertLambdaKey(Key keycode);
     };
     
     

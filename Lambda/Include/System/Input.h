@@ -38,7 +38,7 @@ namespace Lambda
 		static void GetMousePosition(IWindow* pRelativeTo, float& x, float& y);
 
 	protected:
-		static Input& GetInstance();
+		static Input& Get();
 
 	private:
 		static Input* Create();
@@ -48,8 +48,9 @@ namespace Lambda
 	};
 
     
-	inline Input& Input::GetInstance()
+	inline Input& Input::Get()
 	{
+        LAMBDA_ASSERT(s_Instance != nullptr);
 		return *s_Instance;
 	}
 }

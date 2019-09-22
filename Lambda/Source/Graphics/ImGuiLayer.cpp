@@ -23,7 +23,7 @@ namespace Lambda
     }
 
 
-    bool ImGuiLayer::OnEvent(const Event& event)
+    bool ImGuiLayer::OnEvent(const Event* pEvent)
     {
         return false;
     }

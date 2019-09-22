@@ -74,7 +74,7 @@ namespace Lambda
 		void ReleaseMSAABuffer();
         void GetNextFrame() const;
         
-        virtual bool OnEvent(const Event& event) override final;
+        virtual bool OnEvent(const Event* pEvent) override final;
         
     private:
 		VKNDevice*					m_pDevice;
@@ -94,6 +94,6 @@ namespace Lambda
         mutable uint64				m_CurrentFrame;
         
     public:
-		static VKNGraphicsDevice& GetInstance();
+		static VKNGraphicsDevice& Get();
     };
 }

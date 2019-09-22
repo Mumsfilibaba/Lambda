@@ -20,24 +20,24 @@ namespace Lambda
         virtual bool SetFullscreen(bool fullscreen) override final;
         virtual bool GetFullscreen() const override final;
         
-        virtual IGraphicsDevice* GetGraphicsDevice() const override final;
-        virtual uint32 GetHeight() const override final;
-        virtual uint32 GetWidth() const override final;
-        virtual void* GetNativeHandle() const override final;
+        virtual IGraphicsDevice*    GetGraphicsDevice() const override final;
+        virtual uint32              GetHeight() const override final;
+        virtual uint32              GetWidth() const override final;
+        virtual void*               GetNativeHandle() const override final;
         
         
     private:
         void Init(const WindowDesc& desc);
-        void SendEvent(const Event& event);
+        void DispatchEvent(const Event& event);
         
     private:
-        GLFWwindow* m_pWindow;
-        IGraphicsDevice* m_pGraphicsDevice;
-        std::vector<Event> m_EventBackLog;
-        uint32 m_Width;
-        uint32 m_Height;
-        EventCallback m_OnEvent;
-        bool m_Fullscreen;
+        GLFWwindow*         m_pWindow;
+        IGraphicsDevice*    m_pGraphicsDevice;
+        std::vector<Event>  m_EventBackLog;
+        uint32              m_Width;
+        uint32              m_Height;
+        EventCallback       m_EventCallback;
+        bool                m_Fullscreen;
         
     private:
         static void WindowClosedCallback(GLFWwindow* pWindow);

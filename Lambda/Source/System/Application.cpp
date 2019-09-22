@@ -4,6 +4,8 @@
 #include "System/Log.h"
 #include "System/Input.h"
 #include "System/JoystickManager.h"
+#include "Events/KeyEvent.h"
+#include "Events/WindowEvent.h"
 
 namespace Lambda
 {
@@ -26,10 +28,10 @@ namespace Lambda
 	}
 
 
-	bool ApplicationLayer::OnEvent(const Event& event)
+	bool ApplicationLayer::OnEvent(const Event* pEvent)
 	{
 		Application& application = Application::Get();
-		return application.OnEvent(event);
+        return application.OnEvent(pEvent);
 	}
 
 
@@ -230,9 +232,9 @@ namespace Lambda
 	}
 
 
-	bool Application::OnEvent(const Event& event)
+	bool Application::OnEvent(const Event* pEvent)
 	{
-		switch (event.Type)
+		switch (pEvent->GetType())
 		{
 			//Exit the application when the window is closed
 		case EVENT_TYPE_WINDOW_CLOSED:
@@ -241,8 +243,8 @@ namespace Lambda
 			return true;
 
 			//Exit the application when the escape key is pressed
-		case EVENT_TYPE_KEYDOWN:
-			if (event.KeyEvent.KeyCode == KEY_ESCAPE)
+		case EVENT_TYPE_KEY_PRESSED:
+			if (static_cast<const KeyPressedEvent*>(pEvent)->GetKey() == KEY_ESCAPE)
 			{
 				Quit(0);
 				LOG_DEBUG_INFO("Escape pressed, exiting\n");
@@ -260,7 +262,7 @@ namespace Lambda
 				IGraphicsDevice::Get()->WaitForGPU();
 			}
 
-			m_HasFocus = event.FocusChanged.HasFocus;
+			m_HasFocus = static_cast<const WindowFocusChangedEvent*>(pEvent)->HasFocus();
 
 			//Return false so that other parts of the app still can get this event
 			return false;

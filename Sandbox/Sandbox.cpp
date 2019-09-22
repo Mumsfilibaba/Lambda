@@ -1,6 +1,8 @@
 #include "SandBox.h"
 #include "System/Log.h"
 #include "System/Input.h"
+#include "Events/WindowEvent.h"
+#include "Events/KeyEvent.h"
 #include "Graphics/MeshFactory.h"
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -564,26 +566,31 @@ namespace Lambda
     
     
     //Event handler function for the instance
-    bool SandBox::OnEvent(const Event &event)
+    bool SandBox::OnEvent(const Event* pEvent)
     {
-        switch (event.Type)
+        switch (pEvent->GetType())
         {
             case EVENT_TYPE_WINDOW_RESIZE:
+            {
                 //Resize camera if size is not zero
-                if (event.WindowResize.Width > 0 && event.WindowResize.Height > 0)
+                const WindowResizeEvent* pResizeEvent = static_cast<const WindowResizeEvent*>(pEvent);
+                if (pResizeEvent->GetWidth() > 0 && pResizeEvent->GetHeight() > 0)
                 {
-                    CreateCamera(event.WindowResize.Width, event.WindowResize.Height);
+                    CreateCamera(pResizeEvent->GetWidth(), pResizeEvent->GetHeight());
                 }
                 return false;
+            }
+            case EVENT_TYPE_KEY_PRESSED:
+            {
+                const KeyPressedEvent* pKeypressed = static_cast<const KeyPressedEvent*>(pEvent);
                 
-            case EVENT_TYPE_KEYDOWN:
                 //LOG_DEBUG_INFO("Key pressed\n");
-                if (event.KeyEvent.KeyCode == KEY_1)
+                if (pKeypressed->GetKey() == KEY_1)
                 {
                     GetWindow()->SetFullscreen(!GetWindow()->GetFullscreen());
                 }
                 return false;
-                
+            }
             case EVENT_TYPE_MOUSE_MOVED:
                 //LOG_DEBUG_INFO("Mouse moved (x: %d, y: %d)\n", event.MouseMoveEvent.PosX, event.MouseMoveEvent.PosY);
                 
@@ -596,7 +603,7 @@ namespace Lambda
                 //Input::SetMousePosition(m_Width / 2, m_Height / 2);
                 return false;
                 
-            case EVENT_TYPE_MOUSE_BUTTONDOWN:
+            case EVENT_TYPE_MOUSE_BUTTON_PRESSED:
                 //LOG_DEBUG_INFO("Mouse pressed\n");
                 return false;
             
@@ -612,7 +619,7 @@ namespace Lambda
                 return false;
                 
             case EVENT_TYPE_WINDOW_FOCUS_CHANGED:
-                if (event.FocusChanged.HasFocus)
+                if (static_cast<const WindowFocusChangedEvent*>(pEvent)->HasFocus())
                 {
                     LOG_DEBUG_INFO("Window got focus\n");
                 }

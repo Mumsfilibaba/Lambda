@@ -10,16 +10,15 @@ namespace Lambda
 
 	std::vector<EventLayer*> EventDispatcher::s_LayerStack;
 
-	bool EventDispatcher::DispatchEvent(const Event& event)
+	bool EventDispatcher::DispatchEvent(const Event* pEvent)
 	{
 		for (auto& pLayer : s_LayerStack)
 		{
 			//LOG_DEBUG_INFO("%s:\n", iter->pName);
 			
-			uint32 categories = pLayer->GetRecivableCategories();
-			if (categories & event.Category)
+			if (pEvent->GetCategoryFlags() & pLayer->GetRecivableCategories())
 			{
-				if (pLayer->OnEvent(event))
+				if (pLayer->OnEvent(pEvent))
 					return true;
 			}
 		}

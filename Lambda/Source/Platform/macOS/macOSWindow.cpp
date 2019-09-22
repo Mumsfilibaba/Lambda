@@ -3,6 +3,9 @@
     #include "macOSWindow.h"
     #include "macOSInput.h"
     #include "Events/EventDispatcher.h"
+    #include "Events/KeyEvent.h"
+    #include "Events/WindowEvent.h"
+    #include "Events/MouseEvent.h"
     #include "Graphics/IGraphicsDevice.h"
     #include "System/Input.h"
     #include "System/JoystickManager.h"
@@ -10,6 +13,11 @@
 
 namespace Lambda
 {
+    static void GLFWErrorCallback(int, const char* pErrorString)
+    {
+        LOG_DEBUG_ERROR("GLFW: %s\n", pErrorString);
+    }
+
     //-------
     //IWindow
     //-------
@@ -29,7 +37,7 @@ namespace Lambda
         : m_pWindow(nullptr),
         m_Width(0.0f),
         m_Height(0.0f),
-        m_OnEvent(nullptr),
+        m_EventCallback(nullptr),
         m_Fullscreen(false)
     {
         Init(desc);
@@ -57,6 +65,10 @@ namespace Lambda
         //Init glfw
         if (!s_HasGLFW)
         {
+            //Init error callback
+            glfwSetErrorCallback(GLFWErrorCallback);
+            
+            //Init GLFW
             if (glfwInit())
             {
                 s_HasGLFW = true;
@@ -133,7 +145,7 @@ namespace Lambda
     
     void MacOSWindow::SetEventCallback(EventCallback callback)
     {
-        m_OnEvent = callback;
+        m_EventCallback = callback;
     }
     
     
@@ -163,90 +175,128 @@ namespace Lambda
     
     void MacOSWindow::WindowClosedCallback(GLFWwindow* pWindow)
     {
-        Event event;
-        event.Type = EVENT_TYPE_WINDOW_CLOSED;
-        
         MacOSWindow* pUserWindow = reinterpret_cast<MacOSWindow*>(glfwGetWindowUserPointer(pWindow));
-        pUserWindow->SendEvent(event);
+        
+        WindowClosedEvent event = WindowClosedEvent();
+        pUserWindow->DispatchEvent(event);
     }
     
     
     void MacOSWindow::WindowResizeCallback(GLFWwindow* pWindow, int32 width, int32 height)
     {
-        Event event;
-        event.Type = EVENT_TYPE_WINDOW_RESIZE;
-        event.WindowResize.Width = width;
-        event.WindowResize.Height = height;
-        
         MacOSWindow* pUserWindow = reinterpret_cast<MacOSWindow*>(glfwGetWindowUserPointer(pWindow));
-        pUserWindow->SendEvent(event);
+        
+        WindowResizeEvent event = WindowResizeEvent(uint32(width), uint32(height));
+        pUserWindow->DispatchEvent(event);
     }
     
     
     void MacOSWindow::WindowMoveCallback(GLFWwindow* pWindow, int32 x, int32 y)
-    {        
-        Event event;
-        event.Type = EVENT_TYPE_WINDOW_MOVE;
-        event.WindowMove.PosX = x;
-        event.WindowMove.PosY = y;
-        
+    {
         MacOSWindow* pUserWindow = reinterpret_cast<MacOSWindow*>(glfwGetWindowUserPointer(pWindow));
-        pUserWindow->SendEvent(event);
+        
+        WindowMoveEvent event = WindowMoveEvent(x, y);
+        pUserWindow->DispatchEvent(event);
     }
     
     
     void MacOSWindow::KeyCallback(GLFWwindow* pWindow, int32 key, int32 scancode, int32 action, int32 mods)
     {
-        Event event;
-        event.Type = (action == GLFW_PRESS) ? EVENT_TYPE_KEYDOWN : EVENT_TYPE_KEYUP;
-        event.KeyEvent.RepeatCount = 1;
-        event.KeyEvent.KeyCode = MacOSInput::ConvertGLFWKey(key);
+        //Convert modifiers
+        uint32 modifiers = 0;
+        if (mods & GLFW_MOD_SHIFT)
+            modifiers |= KEY_MODIFIER_SHIFT;
+        if (mods & GLFW_MOD_CONTROL)
+            modifiers |= KEY_MODIFIER_CONTROL;
+        if (mods & GLFW_MOD_ALT)
+            modifiers |= KEY_MODIFIER_ALT;
+        if (mods & GLFW_MOD_SUPER)
+            modifiers |= KEY_MODIFIER_SUPER;
+        if (mods & GLFW_MOD_CAPS_LOCK)
+            modifiers |= KEY_MODIFIER_CAPS_LOCK;
+        if (mods & GLFW_MOD_NUM_LOCK)
+            modifiers |= KEY_MODIFIER_NUM_LOCK;
         
+        //Dispatch events
         MacOSWindow* pUserWindow = reinterpret_cast<MacOSWindow*>(glfwGetWindowUserPointer(pWindow));
-        pUserWindow->SendEvent(event);
+        if (action == GLFW_PRESS)
+        {
+            KeyPressedEvent event = KeyPressedEvent(MacOSInput::ConvertGLFWKey(key), 0, modifiers);
+            pUserWindow->DispatchEvent(event);
+        }
+        else if (action == GLFW_REPEAT)
+        {
+            KeyPressedEvent event = KeyPressedEvent(MacOSInput::ConvertGLFWKey(key), 1, modifiers);
+            pUserWindow->DispatchEvent(event);
+        }
+        else if (action == GLFW_RELEASE)
+        {
+            KeyReleasedEvent event = KeyReleasedEvent(MacOSInput::ConvertGLFWKey(key), modifiers);
+            pUserWindow->DispatchEvent(event);
+        }
     }
     
     
     void MacOSWindow::TextCallback(GLFWwindow* pWindow, uint32 codepoint)
     {
-        Event event;
-        event.Type = EVENT_TYPE_KEYTYPED;
-        event.TextEvent.Character = codepoint;
-        
         MacOSWindow* pUserWindow = reinterpret_cast<MacOSWindow*>(glfwGetWindowUserPointer(pWindow));
-        pUserWindow->SendEvent(event);
+        
+        KeyTypedEvent event = KeyTypedEvent(codepoint);
+        pUserWindow->DispatchEvent(event);
     }
     
     
     void MacOSWindow::MouseMoveCallback(GLFWwindow* pWindow, double x, double y)
     {
-        Event event;
-        event.Type = EVENT_TYPE_MOUSE_MOVED;
-        event.MouseMoveEvent.PosX = int16(x);
-        event.MouseMoveEvent.PosY = int16(y);
-        
         MacOSWindow* pUserWindow = reinterpret_cast<MacOSWindow*>(glfwGetWindowUserPointer(pWindow));
-        pUserWindow->SendEvent(event);
+        
+        MouseMovedEvent event = MouseMovedEvent(int32(x), int32(y));
+        pUserWindow->DispatchEvent(event);
     }
     
     
     void MacOSWindow::MouseButtonCallback(GLFWwindow* pWindow, int32 button, int32 action, int32 mods)
     {
-        Event event;
-        event.Type = (action == GLFW_PRESS) ? EVENT_TYPE_MOUSE_BUTTONDOWN : EVENT_TYPE_MOUSE_BUTTONUP;
+        //Convert button
+        MouseButton mouseButton = MOUSEBUTTON_UNKNOWN;
         if (button == GLFW_MOUSE_BUTTON_RIGHT)
-            event.MouseButtonEvent.Button = MOUSEBUTTON_RIGHT;
+            mouseButton = MOUSEBUTTON_RIGHT;
         else if (button == GLFW_MOUSE_BUTTON_MIDDLE)
-            event.MouseButtonEvent.Button = MOUSEBUTTON_MIDDLE;
+            mouseButton = MOUSEBUTTON_MIDDLE;
         else if (button == GLFW_MOUSE_BUTTON_LEFT)
-            event.MouseButtonEvent.Button = MOUSEBUTTON_LEFT;
+            mouseButton = MOUSEBUTTON_LEFT;
         else if (button == GLFW_MOUSE_BUTTON_4)
-            event.MouseButtonEvent.Button = MOUSEBUTTON_FORWARD;
+            mouseButton = MOUSEBUTTON_FORWARD;
         else if (button == GLFW_MOUSE_BUTTON_5)
-            event.MouseButtonEvent.Button = MOUSEBUTTON_BACKWARD;
+            mouseButton = MOUSEBUTTON_BACKWARD;
         
+        //Convert modifiers
+        uint32 modifiers = 0;
+        if (mods & GLFW_MOD_SHIFT)
+            modifiers |= KEY_MODIFIER_SHIFT;
+        if (mods & GLFW_MOD_CONTROL)
+            modifiers |= KEY_MODIFIER_CONTROL;
+        if (mods & GLFW_MOD_ALT)
+            modifiers |= KEY_MODIFIER_ALT;
+        if (mods & GLFW_MOD_SUPER)
+            modifiers |= KEY_MODIFIER_SUPER;
+        if (mods & GLFW_MOD_CAPS_LOCK)
+            modifiers |= KEY_MODIFIER_CAPS_LOCK;
+        if (mods & GLFW_MOD_NUM_LOCK)
+            modifiers |= KEY_MODIFIER_NUM_LOCK;
+    
+        //Dispatch event
         MacOSWindow* pUserWindow = reinterpret_cast<MacOSWindow*>(glfwGetWindowUserPointer(pWindow));
-        pUserWindow->SendEvent(event);
+        if (action == GLFW_PRESS)
+        {
+            MouseButtonPressedEvent event = MouseButtonPressedEvent(mouseButton, modifiers);
+            pUserWindow->DispatchEvent(event);
+        }
+        else if (action == GLFW_RELEASE)
+        {
+            MouseButtonReleasedEvent event = MouseButtonReleasedEvent(mouseButton, modifiers);
+            pUserWindow->DispatchEvent(event);
+        }
     }
     
     
@@ -254,34 +304,17 @@ namespace Lambda
     {
         MacOSWindow* pUserWindow = reinterpret_cast<MacOSWindow*>(glfwGetWindowUserPointer(pWindow));
         
-        //Vertical value
-        Event event;
-        event.Type = EVENT_TYPE_MOUSE_SCROLLED;
-        if (yoffset != 0.0f)
-        {
-            event.MouseScrollEvent.Value = yoffset;
-            event.MouseScrollEvent.Vertical = true;
-            pUserWindow->SendEvent(event);
-        }
-        
-        //Send another event for horizontal value
-        if (xoffset != 0.0f)
-        {
-            event.MouseScrollEvent.Value = xoffset;
-            event.MouseScrollEvent.Vertical = false;
-            pUserWindow->SendEvent(event);
-        }
+        MouseScrolledEvent event = MouseScrolledEvent(float(xoffset), float(yoffset));
+        pUserWindow->DispatchEvent(event);
     }
     
     
     void MacOSWindow::WindowFocusCallback(GLFWwindow* pWindow, int32 focused)
     {
-        Event event;
-        event.Type = EVENT_TYPE_WINDOW_FOCUS_CHANGED;
-        event.FocusChanged.HasFocus = (focused != 0);
-        
         MacOSWindow* pUserWindow = reinterpret_cast<MacOSWindow*>(glfwGetWindowUserPointer(pWindow));
-        pUserWindow->SendEvent(event);
+        
+        WindowFocusChangedEvent event = WindowFocusChangedEvent(focused != 0);
+        pUserWindow->DispatchEvent(event);
     }
     
     
@@ -324,30 +357,25 @@ namespace Lambda
     }
     
     
-    void MacOSWindow::SendEvent(const Lambda::Event &event)
+    void MacOSWindow::DispatchEvent(const Event &event)
     {
-        if (m_OnEvent)
+        if (m_EventCallback)
         {
             //When a eventhandler is registered, then we handled all the backloged items
-            if (m_EventBackLog.size() > 0)
+            /*if (m_EventBackLog.size() > 0)
             {
                 for (auto& e : m_EventBackLog)
-                {
-                    m_OnEvent(e);
-                }
+                    m_EventCallback(e);
                 
                 m_EventBackLog.clear();
-            }
-            
-            m_OnEvent(event);
+            }*/
+            m_EventCallback(&event);
         }
         else
         {
             //If a eventcallback is not registered then we put the event in the backlog
-            m_EventBackLog.push_back(event);
+            //m_EventBackLog.push_back(event);
         }
     }
-    
-    
 }
 #endif

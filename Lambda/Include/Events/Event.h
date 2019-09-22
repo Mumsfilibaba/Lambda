@@ -10,19 +10,19 @@ namespace Lambda
     
 	enum EventType : uint32
 	{
-		EVENT_TYPE_UNKNOWN				= 0,
-		EVENT_TYPE_WINDOW_CLOSED		= 1,
-		EVENT_TYPE_WINDOW_RESIZE		= 2,
-		EVENT_TYPE_WINDOW_MOVE			= 3,
-		EVENT_TYPE_WINDOW_FOCUS_CHANGED	= 4,
-		EVENT_TYPE_KEYDOWN				= 5,
-		EVENT_TYPE_KEYUP				= 6,
-		EVENT_TYPE_KEYTYPED				= 7,
-		EVENT_TYPE_MOUSE_BUTTONDOWN		= 8,
-		EVENT_TYPE_MOUSE_BUTTONUP		= 9,
-		EVENT_TYPE_MOUSE_MOVED			= 10,
-		EVENT_TYPE_MOUSE_SCROLLED		= 11,
-		EVENT_TYPE_JOYSTICK_CHANGED		= 12
+		EVENT_TYPE_UNKNOWN				    = 0,
+		EVENT_TYPE_WINDOW_CLOSED		    = 1,
+		EVENT_TYPE_WINDOW_RESIZE		    = 2,
+		EVENT_TYPE_WINDOW_MOVE			    = 3,
+		EVENT_TYPE_WINDOW_FOCUS_CHANGED	    = 4,
+		EVENT_TYPE_KEY_PRESSED			    = 5,
+		EVENT_TYPE_KEY_RELEASED			    = 6,
+		EVENT_TYPE_KEY_TYPED			    = 7,
+		EVENT_TYPE_MOUSE_BUTTON_PRESSED		= 8,
+		EVENT_TYPE_MOUSE_BUTTON_RELEASED    = 9,
+		EVENT_TYPE_MOUSE_MOVED			    = 10,
+		EVENT_TYPE_MOUSE_SCROLLED		    = 11,
+		EVENT_TYPE_JOYSTICK_CHANGED		    = 12
 	};
 
 	//-------------
@@ -36,6 +36,7 @@ namespace Lambda
 		EVENT_CATEGORY_KEYBOARD		= (1 << 1),
 		EVENT_CATEGORY_MOUSE		= (1 << 2),
 		EVENT_CATEGORY_JOYSTICK		= (1 << 3),
+        EVENT_CATEGORY_INPUT        = (1 << 3),
 		EVENT_CATEGORY_APPLICATION	= (1 << 4),
 		EVENT_CATEGORY_OTHER		= (1 << 5)
 	};
@@ -44,50 +45,72 @@ namespace Lambda
     //Event
     //-----
 
-	struct Event
+    class Event
+    {
+    public:
+        inline Event(EventType type, uint32 categories)
+            : m_Type(type), m_Categories(categories) {}
+        ~Event() = default;
+        
+        inline bool        IsHandled() const                    { return m_Handled; }
+        inline bool        IsInCategory(EventCategory category) { return m_Categories & category; }
+        inline EventType   GetType() const                      { return m_Type; }
+        inline uint32      GetCategoryFlags() const             { return m_Categories; }
+        
+    private:
+        bool        m_Handled;
+        EventType   m_Type;
+        uint32      m_Categories;
+    };
+    
+
+	/*struct Event
 	{
-		EventType		Type;
-		EventCategory	Category;
+		EventType	Type            = EVENT_TYPE_UNKNOWN;
+		uint32 	    CategoryFlags   = 0;
+        bool        IsHandled       = false;
 		union
 		{
 			struct
 			{
 				Key		KeyCode;
-				uint16	RepeatCount;
+                uint32  ModiferKeys;
+				uint32	RepeatCount;
 			} KeyEvent;
 
 			struct
 			{
 				uint32	Character;
-			} TextEvent;
+			} KeyTypedEvent;
 
 			struct
 			{
-				int16	PosX;
-				int16	PosY;
+				int32	PosX;
+				int32	PosY;
 			} MouseMoveEvent;
 
 			struct
 			{
 				MouseButton	Button;
+                uint32      ModiferKeys;
 			} MouseButtonEvent;
 
 			struct
 			{
-				float Value;
-				bool Vertical;
+				float   VerticalValue;
+				float   HorizontalValue;
 			} MouseScrollEvent;
 
 			struct
 			{
-				int16	PosX;
-				int16	PosY;
+				uint32	PosX;
+				uint32	PosY;
 			} WindowMove;
 
 			struct
 			{
-				uint16	Width;
-				uint16	Height;
+				uint32	Width;
+				uint32	Height;
 			} WindowResize;
 
 			struct
@@ -106,5 +129,5 @@ namespace Lambda
 				int16 RightY;
 			} JoystickChanged;
 		};
-	};
+	};*/
 }

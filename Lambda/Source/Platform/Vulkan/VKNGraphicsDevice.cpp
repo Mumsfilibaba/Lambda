@@ -1,4 +1,5 @@
 #include "LambdaPch.h"
+#include "Events/WindowEvent.h"
 #include "VKNGraphicsDevice.h"
 #include "VKNDevice.h"
 #include "VKNShader.h"
@@ -742,14 +743,16 @@ namespace Lambda
     }
     
     
-    bool VKNGraphicsDevice::OnEvent(const Event& event)
+    bool VKNGraphicsDevice::OnEvent(const Event* pEvent)
     {
         //Handle resize event
-        if (event.Type == EVENT_TYPE_WINDOW_RESIZE)
+        if (pEvent->GetType() == EVENT_TYPE_WINDOW_RESIZE)
         {
             //When we minimize or any other reason the size is zero
             //Do not resize if the size is the same as the current one
-            if ((event.WindowResize.Width == 0 || event.WindowResize.Height == 0) || (event.WindowResize.Width == m_pSwapChain->GetWidth() && event.WindowResize.Height == m_pSwapChain->GetHeight()))
+            const WindowResizeEvent* pWindowEvent = (const WindowResizeEvent*)pEvent;
+            if ((pWindowEvent->GetWidth() == 0 || pWindowEvent->GetHeight() == 0) ||
+                (pWindowEvent->GetWidth() == m_pSwapChain->GetWidth() && pWindowEvent->GetHeight() == m_pSwapChain->GetHeight()))
             {
                 return false;
             }
@@ -757,7 +760,7 @@ namespace Lambda
             //Syncronize the GPU so no operations are in flight when recreating swapchain
             WaitForGPU();
            
-            m_pSwapChain->ResizeBuffers(m_ImageSemaphores[m_CurrentFrame], event.WindowResize.Width, event.WindowResize.Height);
+            m_pSwapChain->ResizeBuffers(m_ImageSemaphores[m_CurrentFrame], pWindowEvent->GetWidth(), pWindowEvent->GetHeight());
 
 			//Recreate depthstencil
             ReleaseDepthStencil();
@@ -771,14 +774,14 @@ namespace Lambda
 				CreateMSAABuffer();
 			}
             
-            LOG_DEBUG_INFO("VulkanGraphicsDevice: Window resized w: %d h: %d\n", event.WindowResize.Width, event.WindowResize.Height);
+            LOG_DEBUG_INFO("VulkanGraphicsDevice: Window resized w: %d h: %d\n", pWindowEvent->GetWidth(), pWindowEvent->GetHeight());
         }
         
         return false;
     }
 
 
-	VKNGraphicsDevice& VKNGraphicsDevice::GetInstance()
+	VKNGraphicsDevice& VKNGraphicsDevice::Get()
 	{
 		LAMBDA_ASSERT(s_pInstance != nullptr);
 		
