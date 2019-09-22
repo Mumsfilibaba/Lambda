@@ -6,6 +6,10 @@
 
 namespace Lambda
 {
+	//-----------
+	//WindowClass
+	//-----------
+
 	class WindowClass final
 	{
 	public:

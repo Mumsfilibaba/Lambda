@@ -854,7 +854,7 @@ namespace Lambda
 	}
 
 
-	bool DX12GraphicsDevice::InternalOnEvent(const Event& event)
+	bool DX12GraphicsDevice::OnEvent(const Event& event)
 	{
 		if (event.Type == EVENT_TYPE_WINDOW_RESIZE)
 		{
@@ -889,7 +889,7 @@ namespace Lambda
 	}
 	
 	
-	DX12GraphicsDevice& DX12GraphicsDevice::GetInstance()
+	DX12GraphicsDevice& DX12GraphicsDevice::Get()
 	{
 		LAMBDA_ASSERT(s_pInstance != nullptr);
 

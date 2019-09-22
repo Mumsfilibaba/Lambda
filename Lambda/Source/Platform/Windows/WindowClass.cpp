@@ -3,6 +3,10 @@
     #include "WindowClass.h"
 namespace Lambda
 {
+	//-----------
+	//WindowClass
+	//-----------
+
 	std::unordered_map<std::wstring, uint32> WindowClass::s_ClassTable;
 
 	

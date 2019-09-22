@@ -6,11 +6,18 @@
 
 namespace Lambda
 {
+	//-----
+	//Input
+	//-----
+
 	Input* Input::Create()
 	{
 		return DBG_NEW WindowsInput();
 	}
 
+	//------------
+	//WindowsInput
+	//------------
 
 	WindowsInput::WindowsInput()
 	{

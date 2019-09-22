@@ -42,13 +42,13 @@ namespace Lambda
     
     inline Key MacOSInput::ConvertGLFWKey(uint32 keycode)
     {
-        return ((MacOSInput&)Input::GetInstance()).GLFWKeyToLambda(keycode);
+        return ((MacOSInput&)Input::Get()).GLFWKeyToLambda(keycode);
     }
     
     
     inline uint32 MacOSInput::ConvertLambdaKey(Key keycode)
     {
-        return ((MacOSInput&)Input::GetInstance()).LambdaKeyToGLFW(keycode);
+        return ((MacOSInput&)Input::Get()).LambdaKeyToGLFW(keycode);
     }
 }
 

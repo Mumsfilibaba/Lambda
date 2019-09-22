@@ -71,7 +71,7 @@ namespace Lambda
 		bool QueryAdaper(uint32 flags);
 		bool IsDXRSupported(ID3D12Device* pDevice);
 
-		virtual bool InternalOnEvent(const Event& event) override final;
+		virtual bool OnEvent(const Event& event) override final;
 
 	private:
 		Microsoft::WRL::ComPtr<IDXGIFactory5>	m_Factory;
@@ -104,7 +104,7 @@ namespace Lambda
 		GraphicsDeviceDesc						m_Desc;
 
 	public:
-		static DX12GraphicsDevice& GetInstance();
+		static DX12GraphicsDevice& Get();
 	};
 
 

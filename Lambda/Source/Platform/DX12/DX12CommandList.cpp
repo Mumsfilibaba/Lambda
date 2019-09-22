@@ -45,7 +45,7 @@ namespace Lambda
 	{
 		using namespace Microsoft::WRL;
 
-		DX12GraphicsDevice& device = DX12GraphicsDevice::GetInstance();
+		DX12GraphicsDevice& device = DX12GraphicsDevice::Get();
 		D3D12_COMMAND_LIST_TYPE listType = ConvertCommandListType(type);
 
 		//Create commandallocator
@@ -533,7 +533,7 @@ namespace Lambda
 	void DX12CommandList::InternalCopyAndSetDescriptors()
 	{
 		//Perform copy of resourcedescriptors
-		DX12GraphicsDevice& device = DX12GraphicsDevice::GetInstance();
+		DX12GraphicsDevice& device = DX12GraphicsDevice::Get();
 		m_ResourceCache.CopyDescriptors(device.GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_SamplerCache.CopyDescriptors(device.GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 

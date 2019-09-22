@@ -3,6 +3,10 @@
 #if defined(LAMBDA_PLAT_WINDOWS)
 namespace Lambda
 {
+	//------------
+	//WindowsInput
+	//------------
+
 	class WindowsInput final : public Input
 	{
 	public:
