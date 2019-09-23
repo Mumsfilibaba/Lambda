@@ -58,7 +58,7 @@ namespace Lambda
 			{
 				for (uint32 i = 0; i < numResults; i++)
 				{
-					pResults[i] *= m_TimeStampPeriod;
+					pResults[i] *= uint64(m_TimeStampPeriod);
 				}
 			}
 		}

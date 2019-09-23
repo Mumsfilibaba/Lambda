@@ -171,7 +171,6 @@ namespace Lambda
         
         //Create swapchain
         VKNSwapChainDesc swapChainInfo = {};
-        swapChainInfo.SignalSemaphore    = m_ImageSemaphores[m_CurrentFrame];
         swapChainInfo.PresentationMode   = VK_PRESENT_MODE_MAILBOX_KHR;
         swapChainInfo.Format.format      = VK_FORMAT_B8G8R8A8_UNORM;
         swapChainInfo.Format.colorSpace  = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
@@ -616,8 +615,14 @@ namespace Lambda
         }
     }
 
+
+	void VKNGraphicsDevice::PresentBegin() const
+	{
+		m_pSwapChain->AquireNextImage(m_ImageSemaphores[m_CurrentFrame]);
+	}
+
     
-	void VKNGraphicsDevice::ExecuteCommandListAndPresent(ICommandList* const* ppLists, uint32 numLists) const
+	void VKNGraphicsDevice::PresentEnd(ICommandList* const* ppLists, uint32 numLists) const
 	{
 		//LOG_DEBUG_INFO("Vulkan: VKNGraphicsDevice::ExecuteCommandListAndPresent  Frame '%d' - WaitSemaphore='%x', SignalSemaphore='%x'\n", m_CurrentFrame, m_ImageSemaphores[m_CurrentFrame], m_RenderSemaphores[m_CurrentFrame]);
 
@@ -651,27 +656,19 @@ namespace Lambda
 		}
 		else
 		{
-			Present();
+			//LOG_DEBUG_INFO("Vulkan: Present Frame '%d' - WaitSemaphore='%x', SignalSemaphore='%x'\n", m_CurrentFrame, m_RenderSemaphores[m_CurrentFrame], m_ImageSemaphores[m_CurrentFrame]);
+
+			m_pSwapChain->Present(m_PresentationQueue, m_RenderSemaphores[m_CurrentFrame]);
+			GPUWaitForFrame();
+
+			//if we use MSAA we want to set a texture that we can resolve onto, in this case the current backbuffer since we render to the window
+			if (m_pMSAABuffer)
+			{
+				VKNTexture* pResolveResource = reinterpret_cast<VKNTexture*>(m_pSwapChain->GetCurrentBuffer());
+				m_pMSAABuffer->SetResolveResource(pResolveResource);
+			}
 		}
 	}
-    
-    
-    void VKNGraphicsDevice::Present() const
-    {
-        //LOG_DEBUG_INFO("Vulkan: Present Frame '%d' - WaitSemaphore='%x', SignalSemaphore='%x'\n", m_CurrentFrame, m_RenderSemaphores[m_CurrentFrame], m_ImageSemaphores[m_CurrentFrame]);
-		
-		m_pSwapChain->Present(m_PresentationQueue, m_RenderSemaphores[m_CurrentFrame]);
-        GPUWaitForFrame();
-
-		m_pSwapChain->AquireNextImage(m_ImageSemaphores[m_CurrentFrame]);
-        
-		//if we use MSAA we want to set a texture that we can resolve onto, in this case the current backbuffer since we render to the window
-        if (m_pMSAABuffer)
-        {
-            VKNTexture* pResolveResource = reinterpret_cast<VKNTexture*>(m_pSwapChain->GetCurrentBuffer());
-            m_pMSAABuffer->SetResolveResource(pResolveResource);
-        }
-    }
     
     
     void VKNGraphicsDevice::GPUWaitForFrame() const
@@ -743,40 +740,35 @@ namespace Lambda
     }
     
     
-    bool VKNGraphicsDevice::OnEvent(const Event& event)
+    bool VKNGraphicsDevice::OnResize(const WindowResizeEvent& event)
     {
-        //Handle resize event
-        if (event.GetType() == WindowResizeEvent::GetStaticType())
+        //When we minimize or any other reason the size is zero
+        //Do not resize if the size is the same as the current one
+        if ((event.GetWidth() == 0 || event.GetHeight() == 0) ||
+            (event.GetWidth() == m_pSwapChain->GetWidth() && event.GetHeight() == m_pSwapChain->GetHeight()))
         {
-            //When we minimize or any other reason the size is zero
-            //Do not resize if the size is the same as the current one
-            const WindowResizeEvent& windowEvent = (const WindowResizeEvent&)event;
-            if ((windowEvent.GetWidth() == 0 || windowEvent.GetHeight() == 0) ||
-                (windowEvent.GetWidth() == m_pSwapChain->GetWidth() && windowEvent.GetHeight() == m_pSwapChain->GetHeight()))
-            {
-                return false;
-            }
-            
-            //Syncronize the GPU so no operations are in flight when recreating swapchain
-            WaitForGPU();
-           
-            m_pSwapChain->ResizeBuffers(m_ImageSemaphores[m_CurrentFrame], windowEvent.GetWidth(), windowEvent.GetHeight());
-
-			//Recreate depthstencil
-            ReleaseDepthStencil();
-            CreateDepthStencil();
-
-			//Recreate MSAA buffer if MSAA is used
-			DeviceSettings settings = m_pDevice->GetDeviceSettings();
-			if (settings.SampleCount > VK_SAMPLE_COUNT_1_BIT)
-			{
-				ReleaseMSAABuffer();
-				CreateMSAABuffer();
-			}
-            
-            LOG_DEBUG_INFO("VulkanGraphicsDevice: Window resized w: %d h: %d\n", windowEvent.GetWidth(), windowEvent.GetHeight());
+            return false;
         }
-        
+            
+        //Syncronize the GPU so no operations are in flight when recreating swapchain
+        WaitForGPU();
+           
+        m_pSwapChain->ResizeBuffers(event.GetWidth(), event.GetHeight());
+
+		//Recreate depthstencil
+        ReleaseDepthStencil();
+        CreateDepthStencil();
+
+		//Recreate MSAA buffer if MSAA is used
+		DeviceSettings settings = m_pDevice->GetDeviceSettings();
+		if (settings.SampleCount > VK_SAMPLE_COUNT_1_BIT)
+		{
+			ReleaseMSAABuffer();
+			CreateMSAABuffer();
+		}
+            
+        LOG_DEBUG_INFO("VulkanGraphicsDevice: Window resized w: %d h: %d\n", event.GetWidth(), event.GetHeight());
+
         return false;
     }
 

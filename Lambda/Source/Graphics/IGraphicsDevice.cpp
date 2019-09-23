@@ -7,39 +7,6 @@
 
 namespace Lambda
 {
-
-    //-------------
-    //GraphicsLayer
-    //-------------
-
-    GraphicsLayer::GraphicsLayer()
-        : EventLayer("GraphicsLayer")
-    {
-    }
-
-
-    void GraphicsLayer::OnPop()
-    {
-    }
-
-
-    void GraphicsLayer::OnPush()
-    {
-    }
-
-
-    bool GraphicsLayer::OnEvent(const Event& event)
-    {
-        IGraphicsDevice* pDevice = IGraphicsDevice::Get();
-        return pDevice->OnEvent(event);
-    }
-
-
-    uint32 GraphicsLayer::GetRecivableCategories() const
-    {
-        return EVENT_CATEGORY_WINDOW;
-    }
-
     //---------------
     //IGraphicsDevice
     //---------------

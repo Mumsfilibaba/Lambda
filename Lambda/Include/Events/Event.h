@@ -27,7 +27,8 @@ namespace Lambda
 		EVENT_CATEGORY_JOYSTICK		= (1 << 3),
         EVENT_CATEGORY_INPUT        = (1 << 3),
 		EVENT_CATEGORY_APPLICATION	= (1 << 4),
-		EVENT_CATEGORY_OTHER		= (1 << 5)
+		EVENT_CATEGORY_OTHER		= (1 << 5),
+		EVENT_CATEGORY_ALL			= 0xffffffff
 	};
 
     //-----
@@ -51,10 +52,16 @@ namespace Lambda
         
 	private:
 		inline void SetIsHandled(bool isHandled) const { m_Handled = isHandled; }
-
     private:
         mutable bool    m_Handled;
         uint32			m_Categories;
+
+	private:
+		inline static constexpr Lambda::EventType GetStaticType()
+		{ 
+			constexpr Lambda::EventType hash = Lambda::StringHash("Event");
+			return hash; 
+		}
     };
     
 

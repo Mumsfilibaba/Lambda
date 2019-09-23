@@ -10,6 +10,9 @@
 #include "Graphics/IPipelineResourceState.h"
 #include "Graphics/IQuery.h"
 #include "Graphics/Camera.h"
+#include "Events/WindowEvent.h"
+#include "Events/MouseEvent.h"
+#include "Events/KeyEvent.h"
 
 namespace Lambda
 {
@@ -34,7 +37,7 @@ namespace Lambda
     };
 
 
-	class SandBox final : public Application, public EventLayer
+	class SandBox final : public Application
 	{
 	public:
 		SandBox(const EngineParams& params = EngineParams());
@@ -44,11 +47,9 @@ namespace Lambda
 		virtual void    OnUpdate(Timestep dt) override final;
 		virtual void    OnRender(Timestep dt) override final;
 		virtual void    OnRelease() override final;
-        virtual void    OnPush() override final;
-        virtual void    OnPop() override final;
-        virtual bool    OnEvent(const Event& event) override final;
-        virtual uint32  GetRecivableCategories() const override final;
         
+		bool OnWindowResize(const WindowResizeEvent& event);     
+		bool OnKeyPressed(const KeyPressedEvent& event);
 		void CreateCamera(uint32 width, uint32 height);
 
 	private:

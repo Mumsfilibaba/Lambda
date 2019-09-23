@@ -1,6 +1,6 @@
 #pragma once
 #include "IObject.h"
-#include "Events/EventDispatcher.h"
+#include "Events/WindowEvent.h"
 #include "System/IWindow.h"
 #include "ICommandList.h"
 
@@ -41,28 +41,10 @@ namespace Lambda
     //---------------
     //IGraphicsDevice
     //---------------
-
-    class LAMBDA_API GraphicsLayer : public EventLayer
-    {
-    public:
-        LAMBDA_NO_COPY(GraphicsLayer);
-        
-        GraphicsLayer();
-        ~GraphicsLayer() = default;
-        
-        virtual void    OnPop() override final;
-        virtual void    OnPush() override final;
-        virtual bool    OnEvent(const Event& event) override final;
-        virtual uint32  GetRecivableCategories() const override final;
-    };
-
-    //---------------
-    //IGraphicsDevice
-    //---------------
     
 	class LAMBDA_API IGraphicsDevice
 	{
-        friend class GraphicsLayer;
+        friend class Application;
         
 	public:
 		LAMBDA_INTERFACE(IGraphicsDevice);
@@ -92,8 +74,10 @@ namespace Lambda
 		virtual void Destroy() const = 0;
 
 		virtual void ExecuteCommandList(ICommandList* const * ppLists, uint32 numLists) const = 0;
-		virtual void ExecuteCommandListAndPresent(ICommandList* const* ppLists, uint32 numLists) const = 0;
-		virtual void Present() const = 0;
+		
+		virtual void PresentBegin() const = 0;
+		virtual void PresentEnd(ICommandList* const* ppLists, uint32 numLists) const = 0;
+		
 		virtual void WaitForGPU() const = 0;
 		virtual void GPUWaitForFrame() const = 0;
 
@@ -107,7 +91,7 @@ namespace Lambda
 		virtual uint32              GetSwapChainHeight() const = 0;
 
 	private:
-		virtual bool OnEvent(const Event& event) = 0;
+		virtual bool OnResize(const WindowResizeEvent& event) = 0;
 
 	public:
 		static IGraphicsDevice* Create(const GraphicsDeviceDesc& desc);

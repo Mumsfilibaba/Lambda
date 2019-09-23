@@ -46,8 +46,10 @@ namespace Lambda
 		virtual void Destroy() const override final;
 
 		virtual void ExecuteCommandList(ICommandList* const * ppLists, uint32 numLists) const;
-		virtual void ExecuteCommandListAndPresent(ICommandList* const* ppLists, uint32 numLists) const;
-		virtual void Present() const override final;
+		
+		virtual void PresentBegin() const override final;
+		virtual void PresentEnd(ICommandList* const* ppLists, uint32 numLists) const override final;
+
 		virtual void GPUWaitForFrame() const override final;
 		virtual void WaitForGPU() const override final;
 
@@ -71,7 +73,7 @@ namespace Lambda
 		bool QueryAdaper(uint32 flags);
 		bool IsDXRSupported(ID3D12Device* pDevice);
 
-		virtual bool OnEvent(const Event& event) override final;
+		virtual bool OnResize(const WindowResizeEvent& event) override final;
 
 	private:
 		Microsoft::WRL::ComPtr<IDXGIFactory5>	m_Factory;

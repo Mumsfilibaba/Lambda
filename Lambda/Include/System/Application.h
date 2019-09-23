@@ -45,6 +45,8 @@ namespace Lambda
 
 	class LAMBDA_API Application
 	{
+		friend class ApplicationLayer;
+
 	public:
 		Application(const EngineParams& params);
 		virtual ~Application() = default;
@@ -54,15 +56,13 @@ namespace Lambda
 		virtual void OnRender(Timestep dt) {}
 		virtual void OnRelease() {}
 				
-		bool OnEvent(const Event& event);
-
 		int32 Run();
 
-		const EngineParams& GetEngineParams() const;
 		IWindow* 			GetWindow() const;
+		const EngineParams& GetEngineParams() const;
 
 	private:
-		void Init(const EngineParams& params);
+		bool OnEvent(const Event& event);
 		void Quit(int32 exitCode = 0);
 		void InternalOnLoad();
 		void InternalOnUpdate(Timestep dt);
@@ -73,7 +73,6 @@ namespace Lambda
 		IWindow* 			m_pWindow;
 		ImGuiLayer*	 		m_pImGuiLayer;
 		ApplicationLayer* 	m_pApplicationLayer;
-        GraphicsLayer*      m_pGraphicsLayer;
 		EngineParams 		m_Params;
 		int32 				m_ExitCode;
 		bool 				m_Running;

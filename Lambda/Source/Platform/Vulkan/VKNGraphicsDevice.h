@@ -52,8 +52,10 @@ namespace Lambda
         virtual void Destroy() const override final;
         
         virtual void ExecuteCommandList(ICommandList* const * ppLists, uint32 numLists) const override final;
-		virtual void ExecuteCommandListAndPresent(ICommandList* const* ppLists, uint32 numLists) const override final;
-        virtual void Present() const override final;
+		
+		virtual void PresentBegin() const override final;
+		virtual void PresentEnd(ICommandList* const* ppLists, uint32 numLists) const override final;
+
         virtual void GPUWaitForFrame() const override final;
         virtual void WaitForGPU() const override final;
         
@@ -74,7 +76,7 @@ namespace Lambda
 		void ReleaseMSAABuffer();
         void GetNextFrame() const;
         
-        virtual bool OnEvent(const Event& event) override final;
+        virtual bool OnResize(const WindowResizeEvent& event) override final;
         
     private:
 		VKNDevice*					m_pDevice;

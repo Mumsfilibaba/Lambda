@@ -36,7 +36,7 @@ namespace Lambda
 			auto& callbackList = tableEntry->second;
 			for (auto& callback : callbackList)
 			{
-				if (callback->Callback(event));
+				if (callback->Callback(event))
 				{
 					event.SetIsHandled(true);
 					//Should we break here?
@@ -67,6 +67,26 @@ namespace Lambda
 		pLayer->OnPop();
 
 		LOG_DEBUG_INFO("Lambda Engine: Poped eventlayer '%s'.\n", pLayer->GetName());
+	}
+
+
+	void EventDispatcher::Initialize()
+	{
+		//Does nothing yet
+	}
+
+
+	void EventDispatcher::Release()
+	{
+		//Release all callbacks
+		for (auto& tableEntry : s_CallbackTable)
+		{
+			auto& callbackList = tableEntry.second;
+			for (auto callback : callbackList)
+			{
+				SafeDelete(callback);
+			}
+		}
 	}
 
 

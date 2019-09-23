@@ -14,7 +14,6 @@ namespace Lambda
 {   
 	SandBox::SandBox(const EngineParams& params)
 		: Application(params),
-        EventLayer("SandBoxLayer"),
 		m_pLists(),
         m_pCurrentList(nullptr),
 		m_pVS(nullptr),
@@ -35,8 +34,9 @@ namespace Lambda
 
 	void SandBox::OnLoad()
 	{
-		//Add Sandbox-level eventlayer
-		EventDispatcher::PushEventLayer(this);
+		//Add Sandbox callbacks
+		EventDispatcher::PushCallback<SandBox, KeyPressedEvent>(this, &SandBox::OnKeyPressed);
+		EventDispatcher::PushCallback<SandBox, WindowResizeEvent>(this, &SandBox::OnWindowResize);
 
 		//Init size
 		m_Width		= (float)GetWindow()->GetWidth();
@@ -373,7 +373,7 @@ namespace Lambda
         uint32 backBufferIndex = pDevice->GetBackBufferIndex();
         m_pCurrentList = m_pLists[backBufferIndex];
         m_pCurrentList->Reset();
-        
+
         //Get values and reset query
         uint64 values[2] = { 0, 0 };
         m_pQueries[backBufferIndex]->GetResults(values, 2, 0);
@@ -388,8 +388,11 @@ namespace Lambda
             LOG_SYSTEM(LOG_SEVERITY_INFO, "Renderpass time: %.2fms\n", ms);
             clock.Reset();
         }
+
+		//Begin frame
+		pDevice->PresentBegin();
         
-        //Set and clear rendertarget
+		//Get rendertarget
         float color[] = { 0.392f, 0.584f, 0.929f, 1.0f };
         ITexture* pRenderTarget = pDevice->GetRenderTarget();
         ITexture* pDepthBuffer	= pDevice->GetDepthStencil();
@@ -507,7 +510,7 @@ namespace Lambda
         m_pCurrentList->Close();
         
         //Present
-        pDevice->ExecuteCommandListAndPresent(&m_pCurrentList, 1);
+        pDevice->PresentEnd(&m_pCurrentList, 1);
 	}
 
 
@@ -543,95 +546,29 @@ namespace Lambda
 	}
 
 
+	bool SandBox::OnWindowResize(const WindowResizeEvent& event)
+	{
+		if (event.GetWidth() > 0 && event.GetHeight() > 0)
+		{
+			CreateCamera(event.GetWidth(), event.GetHeight());
+		}
+		return false;
+	}
+
+
+	bool SandBox::OnKeyPressed(const KeyPressedEvent& event)
+	{
+		if (event.GetKey() == KEY_1)
+		{
+			GetWindow()->SetFullscreen(!GetWindow()->GetFullscreen());
+		}
+		return false;
+	}
+
+
 	void SandBox::CreateCamera(uint32 width, uint32 height)
     {
         m_Camera.SetAspect(float(width), float(height));
         m_Camera.CreateProjection();
 	}
-
-
-    void SandBox::OnPush()
-    {
-    }
-
-
-    void SandBox::OnPop()
-    {
-    }
-
-
-    uint32 SandBox::GetRecivableCategories() const
-    {
-        return EVENT_CATEGORY_WINDOW | EVENT_CATEGORY_KEYBOARD | EVENT_CATEGORY_MOUSE;
-    }
-    
-    
-    //Event handler function for the instance
-    bool SandBox::OnEvent(const Event& event)
-    {
-        switch (event.GetType())
-        {
-			case WindowResizeEvent::GetStaticType():
-            {
-                //Resize camera if size is not zero
-                const WindowResizeEvent& resizeEvent = static_cast<const WindowResizeEvent&>(event);
-                if (resizeEvent.GetWidth() > 0 && resizeEvent.GetHeight() > 0)
-                {
-                    CreateCamera(resizeEvent.GetWidth(), resizeEvent.GetHeight());
-                }
-                return false;
-            }
-			case KeyPressedEvent::GetStaticType():
-            {
-                const KeyPressedEvent& keypressed = static_cast<const KeyPressedEvent&>(event);
-                
-                //LOG_DEBUG_INFO("Key pressed\n");
-                if (keypressed.GetKey() == KEY_1)
-                {
-                    GetWindow()->SetFullscreen(!GetWindow()->GetFullscreen());
-                }
-                return false;
-            }
-			case MouseMovedEvent::GetStaticType():
-                //LOG_DEBUG_INFO("Mouse moved (x: %d, y: %d)\n", event.MouseMoveEvent.PosX, event.MouseMoveEvent.PosY);
-                
-                //Rotate camera
-                //glm::vec2 diff = glm::vec2(m_Width / 2, m_Height / 2) - glm::vec2(event.MouseMoveEvent.PosX, event.MouseMoveEvent.PosY);
-                //m_Camera.Rotate(glm::vec3(diff.y, diff.x, 0.0f));
-                //m_Camera.CreateView();
-                
-                //Set position back to the middle
-                //Input::SetMousePosition(m_Width / 2, m_Height / 2);
-                return false;
-                
-			case MouseButtonReleasedEvent::GetStaticType():
-                //LOG_DEBUG_INFO("Mouse pressed\n");
-                return false;
-            
-			case MouseScrolledEvent::GetStaticType():
-                /*if (event.MouseScrollEvent.Vertical)
-                {
-                    LOG_DEBUG_INFO("Vertical scroll\n");
-                }
-                else
-                {
-                    LOG_DEBUG_INFO("Horizontal scroll\n");
-                }*/
-                return false;
-                
-			case WindowFocusChangedEvent::GetStaticType():
-                if (static_cast<const WindowFocusChangedEvent&>(event).HasFocus())
-                {
-                    LOG_DEBUG_INFO("Window got focus\n");
-                }
-                else
-                {
-                    LOG_DEBUG_INFO("Window lost focus\n");
-                }
-                return false;
-                
-            default:
-                return false;
-        }
-    }
 }

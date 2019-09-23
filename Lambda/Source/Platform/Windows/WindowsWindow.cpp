@@ -113,16 +113,16 @@ namespace Lambda
 
 			DEVMODE settings = {};
 			memset(&settings, 0, sizeof(DEVMODE));
-			settings.dmSize = sizeof(DEVMODE);
-			settings.dmPelsWidth = m_Width;
-			settings.dmPelsHeight = m_Height;
-			settings.dmBitsPerPel = 32;
-			settings.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
+			settings.dmSize			= sizeof(DEVMODE);
+			settings.dmPelsWidth	= GetSystemMetrics(SM_CXSCREEN);
+			settings.dmPelsHeight	= GetSystemMetrics(SM_CYSCREEN);
+			settings.dmBitsPerPel	= 32;
+			settings.dmFields		= DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
 
 			if (ChangeDisplaySettingsW(&settings, CDS_FULLSCREEN) == DISP_CHANGE_SUCCESSFUL)
 			{
-				m_Style = GetWindowLongW(m_hWindow, GWL_STYLE);
-				m_ExStyle = GetWindowLongW(m_hWindow, GWL_EXSTYLE);
+				m_Style		= GetWindowLongW(m_hWindow, GWL_STYLE);
+				m_ExStyle	= GetWindowLongW(m_hWindow, GWL_EXSTYLE);
 
 				SetWindowLongW(m_hWindow, GWL_STYLE, WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS);
 				SetWindowLongW(m_hWindow, GWL_EXSTYLE, WS_EX_APPWINDOW);

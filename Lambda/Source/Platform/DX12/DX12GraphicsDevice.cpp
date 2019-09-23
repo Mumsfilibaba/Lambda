@@ -616,15 +616,14 @@ namespace Lambda
 	}
 
 
-	void DX12GraphicsDevice::ExecuteCommandListAndPresent(ICommandList* const* ppLists, uint32 numLists) const
+	void DX12GraphicsDevice::PresentBegin() const
 	{
-		m_DirectQueue.ExecuteCommandLists(reinterpret_cast<DX12CommandList * const*>(ppLists), numLists);
-		Present();
 	}
 
 
-	void DX12GraphicsDevice::Present() const
+	void DX12GraphicsDevice::PresentEnd(ICommandList* const* ppLists, uint32 numLists) const
 	{
+		m_DirectQueue.ExecuteCommandLists(reinterpret_cast<DX12CommandList * const*>(ppLists), numLists);
 		m_SwapChain->Present(1, 0);
 	}
 
@@ -855,35 +854,31 @@ namespace Lambda
 	}
 
 
-	bool DX12GraphicsDevice::OnEvent(const Event& event)
+	bool DX12GraphicsDevice::OnResize(const WindowResizeEvent& event)
 	{
-		if (event.GetType() == WindowResizeEvent::GetStaticType())
+		//if size is zero then do not resize
+		if (event.GetWidth() > 0 && event.GetHeight() > 0)
 		{
-			//if size is zero then do not resize
-			const WindowResizeEvent& windowEvent = static_cast<const WindowResizeEvent&>(event);
-			if (windowEvent.GetWidth() > 0 && windowEvent.GetHeight() > 0)
+			//Make sure frames are finished
+			WaitForGPU();
+
+			LOG_SYSTEM_INFO("Resize - w: %d, h: %d\n", event.GetWidth(), event.GetHeight());
+
+			//Release the old buffers
+			ReleaseBackBuffers();
+
+			//Resize
+			HRESULT hr = m_SwapChain->ResizeBuffers(0, event.GetWidth(), event.GetHeight(), DXGI_FORMAT_UNKNOWN, m_BackBufferFlags);
+			if (FAILED(hr))
 			{
-				//Make sure frames are finished
-				WaitForGPU();
+				LOG_DEBUG_ERROR("DX12: Failed to resize window\n");
+			}
+			else
+			{
+				InitBackBuffers();
 
-				LOG_SYSTEM_INFO("Resize - w: %d, h: %d\n", windowEvent.GetWidth(), windowEvent.GetHeight());
-
-				//Release the old buffers
-				ReleaseBackBuffers();
-
-				//Resize
-				HRESULT hr = m_SwapChain->ResizeBuffers(0, windowEvent.GetWidth(), windowEvent.GetHeight(), DXGI_FORMAT_UNKNOWN, m_BackBufferFlags);
-				if (FAILED(hr))
-				{
-					LOG_DEBUG_ERROR("DX12: Failed to resize window\n");
-				}
-				else
-				{
-					InitBackBuffers();
-
-					m_BackBufferWidth	= windowEvent.GetWidth();
-					m_BackBufferHeight	= windowEvent.GetHeight();
-				}
+				m_BackBufferWidth	= event.GetWidth();
+				m_BackBufferHeight	= event.GetHeight();
 			}
 		}
 

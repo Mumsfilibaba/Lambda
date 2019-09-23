@@ -37,7 +37,7 @@ namespace Lambda
 
 	uint32 ApplicationLayer::GetRecivableCategories() const
 	{
-		return EVENT_CATEGORY_WINDOW | EVENT_CATEGORY_KEYBOARD;
+		return EVENT_CATEGORY_ALL;
 	}
 
 	//-----------
@@ -50,15 +50,13 @@ namespace Lambda
 		: m_pWindow(nullptr),
 		m_pImGuiLayer(nullptr),
 		m_pApplicationLayer(nullptr),
-		m_Params(),
+		m_Params(params),
 		m_ExitCode(0),
 		m_Running(true),
 		m_HasFocus(false)
 	{
 		LAMBDA_ASSERT(s_pInstance == nullptr);
 		s_pInstance = this;
-
-		Init(params);
 	}
 
 
@@ -137,47 +135,6 @@ namespace Lambda
 	}
 
 
-	void Application::Init(const EngineParams& params)
-	{
-		//Setup application layer
-		{
-			m_pApplicationLayer = DBG_NEW ApplicationLayer();
-			EventDispatcher::PushEventLayer(m_pApplicationLayer);
-		}
-
-		//Create window
-		{
-			WindowDesc desc = {};
-			desc.pTitle				= params.pTitle;
-			desc.Width				= params.WindowWidth;
-			desc.Height				= params.WindowHeight;
-			desc.GraphicsDeviceAPI	= params.GraphicsDeviceApi;
-			desc.SampleCount		= params.SampleCount;
-			desc.Fullscreen			= params.Fullscreen;
-
-			m_pWindow = IWindow::Create(desc);
-			m_pWindow->SetEventCallback(EventDispatcher::DispatchEvent);
-
-			//Push graphics layer
-            m_pGraphicsLayer = DBG_NEW GraphicsLayer();
-            EventDispatcher::PushEventLayer(m_pGraphicsLayer);
-		}
-
-		//Create ImGUI-Layer
-		{
-			m_pImGuiLayer = DBG_NEW ImGuiLayer();
-			//Push ImGui-Layer
-			EventDispatcher::PushEventLayer(m_pImGuiLayer);
-		}
-
-		//Set joystick-pollingrate
-		JoystickManager::SetPollrate(Timestep::Seconds(1.0f / 60.0f));
-
-		//Set Params
-		m_Params = params;
-	}
-
-
 	void Application::Quit(int32 exitCode)
 	{
 		m_Running = false;
@@ -196,6 +153,48 @@ namespace Lambda
 
 	void Application::InternalOnLoad()
 	{
+		//Setup the eventdispatcher
+		EventDispatcher::Initialize();
+
+
+		//Setup application layer
+		{
+			m_pApplicationLayer = DBG_NEW ApplicationLayer();
+			EventDispatcher::PushEventLayer(m_pApplicationLayer);
+		}
+
+
+		//Create window
+		{
+			WindowDesc desc = {};
+			desc.pTitle				= m_Params.pTitle;
+			desc.Width				= m_Params.WindowWidth;
+			desc.Height				= m_Params.WindowHeight;
+			desc.GraphicsDeviceAPI	= m_Params.GraphicsDeviceApi;
+			desc.SampleCount		= m_Params.SampleCount;
+			desc.Fullscreen			= m_Params.Fullscreen;
+
+			m_pWindow = IWindow::Create(desc);
+			m_pWindow->SetEventCallback(EventDispatcher::DispatchEvent);
+
+			//Push Resize callback
+			EventDispatcher::PushCallback<IGraphicsDevice, WindowResizeEvent>(IGraphicsDevice::Get(), &IGraphicsDevice::OnResize);
+		}
+
+
+		//Create ImGUI-Layer
+		{
+			m_pImGuiLayer = DBG_NEW ImGuiLayer();
+			//Push ImGui-Layer
+			EventDispatcher::PushEventLayer(m_pImGuiLayer);
+		}
+
+
+		//Set joystick-pollingrate
+		JoystickManager::SetPollrate(Timestep::Seconds(1.0f / 60.0f));
+
+
+		//Load rest of application
 		OnLoad();
 	}
 	
@@ -223,14 +222,14 @@ namespace Lambda
 	{
 		OnRelease();
        
-		//Destroy graphicslayer
-		SafeDelete(m_pGraphicsLayer);
+		//Destroy window
+        SafeDelete(m_pWindow);
+		//Release Eventdispatcher
+		EventDispatcher::Release();
 		//Destroy ImGui-Layer
 		SafeDelete(m_pImGuiLayer);
         //Destroy applicationlayer
-		SafeDelete(m_pApplicationLayer);
-		//Destroy window
-        SafeDelete(m_pWindow);
+		SafeDelete(m_pApplicationLayer);	
 	}
 
 

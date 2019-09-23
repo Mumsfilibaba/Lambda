@@ -74,17 +74,17 @@ namespace Lambda
 		typedef bool(ObjectType::*ObjectEventCallbackFunc)(const EventT&);
 
 	public:
-		inline ObjectEventCallback(ObjectType& objectRef, ObjectEventCallbackFunc func)
-			: m_ObjectRef(objectRef), m_Func(func) {}
+		inline ObjectEventCallback(ObjectType* pObjectRef, ObjectEventCallbackFunc func)
+			: m_pObjectRef(pObjectRef), m_Func(func) {}
 		~ObjectEventCallback() = default;
 
 		inline virtual bool Callback(const Event& event) override final
 		{
-			return (m_ObjectRef.*m_Func)(static_cast<const EventT&>(event));
+			return (m_pObjectRef->*m_Func)(static_cast<const EventT&>(event));
 		}
 
 	private:
-		ObjectType&				m_ObjectRef;
+		ObjectType*				m_pObjectRef;
 		ObjectEventCallbackFunc m_Func;
 	};
 
@@ -102,6 +102,8 @@ namespace Lambda
 		static bool DispatchEvent(const Event& pEvent);
 		static void PushEventLayer(EventLayer* pLayer);
 		static void PopEventLayer();
+		static void Initialize();
+		static void Release();
 
 		//Push a global callback function
 		template <typename EventT>
@@ -112,9 +114,9 @@ namespace Lambda
 
 		//Push object callback function
 		template <typename ObjectType, typename EventT>
-		static void PushCallback(ObjectType& objectRef, bool(ObjectType::* objectCallbackFunc)(const EventT&))
+		static void PushCallback(ObjectType* pObjectRef, bool(ObjectType::* objectCallbackFunc)(const EventT&))
 		{
-			PushCallback(EventT::GetStaticType(), DBG_NEW ObjectEventCallback<ObjectType, EventT>(objectRef, objectCallbackFunc));
+			PushCallback(EventT::GetStaticType(), DBG_NEW ObjectEventCallback<ObjectType, EventT>(pObjectRef, objectCallbackFunc));
 		}
 
 	private:

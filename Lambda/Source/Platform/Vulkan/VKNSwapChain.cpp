@@ -79,11 +79,11 @@ namespace Lambda
 
 		LOG_DEBUG_INFO("Vulkan: Number of images in SwapChain '%u'\n", m_ImageCount);
         
-        InitSwapChain(desc.SignalSemaphore, desc.Extent);
+        InitSwapChain(desc.Extent);
 	}
     
     
-    void VKNSwapChain::InitSwapChain(VkSemaphore signalSemaphore, VkExtent2D extent)
+    void VKNSwapChain::InitSwapChain(VkExtent2D extent)
     {
 		VKNDevice& device			= VKNDevice::Get();
 		SwapChainCapabilities cap	= QuerySwapChainSupport(device.GetPhysicalDevice(), device.GetSurface());
@@ -178,7 +178,7 @@ namespace Lambda
         }
         
         //Aquire the first swapchain image
-        AquireNextImage(signalSemaphore);
+        //AquireNextImage(signalSemaphore);
 
         LOG_DEBUG_INFO("Vulkan: Created ImageViews\n");
     }
@@ -229,7 +229,7 @@ namespace Lambda
 	}
 
 
-	void VKNSwapChain::ResizeBuffers(VkSemaphore signalSemaphore, uint32 width, uint32 height)
+	void VKNSwapChain::ResizeBuffers(uint32 width, uint32 height)
     {
         //Relase the old resources
 		VKNDevice& device = VKNDevice::Get();
@@ -237,7 +237,7 @@ namespace Lambda
         
         //Create swapchain again
         VkExtent2D extent = { width, height };
-        InitSwapChain(signalSemaphore, extent);
+        InitSwapChain(extent);
 	}
 
 

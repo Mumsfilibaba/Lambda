@@ -16,7 +16,6 @@ namespace Lambda
 
 	struct VKNSwapChainDesc
 	{
-		VkSemaphore			SignalSemaphore	= VK_NULL_HANDLE;
         VkExtent2D			Extent          = { 0, 0 };
 		uint32				ImageCount      = 0;
         VkSurfaceFormatKHR	Format;
@@ -35,7 +34,7 @@ namespace Lambda
 		VKNSwapChain(const VKNSwapChainDesc& desc);
 		~VKNSwapChain() = default;
 
-		void ResizeBuffers(VkSemaphore signalSemaphore, uint32 width, uint32 height);
+		void ResizeBuffers(uint32 width, uint32 height);
 		void AquireNextImage(VkSemaphore signalSemaphore);
 		void Present(VkQueue presentQueue, VkSemaphore waitSemaphore);
 
@@ -51,7 +50,7 @@ namespace Lambda
 
 	private:
 		void Init(const VKNSwapChainDesc& desc);
-        void InitSwapChain(VkSemaphore signalSemaphore, VkExtent2D extent);
+        void InitSwapChain(VkExtent2D extent);
 
 	private:
 		VkSwapchainKHR				m_SwapChain;
