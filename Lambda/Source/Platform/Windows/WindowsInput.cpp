@@ -21,7 +21,7 @@ namespace Lambda
 
 	WindowsInput::WindowsInput()
 	{
-		//Set to unknown
+		//Set to zero
 		memset(m_WindowsToLambdaKeyTable, 0, sizeof(m_WindowsToLambdaKeyTable));
 		memset(m_LambdaToWindowsKeyTable, 0, sizeof(m_LambdaToWindowsKeyTable));
 
@@ -355,10 +355,7 @@ namespace Lambda
 
 	void WindowsInput::InternalGetMousePosition(IWindow* pRelativeTo, float& x, float& y) const
 	{
-		if (!pRelativeTo)
-		{
-			return;
-		}
+		LAMBDA_ASSERT(pRelativeTo != nullptr);
 
 		POINT p = {};
 		GetCursorPos(&p);

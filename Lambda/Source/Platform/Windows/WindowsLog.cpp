@@ -4,11 +4,18 @@
 #if defined(LAMBDA_PLAT_WINDOWS)
 namespace Lambda
 {
+	//----
+	//ILog
+	//----
+
 	ILog* ILog::Create()
 	{
 		return DBG_NEW WindowsLog();
 	}
     
+	//----------
+	//WindowsLog
+	//----------
     
 	void WindowsLog::Print(LogSeverity severity, const char* pFormat, ...)
 	{

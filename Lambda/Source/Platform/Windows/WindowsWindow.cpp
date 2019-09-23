@@ -2,7 +2,11 @@
 #include "System/Log.h"
 #include "Graphics/IGraphicsDevice.h"
 #include "Utilities/StringHelper.h"
+#include "Events/KeyEvent.h"
+#include "Events/WindowEvent.h"
+#include "Events/MouseEvent.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
+	#include "WindowsHelper.h"
 	#include "WindowsWindow.h"
 	#include "WindowClass.h"
 	#include "WindowsInput.h"
@@ -10,18 +14,24 @@
 
 namespace Lambda
 {
-	LRESULT CALLBACK WindowEventCallback(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
+	//-------
+	//IWindow
+	//-------
 
 	IWindow* IWindow::Create(const WindowDesc& desc)
 	{
 		return DBG_NEW WindowsWindow(desc);
 	}
 
+	//-------------
+	//WindowsWindow
+	//-------------
+
+	LRESULT CALLBACK WindowEventCallback(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 	WindowsWindow::WindowsWindow(const WindowDesc& desc)
 		: m_pGraphicsDevice(nullptr),
-		m_OnEvent(nullptr),
+		m_EventCallback(nullptr),
 		m_hWindow(0),
 		m_EventBackLog(),
 		m_Fullscreen(false)
@@ -50,7 +60,7 @@ namespace Lambda
 
 	void WindowsWindow::SetEventCallback(EventCallback callback)
 	{
-		m_OnEvent = callback;
+		m_EventCallback = callback;
 	}
 
 
@@ -239,57 +249,78 @@ namespace Lambda
 	}
 
 
+	void WindowsWindow::DispatchEvent(const Event& event)
+	{
+		if (m_EventCallback)
+		{
+			//When a eventhandler is registered, then we handled all the backloged items
+			/*if (m_EventBackLog.size() > 0)
+			{
+				for (auto& e : m_EventBackLog)
+					m_EventCallback(e);
+
+				m_EventBackLog.clear();
+			}*/
+
+			m_EventCallback(&event);
+		}
+		else
+		{
+			//If a eventcallback is not registered then we put the event in the backlog
+			m_EventBackLog.push_back(event);
+		}
+	}
+
+
 	LRESULT WindowsWindow::OnEvent(uint32 msg, WPARAM wParam, LPARAM lParam)
 	{
-		Event event = {};
-		event.Type = EVENT_TYPE_UNKNOWN;
-		event.MouseScrollEvent.Vertical = false;
-
 		switch (msg)
 		{
 		case WM_DESTROY:
 		{
-			event.Type = EVENT_TYPE_WINDOW_CLOSED;
+			WindowClosedEvent event = WindowClosedEvent();
+			DispatchEvent(event);
 			break;
 		}
 		
 		case WM_SIZE:
 		{
-			event.Type = EVENT_TYPE_WINDOW_RESIZE;
-			event.WindowResize.Width = LOWORD(lParam);
-			event.WindowResize.Height = HIWORD(lParam);
+			WindowResizeEvent event = WindowResizeEvent(uint32(LOWORD(lParam)), uint32(HIWORD(lParam)));
+			DispatchEvent(event);
 			break;
 		}
 
 		case WM_MOVE:
 		{
-			event.Type = EVENT_TYPE_WINDOW_MOVE;
-			event.WindowMove.PosX = LOWORD(lParam);
-			event.WindowMove.PosY = HIWORD(lParam);
+			WindowMoveEvent event = WindowMoveEvent(uint32(LOWORD(lParam)), uint32(HIWORD(lParam)));
+			DispatchEvent(event);
 			break;
 		}
 		
 		case WM_KEYDOWN:
+		{
+			KeyPressedEvent event = KeyPressedEvent(WindowsInput::ConvertWindowsKey(uint32(wParam)), GetKeyModifers(), uint32(LOWORD(lParam)));
+			DispatchEvent(event);
+			break;
+		}
 		case WM_KEYUP:
 		{
-			event.Type = msg == WM_KEYDOWN ? EVENT_TYPE_KEYDOWN : EVENT_TYPE_KEYUP;
-			event.KeyEvent.KeyCode = WindowsInput::ConvertWindowsKey(uint32(wParam));
-			event.KeyEvent.RepeatCount = LOWORD(lParam);
+			KeyReleasedEvent event = KeyReleasedEvent(WindowsInput::ConvertWindowsKey(uint32(wParam)), Lambda::GetKeyModifers());
+			DispatchEvent(event);
 			break;
 		}
 
 		case WM_CHAR:
 		{
-			event.Type = EVENT_TYPE_KEYTYPED;
-			event.TextEvent.Character = wchar_t(wParam);
+			KeyTypedEvent event = KeyTypedEvent(uint32(wParam));
+			DispatchEvent(event);
 			break;
 		}
 
 		case WM_MOUSEMOVE:
 		{
-			event.Type = EVENT_TYPE_MOUSE_MOVED;
-			event.MouseMoveEvent.PosX = GET_X_LPARAM(lParam);
-			event.MouseMoveEvent.PosY = GET_Y_LPARAM(lParam);
+			MouseMovedEvent event = MouseMovedEvent(uint32(GET_X_LPARAM(lParam)), uint32(GET_Y_LPARAM(lParam)));
+			DispatchEvent(event);
 			break;
 		}
 
@@ -298,8 +329,8 @@ namespace Lambda
 		case WM_RBUTTONDOWN:
 		case WM_XBUTTONDOWN:
 		{
-			event.Type = EVENT_TYPE_MOUSE_BUTTONUP;
-			event.MouseButtonEvent.Button = WindowsInput::ConvertWindowsButton(uint32(wParam));
+			MouseButtonPressedEvent event = MouseButtonPressedEvent(WindowsInput::ConvertWindowsButton(uint32(wParam)), Lambda::GetKeyModifers());
+			DispatchEvent(event);
 			break;
 		}
 
@@ -308,55 +339,37 @@ namespace Lambda
 		case WM_RBUTTONUP:
 		case WM_XBUTTONUP:
 		{
-			event.Type = EVENT_TYPE_MOUSE_BUTTONDOWN;
-			event.MouseButtonEvent.Button = WindowsInput::ConvertWindowsButton(uint32(wParam));
+			MouseButtonReleasedEvent event = MouseButtonReleasedEvent(WindowsInput::ConvertWindowsButton(uint32(wParam)), Lambda::GetKeyModifers());
+			DispatchEvent(event);
 			break;
 		}
 		
 		case WM_MOUSEWHEEL:
 		case WM_MOUSEHWHEEL:
 		{
-			event.Type = EVENT_TYPE_MOUSE_SCROLLED;
-            event.MouseScrollEvent.Vertical = (msg == WM_MOUSEHWHEEL) ? false : true;
-			event.MouseScrollEvent.Value = float(GET_WHEEL_DELTA_WPARAM(wParam)) / float(WHEEL_DELTA);
+			float value				= float(GET_WHEEL_DELTA_WPARAM(wParam)) / float(WHEEL_DELTA);
+			float horizontalValue	= 0.0f;
+			float verticalValue		= 0.0f;
+			if (msg == WM_MOUSEHWHEEL)
+				horizontalValue = value;
+			else
+				verticalValue = value;
+
+			MouseScrolledEvent event = MouseScrolledEvent(horizontalValue, verticalValue);
+			DispatchEvent(event);
 			break;
 		}
 
 		case WM_SETFOCUS:
-		{
-			event.Type = EVENT_TYPE_WINDOW_FOCUS_CHANGED;
-			event.FocusChanged.HasFocus = true;
-			break;
-		}
-
 		case WM_KILLFOCUS:
 		{
-			event.Type = EVENT_TYPE_WINDOW_FOCUS_CHANGED;
-			event.FocusChanged.HasFocus = false;
+			WindowFocusChangedEvent event = WindowFocusChangedEvent(msg == WM_SETFOCUS);
+			DispatchEvent(event);
 			break;
 		}
 
 		default:
 			return DefWindowProc(m_hWindow, msg, wParam, lParam);
-		}
-
-		if (m_OnEvent)
-		{
-			//When a eventhandler is registered, then we handled all the backloged items
-			if (m_EventBackLog.size() > 0)
-			{
-				for (auto& e : m_EventBackLog)
-					m_OnEvent(e);
-
-				m_EventBackLog.clear();
-			}
-
-			m_OnEvent(event);
-		}
-		else
-		{
-			//If a eventcallback is not registered then we put the event in the backlog
-			m_EventBackLog.push_back(event);
 		}
 
 		return LRESULT(0);

@@ -5,6 +5,10 @@
 
 namespace Lambda
 {
+	//-------------
+	//WindowsWindow
+	//-------------
+
 	class WindowsWindow : public IWindow
 	{
 		friend LRESULT CALLBACK WindowEventCallback(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -25,14 +29,14 @@ namespace Lambda
         virtual uint32 GetHeight() const override;
         virtual uint32 GetWidth() const override;
 
-
 	private:
-		void Init(const WindowDesc& desc);
+		void	Init(const WindowDesc& desc);
+		void	DispatchEvent(const Event& event);
 		LRESULT OnEvent(uint32 msg, WPARAM wParam, LPARAM lParam);
 
 	private:
 		IGraphicsDevice* m_pGraphicsDevice;
-		EventCallback m_OnEvent;
+		EventCallback m_EventCallback;
 		std::vector<Event> m_EventBackLog;
 		HWND m_hWindow;
 		uint32 m_Height;

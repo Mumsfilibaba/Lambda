@@ -7,6 +7,10 @@
 
 namespace Lambda
 {
+	//----------------------
+	//WindowsJoystickManager
+	//----------------------
+
 	class WindowsJoystickManager final : public JoystickManager
 	{
 	public:

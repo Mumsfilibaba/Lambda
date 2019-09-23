@@ -3,8 +3,11 @@
 
 namespace Lambda
 {
-	std::unique_ptr<Input> Input::s_Instance = std::unique_ptr<Input>(Input::Create());
+	//-----
+	//Input
+	//-----
 
+	std::unique_ptr<Input> Input::s_Instance = std::unique_ptr<Input>(Input::Create());
     
 	bool Input::IsKeyUp(Key keycode)
 	{
