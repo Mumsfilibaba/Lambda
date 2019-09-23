@@ -36,6 +36,8 @@ namespace Lambda
 
     class Event
     {
+		friend class EventDispatcher;
+
     public:
         inline Event(uint32 categories)
             : m_Handled(false), m_Categories(categories) {}
@@ -47,9 +49,12 @@ namespace Lambda
 
 		virtual EventType GetType() const = 0;
         
+	private:
+		inline void SetIsHandled(bool isHandled) const { m_Handled = isHandled; }
+
     private:
-        bool        m_Handled;
-        uint32      m_Categories;
+        mutable bool    m_Handled;
+        uint32			m_Categories;
     };
     
 

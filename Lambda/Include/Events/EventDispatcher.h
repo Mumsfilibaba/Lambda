@@ -57,7 +57,7 @@ namespace Lambda
 
 		inline virtual bool Callback(const Event& event) override final
 		{
-			m_Func(static_cast<const EventT&>(event));
+			return m_Func(static_cast<const EventT&>(event));
 		}
 
 	private:
@@ -118,7 +118,7 @@ namespace Lambda
 		}
 
 	private:
-		void PushCallback(EventType key, IEventCallback* pCallback);
+		static void PushCallback(EventType key, IEventCallback* pCallback);
 
 	private:
 		static std::vector<EventLayer*>						s_LayerStack;

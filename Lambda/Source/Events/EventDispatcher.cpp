@@ -13,6 +13,7 @@ namespace Lambda
 
 	bool EventDispatcher::DispatchEvent(const Event& event)
 	{
+		//First send events to all the layers
 		for (auto& pLayer : s_LayerStack)
 		{
 			//LOG_DEBUG_INFO("%s:\n", iter->pName);
@@ -20,11 +21,31 @@ namespace Lambda
 			if (event.GetCategoryFlags() & pLayer->GetRecivableCategories())
 			{
 				if (pLayer->OnEvent(event))
-					return true;
+				{
+					event.SetIsHandled(true);
+					break;
+				}
 			}
 		}
 
-		return false;
+		//Then send the event to the callbacks
+		auto tableEntry = s_CallbackTable.find(event.GetType());
+		if (tableEntry != s_CallbackTable.end())
+		{
+			//There are actually callback functions to recive this event
+			auto& callbackList = tableEntry->second;
+			for (auto& callback : callbackList)
+			{
+				if (callback->Callback(event));
+				{
+					event.SetIsHandled(true);
+					//Should we break here?
+				}
+			}
+		}
+
+		//Did someone respond to the event?
+		return event.IsHandled();
 	}
 
 
