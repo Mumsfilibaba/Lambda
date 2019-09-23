@@ -58,7 +58,7 @@ namespace Lambda
 	}
 	
 
-	void WindowsWindow::SetEventCallback(EventCallback callback)
+	void WindowsWindow::SetEventCallback(EventCallbackFunc callback)
 	{
 		m_EventCallback = callback;
 	}
@@ -262,12 +262,12 @@ namespace Lambda
 				m_EventBackLog.clear();
 			}*/
 
-			m_EventCallback(&event);
+			m_EventCallback(event);
 		}
 		else
 		{
 			//If a eventcallback is not registered then we put the event in the backlog
-			m_EventBackLog.push_back(event);
+			//m_EventBackLog.push_back(event);
 		}
 	}
 

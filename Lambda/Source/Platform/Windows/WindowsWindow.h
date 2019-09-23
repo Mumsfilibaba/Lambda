@@ -19,7 +19,7 @@ namespace Lambda
 		WindowsWindow(const WindowDesc& desc);
 		~WindowsWindow();
 
-		virtual void SetEventCallback(EventCallback callback) override;
+		virtual void SetEventCallback(EventCallbackFunc callback) override;
 		virtual void OnUpdate() const override;
         virtual bool SetFullscreen(bool fullscreen) override final;
         virtual bool GetFullscreen() const override final;
@@ -36,7 +36,7 @@ namespace Lambda
 
 	private:
 		IGraphicsDevice* m_pGraphicsDevice;
-		EventCallback m_EventCallback;
+		EventCallbackFunc m_EventCallback;
 		std::vector<Event> m_EventBackLog;
 		HWND m_hWindow;
 		uint32 m_Height;

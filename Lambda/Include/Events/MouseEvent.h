@@ -10,8 +10,8 @@ namespace Lambda
     class MouseButtonEvent : public Event
     {
     public:
-        inline MouseButtonEvent(EventType type, MouseButton button, uint32 modifiers)
-        : Event(type, EVENT_CATEGORY_MOUSE | EVENT_CATEGORY_INPUT), m_Button(button) {}
+        inline MouseButtonEvent(MouseButton button, uint32 modifiers)
+        : Event(EVENT_CATEGORY_MOUSE | EVENT_CATEGORY_INPUT), m_Button(button), m_Modifiers(modifiers) {}
         ~MouseButtonEvent() = default;
         
         inline bool         HasModifierKey(KeyModifier modifier)    { return m_Modifiers & modifier; }
@@ -31,8 +31,10 @@ namespace Lambda
     {
     public:
         inline MouseButtonPressedEvent(MouseButton button, uint32 modifiers)
-        : MouseButtonEvent(EVENT_TYPE_MOUSE_BUTTON_PRESSED, button, modifiers) {}
+        : MouseButtonEvent(button, modifiers) {}
         ~MouseButtonPressedEvent() = default;
+
+		LAMBDA_DECLARE_EVENT_TYPE(MouseButtonPressedEvent);
     };
 
     //------------------------
@@ -43,8 +45,10 @@ namespace Lambda
     {
     public:
         inline MouseButtonReleasedEvent(MouseButton button, uint32 modifiers)
-        : MouseButtonEvent(EVENT_TYPE_MOUSE_BUTTON_RELEASED, button, modifiers) {}
+        : MouseButtonEvent(button, modifiers) {}
         ~MouseButtonReleasedEvent() = default;
+
+		LAMBDA_DECLARE_EVENT_TYPE(MouseButtonReleasedEvent);
     };
 
     //---------------
@@ -55,12 +59,14 @@ namespace Lambda
     {
     public:
         inline MouseMovedEvent(int32 x, int32 y)
-        : Event(EVENT_TYPE_MOUSE_MOVED, EVENT_CATEGORY_MOUSE | EVENT_CATEGORY_INPUT), m_X(x), m_Y(y) {}
+        : Event(EVENT_CATEGORY_MOUSE | EVENT_CATEGORY_INPUT), m_X(x), m_Y(y) {}
         ~MouseMovedEvent() = default;
         
         inline int32 GetX() const { return m_X; }
         inline int32 GetY() const { return m_Y; }
         
+		LAMBDA_DECLARE_EVENT_TYPE(MouseMovedEvent);
+
     private:
         int32 m_X;
         int32 m_Y;
@@ -73,15 +79,17 @@ namespace Lambda
     class MouseScrolledEvent : public Event
     {
     public:
-        inline MouseScrolledEvent(float x, float y)
-        : Event(EVENT_TYPE_MOUSE_SCROLLED, EVENT_CATEGORY_MOUSE | EVENT_CATEGORY_INPUT), m_X(x), m_Y(y)  {}
+        inline MouseScrolledEvent(float horizontal, float vertical)
+        : Event(EVENT_CATEGORY_MOUSE | EVENT_CATEGORY_INPUT), m_Horizontal(horizontal), m_Vertical(vertical)  {}
         ~MouseScrolledEvent() = default;
         
-        inline int32 GetHorizontalValue() const { return m_X; }
-        inline int32 GetVerticalValue() const   { return m_Y; }
+        inline float GetHorizontalValue() const { return m_Horizontal; }
+        inline float GetVerticalValue() const   { return m_Vertical; }
+
+		LAMBDA_DECLARE_EVENT_TYPE(MouseScrolledEvent);
         
     private:
-        float m_X;
-        float m_Y;
+        float m_Horizontal;
+        float m_Vertical;
     };
 }

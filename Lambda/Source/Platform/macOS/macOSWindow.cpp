@@ -143,7 +143,7 @@ namespace Lambda
     }
     
     
-    void MacOSWindow::SetEventCallback(EventCallback callback)
+    void MacOSWindow::SetEventCallback(EventCallbackFunc callback)
     {
         m_EventCallback = callback;
     }

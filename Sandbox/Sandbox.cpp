@@ -3,6 +3,7 @@
 #include "System/Input.h"
 #include "Events/WindowEvent.h"
 #include "Events/KeyEvent.h"
+#include "Events/MouseEvent.h"
 #include "Graphics/MeshFactory.h"
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -566,32 +567,32 @@ namespace Lambda
     
     
     //Event handler function for the instance
-    bool SandBox::OnEvent(const Event* pEvent)
+    bool SandBox::OnEvent(const Event& event)
     {
-        switch (pEvent->GetType())
+        switch (event.GetType())
         {
-            case EVENT_TYPE_WINDOW_RESIZE:
+			case WindowResizeEvent::GetStaticType():
             {
                 //Resize camera if size is not zero
-                const WindowResizeEvent* pResizeEvent = static_cast<const WindowResizeEvent*>(pEvent);
-                if (pResizeEvent->GetWidth() > 0 && pResizeEvent->GetHeight() > 0)
+                const WindowResizeEvent& resizeEvent = static_cast<const WindowResizeEvent&>(event);
+                if (resizeEvent.GetWidth() > 0 && resizeEvent.GetHeight() > 0)
                 {
-                    CreateCamera(pResizeEvent->GetWidth(), pResizeEvent->GetHeight());
+                    CreateCamera(resizeEvent.GetWidth(), resizeEvent.GetHeight());
                 }
                 return false;
             }
-            case EVENT_TYPE_KEY_PRESSED:
+			case KeyPressedEvent::GetStaticType():
             {
-                const KeyPressedEvent* pKeypressed = static_cast<const KeyPressedEvent*>(pEvent);
+                const KeyPressedEvent& keypressed = static_cast<const KeyPressedEvent&>(event);
                 
                 //LOG_DEBUG_INFO("Key pressed\n");
-                if (pKeypressed->GetKey() == KEY_1)
+                if (keypressed.GetKey() == KEY_1)
                 {
                     GetWindow()->SetFullscreen(!GetWindow()->GetFullscreen());
                 }
                 return false;
             }
-            case EVENT_TYPE_MOUSE_MOVED:
+			case MouseMovedEvent::GetStaticType():
                 //LOG_DEBUG_INFO("Mouse moved (x: %d, y: %d)\n", event.MouseMoveEvent.PosX, event.MouseMoveEvent.PosY);
                 
                 //Rotate camera
@@ -603,11 +604,11 @@ namespace Lambda
                 //Input::SetMousePosition(m_Width / 2, m_Height / 2);
                 return false;
                 
-            case EVENT_TYPE_MOUSE_BUTTON_PRESSED:
+			case MouseButtonReleasedEvent::GetStaticType():
                 //LOG_DEBUG_INFO("Mouse pressed\n");
                 return false;
             
-            case EVENT_TYPE_MOUSE_SCROLLED:
+			case MouseScrolledEvent::GetStaticType():
                 /*if (event.MouseScrollEvent.Vertical)
                 {
                     LOG_DEBUG_INFO("Vertical scroll\n");
@@ -618,8 +619,8 @@ namespace Lambda
                 }*/
                 return false;
                 
-            case EVENT_TYPE_WINDOW_FOCUS_CHANGED:
-                if (static_cast<const WindowFocusChangedEvent*>(pEvent)->HasFocus())
+			case WindowFocusChangedEvent::GetStaticType():
+                if (static_cast<const WindowFocusChangedEvent&>(event).HasFocus())
                 {
                     LOG_DEBUG_INFO("Window got focus\n");
                 }

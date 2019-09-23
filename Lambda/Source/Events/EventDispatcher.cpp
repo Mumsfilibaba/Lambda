@@ -8,17 +8,18 @@ namespace Lambda
 	//EventDispatcher
 	//---------------
 
-	std::vector<EventLayer*> EventDispatcher::s_LayerStack;
+	std::vector<EventLayer*>										EventDispatcher::s_LayerStack;
+	std::unordered_map<EventType, EventDispatcher::CallbackList>	EventDispatcher::s_CallbackTable;
 
-	bool EventDispatcher::DispatchEvent(const Event* pEvent)
+	bool EventDispatcher::DispatchEvent(const Event& event)
 	{
 		for (auto& pLayer : s_LayerStack)
 		{
 			//LOG_DEBUG_INFO("%s:\n", iter->pName);
 			
-			if (pEvent->GetCategoryFlags() & pLayer->GetRecivableCategories())
+			if (event.GetCategoryFlags() & pLayer->GetRecivableCategories())
 			{
-				if (pLayer->OnEvent(pEvent))
+				if (pLayer->OnEvent(event))
 					return true;
 			}
 		}
@@ -45,5 +46,30 @@ namespace Lambda
 		pLayer->OnPop();
 
 		LOG_DEBUG_INFO("Lambda Engine: Poped eventlayer '%s'.\n", pLayer->GetName());
+	}
+
+
+	void EventDispatcher::PushCallback(EventType key, IEventCallback* pCallback)
+	{
+		//Check if list exists
+		auto tableEntry = s_CallbackTable.find(key);
+		if (tableEntry == s_CallbackTable.end())
+		{
+			//If not insert new element
+			auto element = s_CallbackTable.insert(std::pair<EventType, CallbackList>(key, CallbackList()));
+			//Did insertion succeed
+			if (element.second)
+			{
+				tableEntry = element.first;
+			}
+			else
+			{
+				return;
+			}
+		}
+
+		//Insert new callback
+		auto& callbackList = tableEntry->second;
+		callbackList.push_back(pCallback);
 	}
 }

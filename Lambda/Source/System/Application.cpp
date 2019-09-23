@@ -28,10 +28,10 @@ namespace Lambda
 	}
 
 
-	bool ApplicationLayer::OnEvent(const Event* pEvent)
+	bool ApplicationLayer::OnEvent(const Event& event)
 	{
 		Application& application = Application::Get();
-        return application.OnEvent(pEvent);
+        return application.OnEvent(event);
 	}
 
 
@@ -223,6 +223,8 @@ namespace Lambda
 	{
 		OnRelease();
        
+		//Destroy graphicslayer
+		SafeDelete(m_pGraphicsLayer);
 		//Destroy ImGui-Layer
 		SafeDelete(m_pImGuiLayer);
         //Destroy applicationlayer
@@ -232,19 +234,19 @@ namespace Lambda
 	}
 
 
-	bool Application::OnEvent(const Event* pEvent)
+	bool Application::OnEvent(const Event& event)
 	{
-		switch (pEvent->GetType())
+		switch (event.GetType())
 		{
 			//Exit the application when the window is closed
-		case EVENT_TYPE_WINDOW_CLOSED:
+		case WindowClosedEvent::GetStaticType():
 			Quit(0);
 			LOG_DEBUG_INFO("Window closed\n");
 			return true;
 
 			//Exit the application when the escape key is pressed
-		case EVENT_TYPE_KEY_PRESSED:
-			if (static_cast<const KeyPressedEvent*>(pEvent)->GetKey() == KEY_ESCAPE)
+		case KeyPressedEvent::GetStaticType():
+			if (static_cast<const KeyPressedEvent&>(event).GetKey() == KEY_ESCAPE)
 			{
 				Quit(0);
 				LOG_DEBUG_INFO("Escape pressed, exiting\n");
@@ -256,13 +258,13 @@ namespace Lambda
 			}
 
 			//When window is out of focus make sure that the rendering-loop pauses
-		case EVENT_TYPE_WINDOW_FOCUS_CHANGED:
+		case WindowFocusChangedEvent::GetStaticType():
 			if (IGraphicsDevice::Get())
 			{
 				IGraphicsDevice::Get()->WaitForGPU();
 			}
 
-			m_HasFocus = static_cast<const WindowFocusChangedEvent*>(pEvent)->HasFocus();
+			m_HasFocus = static_cast<const WindowFocusChangedEvent&>(event).HasFocus();
 
 			//Return false so that other parts of the app still can get this event
 			return false;

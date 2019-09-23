@@ -31,7 +31,7 @@ namespace Lambda
 		IWindow() = default;
 		virtual ~IWindow() = default;
 
-		virtual void SetEventCallback(EventCallback callback) = 0;
+		virtual void SetEventCallback(EventCallbackFunc callback) = 0;
 		virtual void OnUpdate() const = 0;
         virtual bool SetFullscreen(bool fullscreen) = 0;
         virtual bool GetFullscreen() const = 0;

@@ -46,7 +46,7 @@ namespace Lambda
 		virtual void    OnRelease() override final;
         virtual void    OnPush() override final;
         virtual void    OnPop() override final;
-        virtual bool    OnEvent(const Event* pEvent) override final;
+        virtual bool    OnEvent(const Event& event) override final;
         virtual uint32  GetRecivableCategories() const override final;
         
 		void CreateCamera(uint32 width, uint32 height);

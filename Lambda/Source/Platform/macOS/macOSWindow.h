@@ -15,7 +15,7 @@ namespace Lambda
         MacOSWindow(const WindowDesc& desc);
         ~MacOSWindow();
         
-        virtual void SetEventCallback(EventCallback callback) override final;
+        virtual void SetEventCallback(EventCallbackFunc callback) override final;
         virtual void OnUpdate() const override final;
         virtual bool SetFullscreen(bool fullscreen) override final;
         virtual bool GetFullscreen() const override final;
@@ -36,7 +36,7 @@ namespace Lambda
         std::vector<Event>  m_EventBackLog;
         uint32              m_Width;
         uint32              m_Height;
-        EventCallback       m_EventCallback;
+        EventCallbackFunc       m_EventCallback;
         bool                m_Fullscreen;
         
     private:

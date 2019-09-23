@@ -28,10 +28,10 @@ namespace Lambda
     }
 
 
-    bool GraphicsLayer::OnEvent(const Event* pEvent)
+    bool GraphicsLayer::OnEvent(const Event& event)
     {
         IGraphicsDevice* pDevice = IGraphicsDevice::Get();
-        return pDevice->OnEvent(pEvent);
+        return pDevice->OnEvent(event);
     }
 
 

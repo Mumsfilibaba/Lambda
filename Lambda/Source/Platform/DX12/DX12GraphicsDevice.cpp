@@ -1,5 +1,6 @@
 #include "LambdaPch.h"
 #include "Utilities/StringHelper.h"
+#include "Events/WindowEvent.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#pragma comment(lib, "dxguid.lib")
 
@@ -856,21 +857,22 @@ namespace Lambda
 
 	bool DX12GraphicsDevice::OnEvent(const Event& event)
 	{
-		if (event.Type == EVENT_TYPE_WINDOW_RESIZE)
+		if (event.GetType() == WindowResizeEvent::GetStaticType())
 		{
 			//if size is zero then do not resize
-			if (event.WindowResize.Width > 0 && event.WindowResize.Height > 0)
+			const WindowResizeEvent& windowEvent = static_cast<const WindowResizeEvent&>(event);
+			if (windowEvent.GetWidth() > 0 && windowEvent.GetHeight() > 0)
 			{
 				//Make sure frames are finished
 				WaitForGPU();
 
-				LOG_SYSTEM_INFO("Resize - w: %d, h: %d\n", event.WindowResize.Width, event.WindowResize.Height);
+				LOG_SYSTEM_INFO("Resize - w: %d, h: %d\n", windowEvent.GetWidth(), windowEvent.GetHeight());
 
 				//Release the old buffers
 				ReleaseBackBuffers();
 
 				//Resize
-				HRESULT hr = m_SwapChain->ResizeBuffers(0, event.WindowResize.Width, event.WindowResize.Height, DXGI_FORMAT_UNKNOWN, m_BackBufferFlags);
+				HRESULT hr = m_SwapChain->ResizeBuffers(0, windowEvent.GetWidth(), windowEvent.GetHeight(), DXGI_FORMAT_UNKNOWN, m_BackBufferFlags);
 				if (FAILED(hr))
 				{
 					LOG_DEBUG_ERROR("DX12: Failed to resize window\n");
@@ -879,8 +881,8 @@ namespace Lambda
 				{
 					InitBackBuffers();
 
-					m_BackBufferWidth	= event.WindowResize.Width;
-					m_BackBufferHeight	= event.WindowResize.Height;
+					m_BackBufferWidth	= windowEvent.GetWidth();
+					m_BackBufferHeight	= windowEvent.GetHeight();
 				}
 			}
 		}

@@ -52,7 +52,7 @@ namespace Lambda
 			{
 				if (state.dwPacketNumber != m_ControllerState[i].dwPacketNumber)
 				{
-					Event event = {};
+					/*Event event = {};
 					memset(&event, 0, sizeof(Event));
 
 					event.Type = EVENT_TYPE_JOYSTICK_CHANGED;
@@ -76,7 +76,7 @@ namespace Lambda
 					//TODO: Fix buttons
 
 					EventDispatcher::DispatchEvent(event);
-					memcpy(&(m_ControllerState[i]), &state, sizeof(XINPUT_STATE));
+					memcpy(&(m_ControllerState[i]), &state, sizeof(XINPUT_STATE));*/
 
 					//We found a controller
 					isConnected = true;
@@ -84,7 +84,7 @@ namespace Lambda
 			}
 		}
 
-		//Check again in two seconds if we have connnected
+		//Check again in two seconds if we have connected
 		if (!isConnected)
 		{
 			m_CurrentPollRate = Timestep::Seconds(2.0f);

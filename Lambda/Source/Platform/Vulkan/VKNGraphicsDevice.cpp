@@ -743,16 +743,16 @@ namespace Lambda
     }
     
     
-    bool VKNGraphicsDevice::OnEvent(const Event* pEvent)
+    bool VKNGraphicsDevice::OnEvent(const Event& event)
     {
         //Handle resize event
-        if (pEvent->GetType() == EVENT_TYPE_WINDOW_RESIZE)
+        if (event.GetType() == WindowResizeEvent::GetStaticType())
         {
             //When we minimize or any other reason the size is zero
             //Do not resize if the size is the same as the current one
-            const WindowResizeEvent* pWindowEvent = (const WindowResizeEvent*)pEvent;
-            if ((pWindowEvent->GetWidth() == 0 || pWindowEvent->GetHeight() == 0) ||
-                (pWindowEvent->GetWidth() == m_pSwapChain->GetWidth() && pWindowEvent->GetHeight() == m_pSwapChain->GetHeight()))
+            const WindowResizeEvent& windowEvent = (const WindowResizeEvent&)event;
+            if ((windowEvent.GetWidth() == 0 || windowEvent.GetHeight() == 0) ||
+                (windowEvent.GetWidth() == m_pSwapChain->GetWidth() && windowEvent.GetHeight() == m_pSwapChain->GetHeight()))
             {
                 return false;
             }
@@ -760,7 +760,7 @@ namespace Lambda
             //Syncronize the GPU so no operations are in flight when recreating swapchain
             WaitForGPU();
            
-            m_pSwapChain->ResizeBuffers(m_ImageSemaphores[m_CurrentFrame], pWindowEvent->GetWidth(), pWindowEvent->GetHeight());
+            m_pSwapChain->ResizeBuffers(m_ImageSemaphores[m_CurrentFrame], windowEvent.GetWidth(), windowEvent.GetHeight());
 
 			//Recreate depthstencil
             ReleaseDepthStencil();
@@ -774,7 +774,7 @@ namespace Lambda
 				CreateMSAABuffer();
 			}
             
-            LOG_DEBUG_INFO("VulkanGraphicsDevice: Window resized w: %d h: %d\n", pWindowEvent->GetWidth(), pWindowEvent->GetHeight());
+            LOG_DEBUG_INFO("VulkanGraphicsDevice: Window resized w: %d h: %d\n", windowEvent.GetWidth(), windowEvent.GetHeight());
         }
         
         return false;

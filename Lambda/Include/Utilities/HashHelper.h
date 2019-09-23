@@ -21,7 +21,7 @@ namespace Lambda
 
     constexpr size_t StringHash(const char* pString)
     {
-        static_assert(sizeof(size_t) == 8 | sizeof(size_t) == 4, "Only supports 64- or 32-bit versions of size_t");
+        static_assert(sizeof(size_t) == 8 || sizeof(size_t) == 4, "Only supports 64- or 32-bit versions of size_t");
         
         size_t hash = sizeof(size_t) == 8 ? 1125899906842597L : 4294967291L;
         for (uint32 i = 0; pString[i] != 0; i++)

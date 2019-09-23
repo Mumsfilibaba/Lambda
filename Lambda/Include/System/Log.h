@@ -5,13 +5,13 @@
 
 //Log
 #if defined(LAMBDA_DEBUG)
-	#define LOG_DEBUG_INFO(...) Log::GetDebugLog().Print(LOG_SEVERITY_INFO, __VA_ARGS__)
-	#define LOG_DEBUG_WARNING(...) Log::GetDebugLog().Print(LOG_SEVERITY_WARNING, __VA_ARGS__)
-	#define LOG_DEBUG_ERROR(...) Log::GetDebugLog().Print(LOG_SEVERITY_ERROR, __VA_ARGS__); DEBUG_BREAK
+	#define LOG_DEBUG_INFO(...) Lambda::Log::GetDebugLog().Print(Lambda::LOG_SEVERITY_INFO, __VA_ARGS__)
+	#define LOG_DEBUG_WARNING(...) Lambda::Log::GetDebugLog().Print(Lambda::LOG_SEVERITY_WARNING, __VA_ARGS__)
+	#define LOG_DEBUG_ERROR(...) Lambda::Log::GetDebugLog().Print(Lambda::LOG_SEVERITY_ERROR, __VA_ARGS__); DEBUG_BREAK
 	
-	#define LOG_SYSTEM_INFO(...) Log::GetSystemLog().Print(LOG_SEVERITY_INFO, __VA_ARGS__)
-	#define LOG_SYSTEM_WARNING(...) Log::GetSystemLog().Print(LOG_SEVERITY_WARNING, __VA_ARGS__)
-	#define LOG_SYSTEM_ERROR(...) Log::GetSystemLog().Print(LOG_SEVERITY_ERROR, __VA_ARGS__); DEBUG_BREAK
+	#define LOG_SYSTEM_INFO(...) Lambda::Log::GetSystemLog().Print(Lambda::LOG_SEVERITY_INFO, __VA_ARGS__)
+	#define LOG_SYSTEM_WARNING(...) Lambda::Log::GetSystemLog().Print(Lambda::LOG_SEVERITY_WARNING, __VA_ARGS__)
+	#define LOG_SYSTEM_ERROR(...) Lambda::Log::GetSystemLog().Print(Lambda::LOG_SEVERITY_ERROR, __VA_ARGS__); DEBUG_BREAK
 #else
 	#define LOG_DEBUG_INFO(...)
 	#define LOG_DEBUG_WARNING(...)
@@ -23,10 +23,10 @@
 #endif
 
 #if !defined(LAMBDA_NO_LOGS)
-	#define LOG_DEBUG(...) Log::GetDebugLog().Print(__VA_ARGS__)
-	#define LOG_SYSTEM(...) Log::GetSystemLog().Print(__VA_ARGS__)
-	#define LOG_DEBUG_PRINT(...) Log::GetDebugLog().Print(LOG_SEVERITY_INFO, __VA_ARGS__)
-	#define LOG_SYSTEM_PRINT(...) Log::GetSystemLog().Print(LOG_SEVERITY_INFO, __VA_ARGS__)
+	#define LOG_DEBUG(...) Lambda::Log::GetDebugLog().Print(__VA_ARGS__)
+	#define LOG_SYSTEM(...) Lambda::Log::GetSystemLog().Print(__VA_ARGS__)
+	#define LOG_DEBUG_PRINT(...) Lambda::Log::GetDebugLog().Print(Lambda::LOG_SEVERITY_INFO, __VA_ARGS__)
+	#define LOG_SYSTEM_PRINT(...) Lambda::Log::GetSystemLog().Print(Lambda::LOG_SEVERITY_INFO, __VA_ARGS__)
 #endif
 
 
