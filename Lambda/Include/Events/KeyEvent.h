@@ -13,7 +13,7 @@ namespace Lambda
     public:
         inline KeyEvent(Key key, uint32 modifers)
             : Event(EVENT_CATEGORY_KEYBOARD | EVENT_CATEGORY_INPUT), m_Key(key), m_Modifiers(modifers) {}
-        ~KeyEvent() = default;
+        virtual ~KeyEvent() = default;
         
         inline bool    HasModifer(KeyModifier modifier) const   { return m_Modifiers & modifier; }
         inline Key     GetKey() const                           { return m_Key; }

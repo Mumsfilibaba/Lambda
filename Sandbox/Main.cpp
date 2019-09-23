@@ -2,16 +2,6 @@
 #include "Events/WindowEvent.h"
 #include "System/Log.h"
 
-class Test
-{
-public:
-	bool OnResizeEvent(const Lambda::WindowResizeEvent& event)
-	{
-		LOG_DEBUG_INFO("Test::OnResizeEvent\n");
-		return true;
-	}
-};
-
 int main()
 {
 	using namespace Lambda;

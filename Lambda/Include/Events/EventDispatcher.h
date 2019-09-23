@@ -18,7 +18,7 @@ namespace Lambda
 
 		inline EventLayer(const char* pName)
         : m_pName(pName) {}
-		~EventLayer() = default;
+		virtual ~EventLayer() = default;
 
 		virtual void	OnPush()	= 0;
 		virtual void	OnPop()	    = 0;
@@ -53,7 +53,7 @@ namespace Lambda
 	public:
 		inline EventCallback(EventCallbackFunc func)
 			: m_Func(func) {}
-		~EventCallback() = default;
+		virtual ~EventCallback() = default;
 
 		inline virtual bool Callback(const Event& event) override final
 		{

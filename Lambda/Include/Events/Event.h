@@ -39,7 +39,7 @@ namespace Lambda
     public:
         inline Event(uint32 categories)
             : m_Handled(false), m_Categories(categories) {}
-        ~Event() = default;
+        virtual ~Event() = default;
         
         inline bool        IsHandled() const                    { return m_Handled; }
         inline bool        IsInCategory(EventCategory category) { return m_Categories & category; }

@@ -369,7 +369,7 @@ namespace Lambda
                 
                 m_EventBackLog.clear();
             }*/
-            m_EventCallback(&event);
+            m_EventCallback(event);
         }
         else
         {
