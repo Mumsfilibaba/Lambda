@@ -87,6 +87,11 @@ namespace Lambda
 				SafeDelete(callback);
 			}
 		}
+
+		//Pop all layers
+		size_t numLayers = s_LayerStack.size();
+		for (size_t i = 0; i < numLayers; i++)
+			PopEventLayer();			
 	}
 
 

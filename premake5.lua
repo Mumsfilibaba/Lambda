@@ -82,6 +82,10 @@ workspace "Lambda"
 			"%{prj.name}/**.c",
 			"%{prj.name}/**.hlsl"
 		}
+		dependson
+		{
+			"ImGui"
+		}
 		excludes 
 		{	
 			"**.hlsl"
@@ -103,7 +107,8 @@ workspace "Lambda"
 				"glfw.3.3",
 				"vulkan.1",
 				"vulkan.1.1.114",
-				"assimp"
+				"assimp",
+				"ImGui"
 			}
 			libdirs
 			{
@@ -124,7 +129,8 @@ workspace "Lambda"
 				"d3d12",
 				"dxgi",
 				"d3dcompiler",
-				"vulkan-1"
+				"vulkan-1",
+				"ImGui"
 			}
 			libdirs
 			{

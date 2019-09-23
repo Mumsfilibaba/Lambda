@@ -43,6 +43,8 @@ namespace Lambda
 
 	WindowsWindow::~WindowsWindow()
 	{
+		SetFullscreen(false);
+
 		if (m_pGraphicsDevice)
 		{
 			m_pGraphicsDevice->Destroy();
