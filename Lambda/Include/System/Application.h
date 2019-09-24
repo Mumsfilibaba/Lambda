@@ -59,6 +59,7 @@ namespace Lambda
 		int32 Run();
 
 		IWindow* 			GetWindow() const;
+		ImGuiLayer*			GetUILayer() const;
 		const EngineParams& GetEngineParams() const;
 
 	private:

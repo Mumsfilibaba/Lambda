@@ -215,10 +215,15 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::SetIndexBuffer(IBuffer* pIndexBuffer)
+	void DX12CommandList::SetIndexBuffer(IBuffer* pIndexBuffer, ResourceFormat format)
 	{
 		D3D12_INDEX_BUFFER_VIEW view = reinterpret_cast<DX12Buffer*>(pIndexBuffer)->GetIndexBufferView();
 		m_List->IASetIndexBuffer(&view);
+	}
+
+	
+	void DX12CommandList::SetConstants(ShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData)
+	{
 	}
 
 

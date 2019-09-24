@@ -9,10 +9,11 @@ namespace Lambda
     
 	struct SamplerStateDesc
 	{
-        SamplerAddressMode AdressMode = SAMPLER_ADDRESS_MODE_REPEAT;
-		float MinMipLOD = 0.0f;
-		float MaxMipLOD = 0.0f;
-		float MipLODBias = 0.0f;
+        SamplerAddressMode AdressMode	= SAMPLER_ADDRESS_MODE_REPEAT;
+		float MinMipLOD					= 0.0f;
+		float MaxMipLOD					= 0.0f;
+		float MipLODBias				= 0.0f;
+		float Anisotropy				= 1.0f;
 	};
 
     //-------------

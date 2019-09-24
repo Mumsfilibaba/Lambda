@@ -1,5 +1,12 @@
 #include "LambdaPch.h"
 #include "Graphics/ImGuiLayer.h"
+#include "Graphics/IShader.h"
+#include "Graphics/ISamplerState.h"
+#include "Graphics/IPipelineResourceState.h"
+#include "Graphics/IPipelineState.h"
+#include "Graphics/IRenderPass.h"
+#include "Graphics/ITexture.h"
+#include "Graphics/IBuffer.h"
 #include "System/Application.h"
 #include "Events/KeyEvent.h"
 #include "Events/MouseEvent.h"
@@ -121,15 +128,305 @@ namespace Lambda
 	//----------
 
     ImGuiLayer::ImGuiLayer()
-        : EventLayer("ImGuiLayer")
+        : EventLayer("ImGuiLayer"),
+		m_pVS(nullptr),
+		m_pPS(nullptr),
+		m_pSamplerState(nullptr),
+		m_pPipelineResourceState(nullptr),
+		m_pPipelineState(nullptr),
+		m_pFontTexture(nullptr),
+		m_pVertexBuffer(nullptr),
+		m_pIndexBuffer(nullptr)
     {
     }
 
 
-    void ImGuiLayer::OnPop()
+	void ImGuiLayer::Init(IRenderPass* pRenderPass, ICommandList* pList)
+	{
+		//Create graphics objects
+		IGraphicsDevice* pDevice = IGraphicsDevice::Get();
+
+		//Create shaders
+		ShaderDesc shaderDesc = {};
+#if defined(LAMBDA_DEBUG)
+		shaderDesc.Flags = SHADER_FLAG_COMPILE_DEBUG;
+#else
+		shaderDesc.Flags = 0;
+#endif
+		shaderDesc.pEntryPoint = "main";
+		shaderDesc.Type = SHADER_STAGE_VERTEX;
+
+		GraphicsDeviceDesc deviceDesc = pDevice->GetDesc();
+		if (deviceDesc.Api == GRAPHICS_API_VULKAN)
+		{
+			shaderDesc.pSource		= reinterpret_cast<const char*>(__glsl_shader_vert_spv);
+			shaderDesc.SourceLength = sizeof(__glsl_shader_vert_spv);
+			shaderDesc.Languange	= SHADER_LANG_SPIRV;
+		}
+
+		pDevice->CreateShader(&m_pVS, shaderDesc);
+
+		shaderDesc.Type = SHADER_STAGE_PIXEL;
+		if (deviceDesc.Api == GRAPHICS_API_VULKAN)
+		{
+			shaderDesc.pSource		= reinterpret_cast<const char*>(__glsl_shader_frag_spv);
+			shaderDesc.SourceLength = sizeof(__glsl_shader_frag_spv);
+		}
+
+		pDevice->CreateShader(&m_pPS, shaderDesc);
+
+
+		//Create sampler
+		SamplerStateDesc samplerDesc = {};
+		samplerDesc.AdressMode	= SAMPLER_ADDRESS_MODE_REPEAT;
+		samplerDesc.Anisotropy	= 1.0f;
+		samplerDesc.MaxMipLOD	= 1000.0f;
+		samplerDesc.MinMipLOD	= -1000.0f;
+		samplerDesc.MipLODBias	= 0.0f;
+		pDevice->CreateSamplerState(&m_pSamplerState, samplerDesc);
+
+
+		//Create pipelineresourcestate
+		ResourceSlot resourceSlots[1];
+		resourceSlots[0].pSamplerState = m_pSamplerState;
+		resourceSlots[0].Slot	= 0;
+		resourceSlots[0].Type	= RESOURCE_TYPE_TEXTURE;
+		resourceSlots[0].Usage	= RESOURCE_USAGE_DEFAULT;
+		resourceSlots[0].Stage	= SHADER_STAGE_PIXEL;
+
+		ConstantSlot constantSlots[1];
+		constantSlots[0].Stage			= SHADER_STAGE_VERTEX;
+		constantSlots[0].SizeInBytes	= sizeof(float) * 4;
+
+		PipelineResourceStateDesc resourceStateDesc = {};
+		resourceStateDesc.NumResourceSlots	= 1;
+		resourceStateDesc.pResourceSlots	= resourceSlots;
+		resourceStateDesc.NumConstants		= 1;
+		resourceStateDesc.pConstantSlots	= constantSlots;
+		pDevice->CreatePipelineResourceState(&m_pPipelineResourceState, resourceStateDesc);
+
+
+		//Create pipelinestate
+		InputElement inputElements[3] =
+		{
+			{ "POSITION",   FORMAT_R32G32_FLOAT,	0, 0, sizeof(ImDrawVert), offsetof(ImDrawVert, pos),	false },
+			{ "TEXCOORD",   FORMAT_R32G32_FLOAT,	0, 1, sizeof(ImDrawVert), offsetof(ImDrawVert, uv),		false },
+			{ "COLOR",		FORMAT_R8G8B8A8_UNORM,	0, 2, sizeof(ImDrawVert), offsetof(ImDrawVert, col),    false },
+		};
+
+		GraphicsPipelineStateDesc pipelineStateDesc = {};
+		pipelineStateDesc.pName						= "ImGui-PipelineState";
+		pipelineStateDesc.pVertexShader				= m_pVS;
+		pipelineStateDesc.pPixelShader				= m_pPS;
+		pipelineStateDesc.pRenderPass				= pRenderPass;
+		pipelineStateDesc.pResourceState			= m_pPipelineResourceState;
+		pipelineStateDesc.InputElementCount			= 3;
+		pipelineStateDesc.pInputElements			= inputElements;
+		pipelineStateDesc.Topology					= PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+		pipelineStateDesc.Cull						= CULL_MODE_NONE;
+		pipelineStateDesc.FillMode					= POLYGON_MODE_FILL;
+		pipelineStateDesc.FrontFaceCounterClockWise = true;
+		pipelineStateDesc.DepthTest					= false;
+		pDevice->CreateGraphicsPipelineState(&m_pPipelineState, pipelineStateDesc);
+
+
+		//Create fonttexture
+		uint8* pPixels	= nullptr;
+		int32	width	= 0;
+		int32	height	= 0;
+
+		ImGuiIO& io = ImGui::GetIO();
+		io.Fonts->GetTexDataAsRGBA32(&pPixels, &width, &height);
+		uint64 uploadSize = width * height * 4 * sizeof(char);
+
+		TextureDesc fontTextureDesc = {};
+		fontTextureDesc.Type				= TEXTURE_TYPE_2D;
+		fontTextureDesc.Flags				= TEXTURE_FLAGS_SHADER_RESOURCE;
+		fontTextureDesc.Format				= FORMAT_R8G8B8A8_UNORM;
+		fontTextureDesc.Width				= width;
+		fontTextureDesc.Height				= height;
+		fontTextureDesc.Depth				= 1;
+		fontTextureDesc.MipLevels			= 1;
+		fontTextureDesc.ArraySize			= 1;
+		fontTextureDesc.SampleCount			= 1;
+		fontTextureDesc.pResolveResource	= nullptr;
+		fontTextureDesc.Usage				= RESOURCE_USAGE_DEFAULT;
+
+		ResourceData initalData = {};
+		initalData.pData		= pPixels;
+		initalData.SizeInBytes	= uploadSize;
+		pDevice->CreateTexture(&m_pFontTexture, &initalData, fontTextureDesc);
+		pList->TransitionTexture(m_pFontTexture, RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0, LAMBDA_TRANSITION_ALL_MIPS);
+
+		// Store our identifier
+		io.Fonts->TexID = (ImTextureID)(intptr_t)m_pFontTexture->GetNativeHandle();
+
+
+		//Create vertex and indexbuffer
+		BufferDesc bufferDesc = {};
+		bufferDesc.pName			= "ImGui VertexBuffer";
+		bufferDesc.Flags			= BUFFER_FLAGS_VERTEX_BUFFER;
+		bufferDesc.SizeInBytes		= MB(2);
+		bufferDesc.StrideInBytes	= sizeof(ImDrawVert);
+		bufferDesc.Usage			= RESOURCE_USAGE_DYNAMIC;
+		pDevice->CreateBuffer(&m_pVertexBuffer, nullptr, bufferDesc);
+
+		bufferDesc.pName			= "ImGui IndexBuffer";
+		bufferDesc.Flags			= BUFFER_FLAGS_INDEX_BUFFER;
+		bufferDesc.SizeInBytes		= MB(2);
+		bufferDesc.StrideInBytes	= sizeof(ImDrawIdx);
+		bufferDesc.Usage			= RESOURCE_USAGE_DYNAMIC;
+		pDevice->CreateBuffer(&m_pIndexBuffer, nullptr, bufferDesc);
+	}
+
+
+	void ImGuiLayer::Begin(Timestep time)
+	{
+		ImGuiIO& io = ImGui::GetIO();
+		io.DeltaTime = time.AsSeconds();
+
+		ImGui::NewFrame();
+	}
+
+	
+	void ImGuiLayer::RenderUI()
+	{
+		ImGui::ShowDemoWindow();
+	}
+
+	
+	void ImGuiLayer::End()
+	{
+		ImGui::EndFrame();
+		ImGui::Render();
+	}
+
+
+	void ImGuiLayer::Draw(ICommandList* pList)
+	{
+		ImGuiIO& io = ImGui::GetIO();
+		ImDrawData* pDrawData = ImGui::GetDrawData();
+
+		uint64 vertexSize	= pDrawData->TotalVtxCount * sizeof(ImDrawVert);
+		uint64 indexSize	= pDrawData->TotalIdxCount * sizeof(ImDrawIdx);
+		// Upload vertex/index data into a single contiguous GPU buffer
+		{
+			ImDrawVert* vtxDst = NULL;
+			ImDrawIdx* idxDst = NULL;
+			m_pVertexBuffer->Map(reinterpret_cast<void**>(&vtxDst));
+			m_pIndexBuffer->Map(reinterpret_cast<void**>(&idxDst));
+
+			for (int n = 0; n < pDrawData->CmdListsCount; n++)
+			{
+				const ImDrawList* pCmdList = pDrawData->CmdLists[n];
+				memcpy(vtxDst, pCmdList->VtxBuffer.Data, pCmdList->VtxBuffer.Size * sizeof(ImDrawVert));
+				memcpy(idxDst, pCmdList->IdxBuffer.Data, pCmdList->IdxBuffer.Size * sizeof(ImDrawIdx));
+				vtxDst += pCmdList->VtxBuffer.Size;
+				idxDst += pCmdList->IdxBuffer.Size;
+			}
+
+			m_pVertexBuffer->Unmap();
+			m_pIndexBuffer->Unmap();
+		}
+
+		//Setup pipelinestate
+		m_pPipelineResourceState->SetTextures(&m_pFontTexture, 1, 0);
+		pList->SetGraphicsPipelineResourceState(m_pPipelineResourceState);
+		pList->SetGraphicsPipelineState(m_pPipelineState);
+		
+		//Setup vertex and indexbuffer
+		pList->SetVertexBuffer(m_pVertexBuffer, 0);
+		pList->SetIndexBuffer(m_pIndexBuffer, sizeof(ImDrawIdx) == 2 ? FORMAT_R16_UINT : FORMAT_R32_UINT);
+		
+		//Setup viewport
+		Viewport viewport = {};
+		viewport.TopX		= 0.0f;
+		viewport.TopY		= 0.0f;
+		viewport.Width		= io.DisplaySize.x;
+		viewport.Height		= io.DisplaySize.y;
+		viewport.MinDepth	= 0.0f;
+		viewport.MaxDepth	= 1.0f;
+		pList->SetViewport(viewport);
+
+		// Setup scale and translation:
+		// Our visible imgui space lies from draw_data->DisplayPps (top left) to draw_data->DisplayPos+data_data->DisplaySize (bottom right). DisplayPos is (0,0) for single viewport apps.
+		{
+			float scale[2];
+			scale[0] = 2.0f / pDrawData->DisplaySize.x;
+			scale[1] = -2.0f / pDrawData->DisplaySize.y;
+			float translate[2];
+			translate[0] = -1.0f + pDrawData->DisplayPos.x * scale[0];
+			translate[1] = 1.0f - pDrawData->DisplayPos.y * scale[1];
+
+			pList->SetConstants(SHADER_STAGE_VERTEX, sizeof(float) * 0, sizeof(float) * 2, scale);
+			pList->SetConstants(SHADER_STAGE_VERTEX, sizeof(float) * 2, sizeof(float) * 2, translate);
+		}
+
+		// Will project scissor/clipping rectangles into framebuffer space
+		ImVec2 clipOff		= pDrawData->DisplayPos;       // (0,0) unless using multi-viewports
+		ImVec2 clipScale	= pDrawData->FramebufferScale; // (1,1) unless using retina display which are often (2,2)
+
+		// Render command lists
+		// (Because we merged all buffers into a single one, we maintain our own offset into them)
+		int32 globalVtxOffset = 0;
+		int32 globalIdxOffset = 0;
+		for (int32 n = 0; n < pDrawData->CmdListsCount; n++)
+		{
+			const ImDrawList* pCmdList = pDrawData->CmdLists[n];
+			for (int32 i = 0; i < pCmdList->CmdBuffer.Size; i++)
+			{
+				const ImDrawCmd* pCmd = &pCmdList->CmdBuffer[i];
+				// Project scissor/clipping rectangles into framebuffer space
+				ImVec4 clipRect;
+				clipRect.x = (pCmd->ClipRect.x - clipOff.x) * clipScale.x;
+				clipRect.y = (pCmd->ClipRect.y - clipOff.y) * clipScale.y;
+				clipRect.z = (pCmd->ClipRect.z - clipOff.x) * clipScale.x;
+				clipRect.w = (pCmd->ClipRect.w - clipOff.y) * clipScale.y;
+
+				if (clipRect.x < viewport.Width && clipRect.y < viewport.Height && clipRect.z >= 0.0f && clipRect.w >= 0.0f)
+				{
+					// Negative offsets are illegal for vkCmdSetScissor
+					if (clipRect.x < 0.0f)
+						clipRect.x = 0.0f;
+					if (clipRect.y < 0.0f)
+						clipRect.y = 0.0f;
+
+					// Apply scissor/clipping rectangle	
+					Rectangle scissor = {};
+					scissor.X		= clipRect.x;
+					scissor.Y		= clipRect.y;
+					scissor.Width	= clipRect.z - clipRect.x;
+					scissor.Height	= clipRect.w - clipRect.y;
+					pList->SetScissorRect(scissor);
+
+					// Draw
+					pList->DrawIndexedInstanced(pCmd->ElemCount, 1, pCmd->IdxOffset + globalIdxOffset, pCmd->VtxOffset + globalVtxOffset, 0);
+				}
+			}
+			globalIdxOffset += pCmdList->IdxBuffer.Size;
+			globalVtxOffset += pCmdList->VtxBuffer.Size;
+		}
+	}
+
+
+	void ImGuiLayer::OnPop()
     {
 		//Destroy ImGui context
 		ImGui::DestroyContext();
+
+		//Destroy all objects
+		IGraphicsDevice* pDevice = IGraphicsDevice::Get();
+		if (pDevice != nullptr)
+		{
+			pDevice->DestroyShader(&m_pVS);
+			pDevice->DestroyShader(&m_pPS);
+			pDevice->DestroyResourceState(&m_pPipelineResourceState);
+			pDevice->DestroyGraphicsPipelineState(&m_pPipelineState);
+			pDevice->DestroySamplerState(&m_pSamplerState);
+			pDevice->DestroyTexture(&m_pFontTexture);
+			pDevice->DestroyBuffer(&m_pVertexBuffer);
+			pDevice->DestroyBuffer(&m_pIndexBuffer);
+		}
     }
 
 
@@ -139,10 +436,11 @@ namespace Lambda
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
 
+		IWindow* pWindow = Application::Get().GetWindow();
+
 		ImGuiIO& io = ImGui::GetIO();
-		io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;         // We can honor GetMouseCursor() values (optional)
-		io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;          // We can honor io.WantSetMousePos requests (optional, rarely used)
 		io.BackendPlatformName = "Lambda Engine";
+		io.DisplaySize = ImVec2(float(pWindow->GetWidth()), float(pWindow->GetHeight()));
 
 		// Keyboard mapping. ImGui will use those indices to peek into the io.KeysDown[] array.
 		io.KeyMap[ImGuiKey_Tab]			= KEY_TAB;
@@ -169,7 +467,6 @@ namespace Lambda
 		io.KeyMap[ImGuiKey_Z]			= KEY_Z;
 
 #if defined(LAMBDA_PLAT_WINDOWS)
-		IWindow* pWindow = Application::Get().GetWindow();
 		io.ImeWindowHandle = reinterpret_cast<HWND>(pWindow->GetNativeHandle());
 #endif
     }

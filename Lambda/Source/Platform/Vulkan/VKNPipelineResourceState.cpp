@@ -33,17 +33,18 @@ namespace Lambda
 		//Copy the resourceslots
 		for (uint32 i = 0; i < desc.NumResourceSlots; i++)
 		{
-			auto& slot		= m_ResourceBindings[desc.pResourceSlots[i].Slot];
-			slot.Slot		= desc.pResourceSlots[i];
-			slot.pBuffer	= nullptr;
+			auto& slot = m_ResourceBindings[desc.pResourceSlots[i].Slot];
+			slot.Slot				= desc.pResourceSlots[i];
+			slot.ImageInfo.sampler	= VK_NULL_HANDLE;
+			slot.pBuffer			= nullptr;
 		}
 		
-
 		//Number of each type
 		uint32 uniformBufferCount			= 0;
 		uint32 dynamicUniformBufferCount	= 0;
 		uint32 samplerCount					= 0;
 		uint32 sampledImageCount			= 0;
+		uint32 combinedImageSamplerCount	= 0;
 
 		//Create descriptor bindings for each resourceslot
 		std::vector<VkDescriptorSetLayoutBinding> layoutBindings;
@@ -71,8 +72,23 @@ namespace Lambda
 			}
 			else if (desc.pResourceSlots[i].Type == RESOURCE_TYPE_TEXTURE)
 			{
-				layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-				sampledImageCount++;
+				if (desc.pResourceSlots[i].pSamplerState == nullptr)
+				{
+					layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+					sampledImageCount++;
+				}
+				else
+				{
+					layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+					combinedImageSamplerCount++;
+
+					//Bind sampler to slot permanently
+					VKNSamplerState* pSampler = reinterpret_cast<VKNSamplerState*>(desc.pResourceSlots[i].pSamplerState);
+					auto& slot = m_ResourceBindings[desc.pResourceSlots[i].Slot];
+					slot.ImageInfo.sampler = reinterpret_cast<VkSampler>(pSampler->GetNativeHandle());
+
+					layoutBinding.pImmutableSamplers = &slot.ImageInfo.sampler;
+				}
 			}
 			else if (desc.pResourceSlots[i].Type == RESOURCE_TYPE_SAMPLER_STATE)
 			{
@@ -115,6 +131,33 @@ namespace Lambda
 		else
 		{
 			LOG_DEBUG_INFO("Vulkan: Created DescriptorSetLayout\n");
+
+			//Set to dirty when we create so that we will always allocate a descriptorset
+			m_IsDirty = true;
+		}
+
+		//Create constantranges
+		std::vector<VkPushConstantRange> constantRanges;
+		for (uint32 i = 0; i < desc.NumConstants; i++)
+		{
+			VkPushConstantRange range = {};
+			range.size			= desc.pConstantSlots[i].SizeInBytes;
+			range.offset		= 0;
+			range.stageFlags	= 0;
+			if (desc.pConstantSlots[i].Stage == SHADER_STAGE_VERTEX)
+				range.stageFlags |= VK_SHADER_STAGE_VERTEX_BIT;
+			else if (desc.pConstantSlots[i].Stage == SHADER_STAGE_HULL)
+				range.stageFlags |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+			else if (desc.pConstantSlots[i].Stage == SHADER_STAGE_DOMAIN)
+				range.stageFlags |= VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+			else if (desc.pConstantSlots[i].Stage == SHADER_STAGE_GEOMETRY)
+				range.stageFlags |= VK_SHADER_STAGE_GEOMETRY_BIT;
+			else if (desc.pConstantSlots[i].Stage == SHADER_STAGE_PIXEL)
+				range.stageFlags |= VK_SHADER_STAGE_FRAGMENT_BIT;
+			else if (desc.pConstantSlots[i].Stage == SHADER_STAGE_COMPUTE)
+				range.stageFlags |= VK_SHADER_STAGE_COMPUTE_BIT;
+
+			constantRanges.push_back(range);
 		}
 
 
@@ -125,8 +168,8 @@ namespace Lambda
 		layoutInfo.pNext					= nullptr;
 		layoutInfo.setLayoutCount			= 1;
 		layoutInfo.pSetLayouts				= &m_DescriptorSetLayout;
-		layoutInfo.pushConstantRangeCount	= 0;
-		layoutInfo.pPushConstantRanges		= nullptr;
+		layoutInfo.pushConstantRangeCount	= uint32(constantRanges.size());
+		layoutInfo.pPushConstantRanges		= constantRanges.data();
 
 		if (vkCreatePipelineLayout(device.GetDevice(), &layoutInfo, nullptr, &m_PipelineLayout) != VK_SUCCESS)
 		{
@@ -137,7 +180,7 @@ namespace Lambda
 		{
 			LOG_DEBUG_INFO("Vulkan: Created PipelineLayout\n");
 
-			m_pAllocator = DBG_NEW VKNDescriptorSetAllocator(uniformBufferCount, dynamicUniformBufferCount, samplerCount, sampledImageCount, 2);
+			m_pAllocator = DBG_NEW VKNDescriptorSetAllocator(uniformBufferCount, dynamicUniformBufferCount, samplerCount, sampledImageCount, combinedImageSamplerCount, 8);
 		}
 	}
 
@@ -154,7 +197,10 @@ namespace Lambda
 					resourceBinding.pTexture				= reinterpret_cast<VKNTexture*>(ppTextures[i]);
 					resourceBinding.ImageInfo.imageView		= resourceBinding.pTexture->GetImageView();
 					resourceBinding.ImageInfo.imageLayout	= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-					resourceBinding.ImageInfo.sampler		= VK_NULL_HANDLE;
+					if (resourceBinding.Slot.pSamplerState == nullptr)
+					{
+						resourceBinding.ImageInfo.sampler		= VK_NULL_HANDLE;
+					}
 					m_IsDirty = true;
 				}
 			}
@@ -259,7 +305,8 @@ namespace Lambda
 				writeInfo.descriptorCount	= 1;
 				writeInfo.dstBinding		= binding.Slot.Slot;
 
-				if (binding.Slot.Type == RESOURCE_TYPE_CONSTANT_BUFFER)
+				//Write constantbuffer
+				if (binding.Slot.Type == RESOURCE_TYPE_CONSTANT_BUFFER && binding.pBuffer != nullptr)
 				{
 					writeInfo.pBufferInfo = &binding.BufferInfo;
 					if (binding.Slot.Usage == RESOURCE_USAGE_DYNAMIC)
@@ -278,19 +325,35 @@ namespace Lambda
 					{
 						writeInfo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 					}
+
+					//Add to descriptor writes
+					m_DescriptorWrites.emplace_back(writeInfo);
 				}
-				else if (binding.Slot.Type == RESOURCE_TYPE_TEXTURE)
+				//Bind texture
+				else if (binding.Slot.Type == RESOURCE_TYPE_TEXTURE && binding.pTexture != nullptr)
 				{
-					writeInfo.descriptorType	= VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-					writeInfo.pImageInfo		= &binding.ImageInfo;
+					writeInfo.pImageInfo = &binding.ImageInfo;
+					if (binding.ImageInfo.sampler == VK_NULL_HANDLE)
+					{
+						writeInfo.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+					}
+					else
+					{
+						writeInfo.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+					}
+
+					//Add to descriptor writes
+					m_DescriptorWrites.emplace_back(writeInfo);
 				}
-				else if (binding.Slot.Type == RESOURCE_TYPE_SAMPLER_STATE)
+				//Bind samplerstate
+				else if (binding.Slot.Type == RESOURCE_TYPE_SAMPLER_STATE && binding.pSamplerState != nullptr)
 				{
 					writeInfo.descriptorType	= VK_DESCRIPTOR_TYPE_SAMPLER;
 					writeInfo.pImageInfo		= &binding.ImageInfo;
+					
+					//Add to descriptor writes
+					m_DescriptorWrites.emplace_back(writeInfo);
 				}
-
-				m_DescriptorWrites.emplace_back(writeInfo);
 			}
 
 			//Write all descriptors

@@ -34,7 +34,8 @@ namespace Lambda
 		m_EventCallback(nullptr),
 		m_hWindow(0),
 		m_EventBackLog(),
-		m_Fullscreen(false)
+		m_Fullscreen(false),
+		m_HasFocus(false)
 	{
 		Init(desc);
 		LOG_SYSTEM_INFO("Created window. w: %d, h: %d\n", desc.Width, desc.Height);
@@ -74,6 +75,12 @@ namespace Lambda
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
+	}
+
+
+	bool WindowsWindow::HasFocus() const
+	{
+		return m_HasFocus;
 	}
 
     
@@ -365,7 +372,11 @@ namespace Lambda
 		case WM_SETFOCUS:
 		case WM_KILLFOCUS:
 		{
-			WindowFocusChangedEvent event = WindowFocusChangedEvent(msg == WM_SETFOCUS);
+			//Update has focus
+			m_HasFocus = msg == WM_SETFOCUS;
+
+			//Send event to rest of the system
+			WindowFocusChangedEvent event = WindowFocusChangedEvent(m_HasFocus);
 			DispatchEvent(event);
 			break;
 		}

@@ -45,7 +45,7 @@ namespace Lambda
             VkPhysicalDeviceProperties properties    = device.GetPhysicalDeviceProperties();
 
 			//If dynamic we allocate extra space (NUM_UPDATES updates per frame)
-			constexpr uint32 numUpdatesPerFrame = 16;
+			constexpr uint32 numUpdatesPerFrame = 4;
 			m_SizePerUpdate = Math::AlignUp<uint32>(uint32(desc.SizeInBytes), properties.limits.minUniformBufferOffsetAlignment);
 			m_SizePerFrame	= m_SizePerUpdate * numUpdatesPerFrame;
             info.size		= VkDeviceSize(m_SizePerFrame * settings.FramesAhead);
@@ -57,18 +57,15 @@ namespace Lambda
         
 		//Set usage
 		info.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+		
 		if (desc.Flags & BUFFER_FLAGS_VERTEX_BUFFER)
-		{
             info.usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-		}
+		
 		if (desc.Flags & BUFFER_FLAGS_INDEX_BUFFER)
-		{
             info.usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-		}
+
 		if (desc.Flags & BUFFER_FLAGS_CONSTANT_BUFFER)
-		{
             info.usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-		}
         
 		//Create buffer
 		if (vkCreateBuffer(device.GetDevice(), &info, nullptr, &m_Buffer) != VK_SUCCESS)
@@ -104,7 +101,9 @@ namespace Lambda
     void VKNBuffer::Map(void** ppMem)
     {
 		LAMBDA_ASSERT(ppMem != nullptr);
-        (*ppMem) = m_Memory.pHostMemory + m_TotalDynamicOffset;
+
+		uint8* pMem = m_Memory.pHostMemory + m_TotalDynamicOffset;
+        (*ppMem) = reinterpret_cast<void*>(pMem);
     }
     
     

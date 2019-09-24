@@ -19,15 +19,17 @@ namespace Lambda
 		WindowsWindow(const WindowDesc& desc);
 		~WindowsWindow();
 
-		virtual void SetEventCallback(EventCallbackFunc callback) override;
-		virtual void OnUpdate() const override;
-        virtual bool SetFullscreen(bool fullscreen) override final;
-        virtual bool GetFullscreen() const override final;
+		virtual void OnUpdate() const override final;
+		virtual bool HasFocus() const override final;
 
-        virtual IGraphicsDevice* GetGraphicsDevice() const override final;
-        virtual void* GetNativeHandle() const override;
-        virtual uint32 GetHeight() const override;
-        virtual uint32 GetWidth() const override;
+		virtual void SetEventCallback(EventCallbackFunc callback) override final;
+        virtual bool SetFullscreen(bool fullscreen) override final;
+
+        virtual bool				GetFullscreen() const override final;
+        virtual IGraphicsDevice*	GetGraphicsDevice() const override final;
+        virtual void*				GetNativeHandle() const override;
+        virtual uint32				GetHeight() const override;
+        virtual uint32				GetWidth() const override;
 
 	private:
 		void	Init(const WindowDesc& desc);
@@ -35,15 +37,16 @@ namespace Lambda
 		LRESULT OnEvent(uint32 msg, WPARAM wParam, LPARAM lParam);
 
 	private:
-		IGraphicsDevice* m_pGraphicsDevice;
-		EventCallbackFunc m_EventCallback;
-		std::vector<Event> m_EventBackLog;
-		HWND m_hWindow;
-		uint32 m_Height;
-		uint32 m_Width;
-		DWORD m_Style;
-		DWORD m_ExStyle;
-		bool m_Fullscreen;
+		IGraphicsDevice*	m_pGraphicsDevice;
+		EventCallbackFunc	m_EventCallback;
+		std::vector<Event>	m_EventBackLog;
+		HWND				m_hWindow;
+		uint32				m_Height;
+		uint32				m_Width;
+		DWORD				m_Style;
+		DWORD				m_ExStyle;
+		bool				m_Fullscreen;
+		bool				m_HasFocus;
 	};
 }
 #endif

@@ -133,6 +133,12 @@ namespace Lambda
 		return m_pWindow;
 	}
 
+	
+	ImGuiLayer* Application::GetUILayer() const
+	{
+		return m_pImGuiLayer;
+	}
+
 
 	void Application::Quit(int32 exitCode)
 	{
@@ -221,14 +227,16 @@ namespace Lambda
 	{
 		OnRelease();
        
-		//Destroy window
-        SafeDelete(m_pWindow);
 		//Release Eventdispatcher
 		EventDispatcher::Release();
+		m_pWindow->SetEventCallback(nullptr);
+
 		//Destroy ImGui-Layer
 		SafeDelete(m_pImGuiLayer);
         //Destroy applicationlayer
 		SafeDelete(m_pApplicationLayer);	
+		//Destroy window
+        SafeDelete(m_pWindow);
 	}
 
 

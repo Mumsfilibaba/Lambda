@@ -5,8 +5,8 @@
 namespace Lambda
 {
 	class IBuffer;
-	class ISamplerState;
 	class ITexture;
+	class ISamplerState;
 
     //------------
     //ResourceSlot
@@ -14,11 +14,22 @@ namespace Lambda
 
     struct ResourceSlot
     {
-        ResourceType Type	= RESOURCE_TYPE_UNKNOWN;
-        ShaderStage Stage	= SHADER_STAGE_UNKNOWN;
-		ResourceUsage Usage = RESOURCE_USAGE_UNKNOWN;
-        uint32 Slot			= 0;
+		ISamplerState*	pSamplerState	= nullptr;
+        ResourceType	Type			= RESOURCE_TYPE_UNKNOWN;
+        ShaderStage		Stage			= SHADER_STAGE_UNKNOWN;
+		ResourceUsage	Usage			= RESOURCE_USAGE_UNKNOWN;
+        uint32			Slot			= 0;
     };
+
+	//------------
+	//ConstantSlot
+	//------------
+
+	struct ConstantSlot
+	{
+		ShaderStage	Stage		= SHADER_STAGE_UNKNOWN;
+		uint32		SizeInBytes	= 0;
+	};
     
     //-------------------------
     //PipelineResourceStateDesc
@@ -26,8 +37,10 @@ namespace Lambda
     
     struct PipelineResourceStateDesc
     {
-        uint32 NumResourceSlots				= 0;
-        const ResourceSlot* pResourceSlots	= nullptr;
+        uint32				NumResourceSlots	= 0;
+        const ResourceSlot* pResourceSlots		= nullptr;
+		uint32				NumConstants		= 0;
+		const ConstantSlot* pConstantSlots		= nullptr;
     };
     
     //----------------------

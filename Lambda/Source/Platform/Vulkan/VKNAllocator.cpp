@@ -484,13 +484,14 @@ namespace Lambda
 	//-------------------------
 
 
-	VKNDescriptorSetAllocator::VKNDescriptorSetAllocator(uint32 uniformBufferCount, uint32 dynamicUniformBufferCount, uint32 samplerCount, uint32 sampledImageCount, uint32 numSets)
+	VKNDescriptorSetAllocator::VKNDescriptorSetAllocator(uint32 uniformBufferCount, uint32 dynamicUniformBufferCount, uint32 samplerCount, uint32 sampledImageCount, uint32 combinedImageSamplerCount, uint32 numSets)
 		: m_Pool(VK_NULL_HANDLE),
 		m_NumSets(0),
 		m_UniformBufferCount(uniformBufferCount),
 		m_DynamicUniformBufferCount(dynamicUniformBufferCount),
 		m_SamplerCount(samplerCount),
 		m_SampledImageCount(sampledImageCount),
+		m_CombinedImageSamplerCount(combinedImageSamplerCount),
 		m_SetCount(numSets)
 	{
 		Init();
@@ -548,24 +549,51 @@ namespace Lambda
 		VkDescriptorPool pool = VK_NULL_HANDLE;
 
 		//Setup descriptorcounts
-		constexpr uint32 poolCount = 4;
-		VkDescriptorPoolSize poolSizes[poolCount] = {};
-		poolSizes[0].type				= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		poolSizes[0].descriptorCount	= m_UniformBufferCount * m_SetCount;
-		poolSizes[1].type				= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-		poolSizes[1].descriptorCount	= m_DynamicUniformBufferCount * m_SetCount;
-		poolSizes[2].type				= VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-		poolSizes[2].descriptorCount	= m_SampledImageCount * m_SetCount;
-		poolSizes[3].type				= VK_DESCRIPTOR_TYPE_SAMPLER;
-		poolSizes[3].descriptorCount	= m_SamplerCount * m_SetCount;
+		constexpr uint32 poolCount = 5;
+		std::vector<VkDescriptorPoolSize> poolSizes;
+		if (m_UniformBufferCount > 0)
+		{
+			VkDescriptorPoolSize poolSize = {};
+			poolSize.type				= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			poolSize.descriptorCount	= m_UniformBufferCount * m_SetCount;
+			poolSizes.push_back(poolSize);
+		}
+		if (m_DynamicUniformBufferCount > 0)
+		{
+			VkDescriptorPoolSize poolSize = {};
+			poolSize.type				= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+			poolSize.descriptorCount	= m_DynamicUniformBufferCount * m_SetCount;
+			poolSizes.push_back(poolSize);
+		}
+		if (m_SampledImageCount > 0)
+		{
+			VkDescriptorPoolSize poolSize = {};
+			poolSize.type				= VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+			poolSize.descriptorCount	= m_SampledImageCount * m_SetCount;
+			poolSizes.push_back(poolSize);
+		}
+		if (m_SamplerCount > 0)
+		{
+			VkDescriptorPoolSize poolSize = {};
+			poolSize.type				= VK_DESCRIPTOR_TYPE_SAMPLER;
+			poolSize.descriptorCount	= m_SamplerCount * m_SetCount;
+			poolSizes.push_back(poolSize);
+		}
+		if (m_CombinedImageSamplerCount > 0)
+		{
+			VkDescriptorPoolSize poolSize = {};
+			poolSize.type				= VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			poolSize.descriptorCount	= m_CombinedImageSamplerCount * m_SetCount;
+			poolSizes.push_back(poolSize);
+		}
 
 		//Create descriptorpool
 		VkDescriptorPoolCreateInfo descriptorPoolInfo = {};
 		descriptorPoolInfo.sType			= VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 		descriptorPoolInfo.flags			= 0;
 		descriptorPoolInfo.pNext			= nullptr;
-		descriptorPoolInfo.poolSizeCount	= poolCount;
-		descriptorPoolInfo.pPoolSizes		= poolSizes;
+		descriptorPoolInfo.poolSizeCount	= uint32(poolSizes.size());
+		descriptorPoolInfo.pPoolSizes		= poolSizes.data();
 		descriptorPoolInfo.maxSets			= m_SetCount;
 
 		VKNDevice& device = VKNDevice::Get();

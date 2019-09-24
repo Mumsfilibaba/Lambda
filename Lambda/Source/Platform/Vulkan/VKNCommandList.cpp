@@ -93,10 +93,10 @@ namespace Lambda
 	{
 		m_pResourceState->CommitBindings();
 
-		const uint32* pOffsets = m_pResourceState->GetDynamicOffsets();
-		uint32 offsetCount = m_pResourceState->GetDynamicOffsetCount();
+		const uint32* pOffsets	= m_pResourceState->GetDynamicOffsets();
+		uint32 offsetCount		= m_pResourceState->GetDynamicOffsetCount();
 
-		VkDescriptorSet descriptorSet = m_pResourceState->GetDescriptorSet();
+		VkDescriptorSet descriptorSet	= m_pResourceState->GetDescriptorSet();
 		VkPipelineLayout pipelineLayout = m_pResourceState->GetPipelineLayout();
 		vkCmdBindDescriptorSets(m_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, offsetCount, pOffsets);
 	}
@@ -221,7 +221,7 @@ namespace Lambda
         view.minDepth   = viewport.MinDepth;
         view.maxDepth   = viewport.MaxDepth;
         view.x          = viewport.TopX;
-        view.y          = viewport.TopY + viewport.Height;
+		view.y			= viewport.TopY + viewport.Height;
         
         vkCmdSetViewport(m_CommandBuffer, 0, 1, &view);
     }
@@ -248,19 +248,56 @@ namespace Lambda
     
     void VKNCommandList::SetVertexBuffer(IBuffer* pBuffer, uint32 slot)
     {
-        VkBuffer buffers[] = { reinterpret_cast<VkBuffer>(pBuffer->GetNativeHandle()) };
+		VKNBuffer*	pVkBuffer = reinterpret_cast<VKNBuffer*>(pBuffer);
+        VkBuffer	buffers[] = { reinterpret_cast<VkBuffer>(pVkBuffer->GetNativeHandle()) };
 
-        VkDeviceSize offsets[] = { 0 };
+        VkDeviceSize offsets[] = { pVkBuffer->GetDynamicOffset() };
         vkCmdBindVertexBuffers(m_CommandBuffer, slot, 1, buffers, offsets);
     }
     
     
-    void VKNCommandList::SetIndexBuffer(IBuffer* pBuffer)
+    void VKNCommandList::SetIndexBuffer(IBuffer* pBuffer, ResourceFormat format)
     {
-		//Force uint32 for indices
-        VkBuffer buffer = reinterpret_cast<VkBuffer>(pBuffer->GetNativeHandle());
-        vkCmdBindIndexBuffer(m_CommandBuffer, buffer, 0, VK_INDEX_TYPE_UINT32);
+		VKNBuffer*	pVkBuffer = reinterpret_cast<VKNBuffer*>(pBuffer);
+        VkBuffer	buffer = reinterpret_cast<VkBuffer>(pBuffer->GetNativeHandle());
+
+		VkIndexType indexType = VK_INDEX_TYPE_NONE_NV;
+		if (format == FORMAT_R32_UINT)
+		{
+			indexType = VK_INDEX_TYPE_UINT32;
+		}
+		else if (format == FORMAT_R16_UINT)
+		{
+			indexType = VK_INDEX_TYPE_UINT16;
+		}
+		else
+		{
+			LOG_DEBUG_ERROR("Vulkan: Only supported index formats are VK_INDEX_TYPE_UINT16 or VK_INDEX_TYPE_UINT32\n");
+		}
+
+        vkCmdBindIndexBuffer(m_CommandBuffer, buffer, pVkBuffer->GetDynamicOffset(), indexType);
     }
+
+	
+	void VKNCommandList::SetConstants(ShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData)
+	{
+		VkShaderStageFlags shaderStageFlags = 0;
+		if (stage == SHADER_STAGE_VERTEX)
+			shaderStageFlags |= VK_SHADER_STAGE_VERTEX_BIT;
+		else if (stage == SHADER_STAGE_HULL)
+			shaderStageFlags |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+		else if (stage == SHADER_STAGE_DOMAIN)
+			shaderStageFlags |= VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+		else if (stage == SHADER_STAGE_GEOMETRY)
+			shaderStageFlags |= VK_SHADER_STAGE_GEOMETRY_BIT;
+		else if (stage == SHADER_STAGE_PIXEL)
+			shaderStageFlags |= VK_SHADER_STAGE_FRAGMENT_BIT;
+		else if (stage == SHADER_STAGE_COMPUTE)
+			shaderStageFlags |= VK_SHADER_STAGE_COMPUTE_BIT;
+
+		VkPipelineLayout pipelineLayout = m_pResourceState->GetPipelineLayout();
+		vkCmdPushConstants(m_CommandBuffer, pipelineLayout, shaderStageFlags, offset, sizeInBytes, pData);
+	}
 
 
 	void VKNCommandList::SetGraphicsPipelineResourceState(IPipelineResourceState* pResourceState)
@@ -292,123 +329,130 @@ namespace Lambda
     
     void VKNCommandList::TransitionTexture(const ITexture* pTexture, ResourceState state, uint32 startMipLevel, uint32 numMipLevels)
     {
-        const VKNTexture* pVkTexture = reinterpret_cast<const VKNTexture*>(pTexture);
-        TextureDesc textureDesc = pVkTexture->GetDesc();
+		if (!m_pRenderPass)
+		{
+			const VKNTexture* pVkTexture = reinterpret_cast<const VKNTexture*>(pTexture);
+			TextureDesc textureDesc = pVkTexture->GetDesc();
 
-        //Setup barrier
-        VkImageMemoryBarrier barrier = {};
-        barrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-        barrier.oldLayout                       = pVkTexture->GetResourceState();
-        barrier.newLayout                       = ConvertResourceStateToImageLayout(state);
-        barrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
-        barrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
-        barrier.image                           = reinterpret_cast<VkImage>(pVkTexture->GetNativeHandle());
-        barrier.subresourceRange.aspectMask     = pVkTexture->GetAspectFlags();
-        barrier.subresourceRange.baseMipLevel   = startMipLevel;
+			//Setup barrier
+			VkImageMemoryBarrier barrier = {};
+			barrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+			barrier.oldLayout                       = pVkTexture->GetResourceState();
+			barrier.newLayout                       = ConvertResourceStateToImageLayout(state);
+			barrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+			barrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+			barrier.image                           = reinterpret_cast<VkImage>(pVkTexture->GetNativeHandle());
+			barrier.subresourceRange.aspectMask     = pVkTexture->GetAspectFlags();
+			barrier.subresourceRange.baseMipLevel   = startMipLevel;
         
-        if (numMipLevels == LAMBDA_TRANSITION_ALL_MIPS)
-        {
-            barrier.subresourceRange.levelCount = textureDesc.MipLevels;
-        }
-        else
-        {
-            barrier.subresourceRange.levelCount = numMipLevels;
-        }
+			if (numMipLevels == LAMBDA_TRANSITION_ALL_MIPS)
+			{
+				barrier.subresourceRange.levelCount = textureDesc.MipLevels;
+			}
+			else
+			{
+				barrier.subresourceRange.levelCount = numMipLevels;
+			}
         
-        barrier.subresourceRange.baseArrayLayer = 0;
-        barrier.subresourceRange.layerCount     = 1;
-        barrier.srcAccessMask                   = 0;
-        barrier.dstAccessMask                   = 0;
+			barrier.subresourceRange.baseArrayLayer = 0;
+			barrier.subresourceRange.layerCount     = 1;
+			barrier.srcAccessMask                   = 0;
+			barrier.dstAccessMask                   = 0;
         
-        //Set flags and stage
-        VkPipelineStageFlags sourceStage        = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        VkPipelineStageFlags destinationStage   = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+			//Set flags and stage
+			VkPipelineStageFlags sourceStage        = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+			VkPipelineStageFlags destinationStage   = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
         
-        //Set source- mask and stage
-        if (barrier.oldLayout == VK_IMAGE_LAYOUT_UNDEFINED)
-        {
-            barrier.srcAccessMask = 0;
-            sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        }
-        else if (barrier.oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
-        {
-            barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-            sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-        }
-        else if (barrier.oldLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
-        {
-            barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-            sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-        }
-        else if (barrier.newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-        {
-            barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-            sourceStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-        }
-        else if (barrier.oldLayout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
-        {
-            barrier.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-            sourceStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-        }
-        else if (barrier.oldLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
-        {
-            barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-            sourceStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-        }
-        else if (barrier.oldLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
-        {
-            barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-            sourceStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        }
-        else
-        {
-            LOG_DEBUG_ERROR("Vulkan: Unsupported src-image layout transition '%d'\n", barrier.oldLayout);
-        }
+			//Set source- mask and stage
+			if (barrier.oldLayout == VK_IMAGE_LAYOUT_UNDEFINED)
+			{
+				barrier.srcAccessMask = 0;
+				sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+			}
+			else if (barrier.oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+			{
+				barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+				sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+			}
+			else if (barrier.oldLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
+			{
+				barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+				sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+			}
+			else if (barrier.newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+			{
+				barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+				sourceStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+			}
+			else if (barrier.oldLayout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
+			{
+				barrier.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+				sourceStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+			}
+			else if (barrier.oldLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+			{
+				barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+				sourceStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+			}
+			else if (barrier.oldLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+			{
+				barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+				sourceStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			}
+			else
+			{
+				LOG_DEBUG_ERROR("Vulkan: Unsupported src-image layout transition '%d'\n", barrier.oldLayout);
+			}
         
-        //Set destination- mask and stage
-        if (barrier.oldLayout == VK_IMAGE_LAYOUT_UNDEFINED)
-        {
-            barrier.dstAccessMask = 0;
-            destinationStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        }
-        else if (barrier.newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
-        {
-            barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-            destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-        }
-        else if (barrier.newLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
-        {
-            barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-            destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-        }
-        else if (barrier.newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-        {
-            barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-            destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-        }
-        else if (barrier.newLayout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
-        {
-            barrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-            destinationStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        }
-        else if (barrier.newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
-        {
-            barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-            destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-        }
-        else if (barrier.newLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
-        {
-            barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-            destinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        }
-        else
-        {
-            LOG_DEBUG_ERROR("Vulkan: Unsupported dst-image layout transition '%d'\n", barrier.newLayout);
-        }
+			//Set destination- mask and stage
+			if (barrier.oldLayout == VK_IMAGE_LAYOUT_UNDEFINED)
+			{
+				barrier.dstAccessMask = 0;
+				destinationStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+			}
+			else if (barrier.newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+			{
+				barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+				destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+			}
+			else if (barrier.newLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
+			{
+				barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+				destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+			}
+			else if (barrier.newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+			{
+				barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+				destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+			}
+			else if (barrier.newLayout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
+			{
+				barrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+				destinationStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+			}
+			else if (barrier.newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+			{
+				barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+				destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+			}
+			else if (barrier.newLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+			{
+				barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+				destinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			}
+			else
+			{
+				LOG_DEBUG_ERROR("Vulkan: Unsupported dst-image layout transition '%d'\n", barrier.newLayout);
+			}
         
         
-        vkCmdPipelineBarrier(m_CommandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-        pVkTexture->SetResourceState(barrier.newLayout);
+			vkCmdPipelineBarrier(m_CommandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+			pVkTexture->SetResourceState(barrier.newLayout);
+		}
+		else
+		{
+			LOG_DEBUG_ERROR("Vulkan: TransitionTexture can only be called outside a RenderPass\n");
+		}
     }
     
     

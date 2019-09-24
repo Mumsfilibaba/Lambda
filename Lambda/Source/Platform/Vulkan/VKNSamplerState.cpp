@@ -45,7 +45,7 @@ namespace Lambda
         info.addressModeV               = adressMode;
         info.addressModeW               = adressMode;
         info.anisotropyEnable           = VK_TRUE;
-        info.maxAnisotropy              = 16;
+        info.maxAnisotropy              = desc.Anisotropy;
         info.borderColor                = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
         info.unnormalizedCoordinates    = VK_FALSE;
         info.compareEnable              = VK_FALSE;

@@ -17,3 +17,4 @@ Dependencies/ImGui/bin-int/
 *.xcworkspacedata
 *.xcuserstate
 *.pbxproj
+*.ini

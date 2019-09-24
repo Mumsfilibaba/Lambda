@@ -109,7 +109,9 @@ namespace Lambda
                 desc.DepthStencil.LoadOperation			= LOAD_OP_CLEAR;
                 desc.DepthStencil.StoreOperation		= STORE_OP_UNKNOWN;
                 desc.DepthStencil.FinalState			= RESOURCE_STATE_DEPTH_STENCIL;
+				
 				pDevice->CreateRenderPass(&m_pRenderPass, desc);
+				GetUILayer()->Init(m_pRenderPass, m_pCurrentList);
 			}
 
 
@@ -154,6 +156,8 @@ namespace Lambda
 				PipelineResourceStateDesc desc = {};
 				desc.NumResourceSlots	= 7;
 				desc.pResourceSlots		= slots;
+				desc.NumConstants		= 0;
+				desc.pConstantSlots		= nullptr;
 				pDevice->CreatePipelineResourceState(&m_pResourceState, desc);
 			}
 
@@ -174,7 +178,7 @@ namespace Lambda
                 desc.pInputElements		= elements;
                 desc.InputElementCount	= sizeof(elements) / sizeof(InputElement);
                 desc.Cull				= CULL_MODE_BACK;
-				desc.Mode				= POLYGON_MODE_FILL;
+				desc.FillMode				= POLYGON_MODE_FILL;
                 desc.Topology			= PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 				desc.pRenderPass		= m_pRenderPass;
 				desc.pResourceState		= m_pResourceState;
@@ -308,6 +312,7 @@ namespace Lambda
 				desc.MinMipLOD	= 0.0f;
 				desc.MaxMipLOD	= float(textureDesc.MipLevels);
 				desc.MipLODBias	= 0.0f;
+				desc.Anisotropy = 16.0f;
                 
                 pDevice->CreateSamplerState(&m_pSamplerState, desc);
             }
@@ -454,7 +459,7 @@ namespace Lambda
         
         //Set vertex- and indexbuffer
         m_pCurrentList->SetVertexBuffer(m_pVertexBuffer, 0);
-        m_pCurrentList->SetIndexBuffer(m_pIndexBuffer);
+        m_pCurrentList->SetIndexBuffer(m_pIndexBuffer, FORMAT_R32_UINT);
         
 		//Set rendertargets and clearcolors
 		m_pRenderPass->SetRenderTargets(&pRenderTarget, 1, pDepthBuffer);
@@ -462,8 +467,13 @@ namespace Lambda
 
         //Setup rotation
 		static glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        rotation = glm::rotate(rotation, glm::radians(30.0f) * dt.AsSeconds(), glm::vec3(0.0f, 1.0f, 0.0f));
+        //rotation = glm::rotate(rotation, glm::radians(30.0f) * dt.AsSeconds(), glm::vec3(0.0f, 1.0f, 0.0f));
         
+		//Update userinterface
+		GetUILayer()->Begin(dt);
+		GetUILayer()->RenderUI();
+		GetUILayer()->End();
+
 #if !defined(SINGLE_CUBE)
         //Begin renderpass
         m_pCurrentList->BeginRenderPass(m_pRenderPass);
@@ -487,7 +497,6 @@ namespace Lambda
         //End renderpass
         m_pCurrentList->EndRenderPass();
 #else
-
         //Update transforms
         m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f)) * rotation;
         data.pData            = &m_TransformBuffer;
@@ -500,6 +509,9 @@ namespace Lambda
         
 		//Draw first
 		m_pCurrentList->DrawIndexedInstanced(m_IndexCount, 1, 0, 0, 0);
+
+		//Draw the UI
+		GetUILayer()->Draw(m_pCurrentList);
 
 		//End renderpass
 		m_pCurrentList->EndRenderPass();

@@ -144,9 +144,9 @@ namespace Lambda
         rasterizerState.flags                   = 0;
         rasterizerState.depthClampEnable        = VK_FALSE;
         rasterizerState.rasterizerDiscardEnable = VK_FALSE;
-        rasterizerState.polygonMode             = ConvertPolygonMode(desc.Mode);
+        rasterizerState.polygonMode             = ConvertPolygonMode(desc.FillMode);
         rasterizerState.lineWidth               = 1.0f;
-        rasterizerState.frontFace               = VK_FRONT_FACE_CLOCKWISE;
+        rasterizerState.frontFace               = desc.FrontFaceCounterClockWise ? VK_FRONT_FACE_COUNTER_CLOCKWISE : VK_FRONT_FACE_CLOCKWISE;
         rasterizerState.depthBiasEnable         = VK_FALSE;
         rasterizerState.depthBiasConstantFactor = 0.0f;
         rasterizerState.depthBiasClamp          = 0.0f;
@@ -175,9 +175,9 @@ namespace Lambda
         //Blendstate
         VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
         colorBlendAttachment.colorWriteMask         = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-        colorBlendAttachment.blendEnable            = VK_FALSE;
-        colorBlendAttachment.srcColorBlendFactor    = VK_BLEND_FACTOR_ONE;
-        colorBlendAttachment.dstColorBlendFactor    = VK_BLEND_FACTOR_ZERO;
+        colorBlendAttachment.blendEnable            = VK_TRUE;
+        colorBlendAttachment.srcColorBlendFactor    = VK_BLEND_FACTOR_SRC_ALPHA;
+        colorBlendAttachment.dstColorBlendFactor    = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
         colorBlendAttachment.colorBlendOp           = VK_BLEND_OP_ADD;
         colorBlendAttachment.srcAlphaBlendFactor    = VK_BLEND_FACTOR_ONE;
         colorBlendAttachment.dstAlphaBlendFactor    = VK_BLEND_FACTOR_ZERO;

@@ -28,18 +28,19 @@ namespace Lambda
     
 	struct GraphicsPipelineStateDesc
 	{
-        const char* pName = nullptr;
+        const char* pName		= nullptr;
         //Shaders
-		IShader* pVertexShader = nullptr;
-		IShader* pPixelShader = nullptr;
+		IShader* pVertexShader	= nullptr;
+		IShader* pPixelShader	= nullptr;
         //Input Layout
-        InputElement* pInputElements = nullptr;
-        uint32 InputElementCount = 0;
-        //State
-		PolygonMode Mode = POLYGON_MODE_FILL;
-        PrimitiveTopology Topology = PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-        CullMode Cull = CULL_MODE_BACK;
-        //Depth test
+        InputElement*	pInputElements		= nullptr;
+        uint32			InputElementCount	= 0;
+        //Rasterizer State
+        CullMode			Cull						= CULL_MODE_BACK;
+		PolygonMode			FillMode						= POLYGON_MODE_FILL;
+        PrimitiveTopology	Topology					= PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+		bool				FrontFaceCounterClockWise	= false;
+		//Depth test
         bool DepthTest = true;
         //RenderPass defines the framebuffer
 		IRenderPass* pRenderPass = nullptr;

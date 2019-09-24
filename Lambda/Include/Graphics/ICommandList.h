@@ -37,7 +37,8 @@ namespace Lambda
 		virtual void SetViewport(const Viewport& viewport) = 0;
 		virtual void SetScissorRect(const Rectangle& scissorRect) = 0;
 		virtual void SetVertexBuffer(IBuffer* pBuffer, uint32 slot) = 0;
-        virtual void SetIndexBuffer(IBuffer* pBuffer) = 0;
+        virtual void SetIndexBuffer(IBuffer* pBuffer, ResourceFormat format) = 0;
+		virtual void SetConstants(ShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData) = 0;
 		virtual void SetGraphicsPipelineState(IGraphicsPipelineState* pPiplineState) = 0;
 		virtual void SetGraphicsPipelineResourceState(IPipelineResourceState* pPipelineResourceState) = 0;
 
