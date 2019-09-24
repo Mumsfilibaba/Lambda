@@ -12,13 +12,15 @@ int main()
 	params.pTitle               = "Lambda Engine - Sandbox";
 #if defined(LAMBDA_PLAT_WINDOWS)
 	params.GraphicsDeviceApi    = GRAPHICS_API_VULKAN;
+    params.Fullscreen           = true;
+    params.SampleCount          = 8;
 #else
-	params.GraphicsDeviceApi	= GRAPHICS_API_VULKAN;
+    params.GraphicsDeviceApi    = GRAPHICS_API_VULKAN;
+    params.Fullscreen           = false;
+    params.SampleCount          = 1;
 #endif
-	params.SampleCount          = 8;
-	params.WindowWidth          = 1920;
-	params.WindowHeight         = 1080;
-	params.Fullscreen           = true;
+    params.WindowWidth          = 1920;
+    params.WindowHeight         = 1080;
 
 	Application* pApp = DBG_NEW SandBox(params);
 	int32 result = pApp->Run();
