@@ -12,11 +12,10 @@ int main()
 	params.pTitle               = "Lambda Engine - Sandbox";
 #if defined(LAMBDA_PLAT_WINDOWS)
 	params.GraphicsDeviceApi    = GRAPHICS_API_VULKAN;
-    params.Fullscreen           = false;
 #else
     params.GraphicsDeviceApi    = GRAPHICS_API_VULKAN;
-    params.Fullscreen           = true;
 #endif
+    params.Fullscreen           = true;
     params.SampleCount          = 4;
     params.WindowWidth          = 1920;
     params.WindowHeight         = 1080;
