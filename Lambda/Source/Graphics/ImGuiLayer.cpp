@@ -476,6 +476,7 @@ namespace Lambda
     {
 		EventDispatcher::ForwardEvent<ImGuiLayer, KeyTypedEvent>(this, &ImGuiLayer::OnKeyTyped, event);
 		EventDispatcher::ForwardEvent<ImGuiLayer, KeyPressedEvent>(this, &ImGuiLayer::OnKeyPressed, event);
+        EventDispatcher::ForwardEvent<ImGuiLayer, KeyReleasedEvent>(this, &ImGuiLayer::OnKeyReleased, event);
 		EventDispatcher::ForwardEvent<ImGuiLayer, MouseScrolledEvent>(this, &ImGuiLayer::OnMouseScroll, event);
 		EventDispatcher::ForwardEvent<ImGuiLayer, MouseButtonPressedEvent>(this, &ImGuiLayer::OnMousePressed, event);
 		EventDispatcher::ForwardEvent<ImGuiLayer, MouseButtonReleasedEvent>(this, &ImGuiLayer::OnMouseReleased, event);
