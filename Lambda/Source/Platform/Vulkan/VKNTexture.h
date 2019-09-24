@@ -43,7 +43,7 @@ namespace Lambda
 		IVKNAllocator* const	m_pAllocator;
 		VKNMemory				m_Memory;
         VkImage                 m_Image;
-        VkImageView             m_View;
+        VkImageView             m_ImageView;
         VkImageAspectFlags      m_AspectFlags;
         mutable TextureDesc     m_Desc;
         mutable VkImageLayout   m_ResourceState;
@@ -59,7 +59,7 @@ namespace Lambda
         
     inline VkImageView VKNTexture::GetImageView() const
     {
-        return m_View;
+        return m_ImageView;
     }
     
     

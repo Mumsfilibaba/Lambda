@@ -619,6 +619,13 @@ namespace Lambda
 	void VKNGraphicsDevice::PresentBegin() const
 	{
 		m_pSwapChain->AquireNextImage(m_ImageSemaphores[m_CurrentFrame]);
+
+		//if we use MSAA we want to set a texture that we can resolve onto, in this case the current backbuffer since we render to the window
+		if (m_pMSAABuffer)
+		{
+			VKNTexture* pResolveResource = reinterpret_cast<VKNTexture*>(m_pSwapChain->GetCurrentBuffer());
+			m_pMSAABuffer->SetResolveResource(pResolveResource);
+		}
 	}
 
     
@@ -660,13 +667,6 @@ namespace Lambda
 
 			m_pSwapChain->Present(m_PresentationQueue, m_RenderSemaphores[m_CurrentFrame]);
 			GPUWaitForFrame();
-
-			//if we use MSAA we want to set a texture that we can resolve onto, in this case the current backbuffer since we render to the window
-			if (m_pMSAABuffer)
-			{
-				VKNTexture* pResolveResource = reinterpret_cast<VKNTexture*>(m_pSwapChain->GetCurrentBuffer());
-				m_pMSAABuffer->SetResolveResource(pResolveResource);
-			}
 		}
 	}
     

@@ -16,7 +16,7 @@ namespace Lambda
 		m_Memory(),
         m_IsOwner(false),
 		m_Image(VK_NULL_HANDLE),
-        m_View(VK_NULL_HANDLE),
+        m_ImageView(VK_NULL_HANDLE),
         m_AspectFlags(0),
         m_Desc(),
         m_ResourceState(VK_IMAGE_LAYOUT_UNDEFINED)
@@ -30,7 +30,7 @@ namespace Lambda
 		m_Memory(),
 		m_IsOwner(false),
 		m_Image(VK_NULL_HANDLE),
-		m_View(VK_NULL_HANDLE),
+		m_ImageView(VK_NULL_HANDLE),
 		m_AspectFlags(0),
 		m_Desc(),
 		m_ResourceState(VK_IMAGE_LAYOUT_UNDEFINED)
@@ -179,7 +179,7 @@ namespace Lambda
         viewInfo.format     = GetFormat();
         if (m_Desc.Type == TEXTURE_TYPE_2D)
         {
-            viewInfo.viewType   = VK_IMAGE_VIEW_TYPE_2D;
+            viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
         }
         else
         {
@@ -193,13 +193,13 @@ namespace Lambda
         viewInfo.subresourceRange.layerCount        = 1;
         
 		VKNDevice& device = VKNDevice::Get();
-        if (vkCreateImageView(device.GetDevice(), &viewInfo, nullptr, &m_View) != VK_SUCCESS)
+        if (vkCreateImageView(device.GetDevice(), &viewInfo, nullptr, &m_ImageView) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create image view\n");
         }
         else
         {
-            LOG_DEBUG_INFO("Vulkan: Created image view\n");
+            LOG_DEBUG_INFO("Vulkan: Created image view. Handle=%p\n", m_ImageView);
         }
     }
     
@@ -221,12 +221,12 @@ namespace Lambda
 		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
 
 		//Remove associated framebuffer if there is any
-		VKNFramebufferCache::GetInstance().ReleaseAllContainingTexture(device, this);
+		VKNFramebufferCache::Get().ReleaseAllContainingTexture(device, this);
 
-		if (m_View != VK_NULL_HANDLE)
+		if (m_ImageView != VK_NULL_HANDLE)
 		{
-			vkDestroyImageView(device, m_View, nullptr);
-			m_View = VK_NULL_HANDLE;
+			vkDestroyImageView(device, m_ImageView, nullptr);
+			m_ImageView = VK_NULL_HANDLE;
 		}
 
 		//Destroy if texture was created from init

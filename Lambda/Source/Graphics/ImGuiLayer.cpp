@@ -8,9 +8,9 @@
 
 namespace Lambda
 {
-	//-----------------------------------------------------------------------------
+	//--------
 	// SHADERS
-	//-----------------------------------------------------------------------------
+	//--------
 
 	// glsl_shader.vert, compiled with:
 	// # glslangValidator -V -x -o glsl_shader.vert.u32 glsl_shader.vert
@@ -177,32 +177,118 @@ namespace Lambda
 
     bool ImGuiLayer::OnEvent(const Event& event)
     {
-		if (event.GetType() == MouseButtonPressedEvent::GetStaticType())
-		{
-			const MouseButtonPressedEvent& e = static_cast<const MouseButtonPressedEvent&>(event);
-		}
-		else if (event.GetType() == MouseScrolledEvent::GetStaticType())
-		{
-			const MouseScrolledEvent& scrollEvent = static_cast<const MouseScrolledEvent&>(event);
-
-			ImGuiIO& io = ImGui::GetIO();
-			io.MouseWheelH	+= scrollEvent.GetHorizontalValue();
-			io.MouseWheel	+= scrollEvent.GetVerticalValue();
-		}
-		else if (event.GetType() == KeyTypedEvent::GetStaticType())
-		{
-			const KeyTypedEvent& typeEvent = static_cast<const KeyTypedEvent&>(event);
-
-			ImGuiIO& io = ImGui::GetIO();
-			io.AddInputCharacter(typeEvent.GetCharacter());
-		}
-
+		EventDispatcher::ForwardEvent<ImGuiLayer, KeyTypedEvent>(this, &ImGuiLayer::OnKeyTyped, event);
+		EventDispatcher::ForwardEvent<ImGuiLayer, KeyPressedEvent>(this, &ImGuiLayer::OnKeyPressed, event);
+		EventDispatcher::ForwardEvent<ImGuiLayer, MouseScrolledEvent>(this, &ImGuiLayer::OnMouseScroll, event);
+		EventDispatcher::ForwardEvent<ImGuiLayer, MouseButtonPressedEvent>(this, &ImGuiLayer::OnMousePressed, event);
+		EventDispatcher::ForwardEvent<ImGuiLayer, MouseButtonReleasedEvent>(this, &ImGuiLayer::OnMouseReleased, event);
+		EventDispatcher::ForwardEvent<ImGuiLayer, MouseMovedEvent>(this, &ImGuiLayer::OnMouseMove, event);
+		EventDispatcher::ForwardEvent<ImGuiLayer, WindowResizeEvent>(this, &ImGuiLayer::OnWindowResize, event);
         return false;
     }
 
 
     uint32 ImGuiLayer::GetRecivableCategories() const
     {
-        return 0;
+        return EVENT_CATEGORY_INPUT | EVENT_CATEGORY_WINDOW;
     }
+	
+	
+	bool ImGuiLayer::OnKeyTyped(const KeyTypedEvent& event)
+	{
+		ImGuiIO& io = ImGui::GetIO();
+		io.AddInputCharacter(event.GetCharacter());
+		return false;
+	}
+
+
+	bool ImGuiLayer::OnKeyPressed(const KeyPressedEvent& event)
+	{
+		ImGuiIO& io = ImGui::GetIO();
+		io.KeysDown[event.GetKey()] = true;
+
+		// Modifiers are not reliable across systems
+		io.KeyCtrl	= io.KeysDown[KEY_LEFT_CONTROL] || io.KeysDown[KEY_RIGHT_CONTROL];
+		io.KeyShift = io.KeysDown[KEY_LEFT_SHIFT]	|| io.KeysDown[KEY_RIGHT_SHIFT];
+		io.KeyAlt	= io.KeysDown[KEY_LEFT_ALT]		|| io.KeysDown[KEY_RIGHT_ALT];
+		io.KeySuper = io.KeysDown[KEY_LEFT_SUPER]	|| io.KeysDown[KEY_RIGHT_SUPER];
+		return false;
+	}
+
+	
+	bool ImGuiLayer::OnKeyReleased(const KeyReleasedEvent& event)
+	{
+		ImGuiIO& io = ImGui::GetIO();
+		io.KeysDown[event.GetKey()] = false;
+
+		// Modifiers are not reliable across systems
+		io.KeyCtrl	= io.KeysDown[KEY_LEFT_CONTROL] || io.KeysDown[KEY_RIGHT_CONTROL];
+		io.KeyShift = io.KeysDown[KEY_LEFT_SHIFT]	|| io.KeysDown[KEY_RIGHT_SHIFT];
+		io.KeyAlt	= io.KeysDown[KEY_LEFT_ALT]		|| io.KeysDown[KEY_RIGHT_ALT];
+		io.KeySuper = io.KeysDown[KEY_LEFT_SUPER]	|| io.KeysDown[KEY_RIGHT_SUPER];
+		return false;
+	}
+	
+	
+	bool ImGuiLayer::OnMouseScroll(const MouseScrolledEvent& event)
+	{
+		ImGuiIO& io = ImGui::GetIO();
+		io.MouseWheelH	+= event.GetHorizontalValue();
+		io.MouseWheel	+= event.GetVerticalValue();
+		return false;
+	}
+	
+	
+	bool ImGuiLayer::OnMousePressed(const MouseButtonPressedEvent& event)
+	{
+		int32 button = 0;
+		switch (event.GetButton())
+		{
+		case MOUSEBUTTON_LEFT:		button = 0; break;
+		case MOUSEBUTTON_MIDDLE:	button = 2; break;
+		case MOUSEBUTTON_RIGHT:		button = 1; break;
+		case MOUSEBUTTON_FORWARD:	button = 3; break;
+		case MOUSEBUTTON_BACKWARD:	button = 4; break;
+		default: break;
+		}
+
+		ImGuiIO& io = ImGui::GetIO();
+		io.MouseDown[button] = true;
+		return false;
+	}
+	
+	
+	bool ImGuiLayer::OnMouseReleased(const MouseButtonReleasedEvent& event)
+	{
+		int32 button = 0;
+		switch (event.GetButton())
+		{
+		case MOUSEBUTTON_LEFT:		button = 0; break;
+		case MOUSEBUTTON_MIDDLE:	button = 2; break;
+		case MOUSEBUTTON_RIGHT:		button = 1; break;
+		case MOUSEBUTTON_FORWARD:	button = 3; break;
+		case MOUSEBUTTON_BACKWARD:	button = 4; break;
+		default: break;
+		}
+
+		ImGuiIO& io = ImGui::GetIO();
+		io.MouseDown[button] = false;
+		return false;
+	}
+	
+	
+	bool ImGuiLayer::OnMouseMove(const MouseMovedEvent& event)
+	{
+		ImGuiIO& io = ImGui::GetIO();
+		io.MousePos = ImVec2(float(event.GetX()), float(event.GetY()));
+		return false;
+	}
+	
+	
+	bool ImGuiLayer::OnWindowResize(const WindowResizeEvent& event)
+	{
+		ImGuiIO& io = ImGui::GetIO();
+		io.DisplaySize = ImVec2(float(event.GetWidth()), float(event.GetHeight()));
+		return false;
+	}
 }

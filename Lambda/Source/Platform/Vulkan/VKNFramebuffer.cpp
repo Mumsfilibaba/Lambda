@@ -101,14 +101,14 @@ namespace Lambda
 
 		//Create new framebuffer
 		VkFramebufferCreateInfo info = {};
-		info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		info.pNext = nullptr;
-		info.renderPass = fbKey.RenderPass;
-		info.attachmentCount = fbKey.NumAttachmentViews;
-		info.pAttachments = fbKey.AttachmentViews;
-		info.width = width;
-		info.height = height;
-		info.layers = 1;
+		info.sType				= VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		info.pNext				= nullptr;
+		info.renderPass			= fbKey.RenderPass;
+		info.attachmentCount	= fbKey.NumAttachmentViews;
+		info.pAttachments		= fbKey.AttachmentViews;
+		info.width				= width;
+		info.height				= height;
+		info.layers				= 1;
 
 		VkFramebuffer framebuffer = VK_NULL_HANDLE;
 		
@@ -163,7 +163,7 @@ namespace Lambda
 	}
 	
 	
-	VKNFramebufferCache& VKNFramebufferCache::GetInstance()
+	VKNFramebufferCache& VKNFramebufferCache::Get()
 	{
 		LAMBDA_ASSERT(s_pInstance != nullptr);
 		return *s_pInstance;

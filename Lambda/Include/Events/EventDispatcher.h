@@ -119,6 +119,22 @@ namespace Lambda
 			PushCallback(EventT::GetStaticType(), DBG_NEW ObjectEventCallback<ObjectType, EventT>(pObjectRef, objectCallbackFunc));
 		}
 
+		//Forward event to another function
+		template <typename ObjectType, typename EventT>
+		static bool ForwardEvent(ObjectType* pObjectRef, bool(ObjectType::* objectCallbackFunc)(const EventT&), const Event& event)
+		{
+			if (event.GetType() == EventT::GetStaticType())
+			{
+				if ((pObjectRef->*objectCallbackFunc)(static_cast<const EventT&>(event)))
+				{
+					event.SetIsHandled(true);
+					return true;
+				}
+			}
+
+			return false;
+		}
+
 	private:
 		static void PushCallback(EventType key, IEventCallback* pCallback);
 

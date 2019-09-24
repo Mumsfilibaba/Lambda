@@ -75,7 +75,7 @@ namespace Lambda
 			}
 		}
 
-		VKNFramebufferCache& fbCache = VKNFramebufferCache::GetInstance();
+		VKNFramebufferCache& fbCache = VKNFramebufferCache::Get();
 		m_Framebuffer = fbCache.GetFramebuffer(key, m_FramebufferExtent.width, m_FramebufferExtent.height);
 	}
 
@@ -145,15 +145,17 @@ namespace Lambda
             {
                 VkAttachmentDescription resolveAttachment = colorAttachment;
                 resolveAttachment.loadOp	= VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+				resolveAttachment.storeOp	= VK_ATTACHMENT_STORE_OP_STORE;
                 resolveAttachment.samples	= VK_SAMPLE_COUNT_1_BIT;
                 if (desc.RenderTargets[i].FinalState == RESOURCE_STATE_RENDERTARGET_PRESENT)
                 {
                     colorAttachment.finalLayout		= VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-                    resolveAttachment.finalLayout	= VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+					resolveAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+					resolveAttachment.finalLayout	= VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
                 }
                 resolveAttachments.emplace_back(resolveAttachment);
             }
-            attachments.emplace_back(colorAttachment);
+			attachments.emplace_back(colorAttachment);
 
 			VkAttachmentReference colorAttachmentRef = {};
 			colorAttachmentRef.attachment	= i;

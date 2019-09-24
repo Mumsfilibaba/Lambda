@@ -60,7 +60,7 @@ namespace Lambda
         std::unordered_map<VKNFramebufferCacheKey, VkFramebuffer, VKNFramebufferCacheKeyHash> m_Framebuffers;
 
 	public:
-		static VKNFramebufferCache& GetInstance();
+		static VKNFramebufferCache& Get();
 
 	private:
 		static VKNFramebufferCache* s_pInstance;
