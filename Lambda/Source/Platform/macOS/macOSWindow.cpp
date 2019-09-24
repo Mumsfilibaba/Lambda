@@ -38,7 +38,8 @@ namespace Lambda
         m_Width(0.0f),
         m_Height(0.0f),
         m_EventCallback(nullptr),
-        m_Fullscreen(false)
+        m_Fullscreen(false),
+        m_HasFocus(false)
     {
         Init(desc);
         LOG_SYSTEM_INFO("Created window. w: %d, h: %d\n", desc.Width, desc.Height);
@@ -152,6 +153,12 @@ namespace Lambda
     void MacOSWindow::OnUpdate() const
     {
         glfwPollEvents();
+    }
+
+
+    bool MacOSWindow::HasFocus() const
+    {
+        return m_HasFocus;
     }
     
     
@@ -313,7 +320,11 @@ namespace Lambda
     {
         MacOSWindow* pUserWindow = reinterpret_cast<MacOSWindow*>(glfwGetWindowUserPointer(pWindow));
         
-        WindowFocusChangedEvent event = WindowFocusChangedEvent(focused != 0);
+        //Set that we have focus
+        pUserWindow->m_HasFocus = (focused != 0);
+        
+        //Tell rest of the system that the focus changed
+        WindowFocusChangedEvent event = WindowFocusChangedEvent(pUserWindow->m_HasFocus);
         pUserWindow->DispatchEvent(event);
     }
     

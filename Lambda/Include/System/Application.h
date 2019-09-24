@@ -76,7 +76,6 @@ namespace Lambda
 		EngineParams 		m_Params;
 		int32 				m_ExitCode;
 		bool 				m_Running;
-		bool 				m_HasFocus;
 
 	public:
 		static Application& Get();

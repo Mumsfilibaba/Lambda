@@ -13,12 +13,11 @@ int main()
 #if defined(LAMBDA_PLAT_WINDOWS)
 	params.GraphicsDeviceApi    = GRAPHICS_API_VULKAN;
     params.Fullscreen           = false;
-    params.SampleCount          = 4;
 #else
     params.GraphicsDeviceApi    = GRAPHICS_API_VULKAN;
-    params.Fullscreen           = false;
-    params.SampleCount          = 1;
+    params.Fullscreen           = true;
 #endif
+    params.SampleCount          = 4;
     params.WindowWidth          = 1920;
     params.WindowHeight         = 1080;
 

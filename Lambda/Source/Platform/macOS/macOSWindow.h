@@ -15,16 +15,17 @@ namespace Lambda
         MacOSWindow(const WindowDesc& desc);
         ~MacOSWindow();
         
-        virtual void SetEventCallback(EventCallbackFunc callback) override final;
         virtual void OnUpdate() const override final;
-        virtual bool SetFullscreen(bool fullscreen) override final;
-        virtual bool GetFullscreen() const override final;
+        virtual bool HasFocus() const override final;
         
+        virtual void SetEventCallback(EventCallbackFunc callback) override final;
+        virtual bool SetFullscreen(bool fullscreen) override final;
+        
+        virtual bool                GetFullscreen() const override final;
         virtual IGraphicsDevice*    GetGraphicsDevice() const override final;
         virtual uint32              GetHeight() const override final;
         virtual uint32              GetWidth() const override final;
         virtual void*               GetNativeHandle() const override final;
-        
         
     private:
         void Init(const WindowDesc& desc);
@@ -36,8 +37,9 @@ namespace Lambda
         std::vector<Event>  m_EventBackLog;
         uint32              m_Width;
         uint32              m_Height;
-        EventCallbackFunc       m_EventCallback;
+        EventCallbackFunc   m_EventCallback;
         bool                m_Fullscreen;
+        bool                m_HasFocus;
         
     private:
         static void WindowClosedCallback(GLFWwindow* pWindow);

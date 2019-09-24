@@ -52,8 +52,7 @@ namespace Lambda
 		m_pApplicationLayer(nullptr),
 		m_Params(params),
 		m_ExitCode(0),
-		m_Running(true),
-		m_HasFocus(false)
+		m_Running(true)
 	{
 		LAMBDA_ASSERT(s_pInstance == nullptr);
 		s_pInstance = this;
@@ -89,7 +88,7 @@ namespace Lambda
 
 			
 #if defined(LAMBDA_PLAT_MACOS)
-            if (m_HasFocus)
+            if (m_pWindow->HasFocus())
             {
                 //Render when the application has focus
                 InternalOnRender(clock.GetDeltaTime());
@@ -255,18 +254,6 @@ namespace Lambda
 			{
 				return false;
 			}
-
-			//When window is out of focus make sure that the rendering-loop pauses
-		case WindowFocusChangedEvent::GetStaticType():
-			if (IGraphicsDevice::Get())
-			{
-				IGraphicsDevice::Get()->WaitForGPU();
-			}
-
-			m_HasFocus = static_cast<const WindowFocusChangedEvent&>(event).HasFocus();
-
-			//Return false so that other parts of the app still can get this event
-			return false;
 
 			//If not an handled event return false to let it continue in the eventhandler
 		default:
