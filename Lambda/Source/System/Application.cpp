@@ -60,9 +60,7 @@ namespace Lambda
                 ups++;
 			}
             //Draw UI
-            m_pUILayer->Begin(clock.GetDeltaTime());
             OnRenderUI(clock.GetDeltaTime());
-            m_pUILayer->End();
             //Render
 #if defined(LAMBDA_PLAT_MACOS)
             if (m_pWindow->HasFocus())
@@ -151,25 +149,32 @@ namespace Lambda
 
     void Application::OnRenderUI(Timestep dt)
     {
-        for (auto it = m_LayerStack.Begin(); it != m_LayerStack.End(); it++)
-            (*it)->OnRenderUI(dt);
+		m_pUILayer->Begin(dt);
+		for (auto it = m_LayerStack.Begin(); it != m_LayerStack.End(); it++)
+		{
+			Layer* pLayer = (*it);
+            pLayer->OnRenderUI(dt);
+		}
+		m_pUILayer->End();
     }
 
 
 	void Application::OnRelease()
 	{
+		//Remove callback
+		m_pWindow->SetEventCallback(nullptr);
 		//Release all layers
 		for (auto it = m_LayerStack.Begin(); it != m_LayerStack.End(); it++)
 		{
 			Layer* pLayer = (*it);
 			pLayer->OnRelease();
 		}
-		//Destroy window
-		SafeDelete(m_pWindow);
         //Release LayerStack
         m_LayerStack.Release();
         //Release Eventdispatcher
         m_Dispatcher.Release();
+		//Destroy window
+		SafeDelete(m_pWindow);
 	}
 
 

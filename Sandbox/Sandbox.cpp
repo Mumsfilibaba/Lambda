@@ -24,129 +24,6 @@ namespace Lambda
     static Transform transformRevolver;
     static float lightColor[4];
 
-
-    static void ShowEntityEditor()
-    {
-        ImGui::SetNextWindowSize(ImVec2(430,450), ImGuiCond_FirstUseEver);
-        if (!ImGui::Begin("Entities", NULL))
-        {
-            ImGui::End();
-            return;
-        }
-
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2,2));
-        ImGui::Columns(2);
-        ImGui::Separator();
-
-        struct funcs
-        {
-            static void ShowLight(uint32 uid, float* pColor)
-            {
-                ImGui::PushID(uid);
-                ImGui::AlignTextToFramePadding();
-                bool nodeOpen = ImGui::TreeNode("Light", "Light");
-                ImGui::NextColumn();
-                ImGui::AlignTextToFramePadding();
-                ImGui::NextColumn();
-                
-                if (nodeOpen)
-                {
-                    ImGui::PushID(0);
-                    {
-                        ImGui::AlignTextToFramePadding();
-                        ImGui::TreeNodeEx("Color", ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Bullet, "Color");
-                        ImGui::NextColumn();
-                        ImGui::ColorPicker4("##picker", pColor, ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview);
-                        ImGui::NextColumn();
-                    }
-                    ImGui::PopID();
-                    ImGui::TreePop();
-                }
-                ImGui::PopID();
-            }
-            
-            static void ShowTransform(uint32 uid, float* pPosition, float* pRotation, float* pScale)
-            {
-                ImGui::AlignTextToFramePadding();
-                ImGui::PushID(uid);
-                bool nodeOpen = ImGui::TreeNode("Transform", "Transform");
-                ImGui::NextColumn();
-                ImGui::AlignTextToFramePadding();
-                ImGui::NextColumn();
-                
-                if (nodeOpen)
-                {
-                    ImGui::AlignTextToFramePadding();
-                    ImGui::PushID(0); // Use field index as identifier.
-                    {
-                        // Here we use a TreeNode to highlight on hover (we could use e.g. Selectable as well)
-                        ImGui::TreeNodeEx("Position", ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen, "Position");
-                        ImGui::NextColumn();
-                        ImGui::SetNextItemWidth(-1);
-                        ImGui::DragFloat3("", pPosition, 0.05f);
-                        ImGui::NextColumn();
-                    }
-                    ImGui::PopID();
-                    
-                    ImGui::PushID(1); // Use field index as identifier.
-                    {
-                        ImGui::TreeNodeEx("Rotation", ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen, "Rotation");
-                        ImGui::NextColumn();
-                        ImGui::SetNextItemWidth(-1);
-                        ImGui::DragFloat3("", pRotation);
-                        ImGui::NextColumn();
-                    }
-                    ImGui::PopID();
-                    
-                    ImGui::PushID(2); // Use field index as identifier.
-                    {
-                        ImGui::TreeNodeEx("Scale", ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen, "Scale");
-                        ImGui::NextColumn();
-                        ImGui::SetNextItemWidth(-1);
-                        ImGui::DragFloat3("", pScale, 0.05f);
-                        ImGui::NextColumn();
-                    }
-                    ImGui::PopID();
-                    ImGui::TreePop();
-                }
-                ImGui::PopID();
-            }
-            
-            static void ShowObject(const char* prefix, int uid)
-            {
-                ImGui::PushID(uid);                      // Use object uid as identifier. Most commonly you could also use the object pointer as a base ID.
-                ImGui::AlignTextToFramePadding();  // Text and Tree nodes are less high than regular widgets, here we add vertical spacing to make the tree lines equal high.
-                bool nodeOpen = ImGui::TreeNode("Object", "%s_%u", prefix, uid);
-                ImGui::NextColumn();
-                ImGui::AlignTextToFramePadding();
-                ImGui::NextColumn();
-                if (nodeOpen)
-                {
-                    if (uid == 0)
-                    {
-                        ShowTransform(0, transformRevolver.Position, transformRevolver.Rotation, transformRevolver.Scale);
-                    }
-                    else if (uid == 1)
-                    {
-                        ShowLight(0, lightColor);
-                        ShowTransform(1, transformLight.Position, transformLight.Rotation, transformLight.Scale);
-                    }
-                    ImGui::TreePop();
-                }
-                ImGui::PopID();
-            }
-        };
-
-
-        funcs::ShowObject("Entity", 0);
-        funcs::ShowObject("Entity", 1);
-
-        ImGui::Columns(1);
-        ImGui::Separator();
-        ImGui::PopStyleVar();
-        ImGui::End();
-    }
-
     //-------
     //SandBox
     //-------
@@ -675,7 +552,7 @@ namespace Lambda
         m_pCurrentList->WriteTimeStamp(m_pQueries[backBufferIndex], PIPELINE_STAGE_PIXEL);
 #endif
      
-        //Transition rendertarget to present
+        //Close the commandlist
         m_pCurrentList->Close();
         
         //Present
@@ -717,7 +594,124 @@ namespace Lambda
     void SandBoxLayer::OnRenderUI(Timestep dt)
     {
         //Update userinterface
-        ShowEntityEditor();
+		ImGui::SetNextWindowSize(ImVec2(430, 450), ImGuiCond_FirstUseEver);
+		if (!ImGui::Begin("Entities", NULL))
+		{
+			ImGui::End();
+			return;
+		}
+
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
+		ImGui::Columns(2);
+		ImGui::Separator();
+
+		struct funcs
+		{
+			static void ShowLight(uint32 uid, float* pColor)
+			{
+				ImGui::PushID(uid);
+				ImGui::AlignTextToFramePadding();
+				bool nodeOpen = ImGui::TreeNode("Light", "Light");
+				ImGui::NextColumn();
+				ImGui::AlignTextToFramePadding();
+				ImGui::NextColumn();
+
+				if (nodeOpen)
+				{
+					ImGui::PushID(0);
+					{
+						ImGui::AlignTextToFramePadding();
+						ImGui::TreeNodeEx("Color", ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Bullet, "Color");
+						ImGui::NextColumn();
+						ImGui::ColorPicker4("##picker", pColor, ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview);
+						ImGui::NextColumn();
+					}
+					ImGui::PopID();
+					ImGui::TreePop();
+				}
+				ImGui::PopID();
+			}
+
+			static void ShowTransform(uint32 uid, float* pPosition, float* pRotation, float* pScale)
+			{
+				ImGui::AlignTextToFramePadding();
+				ImGui::PushID(uid);
+				bool nodeOpen = ImGui::TreeNode("Transform", "Transform");
+				ImGui::NextColumn();
+				ImGui::AlignTextToFramePadding();
+				ImGui::NextColumn();
+
+				if (nodeOpen)
+				{
+					ImGui::AlignTextToFramePadding();
+					ImGui::PushID(0); // Use field index as identifier.
+					{
+						// Here we use a TreeNode to highlight on hover (we could use e.g. Selectable as well)
+						ImGui::TreeNodeEx("Position", ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen, "Position");
+						ImGui::NextColumn();
+						ImGui::SetNextItemWidth(-1);
+						ImGui::DragFloat3("", pPosition, 0.05f);
+						ImGui::NextColumn();
+					}
+					ImGui::PopID();
+
+					ImGui::PushID(1); // Use field index as identifier.
+					{
+						ImGui::TreeNodeEx("Rotation", ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen, "Rotation");
+						ImGui::NextColumn();
+						ImGui::SetNextItemWidth(-1);
+						ImGui::DragFloat3("", pRotation);
+						ImGui::NextColumn();
+					}
+					ImGui::PopID();
+
+					ImGui::PushID(2); // Use field index as identifier.
+					{
+						ImGui::TreeNodeEx("Scale", ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen, "Scale");
+						ImGui::NextColumn();
+						ImGui::SetNextItemWidth(-1);
+						ImGui::DragFloat3("", pScale, 0.05f);
+						ImGui::NextColumn();
+					}
+					ImGui::PopID();
+					ImGui::TreePop();
+				}
+				ImGui::PopID();
+			}
+
+			static void ShowObject(const char* prefix, int uid)
+			{
+				ImGui::PushID(uid);                      // Use object uid as identifier. Most commonly you could also use the object pointer as a base ID.
+				ImGui::AlignTextToFramePadding();  // Text and Tree nodes are less high than regular widgets, here we add vertical spacing to make the tree lines equal high.
+				bool nodeOpen = ImGui::TreeNode("Object", "%s_%u", prefix, uid);
+				ImGui::NextColumn();
+				ImGui::AlignTextToFramePadding();
+				ImGui::NextColumn();
+				if (nodeOpen)
+				{
+					if (uid == 0)
+					{
+						ShowTransform(0, transformRevolver.Position, transformRevolver.Rotation, transformRevolver.Scale);
+					}
+					else if (uid == 1)
+					{
+						ShowLight(0, lightColor);
+						ShowTransform(1, transformLight.Position, transformLight.Rotation, transformLight.Scale);
+					}
+					ImGui::TreePop();
+				}
+				ImGui::PopID();
+			}
+		};
+
+
+		funcs::ShowObject("Entity", 0);
+		funcs::ShowObject("Entity", 1);
+
+		ImGui::Columns(1);
+		ImGui::Separator();
+		ImGui::PopStyleVar();
+		ImGui::End();
     }
 
 
