@@ -37,25 +37,24 @@ namespace Lambda
 
     class Event
     {
-		friend class EventDispatcher;
-
+        friend class Application;
+        friend class EventForwarder;
+        friend class EventDispatcher;
     public:
         inline Event(uint32 categories)
             : m_Handled(false), m_Categories(categories) {}
         virtual ~Event() = default;
         
-        inline bool        IsHandled() const                    { return m_Handled; }
-        inline bool        IsInCategory(EventCategory category) { return m_Categories & category; }
-        inline uint32      GetCategoryFlags() const             { return m_Categories; }
-
-		virtual EventType GetType() const = 0;
+        inline bool IsHandled() const                    { return m_Handled; }
+        inline bool IsInCategory(EventCategory category) { return (m_Categories & category); }
+        inline uint32 GetCategoryFlags() const           { return m_Categories; }
         
+		virtual EventType GetType() const = 0;
 	private:
 		inline void SetIsHandled(bool isHandled) const { m_Handled = isHandled; }
     private:
         mutable bool    m_Handled;
         uint32			m_Categories;
-
 	private:
 		inline static constexpr Lambda::EventType GetStaticType()
 		{ 

@@ -209,20 +209,15 @@ namespace Lambda
 			RECT rect	= { 0, 0, static_cast<LONG>(desc.Width), static_cast<LONG>(desc.Height) };
 			AdjustWindowRect(&rect, m_Style, false);
 
-			//Set name
-			std::string name;
-			if (desc.pTitle)
-			{
-				name = std::string(desc.pTitle);
-				if (desc.GraphicsDeviceAPI == GRAPHICS_API_D3D12)
-					name += " - [D3D12] 64-bit";
-				else if (desc.GraphicsDeviceAPI == GRAPHICS_API_VULKAN)
-					name += " - [Vulkan] 64-bit";
-			}
-
+            
+            //Make sure name is not nullptr
+            const char* pName = desc.pTitle;
+            if (pName == nullptr)
+                pName = "";
+            
 			//Create window
 			SetLastError(0);
-			m_hWindow = CreateWindowEx(m_ExStyle, NAME_APPWINDOW, StringToWidestring(name).c_str(), m_Style, 0, 0, rect.right - rect.left, rect.bottom - rect.top, 0, 0, wc.hInstance, 0);
+			m_hWindow = CreateWindowEx(m_ExStyle, NAME_APPWINDOW, StringToWidestring(pName).c_str(), m_Style, 0, 0, rect.right - rect.left, rect.bottom - rect.top, 0, 0, wc.hInstance, 0);
 			if (m_hWindow == 0)
 			{
 				error = GetLastError();
@@ -253,7 +248,18 @@ namespace Lambda
 #else
 			gcDesc.Flags = GRAPHICS_CONTEXT_FLAG_NONE;
 #endif
-			m_pGraphicsDevice = IGraphicsDevice::Create(gcDesc);
+            if (desc.GraphicsDeviceAPI == GRAPHICS_API_D3D12)
+            {
+                m_pGraphicsDevice = DBG_NEW DX12GraphicsDevice(desc);
+            }
+            else if (desc.GraphicsDeviceAPI == GRAPHICS_API_VULKAN)
+            {
+                m_pGraphicsDevice = DBG_NEW VKNGraphicsDevice(desc);
+            }
+            else
+            {
+                LOG_DEBUG_ERROR("Lambda Engine: Unsupported graphics API specified\n");
+            }
 		}
 	}
 

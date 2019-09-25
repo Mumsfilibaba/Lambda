@@ -14,21 +14,21 @@ namespace Lambda
 
     struct ResourceSlot
     {
-		ISamplerState*	pSamplerState	= nullptr;
-        ResourceType	Type			= RESOURCE_TYPE_UNKNOWN;
-        ShaderStage		Stage			= SHADER_STAGE_UNKNOWN;
-		ResourceUsage	Usage			= RESOURCE_USAGE_UNKNOWN;
-        uint32			Slot			= 0;
+		ISamplerState* pSamplerState = nullptr;
+        ResourceType Type			 = RESOURCE_TYPE_UNKNOWN;
+        ShaderStage	Stage			 = SHADER_STAGE_UNKNOWN;
+		ResourceUsage Usage			 = RESOURCE_USAGE_UNKNOWN;
+        uint32 Slot			         = 0;
     };
 
 	//------------
 	//ConstantSlot
 	//------------
 
-	struct ConstantSlot
+	struct ConstantBlock
 	{
-		ShaderStage	Stage		= SHADER_STAGE_UNKNOWN;
-		uint32		SizeInBytes	= 0;
+		ShaderStage	Stage   = SHADER_STAGE_UNKNOWN;
+		uint32 SizeInBytes	= 0;
 	};
     
     //-------------------------
@@ -37,10 +37,10 @@ namespace Lambda
     
     struct PipelineResourceStateDesc
     {
-        uint32				NumResourceSlots	= 0;
-        const ResourceSlot* pResourceSlots		= nullptr;
-		uint32				NumConstants		= 0;
-		const ConstantSlot* pConstantSlots		= nullptr;
+        uint32 NumResourceSlots	             = 0;
+        const ResourceSlot* pResourceSlots   = nullptr;
+		uint32 NumConstantBlocks	         = 0;
+		const ConstantBlock* pConstantBlocks = nullptr;
     };
     
     //----------------------
@@ -58,7 +58,6 @@ namespace Lambda
 		virtual void SetTextures(ITexture** ppTextures, uint32 numTextures, uint32 startSlot) = 0;
 		virtual void SetSamplerStates(ISamplerState** ppSamplerStates, uint32 numSamplerStates, uint32 startSlot) = 0;
 		virtual void SetConstantBuffers(IBuffer** ppBuffers, uint32 numBuffers, uint32 startSlot) = 0;
-
         virtual void* GetNativeHandle() const = 0;
     };
 }

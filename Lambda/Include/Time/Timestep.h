@@ -39,10 +39,8 @@ namespace Lambda
 		friend bool operator<(const Timestep& left, const Timestep& right);
 		friend bool operator>=(const Timestep& left, const Timestep& right);
 		friend bool operator<=(const Timestep& left, const Timestep& right);
-
 	private:
 		uint64 m_Ns;
-
 	public:
 		static Timestep Seconds(float s);
 		static Timestep MilliSeconds(float ms);

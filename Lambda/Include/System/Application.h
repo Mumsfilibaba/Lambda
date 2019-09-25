@@ -1,9 +1,10 @@
 #pragma once
 #include "IWindow.h"
+#include "LayerStack.h"
 #include "Time/Clock.h"
 #include "Events/EventDispatcher.h"
 #include "Graphics/IGraphicsDevice.h"
-#include "Graphics/ImGuiLayer.h"
+#include "Graphics/UILayer.h"
 #include "Debug/DebugLayer.h"
 
 namespace Lambda
@@ -22,67 +23,57 @@ namespace Lambda
 		bool Fullscreen                 = false;
 	};
 
-	//----------------
-	//ApplicationLayer
-	//----------------
-
-	class ApplicationLayer : public EventLayer
-	{
-	public:
-		LAMBDA_NO_COPY(ApplicationLayer);
-
-		ApplicationLayer();
-		~ApplicationLayer() = default;
-
-		virtual void 	OnPush() override final;
-		virtual void 	OnPop() override final;
-		virtual bool 	OnEvent(const Event& event) override final;
-		virtual uint32	GetRecivableCategories() const override final;
-	};
-
 	//-----------
 	//Application
 	//-----------
 
 	class LAMBDA_API Application
 	{
-		friend class ApplicationLayer;
-
 	public:
 		Application(const EngineParams& params);
 		virtual ~Application() = default;
 
-		virtual void OnLoad() {}
-		virtual void OnUpdate(Timestep dt) {}
-		virtual void OnRender(Timestep dt) {}
-		virtual void OnRelease() {}
-				
-		int32 Run();
+        int32 Run();
 
-		IWindow* 			GetWindow() const;
-		ImGuiLayer*			GetUILayer() const;
-		const EngineParams& GetEngineParams() const;
-
-	private:
+        //Push a layer onto the layerstack
+        void PushLayer(Layer* pLayer);
+        //Push a global callback function
+        template <typename EventT>
+        void PushCallback(bool(*callbackFunc)(const EventT&))
+        {
+            m_Dispatcher.PushCallback(EventT::GetStaticType(), DBG_NEW EventCallback<EventT>(callbackFunc));
+        }
+        //Push object callback function
+        template <typename ObjectType, typename EventT>
+        void PushCallback(ObjectType* pObjectRef, bool(ObjectType::* objectCallbackFunc)(const EventT&))
+        {
+            m_Dispatcher.PushCallback(EventT::GetStaticType(), DBG_NEW ObjectEventCallback<ObjectType, EventT>(pObjectRef, objectCallbackFunc));
+        }
+        
+        IWindow* GetWindow() const;
+        UILayer* GetUILayer() const;
+        const EngineParams& GetEngineParams() const;
+    private:
+        void OnLoad();
+        void OnUpdate(Timestep dt);
+        void OnRender(Timestep dt);
+        void OnRenderUI(Timestep dt);
+        void OnRelease();
 		bool OnEvent(const Event& event);
+        bool OnWindowClose(const WindowClosedEvent& event);
+        bool OnKeyPressed(const KeyPressedEvent& event);
+        
 		void Quit(int32 exitCode = 0);
-		void InternalOnLoad();
-		void InternalOnUpdate(Timestep dt);
-		void InternalOnRender(Timestep dt);
-		void InternalOnRelease();
-
 	private:
 		IWindow* 			m_pWindow;
-		ImGuiLayer*	 		m_pImGuiLayer;
-		ApplicationLayer* 	m_pApplicationLayer;
-        DebugLayer*         m_pDebugLayer;
+		UILayer*	 		m_pUILayer;
+        EventDispatcher     m_Dispatcher;
+        LayerStack          m_LayerStack;
 		EngineParams 		m_Params;
 		int32 				m_ExitCode;
 		bool 				m_Running;
-
 	public:
 		static Application& Get();
-
 	private:
 		static Application* s_pInstance;
 	};

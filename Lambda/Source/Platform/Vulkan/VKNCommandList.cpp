@@ -279,7 +279,7 @@ namespace Lambda
     }
 
 	
-	void VKNCommandList::SetConstants(ShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData)
+	void VKNCommandList::SetConstantBlocks(ShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData)
 	{
 		VkShaderStageFlags shaderStageFlags = 0;
 		if (stage == SHADER_STAGE_VERTEX)

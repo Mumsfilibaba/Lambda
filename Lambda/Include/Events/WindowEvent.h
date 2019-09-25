@@ -16,9 +16,7 @@ namespace Lambda
         
         inline uint32 GetWidth() const  { return m_Width; }
         inline uint32 GetHeight() const { return m_Height; }
-
 		LAMBDA_DECLARE_EVENT_TYPE(WindowResizeEvent);
-        
     private:
         uint32 m_Width;
         uint32 m_Height;
@@ -37,9 +35,7 @@ namespace Lambda
         
         inline uint32 GetWidth() const  { return m_X; }
         inline uint32 GetHeight() const { return m_Y; }
-
 		LAMBDA_DECLARE_EVENT_TYPE(WindowMoveEvent);
-        
     private:
         uint32 m_X;
         uint32 m_Y;
@@ -57,9 +53,7 @@ namespace Lambda
         ~WindowFocusChangedEvent() = default;
         
         inline bool HasFocus() const  { return m_HasFocus; }
-
 		LAMBDA_DECLARE_EVENT_TYPE(WindowFocusChangedEvent);
-        
     private:
         bool m_HasFocus;
     };

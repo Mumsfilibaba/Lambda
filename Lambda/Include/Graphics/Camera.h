@@ -27,7 +27,6 @@ namespace Lambda
         
         void CreateView();
         void CreateProjection();
-        
     private:
         glm::mat4   m_View;
         glm::mat4   m_Projection;

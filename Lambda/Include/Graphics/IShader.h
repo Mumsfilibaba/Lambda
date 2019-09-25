@@ -34,12 +34,12 @@ namespace Lambda
     
 	struct ShaderDesc
 	{
-		ShaderStage Type = SHADER_STAGE_UNKNOWN;
-		ShaderLang Languange = SHADER_LANG_UNKNOWN;
-		uint32 Flags = SHADER_FLAG_NONE;
-        uint32 SourceLength = 0;
+		ShaderStage Type        = SHADER_STAGE_UNKNOWN;
+		ShaderLang Languange    = SHADER_LANG_UNKNOWN;
+		uint32 Flags            = SHADER_FLAG_NONE;
+        uint32 SourceLength     = 0;
 		const char* pEntryPoint = nullptr;
-		const char* pSource = nullptr;
+		const char* pSource     = nullptr;
 	};
 
     //-------
@@ -56,7 +56,6 @@ namespace Lambda
 
         virtual void* GetNativeHandle() const = 0;
         virtual ShaderDesc GetDesc() const = 0;
-
 	public:
 		static IShader* CreateShaderFromFile(IGraphicsDevice* pDevice, const char* pFilename, const char* pEntryPoint, ShaderStage type, ShaderLang languange = SHADER_LANG_HLSL);
 	};

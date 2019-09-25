@@ -1,10 +1,11 @@
 #pragma once
+#include "System/Layer.h"
 #include "Events/EventDispatcher.h"
 #include "Events/KeyEvent.h"
 
 namespace Lambda
 {
-    class DebugLayer : public EventLayer
+    class DebugLayer : public Layer
     {
     public:
         LAMBDA_NO_COPY(DebugLayer);
@@ -12,11 +13,8 @@ namespace Lambda
         DebugLayer();
         ~DebugLayer() = default;
 
-        virtual void    OnPush() override final;
-        virtual void    OnPop() override final;
-        virtual bool    OnEvent(const Event& event) override final;
-        virtual uint32  GetRecivableCategories() const override final;
-        
+        virtual bool OnEvent(const Event& event) override final;
+        virtual uint32 GetRecivableCategories() const override final;
     private:
         bool OnKeyPressed(const KeyPressedEvent& event);
     };

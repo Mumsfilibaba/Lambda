@@ -74,6 +74,18 @@ namespace Lambda
     {
 		LAMBDA_ASSERT(m_pAllocator != nullptr);
 
+        //Number of samples (MSAA)
+        VkSampleCountFlagBits sampleCount = ConvertSampleCount(desc.SampleCount);
+        
+        VKNDevice& device = VKNDevice::Get();
+        VkSampleCountFlags highestSampleCount = device.GetHighestSampleCount();
+        if (sampleCount > highestSampleCount)
+        {
+            LOG_DEBUG_ERROR("Vulkan: TextureDesc::SampleCount (=%u) is higher than the maximum of the device (=%u)\n", sampleCount, highestSampleCount);
+            return;
+        }
+        
+        
         //Set miplevels
         uint32 mipLevels = desc.MipLevels;
         if (desc.Flags & TEXTURE_FLAGS_GENEATE_MIPS)
@@ -136,7 +148,7 @@ namespace Lambda
 			}
         }
 
-		VKNDevice& device = VKNDevice::Get();
+
         if (vkCreateImage(device.GetDevice(), &info, nullptr, &m_Image) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create image\n");

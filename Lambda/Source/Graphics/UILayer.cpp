@@ -1,5 +1,5 @@
 #include "LambdaPch.h"
-#include "Graphics/ImGuiLayer.h"
+#include "Graphics/UILayer.h"
 #include "Graphics/IShader.h"
 #include "Graphics/ISamplerState.h"
 #include "Graphics/IPipelineResourceState.h"
@@ -122,12 +122,12 @@ namespace Lambda
 	};
 
 
-	//----------
-	//ImGuiLayer
-	//----------
+	//-------
+	//UILayer
+	//-------
 
-    ImGuiLayer::ImGuiLayer()
-        : EventLayer("ImGuiLayer"),
+    UILayer::UILayer()
+        : Layer("UILayer"),
 		m_pVS(nullptr),
 		m_pPS(nullptr),
 		m_pSamplerState(nullptr),
@@ -137,10 +137,61 @@ namespace Lambda
 		m_pVertexBuffer(nullptr),
 		m_pIndexBuffer(nullptr)
     {
+        Create();
     }
 
 
-	void ImGuiLayer::Init(IRenderPass* pRenderPass, ICommandList* pList)
+    void UILayer::Create()
+    {
+        //Create context for ImGui
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+
+        IWindow* pWindow = Application::Get().GetWindow();
+
+        ImGuiIO& io = ImGui::GetIO();
+        io.BackendPlatformName = "Lambda Engine";
+        io.DisplaySize = ImVec2(float(pWindow->GetWidth()), float(pWindow->GetHeight()));
+
+        // Keyboard mapping. ImGui will use those indices to peek into the io.KeysDown[] array.
+        io.KeyMap[ImGuiKey_Tab]          = KEY_TAB;
+        io.KeyMap[ImGuiKey_LeftArrow]    = KEY_LEFT;
+        io.KeyMap[ImGuiKey_RightArrow]   = KEY_RIGHT;
+        io.KeyMap[ImGuiKey_UpArrow]      = KEY_UP;
+        io.KeyMap[ImGuiKey_DownArrow]    = KEY_DOWN;
+        io.KeyMap[ImGuiKey_PageUp]       = KEY_PAGE_UP;
+        io.KeyMap[ImGuiKey_PageDown]     = KEY_PAGE_DOWN;
+        io.KeyMap[ImGuiKey_Home]         = KEY_HOME;
+        io.KeyMap[ImGuiKey_End]          = KEY_END;
+        io.KeyMap[ImGuiKey_Insert]       = KEY_INSERT;
+        io.KeyMap[ImGuiKey_Delete]       = KEY_DELETE;
+        io.KeyMap[ImGuiKey_Backspace]    = KEY_BACKSPACE;
+        io.KeyMap[ImGuiKey_Space]        = KEY_SPACE;
+        io.KeyMap[ImGuiKey_Enter]        = KEY_ENTER;
+        io.KeyMap[ImGuiKey_Escape]       = KEY_ESCAPE;
+        io.KeyMap[ImGuiKey_KeyPadEnter]  = KEY_KEYPAD_ENTER;
+        io.KeyMap[ImGuiKey_A]            = KEY_A;
+        io.KeyMap[ImGuiKey_C]            = KEY_C;
+        io.KeyMap[ImGuiKey_V]            = KEY_V;
+        io.KeyMap[ImGuiKey_X]            = KEY_X;
+        io.KeyMap[ImGuiKey_Y]            = KEY_Y;
+        io.KeyMap[ImGuiKey_Z]            = KEY_Z;
+
+#if defined(LAMBDA_PLAT_WINDOWS)
+        io.ImeWindowHandle = reinterpret_cast<HWND>(pWindow->GetNativeHandle());
+#endif
+                
+        ImGui::StyleColorsDark();
+        ImGui::GetStyle().WindowRounding    = 0.0f;
+        ImGui::GetStyle().ChildRounding     = 0.0f;
+        ImGui::GetStyle().FrameRounding     = 0.0f;
+        ImGui::GetStyle().GrabRounding      = 0.0f;
+        ImGui::GetStyle().PopupRounding     = 0.0f;
+        ImGui::GetStyle().ScrollbarRounding = 0.0f;
+    }
+
+
+	void UILayer::Init(IRenderPass* pRenderPass, ICommandList* pList)
 	{
 		//Create graphics objects
 		IGraphicsDevice* pDevice = IGraphicsDevice::Get();
@@ -193,15 +244,15 @@ namespace Lambda
 		resourceSlots[0].Usage	= RESOURCE_USAGE_DEFAULT;
 		resourceSlots[0].Stage	= SHADER_STAGE_PIXEL;
 
-		ConstantSlot constantSlots[1];
-		constantSlots[0].Stage			= SHADER_STAGE_VERTEX;
-		constantSlots[0].SizeInBytes	= sizeof(float) * 4;
+        ConstantBlock constantBlocks[1];
+		constantBlocks[0].Stage			= SHADER_STAGE_VERTEX;
+		constantBlocks[0].SizeInBytes	= sizeof(float) * 4;
 
 		PipelineResourceStateDesc resourceStateDesc = {};
 		resourceStateDesc.NumResourceSlots	= 1;
 		resourceStateDesc.pResourceSlots	= resourceSlots;
-		resourceStateDesc.NumConstants		= 1;
-		resourceStateDesc.pConstantSlots	= constantSlots;
+		resourceStateDesc.NumConstantBlocks	= 1;
+        resourceStateDesc.pConstantBlocks	= constantBlocks;
 		pDevice->CreatePipelineResourceState(&m_pPipelineResourceState, resourceStateDesc);
 
 
@@ -280,7 +331,7 @@ namespace Lambda
 	}
 
 
-	void ImGuiLayer::Begin(Timestep time)
+	void UILayer::Begin(Timestep time)
 	{
 		ImGuiIO& io = ImGui::GetIO();
 		io.DeltaTime = time.AsSeconds();
@@ -289,7 +340,7 @@ namespace Lambda
 	}
 
 	
-	void ImGuiLayer::RenderUI()
+	void UILayer::OnRenderUI(Timestep dt)
 	{
         //ImGui::ShowDemoWindow();
         
@@ -303,13 +354,27 @@ namespace Lambda
             ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
         }
         
-        bool t = true;
-        bool* ptrue = &t;
-        ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
-        if (ImGui::Begin("Timings", ptrue, (corner != -1 ? ImGuiWindowFlags_NoMove : 0) | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))
+        ImGui::SetNextWindowBgAlpha(0.75f); // Transparent background
+        if (ImGui::Begin("Timings", NULL, (corner != -1 ? ImGuiWindowFlags_NoMove : 0) | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))
         {
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 0.0f, 1.0f));
-            ImGui::Text("Timings");
+            ImGui::Text("Settings:");
+            ImGui::Separator();
+            
+            IGraphicsDevice* pDevice = IGraphicsDevice::Get();
+            GraphicsDeviceDesc desc = pDevice->GetDesc();
+            
+            if (desc.Api == GRAPHICS_API_VULKAN)
+                ImGui::Text("Renderer: Vulkan");
+            else if (desc.Api == GRAPHICS_API_D3D12)
+                ImGui::Text("Renderer: D3D12");
+            
+            ImGui::Text("Resolution: %u x %u", pDevice->GetSwapChainWidth(), pDevice->GetSwapChainHeight());
+            ImGui::Text("MSAA: %ux", desc.SampleCount);
+            ImGui::Text("BackBufferCount: %u", desc.BackBufferCount);
+            
+            ImGui::Separator();
+            ImGui::Text("Timings:");
             ImGui::Separator();
             
             static float timer = 0.0f;
@@ -350,14 +415,14 @@ namespace Lambda
 	}
 
 	
-	void ImGuiLayer::End()
+	void UILayer::End()
 	{
 		ImGui::EndFrame();
 		ImGui::Render();
 	}
 
 
-	void ImGuiLayer::Draw(ICommandList* pList)
+	void UILayer::Draw(ICommandList* pList)
 	{
 		ImGuiIO& io = ImGui::GetIO();
 		ImDrawData* pDrawData = ImGui::GetDrawData();
@@ -413,8 +478,8 @@ namespace Lambda
 			translate[0] = -1.0f + pDrawData->DisplayPos.x * scale[0];
 			translate[1] = 1.0f - pDrawData->DisplayPos.y * scale[1];
 
-			pList->SetConstants(SHADER_STAGE_VERTEX, sizeof(float) * 0, sizeof(float) * 2, scale);
-			pList->SetConstants(SHADER_STAGE_VERTEX, sizeof(float) * 2, sizeof(float) * 2, translate);
+			pList->SetConstantBlocks(SHADER_STAGE_VERTEX, sizeof(float) * 0, sizeof(float) * 2, scale);
+			pList->SetConstantBlocks(SHADER_STAGE_VERTEX, sizeof(float) * 2, sizeof(float) * 2, translate);
 		}
 
 		// Will project scissor/clipping rectangles into framebuffer space
@@ -464,7 +529,7 @@ namespace Lambda
 	}
 
 
-	void ImGuiLayer::OnPop()
+	void UILayer::OnRelease()
     {
 		//Destroy ImGui context
 		ImGui::DestroyContext();
@@ -485,77 +550,33 @@ namespace Lambda
     }
 
 
-    void ImGuiLayer::OnPush()
+    void UILayer::OnLoad()
     {
-		//Create context for ImGui
-		IMGUI_CHECKVERSION();
-		ImGui::CreateContext();
-
-		IWindow* pWindow = Application::Get().GetWindow();
-
-		ImGuiIO& io = ImGui::GetIO();
-		io.BackendPlatformName = "Lambda Engine";
-		io.DisplaySize = ImVec2(float(pWindow->GetWidth()), float(pWindow->GetHeight()));
-
-		// Keyboard mapping. ImGui will use those indices to peek into the io.KeysDown[] array.
-		io.KeyMap[ImGuiKey_Tab]			= KEY_TAB;
-		io.KeyMap[ImGuiKey_LeftArrow]	= KEY_LEFT;
-		io.KeyMap[ImGuiKey_RightArrow]	= KEY_RIGHT;
-		io.KeyMap[ImGuiKey_UpArrow]		= KEY_UP;
-		io.KeyMap[ImGuiKey_DownArrow]	= KEY_DOWN;
-		io.KeyMap[ImGuiKey_PageUp]		= KEY_PAGE_UP;
-		io.KeyMap[ImGuiKey_PageDown]	= KEY_PAGE_DOWN;
-		io.KeyMap[ImGuiKey_Home]		= KEY_HOME;
-		io.KeyMap[ImGuiKey_End]			= KEY_END;
-		io.KeyMap[ImGuiKey_Insert]		= KEY_INSERT;
-		io.KeyMap[ImGuiKey_Delete]		= KEY_DELETE;
-		io.KeyMap[ImGuiKey_Backspace]	= KEY_BACKSPACE;
-		io.KeyMap[ImGuiKey_Space]		= KEY_SPACE;
-		io.KeyMap[ImGuiKey_Enter]		= KEY_ENTER;
-		io.KeyMap[ImGuiKey_Escape]		= KEY_ESCAPE;
-		io.KeyMap[ImGuiKey_KeyPadEnter]	= KEY_KEYPAD_ENTER;
-		io.KeyMap[ImGuiKey_A]			= KEY_A;
-		io.KeyMap[ImGuiKey_C]			= KEY_C;
-		io.KeyMap[ImGuiKey_V]			= KEY_V;
-		io.KeyMap[ImGuiKey_X]			= KEY_X;
-		io.KeyMap[ImGuiKey_Y]			= KEY_Y;
-		io.KeyMap[ImGuiKey_Z]			= KEY_Z;
-
-#if defined(LAMBDA_PLAT_WINDOWS)
-		io.ImeWindowHandle = reinterpret_cast<HWND>(pWindow->GetNativeHandle());
-#endif
-        
-        ImGui::StyleColorsDark();
-        ImGui::GetStyle().WindowRounding    = 0.0f;
-        ImGui::GetStyle().ChildRounding     = 0.0f;
-        ImGui::GetStyle().FrameRounding     = 0.0f;
-        ImGui::GetStyle().GrabRounding      = 0.0f;
-        ImGui::GetStyle().PopupRounding     = 0.0f;
-        ImGui::GetStyle().ScrollbarRounding = 0.0f;
     }
 
 
-    bool ImGuiLayer::OnEvent(const Event& event)
+    bool UILayer::OnEvent(const Event& event)
     {
-		EventDispatcher::ForwardEvent<ImGuiLayer, KeyTypedEvent>            (this, &ImGuiLayer::OnKeyTyped,         event);
-		EventDispatcher::ForwardEvent<ImGuiLayer, KeyPressedEvent>          (this, &ImGuiLayer::OnKeyPressed,       event);
-        EventDispatcher::ForwardEvent<ImGuiLayer, KeyReleasedEvent>         (this, &ImGuiLayer::OnKeyReleased,      event);
-		EventDispatcher::ForwardEvent<ImGuiLayer, MouseScrolledEvent>       (this, &ImGuiLayer::OnMouseScroll,      event);
-		EventDispatcher::ForwardEvent<ImGuiLayer, MouseButtonPressedEvent>  (this, &ImGuiLayer::OnMousePressed,     event);
-		EventDispatcher::ForwardEvent<ImGuiLayer, MouseButtonReleasedEvent> (this, &ImGuiLayer::OnMouseReleased,    event);
-		EventDispatcher::ForwardEvent<ImGuiLayer, MouseMovedEvent>          (this, &ImGuiLayer::OnMouseMove,        event);
-		EventDispatcher::ForwardEvent<ImGuiLayer, WindowResizeEvent>        (this, &ImGuiLayer::OnWindowResize,     event);
+        EventForwarder forwarder;
+		forwarder.ForwardEvent(this, &UILayer::OnKeyTyped, event);
+		forwarder.ForwardEvent(this, &UILayer::OnKeyPressed, event);
+        forwarder.ForwardEvent(this, &UILayer::OnKeyReleased, event);
+		forwarder.ForwardEvent(this, &UILayer::OnMouseScroll, event);
+		forwarder.ForwardEvent(this, &UILayer::OnMousePressed, event);
+		forwarder.ForwardEvent(this, &UILayer::OnMouseReleased, event);
+		forwarder.ForwardEvent(this, &UILayer::OnMouseMove, event);
+		forwarder.ForwardEvent(this, &UILayer::OnWindowResize, event);
         return false;
     }
 
 
-    uint32 ImGuiLayer::GetRecivableCategories() const
+    uint32 UILayer::GetRecivableCategories() const
     {
         return EVENT_CATEGORY_INPUT | EVENT_CATEGORY_WINDOW;
     }
 	
 	
-	bool ImGuiLayer::OnKeyTyped(const KeyTypedEvent& event)
+	bool UILayer::OnKeyTyped(const KeyTypedEvent& event)
 	{
 		ImGuiIO& io = ImGui::GetIO();
 		io.AddInputCharacter(event.GetCharacter());
@@ -563,7 +584,7 @@ namespace Lambda
 	}
 
 
-	bool ImGuiLayer::OnKeyPressed(const KeyPressedEvent& event)
+	bool UILayer::OnKeyPressed(const KeyPressedEvent& event)
 	{
 		ImGuiIO& io = ImGui::GetIO();
 		io.KeysDown[event.GetKey()] = true;
@@ -577,7 +598,7 @@ namespace Lambda
 	}
 
 	
-	bool ImGuiLayer::OnKeyReleased(const KeyReleasedEvent& event)
+	bool UILayer::OnKeyReleased(const KeyReleasedEvent& event)
 	{
 		ImGuiIO& io = ImGui::GetIO();
 		io.KeysDown[event.GetKey()] = false;
@@ -591,7 +612,7 @@ namespace Lambda
 	}
 	
 	
-	bool ImGuiLayer::OnMouseScroll(const MouseScrolledEvent& event)
+	bool UILayer::OnMouseScroll(const MouseScrolledEvent& event)
 	{
 		ImGuiIO& io = ImGui::GetIO();
 		io.MouseWheelH	+= event.GetHorizontalValue();
@@ -600,7 +621,7 @@ namespace Lambda
 	}
 	
 	
-	bool ImGuiLayer::OnMousePressed(const MouseButtonPressedEvent& event)
+	bool UILayer::OnMousePressed(const MouseButtonPressedEvent& event)
 	{
 		int32 button = 0;
 		switch (event.GetButton())
@@ -619,7 +640,7 @@ namespace Lambda
 	}
 	
 	
-	bool ImGuiLayer::OnMouseReleased(const MouseButtonReleasedEvent& event)
+	bool UILayer::OnMouseReleased(const MouseButtonReleasedEvent& event)
 	{
 		int32 button = 0;
 		switch (event.GetButton())
@@ -638,7 +659,7 @@ namespace Lambda
 	}
 	
 	
-	bool ImGuiLayer::OnMouseMove(const MouseMovedEvent& event)
+	bool UILayer::OnMouseMove(const MouseMovedEvent& event)
 	{
 		ImGuiIO& io = ImGui::GetIO();
 		io.MousePos = ImVec2(float(event.GetX()), float(event.GetY()));
@@ -646,7 +667,7 @@ namespace Lambda
 	}
 	
 	
-	bool ImGuiLayer::OnWindowResize(const WindowResizeEvent& event)
+	bool UILayer::OnWindowResize(const WindowResizeEvent& event)
 	{
 		ImGuiIO& io = ImGui::GetIO();
 		io.DisplaySize = ImVec2(float(event.GetWidth()), float(event.GetHeight()));

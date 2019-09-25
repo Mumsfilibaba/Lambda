@@ -23,10 +23,8 @@ namespace Lambda
 
 		void Tick();
 		void Reset();
-
 		Timestep GetDeltaTime() const;
 		Timestep GetTotalTime() const;
-
 	private:
 		uint64 m_Frequency;
 		Timestep m_LastTime;

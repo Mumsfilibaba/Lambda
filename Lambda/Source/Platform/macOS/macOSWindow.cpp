@@ -1,5 +1,6 @@
 #include "LambdaPch.h"
 #if defined(LAMBDA_PLAT_MACOS)
+    #include "../Vulkan/VKNGraphicsDevice.h"
     #include "macOSWindow.h"
     #include "macOSInput.h"
     #include "Events/EventDispatcher.h"
@@ -37,7 +38,7 @@ namespace Lambda
         : m_pWindow(nullptr),
         m_Width(0.0f),
         m_Height(0.0f),
-        m_EventCallback(nullptr),
+        m_pCallback(nullptr),
         m_Fullscreen(false),
         m_HasFocus(false)
     {
@@ -48,6 +49,8 @@ namespace Lambda
     
     MacOSWindow::~MacOSWindow()
     {
+        //Delete callback
+        SafeDelete(m_pCallback);
 		if (m_pGraphicsDevice)
 		{
 			m_pGraphicsDevice->Destroy();
@@ -85,15 +88,8 @@ namespace Lambda
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GL_FALSE);
         
-        //Set name
-        std::string name;
-        if (desc.pTitle)
-            name = std::string(desc.pTitle);
-        if (desc.GraphicsDeviceAPI == GRAPHICS_API_VULKAN)
-            name += " - [Vulkan] 64-bit";
-        
         //Create window
-        m_pWindow = glfwCreateWindow(desc.Width, desc.Height, name.c_str(), nullptr, nullptr);
+        m_pWindow = glfwCreateWindow(desc.Width, desc.Height, desc.pTitle, nullptr, nullptr);
         if (m_pWindow)
         {
             LOG_DEBUG_INFO("macOS: Created window\n");
@@ -134,7 +130,19 @@ namespace Lambda
 #else
                 gdDesc.Flags = GRAPHICS_CONTEXT_FLAG_NONE;
 #endif
-                m_pGraphicsDevice = IGraphicsDevice::Create(gdDesc);
+                if (desc.GraphicsDeviceAPI == GRAPHICS_API_D3D12)
+                {
+                    LOG_DEBUG_ERROR("Lambda Engine: D3D12 is only supported on the Windows-Platform\n");
+                    m_pGraphicsDevice = nullptr;
+                }
+                else if (desc.GraphicsDeviceAPI == GRAPHICS_API_VULKAN)
+                {
+                    m_pGraphicsDevice = DBG_NEW VKNGraphicsDevice(gdDesc);
+                }
+                else
+                {
+                    LOG_DEBUG_ERROR("Lambda Engine: Unsupported graphics API specified\n");
+                }
             }
         }
         else
@@ -144,9 +152,13 @@ namespace Lambda
     }
     
     
-    void MacOSWindow::SetEventCallback(EventCallbackFunc callback)
+    void MacOSWindow::SetEventCallback(IEventCallback* pCallback)
     {
-        m_EventCallback = callback;
+        if (m_pCallback != nullptr)
+        {
+            SafeDelete(m_pCallback);
+        }
+        m_pCallback = pCallback;
     }
     
     
@@ -370,7 +382,7 @@ namespace Lambda
     
     void MacOSWindow::DispatchEvent(const Event &event)
     {
-        if (m_EventCallback)
+        if (m_pCallback)
         {
             //When a eventhandler is registered, then we handled all the backloged items
             /*if (m_EventBackLog.size() > 0)
@@ -380,7 +392,7 @@ namespace Lambda
                 
                 m_EventBackLog.clear();
             }*/
-            m_EventCallback(event);
+            m_pCallback->Callback(event);
         }
         else
         {

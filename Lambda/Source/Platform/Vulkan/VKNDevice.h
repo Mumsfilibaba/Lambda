@@ -11,17 +11,6 @@ namespace Lambda
 {
 	class IWindow;
 
-	//--------------
-	//DeviceSettings
-	//--------------
-
-	struct DeviceSettings
-	{
-		uint32					FramesAhead = 0;
-		VkSampleCountFlagBits	SampleCount = VK_SAMPLE_COUNT_1_BIT;
-	};
-
-
 	//---------
 	//VKNDevice
 	//---------
@@ -36,14 +25,14 @@ namespace Lambda
 
 		void Destroy();
 		void SetVulkanObjectName(VkObjectType type, uint64 objectHandle, const std::string& name);
-
+        VkSampleCountFlagBits GetHighestSampleCount() const;
+        
 		VkInstance					GetVkInstance() const;
 		VkPhysicalDevice			GetPhysicalDevice() const;
 		VkDevice					GetDevice() const;
 		VkSurfaceKHR				GetSurface() const;
 		QueueFamilyIndices			GetQueueFamilyIndices() const;
 		VkPhysicalDeviceProperties	GetPhysicalDeviceProperties() const;
-		DeviceSettings				GetDeviceSettings() const;
 		GraphicsDeviceDesc			GetDesc() const;
 
 	private:
@@ -63,7 +52,6 @@ namespace Lambda
 		VkInstance					m_Instance;
 		VkDebugUtilsMessengerEXT	m_DebugMessenger;
 		VkDevice					m_Device;
-		DeviceSettings				m_DeviceSettings;
 		QueueFamilyIndices			m_FamiliyIndices;
 		VkPhysicalDevice			m_PhysicalDevice;
 		VkPhysicalDeviceProperties	m_PhysicalDeviceProperties;
@@ -119,12 +107,6 @@ namespace Lambda
 	inline VkPhysicalDeviceProperties VKNDevice::GetPhysicalDeviceProperties() const
 	{
 		return m_PhysicalDeviceProperties;
-	}
-
-
-	inline DeviceSettings VKNDevice::GetDeviceSettings() const
-	{
-		return m_DeviceSettings;
 	}
 
 	

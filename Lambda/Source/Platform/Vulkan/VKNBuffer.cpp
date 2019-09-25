@@ -41,14 +41,14 @@ namespace Lambda
         VKNDevice& device = VKNDevice::Get();
 		if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
 		{
-            DeviceSettings settings                  = device.GetDeviceSettings();
+            GraphicsDeviceDesc deviceDesc            = device.GetDesc();
             VkPhysicalDeviceProperties properties    = device.GetPhysicalDeviceProperties();
 
 			//If dynamic we allocate extra space (NUM_UPDATES updates per frame)
 			constexpr uint32 numUpdatesPerFrame = 4;
 			m_SizePerUpdate = Math::AlignUp<uint32>(uint32(desc.SizeInBytes), properties.limits.minUniformBufferOffsetAlignment);
 			m_SizePerFrame	= m_SizePerUpdate * numUpdatesPerFrame;
-            info.size		= VkDeviceSize(m_SizePerFrame * settings.FramesAhead);
+            info.size		= VkDeviceSize(m_SizePerFrame * deviceDesc.BackBufferCount);
 		}
 		else
 		{

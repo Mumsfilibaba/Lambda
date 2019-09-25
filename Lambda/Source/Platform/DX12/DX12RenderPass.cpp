@@ -1,5 +1,6 @@
 #include "LambdaPch.h"
-#include "DX12RenderPass.h"
+#if defined(LAMBDA_PLAT_WINDOWS)
+    #include "DX12RenderPass.h"
 
 namespace Lambda
 {
@@ -35,5 +36,5 @@ namespace Lambda
 	{
 		return m_Desc;
 	}
-
 }
+#endif

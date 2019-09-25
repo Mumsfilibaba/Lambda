@@ -72,7 +72,6 @@ namespace Lambda
 		virtual ~ILog() = default;
 
 		virtual void Print(LogSeverity severity, const char* pFormat, ...) = 0;
-
 	public:
 		static ILog* Create();
 	};
@@ -88,7 +87,6 @@ namespace Lambda
 
 		static ILog& GetDebugLog();
 		static ILog& GetSystemLog();
-
 	private:
 		static std::unique_ptr<ILog> s_DebugLog;
 		static std::unique_ptr<ILog> s_SystemLog;

@@ -138,23 +138,23 @@ namespace Lambda
 
 		//Create constantranges
 		std::vector<VkPushConstantRange> constantRanges;
-		for (uint32 i = 0; i < desc.NumConstants; i++)
+		for (uint32 i = 0; i < desc.NumConstantBlocks; i++)
 		{
 			VkPushConstantRange range = {};
-			range.size			= desc.pConstantSlots[i].SizeInBytes;
+			range.size			= desc.pConstantBlocks[i].SizeInBytes;
 			range.offset		= 0;
 			range.stageFlags	= 0;
-			if (desc.pConstantSlots[i].Stage == SHADER_STAGE_VERTEX)
+			if (desc.pConstantBlocks[i].Stage == SHADER_STAGE_VERTEX)
 				range.stageFlags |= VK_SHADER_STAGE_VERTEX_BIT;
-			else if (desc.pConstantSlots[i].Stage == SHADER_STAGE_HULL)
+			else if (desc.pConstantBlocks[i].Stage == SHADER_STAGE_HULL)
 				range.stageFlags |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
-			else if (desc.pConstantSlots[i].Stage == SHADER_STAGE_DOMAIN)
+			else if (desc.pConstantBlocks[i].Stage == SHADER_STAGE_DOMAIN)
 				range.stageFlags |= VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
-			else if (desc.pConstantSlots[i].Stage == SHADER_STAGE_GEOMETRY)
+			else if (desc.pConstantBlocks[i].Stage == SHADER_STAGE_GEOMETRY)
 				range.stageFlags |= VK_SHADER_STAGE_GEOMETRY_BIT;
-			else if (desc.pConstantSlots[i].Stage == SHADER_STAGE_PIXEL)
+			else if (desc.pConstantBlocks[i].Stage == SHADER_STAGE_PIXEL)
 				range.stageFlags |= VK_SHADER_STAGE_FRAGMENT_BIT;
-			else if (desc.pConstantSlots[i].Stage == SHADER_STAGE_COMPUTE)
+			else if (desc.pConstantBlocks[i].Stage == SHADER_STAGE_COMPUTE)
 				range.stageFlags |= VK_SHADER_STAGE_COMPUTE_BIT;
 
 			constantRanges.push_back(range);

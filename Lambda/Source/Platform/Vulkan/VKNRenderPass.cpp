@@ -125,7 +125,16 @@ namespace Lambda
 
         //Number of samples (MSAA)
         VkSampleCountFlagBits sampleCount = ConvertSampleCount(desc.SampleCount);
-
+        
+        VKNDevice& device = VKNDevice::Get();
+        VkSampleCountFlags highestSampleCount = device.GetHighestSampleCount();
+        if (sampleCount > highestSampleCount)
+        {
+            LOG_DEBUG_ERROR("Vulkan: RenderPassDesc::SampleCount (=%u) is higher than the maximum of the device (=%u)\n", sampleCount, highestSampleCount);
+            return;
+        }
+        
+        
         //Setup colorattachments
 		for (uint32 i = 0; i < desc.NumRenderTargets; i++)
 		{
@@ -235,7 +244,6 @@ namespace Lambda
 		renderPassInfo.pSubpasses		= &subpass;
 		renderPassInfo.pDependencies	= nullptr;
 
-		VKNDevice& device = VKNDevice::Get();
 		if (vkCreateRenderPass(device.GetDevice(), &renderPassInfo, nullptr, &m_RenderPass) != VK_SUCCESS)
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to create renderpass\n");
@@ -244,6 +252,7 @@ namespace Lambda
 		{
 			LOG_DEBUG_INFO("Vulkan: Created renderpass\n");
             m_Desc = desc;
+            m_Desc.SampleCount = sampleCount;
 		}
 	}
 }

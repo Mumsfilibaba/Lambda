@@ -179,8 +179,7 @@ namespace Lambda
         m_pSwapChain = DBG_NEW VKNSwapChain(swapChainInfo);
 
 		//If we are using MSAA we need to create a seperate texture
-		DeviceSettings settings = m_pDevice->GetDeviceSettings();
-		if (settings.SampleCount > VK_SAMPLE_COUNT_1_BIT)
+		if (desc.SampleCount > VK_SAMPLE_COUNT_1_BIT)
 		{
 			if (!CreateMSAABuffer())
 			{
@@ -209,7 +208,7 @@ namespace Lambda
     
     bool VKNGraphicsDevice::CreateDepthStencil()
     {
-		DeviceSettings settings = m_pDevice->GetDeviceSettings();
+		GraphicsDeviceDesc deviceDesc = m_pDevice->GetDesc();
 
         TextureDesc depthBufferDesc			= {};
         depthBufferDesc.pResolveResource	= nullptr;
@@ -220,7 +219,7 @@ namespace Lambda
         depthBufferDesc.Width				= m_pSwapChain->GetWidth();
         depthBufferDesc.Height				= m_pSwapChain->GetHeight();
         depthBufferDesc.Format				= FORMAT_D24_UNORM_S8_UINT;
-        depthBufferDesc.SampleCount			= uint32(settings.SampleCount);
+        depthBufferDesc.SampleCount			= uint32(deviceDesc.SampleCount);
         depthBufferDesc.MipLevels			= 1;
 		depthBufferDesc.Depth				= 1;
         
@@ -231,7 +230,7 @@ namespace Lambda
 
 	bool VKNGraphicsDevice::CreateMSAABuffer()
 	{
-		DeviceSettings settings = m_pDevice->GetDeviceSettings();
+		GraphicsDeviceDesc deviceDesc = m_pDevice->GetDesc();
 
 		TextureDesc msaaBufferDesc		= {};
         msaaBufferDesc.pResolveResource = m_pSwapChain->GetCurrentBuffer();
@@ -242,7 +241,7 @@ namespace Lambda
 		msaaBufferDesc.Width			= m_pSwapChain->GetWidth();
 		msaaBufferDesc.Height			= m_pSwapChain->GetHeight();
 		msaaBufferDesc.Format			= FORMAT_B8G8R8A8_UNORM;
-		msaaBufferDesc.SampleCount		= uint32(settings.SampleCount);
+		msaaBufferDesc.SampleCount		= uint32(deviceDesc.SampleCount);
 		msaaBufferDesc.MipLevels		= 1;
 		msaaBufferDesc.Depth			= 1;
 
@@ -301,6 +300,8 @@ namespace Lambda
         //Upload inital data
         if (pInitalData)
         {
+            LAMBDA_ASSERT(pInitalData->pData != nullptr && pInitalData->SizeInBytes != 0);
+            
             if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
             {
                 //Register dynamic buffer
@@ -341,6 +342,8 @@ namespace Lambda
         //Handle inital data
         if (pInitalData)
         {
+            LAMBDA_ASSERT(pInitalData->pData != nullptr && pInitalData->SizeInBytes != 0);
+            
             m_pCommandList->Reset();
             //Upload data
             m_pCommandList->UpdateTexture(pVkTexture, pInitalData, 0);
@@ -711,8 +714,8 @@ namespace Lambda
     
     ITexture* VKNGraphicsDevice::GetRenderTarget() const
     {
-		DeviceSettings settings = m_pDevice->GetDeviceSettings();
-        return (settings.SampleCount > VK_SAMPLE_COUNT_1_BIT) ? m_pMSAABuffer : m_pSwapChain->GetCurrentBuffer();
+		GraphicsDeviceDesc deviceDesc = m_pDevice->GetDesc();
+        return (deviceDesc.SampleCount > VK_SAMPLE_COUNT_1_BIT) ? m_pMSAABuffer : m_pSwapChain->GetCurrentBuffer();
     }
     
     
@@ -760,8 +763,8 @@ namespace Lambda
         CreateDepthStencil();
 
 		//Recreate MSAA buffer if MSAA is used
-		DeviceSettings settings = m_pDevice->GetDeviceSettings();
-		if (settings.SampleCount > VK_SAMPLE_COUNT_1_BIT)
+		GraphicsDeviceDesc deviceDesc = m_pDevice->GetDesc();
+		if (deviceDesc.SampleCount > VK_SAMPLE_COUNT_1_BIT)
 		{
 			ReleaseMSAABuffer();
 			CreateMSAABuffer();

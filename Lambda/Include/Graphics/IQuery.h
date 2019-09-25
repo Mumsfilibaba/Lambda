@@ -10,8 +10,8 @@ namespace Lambda
     
     enum QueryType : uint32
     {
-        QUERY_TYPE_UNKNOWN = 0,
-        QUERY_TYPE_TIMESTAMP = 1,
+        QUERY_TYPE_UNKNOWN      = 0,
+        QUERY_TYPE_TIMESTAMP    = 1,
     };
     
     //---------
@@ -20,8 +20,8 @@ namespace Lambda
     
     struct QueryDesc
     {
-        QueryType   Type = QUERY_TYPE_UNKNOWN;
-        uint32      QueryCount = 0;
+        QueryType Type     = QUERY_TYPE_UNKNOWN;
+        uint32 QueryCount  = 0;
     };
     
     //------
@@ -36,8 +36,8 @@ namespace Lambda
         IQuery() = default;
         ~IQuery() = default;
         
-        virtual void        GetResults(uint64* pResults, uint32 numResults, uint32 startQuery) = 0;
-        virtual void*       GetNativeHandle() const = 0;
-        virtual QueryDesc   GetDesc() const = 0;
+        virtual void GetResults(uint64* pResults, uint32 numResults, uint32 startQuery) = 0;
+        virtual void* GetNativeHandle() const = 0;
+        virtual QueryDesc GetDesc() const = 0;
     };
 }

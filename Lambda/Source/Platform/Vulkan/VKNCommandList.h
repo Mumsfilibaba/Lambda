@@ -39,7 +39,7 @@ namespace Lambda
         virtual void SetScissorRect(const Rectangle& scissorRect) override final;
         virtual void SetVertexBuffer(IBuffer* pBuffer, uint32 slot) override final;
         virtual void SetIndexBuffer(IBuffer* pBuffer, ResourceFormat format) override final;
-		virtual void SetConstants(ShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData) override final;
+		virtual void SetConstantBlocks(ShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData) override final;
         virtual void SetGraphicsPipelineState(IGraphicsPipelineState* pPSO) override final;
 		virtual void SetGraphicsPipelineResourceState(IPipelineResourceState* pResourceState) override final;
 

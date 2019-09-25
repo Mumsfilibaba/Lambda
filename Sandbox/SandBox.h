@@ -36,56 +36,73 @@ namespace Lambda
         glm::vec3 Position;
     };
 
+    //------------
+    //SandBoxLayer
+    //------------
 
-	class SandBox final : public Application
-	{
-	public:
-		SandBox(const EngineParams& params = EngineParams());
-		~SandBox();
+    class SandBoxLayer : public Layer
+    {
+    public:
+        LAMBDA_NO_COPY(SandBoxLayer);
 
-		virtual void    OnLoad() override final;
-		virtual void    OnUpdate(Timestep dt) override final;
-		virtual void    OnRender(Timestep dt) override final;
-		virtual void    OnRelease() override final;
-        
-		bool OnWindowResize(const WindowResizeEvent& event);     
-		bool OnKeyPressed(const KeyPressedEvent& event);
-		void CreateCamera(uint32 width, uint32 height);
+        SandBoxLayer();
+        ~SandBoxLayer() = default;
 
-	private:
+        virtual void OnLoad() override final;
+        virtual void OnUpdate(Timestep dt) override final;
+        virtual void OnRender(Timestep dt) override final;
+        virtual void OnRenderUI(Timestep dt) override final;
+        virtual void OnRelease() override final;
+        virtual bool OnEvent(const Event& event) override final;
+        virtual uint32 GetRecivableCategories() const override final;
+    private:
+        bool OnWindowResize(const WindowResizeEvent& event);
+        bool OnKeyPressed(const KeyPressedEvent& event);
+        void CreateCamera(uint32 width, uint32 height);
+    private:
         //Commandlist
-		ICommandList* m_pLists[3];
+        ICommandList* m_pLists[3];
         ICommandList* m_pCurrentList;
         //Querys
         IQuery* m_pQueries[3];
         //Shaders
         IShader* m_pVS;
-		IShader* m_pPS;
+        IShader* m_pPS;
         //Buffers
-		IBuffer* m_pVertexBuffer;
+        IBuffer* m_pVertexBuffer;
         IBuffer* m_pIndexBuffer;
-		IBuffer* m_pColorBuffer;
+        IBuffer* m_pColorBuffer;
         IBuffer* m_pLightBuffer;
-		IBuffer* m_pCameraBuffer;
+        IBuffer* m_pCameraBuffer;
         IBuffer* m_pTransformBuffer;
         //Textures
-		ITexture* m_pAlbedo;
+        ITexture* m_pAlbedo;
         ITexture* m_pNormal;
         //Samplers
         ISamplerState* m_pSamplerState;
         //Pipelinestates
         IGraphicsPipelineState* m_pPipelineState;
-		//RenderPass
-		IRenderPass* m_pRenderPass;
+        //RenderPass
+        IRenderPass* m_pRenderPass;
         //ResourceState
         IPipelineResourceState* m_pResourceState;
-		
         //Other
         float m_Width;
-		float m_Height;
-		uint32 m_IndexCount;
+        float m_Height;
+        uint32 m_IndexCount;
         Camera m_Camera;
-		CameraBuffer m_CameraBuffer;
+        CameraBuffer m_CameraBuffer;
         TransformBuffer m_TransformBuffer;
+    };
+
+    //-------
+    //SandBox
+    //-------
+
+	class SandBox final : public Application
+	{
+	public:
+		SandBox(const EngineParams& params = EngineParams());
+		~SandBox() = default;
 	};
 }

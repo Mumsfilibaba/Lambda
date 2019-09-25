@@ -1,5 +1,6 @@
 #include "LambdaPch.h"
 #include "System/Application.h"
+#include "Graphics/UILayer.h"
 #include "Time/Clock.h"
 #include "System/Log.h"
 #include "System/Input.h"
@@ -9,37 +10,6 @@
 
 namespace Lambda
 {
-	//----------------
-	//ApplicationLayer
-	//----------------
-
-	ApplicationLayer::ApplicationLayer()
-		: EventLayer("ApplicationLayer")
-	{
-	}
-
-	void ApplicationLayer::OnPush()
-	{
-	}
-
-
-	void ApplicationLayer::OnPop()
-	{
-	}
-
-
-	bool ApplicationLayer::OnEvent(const Event& event)
-	{
-		Application& application = Application::Get();
-        return application.OnEvent(event);
-	}
-
-
-	uint32 ApplicationLayer::GetRecivableCategories() const
-	{
-		return EVENT_CATEGORY_ALL;
-	}
-
 	//-----------
 	//Application
 	//-----------
@@ -48,8 +18,7 @@ namespace Lambda
 
 	Application::Application(const EngineParams& params)
 		: m_pWindow(nullptr),
-		m_pImGuiLayer(nullptr),
-		m_pApplicationLayer(nullptr),
+		m_pUILayer(nullptr),
 		m_Params(params),
 		m_ExitCode(0),
 		m_Running(true)
@@ -59,9 +28,15 @@ namespace Lambda
 	}
 
 
+    void Application::PushLayer(Layer* pLayer)
+    {
+        m_LayerStack.PushLayer(pLayer);
+    }
+
+
 	int32 Application::Run()
 	{
-		InternalOnLoad();
+		OnLoad();
 
         LOG_DEBUG_INFO("Lambda Engine: STARTING\n");
         
@@ -74,24 +49,26 @@ namespace Lambda
 		clock.Reset();
 		while (m_Running)
 		{
+            //Tick
 			clock.Tick();
-
-            
 			//Logic update
 			accumulator += clock.GetDeltaTime();
 			while (accumulator >= timestep)
             {
-				InternalOnUpdate(timestep);
+				OnUpdate(timestep);
 				accumulator -= timestep;
                 ups++;
 			}
-
-			
+            //Draw UI
+            m_pUILayer->Begin(clock.GetDeltaTime());
+            OnRenderUI(clock.GetDeltaTime());
+            m_pUILayer->End();
+            //Render
 #if defined(LAMBDA_PLAT_MACOS)
             if (m_pWindow->HasFocus())
             {
                 //Render when the application has focus
-                InternalOnRender(clock.GetDeltaTime());
+                OnRender(clock.GetDeltaTime());
                 fps++;
             }
             else
@@ -104,7 +81,6 @@ namespace Lambda
 			InternalOnRender(clock.GetDeltaTime());
 			fps++;
 #endif
-			
 			//Print FPS and UPS to console
 			if (clock.GetTotalTime().AsSeconds() >= 1.0f)
 			{
@@ -115,60 +91,18 @@ namespace Lambda
 			}
 		}
 
-        LOG_DEBUG_INFO("Lambda Engine: EXITING\n");
-        
-		InternalOnRelease();
+        LOG_DEBUG_INFO("Lambda Engine: EXITING\n");        
+		OnRelease();
 		return m_ExitCode;
 	}
 
 
-	const EngineParams& Application::GetEngineParams() const
-	{
-		return m_Params;
-	}
-
-
-	IWindow* Application::GetWindow() const
-	{
-		return m_pWindow;
-	}
-
-	
-	ImGuiLayer* Application::GetUILayer() const
-	{
-		return m_pImGuiLayer;
-	}
-
-
-	void Application::Quit(int32 exitCode)
-	{
-		m_Running = false;
-		m_ExitCode = exitCode;
-        
-        LOG_DEBUG_INFO("Quit called\n");
-	}
-
-
-	Application& Application::Get()
-	{
-		LAMBDA_ASSERT(s_pInstance != nullptr);
-		return *s_pInstance;
-	}
-	
-
-	void Application::InternalOnLoad()
+	void Application::OnLoad()
 	{
 		//Setup the eventdispatcher
-		EventDispatcher::Initialize();
-
-
-		//Setup application layer
-		{
-			m_pApplicationLayer = DBG_NEW ApplicationLayer();
-			EventDispatcher::PushEventLayer(m_pApplicationLayer);
-		}
-
-
+        m_Dispatcher.Init();
+        //Setup layers
+        m_LayerStack.Init();
 		//Create window
 		{
 			WindowDesc desc = {};
@@ -180,61 +114,60 @@ namespace Lambda
 			desc.Fullscreen			= m_Params.Fullscreen;
 
 			m_pWindow = IWindow::Create(desc);
-			m_pWindow->SetEventCallback(EventDispatcher::DispatchEvent);
+			m_pWindow->SetEventCallback(DBG_NEW ObjectEventCallback(this, &Application::OnEvent));
 
 			//Push Resize callback
-			EventDispatcher::PushCallback<IGraphicsDevice, WindowResizeEvent>(IGraphicsDevice::Get(), &IGraphicsDevice::OnResize);
+			PushCallback<IGraphicsDevice, WindowResizeEvent>(IGraphicsDevice::Get(), &IGraphicsDevice::OnResize);
 		}
-
-
-		//Create ImGUI-Layer
-		{
-			m_pImGuiLayer = DBG_NEW ImGuiLayer();
+		//Create UI-Layer
+        {
+			m_pUILayer = DBG_NEW UILayer();
 			//Push ImGui-Layer
-			EventDispatcher::PushEventLayer(m_pImGuiLayer);
+            PushLayer(m_pUILayer);
 		}
-
-
 		//Set joystick-pollingrate
 		JoystickManager::SetPollrate(Timestep::Seconds(1.0f / 60.0f));
-
-
 		//Load rest of application
-		OnLoad();
+        for (auto it = m_LayerStack.Begin(); it != m_LayerStack.End(); it++)
+            (*it)->OnLoad();
 	}
 	
 
-	void Application::InternalOnUpdate(Timestep dt)
+	void Application::OnUpdate(Timestep dt)
 	{
         //Window update (Handle events)
         m_pWindow->OnUpdate();
-        
         //Update controllers
 		JoystickManager::OnUpdate();
-		
-        //Call update 
-        OnUpdate(dt);
+        //Call update
+        for (auto it = m_LayerStack.Begin(); it != m_LayerStack.End(); it++)
+            (*it)->OnUpdate(dt);
 	}
 
 
-	void Application::InternalOnRender(Timestep dt)
+	void Application::OnRender(Timestep dt)
 	{
-		OnRender(dt);
+        for (auto it = m_LayerStack.Begin(); it != m_LayerStack.End(); it++)
+            (*it)->OnRender(dt);
 	}
 
 
-	void Application::InternalOnRelease()
-	{
-		OnRelease();
-       
-		//Release Eventdispatcher
-		EventDispatcher::Release();
-		m_pWindow->SetEventCallback(nullptr);
+    void Application::OnRenderUI(Timestep dt)
+    {
+        for (auto it = m_LayerStack.Begin(); it != m_LayerStack.End(); it++)
+            (*it)->OnRenderUI(dt);
+    }
 
-		//Destroy ImGui-Layer
-		SafeDelete(m_pImGuiLayer);
-        //Destroy applicationlayer
-		SafeDelete(m_pApplicationLayer);	
+
+	void Application::OnRelease()
+	{
+        //Release all layers
+        for (auto it = m_LayerStack.Begin(); it != m_LayerStack.End(); it++)
+            (*it)->OnRelease();
+        //Release LayerStack
+        m_LayerStack.Release();
+        //Release Eventdispatcher
+        m_Dispatcher.Release();
 		//Destroy window
         SafeDelete(m_pWindow);
 	}
@@ -242,30 +175,82 @@ namespace Lambda
 
 	bool Application::OnEvent(const Event& event)
 	{
-		switch (event.GetType())
-		{
-			//Exit the application when the window is closed
-		case WindowClosedEvent::GetStaticType():
-			Quit(0);
-			LOG_DEBUG_INFO("Window closed\n");
-			return true;
-
-			//Exit the application when the escape key is pressed
-		case KeyPressedEvent::GetStaticType():
-			if (static_cast<const KeyPressedEvent&>(event).GetKey() == KEY_ESCAPE)
-			{
-				Quit(0);
-				LOG_DEBUG_INFO("Escape pressed, exiting\n");
-				return true;
-			}
-			else
-			{
-				return false;
-			}
-
-			//If not an handled event return false to let it continue in the eventhandler
-		default:
-			return false;
-		}
+        //Forward to the rest of application
+        EventForwarder forwarder;
+        forwarder.ForwardEvent(this, &Application::OnWindowClose, event);
+        forwarder.ForwardEvent(this, &Application::OnKeyPressed, event);
+        //Dispatch to all layers
+        for (auto it = m_LayerStack.End(); it != m_LayerStack.Begin(); )
+        {
+            Layer* pLayer = (*--it);
+            if (event.GetCategoryFlags() & pLayer->GetRecivableCategories())
+            {
+                if(pLayer->OnEvent(event))
+                {
+                    event.SetIsHandled(true);
+                    break;
+                }
+            }
+        }
+        //Dispatch to all callbacks
+        m_Dispatcher.DispatchEvent(event);
+        return true;
 	}
+
+
+    bool Application::OnWindowClose(const WindowClosedEvent& event)
+    {
+        Quit(0);
+        LOG_DEBUG_INFO("Window closed\n");
+        return true;
+    }
+
+
+    bool Application::OnKeyPressed(const KeyPressedEvent &event)
+    {
+        if (event.GetKey() == KEY_ESCAPE)
+        {
+            Quit(0);
+            LOG_DEBUG_INFO("Escape pressed, exiting\n");
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+
+    const EngineParams& Application::GetEngineParams() const
+    {
+        return m_Params;
+    }
+
+
+    IWindow* Application::GetWindow() const
+    {
+        return m_pWindow;
+    }
+
+
+    UILayer* Application::GetUILayer() const
+    {
+        return m_pUILayer;
+    }
+
+
+    void Application::Quit(int32 exitCode)
+    {
+        m_Running = false;
+        m_ExitCode = exitCode;
+        
+        LOG_DEBUG_INFO("Quit called\n");
+    }
+
+
+    Application& Application::Get()
+    {
+        LAMBDA_ASSERT(s_pInstance != nullptr);
+        return *s_pInstance;
+    }
 }

@@ -3,6 +3,7 @@
 #include "Events/KeyEvent.h"
 #include "Events/WindowEvent.h"
 #include "Events/MouseEvent.h"
+#include "System/Layer.h"
 #include "Time/Timestep.h"
 #include <imgui.h>
 
@@ -17,30 +18,29 @@ namespace Lambda
 	class IGraphicsPipelineState;
 	class IPipelineResourceState;
 
-	//----------
-	//ImGuiLayer
-	//----------
+	//-------
+	//UILayer
+	//-------
 
-	class LAMBDA_API ImGuiLayer : public EventLayer
+	class LAMBDA_API UILayer : public Layer
 	{
 	public:
-		LAMBDA_NO_COPY(ImGuiLayer);
+		LAMBDA_NO_COPY(UILayer);
 
-		ImGuiLayer();
-		~ImGuiLayer() = default;
+		UILayer();
+		~UILayer() = default;
 
 		void Init(IRenderPass* pRenderPass, ICommandList* pList);
-		
-		void Begin(Timestep time);
-		void RenderUI();
-		void End();
-		void Draw(ICommandList* pList);
+        void Begin(Timestep time);
+        void End();
+        void Draw(ICommandList* pList);
 
-        virtual void    OnPop() override final;
-        virtual void    OnPush() override final;
-        virtual bool    OnEvent(const Event& event) override final;
-        virtual uint32  GetRecivableCategories() const override final;
-
+        virtual void OnLoad() override final;
+        virtual void OnRenderUI(Timestep dt) override final;
+        virtual void OnRelease() override final;
+        virtual bool OnEvent(const Event& event) override final;
+        virtual uint32 GetRecivableCategories() const override final;
+    private:
 		bool OnKeyTyped(const KeyTypedEvent& event);
 		bool OnKeyPressed(const KeyPressedEvent& event);
 		bool OnKeyReleased(const KeyReleasedEvent& event);
@@ -49,7 +49,7 @@ namespace Lambda
 		bool OnMouseReleased(const MouseButtonReleasedEvent& event);
 		bool OnMouseMove(const MouseMovedEvent& event);
 		bool OnWindowResize(const WindowResizeEvent& event);
-
+        void Create();
 	private:
 		IShader*				m_pVS;
 		IShader*				m_pPS;

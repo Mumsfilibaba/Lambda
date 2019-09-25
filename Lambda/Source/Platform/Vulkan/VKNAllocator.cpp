@@ -332,8 +332,8 @@ namespace Lambda
 		m_MemoryToDeallocate()
 	{
 		VKNDevice& device = VKNDevice::Get();
-
-		uint32 frameCount = device.GetDeviceSettings().FramesAhead;
+        GraphicsDeviceDesc deviceDesc = device.GetDesc();
+		uint32 frameCount = deviceDesc.BackBufferCount;
 		m_MemoryToDeallocate.resize(frameCount);
 
 		VkPhysicalDeviceProperties properties = device.GetPhysicalDeviceProperties();
@@ -644,9 +644,8 @@ namespace Lambda
 		s_pInstance = this;
 
 		VKNDevice& device = VKNDevice::Get();
-
-		DeviceSettings settings = device.GetDeviceSettings();
-		m_FrameCount = settings.FramesAhead;
+		GraphicsDeviceDesc deviceDesc = device.GetDesc();
+		m_FrameCount = deviceDesc.BackBufferCount;
 
 		m_OldPools.resize(m_FrameCount);
 	}

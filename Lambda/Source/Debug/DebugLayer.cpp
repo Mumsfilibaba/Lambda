@@ -4,24 +4,15 @@
 namespace Lambda
 {
     DebugLayer::DebugLayer()
-        : EventLayer("DebugLayer")
-    {
-    }
-
-
-    void DebugLayer::OnPush()
-    {
-    }
-
-
-    void DebugLayer::OnPop()
+        : Layer("DebugLayer")
     {
     }
 
 
     bool DebugLayer::OnEvent(const Event& event)
     {
-        return EventDispatcher::ForwardEvent(this, &DebugLayer::OnKeyPressed, event);
+        EventForwarder forwarder;
+        return forwarder.ForwardEvent(this, &DebugLayer::OnKeyPressed, event);
     }
 
 

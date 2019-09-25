@@ -147,10 +147,24 @@ namespace Lambda
         ImGui::End();
     }
 
+    //-------
+    //SandBox
+    //-------
 
-	SandBox::SandBox(const EngineParams& params)
-		: Application(params),
-		m_pLists(),
+    SandBox::SandBox(const EngineParams& params)
+        : Application(params)
+    {
+        PushLayer(DBG_NEW SandBoxLayer());
+    }
+
+
+    //------------
+    //SandBoxLayer
+    //------------
+
+	SandBoxLayer::SandBoxLayer()
+         : Layer("SandBoxLayer"),
+        m_pLists(),
         m_pCurrentList(nullptr),
 		m_pVS(nullptr),
 		m_pPS(nullptr),
@@ -161,14 +175,9 @@ namespace Lambda
 		for (uint32 i = 0; i < 3; i++)
 			m_pLists[i] = nullptr;
 	}
-	
-
-	SandBox::~SandBox()
-	{
-	}
 
 
-	void SandBox::OnLoad()
+	void SandBoxLayer::OnLoad()
 	{
         //Init transforms
         transformRevolver.Position[1] = -1.0f;
@@ -183,14 +192,11 @@ namespace Lambda
         lightColor[1] = 241.0f / 255.0f;
         lightColor[2] = 224.0f / 255.0f;
         lightColor[3] = 1.0f;
-        
-		//Add Sandbox callbacks
-		EventDispatcher::PushCallback<SandBox, KeyPressedEvent>(this, &SandBox::OnKeyPressed);
-		EventDispatcher::PushCallback<SandBox, WindowResizeEvent>(this, &SandBox::OnWindowResize);
 
 		//Init size
-		m_Width		= (float)GetWindow()->GetWidth();
-		m_Height	= (float)GetWindow()->GetHeight();
+        Application& app = Application::Get();
+		m_Width		= float(app.GetWindow()->GetWidth());
+		m_Height	= float(app.GetWindow()->GetHeight());
 
 		IGraphicsDevice* pDevice = IGraphicsDevice::Get();
         if (pDevice)
@@ -247,7 +253,7 @@ namespace Lambda
 			//Create RenderPass
 			{
 				RenderPassDesc desc = {};
-				desc.SampleCount						= GetEngineParams().SampleCount;
+				desc.SampleCount						= app.GetEngineParams().SampleCount;
 				desc.NumRenderTargets					= 1;
 				desc.RenderTargets[0].Format			= pDevice->GetBackBufferFormat();
                 desc.RenderTargets[0].Flags				= RENDER_PASS_ATTACHMENT_FLAG_RESOLVE;
@@ -261,7 +267,7 @@ namespace Lambda
                 desc.DepthStencil.FinalState			= RESOURCE_STATE_DEPTH_STENCIL;
 				
 				pDevice->CreateRenderPass(&m_pRenderPass, desc);
-				GetUILayer()->Init(m_pRenderPass, m_pCurrentList);
+				app.GetUILayer()->Init(m_pRenderPass, m_pCurrentList);
 			}
 
 
@@ -306,8 +312,8 @@ namespace Lambda
 				PipelineResourceStateDesc desc = {};
 				desc.NumResourceSlots	= 7;
 				desc.pResourceSlots		= slots;
-				desc.NumConstants		= 0;
-				desc.pConstantSlots		= nullptr;
+				desc.NumConstantBlocks	= 0;
+				desc.pConstantBlocks	= nullptr;
 				pDevice->CreatePipelineResourceState(&m_pResourceState, desc);
 			}
 
@@ -479,7 +485,7 @@ namespace Lambda
 	}
 
 
-	void SandBox::OnUpdate(Timestep dt)
+	void SandBoxLayer::OnUpdate(Timestep dt)
 	{
         //Move camera
         constexpr float speed = 2.0f;
@@ -519,7 +525,7 @@ namespace Lambda
 	}
 
 
-	void SandBox::OnRender(Timestep dt)
+	void SandBoxLayer::OnRender(Timestep dt)
 	{
         static Clock clock;
         
@@ -619,14 +625,6 @@ namespace Lambda
 		//Set rendertargets and clearcolors
 		m_pRenderPass->SetRenderTargets(&pRenderTarget, 1, pDepthBuffer);
 		m_pRenderPass->SetClearValues(color, 1.0f, 0);
-        
-		//Update userinterface
-		GetUILayer()->Begin(dt);
-        
-        ShowEntityEditor();
-        
-		GetUILayer()->RenderUI();
-		GetUILayer()->End();
 
 #if !defined(SINGLE_CUBE)
         //Begin renderpass
@@ -651,7 +649,6 @@ namespace Lambda
         //End renderpass
         m_pCurrentList->EndRenderPass();
 #else
-        
         //Setup rotation
         glm::mat4 translation = glm::translate(glm::mat4(1.0f), glm::vec3(transformRevolver.Position[0], transformRevolver.Position[1], transformRevolver.Position[2]));
         glm::mat4 rotation = glm::eulerAngleYXZ(glm::radians(transformRevolver.Rotation[1]), glm::radians(transformRevolver.Rotation[0]), glm::radians(transformRevolver.Rotation[2]));
@@ -671,7 +668,7 @@ namespace Lambda
 		m_pCurrentList->DrawIndexedInstanced(m_IndexCount, 1, 0, 0, 0);
 
 		//Draw the UI
-		GetUILayer()->Draw(m_pCurrentList);
+		Application::Get().GetUILayer()->Draw(m_pCurrentList);
 
 		//End renderpass
 		m_pCurrentList->EndRenderPass();
@@ -686,7 +683,7 @@ namespace Lambda
 	}
 
 
-	void SandBox::OnRelease()
+	void SandBoxLayer::OnRelease()
 	{
 		IGraphicsDevice* pDevice = IGraphicsDevice::Get();
         if (pDevice)
@@ -701,7 +698,6 @@ namespace Lambda
 
             pDevice->DestroyShader(&m_pVS);
             pDevice->DestroyShader(&m_pPS);
-
 			pDevice->DestroyResourceState(&m_pResourceState);
 			pDevice->DestroyRenderPass(&m_pRenderPass);
             pDevice->DestroyGraphicsPipelineState(&m_pPipelineState);
@@ -718,7 +714,29 @@ namespace Lambda
 	}
 
 
-	bool SandBox::OnWindowResize(const WindowResizeEvent& event)
+    void SandBoxLayer::OnRenderUI(Timestep dt)
+    {
+        //Update userinterface
+        ShowEntityEditor();
+    }
+
+
+    bool SandBoxLayer::OnEvent(const Event& event)
+    {
+        EventForwarder forwarder;
+        forwarder.ForwardEvent(this, &SandBoxLayer::OnKeyPressed, event);
+        forwarder.ForwardEvent(this, &SandBoxLayer::OnWindowResize, event);
+        return false;
+    }
+
+
+    uint32 SandBoxLayer::GetRecivableCategories() const
+    {
+        return EVENT_CATEGORY_ALL;
+    }
+
+
+	bool SandBoxLayer::OnWindowResize(const WindowResizeEvent& event)
 	{
 		if (event.GetWidth() > 0 && event.GetHeight() > 0)
 		{
@@ -728,17 +746,18 @@ namespace Lambda
 	}
 
 
-	bool SandBox::OnKeyPressed(const KeyPressedEvent& event)
+	bool SandBoxLayer::OnKeyPressed(const KeyPressedEvent& event)
 	{
 		if (event.GetKey() == KEY_1)
 		{
-			GetWindow()->SetFullscreen(!GetWindow()->GetFullscreen());
+            IWindow* pWindow = Application::Get().GetWindow();
+			pWindow->SetFullscreen(!pWindow->GetFullscreen());
 		}
 		return false;
 	}
 
 
-	void SandBox::CreateCamera(uint32 width, uint32 height)
+	void SandBoxLayer::CreateCamera(uint32 width, uint32 height)
     {
         m_Camera.SetAspect(float(width), float(height));
         m_Camera.CreateProjection();

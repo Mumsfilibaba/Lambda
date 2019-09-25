@@ -33,16 +33,13 @@ namespace Lambda
 
         virtual void OnUpdate() const = 0;
         virtual bool HasFocus() const = 0;
-
         virtual bool SetFullscreen(bool fullscreen) = 0;
-        virtual void SetEventCallback(EventCallbackFunc callback) = 0;
-        
+        virtual void SetEventCallback(IEventCallback* pEventCallback) = 0;
         virtual bool GetFullscreen() const = 0;
         virtual IGraphicsDevice* GetGraphicsDevice() const = 0;
 		virtual uint32 GetHeight() const = 0;
 		virtual uint32 GetWidth() const = 0;
 		virtual void* GetNativeHandle() const = 0;
-
 	public:
 		static IWindow* Create(const WindowDesc& desc);
 	};

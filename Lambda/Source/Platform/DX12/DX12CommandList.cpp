@@ -222,7 +222,7 @@ namespace Lambda
 	}
 
 	
-	void DX12CommandList::SetConstants(ShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData)
+	void DX12CommandList::SetConstantBlocks(ShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData)
 	{
 	}
 

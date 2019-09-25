@@ -1,6 +1,5 @@
 #pragma once
 #include "Event.h"
-#include "Types.h"
 
 namespace Lambda
 {
@@ -18,7 +17,6 @@ namespace Lambda
         inline bool    HasModifer(KeyModifier modifier) const   { return m_Modifiers & modifier; }
         inline Key     GetKey() const                           { return m_Key; }
         inline uint32  GetModifiers() const                     { return m_Modifiers; }
-
     private:
         Key     m_Key;
         uint32  m_Modifiers;
@@ -33,8 +31,8 @@ namespace Lambda
     public:
         inline KeyReleasedEvent(Key key, uint32 modifiers)
             : KeyEvent(key, modifiers) {}
+        
         ~KeyReleasedEvent() = default;
-
 		LAMBDA_DECLARE_EVENT_TYPE(KeyReleasedEvent);
     };
 
@@ -50,9 +48,7 @@ namespace Lambda
         ~KeyPressedEvent() = default;
         
         inline uint32 GetRepeatCount() const  { return m_RepeatCount; }
-        
 		LAMBDA_DECLARE_EVENT_TYPE(KeyPressedEvent);
-
     private:
         uint32  m_RepeatCount;
         
@@ -69,9 +65,7 @@ namespace Lambda
         : Event(EVENT_CATEGORY_KEYBOARD | EVENT_CATEGORY_INPUT), m_Character(character) {}
         
         inline uint32 GetCharacter() const  { return m_Character; }
-        
 		LAMBDA_DECLARE_EVENT_TYPE(KeyTypedEvent);
-
     private:
         uint32 m_Character;
     };

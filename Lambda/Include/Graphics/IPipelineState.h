@@ -33,13 +33,13 @@ namespace Lambda
 		IShader* pVertexShader	= nullptr;
 		IShader* pPixelShader	= nullptr;
         //Input Layout
-        InputElement*	pInputElements		= nullptr;
-        uint32			InputElementCount	= 0;
+        InputElement* pInputElements = nullptr;
+        uint32 InputElementCount	 = 0;
         //Rasterizer State
-        CullMode			Cull						= CULL_MODE_BACK;
-		PolygonMode			FillMode						= POLYGON_MODE_FILL;
-        PrimitiveTopology	Topology					= PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-		bool				FrontFaceCounterClockWise	= false;
+        CullMode Cull					= CULL_MODE_BACK;
+		PolygonMode	FillMode			= POLYGON_MODE_FILL;
+        PrimitiveTopology Topology		= PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+		bool FrontFaceCounterClockWise	= false;
 		//Blending
 		bool EnableBlending = false;
 		//Depth test

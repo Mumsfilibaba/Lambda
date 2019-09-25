@@ -9,11 +9,11 @@ namespace Lambda
     
 	struct BufferDesc
 	{
-        const char*     pName           = nullptr;
-		ResourceUsage   Usage           = RESOURCE_USAGE_UNKNOWN;
-		uint32          Flags           = BUFFER_FLAGS_NONE;
-		uint64          SizeInBytes     = 0;
-		uint32          StrideInBytes   = 0;
+        const char* pName      = nullptr;
+		ResourceUsage Usage    = RESOURCE_USAGE_UNKNOWN;
+		uint32 Flags           = BUFFER_FLAGS_NONE;
+		uint64 SizeInBytes     = 0;
+		uint32 StrideInBytes   = 0;
 	};
 
     //-------

@@ -28,7 +28,6 @@ namespace Lambda
 		m_Device(VK_NULL_HANDLE),
 		m_PhysicalDevice(VK_NULL_HANDLE),
 		m_Surface(VK_NULL_HANDLE),
-		m_DeviceSettings(),
 		m_FamiliyIndices(),
 		m_PhysicalDeviceProperties()
 	{
@@ -277,6 +276,7 @@ namespace Lambda
 			vkGetPhysicalDeviceProperties(m_PhysicalDevice, &m_PhysicalDeviceProperties);
 			m_FamiliyIndices = FindQueueFamilies(m_PhysicalDevice, m_Surface);
 
+            //Get memory available on the physical device
 			VkPhysicalDeviceMemoryProperties memoryProperties = {};
 			vkGetPhysicalDeviceMemoryProperties(m_PhysicalDevice, &memoryProperties);
 
@@ -289,6 +289,14 @@ namespace Lambda
 
 			vram = vram / (1024 * 1024);
 			LOG_SYSTEM_PRINT("Vulkan: Selected GPU '%s'\n        VRAM: %llu MB\n", m_PhysicalDeviceProperties.deviceName, vram);
+            
+            //Check so that the MSAA count is valid
+            uint32 highestSampleCount = GetHighestSampleCount();
+            if (desc.SampleCount > highestSampleCount)
+            {
+                LOG_DEBUG_ERROR("Vulkan: GraphicsDeviceDesc::SampleCount (=%u), is higher than the maximum supported on the device (=%u)\n", desc.SampleCount, highestSampleCount);
+                return;
+            }
 		}
 
 		//Find the queuefamily indices for the adapter that we have chosen
@@ -370,29 +378,25 @@ namespace Lambda
 			LOG_SYSTEM_PRINT("Vulkan: Created device and retrived queues\n");
 			m_Desc = desc;
 		}
-
-
-		//Get max MSAA we can use on the device
-		VkSampleCountFlags		sampleCountFlags = std::min(m_PhysicalDeviceProperties.limits.framebufferStencilSampleCounts,
-			std::min(m_PhysicalDeviceProperties.limits.framebufferColorSampleCounts, m_PhysicalDeviceProperties.limits.framebufferDepthSampleCounts));
-		VkSampleCountFlagBits	sampleCount = VK_SAMPLE_COUNT_1_BIT;
-
-		if (sampleCountFlags & VK_SAMPLE_COUNT_64_BIT) { sampleCount = VK_SAMPLE_COUNT_64_BIT; }
-		else if (sampleCountFlags & VK_SAMPLE_COUNT_32_BIT) { sampleCount = VK_SAMPLE_COUNT_32_BIT; }
-		else if (sampleCountFlags & VK_SAMPLE_COUNT_16_BIT) { sampleCount = VK_SAMPLE_COUNT_16_BIT; }
-		else if (sampleCountFlags & VK_SAMPLE_COUNT_8_BIT) { sampleCount = VK_SAMPLE_COUNT_8_BIT; }
-		else if (sampleCountFlags & VK_SAMPLE_COUNT_4_BIT) { sampleCount = VK_SAMPLE_COUNT_4_BIT; }
-		else if (sampleCountFlags & VK_SAMPLE_COUNT_2_BIT) { sampleCount = VK_SAMPLE_COUNT_2_BIT; }
-
-		//Set devicesettings
-		m_DeviceSettings.FramesAhead = desc.BackBufferCount;
-		m_DeviceSettings.SampleCount = ConvertSampleCount(desc.SampleCount);
-		if (m_DeviceSettings.SampleCount > sampleCount)
-		{
-			m_DeviceSettings.SampleCount = sampleCount;
-			LOG_DEBUG_WARNING("Vulkan: SampleCount (= %u) is higher  than the device's maximum of %u. SampleCount was set to the device's maximum.\n", uint32(m_DeviceSettings.SampleCount), uint32(sampleCount));
-		}
 	}
+
+
+    VkSampleCountFlagBits VKNDevice::GetHighestSampleCount() const
+    {
+        //Get max MSAA we can use on the device
+        VkSampleCountFlags sampleCountFlags = std::min(m_PhysicalDeviceProperties.limits.framebufferStencilSampleCounts,
+            std::min(m_PhysicalDeviceProperties.limits.framebufferColorSampleCounts, m_PhysicalDeviceProperties.limits.framebufferDepthSampleCounts));
+        VkSampleCountFlagBits sampleCount = VK_SAMPLE_COUNT_1_BIT;
+
+        if (sampleCountFlags & VK_SAMPLE_COUNT_64_BIT) { sampleCount = VK_SAMPLE_COUNT_64_BIT; }
+        else if (sampleCountFlags & VK_SAMPLE_COUNT_32_BIT) { sampleCount = VK_SAMPLE_COUNT_32_BIT; }
+        else if (sampleCountFlags & VK_SAMPLE_COUNT_16_BIT) { sampleCount = VK_SAMPLE_COUNT_16_BIT; }
+        else if (sampleCountFlags & VK_SAMPLE_COUNT_8_BIT) { sampleCount = VK_SAMPLE_COUNT_8_BIT; }
+        else if (sampleCountFlags & VK_SAMPLE_COUNT_4_BIT) { sampleCount = VK_SAMPLE_COUNT_4_BIT; }
+        else if (sampleCountFlags & VK_SAMPLE_COUNT_2_BIT) { sampleCount = VK_SAMPLE_COUNT_2_BIT; }
+
+        return sampleCount;
+    }
 
 
 	void VKNDevice::SetVulkanObjectName(VkObjectType type, uint64 objectHandle, const std::string& name)
