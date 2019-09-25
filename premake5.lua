@@ -196,7 +196,8 @@ workspace "Lambda"
 		}
 		sysincludedirs
 		{
-			"Dependencies/glm"
+			"Dependencies/glm",
+			"Dependencies/ImGui"
 		}
 		files 
 		{ 

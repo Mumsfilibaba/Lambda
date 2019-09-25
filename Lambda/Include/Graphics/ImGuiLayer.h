@@ -4,6 +4,7 @@
 #include "Events/WindowEvent.h"
 #include "Events/MouseEvent.h"
 #include "Time/Timestep.h"
+#include <imgui.h>
 
 namespace Lambda
 {

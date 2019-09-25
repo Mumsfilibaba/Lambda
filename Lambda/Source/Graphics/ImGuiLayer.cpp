@@ -11,7 +11,6 @@
 #include "Events/KeyEvent.h"
 #include "Events/MouseEvent.h"
 #include "Events/WindowEvent.h"
-#include <imgui.h>
 
 namespace Lambda
 {
@@ -291,7 +290,63 @@ namespace Lambda
 	
 	void ImGuiLayer::RenderUI()
 	{
-		ImGui::ShowDemoWindow();
+        //ImGui::ShowDemoWindow();
+        
+        
+        const float DISTANCE = 10.0f;
+        static int corner = 0;
+        ImGuiIO& io = ImGui::GetIO();
+        if (corner != -1)
+        {
+            ImVec2 window_pos = ImVec2((corner & 1) ? io.DisplaySize.x - DISTANCE : DISTANCE, (corner & 2) ? io.DisplaySize.y - DISTANCE : DISTANCE);
+            ImVec2 window_pos_pivot = ImVec2((corner & 1) ? 1.0f : 0.0f, (corner & 2) ? 1.0f : 0.0f);
+            ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
+        }
+        
+        bool t = true;
+        bool* ptrue = &t;
+        ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
+        if (ImGui::Begin("Timings", ptrue, (corner != -1 ? ImGuiWindowFlags_NoMove : 0) | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))
+        {
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 0.0f, 1.0f));
+            ImGui::Text("Timings");
+            ImGui::Separator();
+            
+            static float timer = 0.0f;
+            static int32 fps = 0;
+            static int32 currentFPS = 0;
+            
+            float ms = io.DeltaTime * 1000.0f;
+            timer += ms;
+            
+            fps++;
+            if (timer >= 1000.0f)
+            {
+                timer = 0.0f;
+                currentFPS = fps;
+                fps = 0;
+            }
+            
+            ImGui::Text("FPS: %d", currentFPS);
+            ImGui::Text("CPU Frametime: %.2fms", ms);
+            
+            static float values[90]     = { 0 };
+            static int   values_offset  = 0;
+            values[values_offset] = ms;
+            values_offset = (values_offset+1) % IM_ARRAYSIZE(values);
+            {
+                float average = 0.0f;
+                for (int n = 0; n < IM_ARRAYSIZE(values); n++)
+                    average += values[n];
+                average /= (float)IM_ARRAYSIZE(values);
+                char overlay[32];
+                sprintf(overlay, "avg %f", average);
+                ImGui::PlotLines("", values, IM_ARRAYSIZE(values), values_offset, overlay, -1.0f, 1.0f, ImVec2(0,80));
+            }
+            
+            ImGui::PopStyleColor();
+        }
+        ImGui::End();
 	}
 
 	
@@ -311,8 +366,8 @@ namespace Lambda
 		uint64 indexSize	= pDrawData->TotalIdxCount * sizeof(ImDrawIdx);
 		// Upload vertex/index data into a single contiguous GPU buffer
 		{
-			ImDrawVert* vtxDst = NULL;
-			ImDrawIdx* idxDst = NULL;
+			ImDrawVert* vtxDst  = NULL;
+			ImDrawIdx* idxDst   = NULL;
 			m_pVertexBuffer->Map(reinterpret_cast<void**>(&vtxDst));
 			m_pIndexBuffer->Map(reinterpret_cast<void**>(&idxDst));
 
@@ -469,19 +524,27 @@ namespace Lambda
 #if defined(LAMBDA_PLAT_WINDOWS)
 		io.ImeWindowHandle = reinterpret_cast<HWND>(pWindow->GetNativeHandle());
 #endif
+        
+        ImGui::StyleColorsDark();
+        ImGui::GetStyle().WindowRounding    = 0.0f;
+        ImGui::GetStyle().ChildRounding     = 0.0f;
+        ImGui::GetStyle().FrameRounding     = 0.0f;
+        ImGui::GetStyle().GrabRounding      = 0.0f;
+        ImGui::GetStyle().PopupRounding     = 0.0f;
+        ImGui::GetStyle().ScrollbarRounding = 0.0f;
     }
 
 
     bool ImGuiLayer::OnEvent(const Event& event)
     {
-		EventDispatcher::ForwardEvent<ImGuiLayer, KeyTypedEvent>(this, &ImGuiLayer::OnKeyTyped, event);
-		EventDispatcher::ForwardEvent<ImGuiLayer, KeyPressedEvent>(this, &ImGuiLayer::OnKeyPressed, event);
-        EventDispatcher::ForwardEvent<ImGuiLayer, KeyReleasedEvent>(this, &ImGuiLayer::OnKeyReleased, event);
-		EventDispatcher::ForwardEvent<ImGuiLayer, MouseScrolledEvent>(this, &ImGuiLayer::OnMouseScroll, event);
-		EventDispatcher::ForwardEvent<ImGuiLayer, MouseButtonPressedEvent>(this, &ImGuiLayer::OnMousePressed, event);
-		EventDispatcher::ForwardEvent<ImGuiLayer, MouseButtonReleasedEvent>(this, &ImGuiLayer::OnMouseReleased, event);
-		EventDispatcher::ForwardEvent<ImGuiLayer, MouseMovedEvent>(this, &ImGuiLayer::OnMouseMove, event);
-		EventDispatcher::ForwardEvent<ImGuiLayer, WindowResizeEvent>(this, &ImGuiLayer::OnWindowResize, event);
+		EventDispatcher::ForwardEvent<ImGuiLayer, KeyTypedEvent>            (this, &ImGuiLayer::OnKeyTyped,         event);
+		EventDispatcher::ForwardEvent<ImGuiLayer, KeyPressedEvent>          (this, &ImGuiLayer::OnKeyPressed,       event);
+        EventDispatcher::ForwardEvent<ImGuiLayer, KeyReleasedEvent>         (this, &ImGuiLayer::OnKeyReleased,      event);
+		EventDispatcher::ForwardEvent<ImGuiLayer, MouseScrolledEvent>       (this, &ImGuiLayer::OnMouseScroll,      event);
+		EventDispatcher::ForwardEvent<ImGuiLayer, MouseButtonPressedEvent>  (this, &ImGuiLayer::OnMousePressed,     event);
+		EventDispatcher::ForwardEvent<ImGuiLayer, MouseButtonReleasedEvent> (this, &ImGuiLayer::OnMouseReleased,    event);
+		EventDispatcher::ForwardEvent<ImGuiLayer, MouseMovedEvent>          (this, &ImGuiLayer::OnMouseMove,        event);
+		EventDispatcher::ForwardEvent<ImGuiLayer, WindowResizeEvent>        (this, &ImGuiLayer::OnWindowResize,     event);
         return false;
     }
 

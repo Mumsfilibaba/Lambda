@@ -108,10 +108,10 @@ namespace Lambda
 			//Print FPS and UPS to console
 			if (clock.GetTotalTime().AsSeconds() >= 1.0f)
 			{
-				clock.Reset();
-				LOG_SYSTEM_PRINT("FPS: %u, UPS: %u\n", fps, ups);
-				fps = 0;
-				ups = 0;
+                LOG_SYSTEM_PRINT("FPS: %u, UPS: %u, Frametime: %.1fms\n", fps, ups, clock.GetDeltaTime().AsMilliSeconds());
+                fps = 0;
+                ups = 0;
+                clock.Reset();
 			}
 		}
 
