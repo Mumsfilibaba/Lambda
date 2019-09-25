@@ -107,7 +107,7 @@ namespace Lambda
         else
         {
 			const char* pErrorMessage = importer.GetErrorString();
-            LOG_DEBUG_ERROR("Failed to load file '%s'. Message: %s\n", filename.c_str(), pErrorMessage);
+            LOG_SYSTEM_PRINT("Failed to load file '%s'. Message: %s\n", filename.c_str(), pErrorMessage);
 			return data;
         }
         
