@@ -78,7 +78,7 @@ namespace Lambda
         VkSampleCountFlagBits sampleCount = ConvertSampleCount(desc.SampleCount);
         
         VKNDevice& device = VKNDevice::Get();
-        VkSampleCountFlags highestSampleCount = device.GetHighestSampleCount();
+		VkSampleCountFlagBits highestSampleCount = device.GetHighestSampleCount();
         if (sampleCount > highestSampleCount)
         {
             LOG_DEBUG_ERROR("Vulkan: TextureDesc::SampleCount (=%u) is higher than the maximum of the device (=%u)\n", sampleCount, highestSampleCount);

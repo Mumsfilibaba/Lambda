@@ -78,7 +78,7 @@ namespace Lambda
             }
 #else
 			//Render
-			InternalOnRender(clock.GetDeltaTime());
+			OnRender(clock.GetDeltaTime());
 			fps++;
 #endif
 			//Print FPS and UPS to console
@@ -103,28 +103,25 @@ namespace Lambda
         m_Dispatcher.Init();
         //Setup layers
         m_LayerStack.Init();
+		
 		//Create window
-		{
-			WindowDesc desc = {};
-			desc.pTitle				= m_Params.pTitle;
-			desc.Width				= m_Params.WindowWidth;
-			desc.Height				= m_Params.WindowHeight;
-			desc.GraphicsDeviceAPI	= m_Params.GraphicsDeviceApi;
-			desc.SampleCount		= m_Params.SampleCount;
-			desc.Fullscreen			= m_Params.Fullscreen;
+		WindowDesc desc = {};
+		desc.pTitle				= m_Params.pTitle;
+		desc.Width				= m_Params.WindowWidth;
+		desc.Height				= m_Params.WindowHeight;
+		desc.GraphicsDeviceAPI	= m_Params.GraphicsDeviceApi;
+		desc.SampleCount		= m_Params.SampleCount;
+		desc.Fullscreen			= m_Params.Fullscreen;
+		m_pWindow = IWindow::Create(desc);
+		m_pWindow->SetEventCallback(DBG_NEW ObjectEventCallback(this, &Application::OnEvent));
+		//Push Resize callback
+		PushCallback<IGraphicsDevice, WindowResizeEvent>(IGraphicsDevice::Get(), &IGraphicsDevice::OnResize);
 
-			m_pWindow = IWindow::Create(desc);
-			m_pWindow->SetEventCallback(DBG_NEW ObjectEventCallback(this, &Application::OnEvent));
-
-			//Push Resize callback
-			PushCallback<IGraphicsDevice, WindowResizeEvent>(IGraphicsDevice::Get(), &IGraphicsDevice::OnResize);
-		}
 		//Create UI-Layer
-        {
-			m_pUILayer = DBG_NEW UILayer();
-			//Push ImGui-Layer
-            PushLayer(m_pUILayer);
-		}
+		m_pUILayer = DBG_NEW UILayer();
+		//Push ImGui-Layer
+        PushLayer(m_pUILayer);
+		
 		//Set joystick-pollingrate
 		JoystickManager::SetPollrate(Timestep::Seconds(1.0f / 60.0f));
 		//Load rest of application
@@ -161,15 +158,18 @@ namespace Lambda
 
 	void Application::OnRelease()
 	{
-        //Release all layers
-        for (auto it = m_LayerStack.Begin(); it != m_LayerStack.End(); it++)
-            (*it)->OnRelease();
+		//Release all layers
+		for (auto it = m_LayerStack.Begin(); it != m_LayerStack.End(); it++)
+		{
+			Layer* pLayer = (*it);
+			pLayer->OnRelease();
+		}
+		//Destroy window
+		SafeDelete(m_pWindow);
         //Release LayerStack
         m_LayerStack.Release();
         //Release Eventdispatcher
         m_Dispatcher.Release();
-		//Destroy window
-        SafeDelete(m_pWindow);
 	}
 
 
