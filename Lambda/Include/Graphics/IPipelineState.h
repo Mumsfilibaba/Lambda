@@ -40,6 +40,8 @@ namespace Lambda
 		PolygonMode			FillMode						= POLYGON_MODE_FILL;
         PrimitiveTopology	Topology					= PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 		bool				FrontFaceCounterClockWise	= false;
+		//Blending
+		bool EnableBlending = false;
 		//Depth test
         bool DepthTest = true;
         //RenderPass defines the framebuffer

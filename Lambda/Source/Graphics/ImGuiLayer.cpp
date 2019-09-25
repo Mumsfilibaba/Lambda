@@ -226,6 +226,7 @@ namespace Lambda
 		pipelineStateDesc.FillMode					= POLYGON_MODE_FILL;
 		pipelineStateDesc.FrontFaceCounterClockWise = true;
 		pipelineStateDesc.DepthTest					= false;
+		pipelineStateDesc.EnableBlending			= true;
 		pDevice->CreateGraphicsPipelineState(&m_pPipelineState, pipelineStateDesc);
 
 
@@ -297,7 +298,7 @@ namespace Lambda
         ImGuiIO& io = ImGui::GetIO();
         if (corner != -1)
         {
-            ImVec2 window_pos = ImVec2((corner & 1) ? io.DisplaySize.x - DISTANCE : DISTANCE, (corner & 2) ? io.DisplaySize.y - DISTANCE : DISTANCE);
+            ImVec2 window_pos		= ImVec2((corner & 1) ? io.DisplaySize.x - DISTANCE : DISTANCE, (corner & 2) ? io.DisplaySize.y - DISTANCE : DISTANCE);
             ImVec2 window_pos_pivot = ImVec2((corner & 1) ? 1.0f : 0.0f, (corner & 2) ? 1.0f : 0.0f);
             ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
         }

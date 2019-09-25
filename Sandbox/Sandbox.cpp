@@ -27,7 +27,7 @@ namespace Lambda
 
     static void ShowEntityEditor()
     {
-        //ImGui::SetNextWindowSize(ImVec2(430,450));
+        ImGui::SetNextWindowSize(ImVec2(430,450), ImGuiCond_FirstUseEver);
         if (!ImGui::Begin("Entities", NULL))
         {
             ImGui::End();
@@ -323,17 +323,19 @@ namespace Lambda
                 };
                 
                 GraphicsPipelineStateDesc desc = {};
-                desc.pVertexShader		= m_pVS;
-                desc.pPixelShader		= m_pPS;
-                desc.pInputElements		= elements;
-                desc.InputElementCount	= sizeof(elements) / sizeof(InputElement);
-                desc.Cull				= CULL_MODE_BACK;
-				desc.FillMode				= POLYGON_MODE_FILL;
-                desc.Topology			= PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-				desc.pRenderPass		= m_pRenderPass;
-				desc.pResourceState		= m_pResourceState;
-                desc.DepthTest			= true;
-                
+				desc.pName						= "MainPipelineState";
+                desc.pVertexShader				= m_pVS;
+                desc.pPixelShader				= m_pPS;
+                desc.pInputElements				= elements;
+                desc.InputElementCount			= sizeof(elements) / sizeof(InputElement);
+                desc.Cull						= CULL_MODE_BACK;
+				desc.FillMode					= POLYGON_MODE_FILL;
+                desc.Topology					= PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+				desc.pRenderPass				= m_pRenderPass;
+				desc.pResourceState				= m_pResourceState;
+                desc.DepthTest					= true;
+				desc.EnableBlending				= false;
+				desc.FrontFaceCounterClockWise	= false;                
                 pDevice->CreateGraphicsPipelineState(&m_pPipelineState, desc);
             }
 

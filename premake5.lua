@@ -82,10 +82,6 @@ workspace "Lambda"
 			"%{prj.name}/**.c",
 			"%{prj.name}/**.hlsl"
 		}
-		dependson
-		{
-			"ImGui"
-		}
 		excludes 
 		{	
 			"**.hlsl"
