@@ -1,5 +1,6 @@
 #pragma once
 #include "Events/Event.h"
+#include "Time/Timestep.h"
 #include <vector>
 #include <unordered_map>
 
@@ -20,8 +21,9 @@ namespace Lambda
         : m_pName(pName) {}
 		virtual ~EventLayer() = default;
 
-		virtual void	OnPush()	= 0;
-		virtual void	OnPop()	    = 0;
+		virtual void	OnPush() {};
+        virtual void	OnPop()	 {};
+        //virtual void    OnUpdate(TimeStamp dt);
 		virtual bool	OnEvent(const Event& event) = 0;
 		virtual uint32	GetRecivableCategories() const = 0;
 

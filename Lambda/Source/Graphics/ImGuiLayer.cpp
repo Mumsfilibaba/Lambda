@@ -292,7 +292,6 @@ namespace Lambda
 	{
         //ImGui::ShowDemoWindow();
         
-        
         const float DISTANCE = 10.0f;
         static int corner = 0;
         ImGuiIO& io = ImGui::GetIO();

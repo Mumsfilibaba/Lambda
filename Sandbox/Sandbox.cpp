@@ -6,16 +6,28 @@
 #include "Events/MouseEvent.h"
 #include "Graphics/MeshFactory.h"
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/euler_angles.hpp>
 
 #define SINGLE_CUBE
 #define RGB_F(r, g, b) float(r) / 255.0f, float(g) / 255.0f, float(b) / 255.0f
 
 namespace Lambda
 {
+    struct Transform
+    {
+        float Position[3] = { 0.0f, 0.0f, 0.0f };
+        float Rotation[3] = { 0.0f, 0.0f, 0.0f };
+        float Scale[3] = { 1.0f, 1.0f, 1.0f };
+    };
+
+    static Transform transformLight;
+    static Transform transformRevolver;
+    static float lightColor[4];
+
+
     static void ShowEntityEditor()
     {
-        static bool show = true;
-        ImGui::SetNextWindowSize(ImVec2(430,450));
+        //ImGui::SetNextWindowSize(ImVec2(430,450));
         if (!ImGui::Begin("Entities", NULL))
         {
             ImGui::End();
@@ -28,39 +40,96 @@ namespace Lambda
 
         struct funcs
         {
-            static void ShowDummyObject(const char* prefix, int uid)
+            static void ShowLight(uint32 uid, float* pColor)
+            {
+                ImGui::PushID(uid);
+                ImGui::AlignTextToFramePadding();
+                bool nodeOpen = ImGui::TreeNode("Light", "Light");
+                ImGui::NextColumn();
+                ImGui::AlignTextToFramePadding();
+                ImGui::NextColumn();
+                
+                if (nodeOpen)
+                {
+                    ImGui::PushID(0);
+                    {
+                        ImGui::AlignTextToFramePadding();
+                        ImGui::TreeNodeEx("Color", ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Bullet, "Color");
+                        ImGui::NextColumn();
+                        ImGui::ColorPicker4("##picker", pColor, ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview);
+                        ImGui::NextColumn();
+                    }
+                    ImGui::PopID();
+                    ImGui::TreePop();
+                }
+                ImGui::PopID();
+            }
+            
+            static void ShowTransform(uint32 uid, float* pPosition, float* pRotation, float* pScale)
+            {
+                ImGui::AlignTextToFramePadding();
+                ImGui::PushID(uid);
+                bool nodeOpen = ImGui::TreeNode("Transform", "Transform");
+                ImGui::NextColumn();
+                ImGui::AlignTextToFramePadding();
+                ImGui::NextColumn();
+                
+                if (nodeOpen)
+                {
+                    ImGui::AlignTextToFramePadding();
+                    ImGui::PushID(0); // Use field index as identifier.
+                    {
+                        // Here we use a TreeNode to highlight on hover (we could use e.g. Selectable as well)
+                        ImGui::TreeNodeEx("Position", ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen, "Position");
+                        ImGui::NextColumn();
+                        ImGui::SetNextItemWidth(-1);
+                        ImGui::DragFloat3("", pPosition, 0.05f);
+                        ImGui::NextColumn();
+                    }
+                    ImGui::PopID();
+                    
+                    ImGui::PushID(1); // Use field index as identifier.
+                    {
+                        ImGui::TreeNodeEx("Rotation", ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen, "Rotation");
+                        ImGui::NextColumn();
+                        ImGui::SetNextItemWidth(-1);
+                        ImGui::DragFloat3("", pRotation);
+                        ImGui::NextColumn();
+                    }
+                    ImGui::PopID();
+                    
+                    ImGui::PushID(2); // Use field index as identifier.
+                    {
+                        ImGui::TreeNodeEx("Scale", ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen, "Scale");
+                        ImGui::NextColumn();
+                        ImGui::SetNextItemWidth(-1);
+                        ImGui::DragFloat3("", pScale, 0.05f);
+                        ImGui::NextColumn();
+                    }
+                    ImGui::PopID();
+                    ImGui::TreePop();
+                }
+                ImGui::PopID();
+            }
+            
+            static void ShowObject(const char* prefix, int uid)
             {
                 ImGui::PushID(uid);                      // Use object uid as identifier. Most commonly you could also use the object pointer as a base ID.
                 ImGui::AlignTextToFramePadding();  // Text and Tree nodes are less high than regular widgets, here we add vertical spacing to make the tree lines equal high.
-                bool node_open = ImGui::TreeNode("Object", "%s_%u", prefix, uid);
+                bool nodeOpen = ImGui::TreeNode("Object", "%s_%u", prefix, uid);
                 ImGui::NextColumn();
                 ImGui::AlignTextToFramePadding();
-                ImGui::Text("my sailor is rich");
                 ImGui::NextColumn();
-                if (node_open)
+                if (nodeOpen)
                 {
-                    static float dummy_members[8] = { 0.0f,0.0f,1.0f,3.1416f,100.0f,999.0f };
-                    for (int i = 0; i < 8; i++)
+                    if (uid == 0)
                     {
-                        ImGui::PushID(i); // Use field index as identifier.
-                        if (i < 2)
-                        {
-                            ShowDummyObject("Child", 424242);
-                        }
-                        else
-                        {
-                            // Here we use a TreeNode to highlight on hover (we could use e.g. Selectable as well)
-                            ImGui::AlignTextToFramePadding();
-                            ImGui::TreeNodeEx("Field", ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Bullet, "Field_%d", i);
-                            ImGui::NextColumn();
-                            ImGui::SetNextItemWidth(-1);
-                            if (i >= 5)
-                                ImGui::InputFloat("##value", &dummy_members[i], 1.0f);
-                            else
-                                ImGui::DragFloat("##value", &dummy_members[i], 0.01f);
-                            ImGui::NextColumn();
-                        }
-                        ImGui::PopID();
+                        ShowTransform(0, transformRevolver.Position, transformRevolver.Rotation, transformRevolver.Scale);
+                    }
+                    else if (uid == 1)
+                    {
+                        ShowLight(0, lightColor);
+                        ShowTransform(1, transformLight.Position, transformLight.Rotation, transformLight.Scale);
                     }
                     ImGui::TreePop();
                 }
@@ -68,9 +137,9 @@ namespace Lambda
             }
         };
 
-        // Iterate dummy objects with dummy members (all the same data)
-        for (int obj_i = 0; obj_i < 3; obj_i++)
-            funcs::ShowDummyObject("Object", obj_i);
+
+        funcs::ShowObject("Entity", 0);
+        funcs::ShowObject("Entity", 1);
 
         ImGui::Columns(1);
         ImGui::Separator();
@@ -101,6 +170,20 @@ namespace Lambda
 
 	void SandBox::OnLoad()
 	{
+        //Init transforms
+        transformRevolver.Position[1] = -1.0f;
+        transformRevolver.Rotation[1] = 180.0f;
+        
+        transformLight.Position[0] = -1.5f;
+        transformLight.Position[1] = 0.5f;
+        transformLight.Position[2] = -1.0f;
+        
+        //Init color
+        lightColor[0] = 255.0f / 255.0f;
+        lightColor[1] = 241.0f / 255.0f;
+        lightColor[2] = 224.0f / 255.0f;
+        lightColor[3] = 1.0f;
+        
 		//Add Sandbox callbacks
 		EventDispatcher::PushCallback<SandBox, KeyPressedEvent>(this, &SandBox::OnKeyPressed);
 		EventDispatcher::PushCallback<SandBox, WindowResizeEvent>(this, &SandBox::OnWindowResize);
@@ -508,9 +591,12 @@ namespace Lambda
         //Update lightbuffer
         static LightBuffer lightBuffer  =
         {
-            glm::vec4(RGB_F(255, 241, 224), 1.0f),
-            glm::vec3(-1.5f, 0.5f, -1.0f)
+            glm::vec4(lightColor[0], lightColor[1], lightColor[2], lightColor[3]),
+            glm::vec3(transformLight.Position[0], transformLight.Position[1], transformLight.Position[2])
         };
+        
+        lightBuffer.Color       = glm::vec4(lightColor[0], lightColor[1], lightColor[2], lightColor[3]);
+        lightBuffer.Position    = glm::vec3(transformLight.Position[0], transformLight.Position[1], transformLight.Position[2]);
         
         data.pData          = &lightBuffer;
         data.SizeInBytes    = sizeof(LightBuffer);
@@ -531,10 +617,6 @@ namespace Lambda
 		//Set rendertargets and clearcolors
 		m_pRenderPass->SetRenderTargets(&pRenderTarget, 1, pDepthBuffer);
 		m_pRenderPass->SetClearValues(color, 1.0f, 0);
-
-        //Setup rotation
-		static glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        //rotation = glm::rotate(rotation, glm::radians(30.0f) * dt.AsSeconds(), glm::vec3(0.0f, 1.0f, 0.0f));
         
 		//Update userinterface
 		GetUILayer()->Begin(dt);
@@ -567,9 +649,15 @@ namespace Lambda
         //End renderpass
         m_pCurrentList->EndRenderPass();
 #else
+        
+        //Setup rotation
+        glm::mat4 translation = glm::translate(glm::mat4(1.0f), glm::vec3(transformRevolver.Position[0], transformRevolver.Position[1], transformRevolver.Position[2]));
+        glm::mat4 rotation = glm::eulerAngleYXZ(glm::radians(transformRevolver.Rotation[1]), glm::radians(transformRevolver.Rotation[0]), glm::radians(transformRevolver.Rotation[2]));
+        glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(transformRevolver.Scale[0], transformRevolver.Scale[1], transformRevolver.Scale[2]));
+        
         //Update transforms
-        m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f)) * rotation;
-        data.pData            = &m_TransformBuffer;
+        m_TransformBuffer.Model = translation * rotation * scale;
+        data.pData          = &m_TransformBuffer;
         data.SizeInBytes    = sizeof(TransformBuffer);
         m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);
 

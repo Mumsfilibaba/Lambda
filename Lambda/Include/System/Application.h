@@ -4,6 +4,7 @@
 #include "Events/EventDispatcher.h"
 #include "Graphics/IGraphicsDevice.h"
 #include "Graphics/ImGuiLayer.h"
+#include "Debug/DebugLayer.h"
 
 namespace Lambda
 {
@@ -74,6 +75,7 @@ namespace Lambda
 		IWindow* 			m_pWindow;
 		ImGuiLayer*	 		m_pImGuiLayer;
 		ApplicationLayer* 	m_pApplicationLayer;
+        DebugLayer*         m_pDebugLayer;
 		EngineParams 		m_Params;
 		int32 				m_ExitCode;
 		bool 				m_Running;
