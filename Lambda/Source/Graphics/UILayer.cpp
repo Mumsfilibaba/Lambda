@@ -376,11 +376,13 @@ namespace Lambda
             ImGui::Separator();
             
             static float timer = 0.0f;
+			static float timer2 = 0.0f;
             static int32 fps = 0;
             static int32 currentFPS = 0;
             
             float ms = io.DeltaTime * 1000.0f;
             timer += ms;
+			timer2 += ms;
             
             fps++;
             if (timer >= 1000.0f)
@@ -395,16 +397,26 @@ namespace Lambda
             
             static float values[90]     = { 0 };
             static int   values_offset  = 0;
-            values[values_offset] = ms;
-            values_offset = (values_offset+1) % IM_ARRAYSIZE(values);
+			if (timer2 >= 8.0f)
+			{
+				values[values_offset] = ms;
+				values_offset = (values_offset+1) % IM_ARRAYSIZE(values);
+				timer2 = 0.0f;
+			}
+
             {
+				static float max = 1.0f;
                 float average = 0.0f;
                 for (int n = 0; n < IM_ARRAYSIZE(values); n++)
                     average += values[n];
                 average /= (float)IM_ARRAYSIZE(values);
+
+				if (average >= max)
+					max = average * 2.0f;
+
                 char overlay[32];
                 sprintf(overlay, "avg %f", average);
-                ImGui::PlotLines("", values, IM_ARRAYSIZE(values), values_offset, overlay, -1.0f, 1.0f, ImVec2(0,80));
+                ImGui::PlotLines("", values, IM_ARRAYSIZE(values), values_offset, overlay, 0.0f, max, ImVec2(0,80));
             }
             
             ImGui::PopStyleColor();
