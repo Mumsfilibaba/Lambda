@@ -5,6 +5,7 @@
 #include "Events/EventDispatcher.h"
 #include "Graphics/IGraphicsDevice.h"
 #include "Graphics/UILayer.h"
+#include "Graphics/Renderer3D.h"
 #include "Debug/DebugLayer.h"
 
 namespace Lambda
@@ -53,6 +54,7 @@ namespace Lambda
         
         IWindow* GetWindow() const;
         UILayer* GetUILayer() const;
+		const Renderer3D& GetRenderer() const;
         const EngineParams& GetEngineParams() const;
     private:
         void OnLoad();
@@ -70,6 +72,7 @@ namespace Lambda
 		UILayer*	 		m_pUILayer;
         EventDispatcher     m_Dispatcher;
         LayerStack          m_LayerStack;
+		Renderer3D			m_Renderer;
 		EngineParams 		m_Params;
 		int32 				m_ExitCode;
 		bool 				m_Running;

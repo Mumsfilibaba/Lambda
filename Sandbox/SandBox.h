@@ -50,7 +50,7 @@ namespace Lambda
 
         virtual void OnLoad() override final;
         virtual void OnUpdate(Timestep dt) override final;
-        virtual void OnRender(Timestep dt) override final;
+        virtual void OnRender(Timestep dt, ICommandList* pCurrentList) override final;
         virtual void OnRenderUI(Timestep dt) override final;
         virtual void OnRelease() override final;
         virtual bool OnEvent(const Event& event) override final;
@@ -60,9 +60,6 @@ namespace Lambda
         bool OnKeyPressed(const KeyPressedEvent& event);
         void CreateCamera(uint32 width, uint32 height);
     private:
-        //Commandlist
-        ICommandList* m_pLists[3];
-        ICommandList* m_pCurrentList;
         //Querys
         IQuery* m_pQueries[3];
         //Shaders
@@ -82,8 +79,6 @@ namespace Lambda
         ISamplerState* m_pSamplerState;
         //Pipelinestates
         IGraphicsPipelineState* m_pPipelineState;
-        //RenderPass
-        IRenderPass* m_pRenderPass;
         //ResourceState
         IPipelineResourceState* m_pResourceState;
         //Other

@@ -41,16 +41,12 @@ namespace Lambda
 
 	SandBoxLayer::SandBoxLayer()
          : Layer("SandBoxLayer"),
-        m_pLists(),
-        m_pCurrentList(nullptr),
 		m_pVS(nullptr),
 		m_pPS(nullptr),
 		m_pVertexBuffer(nullptr),
         m_pIndexBuffer(nullptr),
         m_pPipelineState(nullptr)
 	{
-		for (uint32 i = 0; i < 3; i++)
-			m_pLists[i] = nullptr;
 	}
 
 
@@ -78,24 +74,9 @@ namespace Lambda
 		IGraphicsDevice* pDevice = IGraphicsDevice::Get();
         if (pDevice)
         {
-            //Create commandlists
-            {
-                for (uint32 i = 0; i < 3; i++)
-                {
-                    pDevice->CreateCommandList(&m_pLists[i], COMMAND_LIST_TYPE_GRAPHICS);
-                    if (m_pLists[i])
-                    {
-                        std::string name = "CommandList [" + std::to_string(i) + "]";
-                        m_pLists[i]->SetName(name.c_str());
-                    }
-                }
-
-                m_pCurrentList = m_pLists[0];
-                if (m_pCurrentList)
-                {
-                    m_pCurrentList->Reset();
-                }
-            }
+			ICommandList* pTempList = nullptr;
+			pDevice->CreateCommandList(&pTempList, COMMAND_LIST_TYPE_GRAPHICS);
+			pTempList->Reset();
 
             //Create queries
             {
@@ -105,7 +86,7 @@ namespace Lambda
                 for (uint32 i = 0; i < 3; i++)
                 {
                     pDevice->CreateQuery(&m_pQueries[i], desc);
-                    m_pCurrentList->ResetQuery(m_pQueries[i]);
+					pTempList->ResetQuery(m_pQueries[i]);
                 }
             }
             
@@ -125,28 +106,6 @@ namespace Lambda
 
             //Define depthformat
             ResourceFormat depthFormat = FORMAT_D24_UNORM_S8_UINT;
-            
-
-			//Create RenderPass
-			{
-				RenderPassDesc desc = {};
-				desc.SampleCount						= app.GetEngineParams().SampleCount;
-				desc.NumRenderTargets					= 1;
-				desc.RenderTargets[0].Format			= pDevice->GetBackBufferFormat();
-                desc.RenderTargets[0].Flags				= RENDER_PASS_ATTACHMENT_FLAG_RESOLVE;
-                desc.RenderTargets[0].LoadOperation		= LOAD_OP_CLEAR;
-                desc.RenderTargets[0].StoreOperation	= STORE_OP_STORE;
-                desc.RenderTargets[0].FinalState		= RESOURCE_STATE_RENDERTARGET_PRESENT;
-				desc.DepthStencil.Format				= depthFormat;
-                desc.DepthStencil.Flags					= 0;
-                desc.DepthStencil.LoadOperation			= LOAD_OP_CLEAR;
-                desc.DepthStencil.StoreOperation		= STORE_OP_UNKNOWN;
-                desc.DepthStencil.FinalState			= RESOURCE_STATE_DEPTH_STENCIL;
-				
-				pDevice->CreateRenderPass(&m_pRenderPass, desc);
-				app.GetUILayer()->Init(m_pRenderPass, m_pCurrentList);
-			}
-
 
 			//Create ResourceState
 			{
@@ -214,7 +173,7 @@ namespace Lambda
                 desc.Cull						= CULL_MODE_BACK;
 				desc.FillMode					= POLYGON_MODE_FILL;
                 desc.Topology					= PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-				desc.pRenderPass				= m_pRenderPass;
+				desc.pRenderPass				= app.GetRenderer().GetRenderPass();
 				desc.pResourceState				= m_pResourceState;
                 desc.DepthTest					= true;
 				desc.EnableBlending				= false;
@@ -223,7 +182,7 @@ namespace Lambda
             }
 
             //Create vertexbuffer
-            MeshData mesh = MeshFactory::CreateFromFile("revolver.obj");
+			MeshData mesh = MeshFactory::CreateCube();//MeshFactory::CreateFromFile("revolver.obj");
 			m_IndexCount = uint32(mesh.Indices.size());
 			{
                 BufferDesc desc     = {};
@@ -335,29 +294,26 @@ namespace Lambda
             //Create texture
             m_pAlbedo = ITexture::CreateTextureFromFile(pDevice, "revolver_albedo.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
             m_pNormal = ITexture::CreateTextureFromFile(pDevice, "revolver_normal.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
-			m_pCurrentList->TransitionTexture(m_pAlbedo, RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0, LAMBDA_TRANSITION_ALL_MIPS);
-            m_pCurrentList->TransitionTexture(m_pNormal, RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0, LAMBDA_TRANSITION_ALL_MIPS);
+			pTempList->TransitionTexture(m_pAlbedo, RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0, LAMBDA_TRANSITION_ALL_MIPS);
+			pTempList->TransitionTexture(m_pNormal, RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0, LAMBDA_TRANSITION_ALL_MIPS);
 
             //Create samplerstate
-            {
-                TextureDesc textureDesc = m_pAlbedo->GetDesc();
-                
-                SamplerStateDesc desc = {};
-                desc.AdressMode = SAMPLER_ADDRESS_MODE_REPEAT;
-				desc.MinMipLOD	= 0.0f;
-				desc.MaxMipLOD	= float(textureDesc.MipLevels);
-				desc.MipLODBias	= 0.0f;
-				desc.Anisotropy = 16.0f;
-                
-                pDevice->CreateSamplerState(&m_pSamplerState, desc);
-            }
+            TextureDesc textureDesc = m_pAlbedo->GetDesc();
+            SamplerStateDesc desc = {};
+            desc.AdressMode = SAMPLER_ADDRESS_MODE_REPEAT;
+			desc.MinMipLOD	= 0.0f;
+			desc.MaxMipLOD	= float(textureDesc.MipLevels);
+			desc.MipLODBias	= 0.0f;
+			desc.Anisotropy = 16.0f;
+            pDevice->CreateSamplerState(&m_pSamplerState, desc);
 
             //Close and execute commandlist
-            m_pCurrentList->Close();
-            pDevice->ExecuteCommandList(&m_pCurrentList, 1);
-
+			pTempList->Close();
+            pDevice->ExecuteCommandList(&pTempList, 1);
             //Wait for GPU
             pDevice->WaitForGPU();
+			//Destroy temp commandlist
+			pDevice->DestroyCommandList(&pTempList);
         }
 	}
 
@@ -402,7 +358,7 @@ namespace Lambda
 	}
 
 
-	void SandBoxLayer::OnRender(Timestep dt)
+	void SandBoxLayer::OnRender(Timestep dt, ICommandList* pCurrentList)
 	{
         static Clock clock;
         
@@ -411,13 +367,11 @@ namespace Lambda
         
         //Set commandlist for frame
         uint32 backBufferIndex = pDevice->GetBackBufferIndex();
-        m_pCurrentList = m_pLists[backBufferIndex];
-        m_pCurrentList->Reset();
 
         //Get values and reset query
         uint64 values[2] = { 0, 0 };
         m_pQueries[backBufferIndex]->GetResults(values, 2, 0);
-        m_pCurrentList->ResetQuery(m_pQueries[backBufferIndex]);
+		pCurrentList->ResetQuery(m_pQueries[backBufferIndex]);
         
         clock.Tick();
         if (clock.GetTotalTime().AsSeconds() > 1.0f)
@@ -428,14 +382,6 @@ namespace Lambda
             LOG_SYSTEM(LOG_SEVERITY_INFO, "Renderpass time: %.2fms\n", ms);
             clock.Reset();
         }
-
-		//Begin frame
-		pDevice->PresentBegin();
-        
-		//Get rendertarget
-        float color[] = { 0.392f, 0.584f, 0.929f, 1.0f };
-        ITexture* pRenderTarget = pDevice->GetRenderTarget();
-        ITexture* pDepthBuffer	= pDevice->GetDepthStencil();
                 
         //Set scissor and viewport
         Rectangle scissorrect;
@@ -452,18 +398,18 @@ namespace Lambda
         viewport.MinDepth   = 0.0f;
         viewport.MaxDepth   = 1.0f;
         
-        m_pCurrentList->SetViewport(viewport);
-        m_pCurrentList->SetScissorRect(scissorrect);
+		pCurrentList->SetViewport(viewport);
+		pCurrentList->SetScissorRect(scissorrect);
         
         //Set pipelinestate and topology
-        m_pCurrentList->SetGraphicsPipelineState(m_pPipelineState);
+		pCurrentList->SetGraphicsPipelineState(m_pPipelineState);
         
         //Update Colorbuffer
         ResourceData data   = {};
         glm::vec4 colorBuff = glm::vec4(RGB_F(255, 255, 255), 1.0f);
         data.pData          = &colorBuff;
         data.SizeInBytes    = sizeof(glm::vec4);
-        m_pCurrentList->UpdateBuffer(m_pColorBuffer, &data);
+		pCurrentList->UpdateBuffer(m_pColorBuffer, &data);
         
         //Update camera buffer
         m_CameraBuffer.View         = m_Camera.GetView();
@@ -471,7 +417,7 @@ namespace Lambda
         m_CameraBuffer.Position     = m_Camera.GetPosition();
         data.pData			= &m_CameraBuffer;
         data.SizeInBytes	= sizeof(CameraBuffer);
-        m_pCurrentList->UpdateBuffer(m_pCameraBuffer, &data);
+		pCurrentList->UpdateBuffer(m_pCameraBuffer, &data);
         
         //Update lightbuffer
         static LightBuffer lightBuffer  =
@@ -485,7 +431,7 @@ namespace Lambda
         
         data.pData          = &lightBuffer;
         data.SizeInBytes    = sizeof(LightBuffer);
-        m_pCurrentList->UpdateBuffer(m_pLightBuffer, &data);
+		pCurrentList->UpdateBuffer(m_pLightBuffer, &data);
         
         //Set resources
 		IBuffer*    buffers[]	= { m_pCameraBuffer, m_pTransformBuffer, m_pColorBuffer, m_pLightBuffer };
@@ -493,15 +439,11 @@ namespace Lambda
 		m_pResourceState->SetConstantBuffers(buffers, 4, 0);
 		m_pResourceState->SetTextures(textures, 2, 4);
 		m_pResourceState->SetSamplerStates(&m_pSamplerState, 1, 6);
-		m_pCurrentList->SetGraphicsPipelineResourceState(m_pResourceState);
+		pCurrentList->SetGraphicsPipelineResourceState(m_pResourceState);
         
         //Set vertex- and indexbuffer
-        m_pCurrentList->SetVertexBuffer(m_pVertexBuffer, 0);
-        m_pCurrentList->SetIndexBuffer(m_pIndexBuffer, FORMAT_R32_UINT);
-        
-		//Set rendertargets and clearcolors
-		m_pRenderPass->SetRenderTargets(&pRenderTarget, 1, pDepthBuffer);
-		m_pRenderPass->SetClearValues(color, 1.0f, 0);
+		pCurrentList->SetVertexBuffer(m_pVertexBuffer, 0);
+		pCurrentList->SetIndexBuffer(m_pIndexBuffer, FORMAT_R32_UINT);
 
 #if !defined(SINGLE_CUBE)
         //Begin renderpass
@@ -535,28 +477,22 @@ namespace Lambda
         m_TransformBuffer.Model = translation * rotation * scale;
         data.pData          = &m_TransformBuffer;
         data.SizeInBytes    = sizeof(TransformBuffer);
-        m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);
+		pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);
 
 		//Begin renderpass
-        m_pCurrentList->WriteTimeStamp(m_pQueries[backBufferIndex], PIPELINE_STAGE_VERTEX);
-		m_pCurrentList->BeginRenderPass(m_pRenderPass);
+		pCurrentList->WriteTimeStamp(m_pQueries[backBufferIndex], PIPELINE_STAGE_VERTEX);
+		pCurrentList->BeginRenderPass(Application::Get().GetRenderer().GetRenderPass());
         
 		//Draw first
-		m_pCurrentList->DrawIndexedInstanced(m_IndexCount, 1, 0, 0, 0);
+		pCurrentList->DrawIndexedInstanced(m_IndexCount, 1, 0, 0, 0);
 
 		//Draw the UI
-		Application::Get().GetUILayer()->Draw(m_pCurrentList);
+		Application::Get().GetUILayer()->Draw(pCurrentList);
 
 		//End renderpass
-		m_pCurrentList->EndRenderPass();
-        m_pCurrentList->WriteTimeStamp(m_pQueries[backBufferIndex], PIPELINE_STAGE_PIXEL);
+		pCurrentList->EndRenderPass();
+		pCurrentList->WriteTimeStamp(m_pQueries[backBufferIndex], PIPELINE_STAGE_PIXEL);
 #endif
-     
-        //Close the commandlist
-        m_pCurrentList->Close();
-        
-        //Present
-        pDevice->PresentEnd(&m_pCurrentList, 1);
 	}
 
 
@@ -567,16 +503,12 @@ namespace Lambda
         {
             pDevice->WaitForGPU();
 
-            for (uint32 i = 0; i < 3; i++)
-            {
-                pDevice->DestroyCommandList(&m_pLists[i]);
-                pDevice->DestroyQuery(&m_pQueries[i]);
-            }
+			for (uint32 i = 0; i < 3; i++)
+				pDevice->DestroyQuery(&m_pQueries[i]);
 
             pDevice->DestroyShader(&m_pVS);
             pDevice->DestroyShader(&m_pPS);
 			pDevice->DestroyResourceState(&m_pResourceState);
-			pDevice->DestroyRenderPass(&m_pRenderPass);
             pDevice->DestroyGraphicsPipelineState(&m_pPipelineState);
             pDevice->DestroyBuffer(&m_pVertexBuffer);
             pDevice->DestroyBuffer(&m_pIndexBuffer);

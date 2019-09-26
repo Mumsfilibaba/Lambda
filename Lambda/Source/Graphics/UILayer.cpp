@@ -310,7 +310,7 @@ namespace Lambda
 		pList->TransitionTexture(m_pFontTexture, RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0, LAMBDA_TRANSITION_ALL_MIPS);
 
 		// Store our identifier
-		io.Fonts->TexID = (ImTextureID)(intptr_t)m_pFontTexture->GetNativeHandle();
+		//io.Fonts->TexID = (ImTextureID)(intptr_t)m_pFontTexture->GetNativeHandle();
 
 
 		//Create vertex and indexbuffer

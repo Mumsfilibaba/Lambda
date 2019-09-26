@@ -171,7 +171,7 @@ namespace Lambda
         
         //Create swapchain
         VKNSwapChainDesc swapChainInfo = {};
-        swapChainInfo.VerticalSync       = true;
+        swapChainInfo.VerticalSync       = desc.VerticalSync;
         swapChainInfo.Format.format      = VK_FORMAT_B8G8R8A8_UNORM;
         swapChainInfo.Format.colorSpace  = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
         swapChainInfo.Extent             = { desc.pWindow->GetWidth(), desc.pWindow->GetHeight() };
@@ -268,20 +268,6 @@ namespace Lambda
 			m_pMSAABuffer = nullptr;
 		}
 	}
-    
-    
-    void VKNGraphicsDevice::GetNextFrame() const
-    {
-        //Advance current frame counter
-		GraphicsDeviceDesc desc = m_pDevice->GetDesc();
-        m_CurrentFrame			= (m_CurrentFrame + 1) % desc.BackBufferCount;
-		m_pDynamicBufferManager->MoveToNextFrame(uint32(m_CurrentFrame));
-
-		//Cleanup memory
-		m_pDeviceAllocator->CleanGarbageMemory(m_CurrentFrame);
-		//Cleanup descriptorpool
-		m_pDescriptorPoolManager->Cleanup();
-    }
     
     
     void VKNGraphicsDevice::CreateCommandList(ICommandList** ppList, CommandListType type)
@@ -677,12 +663,18 @@ namespace Lambda
     void VKNGraphicsDevice::GPUWaitForFrame() const
     {
         //Wait for last frame
-
         vkWaitForFences(m_pDevice->GetDevice(), 1, &m_Fences[m_CurrentFrame], VK_TRUE, std::numeric_limits<uint64_t>::max());
         vkResetFences(m_pDevice->GetDevice(), 1, &m_Fences[m_CurrentFrame]);
         
-		//Move to next frame
-        GetNextFrame();
+		//Advance current frame counter
+		GraphicsDeviceDesc desc = m_pDevice->GetDesc();
+		m_CurrentFrame = (m_CurrentFrame + 1) % desc.BackBufferCount;
+		m_pDynamicBufferManager->MoveToNextFrame(uint32(m_CurrentFrame));
+
+		//Cleanup memory
+		m_pDeviceAllocator->CleanGarbageMemory(m_CurrentFrame);
+		//Cleanup descriptorpool
+		m_pDescriptorPoolManager->Cleanup();
     }
     
     

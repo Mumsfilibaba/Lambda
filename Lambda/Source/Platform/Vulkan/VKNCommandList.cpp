@@ -344,7 +344,7 @@ namespace Lambda
 			barrier.image                           = reinterpret_cast<VkImage>(pVkTexture->GetNativeHandle());
 			barrier.subresourceRange.aspectMask     = pVkTexture->GetAspectFlags();
 			barrier.subresourceRange.baseMipLevel   = startMipLevel;
-        
+			
 			if (numMipLevels == LAMBDA_TRANSITION_ALL_MIPS)
 			{
 				barrier.subresourceRange.levelCount = textureDesc.MipLevels;
@@ -459,6 +459,7 @@ namespace Lambda
     void VKNCommandList::UpdateBuffer(IBuffer* pResource, const ResourceData* pData)
     {        
 		LAMBDA_ASSERT(pData != nullptr);
+		LAMBDA_ASSERT(pData->pData != nullptr && pData->SizeInBytes != 0);
 
 		VKNBuffer* pVkResource = reinterpret_cast<VKNBuffer*>(pResource);
 		
@@ -500,6 +501,7 @@ namespace Lambda
     void VKNCommandList::UpdateTexture(ITexture* pResource, const ResourceData* pData, uint32 mipLevel)
     {
 		LAMBDA_ASSERT(pData != nullptr);
+		LAMBDA_ASSERT(pData->pData != nullptr && pData->SizeInBytes != 0);
 
 		if (!m_pRenderPass)
 		{

@@ -85,7 +85,6 @@ namespace Lambda
             return;
         }
         
-        
         //Set miplevels
         uint32 mipLevels = desc.MipLevels;
         if (desc.Flags & TEXTURE_FLAGS_GENEATE_MIPS)
@@ -93,7 +92,8 @@ namespace Lambda
             mipLevels = uint32(std::floor(std::log2(std::max(desc.Width, desc.Height))));
         }
         
-		//Create image
+
+		//Setup
         VkImageCreateInfo info = {};
         info.sType                  = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
         info.pNext                  = nullptr;
@@ -148,7 +148,7 @@ namespace Lambda
 			}
         }
 
-
+		//Create image
         if (vkCreateImage(device.GetDevice(), &info, nullptr, &m_Image) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create image\n");
@@ -156,16 +156,13 @@ namespace Lambda
         }
         else
         {
-
             LOG_DEBUG_INFO("Vulkan: Created image. w=%u, h=%u, format=%s, adress=%p\n", desc.Width, desc.Height, VkFormatToString(info.format), m_Image);
             m_Desc = desc;
             m_Desc.MipLevels = mipLevels;
-
             //Set that we have created the texture and not external memory
             m_IsOwner = true;
         }
         
-
 		//Allocate memory
 		VkMemoryRequirements memoryRequirements = {};
 		vkGetImageMemoryRequirements(device.GetDevice(), m_Image, &memoryRequirements);
@@ -173,7 +170,6 @@ namespace Lambda
 		{
 			vkBindImageMemory(device.GetDevice(), m_Image, m_Memory.DeviceMemory, m_Memory.DeviceMemoryOffset);
 		}
-
         
         //Create the view
         CreateImageView();

@@ -123,6 +123,10 @@ namespace Lambda
 		
 		//Set joystick-pollingrate
 		JoystickManager::SetPollrate(Timestep::Seconds(1.0f / 60.0f));
+
+		//Init renderer
+		m_Renderer.Init();
+
 		//Load rest of application
         for (auto it = m_LayerStack.Begin(); it != m_LayerStack.End(); it++)
             (*it)->OnLoad();
@@ -143,8 +147,13 @@ namespace Lambda
 
 	void Application::OnRender(Timestep dt)
 	{
+		m_Renderer.Begin();
+
         for (auto it = m_LayerStack.Begin(); it != m_LayerStack.End(); it++)
-            (*it)->OnRender(dt);
+            (*it)->OnRender(dt, m_Renderer.m_pCurrentList);
+
+		m_Renderer.End();
+		m_Renderer.Swapbuffers();
 	}
 
 
@@ -162,6 +171,8 @@ namespace Lambda
 
 	void Application::OnRelease()
 	{
+		//Release renderer
+		m_Renderer.Release();
 		//Remove callback
 		m_pWindow->SetEventCallback(nullptr);
 		//Release all layers
@@ -243,6 +254,12 @@ namespace Lambda
     {
         return m_pUILayer;
     }
+
+	
+	const Renderer3D& Application::GetRenderer() const
+	{
+		return m_Renderer;
+	}
 
 
     void Application::Quit(int32 exitCode)

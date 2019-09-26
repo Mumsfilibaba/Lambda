@@ -73,7 +73,7 @@ namespace Lambda
 		bool CreateMSAABuffer();
         void ReleaseDepthStencil();
 		void ReleaseMSAABuffer();
-        void GetNextFrame() const;
+
         virtual bool OnResize(const WindowResizeEvent& event) override final;
     private:
 		VKNDevice*					m_pDevice;
