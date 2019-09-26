@@ -370,6 +370,7 @@ namespace Lambda
             ImGui::Text("Resolution: %u x %u", pDevice->GetSwapChainWidth(), pDevice->GetSwapChainHeight());
             ImGui::Text("MSAA: %ux", desc.SampleCount);
             ImGui::Text("BackBufferCount: %u", desc.BackBufferCount);
+            ImGui::Text("VerticalSync: %s", desc.VerticalSync ? "On" : "Off");
             
             ImGui::Separator();
             ImGui::Text("Timings:");
@@ -412,7 +413,7 @@ namespace Lambda
                 average /= (float)IM_ARRAYSIZE(values);
 
 				if (average >= max)
-					max = average * 2.0f;
+					max = average * 1.25f;
 
                 char overlay[32];
                 sprintf(overlay, "avg %f", average);

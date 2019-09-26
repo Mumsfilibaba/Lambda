@@ -36,6 +36,7 @@ namespace Lambda
         uint32 Flags           = GRAPHICS_CONTEXT_FLAG_NONE;
 		uint32 SampleCount     = 1;
         uint32 BackBufferCount = 3;
+        bool VerticalSync      = true;
     };
 
     //---------------

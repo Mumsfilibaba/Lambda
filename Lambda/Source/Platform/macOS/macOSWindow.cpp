@@ -122,6 +122,7 @@ namespace Lambda
             {
                 GraphicsDeviceDesc gdDesc = {};
                 gdDesc.pWindow          = this;
+                gdDesc.VerticalSync     = desc.VerticalSync;
                 gdDesc.BackBufferCount  = 3;
                 gdDesc.Api              = desc.GraphicsDeviceAPI;
                 gdDesc.SampleCount      = desc.SampleCount;

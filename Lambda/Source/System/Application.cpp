@@ -110,10 +110,11 @@ namespace Lambda
 		desc.GraphicsDeviceAPI	= m_Params.GraphicsDeviceApi;
 		desc.SampleCount		= m_Params.SampleCount;
 		desc.Fullscreen			= m_Params.Fullscreen;
+        desc.VerticalSync       = m_Params.VerticalSync;
 		m_pWindow = IWindow::Create(desc);
 		m_pWindow->SetEventCallback(DBG_NEW ObjectEventCallback(this, &Application::OnEvent));
 		//Push Resize callback
-		PushCallback<IGraphicsDevice, WindowResizeEvent>(IGraphicsDevice::Get(), &IGraphicsDevice::OnResize);
+		PushCallback(IGraphicsDevice::Get(), &IGraphicsDevice::OnResize);
 
 		//Create UI-Layer
 		m_pUILayer = DBG_NEW UILayer();

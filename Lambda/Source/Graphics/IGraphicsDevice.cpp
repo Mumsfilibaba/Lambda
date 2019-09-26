@@ -15,6 +15,7 @@ namespace Lambda
 
 	IGraphicsDevice* IGraphicsDevice::Get()
 	{
+        LAMBDA_ASSERT(s_pInstance != nullptr);
 		return s_pInstance;
 	}
 }

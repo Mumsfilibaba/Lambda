@@ -171,7 +171,7 @@ namespace Lambda
         
         //Create swapchain
         VKNSwapChainDesc swapChainInfo = {};
-        swapChainInfo.PresentationMode   = VK_PRESENT_MODE_MAILBOX_KHR;
+        swapChainInfo.VerticalSync       = true;
         swapChainInfo.Format.format      = VK_FORMAT_B8G8R8A8_UNORM;
         swapChainInfo.Format.colorSpace  = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
         swapChainInfo.Extent             = { desc.pWindow->GetWidth(), desc.pWindow->GetHeight() };

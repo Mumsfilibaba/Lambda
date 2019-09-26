@@ -67,7 +67,6 @@ namespace Lambda
         virtual uint32			    GetBackBufferIndex() const override final;
         virtual uint32			    GetSwapChainWidth() const override final;
         virtual uint32			    GetSwapChainHeight() const override final;
-
     private:
         void Init(const GraphicsDeviceDesc& desc);
         bool CreateDepthStencil();
@@ -75,9 +74,7 @@ namespace Lambda
         void ReleaseDepthStencil();
 		void ReleaseMSAABuffer();
         void GetNextFrame() const;
-        
         virtual bool OnResize(const WindowResizeEvent& event) override final;
-        
     private:
 		VKNDevice*					m_pDevice;
 		VKNBufferManager*			m_pDynamicBufferManager;
@@ -94,7 +91,6 @@ namespace Lambda
 		std::vector<VkSemaphore>	m_RenderSemaphores;
 		std::vector<VkSemaphore>	m_ImageSemaphores;
         mutable uint64				m_CurrentFrame;
-        
     public:
 		static VKNGraphicsDevice& Get();
     };

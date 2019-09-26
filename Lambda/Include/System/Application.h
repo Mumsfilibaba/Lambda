@@ -21,6 +21,7 @@ namespace Lambda
 		uint32 WindowHeight             = 1080;
 		uint32 SampleCount              = 1;
 		bool Fullscreen                 = false;
+        bool VerticalSync               = true;
 	};
 
 	//-----------

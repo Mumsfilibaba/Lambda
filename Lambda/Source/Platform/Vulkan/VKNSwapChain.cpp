@@ -46,24 +46,30 @@ namespace Lambda
 
 		//Choose a presentationmode
 		m_PresentationMode = VK_PRESENT_MODE_FIFO_KHR;
-		for (const auto& availablePresentMode : cap.PresentModes)
-		{
-            if (availablePresentMode == desc.PresentationMode)
+        if (desc.VerticalSync)
+        {
+            for (const auto& availablePresentMode : cap.PresentModes)
             {
-                m_PresentationMode = availablePresentMode;
-                break;
+                if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
+                {
+                    m_PresentationMode = availablePresentMode;
+                    break;
+                }
             }
-			else if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
-			{
-				m_PresentationMode = availablePresentMode;
-				break;
-			}
-			else if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR)
-			{
-				m_PresentationMode = availablePresentMode;
-			}
-		}
-
+        }
+        else
+        {
+            for (const auto& availablePresentMode : cap.PresentModes)
+            {
+                if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR)
+                {
+                    m_PresentationMode = availablePresentMode;
+                    break;
+                }
+            }
+        }
+        
+		
 		LOG_DEBUG_INFO("Vulkan: Chosen SwapChain PresentationMode '%s'\n", VkPresentatModeToString(m_PresentationMode));
 
 		//Setup swapchain images

@@ -19,7 +19,7 @@ namespace Lambda
         VkExtent2D			Extent          = { 0, 0 };
 		uint32				ImageCount      = 0;
         VkSurfaceFormatKHR	Format;
-        VkPresentModeKHR	PresentationMode;
+        bool                VerticalSync    = true;
 	};
 
 	//------------
