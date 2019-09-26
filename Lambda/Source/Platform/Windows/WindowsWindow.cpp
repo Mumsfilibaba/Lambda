@@ -249,6 +249,7 @@ namespace Lambda
 			gcDesc.Api				= desc.GraphicsDeviceAPI;
 			gcDesc.SampleCount		= desc.SampleCount;
 			gcDesc.BackBufferCount	= 3;
+			gcDesc.VerticalSync		= desc.VerticalSync;
 #if LAMBDA_DEBUG
 			gcDesc.Flags = GRAPHICS_CONTEXT_FLAG_DEBUG;
 #else

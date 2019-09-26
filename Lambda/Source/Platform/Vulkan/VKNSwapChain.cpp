@@ -46,30 +46,32 @@ namespace Lambda
 
 		//Choose a presentationmode
 		m_PresentationMode = VK_PRESENT_MODE_FIFO_KHR;
-        if (desc.VerticalSync)
+        if (!desc.VerticalSync)
         {
-            for (const auto& availablePresentMode : cap.PresentModes)
-            {
-                if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
-                {
-                    m_PresentationMode = availablePresentMode;
-                    break;
-                }
-            }
+			//Search for the mailbox mode
+			for (const auto& availablePresentMode : cap.PresentModes)
+			{
+				if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
+				{
+					m_PresentationMode = availablePresentMode;
+					break;
+				}
+			}
+
+			//If mailbox is not available we choose immediete
+			if (m_PresentationMode == VK_PRESENT_MODE_FIFO_KHR)
+			{
+				for (const auto& availablePresentMode : cap.PresentModes)
+				{
+					if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR)
+					{
+						m_PresentationMode = availablePresentMode;
+						break;
+					}
+				}
+			}
         }
-        else
-        {
-            for (const auto& availablePresentMode : cap.PresentModes)
-            {
-                if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR)
-                {
-                    m_PresentationMode = availablePresentMode;
-                    break;
-                }
-            }
-        }
-        
-		
+       
 		LOG_DEBUG_INFO("Vulkan: Chosen SwapChain PresentationMode '%s'\n", VkPresentatModeToString(m_PresentationMode));
 
 		//Setup swapchain images
@@ -182,9 +184,6 @@ namespace Lambda
 
             m_Buffers.push_back(DBG_NEW VKNTexture(textures[i], desc));
         }
-        
-        //Aquire the first swapchain image
-        //AquireNextImage(signalSemaphore);
 
         LOG_DEBUG_INFO("Vulkan: Created ImageViews\n");
     }
