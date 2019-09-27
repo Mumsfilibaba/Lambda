@@ -216,8 +216,9 @@ namespace Lambda
                 
                 pDevice->CreateBuffer(&m_Mesh.pIndexBuffer, &data, desc);
             }
+
 			//Create vertexbuffer
-			MeshData mesh2 = MeshFactory::CreateSphere(3);
+			MeshData mesh2 = MeshFactory::CreateSphere(4);
 			m_SphereMesh.IndexCount = uint32(mesh2.Indices.size());
 			{
 				BufferDesc desc = {};
@@ -236,7 +237,7 @@ namespace Lambda
 			//Create indexbuffer
 			{
 				BufferDesc desc = {};
-				desc.pName			= "IndexBuffer";
+				desc.pName			= "Sphere IndexBuffer";
 				desc.Usage			= RESOURCE_USAGE_DEFAULT;
 				desc.Flags			= BUFFER_FLAGS_INDEX_BUFFER;
 				desc.SizeInBytes	= sizeof(uint32) * uint32(mesh2.Indices.size());
