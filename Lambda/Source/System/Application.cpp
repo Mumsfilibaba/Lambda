@@ -43,7 +43,6 @@ namespace Lambda
 		Clock clock;
 		Timestep accumulator;
 		const Timestep timestep = Timestep::Seconds(1.0f / 60.0f);
-		uint32 fps = 0;
 		uint32 ups = 0;
 
 		clock.Reset();
@@ -51,6 +50,7 @@ namespace Lambda
 		{
             //Tick
 			clock.Tick();
+
 			//Logic update
 			accumulator += clock.GetDeltaTime();
 			while (accumulator >= timestep)
@@ -59,15 +59,16 @@ namespace Lambda
 				accumulator -= timestep;
                 ups++;
 			}
-            //Draw UI
+            
+			//Draw UI
             OnRenderUI(clock.GetDeltaTime());
-            //Render
+            
+			//Render
 #if defined(LAMBDA_PLAT_MACOS)
             if (m_pWindow->HasFocus())
             {
                 //Render when the application has focus
                 OnRender(clock.GetDeltaTime());
-                fps++;
             }
             else
             {
@@ -75,15 +76,13 @@ namespace Lambda
                 std::this_thread::sleep_for(std::chrono::milliseconds(16));
             }
 #else
-			//Render
 			OnRender(clock.GetDeltaTime());
-			fps++;
 #endif
-			//Print FPS and UPS to console
+
+			//Print UPS to console
 			if (clock.GetTotalTime().AsSeconds() >= 1.0f)
 			{
-                LOG_SYSTEM_PRINT("FPS: %u, UPS: %u, Frametime: %.1fms\n", fps, ups, clock.GetDeltaTime().AsMilliSeconds());
-                fps = 0;
+                LOG_SYSTEM_PRINT("UPS: %u, Frametime: %.1fms\n", ups, clock.GetDeltaTime().AsMilliSeconds());
                 ups = 0;
                 clock.Reset();
 			}
@@ -196,6 +195,8 @@ namespace Lambda
         EventForwarder forwarder;
         forwarder.ForwardEvent(this, &Application::OnWindowClose, event);
         forwarder.ForwardEvent(this, &Application::OnKeyPressed, event);
+		forwarder.ForwardEvent(this, &Application::OnWindowResize, event);
+
         //Dispatch to all layers
         for (auto it = m_LayerStack.End(); it != m_LayerStack.Begin(); )
         {
@@ -236,6 +237,13 @@ namespace Lambda
             return false;
         }
     }
+
+	
+	bool Application::OnWindowResize(const WindowResizeEvent& event)
+	{
+		m_Renderer.SetDisplaySize(event.GetWidth(), event.GetHeight());
+		return false;
+	}
 
 
     const EngineParams& Application::GetEngineParams() const

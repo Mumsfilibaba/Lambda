@@ -698,6 +698,12 @@ namespace Lambda
 	}
 
 
+	DeviceProperties DX12GraphicsDevice::GetProperties() const
+	{
+		return DeviceProperties();
+	}
+
+
 	GraphicsDeviceDesc DX12GraphicsDevice::GetDesc() const
 	{
 		return m_Desc;

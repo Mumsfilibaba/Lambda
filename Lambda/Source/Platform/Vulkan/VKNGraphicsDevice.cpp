@@ -111,6 +111,20 @@ namespace Lambda
        
 		//Create device
 		m_pDevice = DBG_NEW VKNDevice(desc);
+		VkPhysicalDeviceProperties props = m_pDevice->GetPhysicalDeviceProperties();
+		strcpy(m_Properties.AdapterString, props.deviceName);
+		if (props.vendorID == VENDOR_ID_NVIDIA)
+			strcpy(m_Properties.VendorString, "NVIDIA");
+		else if (props.vendorID == VENDOR_ID_AMD)
+			strcpy(m_Properties.VendorString, "AMD");
+		else if (props.vendorID == VENDOR_ID_INTEL)
+			strcpy(m_Properties.VendorString, "INTEL");
+		else if (props.vendorID == VENDOR_ID_ARM)
+			strcpy(m_Properties.VendorString, "ARM");
+		else if (props.vendorID == VENDOR_ID_QUALCOMM)
+			strcpy(m_Properties.VendorString, "Qualcomm");
+		else if (props.vendorID == VENDOR_ID_IMGTEC)
+			strcpy(m_Properties.VendorString, "ImgTec");
 
 		//Get queues
 		QueueFamilyIndices familiyIndices = m_pDevice->GetQueueFamilyIndices();
@@ -696,6 +710,12 @@ namespace Lambda
     {
         return reinterpret_cast<void*>(m_pDevice->GetDevice());
     }
+
+	
+	DeviceProperties VKNGraphicsDevice::GetProperties() const
+	{
+		return m_Properties;
+	}
     
     
     GraphicsDeviceDesc VKNGraphicsDevice::GetDesc() const

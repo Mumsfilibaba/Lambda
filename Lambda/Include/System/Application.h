@@ -65,6 +65,7 @@ namespace Lambda
 		bool OnEvent(const Event& event);
         bool OnWindowClose(const WindowClosedEvent& event);
         bool OnKeyPressed(const KeyPressedEvent& event);
+		bool OnWindowResize(const WindowResizeEvent& event);
         
 		void Quit(int32 exitCode = 0);
 	private:

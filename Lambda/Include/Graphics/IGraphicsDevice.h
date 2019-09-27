@@ -6,24 +6,39 @@
 
 namespace Lambda
 {
-    class IQuery;
-    class IWindow;
+	class IQuery;
+	class IWindow;
 	class IBuffer;
-    class IShader;
-    class ITexture;
-    class IRenderPass;
-    class ISamplerState;
-    class IGraphicsPipelineState;
+	class IShader;
+	class ITexture;
+	class IRenderPass;
+	class ISamplerState;
+	class IGraphicsPipelineState;
 	class IPipelineResourceState;
 
-    struct QueryDesc;
+	struct QueryDesc;
 	struct BufferDesc;
-    struct ShaderDesc;
-    struct TextureDesc;
-    struct RenderPassDesc;
-    struct SamplerStateDesc;
-    struct GraphicsPipelineStateDesc;
+	struct ShaderDesc;
+	struct TextureDesc;
+	struct RenderPassDesc;
+	struct SamplerStateDesc;
+	struct GraphicsPipelineStateDesc;
 	struct PipelineResourceStateDesc;
+
+	//--------
+	//VendorID
+	//--------
+
+	enum VendorID : uint32
+	{
+		VENDOR_ID_UNKNOWN	= 0,
+		VENDOR_ID_NVIDIA	= 0x10DE,
+		VENDOR_ID_AMD		= 0x1002,
+		VENDOR_ID_INTEL		= 0x8086,
+		VENDOR_ID_ARM		= 0x13B5,
+		VENDOR_ID_QUALCOMM  = 0x5143,
+		VENDOR_ID_IMGTEC	= 0x1010,
+	};
 
     //------------------
     //GraphicsDeviceDesc
@@ -38,6 +53,16 @@ namespace Lambda
         uint32 BackBufferCount = 3;
         bool VerticalSync      = true;
     };
+
+	//----------------
+	//DeviceProperties
+	//----------------
+
+	struct DeviceProperties
+	{
+		char VendorString[256]	= { 0 };
+		char AdapterString[256]	= { 0 };
+	};
 
     //---------------
     //IGraphicsDevice
@@ -82,6 +107,7 @@ namespace Lambda
 		virtual void WaitForGPU() const = 0;
 		virtual void GPUWaitForFrame() const = 0;
 
+		virtual DeviceProperties GetProperties() const = 0;
         virtual GraphicsDeviceDesc GetDesc() const = 0;
         virtual void* GetNativeHandle() const = 0;
 		virtual ITexture* GetDepthStencil() const = 0;

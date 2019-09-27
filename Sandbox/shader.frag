@@ -26,8 +26,6 @@ layout(set = 0, binding = 4) uniform texture2D  u_Albedo;
 layout(set = 0, binding = 5) uniform texture2D  u_Normal;
 layout(set = 0, binding = 6) uniform sampler    u_Sampler;
 
-const vec3  g_LightDir          = vec3(0.0f, 1.0f, -1.0f);
-
 void main()
 {
     vec4 albedo     = texture(sampler2D(u_Albedo, u_Sampler), g_TexCoord);

@@ -59,14 +59,15 @@ namespace Lambda
         virtual void GPUWaitForFrame() const override final;
         virtual void WaitForGPU() const override final;
         
-        virtual void*			    GetNativeHandle() const override final;
-        virtual GraphicsDeviceDesc  GetDesc() const override final;
-        virtual ITexture*		    GetDepthStencil() const override final;
-        virtual ITexture*		    GetRenderTarget() const override final;
-        virtual ResourceFormat	    GetBackBufferFormat() const override final;
-        virtual uint32			    GetBackBufferIndex() const override final;
-        virtual uint32			    GetSwapChainWidth() const override final;
-        virtual uint32			    GetSwapChainHeight() const override final;
+        virtual void* GetNativeHandle() const override final;
+		virtual DeviceProperties GetProperties() const override final;
+        virtual GraphicsDeviceDesc GetDesc() const override final;
+        virtual ITexture* GetDepthStencil() const override final;
+        virtual ITexture* GetRenderTarget() const override final;
+        virtual ResourceFormat GetBackBufferFormat() const override final;
+        virtual uint32 GetBackBufferIndex() const override final;
+        virtual uint32 GetSwapChainWidth() const override final;
+        virtual uint32 GetSwapChainHeight() const override final;
     private:
         void Init(const GraphicsDeviceDesc& desc);
         bool CreateDepthStencil();
@@ -91,6 +92,7 @@ namespace Lambda
 		std::vector<VkSemaphore>	m_RenderSemaphores;
 		std::vector<VkSemaphore>	m_ImageSemaphores;
         mutable uint64				m_CurrentFrame;
+		DeviceProperties			m_Properties;
     public:
 		static VKNGraphicsDevice& Get();
     };

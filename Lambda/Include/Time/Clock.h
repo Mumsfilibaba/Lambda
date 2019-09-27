@@ -50,6 +50,7 @@ namespace Lambda
 		Tick();
 	}
 
+
 	inline Clock::Clock(Clock&& other)
 		: m_Frequency(other.m_Frequency),
 		m_LastTime(other.m_LastTime),
@@ -72,13 +73,13 @@ namespace Lambda
 	{
 #if defined(LAMBDA_PLAT_WINDOWS)
 		//Get current time
-        uint64 now = 0;
-		QueryPerformanceCounter((LARGE_INTEGER*)&now);
-		Timestep currentTime = Timestep((now * 1000000000) / m_Frequency);
+		LARGE_INTEGER now;
+		QueryPerformanceCounter(&now);
+		Timestep currentTime = Timestep((now.QuadPart * 1000000000) / m_Frequency);
 
         //Update delta- and totaltime
 		m_DeltaTime = currentTime - m_LastTime;
-		m_LastTime = currentTime;
+		m_LastTime	= currentTime;
 		m_TotalTime += m_DeltaTime;
 #elif defined(LAMBDA_PLAT_MACOS)
         //Get current time

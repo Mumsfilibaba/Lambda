@@ -43,9 +43,8 @@ namespace Lambda
          : Layer("SandBoxLayer"),
 		m_pVS(nullptr),
 		m_pPS(nullptr),
-		m_pVertexBuffer(nullptr),
-        m_pIndexBuffer(nullptr),
-        m_pPipelineState(nullptr)
+        m_pPipelineState(nullptr),
+		m_Mesh()
 	{
 	}
 
@@ -66,11 +65,12 @@ namespace Lambda
         lightColor[2] = 224.0f / 255.0f;
         lightColor[3] = 1.0f;
 
+		//Setup camera
+		m_Camera.SetPosition(glm::vec3(0.0f, 0.0f, -2.0f));
+		m_Camera.CreateView();
+
 		//Init size
         Application& app = Application::Get();
-		m_Width		= float(app.GetWindow()->GetWidth());
-		m_Height	= float(app.GetWindow()->GetHeight());
-
 		IGraphicsDevice* pDevice = IGraphicsDevice::Get();
         if (pDevice)
         {
@@ -78,18 +78,6 @@ namespace Lambda
 			pDevice->CreateCommandList(&pTempList, COMMAND_LIST_TYPE_GRAPHICS);
 			pTempList->Reset();
 
-            //Create queries
-            {
-                QueryDesc desc = {};
-                desc.Type       = QUERY_TYPE_TIMESTAMP;
-                desc.QueryCount = 2;
-                for (uint32 i = 0; i < 3; i++)
-                {
-                    pDevice->CreateQuery(&m_pQueries[i], desc);
-					pTempList->ResetQuery(m_pQueries[i]);
-                }
-            }
-            
             //Create shaders
 			GraphicsDeviceDesc deviceDesc = pDevice->GetDesc();
 			if (deviceDesc.Api == GRAPHICS_API_VULKAN)
@@ -183,7 +171,7 @@ namespace Lambda
 
             //Create vertexbuffer
 			MeshData mesh = MeshFactory::CreateFromFile("revolver.obj");
-			m_IndexCount = uint32(mesh.Indices.size());
+			m_Mesh.IndexCount = uint32(mesh.Indices.size());
 			{
                 BufferDesc desc     = {};
                 desc.pName          = "VertexBuffer";
@@ -196,7 +184,7 @@ namespace Lambda
                 data.pData          = mesh.Vertices.data();
                 data.SizeInBytes    = desc.SizeInBytes;
 
-                pDevice->CreateBuffer(&m_pVertexBuffer, &data, desc);
+                pDevice->CreateBuffer(&m_Mesh.pVertexBuffer, &data, desc);
             }
             
             //Create indexbuffer
@@ -212,93 +200,20 @@ namespace Lambda
                 data.pData          = mesh.Indices.data();
                 data.SizeInBytes    = desc.SizeInBytes;
                 
-                pDevice->CreateBuffer(&m_pIndexBuffer, &data, desc);
-            }
-
-            //Create colorbuffer
-            {
-                glm::vec4 color = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
-
-                BufferDesc desc     = {};
-                desc.pName          = "ColorBuffer";
-                desc.Usage			= RESOURCE_USAGE_DYNAMIC;
-                desc.Flags			= BUFFER_FLAGS_CONSTANT_BUFFER;
-                desc.SizeInBytes	= sizeof(glm::vec4);
-                desc.StrideInBytes	= sizeof(glm::vec4);
-
-                ResourceData data   = {};
-                data.pData			= &color;
-                data.SizeInBytes	= sizeof(color);
-
-                pDevice->CreateBuffer(&m_pColorBuffer, &data, desc);
-            }
-            
-            //Create lightbuffer
-            {
-                LightBuffer light = {};
-                
-                BufferDesc desc = {};
-                desc.pName            = "LightBuffer";
-                desc.Usage            = RESOURCE_USAGE_DEFAULT;
-                desc.Flags            = BUFFER_FLAGS_CONSTANT_BUFFER;
-                desc.SizeInBytes      = sizeof(LightBuffer);
-                desc.StrideInBytes    = sizeof(LightBuffer);
-                
-                ResourceData data   = {};
-                data.pData          = &light;
-                data.SizeInBytes    = sizeof(LightBuffer);
-                
-                pDevice->CreateBuffer(&m_pLightBuffer, &data, desc);
-            }
-
-            //Create camerabuffer
-            {
-                //Set camera
-                m_Camera.SetPosition(glm::vec3(0.0f, 0.0f, -2.0f));
-                m_Camera.SetRotation(glm::vec3(0.0f, 0.0f, 0.0f));
-                m_Camera.CreateView();
-                
-                BufferDesc desc = {};
-                desc.pName          = "CameraBuffer";
-                desc.Usage			= RESOURCE_USAGE_DEFAULT;
-                desc.Flags			= BUFFER_FLAGS_CONSTANT_BUFFER;
-                desc.SizeInBytes	= sizeof(CameraBuffer);
-                desc.StrideInBytes	= sizeof(CameraBuffer);
-
-                ResourceData data = {};
-                data.pData			= &m_Camera;
-                data.SizeInBytes	= desc.SizeInBytes;
-
-                pDevice->CreateBuffer(&m_pCameraBuffer, &data, desc);
+                pDevice->CreateBuffer(&m_Mesh.pIndexBuffer, &data, desc);
             }
 
             //Init transforms
             m_TransformBuffer.Model = glm::mat4(1.0f);
-            
-            //Create TransformBuffer
-            {
-                BufferDesc desc = {};
-                desc.pName          = "TransformBuffer";
-                desc.Usage			= RESOURCE_USAGE_DYNAMIC;
-                desc.Flags			= BUFFER_FLAGS_CONSTANT_BUFFER;
-                desc.SizeInBytes	= sizeof(TransformBuffer);
-                desc.StrideInBytes	= sizeof(TransformBuffer);
-                
-                ResourceData data = {};
-                data.pData			= &m_TransformBuffer;
-                data.SizeInBytes	= desc.SizeInBytes;
-                
-                pDevice->CreateBuffer(&m_pTransformBuffer, &data, desc);
-            }
 
             //Create texture
-            m_pAlbedo = ITexture::CreateTextureFromFile(pDevice, "revolver_albedo.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
-            m_pNormal = ITexture::CreateTextureFromFile(pDevice, "revolver_normal.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
-			pTempList->TransitionTexture(m_pAlbedo, RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0, LAMBDA_TRANSITION_ALL_MIPS);
-			pTempList->TransitionTexture(m_pNormal, RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0, LAMBDA_TRANSITION_ALL_MIPS);
+            m_pAlbedoMap = ITexture::CreateTextureFromFile(pDevice, "revolver_albedo.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
+            m_pNormalMap = ITexture::CreateTextureFromFile(pDevice, "revolver_normal.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
+			pTempList->TransitionTexture(m_pAlbedoMap, RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0, LAMBDA_TRANSITION_ALL_MIPS);
+			pTempList->TransitionTexture(m_pNormalMap, RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0, LAMBDA_TRANSITION_ALL_MIPS);
 
             //Create samplerstate
-            TextureDesc textureDesc = m_pAlbedo->GetDesc();
+            TextureDesc textureDesc = m_pAlbedoMap->GetDesc();
             SamplerStateDesc desc = {};
             desc.AdressMode = SAMPLER_ADDRESS_MODE_REPEAT;
 			desc.MinMipLOD	= 0.0f;
@@ -364,59 +279,9 @@ namespace Lambda
         
         //Get current device
         IGraphicsDevice* pDevice = IGraphicsDevice::Get();
-        
-        //Set commandlist for frame
-        uint32 backBufferIndex = pDevice->GetBackBufferIndex();
-
-        //Get values and reset query
-        uint64 values[2] = { 0, 0 };
-        m_pQueries[backBufferIndex]->GetResults(values, 2, 0);
-		pCurrentList->ResetQuery(m_pQueries[backBufferIndex]);
-        
-        clock.Tick();
-        if (clock.GetTotalTime().AsSeconds() > 1.0f)
-        {
-            uint64 ns   = values[1] - values[0];
-            float ms    = float(ns) / (1000.0f * 1000.0f);
-            
-            LOG_SYSTEM(LOG_SEVERITY_INFO, "Renderpass time: %.2fms\n", ms);
-            clock.Reset();
-        }
-                
-        //Set scissor and viewport
-        Rectangle scissorrect;
-        scissorrect.X       = 0.0f;
-        scissorrect.Y       = 0.0f;
-        scissorrect.Width   = float(pDevice->GetSwapChainWidth());
-        scissorrect.Height  = float(pDevice->GetSwapChainHeight());
-        
-        Viewport viewport = {};
-        viewport.Width      = scissorrect.Width;
-        viewport.Height     = scissorrect.Height;
-        viewport.TopX       = 0.0f;
-        viewport.TopY       = 0.0f;
-        viewport.MinDepth   = 0.0f;
-        viewport.MaxDepth   = 1.0f;
-        
-		pCurrentList->SetViewport(viewport);
-		pCurrentList->SetScissorRect(scissorrect);
-        
-        //Update Colorbuffer
-        ResourceData data   = {};
-        glm::vec4 colorBuff = glm::vec4(RGB_F(255, 255, 255), 1.0f);
-        data.pData          = &colorBuff;
-        data.SizeInBytes    = sizeof(glm::vec4);
-		pCurrentList->UpdateBuffer(m_pColorBuffer, &data);
-        
-        //Update camera buffer
-        m_CameraBuffer.View         = m_Camera.GetView();
-        m_CameraBuffer.Projection   = m_Camera.GetProjection();
-        m_CameraBuffer.Position     = m_Camera.GetPosition();
-        data.pData			= &m_CameraBuffer;
-        data.SizeInBytes	= sizeof(CameraBuffer);
-		pCurrentList->UpdateBuffer(m_pCameraBuffer, &data);
-        
-        //Update lightbuffer
+		uint32 backBufferIndex = pDevice->GetBackBufferIndex();
+               
+        //Update light
         static LightBuffer lightBuffer  =
         {
             glm::vec4(lightColor[0], lightColor[1], lightColor[2], lightColor[3]),
@@ -425,18 +290,13 @@ namespace Lambda
         
         lightBuffer.Color       = glm::vec4(lightColor[0], lightColor[1], lightColor[2], lightColor[3]);
         lightBuffer.Position    = glm::vec3(transformLight.Position[0], transformLight.Position[1], transformLight.Position[2]);
-        
-        data.pData          = &lightBuffer;
-        data.SizeInBytes    = sizeof(LightBuffer);
-		pCurrentList->UpdateBuffer(m_pLightBuffer, &data);
-        
-        //Set resources
-		IBuffer*    buffers[]	= { m_pCameraBuffer, m_pTransformBuffer, m_pColorBuffer, m_pLightBuffer };
-        ITexture*   textures[]	= { m_pAlbedo, m_pNormal };
-		m_pResourceState->SetConstantBuffers(buffers, 4, 0);
-		m_pResourceState->SetTextures(textures, 2, 4);
-		m_pResourceState->SetSamplerStates(&m_pSamplerState, 1, 6);
-		pCurrentList->SetGraphicsPipelineResourceState(m_pResourceState);
+
+		m_Material.pAlbedoMap		= m_pAlbedoMap;
+		m_Material.pNormalMap		= m_pNormalMap;
+		m_Material.pPipelineState	= m_pPipelineState;
+		m_Material.pResourceState	= m_pResourceState;
+		m_Material.pSamplerState	= m_pSamplerState;
+		m_Material.Color			= glm::vec4(RGB_F(255, 255, 255), 1.0f);
 
 #if !defined(SINGLE_CUBE)
         //Begin renderpass
@@ -461,30 +321,23 @@ namespace Lambda
         //End renderpass
         m_pCurrentList->EndRenderPass();
 #else
-        //Setup rotation
-        glm::mat4 translation = glm::translate(glm::mat4(1.0f), glm::vec3(transformRevolver.Position[0], transformRevolver.Position[1], transformRevolver.Position[2]));
-        glm::mat4 rotation = glm::eulerAngleYXZ(glm::radians(transformRevolver.Rotation[1]), glm::radians(transformRevolver.Rotation[0]), glm::radians(transformRevolver.Rotation[2]));
-        glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(transformRevolver.Scale[0], transformRevolver.Scale[1], transformRevolver.Scale[2]));
-        
-        //Update transforms
-        m_TransformBuffer.Model = translation * rotation * scale;
-        data.pData          = &m_TransformBuffer;
-        data.SizeInBytes    = sizeof(TransformBuffer);
-		pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);
-
-		//Begin renderpass
-		pCurrentList->WriteTimeStamp(m_pQueries[backBufferIndex], PIPELINE_STAGE_VERTEX);
-		pCurrentList->BeginRenderPass(Application::Get().GetRenderer().GetRenderPass());
-        
 		//Draw
-        Application::Get().GetRenderer().Submit(m_pVertexBuffer, m_pIndexBuffer, m_pPipelineState);
+		Application::Get().GetRenderer().BeginScene(m_Camera, lightBuffer);
+        //Setup transforms
+        glm::mat4 translation	= glm::translate(glm::mat4(1.0f), glm::vec3(transformRevolver.Position[0], transformRevolver.Position[1], transformRevolver.Position[2]));
+        glm::mat4 rotation		= glm::eulerAngleYXZ(glm::radians(transformRevolver.Rotation[1]), glm::radians(transformRevolver.Rotation[0]), glm::radians(transformRevolver.Rotation[2]));
+        glm::mat4 scale			= glm::scale(glm::mat4(1.0f), glm::vec3(transformRevolver.Scale[0], transformRevolver.Scale[1], transformRevolver.Scale[2]));        
+		m_TransformBuffer.Model = translation * rotation * scale;
 
-		//Draw the UI
+        Application::Get().GetRenderer().Submit(m_Mesh, m_Material, m_TransformBuffer);
+		
+		translation = glm::translate(glm::mat4(1.0f), glm::vec3(transformRevolver.Position[0] - 2.0f, transformRevolver.Position[1], transformRevolver.Position[2]));
+		m_TransformBuffer.Model = translation * rotation * scale;
+
+		Application::Get().GetRenderer().Submit(m_Mesh, m_Material, m_TransformBuffer);
+
 		Application::Get().GetUILayer()->Draw(pCurrentList);
-
-		//End renderpass
-		pCurrentList->EndRenderPass();
-		pCurrentList->WriteTimeStamp(m_pQueries[backBufferIndex], PIPELINE_STAGE_PIXEL);
+		Application::Get().GetRenderer().EndScene();
 #endif
 	}
 
@@ -496,21 +349,14 @@ namespace Lambda
         {
             pDevice->WaitForGPU();
 
-			for (uint32 i = 0; i < 3; i++)
-				pDevice->DestroyQuery(&m_pQueries[i]);
-
             pDevice->DestroyShader(&m_pVS);
             pDevice->DestroyShader(&m_pPS);
 			pDevice->DestroyResourceState(&m_pResourceState);
             pDevice->DestroyGraphicsPipelineState(&m_pPipelineState);
-            pDevice->DestroyBuffer(&m_pVertexBuffer);
-            pDevice->DestroyBuffer(&m_pIndexBuffer);
-            pDevice->DestroyBuffer(&m_pColorBuffer);
-            pDevice->DestroyBuffer(&m_pLightBuffer);
-            pDevice->DestroyBuffer(&m_pCameraBuffer);
-            pDevice->DestroyBuffer(&m_pTransformBuffer);
-            pDevice->DestroyTexture(&m_pAlbedo);
-            pDevice->DestroyTexture(&m_pNormal);
+            pDevice->DestroyBuffer(&m_Mesh.pVertexBuffer);
+            pDevice->DestroyBuffer(&m_Mesh.pIndexBuffer);
+            pDevice->DestroyTexture(&m_pAlbedoMap);
+            pDevice->DestroyTexture(&m_pNormalMap);
             pDevice->DestroySamplerState(&m_pSamplerState);
         }
 	}

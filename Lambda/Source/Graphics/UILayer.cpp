@@ -356,17 +356,18 @@ namespace Lambda
         if (ImGui::Begin("Timings", NULL, (corner != -1 ? ImGuiWindowFlags_NoMove : 0) | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))
         {
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 0.0f, 1.0f));
-            ImGui::Text("Settings:");
+
+			IGraphicsDevice* pDevice = IGraphicsDevice::Get();
+            GraphicsDeviceDesc desc = pDevice->GetDesc();
+			DeviceProperties props = pDevice->GetProperties();
+			if (desc.Api == GRAPHICS_API_VULKAN)
+				ImGui::Text("Renderer [Vulkan]");
+			else if (desc.Api == GRAPHICS_API_D3D12)
+				ImGui::Text("Renderer [D3D12]");
             ImGui::Separator();
             
-            IGraphicsDevice* pDevice = IGraphicsDevice::Get();
-            GraphicsDeviceDesc desc = pDevice->GetDesc();
-            
-            if (desc.Api == GRAPHICS_API_VULKAN)
-                ImGui::Text("Renderer: Vulkan");
-            else if (desc.Api == GRAPHICS_API_D3D12)
-                ImGui::Text("Renderer: D3D12");
-            
+			ImGui::Text("Vendor: %s", props.VendorString);
+			ImGui::Text("Adapter: %s", props.AdapterString);
             ImGui::Text("Resolution: %u x %u", pDevice->GetSwapChainWidth(), pDevice->GetSwapChainHeight());
             ImGui::Text("MSAA: %ux", desc.SampleCount);
             ImGui::Text("BackBufferCount: %u", desc.BackBufferCount);
@@ -376,48 +377,62 @@ namespace Lambda
             ImGui::Text("Timings:");
             ImGui::Separator();
             
+			FrameStatistics stats = Application::Get().GetRenderer().GetFrameStatistics();                    
             static float timer = 0.0f;
-			static float timer2 = 0.0f;
-            static int32 fps = 0;
-            static int32 currentFPS = 0;
-            
-            float ms = io.DeltaTime * 1000.0f;
-            timer += ms;
-			timer2 += ms;
-            
-            fps++;
-            if (timer >= 1000.0f)
-            {
-                timer = 0.0f;
-                currentFPS = fps;
-                fps = 0;
-            }
-            
-            ImGui::Text("FPS: %d", currentFPS);
-            ImGui::Text("CPU Frametime: %.2fms", ms);
-            
-            static float values[90]     = { 0 };
-            static int   values_offset  = 0;
-			if (timer2 >= 8.0f)
+            timer += stats.CPUTime.AsMilliSeconds();
+
+			constexpr uint32 valueCount = 90;
+			static float cpuValues[valueCount]  = { 0 };
+			static float gpuValues[valueCount] = { 0 };
+            static int   valuesOffset  = 0;
+			if (timer >= 8.0f)
 			{
-				values[values_offset] = ms;
-				values_offset = (values_offset+1) % IM_ARRAYSIZE(values);
-				timer2 = 0.0f;
+				cpuValues[valuesOffset] = stats.CPUTime.AsMilliSeconds();
+				gpuValues[valuesOffset] = stats.GPUTime.AsMilliSeconds();
+				valuesOffset = (valuesOffset+1) % valueCount;
+				timer = 0.0f;
 			}
 
             {
-				static float max = 1.0f;
-                float average = 0.0f;
-                for (int n = 0; n < IM_ARRAYSIZE(values); n++)
-                    average += values[n];
-                average /= (float)IM_ARRAYSIZE(values);
+				static float timer2 = 0.0f;
+				timer2 += stats.CPUTime.AsMilliSeconds();
 
-				if (average >= max)
-					max = average * 1.25f;
+				static float cpuMax = 1.0f;
+				static float gpuMax = 1.0f;
+                float averageCPU = 0.0f;
+				float averageGPU = 0.0f;
+				for (int n = 0; n < valueCount; n++)
+				{
+					averageCPU += cpuValues[n];
+					averageGPU += gpuValues[n];
+				}
+				averageCPU /= (float)valueCount;
+				averageGPU /= (float)valueCount;
+				
+				if (averageCPU > cpuMax)
+					averageCPU * 1.5f;
 
-                char overlay[32];
-                sprintf(overlay, "avg %f", average);
-                ImGui::PlotLines("", values, IM_ARRAYSIZE(values), values_offset, overlay, 0.0f, max, ImVec2(0,80));
+				if (averageGPU > gpuMax)
+					averageGPU * 1.5f;
+
+				if (timer2 >= 100.0f)
+				{
+					cpuMax = averageCPU * 1.5f;
+					gpuMax = averageGPU * 1.5f;
+					timer2 = 0;
+				}
+				
+				ImGui::Text("FPS: %d", stats.FPS);
+				ImGui::Text("CPU Frametime (ms):");
+                
+				char overlay[32];
+                sprintf(overlay, "Avg %f", averageCPU);
+                ImGui::PlotLines("", cpuValues, valueCount, valuesOffset, overlay, 0.0f, cpuMax, ImVec2(0,80));
+
+				ImGui::Text("GPU Frametime (ms):");
+
+				sprintf(overlay, "Avg %f", averageGPU);
+				ImGui::PlotLines("", gpuValues, valueCount, valuesOffset, overlay, 0.0f, gpuMax, ImVec2(0, 80));
             }
             
             ImGui::PopStyleColor();

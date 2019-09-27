@@ -53,17 +53,16 @@ namespace Lambda
 		virtual void GPUWaitForFrame() const override final;
 		virtual void WaitForGPU() const override final;
 
-		virtual GraphicsDeviceDesc	GetDesc() const override final;
-		virtual void*				GetNativeHandle() const override final;
-		virtual ITexture*			GetDepthStencil() const override final;
-		virtual ITexture*			GetRenderTarget() const override final;
-		virtual ResourceFormat		GetBackBufferFormat() const override final;
-		virtual uint32				GetBackBufferIndex() const override final;
-		virtual uint32				GetSwapChainWidth() const override final;
-		virtual uint32				GetSwapChainHeight() const override final;
-
+		virtual DeviceProperties GetProperties() const override final;
+		virtual GraphicsDeviceDesc GetDesc() const override final;
+		virtual void* GetNativeHandle() const override final;
+		virtual ITexture* GetDepthStencil() const override final;
+		virtual ITexture* GetRenderTarget() const override final;
+		virtual ResourceFormat GetBackBufferFormat() const override final;
+		virtual uint32 GetBackBufferIndex() const override final;
+		virtual uint32 GetSwapChainWidth() const override final;
+		virtual uint32 GetSwapChainHeight() const override final;
 		ID3D12Device* GetDevice() const;
-
 	private:
 		void Init(const GraphicsDeviceDesc& desc);
 		bool InitBackBuffers();
@@ -74,7 +73,6 @@ namespace Lambda
 		bool IsDXRSupported(ID3D12Device* pDevice);
 
 		virtual bool OnResize(const WindowResizeEvent& event) override final;
-
 	private:
 		Microsoft::WRL::ComPtr<IDXGIFactory5>	m_Factory;
 		Microsoft::WRL::ComPtr<IDXGIAdapter3>	m_Adapter;
@@ -104,7 +102,6 @@ namespace Lambda
 		uint32									m_NumBackbuffers;
 		bool									m_DXRSupported;
 		GraphicsDeviceDesc						m_Desc;
-
 	public:
 		static DX12GraphicsDevice& Get();
 	};

@@ -31,7 +31,8 @@ workspace "Lambda"
 		defines
 		{
 			"LAMBDA_VISUAL_STUDIO",
-			"_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING"
+			"_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING",
+			"_CRT_SECURE_NO_WARNINGS"
 		}
 	filter { "action:vs*", "configurations:Debug" }
 		defines
@@ -216,20 +217,3 @@ workspace "Lambda"
 		{ 
 			"Lambda"
 		}
-		filter "action:vs*"
-			defines
-			{
-				"LAMBDA_VISUAL_STUDIO",
-				"_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING"
-			}
-		filter { "action:vs*", "configurations:Debug" }
-			defines
-			{
-				"_DEBUG",
-				"_CRTDBG_MAP_ALLOC"
-			}
-		filter { "action:vs*", "configurations:Release" }
-			defines
-			{
-				"NDEBUG"
-			}
