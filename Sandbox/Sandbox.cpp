@@ -182,7 +182,7 @@ namespace Lambda
             }
 
             //Create vertexbuffer
-			MeshData mesh = MeshFactory::CreateCube();//MeshFactory::CreateFromFile("revolver.obj");
+			MeshData mesh = MeshFactory::CreateFromFile("revolver.obj");
 			m_IndexCount = uint32(mesh.Indices.size());
 			{
                 BufferDesc desc     = {};
@@ -401,9 +401,6 @@ namespace Lambda
 		pCurrentList->SetViewport(viewport);
 		pCurrentList->SetScissorRect(scissorrect);
         
-        //Set pipelinestate and topology
-		pCurrentList->SetGraphicsPipelineState(m_pPipelineState);
-        
         //Update Colorbuffer
         ResourceData data   = {};
         glm::vec4 colorBuff = glm::vec4(RGB_F(255, 255, 255), 1.0f);
@@ -440,10 +437,6 @@ namespace Lambda
 		m_pResourceState->SetTextures(textures, 2, 4);
 		m_pResourceState->SetSamplerStates(&m_pSamplerState, 1, 6);
 		pCurrentList->SetGraphicsPipelineResourceState(m_pResourceState);
-        
-        //Set vertex- and indexbuffer
-		pCurrentList->SetVertexBuffer(m_pVertexBuffer, 0);
-		pCurrentList->SetIndexBuffer(m_pIndexBuffer, FORMAT_R32_UINT);
 
 #if !defined(SINGLE_CUBE)
         //Begin renderpass
@@ -483,8 +476,8 @@ namespace Lambda
 		pCurrentList->WriteTimeStamp(m_pQueries[backBufferIndex], PIPELINE_STAGE_VERTEX);
 		pCurrentList->BeginRenderPass(Application::Get().GetRenderer().GetRenderPass());
         
-		//Draw first
-		pCurrentList->DrawIndexedInstanced(m_IndexCount, 1, 0, 0, 0);
+		//Draw
+        Application::Get().GetRenderer().Submit(m_pVertexBuffer, m_pIndexBuffer, m_pPipelineState);
 
 		//Draw the UI
 		Application::Get().GetUILayer()->Draw(pCurrentList);

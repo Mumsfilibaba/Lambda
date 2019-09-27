@@ -1,6 +1,7 @@
 #include "LambdaPch.h"
 #include "Graphics/Renderer3D.h"
 #include "Graphics/IGraphicsDevice.h"
+#include "Graphics/IBuffer.h"
 #include "System/Application.h"
 
 namespace Lambda
@@ -81,8 +82,15 @@ namespace Lambda
 	}
 
 
-	void Renderer3D::Submit()
+	void Renderer3D::Submit(IBuffer* pVertexBuffer, IBuffer* pIndexBuffer, IGraphicsPipelineState* pPipelineState) const
 	{
+        m_pCurrentList->SetVertexBuffer(pVertexBuffer, 0);
+        m_pCurrentList->SetIndexBuffer(pIndexBuffer, FORMAT_R32_FLOAT);
+        m_pCurrentList->SetGraphicsPipelineState(pPipelineState);
+        
+        BufferDesc desc     = pIndexBuffer->GetDesc();
+        uint32 indexCount   = desc.SizeInBytes / desc.StrideInBytes;
+        m_pCurrentList->DrawIndexedInstanced(indexCount, 1, 0, 0, 0);
 	}
 
 

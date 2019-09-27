@@ -5,7 +5,14 @@
 
 namespace Lambda
 {
-	class LAMBDA_API Renderer3D
+    class IBuffer;
+    class IGraphicsPipelineState;
+
+    //----------
+    //Renderer3D
+    //----------
+
+    class LAMBDA_API Renderer3D
 	{
 		friend class Application;
 
@@ -17,7 +24,7 @@ namespace Lambda
 
 		void Init();
 		void Begin();
-		void Submit();
+		void Submit(IBuffer* pVertexBuffer, IBuffer* pIndexBuffer, IGraphicsPipelineState* pPipelineState) const;
 		void End();
 		void Swapbuffers();
 		void Release();

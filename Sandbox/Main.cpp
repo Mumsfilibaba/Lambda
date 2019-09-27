@@ -16,7 +16,7 @@ int main()
     params.GraphicsDeviceApi    = GRAPHICS_API_VULKAN;
 #endif
     params.Fullscreen           = false;
-    params.VerticalSync         = false;
+    params.VerticalSync         = true;
     params.SampleCount          = 1;
     params.WindowWidth          = 1920;
     params.WindowHeight         = 1080;
