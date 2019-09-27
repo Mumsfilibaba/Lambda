@@ -379,7 +379,7 @@ namespace Lambda
             
 			FrameStatistics stats = Application::Get().GetRenderer().GetFrameStatistics();                    
             static float timer = 0.0f;
-            timer += stats.CPUTime.AsMilliSeconds();
+            timer += dt.AsMilliSeconds();
 
 			constexpr uint32 valueCount = 90;
 			static float cpuValues[valueCount]  = { 0 };
@@ -410,10 +410,10 @@ namespace Lambda
 				averageGPU /= (float)valueCount;
 				
 				if (averageCPU > cpuMax)
-					averageCPU * 1.5f;
+					cpuMax = averageCPU * 1.5f;
 
 				if (averageGPU > gpuMax)
-					averageGPU * 1.5f;
+					gpuMax = averageGPU * 1.5f;
 
 				if (timer2 >= 100.0f)
 				{
@@ -453,8 +453,8 @@ namespace Lambda
 		ImGuiIO& io = ImGui::GetIO();
 		ImDrawData* pDrawData = ImGui::GetDrawData();
 
-		uint64 vertexSize	= pDrawData->TotalVtxCount * sizeof(ImDrawVert);
-		uint64 indexSize	= pDrawData->TotalIdxCount * sizeof(ImDrawIdx);
+		//uint64 vertexSize	= pDrawData->TotalVtxCount * sizeof(ImDrawVert);
+		//uint64 indexSize	= pDrawData->TotalIdxCount * sizeof(ImDrawIdx);
 		// Upload vertex/index data into a single contiguous GPU buffer
 		{
 			ImDrawVert* vtxDst  = NULL;

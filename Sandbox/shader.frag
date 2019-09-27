@@ -11,9 +11,11 @@ layout(location = 4) in    vec3 g_WorldPosition;
 layout(location = 5) in    vec3 g_ViewPosition;
 
 //Materialbuffer
-layout(set = 0, binding = 2) uniform ColorBuffer
+layout(set = 0, binding = 2) uniform MaterialBuffer
 {
     vec4 Color;
+    int HasAlbedoMap;
+    int HasNormalMap;
 } u_Material;
 //Buffer for light
 layout(set = 0, binding = 3) uniform LightBuffer
@@ -28,10 +30,29 @@ layout(set = 0, binding = 6) uniform sampler    u_Sampler;
 
 void main()
 {
-    vec4 albedo     = texture(sampler2D(u_Albedo, u_Sampler), g_TexCoord);
-    vec4 normalMap  = texture(sampler2D(u_Normal, u_Sampler), g_TexCoord);
-    vec3 normal     = normalize(normalMap.rgb * 2 - 1.0f);
-    normal          = normalize(mat3(g_Tangent, g_BiTangent, g_Normal) * normal);
+    //Get albedo
+    vec4 albedo;
+    if (u_Material.HasAlbedoMap == 1)
+    {
+        albedo = texture(sampler2D(u_Albedo, u_Sampler), g_TexCoord) * u_Material.Color;
+    }
+    else
+    {
+        albedo = u_Material.Color;
+    }
+
+    //Get normal
+    vec3 normal;
+    if (u_Material.HasNormalMap == 1)
+    {
+        vec4 normalMap  = texture(sampler2D(u_Normal, u_Sampler), g_TexCoord);
+        normal          = normalize(normalMap.rgb * 2 - 1.0f);
+        normal          = normalize(mat3(g_Tangent, g_BiTangent, g_Normal) * normal);
+    }
+    else
+    {
+        normal = g_Normal;
+    }
 
     //Calculate lightning
     float   distance        = length(u_PointLight.Position - g_WorldPosition);
@@ -48,7 +69,7 @@ void main()
     //Set output color
     vec3 lightColor     = u_PointLight.Color.rgb * lightStrength * attenuation;
     vec3 ambientLight   = vec3(0.1f);
-    vec3 objectColor    = albedo.rgb * u_Material.Color.rgb;
+    vec3 objectColor    = albedo.rgb;
     vec3 resultColor    = objectColor * (ambientLight + lightColor + specularColor);
     g_OutColor = min(vec4(1.0f), vec4(resultColor, 1.0f));
 }

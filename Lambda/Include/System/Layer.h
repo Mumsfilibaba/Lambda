@@ -4,6 +4,7 @@
 namespace Lambda
 {
     class Event;
+	class Renderer3D;
 	class ICommandList;
     
     //-----
@@ -20,7 +21,7 @@ namespace Lambda
 
         virtual void OnLoad();
         virtual void OnUpdate(Timestep dt);
-        virtual void OnRender(Timestep dt, ICommandList* pCurrentList);
+        virtual void OnRender(const Renderer3D& renderer, Timestep dt);
         virtual void OnRenderUI(Timestep dt);
         virtual void OnRelease();
         virtual bool OnEvent(const Event& event) = 0;

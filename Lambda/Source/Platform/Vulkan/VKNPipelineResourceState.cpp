@@ -189,6 +189,11 @@ namespace Lambda
 	{
 		for (uint32 i = 0; i < numTextures; i++)
 		{
+			if (ppTextures[i] == nullptr)
+			{
+				continue;
+			}
+
 			auto& resourceBinding = m_ResourceBindings[startSlot + i];
 			if (resourceBinding.Slot.Type == RESOURCE_TYPE_TEXTURE)
 			{
@@ -216,6 +221,11 @@ namespace Lambda
 	{
 		for (uint32 i = 0; i < numSamplerStates; i++)
 		{
+			if (ppSamplerStates[i] == nullptr)
+			{
+				continue;
+			}
+
 			auto& resourceBinding = m_ResourceBindings[startSlot + i];
 			if (resourceBinding.Slot.Type == RESOURCE_TYPE_SAMPLER_STATE)
 			{
@@ -240,6 +250,11 @@ namespace Lambda
 	{
 		for (uint32 i = 0; i < numBuffers; i++)
 		{
+			if (ppBuffers[i] == nullptr)
+			{
+				continue;
+			}
+
 			auto& resourceBinding = m_ResourceBindings[startSlot + i];
 			if (resourceBinding.Slot.Type == RESOURCE_TYPE_CONSTANT_BUFFER)
 			{

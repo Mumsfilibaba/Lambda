@@ -30,7 +30,7 @@ namespace Lambda
 
         virtual void OnLoad() override final;
         virtual void OnUpdate(Timestep dt) override final;
-        virtual void OnRender(Timestep dt, ICommandList* pCurrentList) override final;
+        virtual void OnRender(const Renderer3D& renderer, Timestep dt) override final;
         virtual void OnRenderUI(Timestep dt) override final;
         virtual void OnRelease() override final;
         virtual bool OnEvent(const Event& event) override final;
@@ -45,8 +45,10 @@ namespace Lambda
         IShader* m_pPS;
         //Meshes
 		Model m_Mesh;
+		Model m_SphereMesh;
 		//Material
 		Material m_Material;
+		Material m_RedMaterial;
         //Textures
         ITexture* m_pAlbedoMap;
         ITexture* m_pNormalMap;

@@ -6,6 +6,7 @@
 #include "Events/MouseEvent.h"
 #include "Graphics/MeshFactory.h"
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/euler_angles.hpp>
 
 #define SINGLE_CUBE
@@ -15,14 +16,16 @@ namespace Lambda
 {
     struct Transform
     {
-        float Position[3] = { 0.0f, 0.0f, 0.0f };
-        float Rotation[3] = { 0.0f, 0.0f, 0.0f };
-        float Scale[3] = { 1.0f, 1.0f, 1.0f };
+        glm::vec3 Position = glm::vec3(0.0f, 0.0f, 0.0f);
+        glm::vec3 Rotation = glm::vec3(0.0f, 0.0f, 0.0f);
+        glm::vec3 Scale = glm::vec3(1.0f, 1.0f, 1.0f);
     };
 
     static Transform transformLight;
     static Transform transformRevolver;
-    static float lightColor[4];
+	static Transform transformRevolver2;
+	static std::vector<Transform> sphereTransforms;
+	static glm::vec4 lightColor;
 
     //-------
     //SandBox
@@ -52,18 +55,30 @@ namespace Lambda
 	void SandBoxLayer::OnLoad()
 	{
         //Init transforms
-        transformRevolver.Position[1] = -1.0f;
-        transformRevolver.Rotation[1] = 180.0f;
-        
-        transformLight.Position[0] = -1.5f;
-        transformLight.Position[1] = 0.5f;
-        transformLight.Position[2] = -1.0f;
+        transformRevolver.Position.y = -1.0f;
+        transformRevolver.Rotation.y = 180.0f;
+
+		transformRevolver2.Position.x = 2.0f;
+		transformRevolver2.Position.y = -1.0f;
+		transformRevolver2.Rotation.y = 180.0f;
+       
+        transformLight.Position.x = -1.5f;
+        transformLight.Position.y = 0.5f;
+        transformLight.Position.z = -1.0f;
+
+		constexpr uint32 sphereWidth = 8;
+		for (uint32 y = 0; y < sphereWidth; y++)
+		{
+			for (uint32 x = 0; x < sphereWidth; x++)
+			{
+				Transform transform = {};
+				transform.Position = glm::vec3(-(float(sphereWidth) / 2.0f) + float(x), -(float(sphereWidth) / 2.0f) + float(y), 2.0f);
+				sphereTransforms.emplace_back(transform);
+			}
+		}
         
         //Init color
-        lightColor[0] = 255.0f / 255.0f;
-        lightColor[1] = 241.0f / 255.0f;
-        lightColor[2] = 224.0f / 255.0f;
-        lightColor[3] = 1.0f;
+        lightColor = glm::vec4(255.0f / 255.0f, 241.0f / 255.0f, 224.0f / 255.0f, 1.0f);
 
 		//Setup camera
 		m_Camera.SetPosition(glm::vec3(0.0f, 0.0f, -2.0f));
@@ -186,7 +201,6 @@ namespace Lambda
 
                 pDevice->CreateBuffer(&m_Mesh.pVertexBuffer, &data, desc);
             }
-            
             //Create indexbuffer
             {
                 BufferDesc desc     = {};
@@ -202,6 +216,38 @@ namespace Lambda
                 
                 pDevice->CreateBuffer(&m_Mesh.pIndexBuffer, &data, desc);
             }
+			//Create vertexbuffer
+			MeshData mesh2 = MeshFactory::CreateSphere(3);
+			m_SphereMesh.IndexCount = uint32(mesh2.Indices.size());
+			{
+				BufferDesc desc = {};
+				desc.pName			= "Sphere VertexBuffer";
+				desc.Usage			= RESOURCE_USAGE_DEFAULT;
+				desc.Flags			= BUFFER_FLAGS_VERTEX_BUFFER;
+				desc.SizeInBytes	= sizeof(Vertex) * uint32(mesh2.Vertices.size());
+				desc.StrideInBytes	= sizeof(Vertex);
+
+				ResourceData data = {};
+				data.pData			= mesh2.Vertices.data();
+				data.SizeInBytes	= desc.SizeInBytes;
+
+				pDevice->CreateBuffer(&m_SphereMesh.pVertexBuffer, &data, desc);
+			}
+			//Create indexbuffer
+			{
+				BufferDesc desc = {};
+				desc.pName			= "IndexBuffer";
+				desc.Usage			= RESOURCE_USAGE_DEFAULT;
+				desc.Flags			= BUFFER_FLAGS_INDEX_BUFFER;
+				desc.SizeInBytes	= sizeof(uint32) * uint32(mesh2.Indices.size());
+				desc.StrideInBytes	= sizeof(uint32);
+
+				ResourceData data = {};
+				data.pData			= mesh2.Indices.data();
+				data.SizeInBytes	= desc.SizeInBytes;
+
+				pDevice->CreateBuffer(&m_SphereMesh.pIndexBuffer, &data, desc);
+			}
 
             //Init transforms
             m_TransformBuffer.Model = glm::mat4(1.0f);
@@ -229,6 +275,21 @@ namespace Lambda
             pDevice->WaitForGPU();
 			//Destroy temp commandlist
 			pDevice->DestroyCommandList(&pTempList);
+
+			//Setup materials
+			m_Material.pAlbedoMap = m_pAlbedoMap;
+			m_Material.pNormalMap = m_pNormalMap;
+			m_Material.pPipelineState = m_pPipelineState;
+			m_Material.pResourceState = m_pResourceState;
+			m_Material.pSamplerState = m_pSamplerState;
+			m_Material.Color = glm::vec4(RGB_F(255, 255, 255), 1.0f);
+
+			m_RedMaterial.pAlbedoMap		= nullptr;
+			m_RedMaterial.pNormalMap		= nullptr;
+			m_RedMaterial.pPipelineState	= m_pPipelineState;
+			m_RedMaterial.pResourceState	= m_pResourceState;
+			m_RedMaterial.pSamplerState		= nullptr;
+			m_RedMaterial.Color				= glm::vec4(RGB_F(255, 0, 0), 1.0f);
         }
 	}
 
@@ -273,14 +334,8 @@ namespace Lambda
 	}
 
 
-	void SandBoxLayer::OnRender(Timestep dt, ICommandList* pCurrentList)
+	void SandBoxLayer::OnRender(const Renderer3D& renderer, Timestep dt)
 	{
-        static Clock clock;
-        
-        //Get current device
-        IGraphicsDevice* pDevice = IGraphicsDevice::Get();
-		uint32 backBufferIndex = pDevice->GetBackBufferIndex();
-               
         //Update light
         static LightBuffer lightBuffer  =
         {
@@ -291,54 +346,27 @@ namespace Lambda
         lightBuffer.Color       = glm::vec4(lightColor[0], lightColor[1], lightColor[2], lightColor[3]);
         lightBuffer.Position    = glm::vec3(transformLight.Position[0], transformLight.Position[1], transformLight.Position[2]);
 
-		m_Material.pAlbedoMap		= m_pAlbedoMap;
-		m_Material.pNormalMap		= m_pNormalMap;
-		m_Material.pPipelineState	= m_pPipelineState;
-		m_Material.pResourceState	= m_pResourceState;
-		m_Material.pSamplerState	= m_pSamplerState;
-		m_Material.Color			= glm::vec4(RGB_F(255, 255, 255), 1.0f);
-
-#if !defined(SINGLE_CUBE)
-        //Begin renderpass
-        m_pCurrentList->BeginRenderPass(m_pRenderPass);
-
-		constexpr uint32 cubes = 2;
-        for (uint32 y = 0; y < cubes; y++)
-        {
-            for (uint32 x = 0; x < cubes; x++)
-            {
-                //Update transforms
-				m_TransformBuffer.Model = glm::translate(glm::mat4(1.0f), glm::vec3(-float(cubes) + x * 2.0f, 0.0f, -float(cubes) + y * 2.0f)) * rotation;
-                data.pData				= &m_TransformBuffer;
-                data.SizeInBytes		= sizeof(TransformBuffer);
-                m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &data);
-            
-				//Draw
-				m_pCurrentList->DrawIndexedInstanced(m_IndexCount, 1, 0, 0, 0);
-            }
-        }
-        
-        //End renderpass
-        m_pCurrentList->EndRenderPass();
-#else
-		//Draw
-		Application::Get().GetRenderer().BeginScene(m_Camera, lightBuffer);
-        //Setup transforms
-        glm::mat4 translation	= glm::translate(glm::mat4(1.0f), glm::vec3(transformRevolver.Position[0], transformRevolver.Position[1], transformRevolver.Position[2]));
-        glm::mat4 rotation		= glm::eulerAngleYXZ(glm::radians(transformRevolver.Rotation[1]), glm::radians(transformRevolver.Rotation[0]), glm::radians(transformRevolver.Rotation[2]));
-        glm::mat4 scale			= glm::scale(glm::mat4(1.0f), glm::vec3(transformRevolver.Scale[0], transformRevolver.Scale[1], transformRevolver.Scale[2]));        
+		renderer.BeginScene(m_Camera, lightBuffer);
+       
+		//draw revolver
+        glm::mat4 translation	= glm::translate(glm::mat4(1.0f), transformRevolver.Position);
+        glm::mat4 rotation		= glm::eulerAngleYXZ(glm::radians(transformRevolver.Rotation.y), glm::radians(transformRevolver.Rotation.x), glm::radians(transformRevolver.Rotation.z));
+        glm::mat4 scale			= glm::scale(glm::mat4(1.0f), transformRevolver.Scale);        
 		m_TransformBuffer.Model = translation * rotation * scale;
-
-        Application::Get().GetRenderer().Submit(m_Mesh, m_Material, m_TransformBuffer);
+		renderer.Submit(m_Mesh, m_Material, m_TransformBuffer);
 		
-		translation = glm::translate(glm::mat4(1.0f), glm::vec3(transformRevolver.Position[0] - 2.0f, transformRevolver.Position[1], transformRevolver.Position[2]));
-		m_TransformBuffer.Model = translation * rotation * scale;
+		//draw spheres
+		for (auto& transform : sphereTransforms)
+		{
+			translation = glm::translate(glm::mat4(1.0f), transform.Position);
+			rotation	= glm::eulerAngleYXZ(glm::radians(transform.Rotation.y), glm::radians(transform.Rotation.x), glm::radians(transform.Rotation.z));
+			scale		= glm::scale(glm::mat4(1.0f), transform.Scale);
+			m_TransformBuffer.Model = translation * rotation * scale;
 
-		Application::Get().GetRenderer().Submit(m_Mesh, m_Material, m_TransformBuffer);
+			renderer.Submit(m_SphereMesh, m_RedMaterial, m_TransformBuffer);
+		}
 
-		Application::Get().GetUILayer()->Draw(pCurrentList);
-		Application::Get().GetRenderer().EndScene();
-#endif
+		renderer.EndScene();
 	}
 
 
@@ -355,6 +383,8 @@ namespace Lambda
             pDevice->DestroyGraphicsPipelineState(&m_pPipelineState);
             pDevice->DestroyBuffer(&m_Mesh.pVertexBuffer);
             pDevice->DestroyBuffer(&m_Mesh.pIndexBuffer);
+			pDevice->DestroyBuffer(&m_SphereMesh.pVertexBuffer);
+			pDevice->DestroyBuffer(&m_SphereMesh.pIndexBuffer);
             pDevice->DestroyTexture(&m_pAlbedoMap);
             pDevice->DestroyTexture(&m_pNormalMap);
             pDevice->DestroySamplerState(&m_pSamplerState);
@@ -462,12 +492,21 @@ namespace Lambda
 				{
 					if (uid == 0)
 					{
-						ShowTransform(0, transformRevolver.Position, transformRevolver.Rotation, transformRevolver.Scale);
+						ShowTransform(0, glm::value_ptr(transformLight.Position), glm::value_ptr(transformLight.Rotation), glm::value_ptr(transformLight.Scale));
+						ShowLight(1, glm::value_ptr(lightColor));
 					}
 					else if (uid == 1)
 					{
-						ShowLight(0, lightColor);
-						ShowTransform(1, transformLight.Position, transformLight.Rotation, transformLight.Scale);
+						ShowTransform(0, glm::value_ptr(transformRevolver.Position), glm::value_ptr(transformRevolver.Rotation), glm::value_ptr(transformRevolver.Scale));
+					}
+					else if (uid == 2)
+					{
+						ShowTransform(0, glm::value_ptr(transformRevolver2.Position), glm::value_ptr(transformRevolver2.Rotation), glm::value_ptr(transformRevolver2.Scale));
+					}
+					else if (uid > 2)
+					{
+						auto& transform = sphereTransforms[uid - 3];
+						ShowTransform(0, glm::value_ptr(transform.Position), glm::value_ptr(transform.Rotation), glm::value_ptr(transform.Scale));
 					}
 					ImGui::TreePop();
 				}
@@ -475,9 +514,15 @@ namespace Lambda
 			}
 		};
 
-
-		funcs::ShowObject("Entity", 0);
+		funcs::ShowObject("PointLight", 0);
 		funcs::ShowObject("Entity", 1);
+
+		//draw spheres
+		uint32 index = 3;
+		for (auto& transform : sphereTransforms)
+		{
+			funcs::ShowObject("Entity", index++);
+		}
 
 		ImGui::Columns(1);
 		ImGui::Separator();

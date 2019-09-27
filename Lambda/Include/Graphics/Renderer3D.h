@@ -80,6 +80,17 @@ namespace Lambda
 		glm::mat4 Model;
 	};
 
+	//---------------
+	//TransformBuffer
+	//---------------
+
+	struct MaterialBuffer
+	{
+		glm::vec4 Color;
+		int32 HasAlbedoMap = 0;
+		int32 HasNormalMap = 0;
+	};
+
     //----------
     //Renderer3D
     //----------

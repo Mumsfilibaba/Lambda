@@ -122,8 +122,8 @@ namespace Lambda
 		materialBufferDesc.pName			= "MaterialBuffer";
 		materialBufferDesc.Usage			= RESOURCE_USAGE_DYNAMIC;
 		materialBufferDesc.Flags			= BUFFER_FLAGS_CONSTANT_BUFFER;
-		materialBufferDesc.SizeInBytes		= sizeof(glm::vec4);
-		materialBufferDesc.StrideInBytes	= sizeof(glm::vec4);
+		materialBufferDesc.SizeInBytes		= sizeof(MaterialBuffer);
+		materialBufferDesc.StrideInBytes	= sizeof(MaterialBuffer);
 		pDevice->CreateBuffer(&m_pMaterialBuffer, &data, materialBufferDesc);
 
 		//Execute commandlist
@@ -217,9 +217,14 @@ namespace Lambda
 		transformData.SizeInBytes	= sizeof(TransformBuffer);
 		m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &transformData);
 		//Update material
+		MaterialBuffer materialBuffer = {};
+		materialBuffer.Color		= material.Color;
+		materialBuffer.HasAlbedoMap = material.pAlbedoMap ? 1 : 0;
+		materialBuffer.HasNormalMap = material.pNormalMap ? 1 : 0;
+
 		ResourceData materialData = {};
-		materialData.pData			= glm::value_ptr(material.Color);
-		materialData.SizeInBytes	= sizeof(glm::vec4);
+		materialData.pData			= &materialBuffer;
+		materialData.SizeInBytes	= sizeof(MaterialBuffer);
 		m_pCurrentList->UpdateBuffer(m_pMaterialBuffer, &materialData);
 		//Set resources
 		IBuffer* ppBuffers[]				= { m_pCameraBuffer, m_pTransformBuffer, m_pMaterialBuffer, m_pLightBuffer };
@@ -241,6 +246,8 @@ namespace Lambda
 
 	void Renderer3D::EndScene() const
 	{
+		//Draw UI before ending renderpass
+		Application::Get().GetUILayer()->Draw(m_pCurrentList);
 		//End renderpass
 		m_pCurrentList->EndRenderPass();
 		//End by writing a timestamp

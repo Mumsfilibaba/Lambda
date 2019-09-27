@@ -127,8 +127,11 @@ namespace Lambda
 		m_Renderer.Init();
 
 		//Load rest of application
-        for (auto it = m_LayerStack.Begin(); it != m_LayerStack.End(); it++)
-            (*it)->OnLoad();
+		for (auto it = m_LayerStack.Begin(); it != m_LayerStack.End(); it++)
+		{
+			Layer* pLayer = (*it);
+			pLayer->OnLoad();
+		}
 	}
 	
 
@@ -140,7 +143,10 @@ namespace Lambda
 		JoystickManager::OnUpdate();
         //Call update
         for (auto it = m_LayerStack.Begin(); it != m_LayerStack.End(); it++)
-            (*it)->OnUpdate(dt);
+		{
+			Layer* pLayer = (*it);
+			pLayer->OnUpdate(dt);
+		}
 	}
 
 
@@ -148,8 +154,11 @@ namespace Lambda
 	{
 		m_Renderer.Begin();
 
-        for (auto it = m_LayerStack.Begin(); it != m_LayerStack.End(); it++)
-            (*it)->OnRender(dt, m_Renderer.m_pCurrentList);
+		for (auto it = m_LayerStack.Begin(); it != m_LayerStack.End(); it++)
+		{
+			Layer* pLayer = (*it);
+            pLayer->OnRender(m_Renderer, dt);
+		}
 
 		m_Renderer.End();
 		m_Renderer.Swapbuffers();
