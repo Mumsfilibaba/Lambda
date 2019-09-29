@@ -2,12 +2,11 @@
 #include "Utilities/MathHelper.h"
 #include "VKNCommandList.h"
 #include "VKNDevice.h"
-#include "VKNUploadBuffer.h"
+#include "VKNBuffer.h"
 #include "VKNPipelineState.h"
 #include "VKNSamplerState.h"
 #include "VKNTexture.h"
 #include "VKNFramebuffer.h"
-#include "VKNBuffer.h"
 #include "VKNQuery.h"
 #include "VKNRenderPass.h"
 #include "VKNPipelineResourceState.h"
@@ -474,7 +473,7 @@ namespace Lambda
 			if (!m_pRenderPass)
 			{
 				//Get offset before allocating
-				uint64 offset = m_pBufferUpload->GetOffset();
+				uint64 deviceOffset = m_pBufferUpload->GetDeviceOffset();
 
 				//Allocate memory in the uploadbuffer
 				void* pMem = m_pBufferUpload->Allocate(pData->SizeInBytes);
@@ -482,7 +481,7 @@ namespace Lambda
 
 				//Copy buffer
 				VkBufferCopy copyRegion = {};
-				copyRegion.srcOffset    = offset;
+				copyRegion.srcOffset    = deviceOffset;
 				copyRegion.dstOffset    = 0;
 				copyRegion.size         = pData->SizeInBytes;
 
@@ -509,7 +508,7 @@ namespace Lambda
 			VKNTexture* pVkResource = reinterpret_cast<VKNTexture*>(pResource);
         
 			//Get offset before allocating
-			uint64 offset = m_pTextureUpload->GetOffset();
+			uint64 offset = m_pTextureUpload->GetDeviceOffset();
         
 			//Allocate memory in the uploadbuffer
 			void* pMappedMemory = m_pTextureUpload->Allocate(pData->SizeInBytes);

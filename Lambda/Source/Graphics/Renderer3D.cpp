@@ -216,7 +216,8 @@ namespace Lambda
 		transformData.pData			= &transform;
 		transformData.SizeInBytes	= sizeof(TransformBuffer);
 		m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &transformData);
-		//Update material
+		
+        //Update material
 		MaterialBuffer materialBuffer = {};
 		materialBuffer.Color		= material.Color;
 		materialBuffer.HasAlbedoMap = material.pAlbedoMap ? 1 : 0;
@@ -227,9 +228,9 @@ namespace Lambda
 		materialData.SizeInBytes	= sizeof(MaterialBuffer);
 		m_pCurrentList->UpdateBuffer(m_pMaterialBuffer, &materialData);
 		//Set resources
-		IBuffer* ppBuffers[]				= { m_pCameraBuffer, m_pTransformBuffer, m_pMaterialBuffer, m_pLightBuffer };
-		ITexture* ppTextures[]				= { material.pAlbedoMap, material.pNormalMap };
-		ISamplerState* ppSamplerStates[]	= { material.pSamplerState };
+		IBuffer* ppBuffers[]		     = { m_pCameraBuffer, m_pTransformBuffer, m_pMaterialBuffer, m_pLightBuffer };
+		ITexture* ppTextures[]		     = { material.pAlbedoMap, material.pNormalMap };
+		ISamplerState* ppSamplerStates[] = { material.pSamplerState };
 		material.pResourceState->SetConstantBuffers(ppBuffers, 4, 0);
 		material.pResourceState->SetTextures(ppTextures, 2, 4);
 		material.pResourceState->SetSamplerStates(ppSamplerStates, 1, 6);

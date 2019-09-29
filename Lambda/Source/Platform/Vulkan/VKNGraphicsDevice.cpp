@@ -13,7 +13,6 @@
 #include "VKNRenderPass.h"
 #include "VKNQuery.h"
 #include "VKNPipelineResourceState.h"
-#include "VKNUploadBuffer.h"
 #include "VKNUtilities.h"
 #include "VKNConversions.inl"
 
@@ -30,7 +29,7 @@ namespace Lambda
 		m_Fences(),
         m_RenderSemaphores(),
 		m_ImageSemaphores(),
-		m_pDynamicBufferManager(nullptr),
+		m_pBufferManager(nullptr),
 		m_pFramebufferCache(nullptr),
 		m_pSwapChain(nullptr),
 		m_pDepthStencil(nullptr),
@@ -83,7 +82,7 @@ namespace Lambda
 		ReleaseMSAABuffer();
 
 		SafeDelete(m_pFramebufferCache);
-		SafeDelete(m_pDynamicBufferManager);
+		SafeDelete(m_pBufferManager);
 		SafeDelete(m_pDescriptorPoolManager);
 
 		//Release all memory
@@ -179,7 +178,7 @@ namespace Lambda
 		//Create descriptorpoolmanager
 		m_pDescriptorPoolManager	= DBG_NEW VKNDescriptorPoolManager();
 		//Create dynamic buffer manager
-		m_pDynamicBufferManager		= DBG_NEW VKNBufferManager();
+		m_pBufferManager		= DBG_NEW VKNBufferManager();
 		//Create framebuffercache
 		m_pFramebufferCache			= DBG_NEW VKNFramebufferCache();
         
@@ -295,8 +294,11 @@ namespace Lambda
     {
 		LAMBDA_ASSERT(ppBuffer != nullptr);
         
+        //Create buffer
         VKNBuffer* pVkBuffer = DBG_NEW VKNBuffer(m_pDeviceAllocator, desc);
-
+        if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
+            m_pBufferManager->RegisterBuffer(pVkBuffer);
+        
         //Upload inital data
         if (pInitalData)
         {
@@ -304,9 +306,6 @@ namespace Lambda
             
             if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
             {
-                //Register dynamic buffer
-                m_pDynamicBufferManager->RegisterBuffer(pVkBuffer);
-                
                 //Upload directly to buffer if it is dynamic
                 void* pMappedData = nullptr;
                 
@@ -461,7 +460,7 @@ namespace Lambda
 			BufferDesc bufferDesc = pVkBuffer->GetDesc();
 			if (bufferDesc.Usage == RESOURCE_USAGE_DYNAMIC)
 			{
-				m_pDynamicBufferManager->UnregisterBuffer(pVkBuffer);
+				m_pBufferManager->UnregisterBuffer(pVkBuffer);
 			}
 
 			//Then destroy buffer
@@ -666,8 +665,6 @@ namespace Lambda
 		}
 		else
 		{
-			//LOG_DEBUG_INFO("Vulkan: Present Frame '%d' - WaitSemaphore='%x', SignalSemaphore='%x'\n", m_CurrentFrame, m_RenderSemaphores[m_CurrentFrame], m_ImageSemaphores[m_CurrentFrame]);
-
 			m_pSwapChain->Present(m_PresentationQueue, m_RenderSemaphores[m_CurrentFrame]);
 			GPUWaitForFrame();
 		}
@@ -683,10 +680,10 @@ namespace Lambda
 		//Advance current frame counter
 		GraphicsDeviceDesc desc = m_pDevice->GetDesc();
 		m_CurrentFrame = (m_CurrentFrame + 1) % desc.BackBufferCount;
-		m_pDynamicBufferManager->MoveToNextFrame(uint32(m_CurrentFrame));
 
-		//Cleanup memory
-		m_pDeviceAllocator->CleanGarbageMemory(m_CurrentFrame);
+        //Cleanup memory
+        m_pBufferManager->AdvanceFrame();
+        m_pDeviceAllocator->EmptyGarbageMemory();
 		//Cleanup descriptorpool
 		m_pDescriptorPoolManager->Cleanup();
     }

@@ -166,10 +166,14 @@ namespace Lambda
 		//Allocate memory
 		VkMemoryRequirements memoryRequirements = {};
 		vkGetImageMemoryRequirements(device.GetDevice(), m_Image, &memoryRequirements);
-		if (m_pAllocator->Allocate(&m_Memory, memoryRequirements, desc.Usage))
+		if (m_pAllocator->Allocate(m_Memory, memoryRequirements, desc.Usage))
 		{
 			vkBindImageMemory(device.GetDevice(), m_Image, m_Memory.DeviceMemory, m_Memory.DeviceMemoryOffset);
 		}
+        else
+        {
+            LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for texture\n");
+        }
         
         //Create the view
         CreateImageView();
@@ -242,7 +246,7 @@ namespace Lambda
 		{
 			if (m_Image != VK_NULL_HANDLE)
 			{
-				m_pAllocator->Deallocate(&m_Memory);
+				m_pAllocator->Deallocate(m_Memory);
 
 				vkDestroyImage(device, m_Image, nullptr);
 				m_Image = VK_NULL_HANDLE;

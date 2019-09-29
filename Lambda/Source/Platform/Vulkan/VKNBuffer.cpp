@@ -12,14 +12,14 @@ namespace Lambda
 
     VKNBuffer::VKNBuffer(IVKNAllocator* pAllocator, const BufferDesc& desc)
 		: m_pAllocator(pAllocator),
+        m_Memory(),
 		m_Buffer(VK_NULL_HANDLE),
-		m_Memory(),
-		m_Desc(),
-		m_CurrentFrame(0),
-		m_SizePerFrame(0),
-		m_SizePerUpdate(0),
-		m_DynamicOffset(0),
-		m_TotalDynamicOffset(0),
+        m_FrameOffset(0),
+        m_TotalSize(0),
+        m_SizePerFrame(0),
+        m_SizePerUpdate(0),
+        m_DynamicOffset(0),
+        m_Desc(),
 		m_IsDirty(false)
     {
 		LAMBDA_ASSERT(pAllocator != nullptr);
@@ -46,9 +46,10 @@ namespace Lambda
 
 			//If dynamic we allocate extra space (NUM_UPDATES updates per frame)
 			constexpr uint32 numUpdatesPerFrame = 4;
-			m_SizePerUpdate = Math::AlignUp<uint32>(uint32(desc.SizeInBytes), properties.limits.minUniformBufferOffsetAlignment);
+			m_SizePerUpdate = Math::AlignUp<uint64>(desc.SizeInBytes, properties.limits.minUniformBufferOffsetAlignment);
 			m_SizePerFrame	= m_SizePerUpdate * numUpdatesPerFrame;
-            info.size		= VkDeviceSize(m_SizePerFrame * deviceDesc.BackBufferCount);
+            m_TotalSize     = m_SizePerFrame * deviceDesc.BackBufferCount;
+            info.size		= m_TotalSize;
 		}
 		else
 		{
@@ -91,9 +92,13 @@ namespace Lambda
 		//Allocate memory
 		VkMemoryRequirements memoryRequirements = {};
 		vkGetBufferMemoryRequirements(device.GetDevice(), m_Buffer, &memoryRequirements);
-        if (m_pAllocator->Allocate(&m_Memory, memoryRequirements, m_Desc.Usage))
+        if (m_pAllocator->Allocate(m_Memory, memoryRequirements, m_Desc.Usage))
 		{
             vkBindBufferMemory(device.GetDevice(), m_Buffer, m_Memory.DeviceMemory, m_Memory.DeviceMemoryOffset);
+        }
+        else
+        {
+            LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for buffer\n");
         }
     }
     
@@ -102,8 +107,8 @@ namespace Lambda
     {
 		LAMBDA_ASSERT(ppMem != nullptr);
 
-		uint8* pMem = m_Memory.pHostMemory + m_TotalDynamicOffset;
-        (*ppMem) = reinterpret_cast<void*>(pMem);
+		uint8* pMemory = m_Memory.pHostMemory + GetDynamicOffset();
+        (*ppMem) = reinterpret_cast<void*>(pMemory);
     }
     
     
@@ -125,38 +130,29 @@ namespace Lambda
     }
 
 
-	void VKNBuffer::AdvanceFrame(uint32 frameCount)
+	void VKNBuffer::AdvanceFrame()
 	{
 		//Move on a frame
-		m_CurrentFrame	= frameCount;
-		//Reset offset
-		m_DynamicOffset      = 0;
-        m_TotalDynamicOffset = 0;
+        m_FrameOffset   = 0;
+        m_DynamicOffset = (m_DynamicOffset+m_SizePerFrame) % m_TotalSize;
+        return;
 	}
 
 
 	void VKNBuffer::DynamicUpdate(const ResourceData* pData)
 	{
 		//Calculate offset and see if there are enough space
-		uint32 offset = m_DynamicOffset + m_SizePerUpdate;
-		if (offset >= m_SizePerFrame)
-		{
-			Reallocate(m_SizePerFrame * 2);
-			offset = 0;
-		}
-
-		//Calculate offset in buffer
-		uint32 frameOffset = m_CurrentFrame * m_SizePerFrame;	//Offset of the current frame
-		m_DynamicOffset = offset;								//Offset per frame
-		m_TotalDynamicOffset = frameOffset + m_DynamicOffset;
-
+		m_FrameOffset += m_SizePerUpdate;
+        if (m_FrameOffset >= m_SizePerFrame)
+            Reallocate(m_SizePerFrame * 2);
+        
 		//Update buffer
-		uint8* pCurrent = m_Memory.pHostMemory + m_TotalDynamicOffset;
+		uint8* pCurrent = m_Memory.pHostMemory + GetDynamicOffset();
 		memcpy(pCurrent, pData->pData, pData->SizeInBytes);
 	}
 
 
-	void VKNBuffer::Reallocate(uint32 sizeInBytes)
+	void VKNBuffer::Reallocate(uint32 sizePerFrame)
 	{
 		VkBufferCreateInfo info = {};
 		info.sType					= VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -170,27 +166,24 @@ namespace Lambda
         GraphicsDeviceDesc desc = device.GetDesc();
         
         //Set new size
-        m_SizePerFrame       = sizeInBytes;
-        m_DynamicOffset      = 0;
-        m_TotalDynamicOffset = 0;
-        info.size            = VkDeviceSize(sizeInBytes * desc.BackBufferCount);
+        m_SizePerFrame  = sizePerFrame;
+        m_DynamicOffset = 0;
+        m_FrameOffset   = 0;
+        m_TotalSize     = m_SizePerFrame * desc.BackBufferCount;
+        info.size       = m_TotalSize;
 
         LOG_DEBUG_WARNING("Vulkan: Reallocated buffer. Old size: %llu bytes, New size: %llu\n", m_Memory.Size, info.size);
         
         //Set usage
         info.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
         if (m_Desc.Flags & BUFFER_FLAGS_VERTEX_BUFFER)
-        {
             info.usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-        }
+        
         if (m_Desc.Flags & BUFFER_FLAGS_INDEX_BUFFER)
-        {
             info.usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-        }
+
         if (m_Desc.Flags & BUFFER_FLAGS_CONSTANT_BUFFER)
-        {
             info.usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-        }
 
         //Create buffer
         VkBuffer newBuffer = VK_NULL_HANDLE;
@@ -213,27 +206,27 @@ namespace Lambda
 		}
 
 		//Allocate memory
-		VkMemoryRequirements memoryRequirements = {};
-		vkGetBufferMemoryRequirements(device.GetDevice(), newBuffer, &memoryRequirements);
-
         VKNMemory newMemory = {};
-		if (m_pAllocator->Allocate(&newMemory, memoryRequirements, m_Desc.Usage))
+        VkMemoryRequirements memoryRequirements = {};
+        vkGetBufferMemoryRequirements(device.GetDevice(), newBuffer, &memoryRequirements);
+		if (m_pAllocator->Allocate(newMemory, memoryRequirements, m_Desc.Usage))
 		{
 			vkBindBufferMemory(device.GetDevice(), newBuffer, newMemory.DeviceMemory, newMemory.DeviceMemoryOffset);
 		}
 		else
 		{
-			return;
+            LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for resize of buffer\n");
 		}
 
 		//Set the new handles and delete the old ones
-		m_pAllocator->DefferedDeallocate(&m_Memory, m_CurrentFrame);
-        
-        VKNBufferManager& bufferManager = VKNBufferManager::GetInstance();
-        bufferManager.DestroyBuffer(m_Buffer, m_CurrentFrame);
+        Release(device.GetDevice());
         
 		m_Buffer = newBuffer;
 		m_Memory = newMemory;
+        
+        //Set offsets
+        m_FrameOffset   = 0;
+        m_DynamicOffset = 0;
 
 		//Set to dirty
 		m_IsDirty = true;
@@ -244,13 +237,10 @@ namespace Lambda
     {
 		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
         
-        if (m_Buffer != VK_NULL_HANDLE)
-        {
-			m_pAllocator->Deallocate(&m_Memory);
+        m_pAllocator->Deallocate(m_Memory);
 
-            vkDestroyBuffer(device, m_Buffer, nullptr);
-            m_Buffer = VK_NULL_HANDLE;
-        }
+        VKNBufferManager& bufferManager = VKNBufferManager::GetInstance();
+        bufferManager.DestroyBuffer(m_Buffer);
     }
     
     
@@ -260,22 +250,173 @@ namespace Lambda
         delete this;
     }
 
+    //---------------
+    //VKNUploadBuffer
+    //---------------
+
+    VKNUploadBuffer::VKNUploadBuffer(IVKNAllocator* pAllocator, uint64 sizeInBytes)
+        : m_pAllocator(pAllocator),
+        m_pCurrent(nullptr),
+        m_Memory(),
+        m_Buffer(VK_NULL_HANDLE),
+        m_BytesLeft(0),
+        m_SizeInBytes(0)
+    {
+        LAMBDA_ASSERT(pAllocator != nullptr);
+        Init(sizeInBytes);
+    }
+
+    
+    bool VKNUploadBuffer::Init(uint64 sizeInBytes)
+    {
+        //Create buffer
+        VkBufferCreateInfo info = {};
+        info.sType                  = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        info.pNext                  = nullptr;
+        info.flags                  = 0;
+        info.queueFamilyIndexCount  = 0;
+        info.pQueueFamilyIndices    = nullptr;
+        info.sharingMode            = VK_SHARING_MODE_EXCLUSIVE;
+        info.size                   = sizeInBytes;
+        info.usage                  = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+        
+        VKNDevice& device = VKNDevice::Get();
+        if (vkCreateBuffer(device.GetDevice(), &info, nullptr, &m_Buffer) != VK_SUCCESS)
+        {
+            LOG_DEBUG_ERROR("Vulkan: Failed to create buffer for UploadBuffer\n");
+            return false;
+        }
+        else
+        {
+            LOG_DEBUG_INFO("Vulkan: Created buffer for UploadBuffer\n");
+            m_SizeInBytes = sizeInBytes;
+        }
+        
+        //Allocate memory
+        VkMemoryRequirements memoryRequirements = {};
+        vkGetBufferMemoryRequirements(device.GetDevice(), m_Buffer, &memoryRequirements);
+        if (m_pAllocator->Allocate(m_Memory, memoryRequirements, RESOURCE_USAGE_DYNAMIC))
+        {
+            vkBindBufferMemory(device.GetDevice(), m_Buffer, m_Memory.DeviceMemory, m_Memory.DeviceMemoryOffset);
+            Reset();
+            return true;
+        }
+        else
+        {
+            LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for uploadbuffer\n");
+            return false;
+        }
+    }
+
+
+    void VKNUploadBuffer::Reallocate(uint64 sizeInBytes)
+    {
+        VkBuffer  newBuffer = VK_NULL_HANDLE;
+        VKNMemory newMemory = {};
+
+        //Create buffer
+        VkBufferCreateInfo info = {};
+        info.sType                  = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        info.pNext                  = nullptr;
+        info.flags                  = 0;
+        info.queueFamilyIndexCount  = 0;
+        info.pQueueFamilyIndices    = nullptr;
+        info.sharingMode            = VK_SHARING_MODE_EXCLUSIVE;
+        info.size                   = sizeInBytes;
+        info.usage                  = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+
+        VKNDevice& device = VKNDevice::Get();
+        if (vkCreateBuffer(device.GetDevice(), &info, nullptr, &newBuffer) != VK_SUCCESS)
+        {
+            LOG_DEBUG_ERROR("Vulkan: Failed to reallocate buffer for UploadBuffer\n");
+        }
+        else
+        {
+            LOG_DEBUG_WARNING("Vulkan: Reallocated buffer for UploadBuffer\n");
+            m_SizeInBytes = sizeInBytes;
+        }
+
+        //Allocate memory
+        VkMemoryRequirements memoryRequirements = {};
+        vkGetBufferMemoryRequirements(device.GetDevice(), newBuffer, &memoryRequirements);
+        if (m_pAllocator->Allocate(newMemory, memoryRequirements, RESOURCE_USAGE_DYNAMIC))
+        {
+            vkBindBufferMemory(device.GetDevice(), newBuffer, newMemory.DeviceMemory, newMemory.DeviceMemoryOffset);
+
+            m_pAllocator->Deallocate(m_Memory);
+
+            VKNBufferManager& bufferManager = VKNBufferManager::GetInstance();
+            bufferManager.DestroyBuffer(m_Buffer);
+            
+            //Set new buffer and memory
+            m_Buffer = newBuffer;
+            m_Memory = newMemory;
+            
+            Reset();
+        }
+        else
+        {
+            LOG_DEBUG_ERROR("Vulkan: Failed to reallocate uploadbuffer\n");
+        }
+    }
+    
+    
+    void* VKNUploadBuffer::Allocate(uint64 bytesToAllocate)
+    {
+        //Do we have enough space? If no reallocate
+        if (bytesToAllocate > m_BytesLeft)
+            Reallocate(bytesToAllocate + MB(1));
+
+        //Move pointer
+        void* pAllocation = reinterpret_cast<void*>(m_pCurrent);
+        m_pCurrent  += bytesToAllocate;
+        m_BytesLeft -= bytesToAllocate;
+        return pAllocation;
+    }
+    
+    
+    void VKNUploadBuffer::Reset()
+    {
+        //Reset buffer by resetting current to the start
+        m_pCurrent  = m_Memory.pHostMemory;
+        m_BytesLeft = m_SizeInBytes;
+    }
+    
+    
+    void VKNUploadBuffer::Destroy(VkDevice device)
+    {
+        LAMBDA_ASSERT(device != VK_NULL_HANDLE);
+        
+        Reset();
+        
+        if (m_Buffer != VK_NULL_HANDLE)
+        {
+            m_pAllocator->Deallocate(m_Memory);
+
+            VKNBufferManager& bufferManager = VKNBufferManager::GetInstance();
+            bufferManager.DestroyBuffer(m_Buffer);
+        }
+        
+        LOG_DEBUG_INFO("Vulkan: Destroyed UploadBuffer\n");
+        delete this;
+    }
+
 	//----------------
 	//VKNBufferManager
 	//----------------
 
+    constexpr size_t frameCount = 5;
 	VKNBufferManager* VKNBufferManager::s_pInstance = nullptr;
 
 	VKNBufferManager::VKNBufferManager()
-		: m_Buffers()
+		: m_FrameIndex(0),
+        m_Buffers(),
+        m_BuffersToDelete()
 	{
 		LAMBDA_ASSERT(s_pInstance == nullptr);
 		s_pInstance = this;
         
-		VKNDevice& device		= VKNDevice::Get();
-        GraphicsDeviceDesc desc = device.GetDesc();
-        
-        m_BuffersToDelete.resize(desc.BackBufferCount);
+        m_BuffersToDelete.resize(frameCount);
 	}
 
 
@@ -285,29 +426,29 @@ namespace Lambda
 			s_pInstance = nullptr;
 
 		//Delete all buffers
-		for (uint32 i = 0; i < uint32(m_BuffersToDelete.size()); i++)
-			CleanupBuffers(i);
+		for (uint32 i = 0; i < frameCount; i++)
+            EmptyGarbageBuffers();
 	}
     
     
-    void VKNBufferManager::DestroyBuffer(VkBuffer buffer, uint32 frameCount)
+    void VKNBufferManager::DestroyBuffer(VkBuffer buffer)
     {
         if (buffer != VK_NULL_HANDLE)
         {
-            auto& buffers = m_BuffersToDelete[frameCount];
+            auto& buffers = m_BuffersToDelete[m_FrameIndex];
             buffers.push_back(buffer);
         }
     }
 
 
-	void VKNBufferManager::MoveToNextFrame(uint32 frameCount)
+	void VKNBufferManager::AdvanceFrame()
 	{
         //Delete all buffers to delete
-		CleanupBuffers(frameCount);
+        EmptyGarbageBuffers();
         
         //Update dynamic buffers
 		for (auto buffer : m_Buffers)
-			buffer->AdvanceFrame(frameCount);
+			buffer->AdvanceFrame();
 	}
 
 
@@ -316,13 +457,10 @@ namespace Lambda
 		for (auto buffer : m_Buffers)
 		{
 			if (buffer == pBuffer)
-			{
 				return;
-			}
 		}
 
 		LOG_DEBUG_INFO("Vulkan: Registered buffer\n");
-
 		m_Buffers.emplace_back(pBuffer);
 	}
 
@@ -342,17 +480,24 @@ namespace Lambda
 	}
 
 	
-	void VKNBufferManager::CleanupBuffers(uint32 frameCount)
+	void VKNBufferManager::EmptyGarbageBuffers()
 	{
-		VKNDevice& device = VKNDevice::Get();
-
-		auto& buffers = m_BuffersToDelete[frameCount];
-		for (auto& buffer : buffers)
-		{
-			vkDestroyBuffer(device.GetDevice(), buffer, nullptr);
-			buffer = VK_NULL_HANDLE;
-		}
-		buffers.clear();
+        //Advance frameindex
+        m_FrameIndex = (m_FrameIndex+1) % frameCount;
+        
+        //Delete all buffers for the current frmae
+        auto& buffers = m_BuffersToDelete[m_FrameIndex];
+        if (buffers.size() > 1)
+        {
+            VKNDevice& device = VKNDevice::Get();
+            for (auto& buffer : buffers)
+            {
+                vkDestroyBuffer(device.GetDevice(), buffer, nullptr);
+                buffer = VK_NULL_HANDLE;
+            }
+            
+            buffers.clear();
+        }
 	}
 	
 	

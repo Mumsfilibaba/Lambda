@@ -296,7 +296,7 @@ namespace Lambda
 		}
 
 		//Update descriptorset
-		if (m_IsDirty)
+        if (m_IsDirty)
 		{
 			//Allocate descriptorset
 			m_DescriptorSet = m_pAllocator->Allocate(m_DescriptorSetLayout);
@@ -386,9 +386,7 @@ namespace Lambda
 
 		//Update bufferoffsets
 		for (size_t i = 0; i < m_DynamicBuffers.size(); i++)
-		{
 			m_DynamicOffsets[i] = m_DynamicBuffers[i]->GetDynamicOffset();
-		}
 	}
 
 

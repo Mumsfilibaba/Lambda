@@ -78,7 +78,7 @@ namespace Lambda
         virtual bool OnResize(const WindowResizeEvent& event) override final;
     private:
 		VKNDevice*					m_pDevice;
-		VKNBufferManager*			m_pDynamicBufferManager;
+		VKNBufferManager*			m_pBufferManager;
 		VKNDescriptorPoolManager*	m_pDescriptorPoolManager;
 		VKNFramebufferCache*		m_pFramebufferCache;
 		VKNTexture*					m_pDepthStencil;

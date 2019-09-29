@@ -12,7 +12,7 @@ namespace Lambda
 
 	constexpr float mb = 1024.0f * 1024.0f;
 
-	VKNMemoryChunk::VKNMemoryChunk(uint32 id, uint64 sizeInBytes, uint32 memoryType, ResourceUsage usage)
+	VKNMemoryChunk::VKNMemoryChunk(uint32 id, VkDeviceSize sizeInBytes, uint32 memoryType, ResourceUsage usage)
 		: m_Usage(usage),
 		m_ID(id),
 		m_MemoryType(memoryType),
@@ -63,12 +63,11 @@ namespace Lambda
 	}
 
 
-	bool VKNMemoryChunk::Allocate(VKNMemory* pAllocation, uint64 sizeInBytes, uint64 alignment)
+	bool VKNMemoryChunk::Allocate(VKNMemory& allocation, VkDeviceSize sizeInBytes, VkDeviceSize alignment, VkDeviceSize granularity)
 	{
-        LAMBDA_ASSERT(pAllocation != nullptr);
-        
-        VkDeviceSize offset         = 0;
-        VkDeviceSize padding        = 0;
+        VkDeviceSize padding = 0;
+        VkDeviceSize paddedDeviceOffset = 0;
+        VkDeviceSize paddedSizeInBytes  = 0;
         VKNMemoryBlock* pBestFit = nullptr;
         
         //Find enough free space, and find the block that best fits
@@ -78,93 +77,108 @@ namespace Lambda
             if (!pCurrent->IsFree)
                 continue;
             
-            //Align the offset
-            offset  = Math::AlignUp<uint64>(pCurrent->DeviceMemoryOffset, alignment);
-            padding = offset - pCurrent->DeviceMemoryOffset;
-            
-            if (pCurrent->Size <= padding + sizeInBytes)
+            //Does it fit into the block
+            if (sizeInBytes > pCurrent->Size)
                 continue;
+            
+            //Align the offset
+            paddedDeviceOffset = Math::AlignUp<uint64>(pCurrent->DeviceMemoryOffset, alignment);
+            
+            //Take granularity into account
+            if (pCurrent->pPrevious != nullptr && granularity > 1)
+            {
+                VKNMemoryBlock* pPrevious = pCurrent->pPrevious;
+                if (IsOnSamePage(pPrevious->DeviceMemoryOffset, pPrevious->Size, paddedDeviceOffset, granularity))
+                {
+                    paddedDeviceOffset = Math::AlignUp(paddedDeviceOffset, granularity);
+                }
+            }
+            
+            //Calculate padding
+            padding = paddedDeviceOffset - pCurrent->DeviceMemoryOffset;
+            paddedSizeInBytes = sizeInBytes + padding;
+            
+            //Does it still fit
+            if (paddedSizeInBytes > pCurrent->Size)
+                continue;
+            
+            //Avoid granularity conflict
+            if (granularity > 1 && pCurrent->pNext != nullptr)
+            {
+                VKNMemoryBlock* pNext = pCurrent->pNext;
+                if (IsOnSamePage(paddedDeviceOffset, sizeInBytes, pNext->DeviceMemoryOffset, granularity))
+                {
+                    continue;
+                }
+            }
             
             //Set bestfit
             if (pBestFit)
             {
-                if (pBestFit->Size <= pCurrent->Size)
+                if (pCurrent->Size > pBestFit->Size)
+                {
                     continue;
+                }
             }
             
             pBestFit = pCurrent;
         }
-        
 
         //Did we find a suitable block to make the allocation?
-        if (!pBestFit)
-        {
+        if (pBestFit == nullptr)
             return false;
-		}
-
-        
-        //Create a block for the padding (Allocating a texture in a block can result in a padding of 256 bytes which is enough for a buffer)
-        if (padding > 0)
-        {
-			//Save the old block (Will be padding)
-            VKNMemoryBlock* pPadding		= pBestFit;
-
-			//Create a new block that fill house the allocation
-			pBestFit						= DBG_NEW VKNMemoryBlock();
-			pBestFit->ID                    = m_BlockCount++;
-			pBestFit->DeviceMemoryOffset    = offset;
-			pBestFit->Size                  = pPadding->Size - padding;
-			pBestFit->IsFree                = true;
-            
-			//Resize padding block
-			pPadding->Size = padding;
-
-			//Set pointers
-			pBestFit->pNext		= pPadding->pNext;
-			pBestFit->pPrevious = pPadding;
-
-            pPadding->pNext     = pBestFit;
-        }
         
         
-        if (pBestFit->Size > sizeInBytes)
+        //        Free block
+        //|--------------------------|
+        //padding Allocation Remaining
+        //|------|----------|--------|
+        if (pBestFit->Size > paddedSizeInBytes)
         {
             //Create a new block after allocation
             VKNMemoryBlock* pBlock = DBG_NEW VKNMemoryBlock();
             pBlock->ID                  = m_BlockCount++;
-            pBlock->Size                = pBestFit->Size - sizeInBytes;
+            pBlock->Size                = pBestFit->Size - paddedSizeInBytes;
             pBlock->DeviceMemoryOffset  = pBestFit->DeviceMemoryOffset + sizeInBytes;
             pBlock->IsFree              = true;
             
-			//Set pointers
-            pBlock->pNext       = pBestFit->pNext;
-            pBlock->pPrevious   = pBestFit;
-            
-            pBestFit->Size      = sizeInBytes;
-            pBestFit->pNext     = pBlock;
+            //Set pointers
+            pBlock->pNext     = pBestFit->pNext;
+            pBlock->pPrevious = pBestFit;
+            if (pBestFit->pNext)
+                pBestFit->pNext->pPrevious = pBlock;
+            pBestFit->pNext = pBlock;
         }
-
         
-        //Setup allocation
-        pAllocation->BlockID            = pBestFit->ID;
-        pAllocation->ChunkID            = m_ID;
-        pAllocation->DeviceMemory       = m_DeviceMemory;
-        pAllocation->DeviceMemoryOffset = pBestFit->DeviceMemoryOffset;
-        pAllocation->Size               = pBestFit->Size;
-        if (m_Usage == RESOURCE_USAGE_DYNAMIC)
-        {
-            pAllocation->pHostMemory = m_pHostMemory + pAllocation->DeviceMemoryOffset;
-        }
-        else
-        {
-            pAllocation->pHostMemory = nullptr;
-        }
-
-        //Set bestfit to be used
+        //Update bestfit
+        pBestFit->Size   = sizeInBytes;
         pBestFit->IsFree = false;
         
+        //Setup allocation
+        allocation.BlockID            = pBestFit->ID;
+        allocation.ChunkID            = m_ID;
+        allocation.DeviceMemory       = m_DeviceMemory;
+        allocation.DeviceMemoryOffset = paddedDeviceOffset;
+        allocation.Size               = sizeInBytes;
+        if (m_Usage == RESOURCE_USAGE_DYNAMIC)
+            allocation.pHostMemory = m_pHostMemory + allocation.DeviceMemoryOffset;
+        else
+            allocation.pHostMemory = nullptr;
+
 		return true;
 	}
+
+
+    bool VKNMemoryChunk::IsOnSamePage(VkDeviceSize aOffset, VkDeviceSize aSize, VkDeviceSize bOffset, VkDeviceSize pageSize)
+    {
+        LAMBDA_ASSERT( aOffset + aSize <= bOffset && aSize > 0 && pageSize > 0 );
+        
+        VkDeviceSize aEnd       = aOffset + (aSize-1);
+        VkDeviceSize aEndPage   = aEnd & ~(pageSize-1);
+        VkDeviceSize bStart     = bOffset;
+        VkDeviceSize bStartPage = bStart & ~(pageSize-1);
+        return aEndPage == bStartPage;
+    }
 
 
 	void VKNMemoryChunk::Map()
@@ -191,91 +205,74 @@ namespace Lambda
 			VKNDevice& device = VKNDevice::Get();
 			vkUnmapMemory(device.GetDevice(), m_DeviceMemory);
 
-			m_pHostMemory   = nullptr;
-			m_IsMapped      = false;
+			m_pHostMemory = nullptr;
+			m_IsMapped    = false;
 		}
 	}
 
 
-	void VKNMemoryChunk::Deallocate(VKNMemory* pAllocation)
+	void VKNMemoryChunk::Deallocate(VKNMemory& allocation)
 	{
+        LOG_DEBUG_INFO("Vulkan: Deallocated block ID=%u\n", allocation.BlockID);
+        
         //Try to find the correct block
         VKNMemoryBlock* pCurrent = m_pBlockHead;
 		while (pCurrent)
         {
-			if (pCurrent->ID == uint32(pAllocation->BlockID))
-			{
+            //Did we find the correct block
+			if (pCurrent->ID == uint32(allocation.BlockID))
 				break;
-			}
-			
-			pCurrent = pCurrent->pNext;
+            //Continue looking
+            pCurrent = pCurrent->pNext;
         }
 
 		if (!pCurrent)
-		{
-			return;
-		}
+        {
+            LOG_DEBUG_ERROR("Vulkan: Block owning allocation was not found\n");
+            return;
+        }
 		
 		//Set this block to free
 		pCurrent->IsFree = true;
 
-		//Try to merge blocks
-		VKNMemoryBlock* pNext		= pCurrent->pNext;
-		VKNMemoryBlock* pPrevious	= pCurrent->pPrevious;
-		if (pNext)
-		{
-			//Merge blocks
-			if (pNext->IsFree)
-			{
-				//Set size
-				pNext->Size					= pNext->Size + pCurrent->Size;
-				pNext->DeviceMemoryOffset	= pNext->DeviceMemoryOffset - pCurrent->Size;
+		//Merge previous with current
+        if (pCurrent->pPrevious)
+        {
+            VKNMemoryBlock* pPrevious = pCurrent->pPrevious;
+            if (pPrevious->IsFree)
+            {
+                //Set size
+                pPrevious->Size += pCurrent->Size;
 
-				//Set pointers
-				pNext->pPrevious = pPrevious;
-				if (pPrevious)
-					pPrevious->pNext = pNext;	
-				if (m_pBlockHead == pCurrent)
-					m_pBlockHead = pNext;
+                //Set pointers
+                pPrevious->pNext = pCurrent->pNext;
+                if (pCurrent->pNext)
+                    pCurrent->pNext->pPrevious = pPrevious;
 
-				//Remove block
-				delete pCurrent;
+                //Remove block
+                delete pCurrent;
+                pCurrent = pPrevious;
+            }
+        }
+        
+        //Try and merge current with next
+        if (pCurrent->pNext)
+        {
+            VKNMemoryBlock* pNext = pCurrent->pNext;    
+            if (pNext->IsFree)
+            {
+                //Set size
+               pCurrent->Size += pNext->Size;
 
-				//Set values to continue the function
-				pCurrent	= pNext;
-				pNext		= pCurrent->pNext;
-			}
-		}
-		if (pPrevious)
-		{
-			//Merge blocks
-			if (pPrevious->IsFree)
-			{
-				//Set size
-				pPrevious->Size = pPrevious->Size + pCurrent->Size;
+                //Set pointers
+                if (pNext->pNext)
+                    pNext->pNext->pPrevious = pCurrent;
+                pCurrent->pNext = pNext->pNext;
 
-				//Set pointers
-				pPrevious->pNext = pNext;
-				if (pNext)
-					pNext->pPrevious = pPrevious;
-				if (m_pBlockHead == pCurrent)
-					m_pBlockHead = pPrevious;
-
-				//Remove block
-				delete pCurrent;
-
-				//Set values to continue the function
-				pCurrent = nullptr;
-			}
-		}
-
-		//Invalidate memory
-		pAllocation->BlockID			= -1;
-		pAllocation->ChunkID			= -1;
-		pAllocation->DeviceMemoryOffset = 0;
-		pAllocation->Size				= 0;
-		pAllocation->DeviceMemory		= VK_NULL_HANDLE;
-		pAllocation->pHostMemory		= nullptr;
+                //Remove block
+                delete pNext;
+            }
+        }
 	}
 
 
@@ -318,37 +315,37 @@ namespace Lambda
 		return m_MemoryType;
 	}
 
-
 	//------------
 	//VKNAllocator
 	//------------
 
+    constexpr size_t numFrames = 5;
 
 	VKNAllocator::VKNAllocator()
 		: m_MaxAllocations(0),
-		m_TotalAllocated(0),
-		m_TotalReserved(0),
+        m_TotalReserved(0),
+        m_TotalAllocated(0),
+        m_FrameIndex(0),
 		m_Chunks(),
 		m_MemoryToDeallocate()
 	{
-		VKNDevice& device = VKNDevice::Get();
-        GraphicsDeviceDesc deviceDesc = device.GetDesc();
-		uint32 frameCount = deviceDesc.BackBufferCount;
-		m_MemoryToDeallocate.resize(frameCount);
-
+        //Resize the number of garbage memory vectors
+        m_MemoryToDeallocate.resize(numFrames);
+        
+        //Setup from properties of the device
+        VKNDevice& device = VKNDevice::Get();
 		VkPhysicalDeviceProperties properties = device.GetPhysicalDeviceProperties();
 		m_MaxAllocations = properties.limits.maxMemoryAllocationCount;
+        m_BufferImageGranularity = properties.limits.bufferImageGranularity;
 	}
 
 
-	bool VKNAllocator::Allocate(VKNMemory* pAllocation, const VkMemoryRequirements& memoryRequirements, ResourceUsage usage)
+	bool VKNAllocator::Allocate(VKNMemory& allocation, const VkMemoryRequirements& memoryRequirements, ResourceUsage usage)
 	{
 		//Set memoryproperty based on resource usage
 		VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 		if (usage == RESOURCE_USAGE_DYNAMIC)
-		{
 			properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-		}
 
 		//Add to total
 		m_TotalAllocated += memoryRequirements.size;
@@ -357,12 +354,14 @@ namespace Lambda
 		VKNDevice& device = VKNDevice::Get();
 		uint32 memoryType = FindMemoryType(device.GetPhysicalDevice(), memoryRequirements.memoryTypeBits, properties);
 
+        LOG_SYSTEM(LOG_SEVERITY_WARNING, "[VULKAN DEVICE ALLOCATOR] Allocated Memory chunk. Number of allocations: '%llu'. Max allocations: '%llu'. Memory type: %d. TotalAllocated: %.2fMB. TotalReserved %.2fMB\n", m_Chunks.size(), m_MaxAllocations, memoryType, float(m_TotalAllocated) / mb, float(m_TotalReserved) / mb);
+        
 		//Try allocating from existing chunk
 		for (auto chunk : m_Chunks)
 		{
 			if (chunk->GetMemoryType() == memoryType)
 			{
-				if (chunk->Allocate(pAllocation, memoryRequirements.size, memoryRequirements.alignment))
+				if (chunk->Allocate(allocation, memoryRequirements.size, memoryRequirements.alignment, m_BufferImageGranularity))
 				{
 					return true;
 				}
@@ -374,9 +373,7 @@ namespace Lambda
 		//If allocated is large, make a dedicated allocation
 		uint64 bytesToReserve = MB(256);
 		if (memoryRequirements.size > bytesToReserve)
-		{
 			bytesToReserve = memoryRequirements.size;
-		}
 
 		//Add to total
 		m_TotalReserved += bytesToReserve;
@@ -384,53 +381,47 @@ namespace Lambda
 		//Allocate new chunk
 		VKNMemoryChunk* pChunk = DBG_NEW VKNMemoryChunk(uint32(m_Chunks.size()), bytesToReserve, memoryType, usage);
 		m_Chunks.emplace_back(pChunk);
-		
-		LOG_SYSTEM(LOG_SEVERITY_WARNING, " [DEVICE ALLOCATOR] Allocated Memory chunk. Number of allocations: '%llu'. Max allocations: '%llu'. Memory type: %d, \n", m_Chunks.size(), m_MaxAllocations, memoryType);
-		LOG_SYSTEM(LOG_SEVERITY_WARNING, " [DEVICE ALLOCATOR] TotalAllocated: %.2fMB. TotalReserved %.2fMB\n", float(m_TotalAllocated) / mb, float(m_TotalReserved) / mb);
-
-		return m_Chunks.back()->Allocate(pAllocation, memoryRequirements.size, memoryRequirements.alignment);
+        return pChunk->Allocate(allocation, memoryRequirements.size, memoryRequirements.alignment, m_BufferImageGranularity);
 	}
 
 
-	void VKNAllocator::Deallocate(VKNMemory* pAllocation)
+	void VKNAllocator::Deallocate(VKNMemory& allocation)
 	{
-        if (size_t(pAllocation->ChunkID) < m_Chunks.size() && pAllocation->DeviceMemory != VK_NULL_HANDLE)
-        {
-            VKNMemoryChunk* pChunk = m_Chunks[pAllocation->ChunkID];
-            pChunk->Deallocate(pAllocation);
+        //Set it to be removed
+        if (size_t(allocation.ChunkID) < m_Chunks.size() && allocation.DeviceMemory != VK_NULL_HANDLE)
+            m_MemoryToDeallocate[m_FrameIndex].emplace_back(allocation);
 
-			m_TotalAllocated -= pAllocation->Size;
-        }
-	}
-
-	
-	void VKNAllocator::DefferedDeallocate(VKNMemory* pAllocation, uint64 frameCount)
-	{
-		//Set it to be removed
-        if (size_t(pAllocation->ChunkID) < m_Chunks.size() && pAllocation->DeviceMemory != VK_NULL_HANDLE)
-        {
-            m_MemoryToDeallocate[frameCount].emplace_back(*pAllocation);
-        }
-
-		//Invalidate memory
-		pAllocation->BlockID			= -1;
-		pAllocation->ChunkID			= -1;
-		pAllocation->DeviceMemoryOffset = 0;
-		pAllocation->Size				= 0;
-		pAllocation->DeviceMemory		= VK_NULL_HANDLE;
-		pAllocation->pHostMemory		= nullptr;
+        //Invalidate memory
+        allocation.BlockID            = -1;
+        allocation.ChunkID            = -1;
+        allocation.DeviceMemoryOffset = 0;
+        allocation.Size               = 0;
+        allocation.DeviceMemory       = VK_NULL_HANDLE;
+        allocation.pHostMemory        = nullptr;
 	}
 
 
-	void VKNAllocator::CleanGarbageMemory(uint64 frameCount)
+	void VKNAllocator::EmptyGarbageMemory()
 	{
-		auto& memoryBlocks = m_MemoryToDeallocate[frameCount];
+        //Move on a frame
+        m_FrameIndex = (m_FrameIndex+1) % numFrames;
+        
+        //Clean memory
+		auto& memoryBlocks = m_MemoryToDeallocate[m_FrameIndex];
 		if (memoryBlocks.size() > 0)
 		{
+            //Deallocate all the blocks
 			for (auto& memory : memoryBlocks)
-			{
-				Deallocate(&memory);
-			}
+            {
+                if (size_t(memory.ChunkID) < m_Chunks.size() && memory.DeviceMemory != VK_NULL_HANDLE)
+                {
+                    VKNMemoryChunk* pChunk = m_Chunks[memory.ChunkID];
+                    pChunk->Deallocate(memory);
+                    
+                    m_TotalAllocated -= memory.Size;
+                }
+            }
+            
 			memoryBlocks.clear();
 		}
 	}
@@ -441,26 +432,15 @@ namespace Lambda
 		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
 
 		//Cleanup all garbage memory before deleting
-		for (auto& memoryBlocks : m_MemoryToDeallocate)
-		{
-			if (memoryBlocks.size() > 0)
-			{
-				for (auto& memory : memoryBlocks)
-				{
-					Deallocate(&memory);
-				}
-				memoryBlocks.clear();
-			}
-		}
+        for (uint32 i = 0; i < numFrames; i++)
+            EmptyGarbageMemory();
 
 		//Delete allocator
 		LOG_SYSTEM(LOG_SEVERITY_WARNING, "Vulkan: Deleting DeviceAllocator. Number of chunks: %u\n", m_Chunks.size());
 		for (auto chunk : m_Chunks)
 		{
 			if (chunk)
-			{
 				chunk->Destroy(device);
-			}
 		}
 
 		delete this;

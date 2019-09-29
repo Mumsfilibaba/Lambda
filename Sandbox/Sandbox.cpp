@@ -66,7 +66,7 @@ namespace Lambda
         transformLight.Position.y = 0.5f;
         transformLight.Position.z = -1.0f;
 
-		constexpr uint32 sphereWidth = 8;
+		constexpr uint32 sphereWidth = 10;
 		for (uint32 y = 0; y < sphereWidth; y++)
 		{
 			for (uint32 x = 0; x < sphereWidth; x++)
@@ -189,7 +189,7 @@ namespace Lambda
 			m_Mesh.IndexCount = uint32(mesh.Indices.size());
 			{
                 BufferDesc desc     = {};
-                desc.pName          = "VertexBuffer";
+                desc.pName          = "Mesh VertexBuffer";
                 desc.Usage          = RESOURCE_USAGE_DEFAULT;
                 desc.Flags          = BUFFER_FLAGS_VERTEX_BUFFER;
                 desc.SizeInBytes    = sizeof(Vertex) * uint32(mesh.Vertices.size());
@@ -204,7 +204,7 @@ namespace Lambda
             //Create indexbuffer
             {
                 BufferDesc desc     = {};
-                desc.pName          = "IndexBuffer";
+                desc.pName          = "Mesh IndexBuffer";
                 desc.Usage          = RESOURCE_USAGE_DEFAULT;
                 desc.Flags          = BUFFER_FLAGS_INDEX_BUFFER;
                 desc.SizeInBytes    = sizeof(uint32) * uint32(mesh.Indices.size());
@@ -218,7 +218,7 @@ namespace Lambda
             }
 
 			//Create vertexbuffer
-			MeshData mesh2 = MeshFactory::CreateSphere(4);
+			MeshData mesh2 = MeshFactory::CreateSphere(4, 0.45);
 			m_SphereMesh.IndexCount = uint32(mesh2.Indices.size());
 			{
 				BufferDesc desc = {};

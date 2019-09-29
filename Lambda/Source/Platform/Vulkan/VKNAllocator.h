@@ -15,8 +15,8 @@ namespace Lambda
         int32			ChunkID             = -1;
         int32           BlockID             = -1;
         uint8*          pHostMemory         = nullptr;
-        uint64          Size                = 0;
-        uint64          DeviceMemoryOffset  = 0;
+        VkDeviceSize    Size                = 0;
+        VkDeviceSize    DeviceMemoryOffset  = 0;
         VkDeviceMemory  DeviceMemory        = VK_NULL_HANDLE;
 	};
 
@@ -32,13 +32,12 @@ namespace Lambda
 		IVKNAllocator() = default;
 		~IVKNAllocator() = default;
 
-		virtual bool	Allocate(VKNMemory* pAllocation, const VkMemoryRequirements& memoryRequirements, ResourceUsage usage) = 0;
-		virtual void	Deallocate(VKNMemory* pAllocation) = 0;
-		virtual void	DefferedDeallocate(VKNMemory* pAllocation, uint64 frameCount) = 0;
-		virtual void	CleanGarbageMemory(uint64 frameCount) = 0;
-		virtual void	Destroy(VkDevice device) = 0;
-		virtual uint64	GetTotalReserved() const = 0;
-		virtual uint64	GetTotalAllocated() const = 0;
+		virtual bool Allocate(VKNMemory& allocation, const VkMemoryRequirements& memoryRequirements, ResourceUsage usage) = 0;
+		virtual void Deallocate(VKNMemory& allocation) = 0;
+		virtual void EmptyGarbageMemory() = 0;
+		virtual void Destroy(VkDevice device) = 0;
+		virtual uint64 GetTotalReserved() const = 0;
+		virtual uint64 GetTotalAllocated() const = 0;
 	};
 
     //--------------
@@ -50,8 +49,8 @@ namespace Lambda
         VKNMemoryBlock* pNext               = nullptr;
         VKNMemoryBlock* pPrevious           = nullptr;
         uint32          ID                  = 0;
-        uint64          Size                = 0;
-        uint64          DeviceMemoryOffset  = 0;
+        VkDeviceSize    Size                = 0;
+        VkDeviceSize    DeviceMemoryOffset  = 0;
         bool            IsFree              = true;
     };
     
@@ -64,19 +63,18 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(VKNMemoryChunk);
 
-		VKNMemoryChunk(uint32 id, uint64 sizeInBytes, uint32 memoryType, ResourceUsage usage);
+		VKNMemoryChunk(uint32 id, VkDeviceSize sizeInBytes, uint32 memoryType, ResourceUsage usage);
 		~VKNMemoryChunk() = default;
 
-		bool    Allocate(VKNMemory* pAllocation, uint64 sizeInBytes, uint64 alignment);
-		void    Deallocate(VKNMemory* pAllocation);
-		void	Destroy(VkDevice device);
-		uint32  GetMemoryType() const;
-
+		bool Allocate(VKNMemory& allocation, VkDeviceSize sizeInBytes, VkDeviceSize alignment, VkDeviceSize granularity);
+        bool IsOnSamePage(VkDeviceSize aOffset, VkDeviceSize aSize, VkDeviceSize bOffset, VkDeviceSize pageSize);
+        void Deallocate(VKNMemory& allocation);
+		void Destroy(VkDevice device);
+		uint32 GetMemoryType() const;
 	private:
 		void Init();
 		void Map();
 		void Unmap();
-
 	private:
 		uint8*				m_pHostMemory;
 		VkDeviceMemory		m_DeviceMemory;
@@ -101,18 +99,18 @@ namespace Lambda
 		VKNAllocator();
 		~VKNAllocator() = default;
 
-		virtual bool	Allocate(VKNMemory* pAllocation, const VkMemoryRequirements& memoryRequirements, ResourceUsage usage) override final;
-		virtual void	Deallocate(VKNMemory* pAllocation) override final;
-		virtual void	DefferedDeallocate(VKNMemory* pAllocation, uint64 frameCount) override final;
-		virtual void	CleanGarbageMemory(uint64 frameCount) override final;
-		virtual void	Destroy(VkDevice device) override final;
-		virtual uint64	GetTotalReserved() const override final;
-		virtual uint64	GetTotalAllocated() const override final;
-
+		virtual bool Allocate(VKNMemory& allocation, const VkMemoryRequirements& memoryRequirements, ResourceUsage usage) override final;
+		virtual void Deallocate(VKNMemory& allocation) override final;
+		virtual void EmptyGarbageMemory() override final;
+		virtual void Destroy(VkDevice device) override final;
+		virtual uint64 GetTotalReserved() const override final;
+		virtual uint64 GetTotalAllocated() const override final;
 	private:
 		uint64								m_MaxAllocations;
 		uint64								m_TotalReserved;
 		uint64								m_TotalAllocated;
+        uint64                              m_FrameIndex;
+        VkDeviceSize                        m_BufferImageGranularity;
 		std::vector<VKNMemoryChunk*>		m_Chunks;
 		std::vector<std::vector<VKNMemory>>	m_MemoryToDeallocate;
 	};
@@ -130,11 +128,9 @@ namespace Lambda
 		~VKNDescriptorSetAllocator() = default;
 
 		VkDescriptorSet Allocate(VkDescriptorSetLayout descriptorSetLayout);
-		void			Destroy(VkDevice device);
-		
+		void Destroy(VkDevice device);
 	private:
 		void Init();
-
 	private:
 		VkDescriptorPool				m_Pool;
 		uint32							m_NumSets;
@@ -160,15 +156,12 @@ namespace Lambda
 
 		void DeallocatePool(VkDescriptorPool pool);
 		void Cleanup();
-
 	private:
 		uint32										m_FrameCount;
 		uint32										m_CurrentFrame;
 		std::vector<std::vector<VkDescriptorPool>>	m_OldPools;
-
 	private:
 		static VKNDescriptorPoolManager* s_pInstance;
-
 	public:
 		static VKNDescriptorPoolManager& GetInstance();
 	};
