@@ -1,6 +1,8 @@
 #pragma once
 #include "ICommandList.h"
 #include "IRenderPass.h"
+#include "IBuffer.h"
+#include "IQuery.h"
 #include "Time/Clock.h"
 #include <vector>
 #include <glm/glm.hpp>
@@ -8,11 +10,6 @@
 namespace Lambda
 {
 	class Camera;
-	class IQuery;
-    class IBuffer;
-	class ITexture;
-	class ISamplerState;
-    class IGraphicsPipelineState;
 
 	//---------------
 	//FrameStatistics
@@ -107,28 +104,28 @@ namespace Lambda
 
 		void Init();
 		void Begin();
-		void BeginScene(const Camera& camera, const LightBuffer& light) const;
-		void Submit(const Model& model, const Material& material, const TransformBuffer& transform) const;
+		void BeginScene(const Camera& camera, const LightBuffer& light);
+		void Submit(const Model& model, const Material& material, const TransformBuffer& transform);
 		void EndScene() const;
 		void End();
 		void Swapbuffers();
 		void Release();
 		void SetDisplaySize(uint32 width, uint32 height);
-		IBuffer* GetCameraCB() const;
-		IBuffer* GetLightCB() const;
-		IBuffer* GetTransformCB() const;
-		IRenderPass* GetRenderPass() const;
+		IBuffer* GetCameraCB();
+		IBuffer* GetLightCB();
+		IBuffer* GetTransformCB();
+		IRenderPass* GetRenderPass();
 		const FrameStatistics& GetFrameStatistics() const;
 	private:
 		ICommandList*				m_pCurrentList;
-		std::vector<ICommandList*>	m_Lists;
-		std::vector<IQuery*>		m_Queries;
 		IQuery*						m_pCurrentQuery;
-		IRenderPass*				m_pRenderPass;
-		IBuffer*					m_pCameraBuffer;
-		IBuffer*					m_pLightBuffer;
-		IBuffer*					m_pTransformBuffer;
-		IBuffer*					m_pMaterialBuffer;
+		std::vector<AutoRef<ICommandList>> m_Lists;
+		std::vector<AutoRef<IQuery>> m_Queries;
+		AutoRef<IRenderPass>		m_RenderPass;
+		AutoRef<IBuffer>			m_CameraBuffer;
+		AutoRef<IBuffer>			m_LightBuffer;
+		AutoRef<IBuffer>			m_TransformBuffer;
+		AutoRef<IBuffer>			m_MaterialBuffer;
 		Viewport					m_Viewport;
 		Rectangle					m_ScissorRect;
 		FrameStatistics				m_FrameInfo;

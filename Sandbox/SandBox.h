@@ -30,7 +30,7 @@ namespace Lambda
 
         virtual void OnLoad() override final;
         virtual void OnUpdate(Timestep dt) override final;
-        virtual void OnRender(const Renderer3D& renderer, Timestep dt) override final;
+        virtual void OnRender(Renderer3D& renderer, Timestep dt) override final;
         virtual void OnRenderUI(Timestep dt) override final;
         virtual void OnRelease() override final;
         virtual bool OnEvent(const Event& event) override final;
@@ -41,8 +41,8 @@ namespace Lambda
         void CreateCamera(uint32 width, uint32 height);
     private:
         //Shaders
-        IShader* m_pVS;
-        IShader* m_pPS;
+        AutoRef<IShader> m_VS;
+        AutoRef<IShader> m_PS;
         //Meshes
 		Model m_Mesh;
 		Model m_SphereMesh;
@@ -50,14 +50,14 @@ namespace Lambda
 		Material m_Material;
 		Material m_RedMaterial;
         //Textures
-        ITexture* m_pAlbedoMap;
-        ITexture* m_pNormalMap;
+		AutoRef<ITexture> m_AlbedoMap;
+		AutoRef<ITexture> m_NormalMap;
         //Samplers
-        ISamplerState* m_pSamplerState;
+		AutoRef<ISamplerState> m_SamplerState;
         //Pipelinestates
-        IGraphicsPipelineState* m_pPipelineState;
+		AutoRef<IGraphicsPipelineState> m_PipelineState;
         //ResourceState
-        IPipelineResourceState* m_pResourceState;
+		AutoRef<IPipelineResourceState> m_ResourceState;
         Camera m_Camera;
         TransformBuffer m_TransformBuffer;
     };

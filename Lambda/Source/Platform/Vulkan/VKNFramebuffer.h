@@ -18,9 +18,7 @@ namespace Lambda
 
 		size_t	GetHash() const;
 		bool	ContainsTexture(const VKNTexture* pTexture) const;
-
 		bool	operator==(const VKNFramebufferCacheKey& other) const;
-
 	public:
 		mutable size_t	Hash;
         VkRenderPass	RenderPass;

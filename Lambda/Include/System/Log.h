@@ -68,9 +68,6 @@ namespace Lambda
 	public:
 		LAMBDA_INTERFACE(ILog);
 
-		ILog() = default;
-		virtual ~ILog() = default;
-
 		virtual void Print(LogSeverity severity, const char* pFormat, ...) = 0;
 	public:
 		static ILog* Create();

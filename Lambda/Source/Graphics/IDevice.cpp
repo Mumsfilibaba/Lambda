@@ -7,9 +7,9 @@
 
 namespace Lambda
 {
-    //-------
+    //---------------
     //IDevice
-    //-------
+    //---------------
 
 	IDevice* IDevice::s_pInstance = nullptr;
 

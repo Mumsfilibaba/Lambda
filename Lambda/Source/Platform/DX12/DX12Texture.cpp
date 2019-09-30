@@ -28,7 +28,7 @@ namespace Lambda
 	}
 
 
-	TextureDesc DX12Texture::GetDesc() const
+	const TextureDesc& DX12Texture::GetDesc() const
 	{
 		return m_Desc;
 	}

@@ -17,13 +17,10 @@ namespace Lambda
     //ICommandList
     //------------
 
-	class LAMBDA_API ICommandList
+	class LAMBDA_API ICommandList : public IObject
 	{
 	public:
-		LAMBDA_INTERFACE(ICommandList);
-
-		ICommandList() = default;
-		~ICommandList() = default;
+		LAMBDA_IOBJECT_INTERFACE(ICommandList);
 
 		virtual void ClearRenderTarget(ITexture* pRenderTarget, float color[4]) = 0;
 		virtual void ClearDepthStencil(ITexture* pDepthStencil, float depth, uint8 stencil) = 0;

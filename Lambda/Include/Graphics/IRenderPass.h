@@ -1,6 +1,5 @@
 #pragma once
-#include "Defines.h"
-#include "Types.h"
+#include "IObject.h"
 
 namespace Lambda
 {
@@ -45,17 +44,14 @@ namespace Lambda
 	//IRenderPass
 	//-----------
 
-	class LAMBDA_API IRenderPass
+	class LAMBDA_API IRenderPass : public IObject
 	{
 	public:
-		LAMBDA_INTERFACE(IRenderPass);
-
-		IRenderPass() = default;
-		~IRenderPass() = default;
-	
+		LAMBDA_IOBJECT_INTERFACE(IRenderPass);
+			
 		virtual void SetRenderTargets(const ITexture* const* const ppRenderTargets, uint32 numRenderTargets, const ITexture* pDepthStencil) = 0;
 		virtual void SetClearValues(float color[4], float depth, uint8 stencil) = 0;
 		virtual void* GetNativeHandle() const = 0;
-		virtual RenderPassDesc GetDesc() const = 0;
+		virtual const RenderPassDesc& GetDesc() const = 0;
 	};
 }

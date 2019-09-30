@@ -24,10 +24,8 @@ namespace Lambda
 		void Reset();
 
 		uint32 GetDescriptorSize() const;
-
 	private:
 		ID3D12DescriptorHeap* GetHeap() const;
-
 	private:
 		Microsoft::WRL::ComPtr<ID3D12Device5> m_Device;
 		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_Heap;

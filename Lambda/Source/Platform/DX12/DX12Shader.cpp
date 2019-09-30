@@ -22,7 +22,7 @@ namespace Lambda
 	}
 
 
-	ShaderDesc DX12Shader::GetDesc() const
+	const ShaderDesc& DX12Shader::GetDesc() const
 	{
 		return ShaderDesc();
 	}

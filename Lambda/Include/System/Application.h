@@ -3,7 +3,7 @@
 #include "LayerStack.h"
 #include "Time/Clock.h"
 #include "Events/EventDispatcher.h"
-#include "Graphics/IGraphicsDevice.h"
+#include "Graphics/IDevice.h"
 #include "Graphics/UILayer.h"
 #include "Graphics/Renderer3D.h"
 #include "Debug/DebugLayer.h"
@@ -54,6 +54,7 @@ namespace Lambda
         
         IWindow* GetWindow() const;
         UILayer* GetUILayer() const;
+		Renderer3D& GetRenderer();
 		const Renderer3D& GetRenderer() const;
         const EngineParams& GetEngineParams() const;
     private:

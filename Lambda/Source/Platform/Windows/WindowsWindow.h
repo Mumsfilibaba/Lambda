@@ -1,6 +1,11 @@
 #pragma once
 #include "System/IWindow.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
+	#if !defined(WIN32_LEAN_AND_MEAN)
+		#define WIN32_LEAN_AND_MEAN 1
+	#endif
+	#include <Windows.h>
+	#include "Graphics/IDevice.h"
 	#include <vector>
 
 namespace Lambda
@@ -24,7 +29,7 @@ namespace Lambda
 		virtual void SetEventCallback(IEventCallback* pCallback) override final;
         virtual bool SetFullscreen(bool fullscreen) override final;
         virtual bool GetFullscreen() const override final;
-        virtual IGraphicsDevice* GetGraphicsDevice() const override final;
+        virtual const IDevice* GetGraphicsDevice() const override final;
         virtual void* GetNativeHandle() const override;
         virtual uint32 GetHeight() const override;
         virtual uint32 GetWidth() const override;
@@ -33,7 +38,7 @@ namespace Lambda
 		void DispatchEvent(const Event& event);
 		LRESULT OnEvent(uint32 msg, WPARAM wParam, LPARAM lParam);
 	private:
-		IGraphicsDevice*	m_pGraphicsDevice;
+		AutoRef<IDevice>	m_GraphicsDevice;
 		IEventCallback*		m_pEventCallback;
 		HWND				m_hWindow;
 		uint32				m_Height;

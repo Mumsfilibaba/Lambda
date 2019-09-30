@@ -7,7 +7,7 @@
 
 namespace Lambda
 {
-	class DX12Texture final : public ITexture
+	class DX12Texture final : public RefCountedObject<ITexture>
 	{
 		friend class DX12CommandList;
 		friend class DX12GraphicsDevice;
@@ -19,9 +19,8 @@ namespace Lambda
 		DX12Texture(ID3D12Device* pDevice, const TextureDesc& desc);
 		~DX12Texture() = default;
 
-		virtual TextureDesc GetDesc() const override final;
 		virtual void* GetNativeHandle() const override final;
-
+		virtual const TextureDesc& GetDesc() const override final;
 	private:
 		void Init(ID3D12Device* pDevice, const TextureDesc& desc);
 		void InitFromResource(ID3D12Resource* pResource);
@@ -31,7 +30,6 @@ namespace Lambda
 
 		ID3D12Resource* GetResource() const;
 		DX12DescriptorHandle GetDescriptorHandle() const;
-
 	private:
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_Texture;
 		DX12DescriptorHandle m_hDescriptor;

@@ -18,8 +18,9 @@ namespace Lambda
 	//VKNCommandList
 	//--------------
 
-    VKNCommandList::VKNCommandList(IVKNAllocator* pAllocator, CommandListType type)
-        : m_CommandPool(VK_NULL_HANDLE),
+    VKNCommandList::VKNCommandList(VKNDevice* pDevice, IVKNAllocator* pAllocator, CommandListType type)
+        : m_pDevice(pDevice),
+		m_CommandPool(VK_NULL_HANDLE),
         m_CommandBuffer(VK_NULL_HANDLE),
 		m_pBufferUpload(nullptr),
 		m_pTextureUpload(nullptr),
@@ -28,16 +29,17 @@ namespace Lambda
         m_Type(COMMAND_LIST_TYPE_UNKNOWN),
 		m_Name()
     {
+		//Add a ref to the refcounter
+		this->AddRef();
+
         Init(pAllocator, type);
     }
 
     
     void VKNCommandList::Init(IVKNAllocator* pAllocator, CommandListType type)
     {
-		VKNDevice& device = VKNDevice::Get();
-
         //Get queuefamiliy indices
-        QueueFamilyIndices familyIndices = device.GetQueueFamilyIndices();
+        QueueFamilyIndices familyIndices = m_pDevice->GetQueueFamilyIndices();
         
 		//Create commandpool
         VkCommandPoolCreateInfo poolInfo = {};
@@ -55,7 +57,7 @@ namespace Lambda
         }
         
 
-        if (vkCreateCommandPool(device.GetDevice(), &poolInfo, nullptr, &m_CommandPool) != VK_SUCCESS)
+        if (vkCreateCommandPool(m_pDevice->GetDevice(), &poolInfo, nullptr, &m_CommandPool) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create commandpool\n");
             return;
@@ -72,7 +74,7 @@ namespace Lambda
         allocInfo.level					= VK_COMMAND_BUFFER_LEVEL_PRIMARY;
         allocInfo.commandBufferCount	= 1;
         
-        if (vkAllocateCommandBuffers(device.GetDevice(), &allocInfo, &m_CommandBuffer) != VK_SUCCESS)
+        if (vkAllocateCommandBuffers(m_pDevice->GetDevice(), &allocInfo, &m_CommandBuffer) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create commandbuffer\n");
             return;
@@ -130,38 +132,34 @@ namespace Lambda
     }
     
     
-    void VKNCommandList::Destroy(VkDevice device)
-    {
-		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
-        
+	VKNCommandList::~VKNCommandList()
+	{
 		if (m_pBufferUpload)
 		{
-			m_pBufferUpload->Destroy(device);
+			m_pBufferUpload->Destroy(m_pDevice->GetDevice());
 			m_pBufferUpload = nullptr;
 		}
 		if (m_pTextureUpload)
 		{
-			m_pTextureUpload->Destroy(device);
+			m_pTextureUpload->Destroy(m_pDevice->GetDevice());
 			m_pTextureUpload = nullptr;
 		}
-        if (m_CommandBuffer != VK_NULL_HANDLE)
-        {
-            vkFreeCommandBuffers(device, m_CommandPool, 1, &m_CommandBuffer);
-            m_CommandBuffer = VK_NULL_HANDLE;
-        }
-        if (m_CommandPool != VK_NULL_HANDLE)
-        {
-            vkDestroyCommandPool(device, m_CommandPool, nullptr);
-            m_CommandPool = VK_NULL_HANDLE;
-        }
-        
-        LOG_DEBUG_INFO("Vulkan: Destroyed CommandList '%s'\n", m_Name.c_str());
+		if (m_CommandBuffer != VK_NULL_HANDLE)
+		{
+			vkFreeCommandBuffers(m_pDevice->GetDevice(), m_CommandPool, 1, &m_CommandBuffer);
+			m_CommandBuffer = VK_NULL_HANDLE;
+		}
+		if (m_CommandPool != VK_NULL_HANDLE)
+		{
+			vkDestroyCommandPool(m_pDevice->GetDevice(), m_CommandPool, nullptr);
+			m_CommandPool = VK_NULL_HANDLE;
+		}
 
-        delete this;
-    }
-    
-    
-    void VKNCommandList::ClearRenderTarget(ITexture* pRenderTarget, float color[4])
+		LOG_DEBUG_INFO("Vulkan: Destroyed CommandList '%s'\n", m_Name.c_str());
+	}
+
+
+	void VKNCommandList::ClearRenderTarget(ITexture* pRenderTarget, float color[4])
     {
 		if (!m_pRenderPass)
 		{
@@ -331,7 +329,7 @@ namespace Lambda
 		if (!m_pRenderPass)
 		{
 			const VKNTexture* pVkTexture = reinterpret_cast<const VKNTexture*>(pTexture);
-			TextureDesc textureDesc = pVkTexture->GetDesc();
+			const TextureDesc& textureDesc = pVkTexture->GetDesc();
 
 			//Setup barrier
 			VkImageMemoryBarrier barrier = {};
@@ -463,7 +461,7 @@ namespace Lambda
 		VKNBuffer* pVkResource = reinterpret_cast<VKNBuffer*>(pResource);
 		
 		//Update dynamic resource with dynamic offset
-		BufferDesc bufferDesc = pResource->GetDesc();
+		const BufferDesc& bufferDesc = pResource->GetDesc();
 		if (bufferDesc.Usage == RESOURCE_USAGE_DYNAMIC)
 		{
 			pVkResource->DynamicUpdate(pData);
@@ -515,7 +513,7 @@ namespace Lambda
 			memcpy(pMappedMemory, pData->pData, pData->SizeInBytes);
         
 			//Perform copy
-			TextureDesc textureDesc = pVkResource->GetDesc();
+			const TextureDesc& textureDesc = pVkResource->GetDesc();
 			VkBufferImageCopy region = {};
 			region.bufferOffset                     = offset;
 			region.bufferRowLength                  = 0;
@@ -607,9 +605,7 @@ namespace Lambda
 		if (pName != nullptr)
 		{
 			m_Name = std::string(pName);
-
-			VKNDevice& device = VKNDevice::Get();
-			device.SetVulkanObjectName(VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64)m_CommandBuffer, m_Name);
+			m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64)m_CommandBuffer, m_Name);
 		}
     }
     
@@ -625,10 +621,8 @@ namespace Lambda
     
     void VKNCommandList::Reset()
     {
-		VKNDevice& device = VKNDevice::Get();
-
         //Reset commandbuffer
-        if (vkResetCommandPool(device.GetDevice(), m_CommandPool, VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT) != VK_SUCCESS)
+        if (vkResetCommandPool(m_pDevice->GetDevice(), m_CommandPool, VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to Reset CommandBuffer\n");
         }
@@ -697,7 +691,7 @@ namespace Lambda
         
         VKNQuery* pVkQuery = reinterpret_cast<VKNQuery*>(pQuery);
         
-        QueryDesc desc          = pVkQuery->GetDesc();
+        const QueryDesc& desc   = pVkQuery->GetDesc();
         VkQueryPool queryPool   = reinterpret_cast<VkQueryPool>(pVkQuery->GetNativeHandle());
         vkCmdResetQueryPool(m_CommandBuffer, queryPool, 0, desc.QueryCount);
         

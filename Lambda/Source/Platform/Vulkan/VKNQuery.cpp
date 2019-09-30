@@ -4,20 +4,36 @@
 
 namespace Lambda
 {
-    VKNQuery::VKNQuery(const QueryDesc& desc)
-        : m_QueryPool(VK_NULL_HANDLE),
+	VKNQuery::VKNQuery(VKNDevice* pDevice, const QueryDesc& desc)
+		: m_pDevice(pDevice),
+		m_QueryPool(VK_NULL_HANDLE),
         m_CurrentQuery(0),
         m_TimeStampPeriod(0),
         m_Desc()
     {
+		//Add a ref to the refcounter
+		this->AddRef();
+
         Init(desc);
         
-        VKNDevice& device = VKNDevice::Get();
+		VKNDevice& device = VKNDevice::Get();
         if (m_Desc.Type == QUERY_TYPE_TIMESTAMP)
         {
             m_TimeStampPeriod = device.GetPhysicalDeviceProperties().limits.timestampPeriod;
         }
     }
+
+
+	VKNQuery::~VKNQuery()
+	{
+		if (m_QueryPool != VK_NULL_HANDLE)
+		{
+			vkDestroyQueryPool(m_pDevice->GetDevice(), m_QueryPool, nullptr);
+			m_QueryPool = VK_NULL_HANDLE;
+		}
+
+		LOG_DEBUG_INFO("Vulkan: Destroyed Query\n");
+	}
     
     
     void VKNQuery::Init(const QueryDesc& desc)
@@ -34,8 +50,7 @@ namespace Lambda
             queryInfo.queryType = VK_QUERY_TYPE_TIMESTAMP;
         }
         
-        VKNDevice& device = VKNDevice::Get();
-        if (vkCreateQueryPool(device.GetDevice(), &queryInfo, nullptr, &m_QueryPool) != VK_SUCCESS)
+        if (vkCreateQueryPool(m_pDevice->GetDevice(), &queryInfo, nullptr, &m_QueryPool) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create querypool\n");
         }
@@ -51,8 +66,7 @@ namespace Lambda
     {
         LAMBDA_ASSERT(pResults != nullptr);
         
-        VKNDevice& device = VKNDevice::Get();
-        if (vkGetQueryPoolResults(device.GetDevice(), m_QueryPool, startQuery, numResults, numResults * sizeof(uint64), pResults, sizeof(uint64), VK_QUERY_RESULT_WITH_AVAILABILITY_BIT) == VK_SUCCESS)
+        if (vkGetQueryPoolResults(m_pDevice->GetDevice(), m_QueryPool, startQuery, numResults, numResults * sizeof(uint64), pResults, sizeof(uint64), VK_QUERY_RESULT_WITH_AVAILABILITY_BIT) == VK_SUCCESS)
 		{
 			if (m_Desc.Type == QUERY_TYPE_TIMESTAMP)
 			{
@@ -71,7 +85,7 @@ namespace Lambda
     }
     
     
-    QueryDesc VKNQuery::GetDesc() const
+    const QueryDesc& VKNQuery::GetDesc() const
     {
         return m_Desc;
     }
@@ -92,19 +106,5 @@ namespace Lambda
     void VKNQuery::Reset()
     {
         m_CurrentQuery = 0;
-    }
-    
-    
-    void VKNQuery::Destroy(VkDevice device)
-    {
-        LAMBDA_ASSERT(device != VK_NULL_HANDLE);
-        
-        if (m_QueryPool != VK_NULL_HANDLE)
-        {
-            vkDestroyQueryPool(device, m_QueryPool, nullptr);
-            m_QueryPool = VK_NULL_HANDLE;
-        }
-        
-        delete this;
     }
 }

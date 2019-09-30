@@ -54,13 +54,10 @@ namespace Lambda
     //IGraphicsPipelineState
     //----------------------
 
-	class LAMBDA_API IGraphicsPipelineState
+	class LAMBDA_API IGraphicsPipelineState : public IObject
 	{
 	public:
-		LAMBDA_INTERFACE(IGraphicsPipelineState);
-
-		IGraphicsPipelineState() = default;
-		~IGraphicsPipelineState() = default;
+		LAMBDA_IOBJECT_INTERFACE(IGraphicsPipelineState);
         
         virtual void SetName(const char* pName) = 0;
         virtual void* GetNativeHandle() const = 0;
@@ -79,13 +76,10 @@ namespace Lambda
     //IComputePipelineState
     //---------------------
 
-	class LAMBDA_API IComputePipelineState
+	class LAMBDA_API IComputePipelineState : public IObject
 	{
 	public:
-		LAMBDA_INTERFACE(IComputePipelineState);
-
-		IComputePipelineState() = default;
-		~IComputePipelineState() = default;
+		LAMBDA_IOBJECT_INTERFACE(IComputePipelineState);
         
         virtual void* GetNativeHandle() const = 0; 
 	};

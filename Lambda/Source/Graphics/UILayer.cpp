@@ -128,14 +128,14 @@ namespace Lambda
 
     UILayer::UILayer()
         : Layer("UILayer"),
-		m_pVS(nullptr),
-		m_pPS(nullptr),
-		m_pSamplerState(nullptr),
-		m_pPipelineResourceState(nullptr),
-		m_pPipelineState(nullptr),
-		m_pFontTexture(nullptr),
-		m_pVertexBuffer(nullptr),
-		m_pIndexBuffer(nullptr)
+		m_VS(nullptr),
+		m_PS(nullptr),
+		m_SamplerState(nullptr),
+		m_PipelineResourceState(nullptr),
+		m_PipelineState(nullptr),
+		m_FontTexture(nullptr),
+		m_VertexBuffer(nullptr),
+		m_IndexBuffer(nullptr)
     {
         Create();
     }
@@ -194,7 +194,7 @@ namespace Lambda
 	void UILayer::Init(IRenderPass* pRenderPass, ICommandList* pList)
 	{
 		//Create graphics objects
-		IGraphicsDevice* pDevice = IGraphicsDevice::Get();
+		IDevice* pDevice = IDevice::Get();
 
 		//Create shaders
 		ShaderDesc shaderDesc = {};
@@ -206,7 +206,7 @@ namespace Lambda
 		shaderDesc.pEntryPoint = "main";
 		shaderDesc.Type = SHADER_STAGE_VERTEX;
 
-		GraphicsDeviceDesc deviceDesc = pDevice->GetDesc();
+		const DeviceDesc& deviceDesc = pDevice->GetDesc();
 		if (deviceDesc.Api == GRAPHICS_API_VULKAN)
 		{
 			shaderDesc.pSource		= reinterpret_cast<const char*>(__glsl_shader_vert_spv);
@@ -214,7 +214,7 @@ namespace Lambda
 			shaderDesc.Languange	= SHADER_LANG_SPIRV;
 		}
 
-		pDevice->CreateShader(&m_pVS, shaderDesc);
+		pDevice->CreateShader(&m_VS, shaderDesc);
 
 		shaderDesc.Type = SHADER_STAGE_PIXEL;
 		if (deviceDesc.Api == GRAPHICS_API_VULKAN)
@@ -223,7 +223,7 @@ namespace Lambda
 			shaderDesc.SourceLength = sizeof(__glsl_shader_frag_spv);
 		}
 
-		pDevice->CreateShader(&m_pPS, shaderDesc);
+		pDevice->CreateShader(&m_PS, shaderDesc);
 
 
 		//Create sampler
@@ -233,12 +233,12 @@ namespace Lambda
 		samplerDesc.MaxMipLOD	= 1000.0f;
 		samplerDesc.MinMipLOD	= -1000.0f;
 		samplerDesc.MipLODBias	= 0.0f;
-		pDevice->CreateSamplerState(&m_pSamplerState, samplerDesc);
+		pDevice->CreateSamplerState(&m_SamplerState, samplerDesc);
 
 
 		//Create pipelineresourcestate
 		ResourceSlot resourceSlots[1];
-		resourceSlots[0].pSamplerState = m_pSamplerState;
+		resourceSlots[0].pSamplerState = m_SamplerState.Get();
 		resourceSlots[0].Slot	= 0;
 		resourceSlots[0].Type	= RESOURCE_TYPE_TEXTURE;
 		resourceSlots[0].Usage	= RESOURCE_USAGE_DEFAULT;
@@ -253,7 +253,7 @@ namespace Lambda
 		resourceStateDesc.pResourceSlots	= resourceSlots;
 		resourceStateDesc.NumConstantBlocks	= 1;
         resourceStateDesc.pConstantBlocks	= constantBlocks;
-		pDevice->CreatePipelineResourceState(&m_pPipelineResourceState, resourceStateDesc);
+		pDevice->CreatePipelineResourceState(&m_PipelineResourceState, resourceStateDesc);
 
 
 		//Create pipelinestate
@@ -266,10 +266,10 @@ namespace Lambda
 
 		GraphicsPipelineStateDesc pipelineStateDesc = {};
 		pipelineStateDesc.pName						= "ImGui-PipelineState";
-		pipelineStateDesc.pVertexShader				= m_pVS;
-		pipelineStateDesc.pPixelShader				= m_pPS;
+		pipelineStateDesc.pVertexShader				= m_VS.Get();
+		pipelineStateDesc.pPixelShader				= m_PS.Get();
 		pipelineStateDesc.pRenderPass				= pRenderPass;
-		pipelineStateDesc.pResourceState			= m_pPipelineResourceState;
+		pipelineStateDesc.pResourceState			= m_PipelineResourceState.Get();
 		pipelineStateDesc.InputElementCount			= 3;
 		pipelineStateDesc.pInputElements			= inputElements;
 		pipelineStateDesc.Topology					= PRIMITIVE_TOPOLOGY_TRIANGLELIST;
@@ -278,7 +278,7 @@ namespace Lambda
 		pipelineStateDesc.FrontFaceCounterClockWise = true;
 		pipelineStateDesc.DepthTest					= false;
 		pipelineStateDesc.EnableBlending			= true;
-		pDevice->CreateGraphicsPipelineState(&m_pPipelineState, pipelineStateDesc);
+		pDevice->CreateGraphicsPipelineState(&m_PipelineState, pipelineStateDesc);
 
 
 		//Create fonttexture
@@ -306,8 +306,8 @@ namespace Lambda
 		ResourceData initalData = {};
 		initalData.pData		= pPixels;
 		initalData.SizeInBytes	= uploadSize;
-		pDevice->CreateTexture(&m_pFontTexture, &initalData, fontTextureDesc);
-		pList->TransitionTexture(m_pFontTexture, RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0, LAMBDA_TRANSITION_ALL_MIPS);
+		pDevice->CreateTexture(&m_FontTexture, &initalData, fontTextureDesc);
+		pList->TransitionTexture(m_FontTexture.Get(), RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0, LAMBDA_TRANSITION_ALL_MIPS);
 
 		// Store our identifier
 		//io.Fonts->TexID = (ImTextureID)(intptr_t)m_pFontTexture->GetNativeHandle();
@@ -320,14 +320,14 @@ namespace Lambda
 		bufferDesc.SizeInBytes		= MB(2);
 		bufferDesc.StrideInBytes	= sizeof(ImDrawVert);
 		bufferDesc.Usage			= RESOURCE_USAGE_DYNAMIC;
-		pDevice->CreateBuffer(&m_pVertexBuffer, nullptr, bufferDesc);
+		pDevice->CreateBuffer(&m_VertexBuffer, nullptr, bufferDesc);
 
 		bufferDesc.pName			= "ImGui IndexBuffer";
 		bufferDesc.Flags			= BUFFER_FLAGS_INDEX_BUFFER;
 		bufferDesc.SizeInBytes		= MB(2);
 		bufferDesc.StrideInBytes	= sizeof(ImDrawIdx);
 		bufferDesc.Usage			= RESOURCE_USAGE_DYNAMIC;
-		pDevice->CreateBuffer(&m_pIndexBuffer, nullptr, bufferDesc);
+		pDevice->CreateBuffer(&m_IndexBuffer, nullptr, bufferDesc);
 	}
 
 
@@ -357,8 +357,8 @@ namespace Lambda
         {
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 0.0f, 1.0f));
 
-			IGraphicsDevice* pDevice = IGraphicsDevice::Get();
-            GraphicsDeviceDesc desc = pDevice->GetDesc();
+			IDevice* pDevice = IDevice::Get();
+            const DeviceDesc& desc = pDevice->GetDesc();
 			DeviceProperties props = pDevice->GetProperties();
 			if (desc.Api == GRAPHICS_API_VULKAN)
 				ImGui::Text("Renderer [Vulkan]");
@@ -459,8 +459,8 @@ namespace Lambda
 		{
 			ImDrawVert* vtxDst  = NULL;
 			ImDrawIdx* idxDst   = NULL;
-			m_pVertexBuffer->Map(reinterpret_cast<void**>(&vtxDst));
-			m_pIndexBuffer->Map(reinterpret_cast<void**>(&idxDst));
+			m_VertexBuffer->Map(reinterpret_cast<void**>(&vtxDst));
+			m_IndexBuffer->Map(reinterpret_cast<void**>(&idxDst));
 
 			for (int n = 0; n < pDrawData->CmdListsCount; n++)
 			{
@@ -471,18 +471,18 @@ namespace Lambda
 				idxDst += pCmdList->IdxBuffer.Size;
 			}
 
-			m_pVertexBuffer->Unmap();
-			m_pIndexBuffer->Unmap();
+			m_VertexBuffer->Unmap();
+			m_IndexBuffer->Unmap();
 		}
 
 		//Setup pipelinestate
-		m_pPipelineResourceState->SetTextures(&m_pFontTexture, 1, 0);
-		pList->SetGraphicsPipelineResourceState(m_pPipelineResourceState);
-		pList->SetGraphicsPipelineState(m_pPipelineState);
+		m_PipelineResourceState->SetTextures(&m_FontTexture, 1, 0);
+		pList->SetGraphicsPipelineResourceState(m_PipelineResourceState.Get());
+		pList->SetGraphicsPipelineState(m_PipelineState.Get());
 		
 		//Setup vertex and indexbuffer
-		pList->SetVertexBuffer(m_pVertexBuffer, 0);
-		pList->SetIndexBuffer(m_pIndexBuffer, sizeof(ImDrawIdx) == 2 ? FORMAT_R16_UINT : FORMAT_R32_UINT);
+		pList->SetVertexBuffer(m_VertexBuffer.Get(), 0);
+		pList->SetIndexBuffer(m_IndexBuffer.Get(), sizeof(ImDrawIdx) == 2 ? FORMAT_R16_UINT : FORMAT_R32_UINT);
 		
 		//Setup viewport
 		Viewport viewport = {};
@@ -561,18 +561,14 @@ namespace Lambda
 		ImGui::DestroyContext();
 
 		//Destroy all objects
-		IGraphicsDevice* pDevice = IGraphicsDevice::Get();
-		if (pDevice != nullptr)
-		{
-			pDevice->DestroyShader(&m_pVS);
-			pDevice->DestroyShader(&m_pPS);
-			pDevice->DestroyResourceState(&m_pPipelineResourceState);
-			pDevice->DestroyGraphicsPipelineState(&m_pPipelineState);
-			pDevice->DestroySamplerState(&m_pSamplerState);
-			pDevice->DestroyTexture(&m_pFontTexture);
-			pDevice->DestroyBuffer(&m_pVertexBuffer);
-			pDevice->DestroyBuffer(&m_pIndexBuffer);
-		}
+		m_VS.Release();
+		m_PS.Release();
+		m_PipelineResourceState.Release();
+		m_PipelineState.Release();
+		m_SamplerState.Release();
+		m_FontTexture.Release();
+		m_VertexBuffer.Release();
+		m_IndexBuffer.Release();
     }
 
 

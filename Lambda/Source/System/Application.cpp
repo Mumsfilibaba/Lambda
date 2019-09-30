@@ -113,7 +113,7 @@ namespace Lambda
 		m_pWindow = IWindow::Create(desc);
 		m_pWindow->SetEventCallback(DBG_NEW ObjectEventCallback(this, &Application::OnEvent));
 		//Push Resize callback
-		PushCallback(IGraphicsDevice::Get(), &IGraphicsDevice::OnResize);
+		PushCallback(IDevice::Get(), &IDevice::OnResize);
 
 		//Create UI-Layer
 		m_pUILayer = DBG_NEW UILayer();
@@ -271,6 +271,12 @@ namespace Lambda
     {
         return m_pUILayer;
     }
+
+
+	Renderer3D& Application::GetRenderer()
+	{
+		return m_Renderer;
+	}
 
 	
 	const Renderer3D& Application::GetRenderer() const

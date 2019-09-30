@@ -1,6 +1,6 @@
 #include "LambdaPch.h"
 #include "Graphics/IShader.h"
-#include "Graphics/IGraphicsDevice.h"
+#include "Graphics/IDevice.h"
 #include <iostream>
 
 namespace Lambda
@@ -9,7 +9,7 @@ namespace Lambda
 	//IShader
 	//-------
 
-	IShader* IShader::CreateShaderFromFile(IGraphicsDevice* pDevice, const char* pFilename, const char* pEntryPoint, ShaderStage type, ShaderLang languange)
+	IShader* IShader::CreateShaderFromFile(IDevice* pDevice, const char* pFilename, const char* pEntryPoint, ShaderStage type, ShaderLang languange)
 	{
 		LAMBDA_ASSERT(pDevice != nullptr);
 

@@ -1,11 +1,12 @@
 #pragma once
-#include "Defines.h"
-#include "Types.h"
+#include "IObject.h"
 #include <vector>
 #include <vulkan/vulkan.h>
 
 namespace Lambda
 {
+	class VKNDevice;
+
 	//---------
 	//VKNMemory
 	//---------
@@ -24,18 +25,14 @@ namespace Lambda
 	//IVKNAllocator
 	//-------------
 
-	class IVKNAllocator
+	class IVKNAllocator : public IObject
 	{
 	public:
 		LAMBDA_INTERFACE(IVKNAllocator);
 
-		IVKNAllocator() = default;
-		~IVKNAllocator() = default;
-
 		virtual bool Allocate(VKNMemory& allocation, const VkMemoryRequirements& memoryRequirements, ResourceUsage usage) = 0;
 		virtual void Deallocate(VKNMemory& allocation) = 0;
 		virtual void EmptyGarbageMemory() = 0;
-		virtual void Destroy(VkDevice device) = 0;
 		virtual uint64 GetTotalReserved() const = 0;
 		virtual uint64 GetTotalAllocated() const = 0;
 	};
@@ -91,27 +88,27 @@ namespace Lambda
 	//VKNAllocator
 	//------------
 
-	class VKNAllocator final : public IVKNAllocator
+	class VKNAllocator final : public RefCountedObject<IVKNAllocator>
 	{
 	public:
 		LAMBDA_NO_COPY(VKNAllocator);
 
-		VKNAllocator();
-		~VKNAllocator() = default;
+		VKNAllocator(VKNDevice* pDevice);
+		~VKNAllocator();
 
 		virtual bool Allocate(VKNMemory& allocation, const VkMemoryRequirements& memoryRequirements, ResourceUsage usage) override final;
 		virtual void Deallocate(VKNMemory& allocation) override final;
 		virtual void EmptyGarbageMemory() override final;
-		virtual void Destroy(VkDevice device) override final;
 		virtual uint64 GetTotalReserved() const override final;
 		virtual uint64 GetTotalAllocated() const override final;
 	private:
-		uint64								m_MaxAllocations;
-		uint64								m_TotalReserved;
-		uint64								m_TotalAllocated;
-        uint64                              m_FrameIndex;
-        VkDeviceSize                        m_BufferImageGranularity;
-		std::vector<VKNMemoryChunk*>		m_Chunks;
+		VKNDevice*	 m_pDevice;
+		uint64		 m_MaxAllocations;
+		uint64		 m_TotalReserved;
+		uint64		 m_TotalAllocated;
+        uint64		 m_FrameIndex;
+        VkDeviceSize m_BufferImageGranularity;
+		std::vector<VKNMemoryChunk*> m_Chunks;
 		std::vector<std::vector<VKNMemory>>	m_MemoryToDeallocate;
 	};
 
@@ -132,14 +129,14 @@ namespace Lambda
 	private:
 		void Init();
 	private:
-		VkDescriptorPool				m_Pool;
-		uint32							m_NumSets;
-		uint32							m_UniformBufferCount;
-		uint32							m_DynamicUniformBufferCount;
-		uint32							m_SamplerCount;
-		uint32							m_SampledImageCount;
-		uint32							m_CombinedImageSamplerCount;
-		uint32							m_SetCount;
+		VkDescriptorPool m_Pool;
+		uint32			 m_NumSets;
+		uint32			 m_UniformBufferCount;
+		uint32			 m_DynamicUniformBufferCount;
+		uint32			 m_SamplerCount;
+		uint32			 m_SampledImageCount;
+		uint32			 m_CombinedImageSamplerCount;
+		uint32			 m_SetCount;
 	};
 
 	//------------------------

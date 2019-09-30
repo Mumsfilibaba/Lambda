@@ -5,6 +5,7 @@
 
 namespace Lambda
 {
+	class VKNDevice;
 	class VKNBuffer;
 	class VKNTexture;
 	class VKNSamplerState;
@@ -34,13 +35,13 @@ namespace Lambda
 	//VKNPipelineResourceState
 	//------------------------
 
-	class VKNPipelineResourceState final : public IPipelineResourceState
+	class VKNPipelineResourceState final : public RefCountedObject<IPipelineResourceState>
 	{
 	public:
 		LAMBDA_NO_COPY(VKNPipelineResourceState);
 
-		VKNPipelineResourceState(const PipelineResourceStateDesc& desc);
-		~VKNPipelineResourceState() = default;
+		VKNPipelineResourceState(VKNDevice* pDevice, const PipelineResourceStateDesc& desc);
+		~VKNPipelineResourceState();
 
 		virtual void SetTextures(ITexture** ppTextures, uint32 numTextures, uint32 startSlot) override final;
 		virtual void SetSamplerStates(ISamplerState** ppSamplerStates, uint32 numSamplerStates, uint32 startSlot) override final;
@@ -48,18 +49,16 @@ namespace Lambda
 
 		virtual void* GetNativeHandle() const override final;
 		
-		const uint32*		GetDynamicOffsets() const;
-		uint32				GetDynamicOffsetCount() const;
-		VkDescriptorSet		GetDescriptorSet() const;
-		VkPipelineLayout	GetPipelineLayout() const;
+		const uint32* GetDynamicOffsets() const;
+		uint32 GetDynamicOffsetCount() const;
+		VkDescriptorSet GetDescriptorSet() const;
+		VkPipelineLayout GetPipelineLayout() const;
 
 		void CommitBindings();
-		void Destroy(VkDevice device);
-
 	private:
 		void Init(const PipelineResourceStateDesc& desc);
-
 	private:
+		VKNDevice*							m_pDevice;
 		VKNDescriptorSetAllocator*			m_pAllocator;
 		VkPipelineLayout				    m_PipelineLayout;
 		VkDescriptorSetLayout			    m_DescriptorSetLayout;

@@ -20,7 +20,7 @@ namespace Lambda
 	//DX12GraphicsDevice
 	//------------------
 
-	DX12GraphicsDevice::DX12GraphicsDevice(const GraphicsDeviceDesc& desc)
+	DX12GraphicsDevice::DX12GraphicsDevice(const DeviceDesc& desc)
 		: m_Device(nullptr),
 		m_DXRDevice(nullptr),
 		m_Debug(nullptr),
@@ -66,13 +66,12 @@ namespace Lambda
 		}
 
 		ICommandList* pList = m_pCommandList;
-		DestroyCommandList(&pList);
-		m_pCommandList = nullptr;
+		m_pCommandList->Release();
 
 		for (uint32 i = 0; i < m_NumBackbuffers; i++)
 		{
 			ITexture* pTexture = m_BackBuffers[i];
-			DestroyTexture(&pTexture);
+			pTexture->Release();
 			m_BackBuffers[i] = nullptr;
 		}
 
@@ -84,7 +83,7 @@ namespace Lambda
 	}
 
 
-	void DX12GraphicsDevice::Init(const GraphicsDeviceDesc& desc)
+	void DX12GraphicsDevice::Init(const DeviceDesc& desc)
 	{
 		using namespace Microsoft::WRL;
 
@@ -487,127 +486,128 @@ namespace Lambda
 	{
 	}
 
+
 	void DX12GraphicsDevice::CreateQuery(IQuery** ppQuery, const QueryDesc& desc)
 	{
 	}
 
 
-	void DX12GraphicsDevice::DestroyCommandList(ICommandList** ppList)
-	{
-		LAMBDA_ASSERT(ppList != nullptr);
+	//void DX12GraphicsDevice::DestroyCommandList(ICommandList** ppList)
+	//{
+	//	LAMBDA_ASSERT(ppList != nullptr);
 
-		DX12CommandList* pList = reinterpret_cast<DX12CommandList*>(*ppList);
-		delete pList;
-		*ppList = nullptr;
-	}
-
-
-	void DX12GraphicsDevice::DestroyBuffer(IBuffer** ppBuffer)
-	{
-		LAMBDA_ASSERT(ppBuffer != nullptr);
-
-		DX12Buffer* pBuffer = reinterpret_cast<DX12Buffer*>(*ppBuffer);
-		
-		//Check if constantbuffer and release descriptor
-		BufferDesc desc = pBuffer->GetDesc();
-		if (desc.Flags & BUFFER_FLAGS_CONSTANT_BUFFER)
-		{
-			DX12DescriptorHandle hDescriptor = pBuffer->GetDescriptorHandle();
-			m_ResourceAllocator.Free(hDescriptor);
-		}
-
-		//Remove state from global resourcetracker
-		DX12ResourceStateTracker::RemoveGlobalState(pBuffer->GetResource());
-
-		delete pBuffer;
-		*ppBuffer = nullptr;
-	}
+	//	DX12CommandList* pList = reinterpret_cast<DX12CommandList*>(*ppList);
+	//	delete pList;
+	//	*ppList = nullptr;
+	//}
 
 
-	void DX12GraphicsDevice::DestroyTexture(ITexture** ppTexture)
-	{
-		LAMBDA_ASSERT(ppTexture != nullptr);
+	//void DX12GraphicsDevice::DestroyBuffer(IBuffer** ppBuffer)
+	//{
+	//	LAMBDA_ASSERT(ppBuffer != nullptr);
 
-		DX12Texture* pTexture = reinterpret_cast<DX12Texture*>(*ppTexture);
-		TextureDesc desc = pTexture->GetDesc();
+	//	DX12Buffer* pBuffer = reinterpret_cast<DX12Buffer*>(*ppBuffer);
+	//	
+	//	//Check if constantbuffer and release descriptor
+	//	BufferDesc desc = pBuffer->GetDesc();
+	//	if (desc.Flags & BUFFER_FLAGS_CONSTANT_BUFFER)
+	//	{
+	//		DX12DescriptorHandle hDescriptor = pBuffer->GetDescriptorHandle();
+	//		m_ResourceAllocator.Free(hDescriptor);
+	//	}
 
-		//Check what descriptor and free it
-		DX12DescriptorHandle hDescriptor = pTexture->GetDescriptorHandle();		
-		if (desc.Flags & TEXTURE_FLAGS_DEPTH_STENCIL)
-		{
-			m_DSAllocator.Free(hDescriptor);
-		}
-		else if (desc.Flags & TEXTURE_FLAGS_RENDER_TARGET)
-		{
-			m_RTAllocator.Free(hDescriptor);
-		}
-		else if (desc.Flags & TEXTURE_FLAGS_SHADER_RESOURCE)
-		{
-			m_ResourceAllocator.Free(hDescriptor);
-		}
+	//	//Remove state from global resourcetracker
+	//	DX12ResourceStateTracker::RemoveGlobalState(pBuffer->GetResource());
 
-		//Remove state from global resourcetracker
-		DX12ResourceStateTracker::RemoveGlobalState(pTexture->GetResource());
-
-		delete pTexture;
-		*ppTexture = nullptr;
-	}
+	//	delete pBuffer;
+	//	*ppBuffer = nullptr;
+	//}
 
 
-	void DX12GraphicsDevice::DestroyShader(IShader** ppShader)
-	{
-		LAMBDA_ASSERT(ppShader != nullptr);
+	//void DX12GraphicsDevice::DestroyTexture(ITexture** ppTexture)
+	//{
+	//	LAMBDA_ASSERT(ppTexture != nullptr);
 
-		DX12Shader* pShader = reinterpret_cast<DX12Shader*>(*ppShader);
-		delete pShader;
-		*ppShader = nullptr;
-	}
+	//	DX12Texture* pTexture = reinterpret_cast<DX12Texture*>(*ppTexture);
+	//	TextureDesc desc = pTexture->GetDesc();
 
+	//	//Check what descriptor and free it
+	//	DX12DescriptorHandle hDescriptor = pTexture->GetDescriptorHandle();		
+	//	if (desc.Flags & TEXTURE_FLAGS_DEPTH_STENCIL)
+	//	{
+	//		m_DSAllocator.Free(hDescriptor);
+	//	}
+	//	else if (desc.Flags & TEXTURE_FLAGS_RENDER_TARGET)
+	//	{
+	//		m_RTAllocator.Free(hDescriptor);
+	//	}
+	//	else if (desc.Flags & TEXTURE_FLAGS_SHADER_RESOURCE)
+	//	{
+	//		m_ResourceAllocator.Free(hDescriptor);
+	//	}
 
-	void DX12GraphicsDevice::DestroySamplerState(ISamplerState** ppSamplerState)
-	{
-		LAMBDA_ASSERT(ppSamplerState != nullptr);
+	//	//Remove state from global resourcetracker
+	//	DX12ResourceStateTracker::RemoveGlobalState(pTexture->GetResource());
 
-		DX12SamplerState* pSamplerState = reinterpret_cast<DX12SamplerState*>(*ppSamplerState);
-
-		//Release descriptor
-		DX12DescriptorHandle hDescriptor = pSamplerState->GetDescriptorHandle();
-		m_SamplerAllocator.Free(hDescriptor);
-
-		delete pSamplerState;
-		*ppSamplerState = nullptr;
-	}
-
-
-	void DX12GraphicsDevice::DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState)
-	{
-		LAMBDA_ASSERT(ppPipelineState != nullptr);
-
-		DX12GraphicsPipelineState* pPipelineState = reinterpret_cast<DX12GraphicsPipelineState*>(*ppPipelineState);
-		delete pPipelineState;
-		*ppPipelineState = nullptr;
-	}
+	//	delete pTexture;
+	//	*ppTexture = nullptr;
+	//}
 
 
-	void DX12GraphicsDevice::DestroyRenderPass(IRenderPass** ppRenderPass)
-	{
-		LAMBDA_ASSERT(ppRenderPass);
-	}
+	//void DX12GraphicsDevice::DestroyShader(IShader** ppShader)
+	//{
+	//	LAMBDA_ASSERT(ppShader != nullptr);
+
+	//	DX12Shader* pShader = reinterpret_cast<DX12Shader*>(*ppShader);
+	//	delete pShader;
+	//	*ppShader = nullptr;
+	//}
 
 
-	void DX12GraphicsDevice::DestroyResourceState(IPipelineResourceState** ppResourceState)
-	{
-	}
+	//void DX12GraphicsDevice::DestroySamplerState(ISamplerState** ppSamplerState)
+	//{
+	//	LAMBDA_ASSERT(ppSamplerState != nullptr);
 
-	void DX12GraphicsDevice::DestroyQuery(IQuery** ppQuery)
-	{
-	}
+	//	DX12SamplerState* pSamplerState = reinterpret_cast<DX12SamplerState*>(*ppSamplerState);
+
+	//	//Release descriptor
+	//	DX12DescriptorHandle hDescriptor = pSamplerState->GetDescriptorHandle();
+	//	m_SamplerAllocator.Free(hDescriptor);
+
+	//	delete pSamplerState;
+	//	*ppSamplerState = nullptr;
+	//}
 
 
-	void DX12GraphicsDevice::Destroy() const
-	{
-		delete this;
-	}
+	//void DX12GraphicsDevice::DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState)
+	//{
+	//	LAMBDA_ASSERT(ppPipelineState != nullptr);
+
+	//	DX12GraphicsPipelineState* pPipelineState = reinterpret_cast<DX12GraphicsPipelineState*>(*ppPipelineState);
+	//	delete pPipelineState;
+	//	*ppPipelineState = nullptr;
+	//}
+
+
+	//void DX12GraphicsDevice::DestroyRenderPass(IRenderPass** ppRenderPass)
+	//{
+	//	LAMBDA_ASSERT(ppRenderPass);
+	//}
+
+
+	//void DX12GraphicsDevice::DestroyResourceState(IPipelineResourceState** ppResourceState)
+	//{
+	//}
+
+	//void DX12GraphicsDevice::DestroyQuery(IQuery** ppQuery)
+	//{
+	//}
+
+
+	//void DX12GraphicsDevice::Destroy() const
+	//{
+	//	delete this;
+	//}
 
 
 	void DX12GraphicsDevice::ExecuteCommandList(ICommandList* const * ppLists, uint32 numLists) const
@@ -704,7 +704,7 @@ namespace Lambda
 	}
 
 
-	GraphicsDeviceDesc DX12GraphicsDevice::GetDesc() const
+	const DeviceDesc& DX12GraphicsDevice::GetDesc() const
 	{
 		return m_Desc;
 	}

@@ -12,7 +12,7 @@ namespace Lambda
 	//DX12CommandList
 	//---------------
 
-	class DX12CommandList final : public ICommandList
+	class DX12CommandList final : public RefCountedObject<ICommandList>
 	{
 		friend class DX12GraphicsDevice;
 		friend class DX12CommandQueue;
@@ -73,12 +73,11 @@ namespace Lambda
 
 		virtual void SetName(const char* pName) override final;
 
-		virtual void*			GetNativeHandle() const override final;
+		virtual void* GetNativeHandle() const override final;
 		virtual	CommandListType GetType() const override final;
 
 		virtual void Close() override final;
 		virtual void Reset() override final;
-
 	private:
 		void Init(CommandListType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV);
 		void AllocateDescriptors();
@@ -87,7 +86,6 @@ namespace Lambda
 		void InternalSetSamplerDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE hDest, D3D12_CPU_DESCRIPTOR_HANDLE hSrc, uint32 slot);
 
 		ID3D12CommandList* GetList() const;
-
 	private:
 		Microsoft::WRL::ComPtr<ID3D12CommandAllocator>		m_Allocator;
 		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4>	m_List;

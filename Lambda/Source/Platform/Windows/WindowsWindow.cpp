@@ -1,8 +1,8 @@
 #include "LambdaPch.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include "System/Log.h"
-	#include "Graphics/IGraphicsDevice.h"
-	#include "../Vulkan/VKNGraphicsDevice.h"
+	#include "Graphics/IDevice.h"
+	#include "../Vulkan/VKNDevice.h"
 	#include "../DX12/DX12GraphicsDevice.h"
 	#include "Utilities/StringHelper.h"
 	#include "Events/KeyEvent.h"
@@ -32,7 +32,7 @@ namespace Lambda
 	LRESULT CALLBACK WindowEventCallback(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 	WindowsWindow::WindowsWindow(const WindowDesc& desc)
-		: m_pGraphicsDevice(nullptr),
+		: m_GraphicsDevice(nullptr),
 		m_pEventCallback(nullptr),
 		m_hWindow(0),
 		m_Fullscreen(false),
@@ -48,11 +48,6 @@ namespace Lambda
 		SetFullscreen(false);
 
 		SafeDelete(m_pEventCallback);
-		if (m_pGraphicsDevice)
-		{
-			m_pGraphicsDevice->Destroy();
-			m_pGraphicsDevice = nullptr;
-		}
 		if (IsWindow(m_hWindow))
 		{
 			DestroyWindow(m_hWindow);
@@ -90,9 +85,9 @@ namespace Lambda
 	}
 
     
-    IGraphicsDevice* WindowsWindow::GetGraphicsDevice() const
+    const IDevice* WindowsWindow::GetGraphicsDevice() const
     {
-        return m_pGraphicsDevice;
+        return m_GraphicsDevice.Get();
     }
     
 
@@ -244,7 +239,7 @@ namespace Lambda
 
 		//Create graphics context
 		{
-			GraphicsDeviceDesc gcDesc = {};
+			DeviceDesc gcDesc = {};
 			gcDesc.pWindow			= this;
 			gcDesc.Api				= desc.GraphicsDeviceAPI;
 			gcDesc.SampleCount		= desc.SampleCount;
@@ -257,11 +252,11 @@ namespace Lambda
 #endif
             if (desc.GraphicsDeviceAPI == GRAPHICS_API_D3D12)
             {
-                m_pGraphicsDevice = DBG_NEW DX12GraphicsDevice(gcDesc);
+                m_GraphicsDevice = AutoRef<IDevice>(DBG_NEW DX12GraphicsDevice(gcDesc));
             }
             else if (desc.GraphicsDeviceAPI == GRAPHICS_API_VULKAN)
             {
-                m_pGraphicsDevice = DBG_NEW VKNGraphicsDevice(gcDesc);
+                m_GraphicsDevice = AutoRef<IDevice>(DBG_NEW VKNDevice(gcDesc));
             }
             else
             {
@@ -275,21 +270,7 @@ namespace Lambda
 	{
 		if (m_pEventCallback)
 		{
-			//When a eventhandler is registered, then we handled all the backloged items
-			/*if (m_EventBackLog.size() > 0)
-			{
-				for (auto& e : m_EventBackLog)
-					m_EventCallback(e);
-
-				m_EventBackLog.clear();
-			}*/
-
 			m_pEventCallback->Callback(event);
-		}
-		else
-		{
-			//If a eventcallback is not registered then we put the event in the backlog
-			//m_EventBackLog.push_back(event);
 		}
 	}
 

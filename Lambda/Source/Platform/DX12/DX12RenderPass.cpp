@@ -32,7 +32,7 @@ namespace Lambda
 	}
 
 
-	RenderPassDesc DX12RenderPass::GetDesc() const
+	const RenderPassDesc& DX12RenderPass::GetDesc() const
 	{
 		return m_Desc;
 	}

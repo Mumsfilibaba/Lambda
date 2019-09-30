@@ -3,7 +3,6 @@
 #include "Utilities/TextureHelper.h"
 #include "Utilities/StringHelper.h"
 #include "Utilities/MathHelper.h"
-
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include "DX12GraphicsDevice.h"
 	#include "DX12PipelineState.h"
@@ -410,7 +409,7 @@ namespace Lambda
 		
 		//Setup texture copy info
 		DX12Texture* pDXTexture	= reinterpret_cast<DX12Texture*>(pResource);
-		TextureDesc desc		= pDXTexture->GetDesc();
+		const TextureDesc& desc	= pDXTexture->GetDesc();
 
 		//Setup dst
 		D3D12_TEXTURE_COPY_LOCATION dst = {};

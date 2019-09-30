@@ -11,8 +11,9 @@ namespace Lambda
 	//VKNSwapChain
 	//------------
 
-	VKNSwapChain::VKNSwapChain(const VKNSwapChainDesc& desc)
-		: m_SwapChain(VK_NULL_HANDLE),
+	VKNSwapChain::VKNSwapChain(VKNDevice* pDevice, const VKNSwapChainDesc& desc)
+		: m_pDevice(pDevice),
+		m_SwapChain(VK_NULL_HANDLE),
 		m_Format(),
 		m_Extent(),
 		m_PresentationMode(),
@@ -27,9 +28,8 @@ namespace Lambda
 	void VKNSwapChain::Init(const VKNSwapChainDesc& desc)
 	{
         //Get the swapchain capabilities from the adapter
-		VKNDevice& device					= VKNDevice::Get();
-        SwapChainCapabilities cap			= QuerySwapChainSupport(device.GetPhysicalDevice(), device.GetSurface());
-        QueueFamilyIndices familyIndices	= device.GetQueueFamilyIndices();
+        SwapChainCapabilities cap			= QuerySwapChainSupport(m_pDevice->GetPhysicalDevice(), m_pDevice->GetSurface());
+        QueueFamilyIndices familyIndices	= m_pDevice->GetQueueFamilyIndices();
         
 		//Choose a swapchain format
 		m_Format = cap.Formats[0];
@@ -93,8 +93,7 @@ namespace Lambda
     
     void VKNSwapChain::InitSwapChain(VkExtent2D extent)
     {
-		VKNDevice& device			= VKNDevice::Get();
-		SwapChainCapabilities cap	= QuerySwapChainSupport(device.GetPhysicalDevice(), device.GetSurface());
+		SwapChainCapabilities cap	= QuerySwapChainSupport(m_pDevice->GetPhysicalDevice(), m_pDevice->GetSurface());
         
         //Choose swapchain extent (Size)
         VkExtent2D newExtent;
@@ -115,7 +114,7 @@ namespace Lambda
         VkSwapchainCreateInfoKHR info = {};
         info.sType                = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
         info.pNext                = nullptr;
-        info.surface              = device.GetSurface();
+        info.surface              = m_pDevice->GetSurface();
         info.minImageCount        = m_ImageCount;
         info.imageFormat          = m_Format.format;
         info.imageColorSpace      = m_Format.colorSpace;
@@ -129,7 +128,7 @@ namespace Lambda
         info.oldSwapchain         = VK_NULL_HANDLE;
         
         //Is the swapchain going to be used by more than one queue
-		QueueFamilyIndices familyIndices = device.GetQueueFamilyIndices();
+		QueueFamilyIndices familyIndices = m_pDevice->GetQueueFamilyIndices();
         if (familyIndices.GraphicsFamily != familyIndices.PresentFamily)
         {
             //If the graphics- and presentqueue is not the same then we have to specify the different queues
@@ -146,7 +145,7 @@ namespace Lambda
             info.pQueueFamilyIndices     = nullptr;
         }
 
-        if (vkCreateSwapchainKHR(device.GetDevice(), &info, nullptr, &m_SwapChain) != VK_SUCCESS)
+        if (vkCreateSwapchainKHR(m_pDevice->GetDevice(), &info, nullptr, &m_SwapChain) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create SwapChain\n");
             
@@ -161,12 +160,12 @@ namespace Lambda
         
         //Get SwapChain images
         uint32 imageCount = 0;
-        vkGetSwapchainImagesKHR(device.GetDevice(), m_SwapChain, &imageCount, nullptr);
+        vkGetSwapchainImagesKHR(m_pDevice->GetDevice(), m_SwapChain, &imageCount, nullptr);
         m_ImageCount = imageCount;
         
         //Init textures
         std::vector<VkImage> textures(imageCount);
-        vkGetSwapchainImagesKHR(device.GetDevice(), m_SwapChain, &imageCount, textures.data());
+        vkGetSwapchainImagesKHR(m_pDevice->GetDevice(), m_SwapChain, &imageCount, textures.data());
         for (uint32 i = 0; i < imageCount; i++)
         {
             TextureDesc desc = {};
@@ -182,7 +181,7 @@ namespace Lambda
             desc.SampleCount		= 1;
             desc.Usage				= RESOURCE_USAGE_DEFAULT;
 
-            m_Buffers.push_back(DBG_NEW VKNTexture(textures[i], desc));
+            m_Buffers.push_back(AutoRef(DBG_NEW VKNTexture(m_pDevice, textures[i], desc)));
         }
 
         LOG_DEBUG_INFO("Vulkan: Created ImageViews\n");
@@ -192,9 +191,7 @@ namespace Lambda
 	void VKNSwapChain::AquireNextImage(VkSemaphore signalSemaphore)
 	{
 		//LOG_DEBUG_INFO("Vulkan: vkAcquireNextImageKHR with semaphore %x\n", signalSemaphore);
-		
-		VKNDevice& device = VKNDevice::Get();
-		vkAcquireNextImageKHR(device.GetDevice(), m_SwapChain, 0xffffffffffffffff, signalSemaphore, VK_NULL_HANDLE, &m_CurrentBufferIndex);
+		vkAcquireNextImageKHR(m_pDevice->GetDevice(), m_SwapChain, 0xffffffffffffffff, signalSemaphore, VK_NULL_HANDLE, &m_CurrentBufferIndex);
 	}
 
 
@@ -230,7 +227,7 @@ namespace Lambda
 
 	ITexture* VKNSwapChain::GetCurrentBuffer() const
 	{
-		return m_Buffers[m_CurrentBufferIndex];
+		return m_Buffers[m_CurrentBufferIndex].Get();
 	}
 
 
@@ -266,15 +263,6 @@ namespace Lambda
 	void VKNSwapChain::Release(VkDevice device)
 	{
 		//Release backbuffers
-		for (size_t i = 0; i < m_Buffers.size(); i++)
-		{
-			if (m_Buffers[i])
-			{
-				m_Buffers[i]->Destroy(device);
-				m_Buffers[i] = nullptr;
-			}
-		}
-
 		m_Buffers.clear();
 
 		if (m_SwapChain != VK_NULL_HANDLE)

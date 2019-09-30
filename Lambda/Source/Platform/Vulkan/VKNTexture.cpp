@@ -11,8 +11,9 @@ namespace Lambda
 	//VKNTexture
 	//----------
 
-    VKNTexture::VKNTexture(IVKNAllocator* pAllocator, const TextureDesc& desc)
-        : m_pAllocator(pAllocator),
+    VKNTexture::VKNTexture(VKNDevice* pDevice, IVKNAllocator* pAllocator, const TextureDesc& desc)
+        : m_pDevice(pDevice),
+		m_pAllocator(pAllocator),
 		m_Memory(),
         m_IsOwner(false),
 		m_Image(VK_NULL_HANDLE),
@@ -21,12 +22,16 @@ namespace Lambda
         m_Desc(),
         m_ResourceState(VK_IMAGE_LAYOUT_UNDEFINED)
     {
+		//Add a ref to the refcounter
+		this->AddRef();
+
         Init(desc);
     }
     
     
-    VKNTexture::VKNTexture(VkImage image, const TextureDesc& desc)
-		: m_pAllocator(nullptr),
+    VKNTexture::VKNTexture(VKNDevice* pDevice, VkImage image, const TextureDesc& desc)
+		:	m_pDevice(pDevice),
+		m_pAllocator(nullptr),
 		m_Memory(),
 		m_IsOwner(false),
 		m_Image(VK_NULL_HANDLE),
@@ -35,10 +40,41 @@ namespace Lambda
 		m_Desc(),
 		m_ResourceState(VK_IMAGE_LAYOUT_UNDEFINED)
     {
+		//Add a ref to the refcounter
+		this->AddRef();
+
 		LAMBDA_ASSERT(image != VK_NULL_HANDLE);
         InitFromResource(image, desc);
     }
     
+
+	VKNTexture::~VKNTexture()
+	{
+		LOG_DEBUG_INFO("Vulkan: Destroying Texture2D '%p'\n", this);
+
+		//Remove associated framebuffer if there is any
+
+		VKNFramebufferCache::Get().ReleaseAllContainingTexture(m_pDevice->GetDevice(), this);
+
+		if (m_ImageView != VK_NULL_HANDLE)
+		{
+			vkDestroyImageView(m_pDevice->GetDevice(), m_ImageView, nullptr);
+			m_ImageView = VK_NULL_HANDLE;
+		}
+
+		//Destroy if texture was created from init
+		if (m_IsOwner)
+		{
+			if (m_Image != VK_NULL_HANDLE)
+			{
+				m_pAllocator->Deallocate(m_Memory);
+
+				vkDestroyImage(m_pDevice->GetDevice(), m_Image, nullptr);
+				m_Image = VK_NULL_HANDLE;
+			}
+		}
+	}
+
     
     void VKNTexture::InitFromResource(VkImage image, const TextureDesc& desc)
     {
@@ -66,7 +102,6 @@ namespace Lambda
         
         //Create view
         CreateImageView();
-        
     }
     
     
@@ -76,9 +111,7 @@ namespace Lambda
 
         //Number of samples (MSAA)
         VkSampleCountFlagBits sampleCount = ConvertSampleCount(desc.SampleCount);
-        
-        VKNDevice& device = VKNDevice::Get();
-		VkSampleCountFlagBits highestSampleCount = device.GetHighestSampleCount();
+		VkSampleCountFlagBits highestSampleCount = m_pDevice->GetHighestSampleCount();
         if (sampleCount > highestSampleCount)
         {
             LOG_DEBUG_ERROR("Vulkan: TextureDesc::SampleCount (=%u) is higher than the maximum of the device (=%u)\n", sampleCount, highestSampleCount);
@@ -149,7 +182,7 @@ namespace Lambda
         }
 
 		//Create image
-        if (vkCreateImage(device.GetDevice(), &info, nullptr, &m_Image) != VK_SUCCESS)
+        if (vkCreateImage(m_pDevice->GetDevice(), &info, nullptr, &m_Image) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create image\n");
             return;
@@ -165,10 +198,10 @@ namespace Lambda
         
 		//Allocate memory
 		VkMemoryRequirements memoryRequirements = {};
-		vkGetImageMemoryRequirements(device.GetDevice(), m_Image, &memoryRequirements);
+		vkGetImageMemoryRequirements(m_pDevice->GetDevice(), m_Image, &memoryRequirements);
 		if (m_pAllocator->Allocate(m_Memory, memoryRequirements, desc.Usage))
 		{
-			vkBindImageMemory(device.GetDevice(), m_Image, m_Memory.DeviceMemory, m_Memory.DeviceMemoryOffset);
+			vkBindImageMemory(m_pDevice->GetDevice(), m_Image, m_Memory.DeviceMemory, m_Memory.DeviceMemoryOffset);
 		}
         else
         {
@@ -214,52 +247,16 @@ namespace Lambda
             LOG_DEBUG_INFO("Vulkan: Created image view. Handle=%p\n", m_ImageView);
         }
     }
-    
-    
-    void* VKNTexture::GetNativeHandle() const
+
+
+	void* VKNTexture::GetNativeHandle() const
     {
         return reinterpret_cast<void*>(m_Image);
     }
     
     
-	TextureDesc VKNTexture::GetDesc() const
+	const TextureDesc& VKNTexture::GetDesc() const
     {
         return m_Desc;
-    }
-    
-    
-	void VKNTexture::Release(VkDevice device)
-	{
-		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
-
-		//Remove associated framebuffer if there is any
-		VKNFramebufferCache::Get().ReleaseAllContainingTexture(device, this);
-
-		if (m_ImageView != VK_NULL_HANDLE)
-		{
-			vkDestroyImageView(device, m_ImageView, nullptr);
-			m_ImageView = VK_NULL_HANDLE;
-		}
-
-		//Destroy if texture was created from init
-		if (m_IsOwner)
-		{
-			if (m_Image != VK_NULL_HANDLE)
-			{
-				m_pAllocator->Deallocate(m_Memory);
-
-				vkDestroyImage(device, m_Image, nullptr);
-				m_Image = VK_NULL_HANDLE;
-			}
-		}
-	}
-
-
-	void VKNTexture::Destroy(VkDevice device)
-    {
-		LOG_DEBUG_INFO("Vulkan: Destroying Texture2D '%p'\n", this);
-		
-		Release(device);
-        delete this;
     }
 }

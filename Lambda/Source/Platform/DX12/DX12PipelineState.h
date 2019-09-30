@@ -6,7 +6,7 @@
 
 namespace Lambda
 {
-	class DX12GraphicsPipelineState final : public IGraphicsPipelineState
+	class DX12GraphicsPipelineState final : public RefCountedObject<IGraphicsPipelineState>
 	{
 		friend class DX12CommandList;
 
@@ -18,12 +18,10 @@ namespace Lambda
 
         virtual void SetName(const char* pName) override final;
 		virtual void* GetNativeHandle() const override final;
-
 	private:
 		void Init(ID3D12Device* pDevice, const GraphicsPipelineStateDesc& desc);
 		ID3D12PipelineState* GetPipelineState() const;
 		ID3D12RootSignature* GetRootSignature() const;
-
 	private:
 		Microsoft::WRL::ComPtr<ID3D12PipelineState> m_State;
 		Microsoft::WRL::ComPtr<ID3D12RootSignature> m_RootSignature;

@@ -13,7 +13,7 @@ namespace Lambda
 	}
 
 
-	SamplerStateDesc DX12SamplerState::GetDesc() const
+	const SamplerStateDesc& DX12SamplerState::GetDesc() const
 	{
 		return m_Desc;
 	}

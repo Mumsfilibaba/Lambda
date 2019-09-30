@@ -5,26 +5,26 @@
 
 namespace Lambda
 {
+    class VKNDevice;
     class VKNTexture;
 	class IVKNAllocator;
     class VKNRenderPass;
 	class VKNUploadBuffer;
-    class VKNGraphicsDevice;
 	class VKNPipelineResourceState;
 
 	//--------------
 	//VKNCommandList
 	//--------------
 
-    class VKNCommandList final : public ICommandList
+    class VKNCommandList final : public RefCountedObject<ICommandList>
     {
-        friend class VKNGraphicsDevice;
+        friend class VKNDevice;
         
     public:
         LAMBDA_NO_COPY(VKNCommandList);
         
-        VKNCommandList(IVKNAllocator* pAllocator, CommandListType type);
-        ~VKNCommandList() = default;
+        VKNCommandList(VKNDevice* pDevice, IVKNAllocator* pAllocator, CommandListType type);
+        ~VKNCommandList();
         
         virtual void ClearRenderTarget(ITexture* pRenderTarget, float color[4]) override final;
         virtual void ClearDepthStencil(ITexture* pDepthStencil, float depth, uint8 stencil) override final;
@@ -60,24 +60,22 @@ namespace Lambda
         virtual void Reset() override final;
         
         virtual CommandListType GetType() const override final;
-        virtual void*			GetNativeHandle() const override final;
+        virtual void* GetNativeHandle() const override final;
         
         void CommitResources();
-        void BlitTexture(VKNTexture* pDst, uint32 dstWidth, uint32 dstHeight, uint32 dstMipLevel, VKNTexture* pSrc, uint32 srcWidth, uint32 srcHeight, uint32 srcMipLevel);
-        void Destroy(VkDevice device);
-        
+        void BlitTexture(VKNTexture* pDst, uint32 dstWidth, uint32 dstHeight, uint32 dstMipLevel, VKNTexture* pSrc, uint32 srcWidth, uint32 srcHeight, uint32 srcMipLevel);        
     private:
         void Init(IVKNAllocator* pAllocator, CommandListType type);
-
     private:
-        VkCommandPool				m_CommandPool;
-        VkCommandBuffer				m_CommandBuffer;  
-		IVKNAllocator*				m_pAllocator;
-        VKNUploadBuffer*			m_pBufferUpload;
-        VKNUploadBuffer*			m_pTextureUpload;
-        VKNRenderPass*				m_pRenderPass;
-		VKNPipelineResourceState*	m_pResourceState;
-        CommandListType				m_Type;
-        std::string					m_Name;
+		VKNDevice*			      m_pDevice;
+        VkCommandPool			  m_CommandPool;
+        VkCommandBuffer			  m_CommandBuffer;  
+		IVKNAllocator*			  m_pAllocator;
+        VKNUploadBuffer*		  m_pBufferUpload;
+        VKNUploadBuffer*		  m_pTextureUpload;
+        VKNRenderPass*			  m_pRenderPass;
+		VKNPipelineResourceState* m_pResourceState;
+        CommandListType			  m_Type;
+        std::string				  m_Name;
     };
 }

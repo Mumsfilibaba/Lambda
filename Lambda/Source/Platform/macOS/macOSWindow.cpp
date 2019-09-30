@@ -120,7 +120,7 @@ namespace Lambda
             
             //Create graphics context
             {
-                GraphicsDeviceDesc gdDesc = {};
+                DeviceDesc gdDesc = {};
                 gdDesc.pWindow          = this;
                 gdDesc.VerticalSync     = desc.VerticalSync;
                 gdDesc.BackBufferCount  = 3;
@@ -138,7 +138,7 @@ namespace Lambda
                 }
                 else if (desc.GraphicsDeviceAPI == GRAPHICS_API_VULKAN)
                 {
-                    m_pGraphicsDevice = DBG_NEW VKNGraphicsDevice(gdDesc);
+                    m_pGraphicsDevice = DBG_NEW VKNDevice(gdDesc);
                 }
                 else
                 {
@@ -342,7 +342,7 @@ namespace Lambda
     }
     
     
-    IGraphicsDevice* MacOSWindow::GetGraphicsDevice() const
+    IDevice* MacOSWindow::GetGraphicsDevice() const
     {
         return m_pGraphicsDevice;
     }

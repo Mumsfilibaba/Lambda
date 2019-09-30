@@ -30,10 +30,8 @@ namespace Lambda
 		DX12Allocation Allocate(uint64 size, uint64 alignment);
 		bool HasSpace(uint64 size, uint64 alignment) const;
 		void Reset();
-
 	private:
 		void Init(ID3D12Device* pDevice, uint64 size);
-
 	private:
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_Resource;
 		void* m_CPUPtr;
@@ -63,10 +61,8 @@ namespace Lambda
 		
 		DX12Allocation Allocate(uint64 size, uint64 alignment);
 		void Reset();
-
 	private:
 		DX12LinearAllocatorBlock* AllocatePage();
-
 	private:
 		Microsoft::WRL::ComPtr<ID3D12Device> m_Device;
 		std::vector<std::unique_ptr<DX12LinearAllocatorBlock>> m_Pages;
@@ -80,8 +76,8 @@ namespace Lambda
 	{
 		//Reset allocator and all pages
 		m_CurrentPageIndex = 0;
-		for (auto page = m_Pages.begin(); page < m_Pages.end(); page++)
-			(*page)->Reset();
+		for (auto& page : m_Pages)
+			page->Reset();
 	}
 }
 #endif

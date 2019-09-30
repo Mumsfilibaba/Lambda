@@ -8,14 +8,30 @@ namespace Lambda
 	//VKNShader
 	//---------
 
-	VKNShader::VKNShader(const ShaderDesc& desc)
-		: m_Shader(VK_NULL_HANDLE),
+	VKNShader::VKNShader(VKNDevice* pDevice, const ShaderDesc& desc)
+		: m_pDevice(pDevice),
+		m_Shader(VK_NULL_HANDLE),
 		m_ByteCode(),
 		m_EntryPoint(),
 		m_Desc()
 	{
+		//Add a ref to the refcounter
+		this->AddRef();
+
         Init(desc);
     }
+
+
+	VKNShader::~VKNShader()
+	{
+		if (m_Shader != VK_NULL_HANDLE)
+		{
+			vkDestroyShaderModule(m_pDevice->GetDevice(), m_Shader, nullptr);
+			m_Shader = VK_NULL_HANDLE;
+		}
+
+		LOG_DEBUG_INFO("Vulkan: Destroyed Shader\n");
+	}
     
     
     void VKNShader::Init(const ShaderDesc& desc)
@@ -37,9 +53,7 @@ namespace Lambda
         info.flags = 0;
         info.codeSize = desc.SourceLength;
         info.pCode = reinterpret_cast<const uint32_t*>(m_ByteCode.data());
-        
-		VKNDevice& device = VKNDevice::Get();
-        if (vkCreateShaderModule(device.GetDevice(), &info, nullptr, &m_Shader) != VK_SUCCESS)
+        if (vkCreateShaderModule(m_pDevice->GetDevice(), &info, nullptr, &m_Shader) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create shadermodule\n");
             m_Shader = VK_NULL_HANDLE;
@@ -54,21 +68,7 @@ namespace Lambda
 			m_Desc.pEntryPoint = m_EntryPoint.c_str();
         }
     }
-    
-    
-    void VKNShader::Destroy(VkDevice device)
-    {
-		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
 
-        if (m_Shader != VK_NULL_HANDLE)
-        {
-            vkDestroyShaderModule(device, m_Shader, nullptr);
-            m_Shader = VK_NULL_HANDLE;
-        }
-        
-        delete this;
-    }
-    
     
     void* VKNShader::GetNativeHandle() const
     {
@@ -76,7 +76,7 @@ namespace Lambda
     }
 	
 	
-	ShaderDesc VKNShader::GetDesc() const
+	const ShaderDesc& VKNShader::GetDesc() const
 	{
 		return m_Desc;
 	}

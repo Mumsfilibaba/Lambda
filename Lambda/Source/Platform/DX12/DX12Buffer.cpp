@@ -40,7 +40,7 @@ namespace Lambda
 	}
 
 
-	BufferDesc DX12Buffer::GetDesc() const
+	const BufferDesc& DX12Buffer::GetDesc() const
 	{
 		return m_Desc;
 	}

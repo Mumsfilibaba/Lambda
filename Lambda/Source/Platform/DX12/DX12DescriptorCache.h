@@ -18,7 +18,6 @@ namespace Lambda
 		void CopyDescriptors(ID3D12Device* pDevice, D3D12_DESCRIPTOR_HEAP_TYPE type);
 		void PushDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE hDest, D3D12_CPU_DESCRIPTOR_HANDLE hSrc);
 		void Clear();
-
 	private:
 		std::vector<UINT> m_RangeCounts;
 		std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> m_SrcRanges;

@@ -20,15 +20,12 @@ namespace Lambda
     //ISamplerState
     //-------------
 
-	class LAMBDA_API ISamplerState
+	class LAMBDA_API ISamplerState : public IObject
 	{
 	public:
-		LAMBDA_INTERFACE(ISamplerState);
+		LAMBDA_IOBJECT_INTERFACE(ISamplerState);
 
-		ISamplerState() = default;
-		~ISamplerState() = default;
-
-		virtual SamplerStateDesc GetDesc() const = 0;
         virtual void* GetNativeHandle() const = 0;
+		virtual const SamplerStateDesc& GetDesc() const = 0;
 	};
 }

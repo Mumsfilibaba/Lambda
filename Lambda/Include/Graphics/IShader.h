@@ -1,10 +1,9 @@
 #pragma once
-#include "Defines.h"
-#include "Types.h"
+#include "IObject.h"
 
 namespace Lambda
 {   
-	class IGraphicsDevice;
+	class IDevice;
 
     //-----------
     //ShaderFlags
@@ -46,17 +45,14 @@ namespace Lambda
     //IShader
     //-------
     
-	class LAMBDA_API IShader
+	class LAMBDA_API IShader : public IObject
 	{
 	public:
-		LAMBDA_INTERFACE(IShader);
-
-		IShader() = default;
-		~IShader() = default;
+		LAMBDA_IOBJECT_INTERFACE(IShader);
 
         virtual void* GetNativeHandle() const = 0;
-        virtual ShaderDesc GetDesc() const = 0;
+        virtual const ShaderDesc& GetDesc() const = 0;
 	public:
-		static IShader* CreateShaderFromFile(IGraphicsDevice* pDevice, const char* pFilename, const char* pEntryPoint, ShaderStage type, ShaderLang languange = SHADER_LANG_HLSL);
+		static IShader* CreateShaderFromFile(IDevice* pDevice, const char* pFilename, const char* pEntryPoint, ShaderStage type, ShaderLang languange = SHADER_LANG_HLSL);
 	};
 }

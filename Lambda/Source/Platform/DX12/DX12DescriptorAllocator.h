@@ -21,7 +21,6 @@ namespace Lambda
 		
 		void Free(const DX12DescriptorHandle& hDescriptor);
 		DX12DescriptorHandle Allocate();
-
 	private:
 		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_Heap;
 		std::vector<uint32> m_FreeList;

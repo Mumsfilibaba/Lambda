@@ -5,41 +5,38 @@
 
 namespace Lambda
 {
+	class VKNDevice;
+
     //----------
     //VKNTexture
     //----------
     
-    class VKNTexture final : public ITexture
+    class VKNTexture final : public RefCountedObject<ITexture>
     {
-        friend class VKNGraphicsDevice;
-        
+        friend class VKNDevice;  
     public:
         LAMBDA_NO_COPY(VKNTexture);
 
-        VKNTexture(IVKNAllocator* pAllocator, const TextureDesc& desc);
-        VKNTexture(VkImage image, const TextureDesc& desc);
-        ~VKNTexture() = default;
+        VKNTexture(VKNDevice* pDevice, IVKNAllocator* pAllocator, const TextureDesc& desc);
+        VKNTexture(VKNDevice* pDevice, VkImage image, const TextureDesc& desc);
+        ~VKNTexture();
         
-        virtual void*       GetNativeHandle() const override final;
-        virtual TextureDesc GetDesc() const override final;
-        
-		void Release(VkDevice device);
-        void Destroy(VkDevice device);
+        virtual void* GetNativeHandle() const override final;
+        virtual const TextureDesc& GetDesc() const override final;
 
         void SetResolveResource(VKNTexture* pResolveResource) const;
         void SetResourceState(VkImageLayout resourceState) const;
-        VkFormat            GetFormat() const;
-        VKNTexture*			GetResolveResource() const;
-        VkImageAspectFlags  GetAspectFlags() const;
-        VkImageView         GetImageView() const;
-        VkImageLayout       GetResourceState() const;
-        
+        VkFormat GetFormat() const;
+        VKNTexture*	GetResolveResource() const;
+        VkImageAspectFlags GetAspectFlags() const;
+        VkImageView GetImageView() const;
+        VkImageLayout GetResourceState() const; 
     private:
         void Init(const TextureDesc& desc);
         void InitFromResource(VkImage image, const TextureDesc& desc);
-        void CreateImageView();
-        
+        void CreateImageView(); 
     private:
+		VKNDevice*				m_pDevice;
 		IVKNAllocator* const	m_pAllocator;
 		VKNMemory				m_Memory;
         VkImage                 m_Image;

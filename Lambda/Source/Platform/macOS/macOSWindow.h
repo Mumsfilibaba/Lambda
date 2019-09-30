@@ -21,7 +21,7 @@ namespace Lambda
         virtual void SetEventCallback(IEventCallback* pCallback) override final;
         virtual bool SetFullscreen(bool fullscreen) override final;
         virtual bool GetFullscreen() const override final;
-        virtual IGraphicsDevice* GetGraphicsDevice() const override final;
+        virtual IDevice* GetGraphicsDevice() const override final;
         virtual uint32 GetHeight() const override final;
         virtual uint32 GetWidth() const override final;
         virtual void* GetNativeHandle() const override final;
@@ -30,7 +30,7 @@ namespace Lambda
         void DispatchEvent(const Event& event);
     private:
         GLFWwindow*         m_pWindow;
-        IGraphicsDevice*    m_pGraphicsDevice;
+        IDevice*    m_pGraphicsDevice;
         IEventCallback*     m_pCallback;
         uint32              m_Width;
         uint32              m_Height;

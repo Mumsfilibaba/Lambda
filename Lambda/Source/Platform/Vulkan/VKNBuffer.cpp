@@ -10,8 +10,9 @@ namespace Lambda
 	//VKNBuffer
 	//---------
 
-    VKNBuffer::VKNBuffer(IVKNAllocator* pAllocator, const BufferDesc& desc)
-		: m_pAllocator(pAllocator),
+    VKNBuffer::VKNBuffer(VKNDevice* pDevice, IVKNAllocator* pAllocator, const BufferDesc& desc)
+		: m_pDevice(pDevice),
+		m_pAllocator(pAllocator),
         m_Memory(),
 		m_Buffer(VK_NULL_HANDLE),
         m_FrameOffset(0),
@@ -22,7 +23,10 @@ namespace Lambda
         m_Desc(),
 		m_IsDirty(false)
     {
-		LAMBDA_ASSERT(pAllocator != nullptr);
+		//Add a ref to the refcounter
+		this->AddRef();
+
+		LAMBDA_ASSERT(pAllocator != nullptr && pDevice != nullptr);
         Init(desc);
     }
     
@@ -38,11 +42,10 @@ namespace Lambda
         info.sharingMode			= VK_SHARING_MODE_EXCLUSIVE;
 
 		//If dynamic we allocate extra size so we can use dynamic offsets
-        VKNDevice& device = VKNDevice::Get();
 		if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
 		{
-            GraphicsDeviceDesc deviceDesc            = device.GetDesc();
-            VkPhysicalDeviceProperties properties    = device.GetPhysicalDeviceProperties();
+            const DeviceDesc& deviceDesc          = m_pDevice->GetDesc();
+            VkPhysicalDeviceProperties properties = m_pDevice->GetPhysicalDeviceProperties();
 
 			//If dynamic we allocate extra space (NUM_UPDATES updates per frame)
 			constexpr uint32 numUpdatesPerFrame = 4;
@@ -69,7 +72,7 @@ namespace Lambda
             info.usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
         
 		//Create buffer
-		if (vkCreateBuffer(device.GetDevice(), &info, nullptr, &m_Buffer) != VK_SUCCESS)
+		if (vkCreateBuffer(m_pDevice->GetDevice(), &info, nullptr, &m_Buffer) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create Buffer\n");
             return;
@@ -79,7 +82,7 @@ namespace Lambda
 			if (m_Desc.pName)
 			{
 				LOG_DEBUG_INFO("Vulkan: Created Buffer. Name=\"%s\"\n", m_Desc.pName);
-				device.SetVulkanObjectName(VK_OBJECT_TYPE_BUFFER, uint64(m_Buffer), std::string(m_Desc.pName));
+				m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_BUFFER, uint64(m_Buffer), std::string(m_Desc.pName));
 			}
 			else
 			{
@@ -91,10 +94,10 @@ namespace Lambda
         
 		//Allocate memory
 		VkMemoryRequirements memoryRequirements = {};
-		vkGetBufferMemoryRequirements(device.GetDevice(), m_Buffer, &memoryRequirements);
+		vkGetBufferMemoryRequirements(m_pDevice->GetDevice(), m_Buffer, &memoryRequirements);
         if (m_pAllocator->Allocate(m_Memory, memoryRequirements, m_Desc.Usage))
 		{
-            vkBindBufferMemory(device.GetDevice(), m_Buffer, m_Memory.DeviceMemory, m_Memory.DeviceMemoryOffset);
+            vkBindBufferMemory(m_pDevice->GetDevice(), m_Buffer, m_Memory.DeviceMemory, m_Memory.DeviceMemoryOffset);
         }
         else
         {
@@ -103,7 +106,20 @@ namespace Lambda
     }
     
     
-    void VKNBuffer::Map(void** ppMem)
+	VKNBuffer::~VKNBuffer()
+	{
+		//Set the new handles and delete the old ones
+		m_pAllocator->Deallocate(m_Memory);
+
+		VKNBufferManager& bufferManager = VKNBufferManager::GetInstance();
+		bufferManager.DestroyBuffer(m_Buffer);
+		bufferManager.UnregisterBuffer(this);
+
+		LOG_DEBUG_INFO("Vulkan: Destroyed buffer\n");
+	}
+
+
+	void VKNBuffer::Map(void** ppMem)
     {
 		LAMBDA_ASSERT(ppMem != nullptr);
 
@@ -124,7 +140,7 @@ namespace Lambda
     }
 
     
-    BufferDesc VKNBuffer::GetDesc() const
+    const BufferDesc& VKNBuffer::GetDesc() const
     {
         return m_Desc;
     }
@@ -135,7 +151,6 @@ namespace Lambda
 		//Move on a frame
         m_FrameOffset   = 0;
         m_DynamicOffset = (m_DynamicOffset+m_SizePerFrame) % m_TotalSize;
-        return;
 	}
 
 
@@ -162,9 +177,7 @@ namespace Lambda
 		info.pQueueFamilyIndices	= nullptr;
 		info.sharingMode			= VK_SHARING_MODE_EXCLUSIVE;
 
-		VKNDevice& device		= VKNDevice::Get();
-        GraphicsDeviceDesc desc = device.GetDesc();
-        
+        const DeviceDesc& desc = m_pDevice->GetDesc(); 
         //Set new size
         m_SizePerFrame  = sizePerFrame;
         m_DynamicOffset = 0;
@@ -187,7 +200,7 @@ namespace Lambda
 
         //Create buffer
         VkBuffer newBuffer = VK_NULL_HANDLE;
-		if (vkCreateBuffer(device.GetDevice(), &info, nullptr, &newBuffer) != VK_SUCCESS)
+		if (vkCreateBuffer(m_pDevice->GetDevice(), &info, nullptr, &newBuffer) != VK_SUCCESS)
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to recreate Buffer\n");
 			return;
@@ -197,7 +210,7 @@ namespace Lambda
 			if (m_Desc.pName)
 			{
 				LOG_DEBUG_INFO("Vulkan: Recreated Buffer. Name=\"%s\"\n", m_Desc.pName);
-				device.SetVulkanObjectName(VK_OBJECT_TYPE_BUFFER, uint64(m_Buffer), std::string(m_Desc.pName));
+				m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_BUFFER, uint64(m_Buffer), std::string(m_Desc.pName));
 			}
 			else
 			{
@@ -208,10 +221,10 @@ namespace Lambda
 		//Allocate memory
         VKNMemory newMemory = {};
         VkMemoryRequirements memoryRequirements = {};
-        vkGetBufferMemoryRequirements(device.GetDevice(), newBuffer, &memoryRequirements);
+        vkGetBufferMemoryRequirements(m_pDevice->GetDevice(), newBuffer, &memoryRequirements);
 		if (m_pAllocator->Allocate(newMemory, memoryRequirements, m_Desc.Usage))
 		{
-			vkBindBufferMemory(device.GetDevice(), newBuffer, newMemory.DeviceMemory, newMemory.DeviceMemoryOffset);
+			vkBindBufferMemory(m_pDevice->GetDevice(), newBuffer, newMemory.DeviceMemory, newMemory.DeviceMemoryOffset);
 		}
 		else
 		{
@@ -219,7 +232,10 @@ namespace Lambda
 		}
 
 		//Set the new handles and delete the old ones
-        Release(device.GetDevice());
+		m_pAllocator->Deallocate(m_Memory);
+
+		VKNBufferManager& bufferManager = VKNBufferManager::GetInstance();
+		bufferManager.DestroyBuffer(m_Buffer);
         
 		m_Buffer = newBuffer;
 		m_Memory = newMemory;
@@ -231,24 +247,6 @@ namespace Lambda
 		//Set to dirty
 		m_IsDirty = true;
 	}
-    
-    
-    void VKNBuffer::Release(VkDevice device)
-    {
-		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
-        
-        m_pAllocator->Deallocate(m_Memory);
-
-        VKNBufferManager& bufferManager = VKNBufferManager::GetInstance();
-        bufferManager.DestroyBuffer(m_Buffer);
-    }
-    
-    
-    void VKNBuffer::Destroy(VkDevice device)
-    {
-        Release(device);
-        delete this;
-    }
 
     //---------------
     //VKNUploadBuffer
@@ -280,7 +278,7 @@ namespace Lambda
         info.size                   = sizeInBytes;
         info.usage                  = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
         
-        VKNDevice& device = VKNDevice::Get();
+		VKNDevice& device = VKNDevice::Get();
         if (vkCreateBuffer(device.GetDevice(), &info, nullptr, &m_Buffer) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create buffer for UploadBuffer\n");
@@ -325,7 +323,7 @@ namespace Lambda
         info.size                   = sizeInBytes;
         info.usage                  = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
-        VKNDevice& device = VKNDevice::Get();
+		VKNDevice& device = VKNDevice::Get();
         if (vkCreateBuffer(device.GetDevice(), &info, nullptr, &newBuffer) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to reallocate buffer for UploadBuffer\n");
@@ -489,7 +487,7 @@ namespace Lambda
         auto& buffers = m_BuffersToDelete[m_FrameIndex];
         if (buffers.size() > 1)
         {
-            VKNDevice& device = VKNDevice::Get();
+			VKNDevice& device = VKNDevice::Get();
             for (auto& buffer : buffers)
             {
                 vkDestroyBuffer(device.GetDevice(), buffer, nullptr);

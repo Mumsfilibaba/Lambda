@@ -13,11 +13,27 @@ namespace Lambda
 	//VKNGraphicsPipelineState
 	//------------------------
 
-    VKNGraphicsPipelineState::VKNGraphicsPipelineState(const GraphicsPipelineStateDesc& desc)
-        : m_Pipeline(VK_NULL_HANDLE)
+    VKNGraphicsPipelineState::VKNGraphicsPipelineState(VKNDevice* pDevice, const GraphicsPipelineStateDesc& desc)
+        : m_pDevice(pDevice),
+		m_Pipeline(VK_NULL_HANDLE)
     {
+		//Add a ref to the refcounter
+		this->AddRef();
+
         Init(desc);
     }
+
+
+	VKNGraphicsPipelineState::~VKNGraphicsPipelineState()
+	{
+		if (m_Pipeline != VK_NULL_HANDLE)
+		{
+			vkDestroyPipeline(m_pDevice->GetDevice(), m_Pipeline, nullptr);
+			m_Pipeline = VK_NULL_HANDLE;
+		}
+
+		LOG_DEBUG_INFO("Vulkan: Destroyed PipelineState\n");
+	}
 
     
     void VKNGraphicsPipelineState::Init(const GraphicsPipelineStateDesc& desc)
@@ -28,7 +44,7 @@ namespace Lambda
         //VertexShader
         if (desc.pVertexShader)
         {
-			ShaderDesc vsDesc = desc.pVertexShader->GetDesc();
+			const ShaderDesc& vsDesc = desc.pVertexShader->GetDesc();
             VkPipelineShaderStageCreateInfo info = {};
             info.sType                  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
             info.pNext                  = nullptr;
@@ -44,7 +60,7 @@ namespace Lambda
         //PixelShader
         if (desc.pPixelShader)
         {
-			ShaderDesc psDesc = desc.pPixelShader->GetDesc();
+			const ShaderDesc& psDesc = desc.pPixelShader->GetDesc();
             VkPipelineShaderStageCreateInfo info = {};
             info.sType                  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
             info.pNext                  = nullptr;
@@ -231,9 +247,7 @@ namespace Lambda
         pipelineInfo.subpass                = 0;
         pipelineInfo.basePipelineHandle     = VK_NULL_HANDLE;
         pipelineInfo.basePipelineIndex      = -1;
-        
-		VKNDevice& device = VKNDevice::Get();
-        if (vkCreateGraphicsPipelines(device.GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_Pipeline) != VK_SUCCESS)
+        if (vkCreateGraphicsPipelines(m_pDevice->GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_Pipeline) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create GraphicsPipelineState\n");
             return;
@@ -250,23 +264,9 @@ namespace Lambda
     {
         return reinterpret_cast<void*>(m_Pipeline);
     }
-    
-    
-    void VKNGraphicsPipelineState::Destroy(VkDevice device)
-    {
-		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
 
-        if (m_Pipeline != VK_NULL_HANDLE)
-        {
-            vkDestroyPipeline(device, m_Pipeline, nullptr);
-            m_Pipeline = VK_NULL_HANDLE;
-        }
 
-        delete this;
-    }
-    
-    
-    void VKNGraphicsPipelineState::SetName(const char* pName)
+	void VKNGraphicsPipelineState::SetName(const char* pName)
     {
 		if (pName != nullptr)
 		{

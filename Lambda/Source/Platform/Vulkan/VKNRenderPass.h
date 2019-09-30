@@ -5,24 +5,24 @@
 
 namespace Lambda
 {
+	class VKNDevice;
+
 	//-------------
 	//VKNRenderPass
 	//-------------
 
-	class VKNRenderPass final : public IRenderPass
+	class VKNRenderPass final : public RefCountedObject<IRenderPass>
 	{
 	public:
 		LAMBDA_NO_COPY(VKNRenderPass);
 
-		VKNRenderPass(const RenderPassDesc& desc);
-		~VKNRenderPass() = default;
+		VKNRenderPass(VKNDevice* pDevice, const RenderPassDesc& desc);
+		~VKNRenderPass();
 
-		virtual void			SetRenderTargets(const ITexture* const* const ppRenderTargets, uint32 numRenderTargets, const ITexture* pDepthStencil) override final;
-		virtual void			SetClearValues(float color[4], float depth, uint8 stencil) override final;
-		virtual void*			GetNativeHandle() const override final;
-		virtual RenderPassDesc	GetDesc() const override final;
-
-        void Destroy(VkDevice device);
+		virtual void SetRenderTargets(const ITexture* const* const ppRenderTargets, uint32 numRenderTargets, const ITexture* pDepthStencil) override final;
+		virtual void SetClearValues(float color[4], float depth, uint8 stencil) override final;
+		virtual void* GetNativeHandle() const override final;
+		virtual const RenderPassDesc& GetDesc() const override final;
 
         VkRenderPass			GetRenderPass() const;
         VkFramebuffer			GetFramebuffer() const;
@@ -30,11 +30,10 @@ namespace Lambda
         VkSampleCountFlagBits	GetSampleCount() const;
         const VkClearValue*		GetClearValues() const;
         uint32					GetAttachmentCount() const;
-
 	private:
 		void Init(const RenderPassDesc& desc);
-
 	private:
+		VKNDevice*		m_pDevice;
 		VkRenderPass	m_RenderPass;
 		VkFramebuffer	m_Framebuffer;
 		VkExtent2D		m_FramebufferExtent;

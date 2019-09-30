@@ -33,20 +33,16 @@ namespace Lambda
 		void FlushBarriers(ID3D12GraphicsCommandList* pCommandList);
 
 		D3D12_RESOURCE_STATES GetState(ID3D12Resource* pResource, uint32 subresource) const;
-
 	private:
 		void SyncGlobalStates();
-	
 	private:
 		ResourceMap m_ResourceStates;
 		std::vector<D3D12_RESOURCE_BARRIER> m_DefferedBarriers;
-
 	private:
 		static DX12ResourceState& GetGlobalState(ID3D12Resource* pResource);
 		static bool HasGlobalState(ID3D12Resource* pResource);
 		static void AddGlobalState(ID3D12Resource* pResource, const DX12ResourceState& state);
 		static void RemoveGlobalState(ID3D12Resource* pResource);
-
 	private:
 		static std::mutex s_GlobalMutex;
 		static ResourceMap s_GlobalResourceStates;

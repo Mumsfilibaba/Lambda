@@ -151,13 +151,13 @@ namespace Lambda
 			{ vec3(-w, -h, -d), vec3(-1.0f,  0.0f,  0.0f), vec3(0.0f,  0.0f, -1.0f), vec2(0.0f, 1.0f) },
 			{ vec3(-w, -h,  d), vec3(-1.0f,  0.0f,  0.0f), vec3(0.0f,  0.0f, -1.0f), vec2(1.0f, 1.0f) },
 
-			//ROOF FACE
+			//TOP FACE
 			{ vec3(-w,  h,  d), vec3(0.0f,  1.0f,  0.0f), vec3(1.0f,  0.0f, 0.0f), vec2(0.0f, 0.0f) },
 			{ vec3( w,  h,  d), vec3(0.0f,  1.0f,  0.0f), vec3(1.0f,  0.0f, 0.0f), vec2(1.0f, 0.0f) },
 			{ vec3(-w,  h, -d), vec3(0.0f,  1.0f,  0.0f), vec3(1.0f,  0.0f, 0.0f), vec2(0.0f, 1.0f) },
 			{ vec3( w,  h, -d), vec3(0.0f,  1.0f,  0.0f), vec3(1.0f,  0.0f, 0.0f), vec2(1.0f, 1.0f) },
 
-			//FLOOR FACE
+			//BOTTOM FACE
 			{ vec3(-w, -h, -d), vec3(0.0f, -1.0f,  0.0f), vec3(-1.0f,  0.0f, 0.0f), vec2(0.0f, 0.0f) },
 			{ vec3( w, -h, -d), vec3(0.0f, -1.0f,  0.0f), vec3(-1.0f,  0.0f, 0.0f), vec2(1.0f, 0.0f) },
 			{ vec3(-w, -h,  d), vec3(0.0f, -1.0f,  0.0f), vec3(-1.0f,  0.0f, 0.0f), vec2(0.0f, 1.0f) },
@@ -182,11 +182,11 @@ namespace Lambda
 			12, 13, 14,
 			13, 15, 14,
 
-			//ROOF FACE
+			//TOP FACE
 			18, 17, 16,
 			18, 19, 17,
 
-			//FLOOR FACE
+			//BOTTOM FACE
 			22, 21, 20,
 			22, 23, 21
 		};

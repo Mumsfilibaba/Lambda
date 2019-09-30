@@ -1,14 +1,13 @@
 #pragma once
-#include "Defines.h"
-#include "Types.h"
+#include "IObject.h"
 #include <vector>
 #include "VKNUtilities.h"
 
 namespace Lambda
 {
 	class ITexture;
+    class VKNDevice;
 	class VKNTexture;
-    class VKNGraphicsDevice;
 
 	//----------------
 	//VKNSwapChainDesc
@@ -31,7 +30,7 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(VKNSwapChain);
 
-		VKNSwapChain(const VKNSwapChainDesc& desc);
+		VKNSwapChain(VKNDevice* pDevice, const VKNSwapChainDesc& desc);
 		~VKNSwapChain() = default;
 
 		void ResizeBuffers(uint32 width, uint32 height);
@@ -47,18 +46,17 @@ namespace Lambda
         uint32		GetBackBufferIndex() const;
 		VkFormat	GetFormat() const;
 		ITexture*	GetCurrentBuffer() const;
-
 	private:
 		void Init(const VKNSwapChainDesc& desc);
         void InitSwapChain(VkExtent2D extent);
-
 	private:
+		VKNDevice*					m_pDevice;
 		VkSwapchainKHR				m_SwapChain;
 		VkSurfaceFormatKHR			m_Format;
 		VkExtent2D					m_Extent;
         VkPresentModeKHR			m_PresentationMode;
 		uint32						m_ImageCount;
 		mutable uint32				m_CurrentBufferIndex;
-		std::vector<VKNTexture*>	m_Buffers;
+		mutable std::vector<AutoRef<VKNTexture>> m_Buffers;
 	};
 }

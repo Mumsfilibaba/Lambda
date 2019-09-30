@@ -1,6 +1,5 @@
 #pragma once
-#include "Defines.h"
-#include "Types.h"
+#include "IObject.h"
 
 namespace Lambda
 {
@@ -28,16 +27,13 @@ namespace Lambda
     //IQuery
     //------
     
-    class IQuery
+    class IQuery : public IObject
     {
     public:
-        LAMBDA_INTERFACE(IQuery);
-        
-        IQuery() = default;
-        ~IQuery() = default;
+		LAMBDA_IOBJECT_INTERFACE(IQuery);
         
         virtual void GetResults(uint64* pResults, uint32 numResults, uint32 startQuery) = 0;
         virtual void* GetNativeHandle() const = 0;
-        virtual QueryDesc GetDesc() const = 0;
+        virtual const QueryDesc& GetDesc() const = 0;
     };
 }

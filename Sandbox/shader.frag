@@ -51,7 +51,7 @@ void main()
     }
     else
     {
-        normal = g_Normal;
+        normal = normalize(g_Normal);
     }
 
     //Calculate lightning

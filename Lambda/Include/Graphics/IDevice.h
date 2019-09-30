@@ -40,11 +40,11 @@ namespace Lambda
 		VENDOR_ID_IMGTEC	= 0x1010,
 	};
 
-    //------------------
-    //GraphicsDeviceDesc
-    //------------------
+    //----------
+    //DeviceDesc
+    //----------
     
-    struct GraphicsDeviceDesc
+    struct DeviceDesc
     {
         IWindow* pWindow       = nullptr;
         GraphicsApi Api        = GRAPHICS_API_VULKAN;
@@ -64,19 +64,15 @@ namespace Lambda
 		char AdapterString[256]	= { 0 };
 	};
 
-    //---------------
-    //IGraphicsDevice
-    //---------------
+    //-------
+    //IDevice
+    //-------
     
-	class LAMBDA_API IGraphicsDevice
+	class LAMBDA_API IDevice : public IObject
 	{
         friend class Application;
-        
 	public:
-		LAMBDA_INTERFACE(IGraphicsDevice);
-
-		IGraphicsDevice() = default;
-		~IGraphicsDevice() = default;
+		LAMBDA_IOBJECT_INTERFACE(IDevice);
 
 		virtual void CreateCommandList(ICommandList** ppList, CommandListType type) = 0;
 		virtual void CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) = 0;
@@ -87,17 +83,6 @@ namespace Lambda
 		virtual void CreateRenderPass(IRenderPass** ppRenderPass, const RenderPassDesc& desc) = 0;
 		virtual void CreatePipelineResourceState(IPipelineResourceState** ppResourceState, const PipelineResourceStateDesc& desc) = 0;
         virtual void CreateQuery(IQuery** ppQuery, const QueryDesc& desc) = 0;
-        
-		virtual void DestroyCommandList(ICommandList** ppList) = 0;
-		virtual void DestroyBuffer(IBuffer** ppBuffer) = 0;
-		virtual void DestroyTexture(ITexture** ppTexture) = 0;
-		virtual void DestroyShader(IShader** ppShader) = 0;
-		virtual void DestroySamplerState(ISamplerState** ppSamplerState) = 0;
-		virtual void DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState) = 0;
-		virtual void DestroyRenderPass(IRenderPass** ppRenderPass) = 0;
-		virtual void DestroyResourceState(IPipelineResourceState** ppResourceState) = 0;
-        virtual void DestroyQuery(IQuery** ppQuery) = 0;
-		virtual void Destroy() const = 0;
 
 		virtual void ExecuteCommandList(ICommandList* const * ppLists, uint32 numLists) const = 0;
 		
@@ -108,7 +93,7 @@ namespace Lambda
 		virtual void GPUWaitForFrame() const = 0;
 
 		virtual DeviceProperties GetProperties() const = 0;
-        virtual GraphicsDeviceDesc GetDesc() const = 0;
+        virtual const DeviceDesc& GetDesc() const = 0;
         virtual void* GetNativeHandle() const = 0;
 		virtual ITexture* GetDepthStencil() const = 0;
 		virtual ITexture* GetRenderTarget() const = 0;
@@ -119,8 +104,8 @@ namespace Lambda
 	private:
 		virtual bool OnResize(const WindowResizeEvent& event) = 0;
 	public:
-		static IGraphicsDevice* Get();
+		static IDevice* Get();
 	protected:
-		static IGraphicsDevice* s_pInstance;
+		static IDevice* s_pInstance;
 	};
 }

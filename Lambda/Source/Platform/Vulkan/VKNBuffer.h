@@ -5,22 +5,24 @@
 
 namespace Lambda
 {
+	class VKNDevice;
+
 	//---------
 	//VKNBuffer
 	//---------
 
-    class VKNBuffer final : public IBuffer
+    class VKNBuffer final : public RefCountedObject<IBuffer>
     {
     public:
         LAMBDA_NO_COPY(VKNBuffer);
         
-        VKNBuffer(IVKNAllocator* pAllocator, const BufferDesc& desc);
-        ~VKNBuffer() = default;
+        VKNBuffer(VKNDevice* pDevice, IVKNAllocator* pAllocator, const BufferDesc& desc);
+        ~VKNBuffer();
         
         virtual void Map(void** ppMem) override final;
         virtual void Unmap() override final;
         virtual void* GetNativeHandle() const override final;
-        virtual BufferDesc GetDesc() const override final;
+        virtual const BufferDesc& GetDesc() const override final;
 
 		bool IsDirty() const;
 		void SetIsClean();
@@ -28,22 +30,20 @@ namespace Lambda
 		void DynamicUpdate(const ResourceData* pData);
 		void Reallocate(uint32 sizeInBytes);
 		uint64 GetDynamicOffset() const;
-        //Release releases vulkan resources while destroy also calls 'delete this'
-        void Release(VkDevice device);
-        void Destroy(VkDevice device);
     private:
         void Init(const BufferDesc& desc);
     private:
-		IVKNAllocator* const m_pAllocator;
-        VKNMemory		     m_Memory;
-        VkBuffer		     m_Buffer;
-		uint64			     m_SizePerFrame;
-		uint64			     m_SizePerUpdate;
-        uint64               m_TotalSize;
-        uint64               m_FrameOffset;
-		uint64			     m_DynamicOffset;
-        BufferDesc		     m_Desc;
-		bool			     m_IsDirty;
+		VKNDevice*		m_pDevice;
+		IVKNAllocator*	m_pAllocator;
+        VKNMemory		m_Memory;
+        VkBuffer		m_Buffer;
+		uint64			m_SizePerFrame;
+		uint64			m_SizePerUpdate;
+        uint64			m_TotalSize;
+        uint64			m_FrameOffset;
+		uint64			m_DynamicOffset;
+        BufferDesc		m_Desc;
+		bool			m_IsDirty;
     };
 
 

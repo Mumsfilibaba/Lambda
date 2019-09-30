@@ -1,6 +1,6 @@
 #include "LambdaPch.h"
 #include "Graphics/ITexture.h"
-#include "Graphics/IGraphicsDevice.h"
+#include "Graphics/IDevice.h"
 #include "Utilities/TextureHelper.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -11,7 +11,7 @@ namespace Lambda
 	//ITexture
 	//--------
 
-	ITexture* ITexture::CreateTextureFromFile(IGraphicsDevice* pDevice, const char* pFileName, uint32 flags, ResourceUsage usage, ResourceFormat format)
+	ITexture* ITexture::CreateTextureFromFile(IDevice* pDevice, const char* pFileName, uint32 flags, ResourceUsage usage, ResourceFormat format)
 	{
 		int32 width = 0;
 		int32 height = 0;

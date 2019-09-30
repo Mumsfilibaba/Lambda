@@ -23,7 +23,7 @@ namespace Lambda
     }
 
 
-    void Layer::OnRender(const Renderer3D& renderer, Timestep dt)
+    void Layer::OnRender(Renderer3D& renderer, Timestep dt)
     {
     }
 

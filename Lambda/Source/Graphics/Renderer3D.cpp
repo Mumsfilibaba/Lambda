@@ -1,6 +1,6 @@
 #include "LambdaPch.h"
 #include "Graphics/Renderer3D.h"
-#include "Graphics/IGraphicsDevice.h"
+#include "Graphics/IDevice.h"
 #include "Graphics/IBuffer.h"
 #include "Graphics/IQuery.h"
 #include "Graphics/Camera.h"
@@ -19,11 +19,11 @@ namespace Lambda
 		m_Lists(),
 		m_Queries(),
 		m_pCurrentQuery(nullptr),
-		m_pRenderPass(nullptr),
-		m_pLightBuffer(nullptr),
-		m_pCameraBuffer(nullptr),
-		m_pTransformBuffer(nullptr),
-		m_pMaterialBuffer(nullptr),
+		m_RenderPass(nullptr),
+		m_LightBuffer(nullptr),
+		m_CameraBuffer(nullptr),
+		m_TransformBuffer(nullptr),
+		m_MaterialBuffer(nullptr),
 		m_Viewport(),
 		m_ScissorRect(),
 		m_FrameInfo(),
@@ -35,8 +35,8 @@ namespace Lambda
 
 	void Renderer3D::Init()
 	{
-		IGraphicsDevice* pDevice = IGraphicsDevice::Get();
-		GraphicsDeviceDesc deviceDesc = pDevice->GetDesc();
+		IDevice* pDevice = IDevice::Get();
+		const DeviceDesc& deviceDesc = pDevice->GetDesc();
 
 		for (uint32 i = 0; i < deviceDesc.BackBufferCount; i++)
 		{
@@ -61,11 +61,11 @@ namespace Lambda
 		}
 
 		//Reset current list
-		m_pCurrentList = m_Lists[0];
+		m_pCurrentList = m_Lists[0].Get();
 		m_pCurrentList->Reset();
 
 		//Current query
-		m_pCurrentQuery = m_Queries[0];
+		m_pCurrentQuery = m_Queries[0].Get();
 
 		Application& app = Application::Get();
 		//Create backbuffer renderpass
@@ -82,8 +82,8 @@ namespace Lambda
 		renderPassDesc.DepthStencil.LoadOperation		= LOAD_OP_CLEAR;
 		renderPassDesc.DepthStencil.StoreOperation		= STORE_OP_UNKNOWN;
 		renderPassDesc.DepthStencil.FinalState			= RESOURCE_STATE_DEPTH_STENCIL;
-		pDevice->CreateRenderPass(&m_pRenderPass, renderPassDesc);
-		app.GetUILayer()->Init(m_pRenderPass, m_pCurrentList);
+		pDevice->CreateRenderPass(&m_RenderPass, renderPassDesc);
+		app.GetUILayer()->Init(m_RenderPass.Get(), m_pCurrentList);
 
 		//Create camerabuffer
 		BufferDesc cameraBufferdesc = {};
@@ -92,7 +92,7 @@ namespace Lambda
 		cameraBufferdesc.Flags			= BUFFER_FLAGS_CONSTANT_BUFFER;
 		cameraBufferdesc.SizeInBytes	= sizeof(CameraBuffer);
 		cameraBufferdesc.StrideInBytes	= sizeof(CameraBuffer);
-		pDevice->CreateBuffer(&m_pCameraBuffer, nullptr, cameraBufferdesc);
+		pDevice->CreateBuffer(&m_CameraBuffer, nullptr, cameraBufferdesc);
 
 		//Create lightbuffer
 		BufferDesc lightBufferDesc = {};
@@ -101,7 +101,7 @@ namespace Lambda
 		lightBufferDesc.Flags			= BUFFER_FLAGS_CONSTANT_BUFFER;
 		lightBufferDesc.SizeInBytes		= sizeof(LightBuffer);
 		lightBufferDesc.StrideInBytes	= sizeof(LightBuffer);
-		pDevice->CreateBuffer(&m_pLightBuffer, nullptr, lightBufferDesc);
+		pDevice->CreateBuffer(&m_LightBuffer, nullptr, lightBufferDesc);
 
 		//Create TransformBuffer
 		BufferDesc transformBufferdesc = {};
@@ -115,7 +115,7 @@ namespace Lambda
 		data.pData			= glm::value_ptr(glm::mat4(1.0f));
 		data.SizeInBytes	= transformBufferdesc.SizeInBytes;
 
-		pDevice->CreateBuffer(&m_pTransformBuffer, &data, transformBufferdesc);
+		pDevice->CreateBuffer(&m_TransformBuffer, &data, transformBufferdesc);
 
 		//Create materialbuffer
 		BufferDesc materialBufferDesc = {};
@@ -124,7 +124,7 @@ namespace Lambda
 		materialBufferDesc.Flags			= BUFFER_FLAGS_CONSTANT_BUFFER;
 		materialBufferDesc.SizeInBytes		= sizeof(MaterialBuffer);
 		materialBufferDesc.StrideInBytes	= sizeof(MaterialBuffer);
-		pDevice->CreateBuffer(&m_pMaterialBuffer, &data, materialBufferDesc);
+		pDevice->CreateBuffer(&m_MaterialBuffer, &data, materialBufferDesc);
 
 		//Execute commandlist
 		m_pCurrentList->Close();
@@ -152,10 +152,10 @@ namespace Lambda
 		m_CurrentFPS++;
 
 		//Get current device
-		IGraphicsDevice* pDevice = IGraphicsDevice::Get();
+		IDevice* pDevice = IDevice::Get();
 		//Set commandlist for frame
 		uint32 backBufferIndex = pDevice->GetBackBufferIndex();
-		m_pCurrentList = m_Lists[backBufferIndex];
+		m_pCurrentList = m_Lists[backBufferIndex].Get();
 		m_pCurrentList->Reset();
 		
 		//Get last frame's values from query
@@ -163,7 +163,7 @@ namespace Lambda
 		m_pCurrentQuery->GetResults(values, 2, 0);
 		m_FrameInfo.GPUTime = Timestep(values[1] - values[0]);
 		//Reset new query
-		m_pCurrentQuery = m_Queries[backBufferIndex];
+		m_pCurrentQuery = m_Queries[backBufferIndex].Get();
 		m_pCurrentList->ResetQuery(m_pCurrentQuery);
 
 		//Begin present
@@ -175,12 +175,12 @@ namespace Lambda
 		ITexture* pDepthBuffer = pDevice->GetDepthStencil();
 
 		//Set rendertargets and clearcolors
-		m_pRenderPass->SetRenderTargets(&pRenderTarget, 1, pDepthBuffer);
-		m_pRenderPass->SetClearValues(color, 1.0f, 0);
+		m_RenderPass->SetRenderTargets(&pRenderTarget, 1, pDepthBuffer);
+		m_RenderPass->SetClearValues(color, 1.0f, 0);
 	}
 
 	
-	void Renderer3D::BeginScene(const Camera& camera, const LightBuffer& light) const
+	void Renderer3D::BeginScene(const Camera& camera, const LightBuffer& light)
 	{
 		//Update camerabuffer
 		CameraBuffer cameraBuffer = {};
@@ -191,16 +191,16 @@ namespace Lambda
 		ResourceData cameraData = {};
 		cameraData.pData		= &cameraBuffer;
 		cameraData.SizeInBytes	= sizeof(CameraBuffer);
-		m_pCurrentList->UpdateBuffer(m_pCameraBuffer, &cameraData);
+		m_pCurrentList->UpdateBuffer(m_CameraBuffer.Get(), &cameraData);
 
 		//Update lightbuffer
 		ResourceData lightData = {};
 		lightData.pData			= &light;
 		lightData.SizeInBytes	= sizeof(LightBuffer);
-		m_pCurrentList->UpdateBuffer(m_pLightBuffer, &lightData);
+		m_pCurrentList->UpdateBuffer(m_LightBuffer.Get(), &lightData);
 
 		//Begin renderpass
-		m_pCurrentList->BeginRenderPass(m_pRenderPass);
+		m_pCurrentList->BeginRenderPass(m_RenderPass.Get());
 		//Write query
 		m_pCurrentList->WriteTimeStamp(m_pCurrentQuery, PIPELINE_STAGE_VERTEX);
 		//Set viewport
@@ -209,13 +209,13 @@ namespace Lambda
 	}
 
 
-	void Renderer3D::Submit(const Model& model, const Material& material, const TransformBuffer& transform) const
+	void Renderer3D::Submit(const Model& model, const Material& material, const TransformBuffer& transform)
 	{
 		//Update transform
 		ResourceData transformData = {};
 		transformData.pData			= &transform;
 		transformData.SizeInBytes	= sizeof(TransformBuffer);
-		m_pCurrentList->UpdateBuffer(m_pTransformBuffer, &transformData);
+		m_pCurrentList->UpdateBuffer(m_TransformBuffer.Get(), &transformData);
 		
         //Update material
 		MaterialBuffer materialBuffer = {};
@@ -226,9 +226,9 @@ namespace Lambda
 		ResourceData materialData = {};
 		materialData.pData			= &materialBuffer;
 		materialData.SizeInBytes	= sizeof(MaterialBuffer);
-		m_pCurrentList->UpdateBuffer(m_pMaterialBuffer, &materialData);
+		m_pCurrentList->UpdateBuffer(m_MaterialBuffer.Get(), &materialData);
 		//Set resources
-		IBuffer* ppBuffers[]		     = { m_pCameraBuffer, m_pTransformBuffer, m_pMaterialBuffer, m_pLightBuffer };
+		IBuffer* ppBuffers[]		     = { m_CameraBuffer.Get(), m_TransformBuffer.Get(), m_MaterialBuffer.Get(), m_LightBuffer.Get() };
 		ITexture* ppTextures[]		     = { material.pAlbedoMap, material.pNormalMap };
 		ISamplerState* ppSamplerStates[] = { material.pSamplerState };
 		material.pResourceState->SetConstantBuffers(ppBuffers, 4, 0);
@@ -265,7 +265,7 @@ namespace Lambda
 	void Renderer3D::Swapbuffers()
 	{
 		//Get current device
-		IGraphicsDevice* pDevice = IGraphicsDevice::Get();
+		IDevice* pDevice = IDevice::Get();
 		pDevice->PresentEnd(&m_pCurrentList, 1);
 	}
 
@@ -273,24 +273,23 @@ namespace Lambda
 	void Renderer3D::Release()
 	{
 		//Release commandlists
-		IGraphicsDevice* pDevice = IGraphicsDevice::Get();
 		for (auto& list : m_Lists)
-			pDevice->DestroyCommandList(&list);
+			list.Release();
 		m_Lists.clear();
 		//Release queries
 		for (auto& query : m_Queries)
-			pDevice->DestroyQuery(&query);
+			query.Get();
 		m_Queries.clear();
 		//Release renderpass
-		pDevice->DestroyRenderPass(&m_pRenderPass);
+		m_RenderPass.Release();
 		//Destroy camerabuffer
-		pDevice->DestroyBuffer(&m_pCameraBuffer);
+		m_CameraBuffer.Release();
 		//Destroy lightbuffer
-		pDevice->DestroyBuffer(&m_pLightBuffer);
+		m_LightBuffer.Release();
 		//Destroy transformbuffer
-		pDevice->DestroyBuffer(&m_pTransformBuffer);
+		m_TransformBuffer.Release();
 		//Destroy materialbuffer
-		pDevice->DestroyBuffer(&m_pMaterialBuffer);
+		m_MaterialBuffer.Release();
 	}
 
 	
@@ -312,27 +311,27 @@ namespace Lambda
 	}
 
 	
-	IBuffer* Renderer3D::GetCameraCB() const
+	IBuffer* Renderer3D::GetCameraCB()
 	{
-		return m_pCameraBuffer;
+		return m_CameraBuffer.Get();
 	}
 
 
-	IBuffer* Renderer3D::GetLightCB() const
+	IBuffer* Renderer3D::GetLightCB()
 	{
-		return m_pLightBuffer;
+		return m_LightBuffer.Get();
 	}
 
 
-	IBuffer* Renderer3D::GetTransformCB() const
+	IBuffer* Renderer3D::GetTransformCB()
 	{
-		return m_pTransformBuffer;
+		return m_TransformBuffer.Get();
 	}
 	
 	
-	IRenderPass* Renderer3D::GetRenderPass() const
+	IRenderPass* Renderer3D::GetRenderPass()
 	{
-		return m_pRenderPass;
+		return m_RenderPass.Get();
 	}
 	
 

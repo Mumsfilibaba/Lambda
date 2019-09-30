@@ -20,18 +20,14 @@ namespace Lambda
     //IBuffer
     //-------
 
-	class LAMBDA_API IBuffer
+	class LAMBDA_API IBuffer : public IObject
 	{
 	public:
-		LAMBDA_INTERFACE(IBuffer);
-
-		IBuffer() = default;
-		~IBuffer() = default;
+		LAMBDA_IOBJECT_INTERFACE(IBuffer);
 
 		virtual void Map(void** ppMem) = 0;
 		virtual void Unmap() = 0;
-
-        virtual void*       GetNativeHandle() const = 0;
-        virtual BufferDesc  GetDesc() const = 0;
+        virtual void* GetNativeHandle() const = 0;
+        virtual const BufferDesc& GetDesc() const = 0;
 	};
 }

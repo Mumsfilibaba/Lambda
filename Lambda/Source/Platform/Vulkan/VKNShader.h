@@ -6,27 +6,26 @@
 
 namespace Lambda
 {
+	class VKNDevice;
+
 	//---------------
 	//VKNSamplerState
 	//---------------
 
-    class VKNShader final : public IShader
+    class VKNShader final : public RefCountedObject<IShader>
     {
     public:
         LAMBDA_NO_COPY(VKNShader);
         
-        VKNShader(const ShaderDesc& desc);
-        ~VKNShader() = default;
+        VKNShader(VKNDevice* pDevice, const ShaderDesc& desc);
+        ~VKNShader();
         
-        virtual void*		GetNativeHandle() const override final;
-		virtual ShaderDesc	GetDesc() const override final;
-        
-        void Destroy(VkDevice device);
-        
+        virtual void* GetNativeHandle() const override final;
+		virtual const ShaderDesc& GetDesc() const override final;
     private:
         void Init(const ShaderDesc& desc);
-        
     private:
+		VKNDevice*			m_pDevice;
         VkShaderModule		m_Shader;
         std::vector<char>	m_ByteCode;
         std::string			m_EntryPoint;

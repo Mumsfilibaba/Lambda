@@ -321,22 +321,43 @@ namespace Lambda
 
     constexpr size_t numFrames = 5;
 
-	VKNAllocator::VKNAllocator()
-		: m_MaxAllocations(0),
+	VKNAllocator::VKNAllocator(VKNDevice* pDevice)
+		: m_pDevice(pDevice),
+		m_MaxAllocations(0),
         m_TotalReserved(0),
         m_TotalAllocated(0),
         m_FrameIndex(0),
 		m_Chunks(),
 		m_MemoryToDeallocate()
 	{
+		//Add a ref to the refcounter
+		this->AddRef();
+
         //Resize the number of garbage memory vectors
         m_MemoryToDeallocate.resize(numFrames);
         
         //Setup from properties of the device
-        VKNDevice& device = VKNDevice::Get();
-		VkPhysicalDeviceProperties properties = device.GetPhysicalDeviceProperties();
+		VkPhysicalDeviceProperties properties = m_pDevice->GetPhysicalDeviceProperties();
 		m_MaxAllocations = properties.limits.maxMemoryAllocationCount;
         m_BufferImageGranularity = properties.limits.bufferImageGranularity;
+	}
+
+
+	VKNAllocator::~VKNAllocator()
+	{
+		//Cleanup all garbage memory before deleting
+		for (uint32 i = 0; i < numFrames; i++)
+			EmptyGarbageMemory();
+
+		//Delete allocator
+		LOG_SYSTEM(LOG_SEVERITY_WARNING, "Vulkan: Deleting DeviceAllocator. Number of chunks: %u\n", m_Chunks.size());
+		for (auto chunk : m_Chunks)
+		{
+			if (chunk)
+				chunk->Destroy(m_pDevice->GetDevice());
+		}
+
+		LOG_DEBUG_INFO("Vulkan: Destroyed buffer\n");
 	}
 
 
@@ -351,8 +372,7 @@ namespace Lambda
 		m_TotalAllocated += memoryRequirements.size;
 
 		//Get needed memorytype
-		VKNDevice& device = VKNDevice::Get();
-		uint32 memoryType = FindMemoryType(device.GetPhysicalDevice(), memoryRequirements.memoryTypeBits, properties);
+		uint32 memoryType = FindMemoryType(m_pDevice->GetPhysicalDevice(), memoryRequirements.memoryTypeBits, properties);
 
         LOG_SYSTEM(LOG_SEVERITY_WARNING, "[VULKAN DEVICE ALLOCATOR] Allocated Memory chunk. Number of allocations: '%llu'. Max allocations: '%llu'. Memory type: %d. TotalAllocated: %.2fMB. TotalReserved %.2fMB\n", m_Chunks.size(), m_MaxAllocations, memoryType, float(m_TotalAllocated) / mb, float(m_TotalReserved) / mb);
         
@@ -381,6 +401,7 @@ namespace Lambda
 		//Allocate new chunk
 		VKNMemoryChunk* pChunk = DBG_NEW VKNMemoryChunk(uint32(m_Chunks.size()), bytesToReserve, memoryType, usage);
 		m_Chunks.emplace_back(pChunk);
+
         return pChunk->Allocate(allocation, memoryRequirements.size, memoryRequirements.alignment, m_BufferImageGranularity);
 	}
 
@@ -427,26 +448,6 @@ namespace Lambda
 	}
 
 
-	void VKNAllocator::Destroy(VkDevice device)
-	{
-		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
-
-		//Cleanup all garbage memory before deleting
-        for (uint32 i = 0; i < numFrames; i++)
-            EmptyGarbageMemory();
-
-		//Delete allocator
-		LOG_SYSTEM(LOG_SEVERITY_WARNING, "Vulkan: Deleting DeviceAllocator. Number of chunks: %u\n", m_Chunks.size());
-		for (auto chunk : m_Chunks)
-		{
-			if (chunk)
-				chunk->Destroy(device);
-		}
-
-		delete this;
-	}
-
-
 	uint64 VKNAllocator::GetTotalReserved() const
 	{
 		return m_TotalReserved;
@@ -457,12 +458,10 @@ namespace Lambda
 	{
 		return m_TotalAllocated;
 	}
-	
-	
+		
 	//-------------------------
 	//VKNDescriptorSetAllocator
 	//-------------------------
-
 
 	VKNDescriptorSetAllocator::VKNDescriptorSetAllocator(uint32 uniformBufferCount, uint32 dynamicUniformBufferCount, uint32 samplerCount, uint32 sampledImageCount, uint32 combinedImageSamplerCount, uint32 numSets)
 		: m_Pool(VK_NULL_HANDLE),
@@ -624,7 +623,7 @@ namespace Lambda
 		s_pInstance = this;
 
 		VKNDevice& device = VKNDevice::Get();
-		GraphicsDeviceDesc deviceDesc = device.GetDesc();
+		const DeviceDesc& deviceDesc = device.GetDesc();
 		m_FrameCount = deviceDesc.BackBufferCount;
 
 		m_OldPools.resize(m_FrameCount);

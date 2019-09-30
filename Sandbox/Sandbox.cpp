@@ -44,10 +44,19 @@ namespace Lambda
 
 	SandBoxLayer::SandBoxLayer()
          : Layer("SandBoxLayer"),
-		m_pVS(nullptr),
-		m_pPS(nullptr),
-        m_pPipelineState(nullptr),
-		m_Mesh()
+		m_VS(nullptr),
+		m_PS(nullptr),
+		m_Mesh(),
+		m_SphereMesh(),
+		m_Material(),
+		m_RedMaterial(),
+		m_AlbedoMap(nullptr),
+		m_NormalMap(nullptr),
+		m_SamplerState(nullptr),
+		m_PipelineState(nullptr),
+		m_ResourceState(nullptr),
+		m_Camera(),
+		m_TransformBuffer()
 	{
 	}
 
@@ -86,24 +95,24 @@ namespace Lambda
 
 		//Init size
         Application& app = Application::Get();
-		IGraphicsDevice* pDevice = IGraphicsDevice::Get();
+		IDevice* pDevice = IDevice::Get();
         if (pDevice)
         {
-			ICommandList* pTempList = nullptr;
-			pDevice->CreateCommandList(&pTempList, COMMAND_LIST_TYPE_GRAPHICS);
-			pTempList->Reset();
+			AutoRef<ICommandList> tempList = nullptr;
+			pDevice->CreateCommandList(&tempList, COMMAND_LIST_TYPE_GRAPHICS);
+			tempList->Reset();
 
             //Create shaders
-			GraphicsDeviceDesc deviceDesc = pDevice->GetDesc();
+			DeviceDesc deviceDesc = pDevice->GetDesc();
 			if (deviceDesc.Api == GRAPHICS_API_VULKAN)
 			{
-				m_pVS = IShader::CreateShaderFromFile(pDevice, "vert.spv", "main", SHADER_STAGE_VERTEX, SHADER_LANG_SPIRV);
-				m_pPS = IShader::CreateShaderFromFile(pDevice, "frag.spv", "main", SHADER_STAGE_PIXEL,	SHADER_LANG_SPIRV);
+				m_VS = IShader::CreateShaderFromFile(pDevice, "vert.spv", "main", SHADER_STAGE_VERTEX, SHADER_LANG_SPIRV);
+				m_PS = IShader::CreateShaderFromFile(pDevice, "frag.spv", "main", SHADER_STAGE_PIXEL,	SHADER_LANG_SPIRV);
 			}
 			else if (deviceDesc.Api == GRAPHICS_API_D3D12)
 			{
-				m_pVS = IShader::CreateShaderFromFile(pDevice, "Triangle.hlsl", "VSMain", SHADER_STAGE_VERTEX,	SHADER_LANG_HLSL);
-				m_pPS = IShader::CreateShaderFromFile(pDevice, "Triangle.hlsl", "PSMain", SHADER_STAGE_PIXEL,	SHADER_LANG_HLSL);
+				m_VS = IShader::CreateShaderFromFile(pDevice, "Triangle.hlsl", "VSMain", SHADER_STAGE_VERTEX,	SHADER_LANG_HLSL);
+				m_PS = IShader::CreateShaderFromFile(pDevice, "Triangle.hlsl", "PSMain", SHADER_STAGE_PIXEL,	SHADER_LANG_HLSL);
 			}
             
 
@@ -153,7 +162,7 @@ namespace Lambda
 				desc.pResourceSlots		= slots;
 				desc.NumConstantBlocks	= 0;
 				desc.pConstantBlocks	= nullptr;
-				pDevice->CreatePipelineResourceState(&m_pResourceState, desc);
+				pDevice->CreatePipelineResourceState(&m_ResourceState, desc);
 			}
 
 
@@ -169,19 +178,19 @@ namespace Lambda
                 
                 GraphicsPipelineStateDesc desc = {};
 				desc.pName						= "MainPipelineState";
-                desc.pVertexShader				= m_pVS;
-                desc.pPixelShader				= m_pPS;
+                desc.pVertexShader				= m_VS.Get();
+                desc.pPixelShader				= m_PS.Get();
                 desc.pInputElements				= elements;
                 desc.InputElementCount			= sizeof(elements) / sizeof(InputElement);
                 desc.Cull						= CULL_MODE_BACK;
 				desc.FillMode					= POLYGON_MODE_FILL;
                 desc.Topology					= PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 				desc.pRenderPass				= app.GetRenderer().GetRenderPass();
-				desc.pResourceState				= m_pResourceState;
+				desc.pResourceState				= m_ResourceState.Get();
                 desc.DepthTest					= true;
 				desc.EnableBlending				= false;
 				desc.FrontFaceCounterClockWise	= false;                
-                pDevice->CreateGraphicsPipelineState(&m_pPipelineState, desc);
+                pDevice->CreateGraphicsPipelineState(&m_PipelineState, desc);
             }
 
             //Create vertexbuffer
@@ -218,7 +227,7 @@ namespace Lambda
             }
 
 			//Create vertexbuffer
-			MeshData mesh2 = MeshFactory::CreateSphere(4, 0.45);
+			MeshData mesh2 = MeshFactory::CreateCube(0.5, 0.5, 0.5); //MeshFactory::CreateSphere(4, 0.45);
 			m_SphereMesh.IndexCount = uint32(mesh2.Indices.size());
 			{
 				BufferDesc desc = {};
@@ -254,41 +263,39 @@ namespace Lambda
             m_TransformBuffer.Model = glm::mat4(1.0f);
 
             //Create texture
-            m_pAlbedoMap = ITexture::CreateTextureFromFile(pDevice, "revolver_albedo.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
-            m_pNormalMap = ITexture::CreateTextureFromFile(pDevice, "revolver_normal.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
-			pTempList->TransitionTexture(m_pAlbedoMap, RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0, LAMBDA_TRANSITION_ALL_MIPS);
-			pTempList->TransitionTexture(m_pNormalMap, RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0, LAMBDA_TRANSITION_ALL_MIPS);
+            m_AlbedoMap = ITexture::CreateTextureFromFile(pDevice, "revolver_albedo.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
+            m_NormalMap = ITexture::CreateTextureFromFile(pDevice, "revolver_normal.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
+			tempList->TransitionTexture(m_AlbedoMap.Get(), RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0, LAMBDA_TRANSITION_ALL_MIPS);
+			tempList->TransitionTexture(m_NormalMap.Get(), RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0, LAMBDA_TRANSITION_ALL_MIPS);
 
             //Create samplerstate
-            TextureDesc textureDesc = m_pAlbedoMap->GetDesc();
+            TextureDesc textureDesc = m_AlbedoMap->GetDesc();
             SamplerStateDesc desc = {};
             desc.AdressMode = SAMPLER_ADDRESS_MODE_REPEAT;
 			desc.MinMipLOD	= 0.0f;
 			desc.MaxMipLOD	= float(textureDesc.MipLevels);
 			desc.MipLODBias	= 0.0f;
 			desc.Anisotropy = 16.0f;
-            pDevice->CreateSamplerState(&m_pSamplerState, desc);
+            pDevice->CreateSamplerState(&m_SamplerState, desc);
 
             //Close and execute commandlist
-			pTempList->Close();
-            pDevice->ExecuteCommandList(&pTempList, 1);
+			tempList->Close();
+            pDevice->ExecuteCommandList(&tempList, 1);
             //Wait for GPU
             pDevice->WaitForGPU();
-			//Destroy temp commandlist
-			pDevice->DestroyCommandList(&pTempList);
 
 			//Setup materials
-			m_Material.pAlbedoMap = m_pAlbedoMap;
-			m_Material.pNormalMap = m_pNormalMap;
-			m_Material.pPipelineState = m_pPipelineState;
-			m_Material.pResourceState = m_pResourceState;
-			m_Material.pSamplerState = m_pSamplerState;
+			m_Material.pAlbedoMap = m_AlbedoMap.Get();
+			m_Material.pNormalMap = m_NormalMap.Get();
+			m_Material.pPipelineState = m_PipelineState.Get();
+			m_Material.pResourceState = m_ResourceState.Get();
+			m_Material.pSamplerState = m_SamplerState.Get();
 			m_Material.Color = glm::vec4(RGB_F(255, 255, 255), 1.0f);
 
 			m_RedMaterial.pAlbedoMap		= nullptr;
 			m_RedMaterial.pNormalMap		= nullptr;
-			m_RedMaterial.pPipelineState	= m_pPipelineState;
-			m_RedMaterial.pResourceState	= m_pResourceState;
+			m_RedMaterial.pPipelineState	= m_PipelineState.Get();
+			m_RedMaterial.pResourceState	= m_ResourceState.Get();
 			m_RedMaterial.pSamplerState		= nullptr;
 			m_RedMaterial.Color				= glm::vec4(RGB_F(255, 0, 0), 1.0f);
         }
@@ -335,7 +342,7 @@ namespace Lambda
 	}
 
 
-	void SandBoxLayer::OnRender(const Renderer3D& renderer, Timestep dt)
+	void SandBoxLayer::OnRender(Renderer3D& renderer, Timestep dt)
 	{
         //Update light
         static LightBuffer lightBuffer  =
@@ -373,22 +380,22 @@ namespace Lambda
 
 	void SandBoxLayer::OnRelease()
 	{
-		IGraphicsDevice* pDevice = IGraphicsDevice::Get();
+		IDevice* pDevice = IDevice::Get();
         if (pDevice)
         {
             pDevice->WaitForGPU();
 
-            pDevice->DestroyShader(&m_pVS);
-            pDevice->DestroyShader(&m_pPS);
-			pDevice->DestroyResourceState(&m_pResourceState);
-            pDevice->DestroyGraphicsPipelineState(&m_pPipelineState);
-            pDevice->DestroyBuffer(&m_Mesh.pVertexBuffer);
-            pDevice->DestroyBuffer(&m_Mesh.pIndexBuffer);
-			pDevice->DestroyBuffer(&m_SphereMesh.pVertexBuffer);
-			pDevice->DestroyBuffer(&m_SphereMesh.pIndexBuffer);
-            pDevice->DestroyTexture(&m_pAlbedoMap);
-            pDevice->DestroyTexture(&m_pNormalMap);
-            pDevice->DestroySamplerState(&m_pSamplerState);
+			m_VS.Release();
+			m_PS.Release();
+			m_ResourceState.Release();
+			m_PipelineState.Release();
+			m_Mesh.pVertexBuffer->Release();
+			m_Mesh.pIndexBuffer->Release();
+			m_SphereMesh.pVertexBuffer->Release();
+			m_SphereMesh.pIndexBuffer->Release();
+			m_AlbedoMap.Release();
+			m_NormalMap.Release();
+			m_SamplerState.Release();
         }
 	}
 

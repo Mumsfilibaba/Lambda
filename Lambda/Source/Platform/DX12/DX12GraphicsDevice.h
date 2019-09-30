@@ -1,5 +1,5 @@
 #pragma once
-#include "Graphics/IGraphicsDevice.h"
+#include "Graphics/IDevice.h"
 #include "System/IWindow.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include "DX12CommandList.h"
@@ -16,12 +16,12 @@ namespace Lambda
 	//DX12GraphicsDevice
 	//------------------
 
-	class DX12GraphicsDevice final : public IGraphicsDevice
+	class DX12GraphicsDevice final : public RefCountedObject<IDevice>
 	{
 	public:
 		LAMBDA_NO_COPY(DX12GraphicsDevice);
 
-		DX12GraphicsDevice(const GraphicsDeviceDesc& desc);
+		DX12GraphicsDevice(const DeviceDesc& desc);
 		~DX12GraphicsDevice();
 
 		virtual void CreateCommandList(ICommandList** ppList, CommandListType type) override final;
@@ -34,17 +34,6 @@ namespace Lambda
 		virtual void CreatePipelineResourceState(IPipelineResourceState** ppResourceState, const PipelineResourceStateDesc& desc) override final;
 		virtual void CreateQuery(IQuery** ppQuery, const QueryDesc& desc) override final;
 
-		virtual void DestroyCommandList(ICommandList** ppList) override final;
-		virtual void DestroyBuffer(IBuffer** ppBuffer) override final;
-		virtual void DestroyTexture(ITexture** ppTexture) override final;
-		virtual void DestroyShader(IShader** ppShader) override final;
-		virtual void DestroySamplerState(ISamplerState** ppSamplerState) override final;
-		virtual void DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState) override final;
-		virtual void DestroyRenderPass(IRenderPass** ppRenderPass) override final;
-		virtual void DestroyResourceState(IPipelineResourceState** ppResourceState) override final;
-		virtual void DestroyQuery(IQuery** ppQuery) override final;
-		virtual void Destroy() const override final;
-
 		virtual void ExecuteCommandList(ICommandList* const * ppLists, uint32 numLists) const;
 		
 		virtual void PresentBegin() const override final;
@@ -54,7 +43,7 @@ namespace Lambda
 		virtual void WaitForGPU() const override final;
 
 		virtual DeviceProperties GetProperties() const override final;
-		virtual GraphicsDeviceDesc GetDesc() const override final;
+		virtual const DeviceDesc& GetDesc() const override final;
 		virtual void* GetNativeHandle() const override final;
 		virtual ITexture* GetDepthStencil() const override final;
 		virtual ITexture* GetRenderTarget() const override final;
@@ -64,7 +53,7 @@ namespace Lambda
 		virtual uint32 GetSwapChainHeight() const override final;
 		ID3D12Device* GetDevice() const;
 	private:
-		void Init(const GraphicsDeviceDesc& desc);
+		void Init(const DeviceDesc& desc);
 		bool InitBackBuffers();
 
 		void ReleaseBackBuffers();
@@ -101,7 +90,7 @@ namespace Lambda
 		mutable uint32							m_CurrentBackBuffer;
 		uint32									m_NumBackbuffers;
 		bool									m_DXRSupported;
-		GraphicsDeviceDesc						m_Desc;
+		DeviceDesc						m_Desc;
 	public:
 		static DX12GraphicsDevice& Get();
 	};

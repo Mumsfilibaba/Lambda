@@ -12,8 +12,9 @@ namespace Lambda
 	//VKNPipelineResourceState
 	//------------------------
 
-	VKNPipelineResourceState::VKNPipelineResourceState(const PipelineResourceStateDesc& desc)
-		: m_pAllocator(nullptr),
+	VKNPipelineResourceState::VKNPipelineResourceState(VKNDevice* pDevice, const PipelineResourceStateDesc& desc)
+		: m_pDevice(pDevice),
+		m_pAllocator(nullptr),
 		m_PipelineLayout(VK_NULL_HANDLE),
 		m_DescriptorSetLayout(VK_NULL_HANDLE),
 		m_DescriptorPool(VK_NULL_HANDLE),
@@ -24,7 +25,37 @@ namespace Lambda
 		m_DynamicBuffers(),
 		m_IsDirty(false)
 	{
+		//Add a ref to the refcounter
+		this->AddRef();
+
 		Init(desc);
+	}
+
+
+	VKNPipelineResourceState::~VKNPipelineResourceState()
+	{
+		if (m_pAllocator)
+		{
+			m_pAllocator->Destroy(m_pDevice->GetDevice());
+			m_pAllocator = nullptr;
+		}
+		if (m_DescriptorPool != VK_NULL_HANDLE)
+		{
+			vkDestroyDescriptorPool(m_pDevice->GetDevice(), m_DescriptorPool, nullptr);
+			m_DescriptorPool = VK_NULL_HANDLE;
+		}
+		if (m_DescriptorSetLayout != VK_NULL_HANDLE)
+		{
+			vkDestroyDescriptorSetLayout(m_pDevice->GetDevice(), m_DescriptorSetLayout, nullptr);
+			m_DescriptorSetLayout = VK_NULL_HANDLE;
+		}
+		if (m_PipelineLayout != VK_NULL_HANDLE)
+		{
+			vkDestroyPipelineLayout(m_pDevice->GetDevice(), m_PipelineLayout, nullptr);
+			m_PipelineLayout = VK_NULL_HANDLE;
+		}
+
+		LOG_DEBUG_INFO("Vulkan: Destroyed PipelineResourceState\n");
 	}
 
 
@@ -122,8 +153,7 @@ namespace Lambda
 		descriptorLayoutInfo.bindingCount   = uint32(layoutBindings.size());
 		descriptorLayoutInfo.pBindings      = layoutBindings.data();
 
-		VKNDevice& device = VKNDevice::Get();
-		if (vkCreateDescriptorSetLayout(device.GetDevice(), &descriptorLayoutInfo, nullptr, &m_DescriptorSetLayout) != VK_SUCCESS)
+		if (vkCreateDescriptorSetLayout(m_pDevice->GetDevice(), &descriptorLayoutInfo, nullptr, &m_DescriptorSetLayout) != VK_SUCCESS)
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to create DescriptorSetLayout\n");
 			return;
@@ -171,7 +201,7 @@ namespace Lambda
 		layoutInfo.pushConstantRangeCount	= uint32(constantRanges.size());
 		layoutInfo.pPushConstantRanges		= constantRanges.data();
 
-		if (vkCreatePipelineLayout(device.GetDevice(), &layoutInfo, nullptr, &m_PipelineLayout) != VK_SUCCESS)
+		if (vkCreatePipelineLayout(m_pDevice->GetDevice(), &layoutInfo, nullptr, &m_PipelineLayout) != VK_SUCCESS)
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to create PipelineLayout\n");
 			return;
@@ -262,7 +292,7 @@ namespace Lambda
 				{
 					resourceBinding.pBuffer				= reinterpret_cast<VKNBuffer*>(ppBuffers[i]);
 					
-					BufferDesc bufferDesc				= resourceBinding.pBuffer->GetDesc();
+					const BufferDesc& bufferDesc		= resourceBinding.pBuffer->GetDesc();
 					resourceBinding.BufferInfo.buffer	= reinterpret_cast<VkBuffer>(resourceBinding.pBuffer->GetNativeHandle());
 					resourceBinding.BufferInfo.offset	= 0;
 					resourceBinding.BufferInfo.range	= bufferDesc.SizeInBytes;
@@ -326,7 +356,7 @@ namespace Lambda
 					writeInfo.pBufferInfo = &binding.BufferInfo;
 					if (binding.Slot.Usage == RESOURCE_USAGE_DYNAMIC)
 					{
-						BufferDesc bufferDesc = binding.pBuffer->GetDesc();
+						const BufferDesc& bufferDesc = binding.pBuffer->GetDesc();
 						binding.BufferInfo.buffer	= reinterpret_cast<VkBuffer>(binding.pBuffer->GetNativeHandle());
 						binding.BufferInfo.offset	= 0;
 						binding.BufferInfo.range	= bufferDesc.SizeInBytes;
@@ -386,33 +416,6 @@ namespace Lambda
 
 		//Update bufferoffsets
 		for (size_t i = 0; i < m_DynamicBuffers.size(); i++)
-			m_DynamicOffsets[i] = m_DynamicBuffers[i]->GetDynamicOffset();
-	}
-
-
-	void VKNPipelineResourceState::Destroy(VkDevice device)
-	{
-		if (m_pAllocator)
-		{
-			m_pAllocator->Destroy(device);
-			m_pAllocator = nullptr;
-		}
-		if (m_DescriptorPool != VK_NULL_HANDLE)
-		{
-			vkDestroyDescriptorPool(device, m_DescriptorPool, nullptr);
-			m_DescriptorPool = VK_NULL_HANDLE;
-		}
-		if (m_DescriptorSetLayout != VK_NULL_HANDLE)
-		{
-			vkDestroyDescriptorSetLayout(device, m_DescriptorSetLayout, nullptr);
-			m_DescriptorSetLayout = VK_NULL_HANDLE;
-		}
-		if (m_PipelineLayout != VK_NULL_HANDLE)
-		{
-			vkDestroyPipelineLayout(device, m_PipelineLayout, nullptr);
-			m_PipelineLayout = VK_NULL_HANDLE;
-		}
-
-		delete this;
+			m_DynamicOffsets[i] = uint32(m_DynamicBuffers[i]->GetDynamicOffset());
 	}
 }

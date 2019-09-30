@@ -4,7 +4,7 @@
 namespace Lambda
 {
     class ITexture;
-	class IGraphicsDevice;
+	class IDevice;
 
     //-------------------
     //OptimizedClearValue
@@ -46,17 +46,14 @@ namespace Lambda
     //ITexture
     //--------
     
-	class LAMBDA_API ITexture
+	class LAMBDA_API ITexture : public IObject
 	{
 	public:
-		LAMBDA_INTERFACE(ITexture);
-
-		ITexture() = default;
-		~ITexture() = default;
+		LAMBDA_IOBJECT_INTERFACE(ITexture);
 
         virtual void* GetNativeHandle() const = 0;
-		virtual TextureDesc GetDesc() const = 0;
+		virtual const TextureDesc& GetDesc() const = 0;
 	public:
-		static ITexture* CreateTextureFromFile(IGraphicsDevice* pDevice, const char* pFileName, uint32 flags, ResourceUsage Usage, ResourceFormat Format);
+		static ITexture* CreateTextureFromFile(IDevice* pDevice, const char* pFileName, uint32 flags, ResourceUsage Usage, ResourceFormat Format);
 	};
 }

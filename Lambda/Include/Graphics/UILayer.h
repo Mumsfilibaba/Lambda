@@ -3,6 +3,12 @@
 #include "Events/KeyEvent.h"
 #include "Events/WindowEvent.h"
 #include "Events/MouseEvent.h"
+#include "Graphics/ITexture.h"
+#include "Graphics/IShader.h"
+#include "Graphics/ISamplerState.h"
+#include "Graphics/IPipelineResourceState.h"
+#include "Graphics/IPipelineState.h"
+#include "Graphics/IBuffer.h"
 #include "System/Layer.h"
 #include "Time/Timestep.h"
 #include <imgui.h>
@@ -51,13 +57,13 @@ namespace Lambda
 		bool OnWindowResize(const WindowResizeEvent& event);
         void Create();
 	private:
-		IShader*				m_pVS;
-		IShader*				m_pPS;
-		ISamplerState*			m_pSamplerState;
-		IPipelineResourceState* m_pPipelineResourceState;
-		IGraphicsPipelineState*	m_pPipelineState;
-		ITexture*				m_pFontTexture;
-		IBuffer*				m_pVertexBuffer;
-		IBuffer*				m_pIndexBuffer;
+		AutoRef<IShader>				m_VS;
+		AutoRef<IShader>				m_PS;
+		AutoRef<ISamplerState>			m_SamplerState;
+		AutoRef<IPipelineResourceState> m_PipelineResourceState;
+		AutoRef<IGraphicsPipelineState>	m_PipelineState;
+		AutoRef<ITexture>				m_FontTexture;
+		AutoRef<IBuffer>				m_VertexBuffer;
+		AutoRef<IBuffer>				m_IndexBuffer;
 	};
 }
