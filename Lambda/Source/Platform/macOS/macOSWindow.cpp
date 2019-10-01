@@ -1,13 +1,13 @@
 #include "LambdaPch.h"
 #if defined(LAMBDA_PLAT_MACOS)
-    #include "../Vulkan/VKNGraphicsDevice.h"
+    #include "../Vulkan/VKNDevice.h"
     #include "macOSWindow.h"
     #include "macOSInput.h"
     #include "Events/EventDispatcher.h"
     #include "Events/KeyEvent.h"
     #include "Events/WindowEvent.h"
     #include "Events/MouseEvent.h"
-    #include "Graphics/IGraphicsDevice.h"
+    #include "Graphics/IDevice.h"
     #include "System/Input.h"
     #include "System/JoystickManager.h"
     #include "System/Log.h"
@@ -36,6 +36,7 @@ namespace Lambda
     
     MacOSWindow::MacOSWindow(const WindowDesc& desc)
         : m_pWindow(nullptr),
+        m_Device(nullptr),
         m_Width(0.0f),
         m_Height(0.0f),
         m_pCallback(nullptr),
@@ -51,11 +52,6 @@ namespace Lambda
     {
         //Delete callback
         SafeDelete(m_pCallback);
-		if (m_pGraphicsDevice)
-		{
-			m_pGraphicsDevice->Destroy();
-			m_pGraphicsDevice = nullptr;
-		}
         //Destroy glfw
         if (s_HasGLFW)
         {
@@ -134,11 +130,11 @@ namespace Lambda
                 if (desc.GraphicsDeviceAPI == GRAPHICS_API_D3D12)
                 {
                     LOG_DEBUG_ERROR("Lambda Engine: D3D12 is only supported on the Windows-Platform\n");
-                    m_pGraphicsDevice = nullptr;
+                    m_Device = nullptr;
                 }
                 else if (desc.GraphicsDeviceAPI == GRAPHICS_API_VULKAN)
                 {
-                    m_pGraphicsDevice = DBG_NEW VKNDevice(gdDesc);
+                    m_Device = AutoRef<IDevice>(DBG_NEW VKNDevice(gdDesc));
                 }
                 else
                 {
@@ -342,9 +338,9 @@ namespace Lambda
     }
     
     
-    IDevice* MacOSWindow::GetGraphicsDevice() const
+    const IDevice* MacOSWindow::GetGraphicsDevice() const
     {
-        return m_pGraphicsDevice;
+        return m_Device.Get();
     }
     
     

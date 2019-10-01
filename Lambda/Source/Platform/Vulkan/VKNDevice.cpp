@@ -14,6 +14,9 @@
 #include "VKNPipelineResourceState.h"
 #include "VKNUtilities.h"
 #include "VKNConversions.inl"
+#if defined(LAMBDA_PLAT_MACOS)
+    #include <GLFW/glfw3.h>
+#endif
 
 namespace Lambda
 {   
