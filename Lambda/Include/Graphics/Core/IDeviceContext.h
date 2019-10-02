@@ -10,17 +10,16 @@ namespace Lambda
 	class ITexture;
     class IRenderPass;
     class ISamplerState;
-    class IPipelineResourceState;
-    class IGraphicsPipelineState;
+    class IPipelineState;
 
     //------------
-    //ICommandList
+    //IDeviceContext
     //------------
 
-	class LAMBDA_API ICommandList : public IObject
+	class LAMBDA_API IDeviceContext : public IObject
 	{
 	public:
-		LAMBDA_IOBJECT_INTERFACE(ICommandList);
+		LAMBDA_IOBJECT_INTERFACE(IDeviceContext);
 
 		virtual void ClearRenderTarget(ITexture* pRenderTarget, float color[4]) = 0;
 		virtual void ClearDepthStencil(ITexture* pDepthStencil, float depth, uint8 stencil) = 0;
@@ -34,10 +33,9 @@ namespace Lambda
 		virtual void SetViewport(const Viewport& viewport) = 0;
 		virtual void SetScissorRect(const Rectangle& scissorRect) = 0;
 		virtual void SetVertexBuffer(IBuffer* pBuffer, uint32 slot) = 0;
-        virtual void SetIndexBuffer(IBuffer* pBuffer, ResourceFormat format) = 0;
+        virtual void SetIndexBuffer(IBuffer* pBuffer, Format format) = 0;
 		virtual void SetConstantBlocks(ShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData) = 0;
-		virtual void SetGraphicsPipelineState(IGraphicsPipelineState* pPiplineState) = 0;
-		virtual void SetGraphicsPipelineResourceState(IPipelineResourceState* pPipelineResourceState) = 0;
+		virtual void SetPipelineState(IPipelineState* pPiplineState) = 0;
 
 		virtual void UpdateBuffer(IBuffer* pResource, const ResourceData* pData) = 0;
 		virtual void UpdateTexture(ITexture* pResource, const ResourceData* pData, uint32 mipLevel) = 0;

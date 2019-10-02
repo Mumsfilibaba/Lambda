@@ -123,9 +123,9 @@ namespace Lambda
                 gdDesc.Api              = desc.GraphicsDeviceAPI;
                 gdDesc.SampleCount      = desc.SampleCount;
 #if LAMBDA_DEBUG
-                gdDesc.Flags = GRAPHICS_CONTEXT_FLAG_DEBUG;
+                gdDesc.Flags = DEVICE_FLAG_DEBUG;
 #else
-                gdDesc.Flags = GRAPHICS_CONTEXT_FLAG_NONE;
+                gdDesc.Flags = DEVICE_FLAG_NONE;
 #endif
                 if (desc.GraphicsDeviceAPI == GRAPHICS_API_D3D12)
                 {

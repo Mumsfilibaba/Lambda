@@ -30,7 +30,7 @@ namespace Lambda
 	{
 		if (m_RenderPass != VK_NULL_HANDLE)
 		{
-			vkDestroyRenderPass(m_pDevice->GetDevice(), m_RenderPass, nullptr);
+			vkDestroyRenderPass(m_pDevice->GetVkDevice(), m_RenderPass, nullptr);
 			m_RenderPass = VK_NULL_HANDLE;
 		}
 
@@ -164,7 +164,7 @@ namespace Lambda
 		renderPassInfo.subpassCount = 1;
 		renderPassInfo.pSubpasses = &subpass;
 		renderPassInfo.pDependencies = nullptr;
-		if (vkCreateRenderPass(m_pDevice->GetDevice(), &renderPassInfo, nullptr, &m_RenderPass) != VK_SUCCESS)
+		if (vkCreateRenderPass(m_pDevice->GetVkDevice(), &renderPassInfo, nullptr, &m_RenderPass) != VK_SUCCESS)
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to create renderpass\n");
 		}
@@ -190,7 +190,7 @@ namespace Lambda
 		{
 			for (uint32 i = 0; i < numRenderTargets; i++)
 			{
-				key.AttachmentViews[i] = reinterpret_cast<const VKNTexture*>(ppRenderTargets[i])->GetImageView();
+				key.AttachmentViews[i] = reinterpret_cast<const VKNTexture*>(ppRenderTargets[i])->GetVkImageView();
 				key.NumAttachmentViews++;
 			}
 
@@ -205,7 +205,7 @@ namespace Lambda
 		}
 		if (pDepthStencil)
 		{
-			key.AttachmentViews[key.NumAttachmentViews++] = reinterpret_cast<const VKNTexture*>(pDepthStencil)->GetImageView();
+			key.AttachmentViews[key.NumAttachmentViews++] = reinterpret_cast<const VKNTexture*>(pDepthStencil)->GetVkImageView();
 
             const TextureDesc& dsDesc = pDepthStencil->GetDesc();
 			m_FramebufferExtent.width	= dsDesc.Width;
@@ -224,7 +224,7 @@ namespace Lambda
                     const VKNTexture* pResolveResource = reinterpret_cast<const VKNTexture*>(ppRenderTargets[i])->GetResolveResource();
                     if (pResolveResource)
                     {
-                        key.AttachmentViews[key.NumAttachmentViews++] = pResolveResource->GetImageView();
+                        key.AttachmentViews[key.NumAttachmentViews++] = pResolveResource->GetVkImageView();
                     }
                 }
 			}

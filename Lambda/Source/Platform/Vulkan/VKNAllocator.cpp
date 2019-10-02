@@ -36,7 +36,7 @@ namespace Lambda
 		allocInfo.memoryTypeIndex	    = m_MemoryType;
 
 		VKNDevice& device = VKNDevice::Get();
-		if (vkAllocateMemory(device.GetDevice(), &allocInfo, nullptr, &m_DeviceMemory) != VK_SUCCESS)
+		if (vkAllocateMemory(device.GetVkDevice(), &allocInfo, nullptr, &m_DeviceMemory) != VK_SUCCESS)
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to allocate MemoryChunk\n");
 			return;
@@ -189,7 +189,7 @@ namespace Lambda
 			VKNDevice& device = VKNDevice::Get();
 
 			void* pMemory = nullptr;
-			vkMapMemory(device.GetDevice(), m_DeviceMemory, 0, VK_WHOLE_SIZE, 0, &pMemory);
+			vkMapMemory(device.GetVkDevice(), m_DeviceMemory, 0, VK_WHOLE_SIZE, 0, &pMemory);
 
 			m_pHostMemory   = reinterpret_cast<uint8*>(pMemory);
 			m_IsMapped      = true;
@@ -203,7 +203,7 @@ namespace Lambda
 		if (m_IsMapped)
 		{
 			VKNDevice& device = VKNDevice::Get();
-			vkUnmapMemory(device.GetDevice(), m_DeviceMemory);
+			vkUnmapMemory(device.GetVkDevice(), m_DeviceMemory);
 
 			m_pHostMemory = nullptr;
 			m_IsMapped    = false;
@@ -309,12 +309,6 @@ namespace Lambda
 		delete this;
 	}
 
-
-	uint32 VKNMemoryChunk::GetMemoryType() const
-	{
-		return m_MemoryType;
-	}
-
 	//------------
 	//VKNAllocator
 	//------------
@@ -354,7 +348,7 @@ namespace Lambda
 		for (auto chunk : m_Chunks)
 		{
 			if (chunk)
-				chunk->Destroy(m_pDevice->GetDevice());
+				chunk->Destroy(m_pDevice->GetVkDevice());
 		}
 
 		LOG_DEBUG_INFO("Vulkan: Destroyed buffer\n");
@@ -372,7 +366,7 @@ namespace Lambda
 		m_TotalAllocated += memoryRequirements.size;
 
 		//Get needed memorytype
-		uint32 memoryType = FindMemoryType(m_pDevice->GetPhysicalDevice(), memoryRequirements.memoryTypeBits, properties);
+		uint32 memoryType = FindMemoryType(m_pDevice->GetVkPhysicalDevice(), memoryRequirements.memoryTypeBits, properties);
 
         LOG_SYSTEM(LOG_SEVERITY_WARNING, "[VULKAN DEVICE ALLOCATOR] Allocated Memory chunk. Number of allocations: '%llu'. Max allocations: '%llu'. Memory type: %d. TotalAllocated: %.2fMB. TotalReserved %.2fMB\n", m_Chunks.size(), m_MaxAllocations, memoryType, float(m_TotalAllocated) / mb, float(m_TotalReserved) / mb);
         
@@ -494,7 +488,7 @@ namespace Lambda
 		descriptorAllocInfo.pSetLayouts			= &descriptorSetLayout;
 
 		VKNDevice& device = VKNDevice::Get();
-		if (vkAllocateDescriptorSets(device.GetDevice(), &descriptorAllocInfo, &set))
+		if (vkAllocateDescriptorSets(device.GetVkDevice(), &descriptorAllocInfo, &set))
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to allocate DescriptorSets\n");
 			return VK_NULL_HANDLE;
@@ -576,7 +570,7 @@ namespace Lambda
 		descriptorPoolInfo.maxSets			= m_SetCount;
 
 		VKNDevice& device = VKNDevice::Get();
-		if (vkCreateDescriptorPool(device.GetDevice(), &descriptorPoolInfo, nullptr, &pool) != VK_SUCCESS)
+		if (vkCreateDescriptorPool(device.GetVkDevice(), &descriptorPoolInfo, nullptr, &pool) != VK_SUCCESS)
 		{
 			if (m_Pool == VK_NULL_HANDLE)
 			{
@@ -652,7 +646,7 @@ namespace Lambda
 			VKNDevice& device = VKNDevice::Get();
 			for (auto& pool : oldpools)
 			{
-				vkDestroyDescriptorPool(device.GetDevice(), pool, nullptr);
+				vkDestroyDescriptorPool(device.GetVkDevice(), pool, nullptr);
 				pool = VK_NULL_HANDLE;
 			}
 		}

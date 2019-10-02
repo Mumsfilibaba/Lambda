@@ -1,5 +1,5 @@
 #pragma once
-#include "Graphics/IRenderPass.h"
+#include "Graphics/Core/IRenderPass.h"
 
 namespace Lambda
 {

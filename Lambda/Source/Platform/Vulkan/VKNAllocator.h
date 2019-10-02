@@ -67,7 +67,7 @@ namespace Lambda
         bool IsOnSamePage(VkDeviceSize aOffset, VkDeviceSize aSize, VkDeviceSize bOffset, VkDeviceSize pageSize);
         void Deallocate(VKNMemory& allocation);
 		void Destroy(VkDevice device);
-		uint32 GetMemoryType() const;
+		inline uint32 GetMemoryType() const { return m_MemoryType; }
 	private:
 		void Init();
 		void Map();

@@ -28,7 +28,7 @@ namespace Lambda
 	void VKNSwapChain::Init(const VKNSwapChainDesc& desc)
 	{
         //Get the swapchain capabilities from the adapter
-        SwapChainCapabilities cap			= QuerySwapChainSupport(m_pDevice->GetPhysicalDevice(), m_pDevice->GetSurface());
+        SwapChainCapabilities cap			= QuerySwapChainSupport(m_pDevice->GetVkPhysicalDevice(), m_pDevice->GetVkSurface());
         QueueFamilyIndices familyIndices	= m_pDevice->GetQueueFamilyIndices();
         
 		//Choose a swapchain format
@@ -93,7 +93,7 @@ namespace Lambda
     
     void VKNSwapChain::InitSwapChain(VkExtent2D extent)
     {
-		SwapChainCapabilities cap	= QuerySwapChainSupport(m_pDevice->GetPhysicalDevice(), m_pDevice->GetSurface());
+		SwapChainCapabilities cap	= QuerySwapChainSupport(m_pDevice->GetVkPhysicalDevice(), m_pDevice->GetVkSurface());
         
         //Choose swapchain extent (Size)
         VkExtent2D newExtent;
@@ -114,7 +114,7 @@ namespace Lambda
         VkSwapchainCreateInfoKHR info = {};
         info.sType                = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
         info.pNext                = nullptr;
-        info.surface              = m_pDevice->GetSurface();
+        info.surface              = m_pDevice->GetVkSurface();
         info.minImageCount        = m_ImageCount;
         info.imageFormat          = m_Format.format;
         info.imageColorSpace      = m_Format.colorSpace;
@@ -145,7 +145,7 @@ namespace Lambda
             info.pQueueFamilyIndices     = nullptr;
         }
 
-        if (vkCreateSwapchainKHR(m_pDevice->GetDevice(), &info, nullptr, &m_SwapChain) != VK_SUCCESS)
+        if (vkCreateSwapchainKHR(m_pDevice->GetVkDevice(), &info, nullptr, &m_SwapChain) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create SwapChain\n");
             
@@ -160,12 +160,12 @@ namespace Lambda
         
         //Get SwapChain images
         uint32 imageCount = 0;
-        vkGetSwapchainImagesKHR(m_pDevice->GetDevice(), m_SwapChain, &imageCount, nullptr);
+        vkGetSwapchainImagesKHR(m_pDevice->GetVkDevice(), m_SwapChain, &imageCount, nullptr);
         m_ImageCount = imageCount;
         
         //Init textures
         std::vector<VkImage> textures(imageCount);
-        vkGetSwapchainImagesKHR(m_pDevice->GetDevice(), m_SwapChain, &imageCount, textures.data());
+        vkGetSwapchainImagesKHR(m_pDevice->GetVkDevice(), m_SwapChain, &imageCount, textures.data());
         for (uint32 i = 0; i < imageCount; i++)
         {
             TextureDesc desc = {};
@@ -191,7 +191,7 @@ namespace Lambda
 	void VKNSwapChain::AquireNextImage(VkSemaphore signalSemaphore)
 	{
 		//LOG_DEBUG_INFO("Vulkan: vkAcquireNextImageKHR with semaphore %x\n", signalSemaphore);
-		vkAcquireNextImageKHR(m_pDevice->GetDevice(), m_SwapChain, 0xffffffffffffffff, signalSemaphore, VK_NULL_HANDLE, &m_CurrentBufferIndex);
+		vkAcquireNextImageKHR(m_pDevice->GetVkDevice(), m_SwapChain, 0xffffffffffffffff, signalSemaphore, VK_NULL_HANDLE, &m_CurrentBufferIndex);
 	}
 
 
@@ -234,8 +234,7 @@ namespace Lambda
 	void VKNSwapChain::ResizeBuffers(uint32 width, uint32 height)
     {
         //Relase the old resources
-		VKNDevice& device = VKNDevice::Get();
-		Release(device.GetDevice());
+		Release(m_pDevice->GetVkDevice());
         
         //Create swapchain again
         VkExtent2D extent = { width, height };

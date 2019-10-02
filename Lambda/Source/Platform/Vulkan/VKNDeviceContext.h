@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
-#include "Graphics/ICommandList.h"
+#include "Graphics/Core/IDeviceContext.h"
+#include "VKNPipelineState.h"
 #include "VKNUtilities.h"
 
 namespace Lambda
@@ -10,21 +11,20 @@ namespace Lambda
 	class IVKNAllocator;
     class VKNRenderPass;
 	class VKNUploadBuffer;
-	class VKNPipelineResourceState;
 
-	//--------------
-	//VKNCommandList
-	//--------------
+	//----------------
+	//VKNDeviceContext
+	//----------------
 
-    class VKNCommandList final : public RefCountedObject<ICommandList>
+    class VKNDeviceContext final : public RefCountedObject<IDeviceContext>
     {
         friend class VKNDevice;
         
     public:
-        LAMBDA_NO_COPY(VKNCommandList);
+        LAMBDA_NO_COPY(VKNDeviceContext);
         
-        VKNCommandList(VKNDevice* pDevice, IVKNAllocator* pAllocator, CommandListType type);
-        ~VKNCommandList();
+        VKNDeviceContext(VKNDevice* pDevice, IVKNAllocator* pAllocator, CommandListType type);
+        ~VKNDeviceContext();
         
         virtual void ClearRenderTarget(ITexture* pRenderTarget, float color[4]) override final;
         virtual void ClearDepthStencil(ITexture* pDepthStencil, float depth, uint8 stencil) override final;
@@ -38,10 +38,9 @@ namespace Lambda
 		virtual void SetViewport(const Viewport& viewport) override final;
         virtual void SetScissorRect(const Rectangle& scissorRect) override final;
         virtual void SetVertexBuffer(IBuffer* pBuffer, uint32 slot) override final;
-        virtual void SetIndexBuffer(IBuffer* pBuffer, ResourceFormat format) override final;
+        virtual void SetIndexBuffer(IBuffer* pBuffer, Format format) override final;
+        virtual void SetPipelineState(IPipelineState* pPipelineState) override final;
 		virtual void SetConstantBlocks(ShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData) override final;
-        virtual void SetGraphicsPipelineState(IGraphicsPipelineState* pPSO) override final;
-		virtual void SetGraphicsPipelineResourceState(IPipelineResourceState* pResourceState) override final;
 
         virtual void UpdateBuffer(IBuffer* pResource, const ResourceData* pData) override final;
         virtual void UpdateTexture(ITexture* pResource, const ResourceData* pData, uint32 mipLevel) override final;
@@ -74,7 +73,7 @@ namespace Lambda
         VKNUploadBuffer*		  m_pBufferUpload;
         VKNUploadBuffer*		  m_pTextureUpload;
         VKNRenderPass*			  m_pRenderPass;
-		VKNPipelineResourceState* m_pResourceState;
+		AutoRef<VKNPipelineState> m_PipelineState;
         CommandListType			  m_Type;
         std::string				  m_Name;
     };

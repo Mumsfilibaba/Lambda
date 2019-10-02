@@ -1,5 +1,5 @@
 #pragma once
-#include "Graphics/IDevice.h"
+#include "Graphics/Core/IDevice.h"
 #include "System/IWindow.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include "DX12CommandList.h"
@@ -24,20 +24,19 @@ namespace Lambda
 		DX12GraphicsDevice(const DeviceDesc& desc);
 		~DX12GraphicsDevice();
 
-		virtual void CreateCommandList(ICommandList** ppList, CommandListType type) override final;
+		virtual void CreateCommandList(IDeviceContext** ppList, CommandListType type) override final;
 		virtual void CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) override final;
 		virtual void CreateTexture(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc) override final;
 		virtual void CreateShader(IShader** ppShader, const ShaderDesc& desc) override final;
 		virtual void CreateSamplerState(ISamplerState** ppSamplerState, const SamplerStateDesc& desc) override final;
-		virtual void CreateGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc) override final;
+		virtual void CreatePipelineState(IPipelineState** ppPipelineState, const PipelineStateDesc& desc) override final;
 		virtual void CreateRenderPass(IRenderPass** ppRenderPass, const RenderPassDesc& desc) override final;
-		virtual void CreatePipelineResourceState(IPipelineResourceState** ppResourceState, const PipelineResourceStateDesc& desc) override final;
 		virtual void CreateQuery(IQuery** ppQuery, const QueryDesc& desc) override final;
 
-		virtual void ExecuteCommandList(ICommandList* const * ppLists, uint32 numLists) const;
+		virtual void ExecuteCommandList(IDeviceContext* const * ppLists, uint32 numLists) const;
 		
 		virtual void PresentBegin() const override final;
-		virtual void PresentEnd(ICommandList* const* ppLists, uint32 numLists) const override final;
+		virtual void PresentEnd(IDeviceContext* const* ppLists, uint32 numLists) const override final;
 
 		virtual void GPUWaitForFrame() const override final;
 		virtual void WaitForGPU() const override final;
@@ -47,7 +46,7 @@ namespace Lambda
 		virtual void* GetNativeHandle() const override final;
 		virtual ITexture* GetDepthStencil() const override final;
 		virtual ITexture* GetRenderTarget() const override final;
-		virtual ResourceFormat GetBackBufferFormat() const override final;
+		virtual Format GetBackBufferFormat() const override final;
 		virtual uint32 GetBackBufferIndex() const override final;
 		virtual uint32 GetSwapChainWidth() const override final;
 		virtual uint32 GetSwapChainHeight() const override final;

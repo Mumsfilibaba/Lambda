@@ -54,7 +54,6 @@ namespace Lambda
 		m_NormalMap(nullptr),
 		m_SamplerState(nullptr),
 		m_PipelineState(nullptr),
-		m_ResourceState(nullptr),
 		m_Camera(),
 		m_TransformBuffer()
 	{
@@ -98,7 +97,7 @@ namespace Lambda
 		IDevice* pDevice = IDevice::Get();
         if (pDevice)
         {
-			AutoRef<ICommandList> tempList = nullptr;
+			AutoRef<IDeviceContext> tempList = nullptr;
 			pDevice->CreateCommandList(&tempList, COMMAND_LIST_TYPE_GRAPHICS);
 			tempList->Reset();
 
@@ -117,58 +116,11 @@ namespace Lambda
             
 
             //Define depthformat
-            ResourceFormat depthFormat = FORMAT_D24_UNORM_S8_UINT;
-
-			//Create ResourceState
-			{
-				ResourceSlot slots[7];
-				slots[0].Slot	= 0;
-				slots[0].Stage	= SHADER_STAGE_VERTEX;
-				slots[0].Type	= RESOURCE_TYPE_CONSTANT_BUFFER;
-				slots[0].Usage	= RESOURCE_USAGE_DEFAULT;
-
-				slots[1].Slot	= 1;
-				slots[1].Stage	= SHADER_STAGE_VERTEX;
-				slots[1].Type	= RESOURCE_TYPE_CONSTANT_BUFFER;
-				slots[1].Usage	= RESOURCE_USAGE_DYNAMIC;
-
-				slots[2].Slot	= 2;
-				slots[2].Stage	= SHADER_STAGE_PIXEL;
-				slots[2].Type	= RESOURCE_TYPE_CONSTANT_BUFFER;
-				slots[2].Usage	= RESOURCE_USAGE_DYNAMIC;
-                
-                slots[3].Slot   = 3;
-                slots[3].Stage  = SHADER_STAGE_PIXEL;
-                slots[3].Type   = RESOURCE_TYPE_CONSTANT_BUFFER;
-                slots[3].Usage  = RESOURCE_USAGE_DEFAULT;
-
-				slots[4].Slot	= 4;
-				slots[4].Stage	= SHADER_STAGE_PIXEL;
-				slots[4].Type	= RESOURCE_TYPE_TEXTURE;
-				slots[4].Usage	= RESOURCE_USAGE_DEFAULT;
-                
-                slots[5].Slot   = 5;
-                slots[5].Stage  = SHADER_STAGE_PIXEL;
-                slots[5].Type   = RESOURCE_TYPE_TEXTURE;
-                slots[5].Usage  = RESOURCE_USAGE_DEFAULT;
-
-				slots[6].Slot	= 6;
-				slots[6].Stage	= SHADER_STAGE_PIXEL;
-				slots[6].Type	= RESOURCE_TYPE_SAMPLER_STATE;
-				slots[6].Usage	= RESOURCE_USAGE_DEFAULT;
-
-				PipelineResourceStateDesc desc = {};
-				desc.NumResourceSlots	= 7;
-				desc.pResourceSlots		= slots;
-				desc.NumConstantBlocks	= 0;
-				desc.pConstantBlocks	= nullptr;
-				pDevice->CreatePipelineResourceState(&m_ResourceState, desc);
-			}
-
+            Format depthFormat = FORMAT_D24_UNORM_S8_UINT;
 
             //Create pipelinestate
             {
-                InputElement elements[]
+				InputElementDesc elements[]
                 {
                     { "POSITION",   FORMAT_R32G32B32_FLOAT, 0, 0, sizeof(Vertex), 0,                     false },
                     { "NORMAL",     FORMAT_R32G32B32_FLOAT, 0, 1, sizeof(Vertex), sizeof(glm::vec3),     false },
@@ -176,21 +128,54 @@ namespace Lambda
                     { "TEXCOORD",   FORMAT_R32G32_FLOAT,    0, 3, sizeof(Vertex), sizeof(glm::vec3) * 3, false },
                 };
                 
-                GraphicsPipelineStateDesc desc = {};
-				desc.pName						= "MainPipelineState";
-                desc.pVertexShader				= m_VS.Get();
-                desc.pPixelShader				= m_PS.Get();
-                desc.pInputElements				= elements;
-                desc.InputElementCount			= sizeof(elements) / sizeof(InputElement);
-                desc.Cull						= CULL_MODE_BACK;
-				desc.FillMode					= POLYGON_MODE_FILL;
-                desc.Topology					= PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-				desc.pRenderPass				= app.GetRenderer().GetRenderPass();
-				desc.pResourceState				= m_ResourceState.Get();
-                desc.DepthTest					= true;
-				desc.EnableBlending				= false;
-				desc.FrontFaceCounterClockWise	= false;                
-                pDevice->CreateGraphicsPipelineState(&m_PipelineState, desc);
+				InputLayoutDesc vertexInput = {};
+				vertexInput.ElementCount	= sizeof(elements) / sizeof(InputElementDesc);
+				vertexInput.pElements		= elements;
+
+				RasterizerStateDesc rasterizerState = {};
+				rasterizerState.Cull		= CULL_MODE_BACK;
+				rasterizerState.FillMode	= POLYGON_MODE_FILL;
+				rasterizerState.FrontFaceCounterClockWise = false;
+				
+				BlendStateDesc blendState = {};
+				blendState.EnableBlending = false;
+
+				DepthStencilStateDesc depthStencilState = {};
+				depthStencilState.DepthTest = true;
+
+                GraphicsPipelineStateDesc graphicsPipeline = {};
+                graphicsPipeline.pVertexShader = m_VS.Get();
+                graphicsPipeline.pPixelShader  = m_PS.Get();
+				graphicsPipeline.Topology = PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+				graphicsPipeline.VertexInput		= vertexInput;
+				graphicsPipeline.RasterizerState	= rasterizerState;
+				graphicsPipeline.pRenderPass		= app.GetRenderer().GetRenderPass();
+				graphicsPipeline.BlendState			= blendState;
+				graphicsPipeline.DepthStencilState	= depthStencilState;
+
+				ShaderVariableDesc slots[] =
+				{
+					{ nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_VERTEX,	RESOURCE_USAGE_DEFAULT, 0 },
+					{ nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_VERTEX,	RESOURCE_USAGE_DYNAMIC, 1 },
+					{ nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DYNAMIC, 2 },
+					{ nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DEFAULT, 3 },
+					{ nullptr, RESOURCE_TYPE_TEXTURE,			SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DEFAULT, 4 },
+					{ nullptr, RESOURCE_TYPE_TEXTURE,			SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DEFAULT, 5 },
+					{ nullptr, RESOURCE_TYPE_SAMPLER_STATE,		SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DEFAULT, 6 },
+				};
+
+				ShaderVariableLayoutDesc resourceDesc = {};
+				resourceDesc.NumResourceSlots	= 7;
+				resourceDesc.pResourceSlots		= slots;
+				resourceDesc.NumConstantBlocks	= 0;
+				resourceDesc.pConstantBlocks	= nullptr;
+
+				PipelineStateDesc pipelineDesc = {};
+				pipelineDesc.pName	= "MainPipelineState";
+				pipelineDesc.Type	= PIPELINE_TYPE_GRAPHICS;
+				pipelineDesc.ShaderResources = resourceDesc;
+				pipelineDesc.GraphicsPipeline = graphicsPipeline;
+                pDevice->CreatePipelineState(&m_PipelineState, pipelineDesc);
             }
 
             //Create vertexbuffer
@@ -227,7 +212,7 @@ namespace Lambda
             }
 
 			//Create vertexbuffer
-			MeshData mesh2 = MeshFactory::CreateCube(0.5, 0.5, 0.5); //MeshFactory::CreateSphere(4, 0.45);
+			MeshData mesh2 = MeshFactory::CreateSphere(4, 0.45);
 			m_SphereMesh.IndexCount = uint32(mesh2.Indices.size());
 			{
 				BufferDesc desc = {};
@@ -288,14 +273,12 @@ namespace Lambda
 			m_Material.pAlbedoMap = m_AlbedoMap.Get();
 			m_Material.pNormalMap = m_NormalMap.Get();
 			m_Material.pPipelineState = m_PipelineState.Get();
-			m_Material.pResourceState = m_ResourceState.Get();
 			m_Material.pSamplerState = m_SamplerState.Get();
 			m_Material.Color = glm::vec4(RGB_F(255, 255, 255), 1.0f);
 
 			m_RedMaterial.pAlbedoMap		= nullptr;
 			m_RedMaterial.pNormalMap		= nullptr;
 			m_RedMaterial.pPipelineState	= m_PipelineState.Get();
-			m_RedMaterial.pResourceState	= m_ResourceState.Get();
 			m_RedMaterial.pSamplerState		= nullptr;
 			m_RedMaterial.Color				= glm::vec4(RGB_F(255, 0, 0), 1.0f);
         }
@@ -387,7 +370,6 @@ namespace Lambda
 
 			m_VS.Release();
 			m_PS.Release();
-			m_ResourceState.Release();
 			m_PipelineState.Release();
 			m_Mesh.pVertexBuffer->Release();
 			m_Mesh.pIndexBuffer->Release();

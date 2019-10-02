@@ -199,7 +199,7 @@ namespace Lambda
 	}*/
 
 
-	void DX12CommandList::SetGraphicsPipelineState(IGraphicsPipelineState* pPSO)
+	void DX12CommandList::SetPipelineState(IPipelineState* pPSO)
 	{
 		DX12GraphicsPipelineState* pState = reinterpret_cast<DX12GraphicsPipelineState*>(pPSO);
 		m_List->SetPipelineState(pState->GetPipelineState());
@@ -214,7 +214,7 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::SetIndexBuffer(IBuffer* pIndexBuffer, ResourceFormat format)
+	void DX12CommandList::SetIndexBuffer(IBuffer* pIndexBuffer, Format format)
 	{
 		D3D12_INDEX_BUFFER_VIEW view = reinterpret_cast<DX12Buffer*>(pIndexBuffer)->GetIndexBufferView();
 		m_List->IASetIndexBuffer(&view);
@@ -222,11 +222,6 @@ namespace Lambda
 
 	
 	void DX12CommandList::SetConstantBlocks(ShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData)
-	{
-	}
-
-
-	void DX12CommandList::SetGraphicsPipelineResourceState(IPipelineResourceState* pResourceState)
 	{
 	}
 

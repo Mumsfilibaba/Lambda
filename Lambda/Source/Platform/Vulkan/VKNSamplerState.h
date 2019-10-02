@@ -1,5 +1,5 @@
 #pragma once
-#include "Graphics/ISamplerState.h"
+#include "Graphics/Core/ISamplerState.h"
 #include <vulkan/vulkan.h>
 
 namespace Lambda
@@ -20,6 +20,8 @@ namespace Lambda
         
         virtual void* GetNativeHandle() const override final;
         virtual const SamplerStateDesc& GetDesc() const override final;
+
+		inline VkSampler GetVkSampler() const { return m_Sampler; }
     private:
         void Init(const SamplerStateDesc& desc);     
     private:

@@ -5,13 +5,12 @@
 #include "VKNPipelineState.h"
 #include "VKNTexture.h"
 #include "VKNSamplerState.h"
-#include "VKNCommandList.h"
+#include "VKNDeviceContext.h"
 #include "VKNFramebuffer.h"
 #include "VKNBuffer.h"
 #include "VKNSwapChain.h"
 #include "VKNRenderPass.h"
 #include "VKNQuery.h"
-#include "VKNPipelineResourceState.h"
 #include "VKNUtilities.h"
 #include "VKNConversions.inl"
 #if defined(LAMBDA_PLAT_MACOS)
@@ -188,7 +187,7 @@ namespace Lambda
 
 
 		//Get extensions
-		std::vector<const char*> requiredExtensions = GetRequiredInstanceExtensions(desc.Flags & GRAPHICS_CONTEXT_FLAG_DEBUG);
+		std::vector<const char*> requiredExtensions = GetRequiredInstanceExtensions(desc.Flags & DEVICE_FLAG_DEBUG);
 		if (requiredExtensions.size() > 0)
 		{
 			LOG_DEBUG_INFO("[Vulkan] Required Instance-Extensions:\n");
@@ -198,7 +197,7 @@ namespace Lambda
 
 
 		//Get layers
-		std::vector<const char*> requiredLayers = GetRequiredValidationLayers(desc.Flags & GRAPHICS_CONTEXT_FLAG_DEBUG);
+		std::vector<const char*> requiredLayers = GetRequiredValidationLayers(desc.Flags & DEVICE_FLAG_DEBUG);
 		if (requiredLayers.size() > 0)
 		{
 			LOG_DEBUG_INFO("[Vulkan] Required Instance-Layers:\n");
@@ -255,7 +254,7 @@ namespace Lambda
 		//Create instance
 		VkInstanceCreateInfo instanceInfo = {};
 		instanceInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-		instanceInfo.pNext = (desc.Flags & GRAPHICS_CONTEXT_FLAG_DEBUG) ? (VkDebugUtilsMessengerCreateInfoEXT*)& dInfo : nullptr;
+		instanceInfo.pNext = (desc.Flags & DEVICE_FLAG_DEBUG) ? (VkDebugUtilsMessengerCreateInfoEXT*)& dInfo : nullptr;
 		instanceInfo.flags = 0;
 		instanceInfo.pApplicationInfo = &applicationInfo;
 		instanceInfo.enabledExtensionCount = uint32(requiredExtensions.size());
@@ -295,7 +294,7 @@ namespace Lambda
 
 
 		//If not the debugflag is set we do not want to create the messenger
-		if (desc.Flags & GRAPHICS_CONTEXT_FLAG_DEBUG)
+		if (desc.Flags & DEVICE_FLAG_DEBUG)
 		{
 			//Create debugmessenger
 			VkDebugUtilsMessengerCreateInfoEXT info;
@@ -540,11 +539,11 @@ namespace Lambda
         }
          
         //Init internal commandlist, used for copying from staging buffers to final resource etc.
-		ICommandList* pList = nullptr;
+		IDeviceContext* pList = nullptr;
         CreateCommandList(&pList, COMMAND_LIST_TYPE_GRAPHICS);
 		if (pList)
 		{
-			m_pCommandList = reinterpret_cast<VKNCommandList*>(pList);
+			m_pCommandList = reinterpret_cast<VKNDeviceContext*>(pList);
 			m_pCommandList->SetName("Graphics Device Internal CommandList");
 		}
     }
@@ -610,10 +609,10 @@ namespace Lambda
 	}
     
     
-    void VKNDevice::CreateCommandList(ICommandList** ppList, CommandListType type)
+    void VKNDevice::CreateCommandList(IDeviceContext** ppList, CommandListType type)
     {
 		LAMBDA_ASSERT(ppList != nullptr);
-        (*ppList) = DBG_NEW VKNCommandList(this, m_DeviceAllocator.Get(), type);
+        (*ppList) = DBG_NEW VKNDeviceContext(this, m_DeviceAllocator.Get(), type);
     }
     
     
@@ -647,7 +646,7 @@ namespace Lambda
                 m_pCommandList->UpdateBuffer(pVkBuffer, pInitalData);
                 m_pCommandList->Close();
             
-                ICommandList* ppLists[] = { m_pCommandList };
+                IDeviceContext* ppLists[] = { m_pCommandList };
                 ExecuteCommandList(ppLists, 1);
 
                 WaitForGPU();
@@ -678,7 +677,7 @@ namespace Lambda
             if (desc.Flags & TEXTURE_FLAGS_GENEATE_MIPS)
             {
                 VkFormatProperties formatProperties = {};
-                vkGetPhysicalDeviceFormatProperties(m_PhysicalDevice, pVkTexture->GetFormat(), &formatProperties);
+                vkGetPhysicalDeviceFormatProperties(m_PhysicalDevice, pVkTexture->GetVkFormat(), &formatProperties);
                 
                 if (formatProperties.linearTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)
                 {
@@ -708,7 +707,7 @@ namespace Lambda
             //Execute and wait for GPU
             m_pCommandList->Close();
             
-            ICommandList* ppLists[] = { m_pCommandList };
+            IDeviceContext* ppLists[] = { m_pCommandList };
             ExecuteCommandList(ppLists, 1);
 
             WaitForGPU();
@@ -733,10 +732,10 @@ namespace Lambda
     }
     
     
-    void VKNDevice::CreateGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc)
+    void VKNDevice::CreatePipelineState(IPipelineState** ppPipelineState, const PipelineStateDesc& desc)
     {
 		LAMBDA_ASSERT(ppPipelineState != nullptr);
-        (*ppPipelineState) = DBG_NEW VKNGraphicsPipelineState(this, desc);
+        (*ppPipelineState) = DBG_NEW VKNPipelineState(this, desc);
     }
 
 
@@ -744,13 +743,6 @@ namespace Lambda
 	{
 		LAMBDA_ASSERT(ppRenderPass != nullptr);
 		(*ppRenderPass) = DBG_NEW VKNRenderPass(this, desc);
-	}
-
-
-	void VKNDevice::CreatePipelineResourceState(IPipelineResourceState** ppResourceState, const PipelineResourceStateDesc& desc)
-	{
-		LAMBDA_ASSERT(ppResourceState != nullptr);
-		(*ppResourceState) = DBG_NEW VKNPipelineResourceState(this, desc);
 	}
 
     
@@ -761,7 +753,7 @@ namespace Lambda
     }
     
     
-    void VKNDevice::ExecuteCommandList(ICommandList* const * ppLists, uint32 numLists) const
+    void VKNDevice::ExecuteCommandList(IDeviceContext* const * ppLists, uint32 numLists) const
     {
         //Retrive commandbuffers
         std::vector<VkCommandBuffer> buffers;
@@ -802,7 +794,7 @@ namespace Lambda
 	}
 
     
-	void VKNDevice::PresentEnd(ICommandList* const* ppLists, uint32 numLists) const
+	void VKNDevice::PresentEnd(IDeviceContext* const* ppLists, uint32 numLists) const
 	{
 		//LOG_DEBUG_INFO("Vulkan: VKNDevice::ExecuteCommandListAndPresent  Frame '%d' - WaitSemaphore='%x', SignalSemaphore='%x'\n", m_CurrentFrame, m_ImageSemaphores[m_CurrentFrame], m_RenderSemaphores[m_CurrentFrame]);
 
@@ -1146,7 +1138,7 @@ namespace Lambda
 	}
 
     
-    ResourceFormat VKNDevice::GetBackBufferFormat() const
+    Format VKNDevice::GetBackBufferFormat() const
     {
         return ConvertVkFormat(m_pSwapChain->GetFormat());
     }

@@ -5,7 +5,7 @@ namespace Lambda
 {
     class Event;
 	class Renderer3D;
-	class ICommandList;
+	class IDeviceContext;
     
     //-----
     //Layer

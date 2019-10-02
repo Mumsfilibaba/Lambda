@@ -72,7 +72,7 @@ namespace Lambda
             info.usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
         
 		//Create buffer
-		if (vkCreateBuffer(m_pDevice->GetDevice(), &info, nullptr, &m_Buffer) != VK_SUCCESS)
+		if (vkCreateBuffer(m_pDevice->GetVkDevice(), &info, nullptr, &m_Buffer) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create Buffer\n");
             return;
@@ -94,10 +94,10 @@ namespace Lambda
         
 		//Allocate memory
 		VkMemoryRequirements memoryRequirements = {};
-		vkGetBufferMemoryRequirements(m_pDevice->GetDevice(), m_Buffer, &memoryRequirements);
+		vkGetBufferMemoryRequirements(m_pDevice->GetVkDevice(), m_Buffer, &memoryRequirements);
         if (m_pAllocator->Allocate(m_Memory, memoryRequirements, m_Desc.Usage))
 		{
-            vkBindBufferMemory(m_pDevice->GetDevice(), m_Buffer, m_Memory.DeviceMemory, m_Memory.DeviceMemoryOffset);
+            vkBindBufferMemory(m_pDevice->GetVkDevice(), m_Buffer, m_Memory.DeviceMemory, m_Memory.DeviceMemoryOffset);
         }
         else
         {
@@ -200,7 +200,7 @@ namespace Lambda
 
         //Create buffer
         VkBuffer newBuffer = VK_NULL_HANDLE;
-		if (vkCreateBuffer(m_pDevice->GetDevice(), &info, nullptr, &newBuffer) != VK_SUCCESS)
+		if (vkCreateBuffer(m_pDevice->GetVkDevice(), &info, nullptr, &newBuffer) != VK_SUCCESS)
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to recreate Buffer\n");
 			return;
@@ -221,10 +221,10 @@ namespace Lambda
 		//Allocate memory
         VKNMemory newMemory = {};
         VkMemoryRequirements memoryRequirements = {};
-        vkGetBufferMemoryRequirements(m_pDevice->GetDevice(), newBuffer, &memoryRequirements);
+        vkGetBufferMemoryRequirements(m_pDevice->GetVkDevice(), newBuffer, &memoryRequirements);
 		if (m_pAllocator->Allocate(newMemory, memoryRequirements, m_Desc.Usage))
 		{
-			vkBindBufferMemory(m_pDevice->GetDevice(), newBuffer, newMemory.DeviceMemory, newMemory.DeviceMemoryOffset);
+			vkBindBufferMemory(m_pDevice->GetVkDevice(), newBuffer, newMemory.DeviceMemory, newMemory.DeviceMemoryOffset);
 		}
 		else
 		{
@@ -279,7 +279,7 @@ namespace Lambda
         info.usage                  = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
         
 		VKNDevice& device = VKNDevice::Get();
-        if (vkCreateBuffer(device.GetDevice(), &info, nullptr, &m_Buffer) != VK_SUCCESS)
+        if (vkCreateBuffer(device.GetVkDevice(), &info, nullptr, &m_Buffer) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create buffer for UploadBuffer\n");
             return false;
@@ -292,10 +292,10 @@ namespace Lambda
         
         //Allocate memory
         VkMemoryRequirements memoryRequirements = {};
-        vkGetBufferMemoryRequirements(device.GetDevice(), m_Buffer, &memoryRequirements);
+        vkGetBufferMemoryRequirements(device.GetVkDevice(), m_Buffer, &memoryRequirements);
         if (m_pAllocator->Allocate(m_Memory, memoryRequirements, RESOURCE_USAGE_DYNAMIC))
         {
-            vkBindBufferMemory(device.GetDevice(), m_Buffer, m_Memory.DeviceMemory, m_Memory.DeviceMemoryOffset);
+            vkBindBufferMemory(device.GetVkDevice(), m_Buffer, m_Memory.DeviceMemory, m_Memory.DeviceMemoryOffset);
             Reset();
             return true;
         }
@@ -324,7 +324,7 @@ namespace Lambda
         info.usage                  = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
 		VKNDevice& device = VKNDevice::Get();
-        if (vkCreateBuffer(device.GetDevice(), &info, nullptr, &newBuffer) != VK_SUCCESS)
+        if (vkCreateBuffer(device.GetVkDevice(), &info, nullptr, &newBuffer) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to reallocate buffer for UploadBuffer\n");
         }
@@ -336,10 +336,10 @@ namespace Lambda
 
         //Allocate memory
         VkMemoryRequirements memoryRequirements = {};
-        vkGetBufferMemoryRequirements(device.GetDevice(), newBuffer, &memoryRequirements);
+        vkGetBufferMemoryRequirements(device.GetVkDevice(), newBuffer, &memoryRequirements);
         if (m_pAllocator->Allocate(newMemory, memoryRequirements, RESOURCE_USAGE_DYNAMIC))
         {
-            vkBindBufferMemory(device.GetDevice(), newBuffer, newMemory.DeviceMemory, newMemory.DeviceMemoryOffset);
+            vkBindBufferMemory(device.GetVkDevice(), newBuffer, newMemory.DeviceMemory, newMemory.DeviceMemoryOffset);
 
             m_pAllocator->Deallocate(m_Memory);
 
@@ -490,7 +490,7 @@ namespace Lambda
 			VKNDevice& device = VKNDevice::Get();
             for (auto& buffer : buffers)
             {
-                vkDestroyBuffer(device.GetDevice(), buffer, nullptr);
+                vkDestroyBuffer(device.GetVkDevice(), buffer, nullptr);
                 buffer = VK_NULL_HANDLE;
             }
             

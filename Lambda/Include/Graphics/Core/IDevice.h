@@ -2,7 +2,7 @@
 #include "IObject.h"
 #include "Events/WindowEvent.h"
 #include "System/IWindow.h"
-#include "ICommandList.h"
+#include "IDeviceContext.h"
 
 namespace Lambda
 {
@@ -13,8 +13,7 @@ namespace Lambda
 	class ITexture;
 	class IRenderPass;
 	class ISamplerState;
-	class IGraphicsPipelineState;
-	class IPipelineResourceState;
+	class IPipelineState;
 
 	struct QueryDesc;
 	struct BufferDesc;
@@ -22,8 +21,7 @@ namespace Lambda
 	struct TextureDesc;
 	struct RenderPassDesc;
 	struct SamplerStateDesc;
-	struct GraphicsPipelineStateDesc;
-	struct PipelineResourceStateDesc;
+	struct PipelineStateDesc;
 
 	//--------
 	//VendorID
@@ -48,7 +46,7 @@ namespace Lambda
     {
         IWindow* pWindow       = nullptr;
         GraphicsApi Api        = GRAPHICS_API_VULKAN;
-        uint32 Flags           = GRAPHICS_CONTEXT_FLAG_NONE;
+        uint32 Flags           = DEVICE_FLAG_NONE;
 		uint32 SampleCount     = 1;
         uint32 BackBufferCount = 3;
         bool VerticalSync      = true;
@@ -74,20 +72,19 @@ namespace Lambda
 	public:
 		LAMBDA_IOBJECT_INTERFACE(IDevice);
 
-		virtual void CreateCommandList(ICommandList** ppList, CommandListType type) = 0;
+		virtual void CreateCommandList(IDeviceContext** ppList, CommandListType type) = 0;
 		virtual void CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) = 0;
 		virtual void CreateTexture(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc) = 0;
 		virtual void CreateShader(IShader** ppShader, const ShaderDesc& desc) = 0;
 		virtual void CreateSamplerState(ISamplerState** ppSamplerState, const SamplerStateDesc& desc) = 0;
-		virtual void CreateGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc) = 0;
+		virtual void CreatePipelineState(IPipelineState** ppPipelineState, const PipelineStateDesc& desc) = 0;
 		virtual void CreateRenderPass(IRenderPass** ppRenderPass, const RenderPassDesc& desc) = 0;
-		virtual void CreatePipelineResourceState(IPipelineResourceState** ppResourceState, const PipelineResourceStateDesc& desc) = 0;
         virtual void CreateQuery(IQuery** ppQuery, const QueryDesc& desc) = 0;
 
-		virtual void ExecuteCommandList(ICommandList* const * ppLists, uint32 numLists) const = 0;
+		virtual void ExecuteCommandList(IDeviceContext* const * ppLists, uint32 numLists) const = 0;
 		
 		virtual void PresentBegin() const = 0;
-		virtual void PresentEnd(ICommandList* const* ppLists, uint32 numLists) const = 0;
+		virtual void PresentEnd(IDeviceContext* const* ppLists, uint32 numLists) const = 0;
 		
 		virtual void WaitForGPU() const = 0;
 		virtual void GPUWaitForFrame() const = 0;
@@ -97,7 +94,7 @@ namespace Lambda
         virtual void* GetNativeHandle() const = 0;
 		virtual ITexture* GetDepthStencil() const = 0;
 		virtual ITexture* GetRenderTarget() const = 0;
-		virtual ResourceFormat GetBackBufferFormat() const = 0;
+		virtual Format GetBackBufferFormat() const = 0;
 		virtual uint32 GetBackBufferIndex() const = 0;
 		virtual uint32 GetSwapChainWidth() const = 0;
 		virtual uint32 GetSwapChainHeight() const = 0;

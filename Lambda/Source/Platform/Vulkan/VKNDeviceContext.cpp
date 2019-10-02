@@ -1,30 +1,28 @@
 #include "LambdaPch.h"
 #include "Utilities/MathHelper.h"
-#include "VKNCommandList.h"
+#include "VKNDeviceContext.h"
 #include "VKNDevice.h"
 #include "VKNBuffer.h"
-#include "VKNPipelineState.h"
 #include "VKNSamplerState.h"
 #include "VKNTexture.h"
 #include "VKNFramebuffer.h"
 #include "VKNQuery.h"
 #include "VKNRenderPass.h"
-#include "VKNPipelineResourceState.h"
 #include "VKNConversions.inl"
 
 namespace Lambda
 {
-	//--------------
-	//VKNCommandList
-	//--------------
+	//----------------
+	//VKNDeviceContext
+	//----------------
 
-    VKNCommandList::VKNCommandList(VKNDevice* pDevice, IVKNAllocator* pAllocator, CommandListType type)
+    VKNDeviceContext::VKNDeviceContext(VKNDevice* pDevice, IVKNAllocator* pAllocator, CommandListType type)
         : m_pDevice(pDevice),
 		m_CommandPool(VK_NULL_HANDLE),
         m_CommandBuffer(VK_NULL_HANDLE),
 		m_pBufferUpload(nullptr),
 		m_pTextureUpload(nullptr),
-        m_pResourceState(nullptr),
+        m_PipelineState(nullptr),
         m_pRenderPass(nullptr),
         m_Type(COMMAND_LIST_TYPE_UNKNOWN),
 		m_Name()
@@ -36,7 +34,7 @@ namespace Lambda
     }
 
     
-    void VKNCommandList::Init(IVKNAllocator* pAllocator, CommandListType type)
+    void VKNDeviceContext::Init(IVKNAllocator* pAllocator, CommandListType type)
     {
         //Get queuefamiliy indices
         QueueFamilyIndices familyIndices = m_pDevice->GetQueueFamilyIndices();
@@ -57,7 +55,7 @@ namespace Lambda
         }
         
 
-        if (vkCreateCommandPool(m_pDevice->GetDevice(), &poolInfo, nullptr, &m_CommandPool) != VK_SUCCESS)
+        if (vkCreateCommandPool(m_pDevice->GetVkDevice(), &poolInfo, nullptr, &m_CommandPool) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create commandpool\n");
             return;
@@ -74,7 +72,7 @@ namespace Lambda
         allocInfo.level					= VK_COMMAND_BUFFER_LEVEL_PRIMARY;
         allocInfo.commandBufferCount	= 1;
         
-        if (vkAllocateCommandBuffers(m_pDevice->GetDevice(), &allocInfo, &m_CommandBuffer) != VK_SUCCESS)
+        if (vkAllocateCommandBuffers(m_pDevice->GetVkDevice(), &allocInfo, &m_CommandBuffer) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create commandbuffer\n");
             return;
@@ -90,20 +88,20 @@ namespace Lambda
     }
 
 
-	inline void VKNCommandList::CommitResources()
+	inline void VKNDeviceContext::CommitResources()
 	{
-		m_pResourceState->CommitBindings();
+		m_PipelineState->CommitBindings();
 
-		const uint32* pOffsets	= m_pResourceState->GetDynamicOffsets();
-		uint32 offsetCount		= m_pResourceState->GetDynamicOffsetCount();
+		const uint32* pOffsets	= m_PipelineState->GetDynamicOffsets();
+		uint32 offsetCount		= m_PipelineState->GetDynamicOffsetCount();
 
-		VkDescriptorSet descriptorSet	= m_pResourceState->GetDescriptorSet();
-		VkPipelineLayout pipelineLayout = m_pResourceState->GetPipelineLayout();
+		VkDescriptorSet descriptorSet	= m_PipelineState->GetVkDescriptorSet();
+		VkPipelineLayout pipelineLayout = m_PipelineState->GetVkPipelineLayout();
 		vkCmdBindDescriptorSets(m_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, offsetCount, pOffsets);
 	}
     
     
-    void VKNCommandList::BlitTexture(VKNTexture* pDst, uint32 dstWidth, uint32 dstHeight, uint32 dstMipLevel, VKNTexture* pSrc, uint32 srcWidth, uint32 srcHeight, uint32 srcMipLevel)
+    void VKNDeviceContext::BlitTexture(VKNTexture* pDst, uint32 dstWidth, uint32 dstHeight, uint32 dstMipLevel, VKNTexture* pSrc, uint32 srcWidth, uint32 srcHeight, uint32 srcMipLevel)
     {
 		if (!m_pRenderPass)
 		{
@@ -132,26 +130,26 @@ namespace Lambda
     }
     
     
-	VKNCommandList::~VKNCommandList()
+	VKNDeviceContext::~VKNDeviceContext()
 	{
 		if (m_pBufferUpload)
 		{
-			m_pBufferUpload->Destroy(m_pDevice->GetDevice());
+			m_pBufferUpload->Destroy(m_pDevice->GetVkDevice());
 			m_pBufferUpload = nullptr;
 		}
 		if (m_pTextureUpload)
 		{
-			m_pTextureUpload->Destroy(m_pDevice->GetDevice());
+			m_pTextureUpload->Destroy(m_pDevice->GetVkDevice());
 			m_pTextureUpload = nullptr;
 		}
 		if (m_CommandBuffer != VK_NULL_HANDLE)
 		{
-			vkFreeCommandBuffers(m_pDevice->GetDevice(), m_CommandPool, 1, &m_CommandBuffer);
+			vkFreeCommandBuffers(m_pDevice->GetVkDevice(), m_CommandPool, 1, &m_CommandBuffer);
 			m_CommandBuffer = VK_NULL_HANDLE;
 		}
 		if (m_CommandPool != VK_NULL_HANDLE)
 		{
-			vkDestroyCommandPool(m_pDevice->GetDevice(), m_CommandPool, nullptr);
+			vkDestroyCommandPool(m_pDevice->GetVkDevice(), m_CommandPool, nullptr);
 			m_CommandPool = VK_NULL_HANDLE;
 		}
 
@@ -159,7 +157,7 @@ namespace Lambda
 	}
 
 
-	void VKNCommandList::ClearRenderTarget(ITexture* pRenderTarget, float color[4])
+	void VKNDeviceContext::ClearRenderTarget(ITexture* pRenderTarget, float color[4])
     {
 		if (!m_pRenderPass)
 		{
@@ -184,7 +182,7 @@ namespace Lambda
     }
     
     
-    void VKNCommandList::ClearDepthStencil(ITexture* pDepthStencil, float depth, uint8 stencil)
+    void VKNDeviceContext::ClearDepthStencil(ITexture* pDepthStencil, float depth, uint8 stencil)
     {
 		if (!m_pRenderPass)
 		{
@@ -210,7 +208,7 @@ namespace Lambda
     }
     
     
-    void VKNCommandList::SetViewport(const Viewport& viewport)
+    void VKNDeviceContext::SetViewport(const Viewport& viewport)
     {
         VkViewport view = {};
         view.width      = viewport.Width;
@@ -224,7 +222,7 @@ namespace Lambda
     }
     
     
-    void VKNCommandList::SetScissorRect(const Rectangle& scissorRect)
+    void VKNDeviceContext::SetScissorRect(const Rectangle& scissorRect)
     {
         VkRect2D rect = {};
         rect.extent.height  = uint32(scissorRect.Height);
@@ -236,24 +234,26 @@ namespace Lambda
     }
     
     
-    void VKNCommandList::SetGraphicsPipelineState(IGraphicsPipelineState* pPipelineState)
+    void VKNDeviceContext::SetPipelineState(IPipelineState* pPipelineState)
     {
-        VkPipeline pipeline = reinterpret_cast<VkPipeline>(pPipelineState->GetNativeHandle());
-        vkCmdBindPipeline(m_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+		pPipelineState->AddRef();
+		m_PipelineState = reinterpret_cast<VKNPipelineState*>(pPipelineState);
+        
+		vkCmdBindPipeline(m_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineState->GetVkPipeline());
     }
     
     
-    void VKNCommandList::SetVertexBuffer(IBuffer* pBuffer, uint32 slot)
+    void VKNDeviceContext::SetVertexBuffer(IBuffer* pBuffer, uint32 slot)
     {
 		VKNBuffer*	pVkBuffer = reinterpret_cast<VKNBuffer*>(pBuffer);
-        VkBuffer	buffers[] = { reinterpret_cast<VkBuffer>(pVkBuffer->GetNativeHandle()) };
+		VkBuffer	buffers[] = { pVkBuffer->GetVkBuffer() };
 
         VkDeviceSize offsets[] = { pVkBuffer->GetDynamicOffset() };
         vkCmdBindVertexBuffers(m_CommandBuffer, slot, 1, buffers, offsets);
     }
     
     
-    void VKNCommandList::SetIndexBuffer(IBuffer* pBuffer, ResourceFormat format)
+    void VKNDeviceContext::SetIndexBuffer(IBuffer* pBuffer, Format format)
     {
 		VKNBuffer*	pVkBuffer = reinterpret_cast<VKNBuffer*>(pBuffer);
         VkBuffer	buffer = reinterpret_cast<VkBuffer>(pBuffer->GetNativeHandle());
@@ -276,7 +276,7 @@ namespace Lambda
     }
 
 	
-	void VKNCommandList::SetConstantBlocks(ShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData)
+	void VKNDeviceContext::SetConstantBlocks(ShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData)
 	{
 		VkShaderStageFlags shaderStageFlags = 0;
 		if (stage == SHADER_STAGE_VERTEX)
@@ -292,56 +292,48 @@ namespace Lambda
 		else if (stage == SHADER_STAGE_COMPUTE)
 			shaderStageFlags |= VK_SHADER_STAGE_COMPUTE_BIT;
 
-		VkPipelineLayout pipelineLayout = m_pResourceState->GetPipelineLayout();
+		VkPipelineLayout pipelineLayout = m_PipelineState->GetVkPipelineLayout();
 		vkCmdPushConstants(m_CommandBuffer, pipelineLayout, shaderStageFlags, offset, sizeInBytes, pData);
 	}
 
-
-	void VKNCommandList::SetGraphicsPipelineResourceState(IPipelineResourceState* pResourceState)
-	{
-		VKNPipelineResourceState* pVkResourceState = reinterpret_cast<VKNPipelineResourceState*>(pResourceState);
-		m_pResourceState = pVkResourceState;
-
-        CommitResources();
-	}
-
     
-    CommandListType VKNCommandList::GetType() const
+    CommandListType VKNDeviceContext::GetType() const
     {
         return m_Type;
     }
     
     
-    void* VKNCommandList::GetNativeHandle() const
+    void* VKNDeviceContext::GetNativeHandle() const
     {
         return reinterpret_cast<void*>(m_CommandBuffer);
     }
     
     
-    void VKNCommandList::TransitionBuffer(const IBuffer* pBuffer, ResourceState state)
+    void VKNDeviceContext::TransitionBuffer(const IBuffer* pBuffer, ResourceState state)
     {
 		LAMBDA_ASSERT(pBuffer && state);
     }
     
     
-    void VKNCommandList::TransitionTexture(const ITexture* pTexture, ResourceState state, uint32 startMipLevel, uint32 numMipLevels)
+    void VKNDeviceContext::TransitionTexture(const ITexture* pTexture, ResourceState state, uint32 startMipLevel, uint32 numMipLevels)
     {
 		if (!m_pRenderPass)
 		{
 			const VKNTexture* pVkTexture = reinterpret_cast<const VKNTexture*>(pTexture);
-			const TextureDesc& textureDesc = pVkTexture->GetDesc();
+			VkImageLayout newLayout = ConvertResourceStateToImageLayout(state);
 
 			//Setup barrier
 			VkImageMemoryBarrier barrier = {};
 			barrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-			barrier.oldLayout                       = pVkTexture->GetResourceState();
-			barrier.newLayout                       = ConvertResourceStateToImageLayout(state);
+			barrier.oldLayout                       = pVkTexture->GetVkImageLayout();
+			barrier.newLayout                       = newLayout;
 			barrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
 			barrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
-			barrier.image                           = reinterpret_cast<VkImage>(pVkTexture->GetNativeHandle());
+			barrier.image                           = pVkTexture->GetVkImage();
 			barrier.subresourceRange.aspectMask     = pVkTexture->GetAspectFlags();
 			barrier.subresourceRange.baseMipLevel   = startMipLevel;
 			
+			const TextureDesc& textureDesc = pVkTexture->GetDesc();
 			if (numMipLevels == LAMBDA_TRANSITION_ALL_MIPS)
 			{
 				barrier.subresourceRange.levelCount = textureDesc.MipLevels;
@@ -444,7 +436,7 @@ namespace Lambda
         
         
 			vkCmdPipelineBarrier(m_CommandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-			pVkTexture->SetResourceState(barrier.newLayout);
+			pVkTexture->SetVkImageLayout(barrier.newLayout);
 		}
 		else
 		{
@@ -453,7 +445,7 @@ namespace Lambda
     }
     
     
-    void VKNCommandList::UpdateBuffer(IBuffer* pResource, const ResourceData* pData)
+    void VKNDeviceContext::UpdateBuffer(IBuffer* pResource, const ResourceData* pData)
     {        
 		LAMBDA_ASSERT(pData != nullptr);
 		LAMBDA_ASSERT(pData->pData != nullptr && pData->SizeInBytes != 0);
@@ -483,7 +475,7 @@ namespace Lambda
 				copyRegion.dstOffset    = 0;
 				copyRegion.size         = pData->SizeInBytes;
 
-				VkBuffer srcBuffer = m_pBufferUpload->GetBuffer();
+				VkBuffer srcBuffer = m_pBufferUpload->GetVkBuffer();
 				VkBuffer dstBuffer = reinterpret_cast<VkBuffer>(pVkResource->GetNativeHandle());
 				vkCmdCopyBuffer(m_CommandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
 			}
@@ -495,7 +487,7 @@ namespace Lambda
     }
     
     
-    void VKNCommandList::UpdateTexture(ITexture* pResource, const ResourceData* pData, uint32 mipLevel)
+    void VKNDeviceContext::UpdateTexture(ITexture* pResource, const ResourceData* pData, uint32 mipLevel)
     {
 		LAMBDA_ASSERT(pData != nullptr);
 		LAMBDA_ASSERT(pData->pData != nullptr && pData->SizeInBytes != 0);
@@ -525,8 +517,8 @@ namespace Lambda
 			region.imageOffset                      = { 0, 0, 0 };
 			region.imageExtent                      = { textureDesc.Width, textureDesc.Height, textureDesc.Depth };
         
-			VkBuffer buffer = m_pTextureUpload->GetBuffer();
-			VkImage image = reinterpret_cast<VkImage>(pResource->GetNativeHandle());
+			VkBuffer buffer = m_pTextureUpload->GetVkBuffer();
+			VkImage image = pVkResource->GetVkImage();
 			vkCmdCopyBufferToImage(m_CommandBuffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 		}
 		else
@@ -536,7 +528,7 @@ namespace Lambda
     }
     
     
-    void VKNCommandList::CopyBuffer(IBuffer* pDst, IBuffer* pSrc)
+    void VKNDeviceContext::CopyBuffer(IBuffer* pDst, IBuffer* pSrc)
     {
 		if (!m_pRenderPass)
 		{
@@ -556,19 +548,13 @@ namespace Lambda
     }
     
     
-    void VKNCommandList::DrawInstanced(uint32 vertexCountPerInstance, uint32 instanceCount, uint32 startVertexLocation, uint32 startInstanceLocation)
+    void VKNDeviceContext::DrawInstanced(uint32 vertexCountPerInstance, uint32 instanceCount, uint32 startVertexLocation, uint32 startInstanceLocation)
     {        
 		if (m_pRenderPass)
 		{
-            if (m_pResourceState)
-            {
-                CommitResources();
-            }
-            else
-            {
-                LOG_DEBUG_ERROR("Vulkan: DrawInstanced must have a valid PipelineResourceState bound when called\n");
-            }
-            
+			LAMBDA_ASSERT_PRINT(m_PipelineState, "Vulkan: DrawInstanced must have a valid PipelineState bound when called\n");
+
+			CommitResources();
 			vkCmdDraw(m_CommandBuffer, vertexCountPerInstance, instanceCount, startVertexLocation, startInstanceLocation);
 		}
 		else
@@ -578,19 +564,13 @@ namespace Lambda
     }
     
     
-    void VKNCommandList::DrawIndexedInstanced(uint32 indexCountPerInstance, uint32 instanceCount, uint32 startIndexLocation, uint32 baseVertexLocation, uint32 startInstanceLocation)
+    void VKNDeviceContext::DrawIndexedInstanced(uint32 indexCountPerInstance, uint32 instanceCount, uint32 startIndexLocation, uint32 baseVertexLocation, uint32 startInstanceLocation)
     {
 		if (m_pRenderPass)
 		{
-            if (m_pResourceState)
-            {
-                CommitResources();
-            }
-            else
-            {
-                LOG_DEBUG_ERROR("Vulkan: DrawInstanced must have a valid PipelineResourceState bound when called\n");
-            }
-            
+			LAMBDA_ASSERT_PRINT(m_PipelineState, "Vulkan: DrawInstanced must have a valid PipelineState bound when called\n");
+
+            CommitResources();
 			vkCmdDrawIndexed(m_CommandBuffer, indexCountPerInstance, instanceCount, startIndexLocation, baseVertexLocation, startInstanceLocation);
 		}
 		else
@@ -600,7 +580,7 @@ namespace Lambda
     }
     
     
-    void VKNCommandList::SetName(const char* pName)
+    void VKNDeviceContext::SetName(const char* pName)
     {
 		if (pName != nullptr)
 		{
@@ -610,7 +590,7 @@ namespace Lambda
     }
     
     
-    void VKNCommandList::Close()
+    void VKNDeviceContext::Close()
     {
         if (vkEndCommandBuffer(m_CommandBuffer) != VK_SUCCESS)
         {
@@ -619,10 +599,10 @@ namespace Lambda
     }
     
     
-    void VKNCommandList::Reset()
+    void VKNDeviceContext::Reset()
     {
         //Reset commandbuffer
-        if (vkResetCommandPool(m_pDevice->GetDevice(), m_CommandPool, VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT) != VK_SUCCESS)
+        if (vkResetCommandPool(m_pDevice->GetVkDevice(), m_CommandPool, VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to Reset CommandBuffer\n");
         }
@@ -645,7 +625,7 @@ namespace Lambda
     }
     
     
-	void VKNCommandList::BeginRenderPass(IRenderPass* pRenderPass)
+	void VKNDeviceContext::BeginRenderPass(IRenderPass* pRenderPass)
 	{
 		if (!m_pRenderPass)
 		{
@@ -653,8 +633,8 @@ namespace Lambda
 			VkRenderPassBeginInfo info = {};
 			info.sType				= VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 			info.pNext				= nullptr;
-			info.renderPass			= pVkRenderPass->GetRenderPass();
-			info.framebuffer		= pVkRenderPass->GetFramebuffer();
+			info.renderPass			= pVkRenderPass->GetVkRenderPass();
+			info.framebuffer		= pVkRenderPass->GetVkFramebuffer();
 			info.renderArea.offset	= { 0, 0 };
 			info.renderArea.extent	= pVkRenderPass->GetFramebufferExtent();
 			info.clearValueCount	= pVkRenderPass->GetAttachmentCount();
@@ -671,7 +651,7 @@ namespace Lambda
 	}
 
 
-	void VKNCommandList::EndRenderPass()
+	void VKNDeviceContext::EndRenderPass()
 	{
 		if (m_pRenderPass)
 		{
@@ -685,7 +665,7 @@ namespace Lambda
 	}
     
     
-    void VKNCommandList::ResetQuery(IQuery* pQuery)
+    void VKNDeviceContext::ResetQuery(IQuery* pQuery)
     {
         LAMBDA_ASSERT(pQuery != nullptr);
         
@@ -699,7 +679,7 @@ namespace Lambda
     }
     
     
-    void VKNCommandList::WriteTimeStamp(IQuery* pQuery, PipelineStage stage)
+    void VKNDeviceContext::WriteTimeStamp(IQuery* pQuery, PipelineStage stage)
     {
         LAMBDA_ASSERT(pQuery != nullptr);
         

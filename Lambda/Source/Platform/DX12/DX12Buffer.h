@@ -1,5 +1,5 @@
 #pragma once
-#include "Graphics/IBuffer.h"
+#include "Graphics/Core/IBuffer.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include <wrl/client.h>
 	#include "DX12DescriptorHandle.h"

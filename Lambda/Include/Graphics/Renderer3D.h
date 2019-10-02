@@ -1,8 +1,8 @@
 #pragma once
-#include "ICommandList.h"
-#include "IRenderPass.h"
-#include "IBuffer.h"
-#include "IQuery.h"
+#include "Core/IDeviceContext.h"
+#include "Core/IRenderPass.h"
+#include "Core/IBuffer.h"
+#include "Core/IQuery.h"
 #include "Time/Clock.h"
 #include <vector>
 #include <glm/glm.hpp>
@@ -60,11 +60,10 @@ namespace Lambda
 
 	struct Material
 	{
-		ITexture* pAlbedoMap					= nullptr;
-		ITexture* pNormalMap					= nullptr;
-		ISamplerState* pSamplerState			= nullptr;
-		IPipelineResourceState* pResourceState	= nullptr;
-		IGraphicsPipelineState* pPipelineState	= nullptr;
+		ITexture* pAlbedoMap			= nullptr;
+		ITexture* pNormalMap			= nullptr;
+		ISamplerState* pSamplerState	= nullptr;
+		IPipelineState* pPipelineState	= nullptr;
 		glm::vec4 Color;
 	};
 
@@ -117,9 +116,9 @@ namespace Lambda
 		IRenderPass* GetRenderPass();
 		const FrameStatistics& GetFrameStatistics() const;
 	private:
-		ICommandList*				m_pCurrentList;
+		IDeviceContext*				m_pCurrentList;
 		IQuery*						m_pCurrentQuery;
-		std::vector<AutoRef<ICommandList>> m_Lists;
+		std::vector<AutoRef<IDeviceContext>> m_Lists;
 		std::vector<AutoRef<IQuery>> m_Queries;
 		AutoRef<IRenderPass>		m_RenderPass;
 		AutoRef<IBuffer>			m_CameraBuffer;

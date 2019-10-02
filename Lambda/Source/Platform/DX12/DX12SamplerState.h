@@ -1,5 +1,5 @@
 #pragma once
-#include "Graphics/ISamplerState.h"
+#include "Graphics/Core/ISamplerState.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include "DX12DescriptorHandle.h"
 

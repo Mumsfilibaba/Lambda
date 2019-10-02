@@ -1,7 +1,7 @@
 #pragma once
 namespace Lambda
 {
-	inline DXGI_FORMAT ConvertFormat(ResourceFormat format)
+	inline DXGI_FORMAT ConvertFormat(Format format)
 	{
 		switch (format)
 		{
@@ -56,7 +56,7 @@ namespace Lambda
 	}
 
 
-	inline ResourceFormat ConvertDXGIFormat(DXGI_FORMAT format)
+	inline Format ConvertDXGIFormat(DXGI_FORMAT format)
 	{
 		switch (format)
 		{

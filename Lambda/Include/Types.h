@@ -3,14 +3,14 @@
 namespace Lambda
 {
     //Integer types
-	typedef char int8;
-	typedef short int16;
-	typedef int int32;
-	typedef long long int64;
-	typedef unsigned char uint8;
-	typedef unsigned short uint16;
-	typedef unsigned int uint32;
-	typedef unsigned long long uint64;
+	typedef char				int8;
+	typedef short				int16;
+	typedef int					int32;
+	typedef long long			int64;
+	typedef unsigned char		uint8;
+	typedef unsigned short		uint16;
+	typedef unsigned int		uint32;
+	typedef unsigned long long	uint64;
 
 
     //All keys
@@ -241,7 +241,7 @@ namespace Lambda
 
 
     //Format
-	enum ResourceFormat : uint32
+	enum Format : uint32
 	{
 		FORMAT_UNKNOWN                  = 0,
 		FORMAT_R32G32B32A32_FLOAT       = 1,
@@ -335,11 +335,11 @@ namespace Lambda
 
     
     //Flags for graphics context
-    enum GraphicsContextFlags : uint32
+    enum DeviceFlags : uint32
     {
-        GRAPHICS_CONTEXT_FLAG_NONE                      = 0,
-        GRAPHICS_CONTEXT_FLAG_DEBUG                     = (1 << 0),
-        GRAPHICS_CONTEXT_FLAG_ALLOW_SOFTWARE_ADAPTER    = (1 << 1),
+        DEVICE_FLAG_NONE                      = 0,
+        DEVICE_FLAG_DEBUG                     = (1 << 0),
+        DEVICE_FLAG_ALLOW_SOFTWARE_ADAPTER    = (1 << 1),
     };
     
     
@@ -373,12 +373,12 @@ namespace Lambda
     enum ShaderStage
     {
         SHADER_STAGE_UNKNOWN  = 0,
-        SHADER_STAGE_VERTEX	  = 1,
-        SHADER_STAGE_HULL	  = 2,
-        SHADER_STAGE_DOMAIN	  = 3,
-        SHADER_STAGE_GEOMETRY = 4,
-        SHADER_STAGE_PIXEL	  = 5,
-        SHADER_STAGE_COMPUTE  = 6,
+        SHADER_STAGE_VERTEX	  = (1 << 0),
+        SHADER_STAGE_HULL	  = (1 << 1),
+        SHADER_STAGE_DOMAIN	  = (1 << 2),
+        SHADER_STAGE_GEOMETRY = (1 << 3),
+        SHADER_STAGE_PIXEL	  = (1 << 4),
+        SHADER_STAGE_COMPUTE  = (1 << 5),
     };
     
     

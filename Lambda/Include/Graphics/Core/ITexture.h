@@ -31,7 +31,7 @@ namespace Lambda
 	{
 		TextureType Type            = TEXTURE_TYPE_UNKNOWN;
         ResourceUsage Usage         = RESOURCE_USAGE_UNKNOWN;
-        ResourceFormat Format       = FORMAT_UNKNOWN;
+        Format Format       = FORMAT_UNKNOWN;
         ITexture* pResolveResource  = nullptr;
         uint32 Flags                = TEXTURE_FLAGS_NONE;
 		uint32 SampleCount          = 1;
@@ -54,6 +54,6 @@ namespace Lambda
         virtual void* GetNativeHandle() const = 0;
 		virtual const TextureDesc& GetDesc() const = 0;
 	public:
-		static ITexture* CreateTextureFromFile(IDevice* pDevice, const char* pFileName, uint32 flags, ResourceUsage Usage, ResourceFormat Format);
+		static ITexture* CreateTextureFromFile(IDevice* pDevice, const char* pFileName, uint32 flags, ResourceUsage Usage, Format Format);
 	};
 }

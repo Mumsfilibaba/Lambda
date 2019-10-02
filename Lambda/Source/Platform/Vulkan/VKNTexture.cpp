@@ -20,7 +20,7 @@ namespace Lambda
         m_ImageView(VK_NULL_HANDLE),
         m_AspectFlags(0),
         m_Desc(),
-        m_ResourceState(VK_IMAGE_LAYOUT_UNDEFINED)
+        m_ImageLayout(VK_IMAGE_LAYOUT_UNDEFINED)
     {
 		//Add a ref to the refcounter
 		this->AddRef();
@@ -38,7 +38,7 @@ namespace Lambda
 		m_ImageView(VK_NULL_HANDLE),
 		m_AspectFlags(0),
 		m_Desc(),
-		m_ResourceState(VK_IMAGE_LAYOUT_UNDEFINED)
+		m_ImageLayout(VK_IMAGE_LAYOUT_UNDEFINED)
     {
 		//Add a ref to the refcounter
 		this->AddRef();
@@ -54,11 +54,11 @@ namespace Lambda
 
 		//Remove associated framebuffer if there is any
 
-		VKNFramebufferCache::Get().ReleaseAllContainingTexture(m_pDevice->GetDevice(), this);
+		VKNFramebufferCache::Get().ReleaseAllContainingTexture(m_pDevice->GetVkDevice(), this);
 
 		if (m_ImageView != VK_NULL_HANDLE)
 		{
-			vkDestroyImageView(m_pDevice->GetDevice(), m_ImageView, nullptr);
+			vkDestroyImageView(m_pDevice->GetVkDevice(), m_ImageView, nullptr);
 			m_ImageView = VK_NULL_HANDLE;
 		}
 
@@ -69,7 +69,7 @@ namespace Lambda
 			{
 				m_pAllocator->Deallocate(m_Memory);
 
-				vkDestroyImage(m_pDevice->GetDevice(), m_Image, nullptr);
+				vkDestroyImage(m_pDevice->GetVkDevice(), m_Image, nullptr);
 				m_Image = VK_NULL_HANDLE;
 			}
 		}
@@ -182,7 +182,7 @@ namespace Lambda
         }
 
 		//Create image
-        if (vkCreateImage(m_pDevice->GetDevice(), &info, nullptr, &m_Image) != VK_SUCCESS)
+        if (vkCreateImage(m_pDevice->GetVkDevice(), &info, nullptr, &m_Image) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create image\n");
             return;
@@ -198,10 +198,10 @@ namespace Lambda
         
 		//Allocate memory
 		VkMemoryRequirements memoryRequirements = {};
-		vkGetImageMemoryRequirements(m_pDevice->GetDevice(), m_Image, &memoryRequirements);
+		vkGetImageMemoryRequirements(m_pDevice->GetVkDevice(), m_Image, &memoryRequirements);
 		if (m_pAllocator->Allocate(m_Memory, memoryRequirements, desc.Usage))
 		{
-			vkBindImageMemory(m_pDevice->GetDevice(), m_Image, m_Memory.DeviceMemory, m_Memory.DeviceMemoryOffset);
+			vkBindImageMemory(m_pDevice->GetVkDevice(), m_Image, m_Memory.DeviceMemory, m_Memory.DeviceMemoryOffset);
 		}
         else
         {
@@ -221,7 +221,7 @@ namespace Lambda
         viewInfo.pNext      = nullptr;
         viewInfo.flags      = 0;
         viewInfo.image      = m_Image;
-        viewInfo.format     = GetFormat();
+        viewInfo.format     = GetVkFormat();
         if (m_Desc.Type == TEXTURE_TYPE_2D)
         {
             viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
@@ -236,9 +236,7 @@ namespace Lambda
         viewInfo.subresourceRange.levelCount        = m_Desc.MipLevels;
         viewInfo.subresourceRange.baseArrayLayer    = 0;
         viewInfo.subresourceRange.layerCount        = 1;
-        
-		VKNDevice& device = VKNDevice::Get();
-        if (vkCreateImageView(device.GetDevice(), &viewInfo, nullptr, &m_ImageView) != VK_SUCCESS)
+        if (vkCreateImageView(m_pDevice->GetVkDevice(), &viewInfo, nullptr, &m_ImageView) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create image view\n");
         }

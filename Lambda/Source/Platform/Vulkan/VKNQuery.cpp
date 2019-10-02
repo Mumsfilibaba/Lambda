@@ -28,7 +28,7 @@ namespace Lambda
 	{
 		if (m_QueryPool != VK_NULL_HANDLE)
 		{
-			vkDestroyQueryPool(m_pDevice->GetDevice(), m_QueryPool, nullptr);
+			vkDestroyQueryPool(m_pDevice->GetVkDevice(), m_QueryPool, nullptr);
 			m_QueryPool = VK_NULL_HANDLE;
 		}
 
@@ -50,7 +50,7 @@ namespace Lambda
             queryInfo.queryType = VK_QUERY_TYPE_TIMESTAMP;
         }
         
-        if (vkCreateQueryPool(m_pDevice->GetDevice(), &queryInfo, nullptr, &m_QueryPool) != VK_SUCCESS)
+        if (vkCreateQueryPool(m_pDevice->GetVkDevice(), &queryInfo, nullptr, &m_QueryPool) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create querypool\n");
         }
@@ -66,7 +66,7 @@ namespace Lambda
     {
         LAMBDA_ASSERT(pResults != nullptr);
         
-        if (vkGetQueryPoolResults(m_pDevice->GetDevice(), m_QueryPool, startQuery, numResults, numResults * sizeof(uint64), pResults, sizeof(uint64), VK_QUERY_RESULT_WITH_AVAILABILITY_BIT) == VK_SUCCESS)
+        if (vkGetQueryPoolResults(m_pDevice->GetVkDevice(), m_QueryPool, startQuery, numResults, numResults * sizeof(uint64), pResults, sizeof(uint64), VK_QUERY_RESULT_WITH_AVAILABILITY_BIT) == VK_SUCCESS)
 		{
 			if (m_Desc.Type == QUERY_TYPE_TIMESTAMP)
 			{

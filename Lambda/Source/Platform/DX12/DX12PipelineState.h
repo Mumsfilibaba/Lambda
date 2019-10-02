@@ -1,12 +1,12 @@
 #pragma once
-#include "Graphics/IPipelineState.h"
+#include "Graphics/Core/IPipelineState.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include <wrl/client.h>
 	#include <d3d12.h>
 
 namespace Lambda
 {
-	class DX12GraphicsPipelineState final : public RefCountedObject<IGraphicsPipelineState>
+	class DX12GraphicsPipelineState final : public RefCountedObject<IPipelineState>
 	{
 		friend class DX12CommandList;
 

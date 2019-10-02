@@ -3,7 +3,7 @@
 
 namespace Lambda
 {
-    inline VkFormat ConvertResourceFormat(ResourceFormat format)
+    inline VkFormat ConvertResourceFormat(Format format)
     {
         switch (format)
         {
@@ -59,7 +59,7 @@ namespace Lambda
     }
     
     
-    inline ResourceFormat ConvertVkFormat(VkFormat format)
+    inline Format ConvertVkFormat(VkFormat format)
     {
         switch (format)
         {

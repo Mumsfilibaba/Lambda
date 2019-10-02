@@ -1,14 +1,13 @@
 #pragma once
 #include "System/Application.h"
-#include "Graphics/ICommandList.h"
-#include "Graphics/IShader.h"
-#include "Graphics/IPipelineState.h"
-#include "Graphics/IBuffer.h"
-#include "Graphics/ITexture.h"
-#include "Graphics/ISamplerState.h"
-#include "Graphics/IRenderPass.h"
-#include "Graphics/IPipelineResourceState.h"
-#include "Graphics/IQuery.h"
+#include "Graphics/Core/IDeviceContext.h"
+#include "Graphics/Core/IShader.h"
+#include "Graphics/Core/IPipelineState.h"
+#include "Graphics/Core/IBuffer.h"
+#include "Graphics/Core/ITexture.h"
+#include "Graphics/Core/ISamplerState.h"
+#include "Graphics/Core/IRenderPass.h"
+#include "Graphics/Core/IQuery.h"
 #include "Graphics/Camera.h"
 #include "Events/WindowEvent.h"
 #include "Events/MouseEvent.h"
@@ -55,9 +54,7 @@ namespace Lambda
         //Samplers
 		AutoRef<ISamplerState> m_SamplerState;
         //Pipelinestates
-		AutoRef<IGraphicsPipelineState> m_PipelineState;
-        //ResourceState
-		AutoRef<IPipelineResourceState> m_ResourceState;
+		AutoRef<IPipelineState> m_PipelineState;
         Camera m_Camera;
         TransformBuffer m_TransformBuffer;
     };

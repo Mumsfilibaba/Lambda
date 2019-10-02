@@ -1,5 +1,5 @@
 #pragma once
-#include "Graphics/IRenderPass.h"
+#include "Graphics/Core/IRenderPass.h"
 #include <vulkan/vulkan.h>
 #include "VKNConversions.inl"
 
@@ -24,12 +24,12 @@ namespace Lambda
 		virtual void* GetNativeHandle() const override final;
 		virtual const RenderPassDesc& GetDesc() const override final;
 
-        VkRenderPass			GetRenderPass() const;
-        VkFramebuffer			GetFramebuffer() const;
-        VkExtent2D				GetFramebufferExtent() const;
-        VkSampleCountFlagBits	GetSampleCount() const;
-        const VkClearValue*		GetClearValues() const;
-        uint32					GetAttachmentCount() const;
+		inline VkRenderPass	GetVkRenderPass() const { return m_RenderPass; }
+		inline VkFramebuffer GetVkFramebuffer() const { return m_Framebuffer; }
+		inline VkExtent2D GetFramebufferExtent() const { return m_FramebufferExtent; }
+		inline VkSampleCountFlagBits GetSampleCount() const { return ConvertSampleCount(m_Desc.SampleCount); }
+		inline const VkClearValue* GetClearValues() const { return m_ClearValues; }
+		inline uint32 GetAttachmentCount() const { return m_Desc.NumRenderTargets + ((m_Desc.DepthStencil.Format != FORMAT_UNKNOWN) ? 1 : 0); }
 	private:
 		void Init(const RenderPassDesc& desc);
 	private:
@@ -40,40 +40,4 @@ namespace Lambda
         RenderPassDesc	m_Desc;
 		VkClearValue	m_ClearValues[LAMBDA_MAX_RENDERTARGET_COUNT + 1];
 	};
-
-
-	inline VkRenderPass VKNRenderPass::GetRenderPass() const
-	{
-		return m_RenderPass;
-	}
-
-
-	inline VkFramebuffer VKNRenderPass::GetFramebuffer() const
-	{
-		return m_Framebuffer;
-	}
-
-
-	inline VkExtent2D VKNRenderPass::GetFramebufferExtent() const
-	{
-		return m_FramebufferExtent;
-	}
-
-
-	inline VkSampleCountFlagBits VKNRenderPass::GetSampleCount() const
-	{
-		return ConvertSampleCount(m_Desc.SampleCount);
-	}
-
-
-	inline const VkClearValue* VKNRenderPass::GetClearValues() const
-	{
-		return m_ClearValues;
-	}
-	
-	
-	inline uint32 VKNRenderPass::GetAttachmentCount() const
-	{
-		return m_Desc.NumRenderTargets + ((m_Desc.DepthStencil.Format != FORMAT_UNKNOWN) ? 1 : 0);
-	}
 }

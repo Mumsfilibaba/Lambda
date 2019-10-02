@@ -31,7 +31,7 @@ namespace Lambda
 	{
 		if (m_Sampler != VK_NULL_HANDLE)
 		{
-			vkDestroySampler(m_pDevice->GetDevice(), m_Sampler, nullptr);
+			vkDestroySampler(m_pDevice->GetVkDevice(), m_Sampler, nullptr);
 			m_Sampler = VK_NULL_HANDLE;
 		}
 
@@ -64,7 +64,7 @@ namespace Lambda
 		info.minLod = desc.MinMipLOD;
 		info.maxLod = desc.MaxMipLOD;
 		info.mipLodBias = desc.MipLODBias;
-		if (vkCreateSampler(m_pDevice->GetDevice(), &info, nullptr, &m_Sampler) != VK_SUCCESS)
+		if (vkCreateSampler(m_pDevice->GetVkDevice(), &info, nullptr, &m_Sampler) != VK_SUCCESS)
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to create samplerstate\n");
 		}

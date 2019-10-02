@@ -57,7 +57,7 @@ namespace Lambda
 
 	bool VKNFramebufferCacheKey::ContainsTexture(const VKNTexture* pTexture) const
 	{
-		VkImageView view = pTexture->GetImageView();
+		VkImageView view = pTexture->GetVkImageView();
 		for (uint32 i = 0; i < NumAttachmentViews; i++)
 		{
 			if (AttachmentViews[i] == view)
@@ -113,7 +113,7 @@ namespace Lambda
 		VkFramebuffer framebuffer = VK_NULL_HANDLE;
 		
 		VKNDevice& device = VKNDevice::Get();
-		if (vkCreateFramebuffer(device.GetDevice(), &info, nullptr, &framebuffer) != VK_SUCCESS)
+		if (vkCreateFramebuffer(device.GetVkDevice(), &info, nullptr, &framebuffer) != VK_SUCCESS)
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to create Framebuffer\n");
 			return VK_NULL_HANDLE;

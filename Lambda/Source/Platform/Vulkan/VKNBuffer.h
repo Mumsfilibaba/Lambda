@@ -1,5 +1,5 @@
 #pragma once
-#include "Graphics/IBuffer.h"
+#include "Graphics/Core/IBuffer.h"
 #include <string>
 #include "VKNAllocator.h"
 
@@ -24,12 +24,14 @@ namespace Lambda
         virtual void* GetNativeHandle() const override final;
         virtual const BufferDesc& GetDesc() const override final;
 
-		bool IsDirty() const;
-		void SetIsClean();
 		void AdvanceFrame();
 		void DynamicUpdate(const ResourceData* pData);
 		void Reallocate(uint32 sizeInBytes);
-		uint64 GetDynamicOffset() const;
+		
+		inline VkBuffer GetVkBuffer() const		{ return m_Buffer; }
+		inline bool   IsDirty() const			{ return m_IsDirty; }
+		inline void   SetIsClean()				{ m_IsDirty = false; }
+		inline uint64 GetDynamicOffset() const	{ return  m_DynamicOffset + m_FrameOffset; }
     private:
         void Init(const BufferDesc& desc);
     private:
@@ -45,24 +47,6 @@ namespace Lambda
         BufferDesc		m_Desc;
 		bool			m_IsDirty;
     };
-
-
-	inline bool VKNBuffer::IsDirty() const
-	{
-		return m_IsDirty;
-	}
-
-
-	inline void VKNBuffer::SetIsClean()
-	{
-		m_IsDirty = false;
-	}
-
-
-	inline uint64 VKNBuffer::GetDynamicOffset() const
-	{
-		return m_DynamicOffset + m_FrameOffset;
-	}
 
     //---------------
     //VKNUploadBuffer
@@ -80,8 +64,8 @@ namespace Lambda
         void Reset();
         void Destroy(VkDevice device);
         
-        uint64 GetDeviceOffset() const;
-        VkBuffer GetBuffer() const;
+		inline uint64 GetDeviceOffset() const { return uint64(m_pCurrent - m_Memory.pHostMemory); }
+		inline VkBuffer GetVkBuffer() const { return m_Buffer; }
     private:
         bool Init(uint64 sizeInBytes);
         void Reallocate(uint64 sizeInBytes);
@@ -93,18 +77,6 @@ namespace Lambda
         uint64               m_BytesLeft;
         uint64               m_SizeInBytes;
     };
-    
-    
-    inline VkBuffer VKNUploadBuffer::GetBuffer() const
-    {
-        return m_Buffer;
-    }
-    
-    
-    inline uint64 VKNUploadBuffer::GetDeviceOffset() const
-    {
-        return uint64(m_pCurrent - m_Memory.pHostMemory);
-    }
 
 	//----------------
 	//VKNBufferManager

@@ -1,10 +1,9 @@
 #include "LambdaPch.h"
 #include "Graphics/Renderer3D.h"
-#include "Graphics/IDevice.h"
-#include "Graphics/IBuffer.h"
-#include "Graphics/IQuery.h"
 #include "Graphics/Camera.h"
-#include "Graphics/IPipelineResourceState.h"
+#include "Graphics/Core/IDevice.h"
+#include "Graphics/Core/IBuffer.h"
+#include "Graphics/Core/IQuery.h"
 #include "System/Application.h"
 #include <glm/gtc/type_ptr.hpp>
 
@@ -41,7 +40,7 @@ namespace Lambda
 		for (uint32 i = 0; i < deviceDesc.BackBufferCount; i++)
 		{
 			//Create commandlists
-			ICommandList* pList = nullptr;
+			IDeviceContext* pList = nullptr;
 			pDevice->CreateCommandList(&pList, COMMAND_LIST_TYPE_GRAPHICS);
 			if (pList)
 			{
@@ -231,15 +230,16 @@ namespace Lambda
 		IBuffer* ppBuffers[]		     = { m_CameraBuffer.Get(), m_TransformBuffer.Get(), m_MaterialBuffer.Get(), m_LightBuffer.Get() };
 		ITexture* ppTextures[]		     = { material.pAlbedoMap, material.pNormalMap };
 		ISamplerState* ppSamplerStates[] = { material.pSamplerState };
-		material.pResourceState->SetConstantBuffers(ppBuffers, 4, 0);
-		material.pResourceState->SetTextures(ppTextures, 2, 4);
-		material.pResourceState->SetSamplerStates(ppSamplerStates, 1, 6);
-		m_pCurrentList->SetGraphicsPipelineResourceState(material.pResourceState);
+		
+		IPipelineState* pPipelineState = material.pPipelineState;
+		pPipelineState->SetConstantBuffers(ppBuffers, 4, 0);
+		pPipelineState->SetTextures(ppTextures, 2, 4);
+		pPipelineState->SetSamplerStates(ppSamplerStates, 1, 6);
 		//Set mesh
         m_pCurrentList->SetVertexBuffer(model.pVertexBuffer, 0);
         m_pCurrentList->SetIndexBuffer(model.pIndexBuffer, FORMAT_R32_UINT);
         //Set pipelinestate
-		m_pCurrentList->SetGraphicsPipelineState(material.pPipelineState);
+		m_pCurrentList->SetPipelineState(pPipelineState);
         //Draw
         m_pCurrentList->DrawIndexedInstanced(model.IndexCount, 1, 0, 0, 0);
 	}

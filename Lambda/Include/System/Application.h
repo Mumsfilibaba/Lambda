@@ -3,7 +3,7 @@
 #include "LayerStack.h"
 #include "Time/Clock.h"
 #include "Events/EventDispatcher.h"
-#include "Graphics/IDevice.h"
+#include "Graphics/Core/IDevice.h"
 #include "Graphics/UILayer.h"
 #include "Graphics/Renderer3D.h"
 #include "Debug/DebugLayer.h"

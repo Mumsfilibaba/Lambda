@@ -1,5 +1,5 @@
 #pragma once
-#include "Graphics/IQuery.h"
+#include "Graphics/Core/IQuery.h"
 #include "VKNAllocator.h"
 
 namespace Lambda

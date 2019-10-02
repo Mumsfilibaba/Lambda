@@ -171,6 +171,13 @@ namespace Lambda
 		}
 
 
+		inline AutoRef& operator=(TObject* pObject)
+		{
+			AutoRef other(pObject);
+			return *this = other;
+		}
+
+
 		inline AutoRef& operator=(const AutoRef& other)
 		{
 			if (m_pObject)
@@ -192,6 +199,12 @@ namespace Lambda
 			other.m_pObject = nullptr;
 
 			return *this;
+		}
+
+
+		inline operator bool()
+		{
+			return m_pObject != nullptr;
 		}
 
 	private:

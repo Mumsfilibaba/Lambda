@@ -1,12 +1,11 @@
 #include "LambdaPch.h"
 #include "Graphics/UILayer.h"
-#include "Graphics/IShader.h"
-#include "Graphics/ISamplerState.h"
-#include "Graphics/IPipelineResourceState.h"
-#include "Graphics/IPipelineState.h"
-#include "Graphics/IRenderPass.h"
-#include "Graphics/ITexture.h"
-#include "Graphics/IBuffer.h"
+#include "Graphics/Core/IShader.h"
+#include "Graphics/Core/ISamplerState.h"
+#include "Graphics/Core/IPipelineState.h"
+#include "Graphics/Core/IRenderPass.h"
+#include "Graphics/Core/ITexture.h"
+#include "Graphics/Core/IBuffer.h"
 #include "System/Application.h"
 #include "Events/KeyEvent.h"
 #include "Events/MouseEvent.h"
@@ -131,7 +130,6 @@ namespace Lambda
 		m_VS(nullptr),
 		m_PS(nullptr),
 		m_SamplerState(nullptr),
-		m_PipelineResourceState(nullptr),
 		m_PipelineState(nullptr),
 		m_FontTexture(nullptr),
 		m_VertexBuffer(nullptr),
@@ -191,7 +189,7 @@ namespace Lambda
     }
 
 
-	void UILayer::Init(IRenderPass* pRenderPass, ICommandList* pList)
+	void UILayer::Init(IRenderPass* pRenderPass, IDeviceContext* pList)
 	{
 		//Create graphics objects
 		IDevice* pDevice = IDevice::Get();
@@ -237,7 +235,7 @@ namespace Lambda
 
 
 		//Create pipelineresourcestate
-		ResourceSlot resourceSlots[1];
+		ShaderVariableDesc resourceSlots[1];
 		resourceSlots[0].pSamplerState = m_SamplerState.Get();
 		resourceSlots[0].Slot	= 0;
 		resourceSlots[0].Type	= RESOURCE_TYPE_TEXTURE;
@@ -248,43 +246,56 @@ namespace Lambda
 		constantBlocks[0].Stage			= SHADER_STAGE_VERTEX;
 		constantBlocks[0].SizeInBytes	= sizeof(float) * 4;
 
-		PipelineResourceStateDesc resourceStateDesc = {};
+		ShaderVariableLayoutDesc resourceStateDesc = {};
 		resourceStateDesc.NumResourceSlots	= 1;
 		resourceStateDesc.pResourceSlots	= resourceSlots;
 		resourceStateDesc.NumConstantBlocks	= 1;
         resourceStateDesc.pConstantBlocks	= constantBlocks;
-		pDevice->CreatePipelineResourceState(&m_PipelineResourceState, resourceStateDesc);
-
 
 		//Create pipelinestate
-		InputElement inputElements[3] =
+		InputElementDesc inputElements[3] =
 		{
 			{ "POSITION",   FORMAT_R32G32_FLOAT,	0, 0, sizeof(ImDrawVert), offsetof(ImDrawVert, pos),	false },
 			{ "TEXCOORD",   FORMAT_R32G32_FLOAT,	0, 1, sizeof(ImDrawVert), offsetof(ImDrawVert, uv),		false },
 			{ "COLOR",		FORMAT_R8G8B8A8_UNORM,	0, 2, sizeof(ImDrawVert), offsetof(ImDrawVert, col),    false },
 		};
 
-		GraphicsPipelineStateDesc pipelineStateDesc = {};
-		pipelineStateDesc.pName						= "ImGui-PipelineState";
-		pipelineStateDesc.pVertexShader				= m_VS.Get();
-		pipelineStateDesc.pPixelShader				= m_PS.Get();
-		pipelineStateDesc.pRenderPass				= pRenderPass;
-		pipelineStateDesc.pResourceState			= m_PipelineResourceState.Get();
-		pipelineStateDesc.InputElementCount			= 3;
-		pipelineStateDesc.pInputElements			= inputElements;
-		pipelineStateDesc.Topology					= PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-		pipelineStateDesc.Cull						= CULL_MODE_NONE;
-		pipelineStateDesc.FillMode					= POLYGON_MODE_FILL;
-		pipelineStateDesc.FrontFaceCounterClockWise = true;
-		pipelineStateDesc.DepthTest					= false;
-		pipelineStateDesc.EnableBlending			= true;
-		pDevice->CreateGraphicsPipelineState(&m_PipelineState, pipelineStateDesc);
+		InputLayoutDesc vertexInput = {};
+		vertexInput.ElementCount	= 3;
+		vertexInput.pElements		= inputElements;
 
+		RasterizerStateDesc rasterizerState = {};
+		rasterizerState.Cull		= CULL_MODE_NONE;
+		rasterizerState.FillMode	= POLYGON_MODE_FILL;
+		rasterizerState.FrontFaceCounterClockWise = true;
+
+		BlendStateDesc blendState = {};
+		blendState.EnableBlending = true;
+
+		DepthStencilStateDesc depthStencilState = {};
+		depthStencilState.DepthTest = false;
+
+		GraphicsPipelineStateDesc graphicsPipeline  = {};
+		graphicsPipeline.pVertexShader		= m_VS.Get();
+		graphicsPipeline.pPixelShader		= m_PS.Get();
+		graphicsPipeline.pRenderPass		= pRenderPass;
+		graphicsPipeline.VertexInput		= vertexInput;
+		graphicsPipeline.RasterizerState	= rasterizerState;
+		graphicsPipeline.BlendState			= blendState;
+		graphicsPipeline.DepthStencilState	= depthStencilState;
+		graphicsPipeline.Topology			= PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+
+		PipelineStateDesc pipelineDesc = {};
+		pipelineDesc.pName = "ImGui PipelineState";
+		pipelineDesc.Type = PIPELINE_TYPE_GRAPHICS;
+		pipelineDesc.ShaderResources = resourceStateDesc;
+		pipelineDesc.GraphicsPipeline = graphicsPipeline;
+		pDevice->CreatePipelineState(&m_PipelineState, pipelineDesc);
 
 		//Create fonttexture
 		uint8* pPixels	= nullptr;
-		int32	width	= 0;
-		int32	height	= 0;
+		int32 width		= 0;
+		int32 height	= 0;
 
 		ImGuiIO& io = ImGui::GetIO();
 		io.Fonts->GetTexDataAsRGBA32(&pPixels, &width, &height);
@@ -448,7 +459,7 @@ namespace Lambda
 	}
 
 
-	void UILayer::Draw(ICommandList* pList)
+	void UILayer::Draw(IDeviceContext* pList)
 	{
 		ImGuiIO& io = ImGui::GetIO();
 		ImDrawData* pDrawData = ImGui::GetDrawData();
@@ -476,9 +487,8 @@ namespace Lambda
 		}
 
 		//Setup pipelinestate
-		m_PipelineResourceState->SetTextures(&m_FontTexture, 1, 0);
-		pList->SetGraphicsPipelineResourceState(m_PipelineResourceState.Get());
-		pList->SetGraphicsPipelineState(m_PipelineState.Get());
+		m_PipelineState->SetTextures(&m_FontTexture, 1, 0);
+		pList->SetPipelineState(m_PipelineState.Get());
 		
 		//Setup vertex and indexbuffer
 		pList->SetVertexBuffer(m_VertexBuffer.Get(), 0);
@@ -563,7 +573,6 @@ namespace Lambda
 		//Destroy all objects
 		m_VS.Release();
 		m_PS.Release();
-		m_PipelineResourceState.Release();
 		m_PipelineState.Release();
 		m_SamplerState.Release();
 		m_FontTexture.Release();

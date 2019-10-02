@@ -65,7 +65,7 @@ namespace Lambda
 			m_SwapChain->SetFullscreenState(false, nullptr);
 		}
 
-		ICommandList* pList = m_pCommandList;
+		IDeviceContext* pList = m_pCommandList;
 		m_pCommandList->Release();
 
 		for (uint32 i = 0; i < m_NumBackbuffers; i++)
@@ -91,7 +91,7 @@ namespace Lambda
 
 		//Should we enable debuglayer
 		uint32 factoryFlags = 0;
-		if (desc.Flags & GRAPHICS_CONTEXT_FLAG_DEBUG)
+		if (desc.Flags & DEVICE_FLAG_DEBUG)
 		{
 			factoryFlags = DXGI_CREATE_FACTORY_DEBUG;
 
@@ -162,7 +162,7 @@ namespace Lambda
 			}
 
 			//Create debug interface
-			if (desc.Flags & GRAPHICS_CONTEXT_FLAG_DEBUG)
+			if (desc.Flags & DEVICE_FLAG_DEBUG)
 			{
 				//Retrive infoqueue
 				ComPtr<ID3D12InfoQueue> infoQueue = nullptr;
@@ -265,7 +265,7 @@ namespace Lambda
 
 
 		//Create internal commandlist
-		ICommandList* pCommandList = nullptr;
+		IDeviceContext* pCommandList = nullptr;
 		CreateCommandList(&pCommandList, COMMAND_LIST_TYPE_GRAPHICS);
 		
 		m_pCommandList = reinterpret_cast<DX12CommandList*>(pCommandList);
@@ -324,7 +324,7 @@ namespace Lambda
 	}
 
 
-	void DX12GraphicsDevice::CreateCommandList(ICommandList** ppList, CommandListType type)
+	void DX12GraphicsDevice::CreateCommandList(IDeviceContext** ppList, CommandListType type)
 	{
 		*ppList = DBG_NEW DX12CommandList(type, m_NullSampler, m_NullSRV, m_NullUAV, m_NullCBV);
 	}
@@ -406,7 +406,7 @@ namespace Lambda
 			//Execute and wait for GPU before creating
 			m_pCommandList->Close();
 
-			ICommandList* pList = m_pCommandList;
+			IDeviceContext* pList = m_pCommandList;
 			ExecuteCommandList(&pList, 1);
 
 			WaitForGPU();
@@ -470,9 +470,9 @@ namespace Lambda
 	}
 
 
-	void DX12GraphicsDevice::CreateGraphicsPipelineState(IGraphicsPipelineState** ppPSO, const GraphicsPipelineStateDesc& desc)
+	void DX12GraphicsDevice::CreatePipelineState(IPipelineState** ppPSO, const PipelineStateDesc& desc)
 	{
-		(*ppPSO) = DBG_NEW DX12GraphicsPipelineState(m_Device.Get(), desc);
+		//(*ppPSO) = DBG_NEW DX12GraphicsPipelineState(m_Device.Get(), desc);
 	}
 
 
@@ -482,17 +482,12 @@ namespace Lambda
 	}
 
 
-	void DX12GraphicsDevice::CreatePipelineResourceState(IPipelineResourceState** ppResourceState, const PipelineResourceStateDesc& desc)
-	{
-	}
-
-
 	void DX12GraphicsDevice::CreateQuery(IQuery** ppQuery, const QueryDesc& desc)
 	{
 	}
 
 
-	//void DX12GraphicsDevice::DestroyCommandList(ICommandList** ppList)
+	//void DX12GraphicsDevice::DestroyCommandList(IDeviceContext** ppList)
 	//{
 	//	LAMBDA_ASSERT(ppList != nullptr);
 
@@ -610,7 +605,7 @@ namespace Lambda
 	//}
 
 
-	void DX12GraphicsDevice::ExecuteCommandList(ICommandList* const * ppLists, uint32 numLists) const
+	void DX12GraphicsDevice::ExecuteCommandList(IDeviceContext* const * ppLists, uint32 numLists) const
 	{
 		m_DirectQueue.ExecuteCommandLists(reinterpret_cast<DX12CommandList* const *>(ppLists), numLists);
 	}
@@ -621,7 +616,7 @@ namespace Lambda
 	}
 
 
-	void DX12GraphicsDevice::PresentEnd(ICommandList* const* ppLists, uint32 numLists) const
+	void DX12GraphicsDevice::PresentEnd(IDeviceContext* const* ppLists, uint32 numLists) const
 	{
 		m_DirectQueue.ExecuteCommandLists(reinterpret_cast<DX12CommandList * const*>(ppLists), numLists);
 		m_SwapChain->Present(1, 0);
@@ -674,7 +669,7 @@ namespace Lambda
 	}
 
 
-	ResourceFormat DX12GraphicsDevice::GetBackBufferFormat() const
+	Format DX12GraphicsDevice::GetBackBufferFormat() const
 	{
 		return ConvertDXGIFormat(m_BackBufferFormat);
 	}
@@ -751,7 +746,7 @@ namespace Lambda
 			//Skip software adapters
 			if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
 			{
-				if (!(flags & GRAPHICS_CONTEXT_FLAG_ALLOW_SOFTWARE_ADAPTER))
+				if (!(flags & DEVICE_FLAG_ALLOW_SOFTWARE_ADAPTER))
 					continue;
 			}
 

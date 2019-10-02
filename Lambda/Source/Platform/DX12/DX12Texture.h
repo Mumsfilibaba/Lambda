@@ -1,5 +1,5 @@
 #pragma once
-#include "Graphics/ITexture.h"
+#include "Graphics/Core/ITexture.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include <wrl/client.h>
 	#include "DX12DescriptorHandle.h"

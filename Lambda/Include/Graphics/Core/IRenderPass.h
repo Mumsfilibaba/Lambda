@@ -21,7 +21,7 @@ namespace Lambda
 
 	struct RenderPassAttachmentDesc
 	{
-		ResourceFormat Format       = FORMAT_UNKNOWN;
+		Format Format       = FORMAT_UNKNOWN;
         uint32 Flags                = RENDER_PASS_ATTACHMENT_FLAG_NONE;
         LoadOp LoadOperation        = LOAD_OP_UNKNOWN;
         StoreOp StoreOperation      = STORE_OP_UNKNOWN;

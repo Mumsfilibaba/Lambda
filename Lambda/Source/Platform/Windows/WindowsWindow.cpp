@@ -1,7 +1,7 @@
 #include "LambdaPch.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include "System/Log.h"
-	#include "Graphics/IDevice.h"
+	#include "Graphics/Core/IDevice.h"
 	#include "../Vulkan/VKNDevice.h"
 	#include "../DX12/DX12GraphicsDevice.h"
 	#include "Utilities/StringHelper.h"
@@ -246,9 +246,9 @@ namespace Lambda
 			gcDesc.BackBufferCount	= 3;
 			gcDesc.VerticalSync		= desc.VerticalSync;
 #if LAMBDA_DEBUG
-			gcDesc.Flags = GRAPHICS_CONTEXT_FLAG_DEBUG;
+			gcDesc.Flags = DEVICE_FLAG_DEBUG;
 #else
-			gcDesc.Flags = GRAPHICS_CONTEXT_FLAG_NONE;
+			gcDesc.Flags = DEVICE_FLAG_NONE;
 #endif
             if (desc.GraphicsDeviceAPI == GRAPHICS_API_D3D12)
             {

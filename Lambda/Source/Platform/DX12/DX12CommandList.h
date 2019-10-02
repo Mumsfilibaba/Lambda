@@ -1,5 +1,5 @@
 #pragma once
-#include "Graphics/ICommandList.h"
+#include "Graphics/Core/IDeviceContext.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include "DX12LinearAllocator.h"
 	#include "DX12LinearDescriptorAllocator.h"
@@ -12,7 +12,7 @@ namespace Lambda
 	//DX12CommandList
 	//---------------
 
-	class DX12CommandList final : public RefCountedObject<ICommandList>
+	class DX12CommandList final : public RefCountedObject<IDeviceContext>
 	{
 		friend class DX12GraphicsDevice;
 		friend class DX12CommandQueue;
@@ -35,10 +35,9 @@ namespace Lambda
 		virtual void SetViewport(const Viewport& viewport) override final;
 		virtual void SetScissorRect(const Rectangle& scissorRect) override final;
 		virtual void SetVertexBuffer(IBuffer* pBuffer, uint32 slot) override final; 
-		virtual void SetIndexBuffer(IBuffer* pIndexBuffer, ResourceFormat format) override final;
+		virtual void SetIndexBuffer(IBuffer* pIndexBuffer, Format format) override final;
 		virtual void SetConstantBlocks(ShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData) override final;
-		virtual void SetGraphicsPipelineState(IGraphicsPipelineState* pPiplineState) override final;
-		virtual void SetGraphicsPipelineResourceState(IPipelineResourceState* pResourceState) override final;
+		virtual void SetPipelineState(IPipelineState* pPiplineState) override final;
 
 		virtual void TransitionBuffer(const IBuffer* pResource, ResourceState resourceState) override final;
 		virtual void TransitionTexture(const ITexture* pResource, ResourceState resourceState, uint32 startMipLevel, uint32 numMipLevels) override final;

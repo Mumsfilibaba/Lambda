@@ -1,5 +1,5 @@
 #pragma once
-#include "Graphics/IShader.h"
+#include "Graphics/Core/IShader.h"
 #include <vulkan/vulkan.h>
 #include <vector>
 #include <string>
@@ -22,6 +22,8 @@ namespace Lambda
         
         virtual void* GetNativeHandle() const override final;
 		virtual const ShaderDesc& GetDesc() const override final;
+
+		inline VkShaderModule GetVkShaderModule() const { return m_Shader; }
     private:
         void Init(const ShaderDesc& desc);
     private:

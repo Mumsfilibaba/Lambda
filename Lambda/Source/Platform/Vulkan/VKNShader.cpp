@@ -26,7 +26,7 @@ namespace Lambda
 	{
 		if (m_Shader != VK_NULL_HANDLE)
 		{
-			vkDestroyShaderModule(m_pDevice->GetDevice(), m_Shader, nullptr);
+			vkDestroyShaderModule(m_pDevice->GetVkDevice(), m_Shader, nullptr);
 			m_Shader = VK_NULL_HANDLE;
 		}
 
@@ -53,7 +53,7 @@ namespace Lambda
         info.flags = 0;
         info.codeSize = desc.SourceLength;
         info.pCode = reinterpret_cast<const uint32_t*>(m_ByteCode.data());
-        if (vkCreateShaderModule(m_pDevice->GetDevice(), &info, nullptr, &m_Shader) != VK_SUCCESS)
+        if (vkCreateShaderModule(m_pDevice->GetVkDevice(), &info, nullptr, &m_Shader) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create shadermodule\n");
             m_Shader = VK_NULL_HANDLE;

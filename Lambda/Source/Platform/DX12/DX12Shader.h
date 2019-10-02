@@ -1,5 +1,5 @@
 #pragma once
-#include "Graphics/IShader.h"
+#include "Graphics/Core/IShader.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include <wrl/client.h>
 	#include <d3d12.h>

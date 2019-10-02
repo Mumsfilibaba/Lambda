@@ -1,5 +1,5 @@
 #pragma once
-#include "Graphics/IDevice.h"
+#include "Graphics/Core/IDevice.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#define VK_USE_PLATFORM_WIN32_KHR
 #endif
@@ -14,7 +14,7 @@ namespace Lambda
     class VKNTexture;
     class VKNSwapChain;
     class VKNAllocator;
-    class VKNCommandList;
+    class VKNDeviceContext;
     class VKNSamplerState;
     class VKNUploadBuffer;
     class VKNBufferManager;
@@ -32,20 +32,19 @@ namespace Lambda
         VKNDevice(const DeviceDesc& desc);
         ~VKNDevice();
         
-        virtual void CreateCommandList(ICommandList** ppList, CommandListType type) override final;
+        virtual void CreateCommandList(IDeviceContext** ppList, CommandListType type) override final;
         virtual void CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) override final;
         virtual void CreateTexture(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc) override final;
         virtual void CreateShader(IShader** ppShader, const ShaderDesc& desc) override final;
         virtual void CreateSamplerState(ISamplerState** ppSamplerState, const SamplerStateDesc& desc) override final;
-        virtual void CreateGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState, const GraphicsPipelineStateDesc& desc) override final;
+        virtual void CreatePipelineState(IPipelineState** ppPipelineState, const PipelineStateDesc& desc) override final;
 		virtual void CreateRenderPass(IRenderPass** ppRenderPass, const RenderPassDesc& desc) override final;
-		virtual void CreatePipelineResourceState(IPipelineResourceState** ppResourceState, const PipelineResourceStateDesc& desc) override final;
 		virtual void CreateQuery(IQuery** ppQuery, const QueryDesc& desc) override final;
         
-        virtual void ExecuteCommandList(ICommandList* const * ppLists, uint32 numLists) const override final;
+        virtual void ExecuteCommandList(IDeviceContext* const * ppLists, uint32 numLists) const override final;
 		
 		virtual void PresentBegin() const override final;
-		virtual void PresentEnd(ICommandList* const* ppLists, uint32 numLists) const override final;
+		virtual void PresentEnd(IDeviceContext* const* ppLists, uint32 numLists) const override final;
 
         virtual void GPUWaitForFrame() const override final;
         virtual void WaitForGPU() const override final;
@@ -55,7 +54,7 @@ namespace Lambda
         virtual const DeviceDesc& GetDesc() const override final;
         virtual ITexture* GetDepthStencil() const override final;
         virtual ITexture* GetRenderTarget() const override final;
-        virtual ResourceFormat GetBackBufferFormat() const override final;
+        virtual Format GetBackBufferFormat() const override final;
         virtual uint32 GetBackBufferIndex() const override final;
         virtual uint32 GetSwapChainWidth() const override final;
         virtual uint32 GetSwapChainHeight() const override final;
@@ -63,12 +62,12 @@ namespace Lambda
 		void SetVulkanObjectName(VkObjectType type, uint64 objectHandle, const std::string& name);
 		VkSampleCountFlagBits GetHighestSampleCount() const;
 
-		VkInstance GetVkInstance() const;
-		VkPhysicalDevice GetPhysicalDevice() const;
-		VkDevice GetDevice() const;
-		VkSurfaceKHR GetSurface() const;
-		QueueFamilyIndices GetQueueFamilyIndices() const;
-		VkPhysicalDeviceProperties GetPhysicalDeviceProperties() const;
+		inline VkInstance GetVkInstance() const { return m_Instance; }
+		inline VkPhysicalDevice GetVkPhysicalDevice() const { return m_PhysicalDevice; }
+		inline VkDevice GetVkDevice() const { return m_Device; }
+		inline VkSurfaceKHR GetVkSurface() const { return m_Surface; }
+		inline QueueFamilyIndices GetQueueFamilyIndices() const { return m_FamiliyIndices; }
+		inline VkPhysicalDeviceProperties GetPhysicalDeviceProperties() const { return m_PhysicalDeviceProperties; }
 	private:
 		void Init(const DeviceDesc& desc);
 		void InitDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo);
@@ -93,7 +92,7 @@ namespace Lambda
 		VKNTexture*					  m_pDepthStencil;
 		VKNTexture*					  m_pMSAABuffer;
 		VKNSwapChain*				  m_pSwapChain;
-		VKNCommandList*				  m_pCommandList;
+		VKNDeviceContext*				  m_pCommandList;
 		mutable AutoRef<VKNAllocator> m_DeviceAllocator;
         VkQueue						  m_GraphicsQueue;
         VkQueue						  m_PresentationQueue;
@@ -122,40 +121,4 @@ namespace Lambda
     public:
 		static VKNDevice& Get();
     };
-
-
-	inline VkDevice VKNDevice::GetDevice() const
-	{
-		return m_Device;
-	}
-
-
-	inline VkInstance VKNDevice::GetVkInstance() const
-	{
-		return m_Instance;
-	}
-
-
-	inline VkPhysicalDevice VKNDevice::GetPhysicalDevice() const
-	{
-		return m_PhysicalDevice;
-	}
-
-
-	inline VkSurfaceKHR VKNDevice::GetSurface() const
-	{
-		return m_Surface;
-	}
-
-
-	inline QueueFamilyIndices VKNDevice::GetQueueFamilyIndices() const
-	{
-		return m_FamiliyIndices;
-	}
-
-
-	inline VkPhysicalDeviceProperties VKNDevice::GetPhysicalDeviceProperties() const
-	{
-		return m_PhysicalDeviceProperties;
-	}
 }

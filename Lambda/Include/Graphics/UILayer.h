@@ -3,12 +3,11 @@
 #include "Events/KeyEvent.h"
 #include "Events/WindowEvent.h"
 #include "Events/MouseEvent.h"
-#include "Graphics/ITexture.h"
-#include "Graphics/IShader.h"
-#include "Graphics/ISamplerState.h"
-#include "Graphics/IPipelineResourceState.h"
-#include "Graphics/IPipelineState.h"
-#include "Graphics/IBuffer.h"
+#include "Graphics/Core/ITexture.h"
+#include "Graphics/Core/IShader.h"
+#include "Graphics/Core/ISamplerState.h"
+#include "Graphics/Core/IPipelineState.h"
+#include "Graphics/Core/IBuffer.h"
 #include "System/Layer.h"
 #include "Time/Timestep.h"
 #include <imgui.h>
@@ -19,10 +18,9 @@ namespace Lambda
 	class IShader;
 	class ITexture;
 	class IRenderPass;
-	class ICommandList;
 	class ISamplerState;
-	class IGraphicsPipelineState;
-	class IPipelineResourceState;
+	class IDeviceContext;
+	class IPipelineState;
 
 	//-------
 	//UILayer
@@ -36,10 +34,10 @@ namespace Lambda
 		UILayer();
 		~UILayer() = default;
 
-		void Init(IRenderPass* pRenderPass, ICommandList* pList);
+		void Init(IRenderPass* pRenderPass, IDeviceContext* pList);
         void Begin(Timestep time);
         void End();
-        void Draw(ICommandList* pList);
+        void Draw(IDeviceContext* pList);
 
         virtual void OnLoad() override final;
         virtual void OnRenderUI(Timestep dt) override final;
@@ -57,13 +55,12 @@ namespace Lambda
 		bool OnWindowResize(const WindowResizeEvent& event);
         void Create();
 	private:
-		AutoRef<IShader>				m_VS;
-		AutoRef<IShader>				m_PS;
-		AutoRef<ISamplerState>			m_SamplerState;
-		AutoRef<IPipelineResourceState> m_PipelineResourceState;
-		AutoRef<IGraphicsPipelineState>	m_PipelineState;
-		AutoRef<ITexture>				m_FontTexture;
-		AutoRef<IBuffer>				m_VertexBuffer;
-		AutoRef<IBuffer>				m_IndexBuffer;
+		AutoRef<IShader>		m_VS;
+		AutoRef<IShader>		m_PS;
+		AutoRef<ISamplerState>	m_SamplerState;
+		AutoRef<IPipelineState>	m_PipelineState;
+		AutoRef<ITexture>		m_FontTexture;
+		AutoRef<IBuffer>		m_VertexBuffer;
+		AutoRef<IBuffer>		m_IndexBuffer;
 	};
 }
