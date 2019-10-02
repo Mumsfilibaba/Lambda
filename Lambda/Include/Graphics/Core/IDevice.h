@@ -1,5 +1,4 @@
 #pragma once
-#include "IObject.h"
 #include "Events/WindowEvent.h"
 #include "System/IWindow.h"
 #include "IDeviceContext.h"

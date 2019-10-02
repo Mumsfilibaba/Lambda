@@ -17,7 +17,7 @@ namespace Lambda
 	//----------------
 
     VKNPipelineState::VKNPipelineState(VKNDevice* pDevice, const PipelineStateDesc& desc)
-        : m_pDevice(pDevice),
+        : VKNDeviceObject<IPipelineState>(pDevice),
 		m_Pipeline(VK_NULL_HANDLE),
 		m_IsDirty(true)
     {

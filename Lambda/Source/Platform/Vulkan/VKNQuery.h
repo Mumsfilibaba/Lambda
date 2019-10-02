@@ -8,7 +8,7 @@ namespace Lambda
     //VKNQuery
     //--------
     
-    class VKNQuery final : public RefCountedObject<IQuery>
+    class VKNQuery final : public VKNDeviceObject<IQuery>
     {
     public:
         LAMBDA_NO_COPY(VKNQuery);
@@ -26,7 +26,6 @@ namespace Lambda
     private:
         void Init(const QueryDesc& desc);
     private:
-		VKNDevice*	m_pDevice;
         VkQueryPool m_QueryPool;
         uint32      m_CurrentQuery;
         float       m_TimeStampPeriod;

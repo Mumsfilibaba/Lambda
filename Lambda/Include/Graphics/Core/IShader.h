@@ -1,5 +1,5 @@
 #pragma once
-#include "IObject.h"
+#include "IDeviceObject.h"
 
 namespace Lambda
 {   
@@ -45,7 +45,7 @@ namespace Lambda
     //IShader
     //-------
     
-	class LAMBDA_API IShader : public IObject
+	class LAMBDA_API IShader : public IDeviceObject
 	{
 	public:
 		LAMBDA_IOBJECT_INTERFACE(IShader);

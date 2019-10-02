@@ -85,7 +85,7 @@
 
 	#define DEBUG_BREAK __debugbreak()
 #else
-	#define DEBUG_BREAK
+	#define DEBUG_BREAK assert(false)
 #endif
 
 

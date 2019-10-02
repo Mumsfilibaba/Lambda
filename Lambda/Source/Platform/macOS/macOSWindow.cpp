@@ -7,7 +7,7 @@
     #include "Events/KeyEvent.h"
     #include "Events/WindowEvent.h"
     #include "Events/MouseEvent.h"
-    #include "Graphics/IDevice.h"
+    #include "Graphics/Core/IDevice.h"
     #include "System/Input.h"
     #include "System/JoystickManager.h"
     #include "System/Log.h"

@@ -1,5 +1,5 @@
 #pragma once
-#include "IObject.h"
+#include "IDeviceObject.h"
 
 #define LAMBDA_TRANSITION_ALL_MIPS uint32(-1)
 
@@ -12,11 +12,11 @@ namespace Lambda
     class ISamplerState;
     class IPipelineState;
 
-    //------------
+    //--------------
     //IDeviceContext
-    //------------
+    //--------------
 
-	class LAMBDA_API IDeviceContext : public IObject
+	class LAMBDA_API IDeviceContext : public IDeviceObject
 	{
 	public:
 		LAMBDA_IOBJECT_INTERFACE(IDeviceContext);

@@ -5,7 +5,7 @@
 namespace Lambda
 {
 	VKNQuery::VKNQuery(VKNDevice* pDevice, const QueryDesc& desc)
-		: m_pDevice(pDevice),
+		: VKNDeviceObject<IQuery>(pDevice),
 		m_QueryPool(VK_NULL_HANDLE),
         m_CurrentQuery(0),
         m_TimeStampPeriod(0),

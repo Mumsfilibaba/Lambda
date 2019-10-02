@@ -1,5 +1,5 @@
 #pragma once
-#include "IObject.h"
+#include "IDeviceObject.h"
 
 namespace Lambda
 {
@@ -27,7 +27,7 @@ namespace Lambda
     //IQuery
     //------
     
-    class IQuery : public IObject
+    class IQuery : public IDeviceObject
     {
     public:
 		LAMBDA_IOBJECT_INTERFACE(IQuery);

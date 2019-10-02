@@ -1,12 +1,10 @@
 #pragma once
-#include "IObject.h"
+#include "VKNDeviceObject.h"
 #include <vector>
 #include <vulkan/vulkan.h>
 
 namespace Lambda
 {
-	class VKNDevice;
-
 	//---------
 	//VKNMemory
 	//---------
@@ -25,7 +23,7 @@ namespace Lambda
 	//IVKNAllocator
 	//-------------
 
-	class IVKNAllocator : public IObject
+	class IVKNAllocator : public IDeviceObject
 	{
 	public:
 		LAMBDA_INTERFACE(IVKNAllocator);
@@ -88,7 +86,7 @@ namespace Lambda
 	//VKNAllocator
 	//------------
 
-	class VKNAllocator final : public RefCountedObject<IVKNAllocator>
+	class VKNAllocator final : public VKNDeviceObject<IVKNAllocator>
 	{
 	public:
 		LAMBDA_NO_COPY(VKNAllocator);
@@ -102,7 +100,6 @@ namespace Lambda
 		virtual uint64 GetTotalReserved() const override final;
 		virtual uint64 GetTotalAllocated() const override final;
 	private:
-		VKNDevice*	 m_pDevice;
 		uint64		 m_MaxAllocations;
 		uint64		 m_TotalReserved;
 		uint64		 m_TotalAllocated;

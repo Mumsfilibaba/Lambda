@@ -1,5 +1,5 @@
 #pragma once
-#include "IObject.h"
+#include "IDeviceObject.h"
 
 namespace Lambda
 {
@@ -46,7 +46,7 @@ namespace Lambda
     //ITexture
     //--------
     
-	class LAMBDA_API ITexture : public IObject
+	class LAMBDA_API ITexture : public IDeviceObject
 	{
 	public:
 		LAMBDA_IOBJECT_INTERFACE(ITexture);

@@ -1,6 +1,7 @@
 #pragma once
 #include "Graphics/Core/IRenderPass.h"
 #include <vulkan/vulkan.h>
+#include "VKNDeviceObject.h"
 #include "VKNConversions.inl"
 
 namespace Lambda
@@ -11,7 +12,7 @@ namespace Lambda
 	//VKNRenderPass
 	//-------------
 
-	class VKNRenderPass final : public RefCountedObject<IRenderPass>
+	class VKNRenderPass final : public VKNDeviceObject<IRenderPass>
 	{
 	public:
 		LAMBDA_NO_COPY(VKNRenderPass);
@@ -33,7 +34,6 @@ namespace Lambda
 	private:
 		void Init(const RenderPassDesc& desc);
 	private:
-		VKNDevice*		m_pDevice;
 		VkRenderPass	m_RenderPass;
 		VkFramebuffer	m_Framebuffer;
 		VkExtent2D		m_FramebufferExtent;

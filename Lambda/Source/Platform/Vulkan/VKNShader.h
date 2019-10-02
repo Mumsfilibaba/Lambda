@@ -1,5 +1,6 @@
 #pragma once
 #include "Graphics/Core/IShader.h"
+#include "VKNDeviceObject.h"
 #include <vulkan/vulkan.h>
 #include <vector>
 #include <string>
@@ -12,7 +13,7 @@ namespace Lambda
 	//VKNSamplerState
 	//---------------
 
-    class VKNShader final : public RefCountedObject<IShader>
+    class VKNShader final : public VKNDeviceObject<IShader>
     {
     public:
         LAMBDA_NO_COPY(VKNShader);
@@ -27,7 +28,6 @@ namespace Lambda
     private:
         void Init(const ShaderDesc& desc);
     private:
-		VKNDevice*			m_pDevice;
         VkShaderModule		m_Shader;
         std::vector<char>	m_ByteCode;
         std::string			m_EntryPoint;

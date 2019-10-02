@@ -32,11 +32,7 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(RefCountedObject);
 
-		RefCountedObject()
-			: Base(), m_StrongReferences(0)
-		{
-		}
-
+		RefCountedObject() : Base(), m_StrongReferences(0) {}
 		virtual ~RefCountedObject() = default;
 
 		virtual RefCountValue Release() override final

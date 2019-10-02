@@ -1,5 +1,5 @@
 #pragma once
-#include "IObject.h"
+#include "IDeviceObject.h"
 
 namespace Lambda
 {
@@ -20,7 +20,7 @@ namespace Lambda
     //IBuffer
     //-------
 
-	class LAMBDA_API IBuffer : public IObject
+	class LAMBDA_API IBuffer : public IDeviceObject
 	{
 	public:
 		LAMBDA_IOBJECT_INTERFACE(IBuffer);

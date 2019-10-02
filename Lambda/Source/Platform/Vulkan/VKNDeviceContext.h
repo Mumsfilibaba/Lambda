@@ -1,6 +1,6 @@
 #pragma once
-#include <string>
 #include "Graphics/Core/IDeviceContext.h"
+#include <string>
 #include "VKNPipelineState.h"
 #include "VKNUtilities.h"
 
@@ -16,7 +16,7 @@ namespace Lambda
 	//VKNDeviceContext
 	//----------------
 
-    class VKNDeviceContext final : public RefCountedObject<IDeviceContext>
+    class VKNDeviceContext final : public VKNDeviceObject<IDeviceContext>
     {
         friend class VKNDevice;
         
@@ -66,7 +66,6 @@ namespace Lambda
     private:
         void Init(IVKNAllocator* pAllocator, CommandListType type);
     private:
-		VKNDevice*			      m_pDevice;
         VkCommandPool			  m_CommandPool;
         VkCommandBuffer			  m_CommandBuffer;  
 		IVKNAllocator*			  m_pAllocator;

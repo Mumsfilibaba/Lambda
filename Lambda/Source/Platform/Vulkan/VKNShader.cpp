@@ -9,7 +9,7 @@ namespace Lambda
 	//---------
 
 	VKNShader::VKNShader(VKNDevice* pDevice, const ShaderDesc& desc)
-		: m_pDevice(pDevice),
+		: VKNDeviceObject<IShader>(pDevice),
 		m_Shader(VK_NULL_HANDLE),
 		m_ByteCode(),
 		m_EntryPoint(),

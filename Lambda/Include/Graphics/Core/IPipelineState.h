@@ -1,5 +1,5 @@
 #pragma once
-#include "IObject.h"
+#include "IDeviceObject.h"
 
 namespace Lambda
 {    
@@ -154,7 +154,7 @@ namespace Lambda
     //IPipelineState
     //--------------
 
-	class LAMBDA_API IPipelineState : public IObject
+	class LAMBDA_API IPipelineState : public IDeviceObject
 	{
 	public:
 		LAMBDA_IOBJECT_INTERFACE(IPipelineState);

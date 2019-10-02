@@ -1,5 +1,6 @@
 #pragma once
 #include "Graphics/Core/IPipelineState.h"
+#include "VKNDeviceObject.h"
 #include <map>
 #include <vector>
 #include <vulkan/vulkan.h>
@@ -39,7 +40,7 @@ namespace Lambda
 	//VKNPipelineState
 	//------------------------
 
-    class VKNPipelineState final : public RefCountedObject<IPipelineState>
+    class VKNPipelineState final : public VKNDeviceObject<IPipelineState>
     {
     public:
         LAMBDA_NO_COPY(VKNPipelineState);
@@ -64,7 +65,6 @@ namespace Lambda
     private:
         void Init(const PipelineStateDesc& desc);
     private:
-		VKNDevice*	m_pDevice;
 		std::map<uint32, VKNSlot> m_ResourceBindings;
 		std::vector<VkWriteDescriptorSet>   m_DescriptorWrites;
 		std::vector<uint32>				    m_DynamicOffsets;

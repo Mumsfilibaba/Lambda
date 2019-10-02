@@ -11,7 +11,7 @@ namespace Lambda
 	//---------
 
     VKNBuffer::VKNBuffer(VKNDevice* pDevice, IVKNAllocator* pAllocator, const BufferDesc& desc)
-		: m_pDevice(pDevice),
+		: VKNDeviceObject<IBuffer>(pDevice),
 		m_pAllocator(pAllocator),
         m_Memory(),
 		m_Buffer(VK_NULL_HANDLE),

@@ -316,7 +316,7 @@ namespace Lambda
     constexpr size_t numFrames = 5;
 
 	VKNAllocator::VKNAllocator(VKNDevice* pDevice)
-		: m_pDevice(pDevice),
+		: VKNDeviceObject<IVKNAllocator>(pDevice),
 		m_MaxAllocations(0),
         m_TotalReserved(0),
         m_TotalAllocated(0),
@@ -331,7 +331,7 @@ namespace Lambda
         m_MemoryToDeallocate.resize(numFrames);
         
         //Setup from properties of the device
-		VkPhysicalDeviceProperties properties = m_pDevice->GetPhysicalDeviceProperties();
+		VkPhysicalDeviceProperties properties = pDevice->GetPhysicalDeviceProperties();
 		m_MaxAllocations = properties.limits.maxMemoryAllocationCount;
         m_BufferImageGranularity = properties.limits.bufferImageGranularity;
 	}

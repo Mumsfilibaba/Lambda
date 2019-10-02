@@ -11,7 +11,7 @@ namespace Lambda
     //VKNTexture
     //----------
     
-    class VKNTexture final : public RefCountedObject<ITexture>
+    class VKNTexture final : public VKNDeviceObject<ITexture>
     {
         friend class VKNDevice;  
     public:
@@ -37,7 +37,6 @@ namespace Lambda
         void InitFromResource(VkImage image, const TextureDesc& desc);
         void CreateImageView(); 
     private:
-		VKNDevice*				m_pDevice;
 		IVKNAllocator* const	m_pAllocator;
 		VKNMemory				m_Memory;
         VkImage                 m_Image;

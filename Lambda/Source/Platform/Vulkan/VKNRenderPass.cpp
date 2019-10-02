@@ -12,7 +12,7 @@ namespace Lambda
 	//-------------
 
 	VKNRenderPass::VKNRenderPass(VKNDevice* pDevice, const RenderPassDesc& desc)
-		: m_pDevice(pDevice),
+		: VKNDeviceObject<IRenderPass>(pDevice),
 		m_RenderPass(VK_NULL_HANDLE),
 		m_Framebuffer(VK_NULL_HANDLE),
 		m_FramebufferExtent(),

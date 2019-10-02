@@ -1,5 +1,5 @@
 #pragma once
-#include "IObject.h"
+#include "IDeviceObject.h"
 
 namespace Lambda
 {
@@ -44,7 +44,7 @@ namespace Lambda
 	//IRenderPass
 	//-----------
 
-	class LAMBDA_API IRenderPass : public IObject
+	class LAMBDA_API IRenderPass : public IDeviceObject
 	{
 	public:
 		LAMBDA_IOBJECT_INTERFACE(IRenderPass);

@@ -11,7 +11,7 @@ namespace Lambda
 	//VKNBuffer
 	//---------
 
-    class VKNBuffer final : public RefCountedObject<IBuffer>
+    class VKNBuffer final : public VKNDeviceObject<IBuffer>
     {
     public:
         LAMBDA_NO_COPY(VKNBuffer);
@@ -35,7 +35,6 @@ namespace Lambda
     private:
         void Init(const BufferDesc& desc);
     private:
-		VKNDevice*		m_pDevice;
 		IVKNAllocator*	m_pAllocator;
         VKNMemory		m_Memory;
         VkBuffer		m_Buffer;

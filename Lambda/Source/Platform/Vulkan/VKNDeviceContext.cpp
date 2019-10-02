@@ -17,7 +17,7 @@ namespace Lambda
 	//----------------
 
     VKNDeviceContext::VKNDeviceContext(VKNDevice* pDevice, IVKNAllocator* pAllocator, CommandListType type)
-        : m_pDevice(pDevice),
+        : VKNDeviceObject<IDeviceContext>(pDevice),
 		m_CommandPool(VK_NULL_HANDLE),
         m_CommandBuffer(VK_NULL_HANDLE),
 		m_pBufferUpload(nullptr),

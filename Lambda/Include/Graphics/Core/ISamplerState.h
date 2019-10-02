@@ -1,5 +1,5 @@
 #pragma once
-#include "IObject.h"
+#include "IDeviceObject.h"
 
 namespace Lambda
 {
@@ -20,7 +20,7 @@ namespace Lambda
     //ISamplerState
     //-------------
 
-	class LAMBDA_API ISamplerState : public IObject
+	class LAMBDA_API ISamplerState : public IDeviceObject
 	{
 	public:
 		LAMBDA_IOBJECT_INTERFACE(ISamplerState);

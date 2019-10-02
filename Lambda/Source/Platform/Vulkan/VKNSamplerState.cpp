@@ -10,7 +10,7 @@ namespace Lambda
 	//---------------
 
 	VKNSamplerState::VKNSamplerState(VKNDevice* pDevice, const SamplerStateDesc& desc)
-		: m_pDevice(pDevice),
+		: VKNDeviceObject<ISamplerState>(pDevice),
 		m_Sampler(VK_NULL_HANDLE),
 		m_Desc()
 	{
