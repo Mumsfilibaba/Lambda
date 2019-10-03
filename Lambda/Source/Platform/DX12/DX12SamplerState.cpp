@@ -1,15 +1,16 @@
 #include "LambdaPch.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
+	#include "DX12Device.h"
 	#include "DX12SamplerState.h"
 
 namespace Lambda
 {
-	DX12SamplerState::DX12SamplerState(ID3D12Device* pDevice, DX12DescriptorHandle hDescriptor, const SamplerStateDesc& desc)
-		: m_Desc(),
+	DX12SamplerState::DX12SamplerState(DX12Device* pDevice, DX12DescriptorHandle hDescriptor, const SamplerStateDesc& desc)
+		: DeviceObjectBase<DX12Device, ISamplerState>(pDevice),
+		m_Desc(),
 		m_Descriptor()
 	{
-		LAMBDA_ASSERT(pDevice != nullptr);
-		Init(pDevice, hDescriptor, desc);
+		Init(hDescriptor, desc);
 	}
 
 
@@ -25,10 +26,8 @@ namespace Lambda
 	}
 
 
-	void DX12SamplerState::Init(ID3D12Device* pDevice, DX12DescriptorHandle hDescriptor, const SamplerStateDesc& desc)
+	void DX12SamplerState::Init(DX12DescriptorHandle hDescriptor, const SamplerStateDesc& desc)
 	{
-		LAMBDA_ASSERT(&desc != nullptr);
-
 		//Create sampler
 		D3D12_SAMPLER_DESC sDesc = {};
 		sDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
@@ -45,7 +44,7 @@ namespace Lambda
 		sDesc.MaxLOD = 1;
 		sDesc.MipLODBias = 0;
 
-		pDevice->CreateSampler(&sDesc, hDescriptor.CPU);
+		m_pDevice->GetDevice()->CreateSampler(&sDesc, hDescriptor.CPU);
 
 		//Set descriptor
 		m_Descriptor = hDescriptor;

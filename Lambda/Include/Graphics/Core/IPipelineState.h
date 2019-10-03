@@ -1,5 +1,5 @@
 #pragma once
-#include "IDeviceObject.h"
+#include "IShaderVariableTable.h"
 
 namespace Lambda
 {    
@@ -74,41 +74,6 @@ namespace Lambda
 		bool DepthTest = true;
 	};
 
-	//------------------
-	//ShaderVariableDesc
-	//------------------
-
-	struct ShaderVariableDesc
-	{
-		ISamplerState* pSamplerState = nullptr;
-		ResourceType Type	= RESOURCE_TYPE_UNKNOWN;
-		ShaderStage	Stage	= SHADER_STAGE_UNKNOWN;
-		ResourceUsage Usage = RESOURCE_USAGE_UNKNOWN;
-		uint32 Slot			= 0;
-	};
-
-	//------------
-	//ConstantSlot
-	//------------
-
-	struct ConstantBlock
-	{
-		ShaderStage	Stage	= SHADER_STAGE_UNKNOWN;
-		uint32 SizeInBytes	= 0;
-	};
-
-	//------------------------
-	//ShaderVariableLayoutDesc
-	//------------------------
-
-	struct ShaderVariableLayoutDesc
-	{
-		uint32 NumResourceSlots						= 0;
-		const ShaderVariableDesc* pResourceSlots	= nullptr;
-		uint32 NumConstantBlocks					= 0;
-		const ConstantBlock* pConstantBlocks		= nullptr;
-	};
-
 	//-------------------------
 	//GraphicsPipelineStateDesc
 	//-------------------------
@@ -145,7 +110,7 @@ namespace Lambda
 	{
         const char* pName = nullptr;
 		PipelineType Type = PIPELINE_TYPE_GRAPHICS;
-		ShaderVariableLayoutDesc ShaderResources;
+		ShaderVariableTableDesc ShaderVariableTable;
 		GraphicsPipelineStateDesc GraphicsPipeline;
 		ComputePipelineStateDesc ComputePipeline;
 	};
@@ -159,11 +124,14 @@ namespace Lambda
 	public:
 		LAMBDA_IOBJECT_INTERFACE(IPipelineState);
         
+		virtual void CreateShaderVariableTable(IShaderVariableTable** ppVariableTable) = 0;
+
 		virtual void SetTextures(ITexture** ppTextures, uint32 numTextures, uint32 startSlot) = 0;
 		virtual void SetSamplerStates(ISamplerState** ppSamplerStates, uint32 numSamplerStates, uint32 startSlot) = 0;
 		virtual void SetConstantBuffers(IBuffer** ppBuffers, uint32 numBuffers, uint32 startSlot) = 0;
 
         virtual void SetName(const char* pName) = 0;
         virtual void* GetNativeHandle() const = 0;
+		virtual const PipelineStateDesc& GetDesc() const = 0;
 	};
 }

@@ -1,6 +1,6 @@
 #pragma once
 #include "Graphics/Core/ISamplerState.h"
-#include "VKNDeviceObject.h"
+#include "Graphics/Core/DeviceObjectBase.h"
 #include <vulkan/vulkan.h>
 
 namespace Lambda
@@ -11,7 +11,7 @@ namespace Lambda
 	//VKNSamplerState
 	//---------------
 
-    class VKNSamplerState : public VKNDeviceObject<ISamplerState>
+    class VKNSamplerState : public DeviceObjectBase<VKNDevice, ISamplerState>
     {
     public:
         LAMBDA_NO_COPY(VKNSamplerState);

@@ -8,8 +8,9 @@ namespace Lambda
 	//DX12Shader
 	//----------
 
-	DX12Shader::DX12Shader(const ShaderDesc& desc)
-		: m_ShaderBlob(),
+	DX12Shader::DX12Shader(DX12Device* pDevice, const ShaderDesc& desc)
+		: DeviceObjectBase<DX12Device, IShader>(pDevice),
+		m_ShaderBlob(),
 		m_Type(SHADER_STAGE_UNKNOWN)
 	{
 		Init(desc);

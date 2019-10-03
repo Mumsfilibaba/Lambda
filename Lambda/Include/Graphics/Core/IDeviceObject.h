@@ -9,7 +9,7 @@ namespace Lambda
     //DeviceObject
     //------------
 
-    class IDeviceObject : public IObject
+    class LAMBDA_API IDeviceObject : public IObject
     {
     public:
         LAMBDA_IOBJECT_INTERFACE(IDeviceObject);

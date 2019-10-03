@@ -1,6 +1,7 @@
 #pragma once
 #include "Graphics/Core/IDeviceContext.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
+	#include "Graphics/Core/DeviceObjectBase.h"
 	#include "DX12LinearAllocator.h"
 	#include "DX12LinearDescriptorAllocator.h"
 	#include "DX12ResourceStateTracker.h"
@@ -8,20 +9,20 @@
 
 namespace Lambda
 {
-	//---------------
-	//DX12CommandList
-	//---------------
+	//-----------------
+	//DX12DeviceContext
+	//-----------------
 
-	class DX12CommandList final : public RefCountedObject<IDeviceContext>
+	class DX12DeviceContext final : public DeviceObjectBase<DX12Device, IDeviceContext>
 	{
-		friend class DX12GraphicsDevice;
+		friend class DX12Device;
 		friend class DX12CommandQueue;
 
 	public:
-		LAMBDA_NO_COPY(DX12CommandList);
+		LAMBDA_NO_COPY(DX12DeviceContext);
 
-		DX12CommandList(CommandListType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV);
-		~DX12CommandList() = default;
+		DX12DeviceContext(DX12Device* pDevice, CommandListType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV);
+		~DX12DeviceContext() = default;
 	
 		virtual void ClearRenderTarget(ITexture* pRenderTarget, float color[4]) override final;
 		virtual void ClearDepthStencil(ITexture* pDepthStencil, float depth, uint8 stencil) override final;
@@ -36,8 +37,9 @@ namespace Lambda
 		virtual void SetScissorRect(const Rectangle& scissorRect) override final;
 		virtual void SetVertexBuffer(IBuffer* pBuffer, uint32 slot) override final; 
 		virtual void SetIndexBuffer(IBuffer* pIndexBuffer, Format format) override final;
-		virtual void SetConstantBlocks(ShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData) override final;
 		virtual void SetPipelineState(IPipelineState* pPiplineState) override final;
+		virtual void SetShaderVariableTable(IShaderVariableTable* pVariableTable) override final;
+		virtual void SetConstantBlocks(ShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData) override final;
 
 		virtual void TransitionBuffer(const IBuffer* pResource, ResourceState resourceState) override final;
 		virtual void TransitionTexture(const ITexture* pResource, ResourceState resourceState, uint32 startMipLevel, uint32 numMipLevels) override final;
@@ -104,13 +106,13 @@ namespace Lambda
 	};
 
 
-	inline ID3D12CommandList* DX12CommandList::GetList() const
+	inline ID3D12CommandList* DX12DeviceContext::GetList() const
 	{
 		return m_List.Get();
 	}
 
 
-	inline void DX12CommandList::InternalSetResourceDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE hDest, D3D12_CPU_DESCRIPTOR_HANDLE hSrc, uint32 slot, uint32 range)
+	inline void DX12DeviceContext::InternalSetResourceDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE hDest, D3D12_CPU_DESCRIPTOR_HANDLE hSrc, uint32 slot, uint32 range)
 	{
 		//Get dest descriptor
 		hDest.ptr += (uint64)m_ResourceDescriptorSize * (((uint64)range * 8) + slot);
@@ -118,7 +120,7 @@ namespace Lambda
 	}
 
 
-	inline void DX12CommandList::InternalSetSamplerDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE hDest, D3D12_CPU_DESCRIPTOR_HANDLE hSrc, uint32 slot)
+	inline void DX12DeviceContext::InternalSetSamplerDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE hDest, D3D12_CPU_DESCRIPTOR_HANDLE hSrc, uint32 slot)
 	{
 		//Get dest descriptor
 		hDest.ptr += (uint64)m_SamplerDescriptorSize * slot;

@@ -1,10 +1,10 @@
 #include "LambdaPch.h"
-#include "DX12CommandList.h"
+#include "DX12DeviceContext.h"
 #include "Utilities/TextureHelper.h"
 #include "Utilities/StringHelper.h"
 #include "Utilities/MathHelper.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
-	#include "DX12GraphicsDevice.h"
+	#include "DX12Device.h"
 	#include "DX12PipelineState.h"
 	#include "DX12Buffer.h"
 	#include "DX12Texture.h"
@@ -16,12 +16,13 @@
 
 namespace Lambda
 {
-	//---------------
-	//DX12CommandList
-	//---------------
+	//-----------------
+	//DX12DeviceContext
+	//-----------------
 
-	DX12CommandList::DX12CommandList(CommandListType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV)
-		: m_Allocator(nullptr),
+	DX12DeviceContext::DX12DeviceContext(DX12Device* pDevice, CommandListType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV)
+		: DeviceObjectBase<DX12Device, IDeviceContext>(pDevice),
+		m_Allocator(nullptr),
 		m_List(nullptr),
 		m_BufferAllocator(),
 		m_TextureAllocator(),
@@ -40,15 +41,14 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::Init(CommandListType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV)
+	void DX12DeviceContext::Init(CommandListType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV)
 	{
 		using namespace Microsoft::WRL;
 
-		DX12GraphicsDevice& device = DX12GraphicsDevice::Get();
 		D3D12_COMMAND_LIST_TYPE listType = ConvertCommandListType(type);
 
 		//Create commandallocator
-		HRESULT hr = device.GetDevice()->CreateCommandAllocator(listType, IID_PPV_ARGS(&m_Allocator));
+		HRESULT hr = m_pDevice->GetDevice()->CreateCommandAllocator(listType, IID_PPV_ARGS(&m_Allocator));
 		if (FAILED(hr))
 		{
 			LOG_DEBUG_ERROR("DX12: Failed to create CommandAllocator.\n");
@@ -61,7 +61,7 @@ namespace Lambda
 
 		//Create commandlist
 		ComPtr<ID3D12GraphicsCommandList> commandList = nullptr;
-		hr = device.GetDevice()->CreateCommandList(1, listType, m_Allocator.Get(), nullptr, IID_PPV_ARGS(&commandList));
+		hr = m_pDevice->GetDevice()->CreateCommandList(1, listType, m_Allocator.Get(), nullptr, IID_PPV_ARGS(&commandList));
 		if (FAILED(hr))
 		{
 			LOG_DEBUG_ERROR("DX12: Failed to create CommandList.\n");
@@ -84,12 +84,12 @@ namespace Lambda
 				m_List->Close();
 
 				//Create uploadallocators
-				m_BufferAllocator.Init(device.GetDevice());
-				m_TextureAllocator.Init(device.GetDevice(), MB(16));
+				m_BufferAllocator.Init(m_pDevice->GetDevice());
+				m_TextureAllocator.Init(m_pDevice->GetDevice(), MB(16));
 
 				//Create frame descriptor allocators
-				m_ResourceAllocator.Init(device.GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 256, true);
-				m_SamplerAllocator.Init(device.GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, 256, true);
+				m_ResourceAllocator.Init(m_pDevice->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 256, true);
+				m_SamplerAllocator.Init(m_pDevice->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, 256, true);
 
 				//Cache descriptor size
 				m_ResourceDescriptorSize = m_ResourceAllocator.GetDescriptorSize();
@@ -108,7 +108,7 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::ClearRenderTarget(ITexture* pRenderTarget, float color[4])
+	void DX12DeviceContext::ClearRenderTarget(ITexture* pRenderTarget, float color[4])
 	{
 		//Flush barriers - needs to be transitioned outside function
 		m_ResourceTracker.FlushBarriers(m_List.Get());
@@ -119,7 +119,7 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::ClearDepthStencil(ITexture * pDepthStencil, float depth, uint8 stencil)
+	void DX12DeviceContext::ClearDepthStencil(ITexture * pDepthStencil, float depth, uint8 stencil)
 	{
 		//Flush barriers - needs to be transitioned outside function
 		m_ResourceTracker.FlushBarriers(m_List.Get());
@@ -130,26 +130,26 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::BeginRenderPass(IRenderPass* pRenderPass)
+	void DX12DeviceContext::BeginRenderPass(IRenderPass* pRenderPass)
 	{
 		LAMBDA_ASSERT(pRenderPass);
 	}
 
 
-	void DX12CommandList::EndRenderPass()
+	void DX12DeviceContext::EndRenderPass()
 	{
 	}
 
-	void DX12CommandList::ResetQuery(IQuery* pQuery)
+	void DX12DeviceContext::ResetQuery(IQuery* pQuery)
 	{
 	}
 
-	void DX12CommandList::WriteTimeStamp(IQuery* pQuery, PipelineStage stage)
+	void DX12DeviceContext::WriteTimeStamp(IQuery* pQuery, PipelineStage stage)
 	{
 	}
 
 
-	/*void DX12CommandList::SetRenderTarget(ITexture2D* pRenderTarget, ITexture2D* pDepthStencil)
+	/*void DX12DeviceContext::SetRenderTarget(ITexture2D* pRenderTarget, ITexture2D* pDepthStencil)
 	{
 		//TODO: Multiple rendertargets
 
@@ -173,21 +173,21 @@ namespace Lambda
 	}*/
 
 
-	void DX12CommandList::SetViewport(const Viewport& viewport)
+	void DX12DeviceContext::SetViewport(const Viewport& viewport)
 	{
 		D3D12_VIEWPORT port = { viewport.TopX, viewport.TopY, viewport.Width, viewport.Height, viewport.MinDepth, viewport.MaxDepth };
 		m_List->RSSetViewports( 1, &port );
 	}
 
 
-	void DX12CommandList::SetScissorRect(const Rectangle& scissorRect)
+	void DX12DeviceContext::SetScissorRect(const Rectangle& scissorRect)
 	{
 		D3D12_RECT rect = { (LONG)scissorRect.X, (LONG)scissorRect.Y, (LONG)scissorRect.X + (LONG)scissorRect.Width, (LONG)scissorRect.Y + (LONG)scissorRect.Height };
 		m_List->RSSetScissorRects(1, &rect);
 	}
 
 
-	/*void DX12CommandList::SetPrimtiveTopology(PrimitiveTopology topology)
+	/*void DX12DeviceContext::SetPrimtiveTopology(PrimitiveTopology topology)
 	{
 		D3D_PRIMITIVE_TOPOLOGY top = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
 		if (topology == PRIMITIVE_TOPOLOGY_TRIANGLELIST)
@@ -199,54 +199,59 @@ namespace Lambda
 	}*/
 
 
-	void DX12CommandList::SetPipelineState(IPipelineState* pPSO)
+	void DX12DeviceContext::SetPipelineState(IPipelineState* pPSO)
 	{
-		DX12GraphicsPipelineState* pState = reinterpret_cast<DX12GraphicsPipelineState*>(pPSO);
+		DX12PipelineState* pState = reinterpret_cast<DX12PipelineState*>(pPSO);
 		m_List->SetPipelineState(pState->GetPipelineState());
 		m_List->SetGraphicsRootSignature(pState->GetRootSignature());
 	}
 
+	
+	void DX12DeviceContext::SetShaderVariableTable(IShaderVariableTable* pVariableTable)
+	{
+	}
 
-	void DX12CommandList::SetVertexBuffer(IBuffer* pBuffer, uint32 slot)
+
+	void DX12DeviceContext::SetVertexBuffer(IBuffer* pBuffer, uint32 slot)
 	{
 		D3D12_VERTEX_BUFFER_VIEW view = reinterpret_cast<DX12Buffer*>(pBuffer)->GetVertexBufferView();
 		m_List->IASetVertexBuffers(slot, 1, &view);
 	}
 
 
-	void DX12CommandList::SetIndexBuffer(IBuffer* pIndexBuffer, Format format)
+	void DX12DeviceContext::SetIndexBuffer(IBuffer* pIndexBuffer, Format format)
 	{
 		D3D12_INDEX_BUFFER_VIEW view = reinterpret_cast<DX12Buffer*>(pIndexBuffer)->GetIndexBufferView();
 		m_List->IASetIndexBuffer(&view);
 	}
 
 	
-	void DX12CommandList::SetConstantBlocks(ShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData)
+	void DX12DeviceContext::SetConstantBlocks(ShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData)
 	{
 	}
 
 
-	CommandListType DX12CommandList::GetType() const
+	CommandListType DX12DeviceContext::GetType() const
 	{
 		return m_Type;
 	}
 
 
-	void DX12CommandList::TransitionBuffer(const IBuffer* pResource, ResourceState resourceState)
+	void DX12DeviceContext::TransitionBuffer(const IBuffer* pResource, ResourceState resourceState)
 	{
 		const DX12Buffer* pBuffer = reinterpret_cast<const DX12Buffer*>(pResource);
 		m_ResourceTracker.TransitionResource(pBuffer->GetResource(), D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, ConvertResourceState(resourceState));
 	}
 
 
-	void DX12CommandList::TransitionTexture(const ITexture* pResource, ResourceState resourceState, uint32 startMipLevel, uint32 numMipLevels)
+	void DX12DeviceContext::TransitionTexture(const ITexture* pResource, ResourceState resourceState, uint32 startMipLevel, uint32 numMipLevels)
 	{
 		const DX12Texture* pTexture = reinterpret_cast<const DX12Texture*>(pResource);
 		m_ResourceTracker.TransitionResource(pTexture->GetResource(), D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, ConvertResourceState(resourceState));
 	}
 
 
-	void DX12CommandList::VSSetConstantBuffers(const IBuffer* const * ppBuffers, uint32 numBuffers, uint32 startSlot)
+	void DX12DeviceContext::VSSetConstantBuffers(const IBuffer* const * ppBuffers, uint32 numBuffers, uint32 startSlot)
 	{
 		for (uint32 i = 0; i < numBuffers; i++)
 		{
@@ -255,7 +260,7 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::VSSetTextures(const ITexture* const* ppTextures, uint32 numTextures, uint32 startSlot)
+	void DX12DeviceContext::VSSetTextures(const ITexture* const* ppTextures, uint32 numTextures, uint32 startSlot)
 	{
 		for (uint32 i = 0; i < numTextures; i++)
 		{
@@ -264,7 +269,7 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::VSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot)
+	void DX12DeviceContext::VSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot)
 	{
 		for (uint32 i = 0; i < numSamplers; i++)
 		{
@@ -273,7 +278,7 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::HSSetConstantBuffers(const IBuffer* const * ppBuffers, uint32 numBuffers, uint32 startSlot)
+	void DX12DeviceContext::HSSetConstantBuffers(const IBuffer* const * ppBuffers, uint32 numBuffers, uint32 startSlot)
 	{
 		for (uint32 i = 0; i < numBuffers; i++)
 		{
@@ -282,7 +287,7 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::HSSetTextures(const ITexture* const* ppTextures, uint32 numTextures, uint32 startSlot)
+	void DX12DeviceContext::HSSetTextures(const ITexture* const* ppTextures, uint32 numTextures, uint32 startSlot)
 	{
 		for (uint32 i = 0; i < numTextures; i++)
 		{
@@ -291,7 +296,7 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::HSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot)
+	void DX12DeviceContext::HSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot)
 	{
 		for (uint32 i = 0; i < numSamplers; i++)
 		{
@@ -300,7 +305,7 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::DSSetConstantBuffers(const IBuffer* const * ppBuffers, uint32 numBuffers, uint32 startSlot)
+	void DX12DeviceContext::DSSetConstantBuffers(const IBuffer* const * ppBuffers, uint32 numBuffers, uint32 startSlot)
 	{
 		for (uint32 i = 0; i < numBuffers; i++)
 		{
@@ -309,7 +314,7 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::DSSetTextures(const ITexture* const* ppTextures, uint32 numTextures, uint32 startSlot)
+	void DX12DeviceContext::DSSetTextures(const ITexture* const* ppTextures, uint32 numTextures, uint32 startSlot)
 	{
 		for (uint32 i = 0; i < numTextures; i++)
 		{
@@ -318,7 +323,7 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::DSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot)
+	void DX12DeviceContext::DSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot)
 	{
 		for (uint32 i = 0; i < numSamplers; i++)
 		{
@@ -327,7 +332,7 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::GSSetConstantBuffers(const IBuffer* const * ppBuffers, uint32 numBuffers, uint32 startSlot)
+	void DX12DeviceContext::GSSetConstantBuffers(const IBuffer* const * ppBuffers, uint32 numBuffers, uint32 startSlot)
 	{
 		for (uint32 i = 0; i < numBuffers; i++)
 		{
@@ -336,7 +341,7 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::GSSetTextures(const ITexture* const* ppTextures, uint32 numTextures, uint32 startSlot)
+	void DX12DeviceContext::GSSetTextures(const ITexture* const* ppTextures, uint32 numTextures, uint32 startSlot)
 	{
 		for (uint32 i = 0; i < numTextures; i++)
 		{
@@ -345,7 +350,7 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::GSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot)
+	void DX12DeviceContext::GSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot)
 	{
 		for (uint32 i = 0; i < numSamplers; i++)
 		{
@@ -354,7 +359,7 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::PSSetConstantBuffers(const IBuffer* const * ppBuffers, uint32 numBuffers, uint32 startSlot)
+	void DX12DeviceContext::PSSetConstantBuffers(const IBuffer* const * ppBuffers, uint32 numBuffers, uint32 startSlot)
 	{
 		for (uint32 i = 0; i < numBuffers; i++)
 		{
@@ -363,7 +368,7 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::PSSetTextures(const ITexture* const* ppTextures, uint32 numTextures, uint32 startSlot)
+	void DX12DeviceContext::PSSetTextures(const ITexture* const* ppTextures, uint32 numTextures, uint32 startSlot)
 	{
 		for (uint32 i = 0; i < numTextures; i++)
 		{
@@ -372,7 +377,7 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::PSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot)
+	void DX12DeviceContext::PSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot)
 	{
 		for (uint32 i = 0; i < numSamplers; i++)
 		{
@@ -381,7 +386,7 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::UpdateBuffer(IBuffer* pResource, const ResourceData* pData)
+	void DX12DeviceContext::UpdateBuffer(IBuffer* pResource, const ResourceData* pData)
 	{
 		m_ResourceTracker.FlushBarriers(m_List.Get());
 
@@ -394,7 +399,7 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::UpdateTexture(ITexture* pResource, const ResourceData* pData, uint32 subresource)
+	void DX12DeviceContext::UpdateTexture(ITexture* pResource, const ResourceData* pData, uint32 subresource)
 	{
 		m_ResourceTracker.FlushBarriers(m_List.Get());
 
@@ -434,13 +439,13 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::CopyBuffer(IBuffer* pDst, IBuffer* pSrc)
+	void DX12DeviceContext::CopyBuffer(IBuffer* pDst, IBuffer* pSrc)
 	{
 		m_List->CopyResource(reinterpret_cast<DX12Buffer*>(pDst)->GetResource(), reinterpret_cast<DX12Buffer*>(pSrc)->GetResource());
 	}
 
 
-	void DX12CommandList::DrawInstanced(uint32 vertexCountPerInstance, uint32 instanceCount, uint32 startVertexLocation, uint32 startInstanceLocation)
+	void DX12DeviceContext::DrawInstanced(uint32 vertexCountPerInstance, uint32 instanceCount, uint32 startVertexLocation, uint32 startInstanceLocation)
 	{
 		m_ResourceTracker.FlushBarriers(m_List.Get());
 
@@ -449,7 +454,7 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::DrawIndexedInstanced(uint32 indexCountPerInstance, uint32 instanceCount, uint32 startIndexLocation, uint32 baseVertexLocation, uint32 startInstanceLocation)
+	void DX12DeviceContext::DrawIndexedInstanced(uint32 indexCountPerInstance, uint32 instanceCount, uint32 startIndexLocation, uint32 baseVertexLocation, uint32 startInstanceLocation)
 	{
 		m_ResourceTracker.FlushBarriers(m_List.Get());
 
@@ -458,26 +463,26 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::SetName(const char* pName)
+	void DX12DeviceContext::SetName(const char* pName)
 	{
 		m_List->SetName(StringToWidestring(pName).c_str());
 	}
 
 
-	void* DX12CommandList::GetNativeHandle() const
+	void* DX12DeviceContext::GetNativeHandle() const
 	{
 		return m_List.Get();
 	}
 
 
-	void DX12CommandList::Close()
+	void DX12DeviceContext::Close()
 	{
 		m_ResourceTracker.FlushBarriers(m_List.Get());
 		m_List->Close();
 	}
 
 
-	void DX12CommandList::Reset()
+	void DX12DeviceContext::Reset()
 	{
 		//Reset commandallocator and commandlist
 		if (FAILED(m_Allocator->Reset()))
@@ -501,7 +506,7 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::AllocateDescriptors()
+	void DX12DeviceContext::AllocateDescriptors()
 	{
 		//Allocate descriptors
 		DX12DescriptorHandle hResource = m_ResourceAllocator.Allocate(120);
@@ -529,12 +534,11 @@ namespace Lambda
 	}
 
 
-	void DX12CommandList::InternalCopyAndSetDescriptors()
+	void DX12DeviceContext::InternalCopyAndSetDescriptors()
 	{
 		//Perform copy of resourcedescriptors
-		DX12GraphicsDevice& device = DX12GraphicsDevice::Get();
-		m_ResourceCache.CopyDescriptors(device.GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-		m_SamplerCache.CopyDescriptors(device.GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+		m_ResourceCache.CopyDescriptors(m_pDevice->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_SamplerCache.CopyDescriptors(m_pDevice->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 
 		//Set heap and descriptortables at predefine slots. (See default rootsignature in DX12PipelineState)
 		ID3D12DescriptorHeap* ppHeaps[] = { m_ResourceAllocator.GetHeap(), m_SamplerAllocator.GetHeap() };

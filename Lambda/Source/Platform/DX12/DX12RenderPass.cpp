@@ -4,8 +4,9 @@
 
 namespace Lambda
 {
-	DX12RenderPass::DX12RenderPass(const RenderPassDesc& desc)
-		: m_Desc()
+	DX12RenderPass::DX12RenderPass(DX12Device* pDevice, const RenderPassDesc& desc)
+		: DeviceObjectBase<DX12Device, IRenderPass>(pDevice),
+		m_Desc()
 	{
 		Init(desc);
 	}

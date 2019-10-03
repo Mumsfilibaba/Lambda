@@ -1,10 +1,12 @@
 #pragma once
-#include "VKNDeviceObject.h"
+#include "Graphics/Core/DeviceObjectBase.h"
 #include <vector>
 #include <vulkan/vulkan.h>
 
 namespace Lambda
 {
+	class VKNDevice;
+
 	//---------
 	//VKNMemory
 	//---------
@@ -86,7 +88,7 @@ namespace Lambda
 	//VKNAllocator
 	//------------
 
-	class VKNAllocator final : public VKNDeviceObject<IVKNAllocator>
+	class VKNAllocator final : public DeviceObjectBase<VKNDevice, IVKNAllocator>
 	{
 	public:
 		LAMBDA_NO_COPY(VKNAllocator);

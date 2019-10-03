@@ -6,6 +6,7 @@
 #include "VKNSamplerState.h"
 #include "VKNRenderPass.h"
 #include "VKNSamplerState.h"
+#include "VKNShaderVariableTable.h"
 #include "VKNDevice.h"
 #include "VKNUtilities.h"
 #include "VKNConversions.inl"
@@ -17,13 +18,12 @@ namespace Lambda
 	//----------------
 
     VKNPipelineState::VKNPipelineState(VKNDevice* pDevice, const PipelineStateDesc& desc)
-        : VKNDeviceObject<IPipelineState>(pDevice),
+        : DeviceObjectBase<VKNDevice, IPipelineState>(pDevice),
 		m_Pipeline(VK_NULL_HANDLE),
 		m_IsDirty(true)
     {
 		//Add a ref to the refcounter
 		this->AddRef();
-
         Init(desc);
     }
 
@@ -35,10 +35,10 @@ namespace Lambda
 			m_pAllocator->Destroy(m_pDevice->GetVkDevice());
 			m_pAllocator = nullptr;
 		}
-		if (m_DescriptorPool != VK_NULL_HANDLE)
+		if (m_Pipeline != VK_NULL_HANDLE)
 		{
-			vkDestroyDescriptorPool(m_pDevice->GetVkDevice(), m_DescriptorPool, nullptr);
-			m_DescriptorPool = VK_NULL_HANDLE;
+			vkDestroyPipeline(m_pDevice->GetVkDevice(), m_Pipeline, nullptr);
+			m_Pipeline = VK_NULL_HANDLE;
 		}
 		if (m_DescriptorSetLayout != VK_NULL_HANDLE)
 		{
@@ -50,114 +50,91 @@ namespace Lambda
 			vkDestroyPipelineLayout(m_pDevice->GetVkDevice(), m_PipelineLayout, nullptr);
 			m_PipelineLayout = VK_NULL_HANDLE;
 		}
-		if (m_Pipeline != VK_NULL_HANDLE)
-		{
-			vkDestroyPipeline(m_pDevice->GetVkDevice(), m_Pipeline, nullptr);
-			m_Pipeline = VK_NULL_HANDLE;
-		}
 
 		LOG_DEBUG_INFO("Vulkan: Destroyed PipelineState\n");
+	}
+
+	
+	void VKNPipelineState::CreateShaderVariableTable(IShaderVariableTable** ppVariableTable)
+	{
+		LAMBDA_ASSERT(ppVariableTable != nullptr);
+
+		ShaderVariableTableDesc desc = {};
+		desc.NumVariables		= uint32(m_ShaderVariableDescs.size());
+		desc.pVariables			= m_ShaderVariableDescs.data();
+		desc.NumConstantBlocks	= uint32(m_ConstantBlockDescs.size());
+		desc.pConstantBlocks	= m_ConstantBlockDescs.data();
+
+		(*ppVariableTable) = DBG_NEW VKNShaderVariableTable(m_pDevice, this, desc);
 	}
 
     
     void VKNPipelineState::Init(const PipelineStateDesc& desc)
     {
 		//Copy the resourceslots
-		const ShaderVariableLayoutDesc& varibleLayout = desc.ShaderResources;
-		for (uint32 i = 0; i < varibleLayout.NumResourceSlots; i++)
+		const ShaderVariableTableDesc& varibleLayout = desc.ShaderVariableTable;
+		for (uint32 i = 0; i < varibleLayout.NumVariables; i++)
 		{
-			auto& variable	= m_ResourceBindings[varibleLayout.pResourceSlots[i].Slot];
-			variable.Slot	= varibleLayout.pResourceSlots[i];
+			auto& variable	= m_ResourceBindings[varibleLayout.pVariables[i].Slot];
+			variable.Slot	= varibleLayout.pVariables[i];
 			variable.ImageInfo.sampler = VK_NULL_HANDLE;
 			variable.pBuffer = nullptr;
 		}
 
-		//Number of each type
-		uint32 uniformBufferCount = 0;
-		uint32 dynamicUniformBufferCount = 0;
-		uint32 samplerCount = 0;
-		uint32 sampledImageCount = 0;
-		uint32 combinedImageSamplerCount = 0;
-
 		//Create descriptor bindings for each shadervariable
 		std::vector<VkDescriptorSetLayoutBinding> layoutBindings;
-		for (uint32 i = 0; i < varibleLayout.NumResourceSlots; i++)
+		for (uint32 i = 0; i < varibleLayout.NumVariables; i++)
 		{
-			const ShaderVariableDesc& variable = varibleLayout.pResourceSlots[i];
+			const ShaderVariableDesc& variable = varibleLayout.pVariables[i];
+			m_ShaderVariableDescs.emplace_back(variable);
 
 			VkDescriptorSetLayoutBinding layoutBinding = {};
-			layoutBinding.descriptorCount = 1;
-			layoutBinding.binding = variable.Slot;
-			layoutBinding.pImmutableSamplers = nullptr;
-
-			//Set type
-			layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM;
-			if (varibleLayout.pResourceSlots[i].Type == RESOURCE_TYPE_CONSTANT_BUFFER)
+			layoutBinding.descriptorCount		= 1;
+			layoutBinding.binding				= variable.Slot;
+			layoutBinding.pImmutableSamplers	= nullptr;
+			layoutBinding.stageFlags			= ConvertShaderStages(variable.Stage);
+			layoutBinding.descriptorType		= ConvertResourceToDescriptorType(variable.Type);
+			if (layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER && variable.Usage == RESOURCE_USAGE_DYNAMIC)
 			{
-				if (varibleLayout.pResourceSlots[i].Usage == RESOURCE_USAGE_DYNAMIC)
-				{
-					layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-					dynamicUniformBufferCount++;
-				}
-				else
-				{
-					layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-					uniformBufferCount++;
-				}
+				layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 			}
-			else if (variable.Type == RESOURCE_TYPE_TEXTURE)
+			else if (layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE && variable.pSamplerState != nullptr)
 			{
-				if (variable.pSamplerState == nullptr)
-				{
-					layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-					sampledImageCount++;
-				}
-				else
-				{
-					layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-					combinedImageSamplerCount++;
+				layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 
-					//Bind sampler to slot permanently
-					VKNSamplerState* pSampler = reinterpret_cast<VKNSamplerState*>(variable.pSamplerState);
-					auto& slot = m_ResourceBindings[variable.Slot];
-					slot.ImageInfo.sampler = reinterpret_cast<VkSampler>(pSampler->GetNativeHandle());
+				//Bind sampler to slot permanently
+				VKNSamplerState* pSampler = reinterpret_cast<VKNSamplerState*>(variable.pSamplerState);
+				auto& slot = m_ResourceBindings[variable.Slot];
+				slot.ImageInfo.sampler = reinterpret_cast<VkSampler>(pSampler->GetNativeHandle());
 
-					layoutBinding.pImmutableSamplers = &slot.ImageInfo.sampler;
-				}
+				layoutBinding.pImmutableSamplers = &slot.ImageInfo.sampler;
 			}
-			else if (variable.Type == RESOURCE_TYPE_SAMPLER_STATE)
-			{
-				layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-				samplerCount++;
-			}
-
-			//Setup stages
-			layoutBinding.stageFlags = 0;
-			if (variable.Stage & SHADER_STAGE_VERTEX)
-				layoutBinding.stageFlags |= VK_SHADER_STAGE_VERTEX_BIT;
-			if (variable.Stage & SHADER_STAGE_HULL)
-				layoutBinding.stageFlags |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
-			if (variable.Stage & SHADER_STAGE_DOMAIN)
-				layoutBinding.stageFlags |= VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
-			if (variable.Stage & SHADER_STAGE_GEOMETRY)
-				layoutBinding.stageFlags |= VK_SHADER_STAGE_GEOMETRY_BIT;
-			if (variable.Stage & SHADER_STAGE_PIXEL)
-				layoutBinding.stageFlags |= VK_SHADER_STAGE_FRAGMENT_BIT;
-			if (variable.Stage & SHADER_STAGE_COMPUTE)
-				layoutBinding.stageFlags |= VK_SHADER_STAGE_COMPUTE_BIT;
 
 			layoutBindings.emplace_back(layoutBinding);
 		}
 
+		//Create constantranges
+		std::vector<VkPushConstantRange> constantRanges;
+		for (uint32 i = 0; i < varibleLayout.NumConstantBlocks; i++)
+		{
+			const ConstantBlockDesc& block = varibleLayout.pConstantBlocks[i];
+			m_ConstantBlockDescs.emplace_back(block);
 
-		//Create descriptorsetlayout
+			VkPushConstantRange range = {};
+			range.size		 = block.SizeInBytes;
+			range.offset	 = 0;
+			range.stageFlags = ConvertShaderStages(block.Stage);
+			constantRanges.push_back(range);
+		}
+
+
+		//Create pipelineLayout
 		VkDescriptorSetLayoutCreateInfo descriptorLayoutInfo = {};
 		descriptorLayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 		descriptorLayoutInfo.pNext = nullptr;
 		descriptorLayoutInfo.flags = 0;
-		descriptorLayoutInfo.bindingCount = uint32(layoutBindings.size());
-		descriptorLayoutInfo.pBindings = layoutBindings.data();
-
+		descriptorLayoutInfo.bindingCount	= uint32(layoutBindings.size());
+		descriptorLayoutInfo.pBindings		= layoutBindings.data();
 		if (vkCreateDescriptorSetLayout(m_pDevice->GetVkDevice(), &descriptorLayoutInfo, nullptr, &m_DescriptorSetLayout) != VK_SUCCESS)
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to create DescriptorSetLayout\n");
@@ -166,49 +143,17 @@ namespace Lambda
 		else
 		{
 			LOG_DEBUG_INFO("Vulkan: Created DescriptorSetLayout\n");
-
-			//Set to dirty when we create so that we will always allocate a descriptorset
-			m_IsDirty = true;
 		}
-
-
-		//Create constantranges
-		std::vector<VkPushConstantRange> constantRanges;
-		for (uint32 i = 0; i < varibleLayout.NumConstantBlocks; i++)
-		{
-			const ConstantBlock& block = varibleLayout.pConstantBlocks[i];
-
-			VkPushConstantRange range = {};
-			range.size = block.SizeInBytes;
-			range.offset = 0;
-			range.stageFlags = 0;
-			if (block.Stage == SHADER_STAGE_VERTEX)
-				range.stageFlags |= VK_SHADER_STAGE_VERTEX_BIT;
-			else if (block.Stage == SHADER_STAGE_HULL)
-				range.stageFlags |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
-			else if (block.Stage == SHADER_STAGE_DOMAIN)
-				range.stageFlags |= VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
-			else if (block.Stage == SHADER_STAGE_GEOMETRY)
-				range.stageFlags |= VK_SHADER_STAGE_GEOMETRY_BIT;
-			else if (block.Stage == SHADER_STAGE_PIXEL)
-				range.stageFlags |= VK_SHADER_STAGE_FRAGMENT_BIT;
-			else if (block.Stage == SHADER_STAGE_COMPUTE)
-				range.stageFlags |= VK_SHADER_STAGE_COMPUTE_BIT;
-
-			constantRanges.push_back(range);
-		}
-
 
 		//Create pipelinelayout
 		VkPipelineLayoutCreateInfo layoutInfo = {};
 		layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		layoutInfo.flags = 0;
 		layoutInfo.pNext = nullptr;
-		layoutInfo.setLayoutCount = 1;
-		layoutInfo.pSetLayouts = &m_DescriptorSetLayout;
-		layoutInfo.pushConstantRangeCount = uint32(constantRanges.size());
-		layoutInfo.pPushConstantRanges = constantRanges.data();
-
+		layoutInfo.setLayoutCount	= 1;
+		layoutInfo.pSetLayouts		= &m_DescriptorSetLayout;
+		layoutInfo.pushConstantRangeCount	= uint32(constantRanges.size());
+		layoutInfo.pPushConstantRanges		= constantRanges.data();
 		if (vkCreatePipelineLayout(m_pDevice->GetVkDevice(), &layoutInfo, nullptr, &m_PipelineLayout) != VK_SUCCESS)
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to create PipelineLayout\n");
@@ -217,7 +162,11 @@ namespace Lambda
 		else
 		{
 			LOG_DEBUG_INFO("Vulkan: Created PipelineLayout\n");
-			m_pAllocator = DBG_NEW VKNDescriptorSetAllocator(uniformBufferCount, dynamicUniformBufferCount, samplerCount, sampledImageCount, combinedImageSamplerCount, 8);
+
+			//Set to dirty when we create so that we will always allocate a descriptorset
+			m_IsDirty = true;
+			//Create allocator
+			m_pAllocator = DBG_NEW VKNDescriptorSetAllocator(8, 8, 8, 8, 8, 8);
 		}
 
 
@@ -485,9 +434,7 @@ namespace Lambda
 		for (uint32 i = 0; i < numTextures; i++)
 		{
 			if (ppTextures[i] == nullptr)
-			{
 				continue;
-			}
 
 			auto& resourceBinding = m_ResourceBindings[startSlot + i];
 			if (resourceBinding.Slot.Type == RESOURCE_TYPE_TEXTURE)
@@ -663,8 +610,7 @@ namespace Lambda
 			//Write all descriptors
 			if (m_DescriptorWrites.size() > 0)
 			{
-				VKNDevice& device = VKNDevice::Get();
-				vkUpdateDescriptorSets(device.GetVkDevice(), uint32(m_DescriptorWrites.size()), m_DescriptorWrites.data(), 0, nullptr);
+				vkUpdateDescriptorSets(m_pDevice->GetVkDevice(), uint32(m_DescriptorWrites.size()), m_DescriptorWrites.data(), 0, nullptr);
 				m_DescriptorWrites.clear();
 			}
 
@@ -683,6 +629,12 @@ namespace Lambda
     {
         return reinterpret_cast<void*>(m_Pipeline);
     }
+
+	
+	const PipelineStateDesc& VKNPipelineState::GetDesc() const
+	{
+		return m_Desc;
+	}
 
 
 	void VKNPipelineState::SetName(const char* pName)

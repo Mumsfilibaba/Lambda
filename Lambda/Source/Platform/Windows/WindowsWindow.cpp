@@ -1,9 +1,6 @@
 #include "LambdaPch.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include "System/Log.h"
-	#include "Graphics/Core/IDevice.h"
-	#include "../Vulkan/VKNDevice.h"
-	#include "../DX12/DX12GraphicsDevice.h"
 	#include "Utilities/StringHelper.h"
 	#include "Events/KeyEvent.h"
 	#include "Events/WindowEvent.h"
@@ -12,6 +9,8 @@
 	#include "WindowsWindow.h"
 	#include "WindowClass.h"
 	#include "WindowsInput.h"
+	#include "../Vulkan/VKNDevice.h"
+	#include "../DX12/DX12Device.h"
 	#define	NAME_APPWINDOW L"AppWindow"
 
 namespace Lambda
@@ -252,7 +251,7 @@ namespace Lambda
 #endif
             if (desc.GraphicsDeviceAPI == GRAPHICS_API_D3D12)
             {
-                m_GraphicsDevice = AutoRef<IDevice>(DBG_NEW DX12GraphicsDevice(gcDesc));
+                m_GraphicsDevice = AutoRef<IDevice>(DBG_NEW DX12Device(gcDesc));
             }
             else if (desc.GraphicsDeviceAPI == GRAPHICS_API_VULKAN)
             {

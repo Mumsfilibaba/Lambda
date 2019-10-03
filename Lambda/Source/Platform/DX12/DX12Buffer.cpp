@@ -1,20 +1,24 @@
 #include "LambdaPch.h"
-#include "DX12Buffer.h"
-
 #if defined(LAMBDA_PLAT_WINDOWS)
+	#include "DX12Device.h"
+	#include "DX12Buffer.h"
+
 namespace Lambda
 {
-	DX12Buffer::DX12Buffer(ID3D12Device* pDevice, const BufferDesc& desc)
-		: m_Buffer(nullptr),
+	//----------
+	//DX12Buffer
+	//----------
+
+	DX12Buffer::DX12Buffer(DX12Device* pDevice, const BufferDesc& desc)
+		: DeviceObjectBase<DX12Device, IBuffer>(pDevice),
+		m_Buffer(nullptr),
 		m_hDescriptor(),
 		m_IBV(),
 		m_VBV(),
 		m_Desc(),
 		m_Adress(0)
 	{
-		LAMBDA_ASSERT(pDevice != nullptr);
-		memset(&m_Desc, 0, sizeof(m_Desc));
-		Init(pDevice, desc);
+		Init(desc);
 	}
 
 
@@ -46,7 +50,7 @@ namespace Lambda
 	}
 
 
-	void DX12Buffer::Init(ID3D12Device* pDevice, const BufferDesc& desc)
+	void DX12Buffer::Init(const BufferDesc& desc)
 	{
 		//Create buffer resource
 		{
@@ -66,7 +70,7 @@ namespace Lambda
 			}
 
 			CD3DX12_RESOURCE_DESC rDesc = CD3DX12_RESOURCE_DESC::Buffer(desc.SizeInBytes);
-			HRESULT hr = pDevice->CreateCommittedResource(&heapProp, D3D12_HEAP_FLAG_NONE, &rDesc, state, nullptr, IID_PPV_ARGS(&m_Buffer));
+			HRESULT hr = m_pDevice->GetDevice()->CreateCommittedResource(&heapProp, D3D12_HEAP_FLAG_NONE, &rDesc, state, nullptr, IID_PPV_ARGS(&m_Buffer));
 			if (FAILED(hr))
 			{
 				LOG_DEBUG_ERROR("DX12: Failed to create Buffer.\n");

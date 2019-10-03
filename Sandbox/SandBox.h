@@ -55,6 +55,8 @@ namespace Lambda
 		AutoRef<ISamplerState> m_SamplerState;
         //Pipelinestates
 		AutoRef<IPipelineState> m_PipelineState;
+		//Variable tables
+		AutoRef<IShaderVariableTable> m_VariableTable;
         Camera m_Camera;
         TransformBuffer m_TransformBuffer;
     };

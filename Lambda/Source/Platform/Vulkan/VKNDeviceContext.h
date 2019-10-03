@@ -1,7 +1,9 @@
 #pragma once
 #include "Graphics/Core/IDeviceContext.h"
+#include "Graphics/Core/DeviceObjectBase.h"
 #include <string>
 #include "VKNPipelineState.h"
+#include "VKNShaderVariableTable.h"
 #include "VKNUtilities.h"
 
 namespace Lambda
@@ -16,7 +18,7 @@ namespace Lambda
 	//VKNDeviceContext
 	//----------------
 
-    class VKNDeviceContext final : public VKNDeviceObject<IDeviceContext>
+    class VKNDeviceContext final : public DeviceObjectBase<VKNDevice, IDeviceContext>
     {
         friend class VKNDevice;
         
@@ -40,6 +42,7 @@ namespace Lambda
         virtual void SetVertexBuffer(IBuffer* pBuffer, uint32 slot) override final;
         virtual void SetIndexBuffer(IBuffer* pBuffer, Format format) override final;
         virtual void SetPipelineState(IPipelineState* pPipelineState) override final;
+		virtual void SetShaderVariableTable(IShaderVariableTable* pVariableTable) override final;
 		virtual void SetConstantBlocks(ShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData) override final;
 
         virtual void UpdateBuffer(IBuffer* pResource, const ResourceData* pData) override final;
@@ -61,19 +64,20 @@ namespace Lambda
         virtual CommandListType GetType() const override final;
         virtual void* GetNativeHandle() const override final;
         
-        void CommitResources();
+        void CommitAndTransitionResources();
         void BlitTexture(VKNTexture* pDst, uint32 dstWidth, uint32 dstHeight, uint32 dstMipLevel, VKNTexture* pSrc, uint32 srcWidth, uint32 srcHeight, uint32 srcMipLevel);        
     private:
         void Init(IVKNAllocator* pAllocator, CommandListType type);
     private:
-        VkCommandPool			  m_CommandPool;
-        VkCommandBuffer			  m_CommandBuffer;  
-		IVKNAllocator*			  m_pAllocator;
-        VKNUploadBuffer*		  m_pBufferUpload;
-        VKNUploadBuffer*		  m_pTextureUpload;
-        VKNRenderPass*			  m_pRenderPass;
+        VkCommandPool	 m_CommandPool;
+        VkCommandBuffer	 m_CommandBuffer;  
+		IVKNAllocator*	 m_pAllocator;
+        VKNUploadBuffer* m_pBufferUpload;
+        VKNUploadBuffer* m_pTextureUpload;
+        VKNRenderPass*	 m_pRenderPass;
 		AutoRef<VKNPipelineState> m_PipelineState;
-        CommandListType			  m_Type;
-        std::string				  m_Name;
+		AutoRef<VKNShaderVariableTable> m_VariableTable;
+        CommandListType	m_Type;
+        std::string		m_Name;
     };
 }

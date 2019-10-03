@@ -8,7 +8,7 @@ namespace Lambda
 {
 	class DX12LinearDescriptorAllocator final
 	{
-		friend class DX12CommandList;
+		friend class DX12DeviceContext;
 
 	public:
 		LAMBDA_NO_COPY(DX12LinearDescriptorAllocator);

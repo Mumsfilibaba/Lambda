@@ -1,5 +1,6 @@
 #pragma once
 #include "Graphics/Core/IQuery.h"
+#include "Graphics/Core/DeviceObjectBase.h"
 #include "VKNAllocator.h"
 
 namespace Lambda
@@ -8,7 +9,7 @@ namespace Lambda
     //VKNQuery
     //--------
     
-    class VKNQuery final : public VKNDeviceObject<IQuery>
+    class VKNQuery final : public DeviceObjectBase<VKNDevice, IQuery>
     {
     public:
         LAMBDA_NO_COPY(VKNQuery);

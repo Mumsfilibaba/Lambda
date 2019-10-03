@@ -1,30 +1,29 @@
 #include "LambdaPch.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
+	#include "DX12Device.h"
 	#include "DX12Texture.h"
 
 namespace Lambda
 {
-	DX12Texture::DX12Texture(ID3D12Resource* pResource)
-		: m_Texture(nullptr),
+	DX12Texture::DX12Texture(DX12Device* pDevice, ID3D12Resource* pResource)
+		: DeviceObjectBase<DX12Device, ITexture>(pDevice),
+		m_Texture(nullptr),
 		m_hDescriptor(),
 		m_Desc()
 	{
 		//Init
-		memset(&m_Desc, 0, sizeof(m_Desc));
 		InitFromResource(pResource);
 	}
 
 
-	DX12Texture::DX12Texture(ID3D12Device* pDevice, const TextureDesc& desc)
-		: m_Texture(nullptr),
+	DX12Texture::DX12Texture(DX12Device* pDevice, const TextureDesc& desc)
+		: DeviceObjectBase<DX12Device, ITexture>(pDevice),
+		m_Texture(nullptr),
 		m_hDescriptor(),
 		m_Desc()
 	{
-		LAMBDA_ASSERT(pDevice != nullptr);
-
 		//Init
-		memset(&m_Desc, 0, sizeof(m_Desc));
-		Init(pDevice, desc);
+		Init(desc);
 	}
 
 
@@ -40,7 +39,7 @@ namespace Lambda
 	}
 
 
-	void DX12Texture::Init(ID3D12Device* pDevice, const TextureDesc& desc)
+	void DX12Texture::Init(const TextureDesc& desc)
 	{
 		//Create texture2d resource
 		{
@@ -88,7 +87,7 @@ namespace Lambda
 
 			//Create resource
 			CD3DX12_RESOURCE_DESC rDesc = CD3DX12_RESOURCE_DESC::Tex2D(format, desc.Width, desc.Height, (UINT16)desc.ArraySize, (UINT16)desc.MipLevels, (UINT16)desc.SampleCount, 0, flags);
-			HRESULT hr = pDevice->CreateCommittedResource(&heapProp, D3D12_HEAP_FLAG_NONE, &rDesc, state, pClearValue, IID_PPV_ARGS(&m_Texture));
+			HRESULT hr = m_pDevice->GetDevice()->CreateCommittedResource(&heapProp, D3D12_HEAP_FLAG_NONE, &rDesc, state, pClearValue, IID_PPV_ARGS(&m_Texture));
 			if (FAILED(hr))
 			{
 				LOG_DEBUG_ERROR("DX12: Failed to create Texture2D.\n");

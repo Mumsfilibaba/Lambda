@@ -2,7 +2,8 @@
 #include "Defines.h"
 #include "Types.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
-	#include "DX12CommandList.h"
+	#include "DX12DeviceContext.h"
+
 namespace Lambda
 {
 	class DX12CommandQueue final
@@ -17,7 +18,7 @@ namespace Lambda
 		bool Init(ID3D12Device* pDevice, D3D12_COMMAND_LIST_TYPE type, uint64 initalFence);
 		void Signal(uint64 fenceValue) const;
 		void WaitForFenceValue(uint64 fenceValue) const;
-		void ExecuteCommandLists(DX12CommandList* const* ppLists, uint32 numLists) const;
+		void ExecuteCommandLists(DX12DeviceContext* const* ppLists, uint32 numLists) const;
 		
 		ID3D12CommandQueue* GetQueue() const;
 		uint64 GetCompletedFenceValue() const;
@@ -31,7 +32,7 @@ namespace Lambda
 	};
 
 
-	inline void DX12CommandQueue::ExecuteCommandLists(DX12CommandList* const* ppLists, uint32 numLists) const
+	inline void DX12CommandQueue::ExecuteCommandLists(DX12DeviceContext* const* ppLists, uint32 numLists) const
 	{
 		//Convert lists
 		for (uint32 i = 0; i < numLists; i++)

@@ -2,19 +2,26 @@
 #include "Graphics/Core/IBuffer.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include <wrl/client.h>
+	#include "Graphics/Core/DeviceObjectBase.h"
 	#include "DX12DescriptorHandle.h"
 
 namespace Lambda
 {
-	class DX12Buffer final : public RefCountedObject<IBuffer>
+	class DX12Device;
+
+	//----------
+	//DX12Buffer
+	//----------
+
+	class DX12Buffer final : public DeviceObjectBase<DX12Device, IBuffer>
 	{
-		friend class DX12CommandList;
-		friend class DX12GraphicsDevice;
+		friend class DX12Device;
+		friend class DX12DeviceContext;
 
 	public:
 		LAMBDA_NO_COPY(DX12Buffer);
 
-		DX12Buffer(ID3D12Device* pDevice, const BufferDesc& desc);
+		DX12Buffer(DX12Device* pDevice, const BufferDesc& desc);
 		~DX12Buffer() = default;
 
 		virtual void Map(void** ppMem) override final;
@@ -23,7 +30,7 @@ namespace Lambda
 		virtual void* GetNativeHandle() const override final;
 		virtual const BufferDesc& GetDesc() const override final;
 	private:
-		void Init(ID3D12Device* pDevice, const BufferDesc& desc);
+		void Init(const BufferDesc& desc);
 		
 		void SetDescriporHandle(const DX12DescriptorHandle& hDescriptor);
 

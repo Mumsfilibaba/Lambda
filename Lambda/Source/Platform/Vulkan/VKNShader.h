@@ -1,6 +1,6 @@
 #pragma once
 #include "Graphics/Core/IShader.h"
-#include "VKNDeviceObject.h"
+#include "Graphics/Core/DeviceObjectBase.h"
 #include <vulkan/vulkan.h>
 #include <vector>
 #include <string>
@@ -13,7 +13,7 @@ namespace Lambda
 	//VKNSamplerState
 	//---------------
 
-    class VKNShader final : public VKNDeviceObject<IShader>
+    class VKNShader final : public DeviceObjectBase<VKNDevice, IShader>
     {
     public:
         LAMBDA_NO_COPY(VKNShader);

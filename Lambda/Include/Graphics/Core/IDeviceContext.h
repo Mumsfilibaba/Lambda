@@ -11,6 +11,7 @@ namespace Lambda
     class IRenderPass;
     class ISamplerState;
     class IPipelineState;
+	class IShaderVariableTable;
 
     //--------------
     //IDeviceContext
@@ -34,6 +35,7 @@ namespace Lambda
 		virtual void SetScissorRect(const Rectangle& scissorRect) = 0;
 		virtual void SetVertexBuffer(IBuffer* pBuffer, uint32 slot) = 0;
         virtual void SetIndexBuffer(IBuffer* pBuffer, Format format) = 0;
+		virtual void SetShaderVariableTable(IShaderVariableTable* pVariableTable) = 0;
 		virtual void SetConstantBlocks(ShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData) = 0;
 		virtual void SetPipelineState(IPipelineState* pPiplineState) = 0;
 

@@ -3,9 +3,8 @@
 #include "Events/WindowEvent.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#pragma comment(lib, "dxguid.lib")
-
-	#include "DX12GraphicsDevice.h"
-	#include "DX12CommandList.h"
+	#include "DX12Device.h"
+	#include "DX12DeviceContext.h"
 	#include "DX12PipelineState.h"
 	#include "DX12Shader.h"
 	#include "DX12Buffer.h"
@@ -17,10 +16,10 @@
 namespace Lambda
 {
 	//------------------
-	//DX12GraphicsDevice
+	//DX12Device
 	//------------------
 
-	DX12GraphicsDevice::DX12GraphicsDevice(const DeviceDesc& desc)
+	DX12Device::DX12Device(const DeviceDesc& desc)
 		: m_Device(nullptr),
 		m_DXRDevice(nullptr),
 		m_Debug(nullptr),
@@ -45,7 +44,7 @@ namespace Lambda
 		LAMBDA_ASSERT(s_pInstance == nullptr);
 		s_pInstance = this;
 
-		LOG_SYSTEM_INFO("Creating DX12GraphicsDevice\n");
+		LOG_SYSTEM_INFO("Creating DX12Device\n");
 		
 		//TODO: Allow tearing?
 		m_BackBufferFlags	= DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
@@ -56,7 +55,7 @@ namespace Lambda
 	}
 
 
-	DX12GraphicsDevice::~DX12GraphicsDevice()
+	DX12Device::~DX12Device()
 	{
 		WaitForGPU();
 
@@ -83,7 +82,7 @@ namespace Lambda
 	}
 
 
-	void DX12GraphicsDevice::Init(const DeviceDesc& desc)
+	void DX12Device::Init(const DeviceDesc& desc)
 	{
 		using namespace Microsoft::WRL;
 
@@ -258,7 +257,7 @@ namespace Lambda
 			//Create the rendertarget-objects
 			m_BackBuffers.resize(m_NumBackbuffers);
 			for (uint32 i = 0; i < m_NumBackbuffers; i++)
-				m_BackBuffers[i] = DBG_NEW DX12Texture(nullptr);
+				m_BackBuffers[i] = DBG_NEW DX12Texture(this, nullptr);
 
 			LOG_DEBUG_INFO("DX12: Created swapchain\n");
 		}
@@ -268,7 +267,7 @@ namespace Lambda
 		IDeviceContext* pCommandList = nullptr;
 		CreateCommandList(&pCommandList, COMMAND_LIST_TYPE_GRAPHICS);
 		
-		m_pCommandList = reinterpret_cast<DX12CommandList*>(pCommandList);
+		m_pCommandList = reinterpret_cast<DX12DeviceContext*>(pCommandList);
 		m_pCommandList->SetName("Device GraphicsCommandList");
 		m_pCommandList->Reset();
 
@@ -324,16 +323,16 @@ namespace Lambda
 	}
 
 
-	void DX12GraphicsDevice::CreateCommandList(IDeviceContext** ppList, CommandListType type)
+	void DX12Device::CreateCommandList(IDeviceContext** ppList, CommandListType type)
 	{
-		*ppList = DBG_NEW DX12CommandList(type, m_NullSampler, m_NullSRV, m_NullUAV, m_NullCBV);
+		*ppList = DBG_NEW DX12DeviceContext(this, type, m_NullSampler, m_NullSRV, m_NullUAV, m_NullCBV);
 	}
 
 
-	void DX12GraphicsDevice::CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc)
+	void DX12Device::CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc)
 	{
 		//Create resource
-		DX12Buffer* pBuffer = DBG_NEW DX12Buffer(m_Device.Get(), desc);
+		DX12Buffer* pBuffer = DBG_NEW DX12Buffer(this, desc);
 
 		//Set initaldata if there are any
 		if (pInitalData != nullptr)
@@ -382,7 +381,7 @@ namespace Lambda
 	}
 
 
-	void DX12GraphicsDevice::CreateTexture(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc)
+	void DX12Device::CreateTexture(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc)
 	{
 		//Return early if errors
 		if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
@@ -393,7 +392,7 @@ namespace Lambda
 		}
 
 		//Create resource
-		DX12Texture* pTexture = DBG_NEW DX12Texture(m_Device.Get(), desc);
+		DX12Texture* pTexture = DBG_NEW DX12Texture(this, desc);
 		
 		//Set initaldata if there are any
 		if (pInitalData != nullptr)
@@ -457,47 +456,47 @@ namespace Lambda
 	}
 
 
-	void DX12GraphicsDevice::CreateShader(IShader** ppShader, const ShaderDesc& desc)
+	void DX12Device::CreateShader(IShader** ppShader, const ShaderDesc& desc)
 	{
-		(*ppShader) = DBG_NEW DX12Shader(desc);
+		(*ppShader) = DBG_NEW DX12Shader(this, desc);
 	}
 
 
-	void DX12GraphicsDevice::CreateSamplerState(ISamplerState** ppSamplerState, const SamplerStateDesc& desc)
+	void DX12Device::CreateSamplerState(ISamplerState** ppSamplerState, const SamplerStateDesc& desc)
 	{
 		DX12DescriptorHandle hDescriptor = m_SamplerAllocator.Allocate();
-		(*ppSamplerState) = DBG_NEW DX12SamplerState(m_Device.Get(), hDescriptor, desc);
+		(*ppSamplerState) = DBG_NEW DX12SamplerState(this, hDescriptor, desc);
 	}
 
 
-	void DX12GraphicsDevice::CreatePipelineState(IPipelineState** ppPSO, const PipelineStateDesc& desc)
+	void DX12Device::CreatePipelineState(IPipelineState** ppPSO, const PipelineStateDesc& desc)
 	{
-		//(*ppPSO) = DBG_NEW DX12GraphicsPipelineState(m_Device.Get(), desc);
+		//(*ppPSO) = DBG_NEW DX12PipelineState(m_Device.Get(), desc);
 	}
 
 
-	void DX12GraphicsDevice::CreateRenderPass(IRenderPass** ppRenderPass, const RenderPassDesc& desc)
+	void DX12Device::CreateRenderPass(IRenderPass** ppRenderPass, const RenderPassDesc& desc)
 	{
 		LAMBDA_ASSERT(ppRenderPass && &desc);
 	}
 
 
-	void DX12GraphicsDevice::CreateQuery(IQuery** ppQuery, const QueryDesc& desc)
+	void DX12Device::CreateQuery(IQuery** ppQuery, const QueryDesc& desc)
 	{
 	}
 
 
-	//void DX12GraphicsDevice::DestroyCommandList(IDeviceContext** ppList)
+	//void DX12Device::DestroyCommandList(IDeviceContext** ppList)
 	//{
 	//	LAMBDA_ASSERT(ppList != nullptr);
 
-	//	DX12CommandList* pList = reinterpret_cast<DX12CommandList*>(*ppList);
+	//	DX12DeviceContext* pList = reinterpret_cast<DX12DeviceContext*>(*ppList);
 	//	delete pList;
 	//	*ppList = nullptr;
 	//}
 
 
-	//void DX12GraphicsDevice::DestroyBuffer(IBuffer** ppBuffer)
+	//void DX12Device::DestroyBuffer(IBuffer** ppBuffer)
 	//{
 	//	LAMBDA_ASSERT(ppBuffer != nullptr);
 
@@ -519,7 +518,7 @@ namespace Lambda
 	//}
 
 
-	//void DX12GraphicsDevice::DestroyTexture(ITexture** ppTexture)
+	//void DX12Device::DestroyTexture(ITexture** ppTexture)
 	//{
 	//	LAMBDA_ASSERT(ppTexture != nullptr);
 
@@ -549,7 +548,7 @@ namespace Lambda
 	//}
 
 
-	//void DX12GraphicsDevice::DestroyShader(IShader** ppShader)
+	//void DX12Device::DestroyShader(IShader** ppShader)
 	//{
 	//	LAMBDA_ASSERT(ppShader != nullptr);
 
@@ -559,7 +558,7 @@ namespace Lambda
 	//}
 
 
-	//void DX12GraphicsDevice::DestroySamplerState(ISamplerState** ppSamplerState)
+	//void DX12Device::DestroySamplerState(ISamplerState** ppSamplerState)
 	//{
 	//	LAMBDA_ASSERT(ppSamplerState != nullptr);
 
@@ -574,56 +573,56 @@ namespace Lambda
 	//}
 
 
-	//void DX12GraphicsDevice::DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState)
+	//void DX12Device::DestroyGraphicsPipelineState(IGraphicsPipelineState** ppPipelineState)
 	//{
 	//	LAMBDA_ASSERT(ppPipelineState != nullptr);
 
-	//	DX12GraphicsPipelineState* pPipelineState = reinterpret_cast<DX12GraphicsPipelineState*>(*ppPipelineState);
+	//	DX12PipelineState* pPipelineState = reinterpret_cast<DX12PipelineState*>(*ppPipelineState);
 	//	delete pPipelineState;
 	//	*ppPipelineState = nullptr;
 	//}
 
 
-	//void DX12GraphicsDevice::DestroyRenderPass(IRenderPass** ppRenderPass)
+	//void DX12Device::DestroyRenderPass(IRenderPass** ppRenderPass)
 	//{
 	//	LAMBDA_ASSERT(ppRenderPass);
 	//}
 
 
-	//void DX12GraphicsDevice::DestroyResourceState(IPipelineResourceState** ppResourceState)
+	//void DX12Device::DestroyResourceState(IPipelineResourceState** ppResourceState)
 	//{
 	//}
 
-	//void DX12GraphicsDevice::DestroyQuery(IQuery** ppQuery)
+	//void DX12Device::DestroyQuery(IQuery** ppQuery)
 	//{
 	//}
 
 
-	//void DX12GraphicsDevice::Destroy() const
+	//void DX12Device::Destroy() const
 	//{
 	//	delete this;
 	//}
 
 
-	void DX12GraphicsDevice::ExecuteCommandList(IDeviceContext* const * ppLists, uint32 numLists) const
+	void DX12Device::ExecuteCommandList(IDeviceContext* const * ppLists, uint32 numLists) const
 	{
-		m_DirectQueue.ExecuteCommandLists(reinterpret_cast<DX12CommandList* const *>(ppLists), numLists);
+		m_DirectQueue.ExecuteCommandLists(reinterpret_cast<DX12DeviceContext* const *>(ppLists), numLists);
 	}
 
 
-	void DX12GraphicsDevice::PresentBegin() const
+	void DX12Device::PresentBegin() const
 	{
 	}
 
 
-	void DX12GraphicsDevice::PresentEnd(IDeviceContext* const* ppLists, uint32 numLists) const
+	void DX12Device::PresentEnd(IDeviceContext* const* ppLists, uint32 numLists) const
 	{
-		m_DirectQueue.ExecuteCommandLists(reinterpret_cast<DX12CommandList * const*>(ppLists), numLists);
+		m_DirectQueue.ExecuteCommandLists(reinterpret_cast<DX12DeviceContext * const*>(ppLists), numLists);
 		m_SwapChain->Present(1, 0);
 	}
 
 
-	void DX12GraphicsDevice::GPUWaitForFrame() const
+	void DX12Device::GPUWaitForFrame() const
 	{
 		//Increment the fencecalue on the GPU (signal) for the current frame
 		uint64 fenceValue = m_FenceValues[m_CurrentBackBuffer];
@@ -643,7 +642,7 @@ namespace Lambda
 	}
 
 
-	void DX12GraphicsDevice::WaitForGPU() const
+	void DX12Device::WaitForGPU() const
 	{
 		//Increment the fencecalue on the GPU (signal) for the current frame
 		uint64 fenceValue = m_FenceValues[m_CurrentBackBuffer];
@@ -657,62 +656,62 @@ namespace Lambda
 	}
 
 
-	ITexture* DX12GraphicsDevice::GetRenderTarget() const
+	ITexture* DX12Device::GetRenderTarget() const
 	{
 		return m_BackBuffers[m_SwapChain->GetCurrentBackBufferIndex()];
 	}
 
 
-	ITexture* DX12GraphicsDevice::GetDepthStencil() const
+	ITexture* DX12Device::GetDepthStencil() const
 	{
 		return nullptr;
 	}
 
 
-	Format DX12GraphicsDevice::GetBackBufferFormat() const
+	Format DX12Device::GetBackBufferFormat() const
 	{
 		return ConvertDXGIFormat(m_BackBufferFormat);
 	}
 
 
-	uint32 DX12GraphicsDevice::GetBackBufferIndex() const
+	uint32 DX12Device::GetBackBufferIndex() const
 	{
 		return m_SwapChain->GetCurrentBackBufferIndex();
 	}
 
 
-	uint32 DX12GraphicsDevice::GetSwapChainWidth() const
+	uint32 DX12Device::GetSwapChainWidth() const
 	{
 		return m_BackBufferWidth;
 	}
 
 
-	uint32 DX12GraphicsDevice::GetSwapChainHeight() const
+	uint32 DX12Device::GetSwapChainHeight() const
 	{
 		return m_BackBufferHeight;
 	}
 
 
-	DeviceProperties DX12GraphicsDevice::GetProperties() const
+	DeviceProperties DX12Device::GetProperties() const
 	{
 		return DeviceProperties();
 	}
 
 
-	const DeviceDesc& DX12GraphicsDevice::GetDesc() const
+	const DeviceDesc& DX12Device::GetDesc() const
 	{
 		return m_Desc;
 	}
 
 
-	void* DX12GraphicsDevice::GetNativeHandle() const
+	void* DX12Device::GetNativeHandle() const
 	{
 		//Return the ID3D12Device-ptr
 		return m_Device.Get();
 	}
 
 
-	void DX12GraphicsDevice::ReleaseBackBuffers()
+	void DX12Device::ReleaseBackBuffers()
 	{
 		using namespace Microsoft::WRL;
 
@@ -728,7 +727,7 @@ namespace Lambda
 	}
 
 
-	bool DX12GraphicsDevice::QueryAdaper(uint32 flags)
+	bool DX12Device::QueryAdaper(uint32 flags)
 	{
 		using namespace Microsoft::WRL;
 
@@ -805,7 +804,7 @@ namespace Lambda
 	}
 
 
-	bool DX12GraphicsDevice::InitBackBuffers()
+	bool DX12Device::InitBackBuffers()
 	{
 		using namespace Microsoft::WRL;
 
@@ -839,7 +838,7 @@ namespace Lambda
 	}
 
 
-	bool DX12GraphicsDevice::IsDXRSupported(ID3D12Device* pDevice)
+	bool DX12Device::IsDXRSupported(ID3D12Device* pDevice)
 	{
 		//Check support for DXR
 		D3D12_FEATURE_DATA_D3D12_OPTIONS5 supportData = {};
@@ -855,7 +854,7 @@ namespace Lambda
 	}
 
 
-	bool DX12GraphicsDevice::OnResize(const WindowResizeEvent& event)
+	bool DX12Device::OnResize(const WindowResizeEvent& event)
 	{
 		//if size is zero then do not resize
 		if (event.GetWidth() > 0 && event.GetHeight() > 0)
@@ -887,11 +886,11 @@ namespace Lambda
 	}
 	
 	
-	DX12GraphicsDevice& DX12GraphicsDevice::Get()
+	DX12Device& DX12Device::Get()
 	{
 		LAMBDA_ASSERT(s_pInstance != nullptr);
 
-		DX12GraphicsDevice* pDXDevice = reinterpret_cast<DX12GraphicsDevice*>(s_pInstance);
+		DX12Device* pDXDevice = reinterpret_cast<DX12Device*>(s_pInstance);
 		return *pDXDevice;
 	}
 }

@@ -1,32 +1,45 @@
 #include "LambdaPch.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
+	#include "DX12Device.h"
 	#include "DX12PipelineState.h"
 	#include "DX12Shader.h"
 
 namespace Lambda
 {
-	DX12GraphicsPipelineState::DX12GraphicsPipelineState(ID3D12Device* pDevice, const GraphicsPipelineStateDesc& desc)
-		: m_State(nullptr),
+	DX12PipelineState::DX12PipelineState(DX12Device* pDevice, const PipelineStateDesc& desc)
+		: DeviceObjectBase<DX12Device, IPipelineState>(pDevice),
+		m_State(nullptr),
 		m_RootSignature(nullptr)
 	{
 		LAMBDA_ASSERT(pDevice != nullptr);
-		Init(pDevice, desc);
+		Init(desc);
 	}
 
 
-	void DX12GraphicsPipelineState::SetName(const char* pName)
+	void DX12PipelineState::CreateShaderVariableTable(IShaderVariableTable** ppVariableTable)
+	{
+	}
+
+
+	void DX12PipelineState::SetName(const char* pName)
 	{
 		m_Name = std::string(pName);
 	}
 
 
-	void* DX12GraphicsPipelineState::GetNativeHandle() const
+	void* DX12PipelineState::GetNativeHandle() const
 	{
 		return m_State.Get();
 	}
 
+	
+	const PipelineStateDesc& DX12PipelineState::GetDesc() const
+	{
+		return PipelineStateDesc();
+	}
 
-	void DX12GraphicsPipelineState::Init(ID3D12Device* pDevice, const GraphicsPipelineStateDesc& desc)
+
+	void DX12PipelineState::Init(const PipelineStateDesc& desc)
 	{
 		using namespace Microsoft::WRL;
 
@@ -129,12 +142,12 @@ namespace Lambda
 			{
 #if defined(LAMBDA_DEBUG)
 				const char* pMessage = reinterpret_cast<const char*>(error->GetBufferPointer());
-#endif
 				LOG_DEBUG_ERROR("DX12: Failed to serialize RootSignature. Error-message:\n%s\n", pMessage);
+#endif
 				return;
 			}
 
-			hr = pDevice->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_RootSignature));
+			hr = m_pDevice->GetDevice()->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_RootSignature));
 			if (FAILED(hr))
 			{
 				LOG_DEBUG_ERROR("DX12: Failed to create RootSignature\n");
@@ -155,8 +168,8 @@ namespace Lambda
 			};
 
 			//Retrive shaders from desc
-			DX12Shader* pVS = reinterpret_cast<DX12Shader*>(desc.pVertexShader);
-			DX12Shader* pPS = reinterpret_cast<DX12Shader*>(desc.pPixelShader);
+			DX12Shader* pVS = reinterpret_cast<DX12Shader*>(desc.GraphicsPipeline.pVertexShader);
+			DX12Shader* pPS = reinterpret_cast<DX12Shader*>(desc.GraphicsPipeline.pPixelShader);
 
 			//Create shader
 			D3D12_SHADER_BYTECODE vertexShader	= { pVS->GetShaderBlobData(), pVS->GetShaderBlobSize() };
@@ -178,11 +191,10 @@ namespace Lambda
 			psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
 			psoDesc.SampleDesc.Count = 1;
 
-			HRESULT hr = pDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_State));
+			HRESULT hr = m_pDevice->GetDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_State));
 			if (FAILED(hr))
 			{
 				LOG_DEBUG_ERROR("DX12: Failed to create pipelinestate\n");
-				return;
 			}
 			else
 			{

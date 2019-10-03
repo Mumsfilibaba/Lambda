@@ -133,7 +133,8 @@ namespace Lambda
 		m_PipelineState(nullptr),
 		m_FontTexture(nullptr),
 		m_VertexBuffer(nullptr),
-		m_IndexBuffer(nullptr)
+		m_IndexBuffer(nullptr),
+		m_VariableTable(nullptr)
     {
         Create();
     }
@@ -211,7 +212,6 @@ namespace Lambda
 			shaderDesc.SourceLength = sizeof(__glsl_shader_vert_spv);
 			shaderDesc.Languange	= SHADER_LANG_SPIRV;
 		}
-
 		pDevice->CreateShader(&m_VS, shaderDesc);
 
 		shaderDesc.Type = SHADER_STAGE_PIXEL;
@@ -220,7 +220,6 @@ namespace Lambda
 			shaderDesc.pSource		= reinterpret_cast<const char*>(__glsl_shader_frag_spv);
 			shaderDesc.SourceLength = sizeof(__glsl_shader_frag_spv);
 		}
-
 		pDevice->CreateShader(&m_PS, shaderDesc);
 
 
@@ -235,22 +234,23 @@ namespace Lambda
 
 
 		//Create pipelineresourcestate
-		ShaderVariableDesc resourceSlots[1];
-		resourceSlots[0].pSamplerState = m_SamplerState.Get();
-		resourceSlots[0].Slot	= 0;
-		resourceSlots[0].Type	= RESOURCE_TYPE_TEXTURE;
-		resourceSlots[0].Usage	= RESOURCE_USAGE_DEFAULT;
-		resourceSlots[0].Stage	= SHADER_STAGE_PIXEL;
+		ShaderVariableDesc shaderVariables[1];
+		shaderVariables[0].pName			= "sTexture";
+		shaderVariables[0].pSamplerState	= m_SamplerState.Get();
+		shaderVariables[0].Slot				= 0;
+		shaderVariables[0].Type				= RESOURCE_TYPE_TEXTURE;
+		shaderVariables[0].Usage			= RESOURCE_USAGE_DEFAULT;
+		shaderVariables[0].Stage			= SHADER_STAGE_PIXEL;
 
-        ConstantBlock constantBlocks[1];
+        ConstantBlockDesc constantBlocks[1];
 		constantBlocks[0].Stage			= SHADER_STAGE_VERTEX;
 		constantBlocks[0].SizeInBytes	= sizeof(float) * 4;
 
-		ShaderVariableLayoutDesc resourceStateDesc = {};
-		resourceStateDesc.NumResourceSlots	= 1;
-		resourceStateDesc.pResourceSlots	= resourceSlots;
-		resourceStateDesc.NumConstantBlocks	= 1;
-        resourceStateDesc.pConstantBlocks	= constantBlocks;
+		ShaderVariableTableDesc variableTableDesc = {};
+		variableTableDesc.NumVariables	= 1;
+		variableTableDesc.pVariables	= shaderVariables;
+		variableTableDesc.NumConstantBlocks	= 1;
+		variableTableDesc.pConstantBlocks	= constantBlocks;
 
 		//Create pipelinestate
 		InputElementDesc inputElements[3] =
@@ -286,11 +286,12 @@ namespace Lambda
 		graphicsPipeline.Topology			= PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
 		PipelineStateDesc pipelineDesc = {};
-		pipelineDesc.pName = "ImGui PipelineState";
-		pipelineDesc.Type = PIPELINE_TYPE_GRAPHICS;
-		pipelineDesc.ShaderResources = resourceStateDesc;
-		pipelineDesc.GraphicsPipeline = graphicsPipeline;
+		pipelineDesc.pName	= "ImGui PipelineState";
+		pipelineDesc.Type	= PIPELINE_TYPE_GRAPHICS;
+		pipelineDesc.ShaderVariableTable	= variableTableDesc;
+		pipelineDesc.GraphicsPipeline		= graphicsPipeline;
 		pDevice->CreatePipelineState(&m_PipelineState, pipelineDesc);
+		m_PipelineState->CreateShaderVariableTable(&m_VariableTable);
 
 		//Create fonttexture
 		uint8* pPixels	= nullptr;
@@ -320,9 +321,8 @@ namespace Lambda
 		pDevice->CreateTexture(&m_FontTexture, &initalData, fontTextureDesc);
 		pList->TransitionTexture(m_FontTexture.Get(), RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0, LAMBDA_TRANSITION_ALL_MIPS);
 
-		// Store our identifier
-		//io.Fonts->TexID = (ImTextureID)(intptr_t)m_pFontTexture->GetNativeHandle();
-
+		m_VariableTable->GetVariableByIndex(SHADER_STAGE_PIXEL, 0)->SetTexture(m_FontTexture.Get());
+		m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "sTexture")->SetTexture(m_FontTexture.Get());
 
 		//Create vertex and indexbuffer
 		BufferDesc bufferDesc = {};
@@ -487,9 +487,10 @@ namespace Lambda
 		}
 
 		//Setup pipelinestate
-		m_PipelineState->SetTextures(&m_FontTexture, 1, 0);
 		pList->SetPipelineState(m_PipelineState.Get());
-		
+		//Set shader variable list
+		pList->SetShaderVariableTable(m_VariableTable.Get());
+
 		//Setup vertex and indexbuffer
 		pList->SetVertexBuffer(m_VertexBuffer.Get(), 0);
 		pList->SetIndexBuffer(m_IndexBuffer.Get(), sizeof(ImDrawIdx) == 2 ? FORMAT_R16_UINT : FORMAT_R32_UINT);

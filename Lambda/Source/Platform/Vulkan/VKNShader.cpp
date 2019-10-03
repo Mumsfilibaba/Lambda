@@ -9,7 +9,7 @@ namespace Lambda
 	//---------
 
 	VKNShader::VKNShader(VKNDevice* pDevice, const ShaderDesc& desc)
-		: VKNDeviceObject<IShader>(pDevice),
+		: DeviceObjectBase<VKNDevice, IShader>(pDevice),
 		m_Shader(VK_NULL_HANDLE),
 		m_ByteCode(),
 		m_EntryPoint(),
@@ -17,7 +17,6 @@ namespace Lambda
 	{
 		//Add a ref to the refcounter
 		this->AddRef();
-
         Init(desc);
     }
 

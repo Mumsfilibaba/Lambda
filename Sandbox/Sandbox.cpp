@@ -54,6 +54,7 @@ namespace Lambda
 		m_NormalMap(nullptr),
 		m_SamplerState(nullptr),
 		m_PipelineState(nullptr),
+		m_VariableTable(nullptr),
 		m_Camera(),
 		m_TransformBuffer()
 	{
@@ -153,29 +154,30 @@ namespace Lambda
 				graphicsPipeline.BlendState			= blendState;
 				graphicsPipeline.DepthStencilState	= depthStencilState;
 
-				ShaderVariableDesc slots[] =
+				ShaderVariableDesc shaderVariables[] =
 				{
-					{ nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_VERTEX,	RESOURCE_USAGE_DEFAULT, 0 },
-					{ nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_VERTEX,	RESOURCE_USAGE_DYNAMIC, 1 },
-					{ nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DYNAMIC, 2 },
-					{ nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DEFAULT, 3 },
-					{ nullptr, RESOURCE_TYPE_TEXTURE,			SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DEFAULT, 4 },
-					{ nullptr, RESOURCE_TYPE_TEXTURE,			SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DEFAULT, 5 },
-					{ nullptr, RESOURCE_TYPE_SAMPLER_STATE,		SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DEFAULT, 6 },
+					{ "u_CameraBuffer",		nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_VERTEX,	RESOURCE_USAGE_DEFAULT, 0 },
+					{ "u_TransformBuffer",	nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_VERTEX,	RESOURCE_USAGE_DYNAMIC, 1 },
+					{ "u_MaterialBuffer",	nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DYNAMIC, 2 },
+					{ "u_LightBuffer",		nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DEFAULT, 3 },
+					{ "u_Albedo",			nullptr, RESOURCE_TYPE_TEXTURE,			SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DEFAULT, 4 },
+					{ "u_Normal",			nullptr, RESOURCE_TYPE_TEXTURE,			SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DEFAULT, 5 },
+					{ "u_Sampler",			nullptr, RESOURCE_TYPE_SAMPLER_STATE,	SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DEFAULT, 6 },
 				};
 
-				ShaderVariableLayoutDesc resourceDesc = {};
-				resourceDesc.NumResourceSlots	= 7;
-				resourceDesc.pResourceSlots		= slots;
-				resourceDesc.NumConstantBlocks	= 0;
-				resourceDesc.pConstantBlocks	= nullptr;
+				ShaderVariableTableDesc variableTableDesc = {};
+				variableTableDesc.NumVariables	= 7;
+				variableTableDesc.pVariables	= shaderVariables;
+				variableTableDesc.NumConstantBlocks	= 0;
+				variableTableDesc.pConstantBlocks	= nullptr;
 
 				PipelineStateDesc pipelineDesc = {};
 				pipelineDesc.pName	= "MainPipelineState";
 				pipelineDesc.Type	= PIPELINE_TYPE_GRAPHICS;
-				pipelineDesc.ShaderResources = resourceDesc;
-				pipelineDesc.GraphicsPipeline = graphicsPipeline;
+				pipelineDesc.ShaderVariableTable	= variableTableDesc;
+				pipelineDesc.GraphicsPipeline		= graphicsPipeline;
                 pDevice->CreatePipelineState(&m_PipelineState, pipelineDesc);
+				m_PipelineState->CreateShaderVariableTable(&m_VariableTable);
             }
 
             //Create vertexbuffer
@@ -270,16 +272,20 @@ namespace Lambda
             pDevice->WaitForGPU();
 
 			//Setup materials
-			m_Material.pAlbedoMap = m_AlbedoMap.Get();
-			m_Material.pNormalMap = m_NormalMap.Get();
-			m_Material.pPipelineState = m_PipelineState.Get();
-			m_Material.pSamplerState = m_SamplerState.Get();
-			m_Material.Color = glm::vec4(RGB_F(255, 255, 255), 1.0f);
+			m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Albedo")->SetTexture(m_AlbedoMap.Get());
+			m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Normal")->SetTexture(m_NormalMap.Get());
+			m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Sampler")->SetSamplerState(m_SamplerState.Get());
 
-			m_RedMaterial.pAlbedoMap		= nullptr;
-			m_RedMaterial.pNormalMap		= nullptr;
+			m_Material.pPipelineState	= m_PipelineState.Get();
+			m_Material.pVariableTable	= m_VariableTable.Get();
+			m_Material.HasNormalMap		= 1;
+			m_Material.HasAlbedoMap		= 1;
+			m_Material.Color			= glm::vec4(RGB_F(255, 255, 255), 1.0f);
+
+			m_RedMaterial.pVariableTable	= m_VariableTable.Get();
 			m_RedMaterial.pPipelineState	= m_PipelineState.Get();
-			m_RedMaterial.pSamplerState		= nullptr;
+			m_RedMaterial.HasNormalMap		= 0;
+			m_RedMaterial.HasAlbedoMap		= 0;
 			m_RedMaterial.Color				= glm::vec4(RGB_F(255, 0, 0), 1.0f);
         }
 	}
@@ -371,6 +377,7 @@ namespace Lambda
 			m_VS.Release();
 			m_PS.Release();
 			m_PipelineState.Release();
+			m_VariableTable.Release();
 			m_Mesh.pVertexBuffer->Release();
 			m_Mesh.pIndexBuffer->Release();
 			m_SphereMesh.pVertexBuffer->Release();

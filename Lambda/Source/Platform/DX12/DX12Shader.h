@@ -1,28 +1,29 @@
 #pragma once
 #include "Graphics/Core/IShader.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
-	#include <wrl/client.h>
-	#include <d3d12.h>
+	#include "Graphics/Core/DeviceObjectBase.h"
 
 namespace Lambda
 {
+	class DX12Device;
+
 	//----------
 	//DX12Shader
 	//----------
 
-	class DX12Shader final : public RefCountedObject<IShader>
+	class DX12Shader final : public DeviceObjectBase<DX12Device, IShader>
 	{
 	public:
 		LAMBDA_NO_COPY(DX12Shader);
 
-		DX12Shader(const ShaderDesc& desc);
+		DX12Shader(DX12Device* pDevice, const ShaderDesc& desc);
 		~DX12Shader() = default;
 
 		virtual void* GetNativeHandle() const override final;
 		virtual const ShaderDesc& GetDesc() const override final;
 
-		const void* GetShaderBlobData() const;
-		uint64 GetShaderBlobSize() const;
+		inline const void* GetShaderBlobData() const { return reinterpret_cast<const void*>(m_ShaderBlob.data()); }
+		inline uint64 GetShaderBlobSize() const { return uint64(m_ShaderBlob.size()); }
 	private:
 		void Init(const ShaderDesc& desc);
 	private:
@@ -32,17 +33,5 @@ namespace Lambda
 	private:
 		static const char* GetTarget(ShaderStage type);
 	};
-
-
-	inline const void* DX12Shader::GetShaderBlobData() const
-	{
-		return reinterpret_cast<const void*>(m_ShaderBlob.data());
-	}
-
-
-	inline uint64 DX12Shader::GetShaderBlobSize() const
-	{
-		return (uint64)m_ShaderBlob.size();
-	}
 }
 #endif

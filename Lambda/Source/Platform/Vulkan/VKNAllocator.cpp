@@ -316,7 +316,7 @@ namespace Lambda
     constexpr size_t numFrames = 5;
 
 	VKNAllocator::VKNAllocator(VKNDevice* pDevice)
-		: VKNDeviceObject<IVKNAllocator>(pDevice),
+		: DeviceObjectBase<VKNDevice, IVKNAllocator>(pDevice),
 		m_MaxAllocations(0),
         m_TotalReserved(0),
         m_TotalAllocated(0),

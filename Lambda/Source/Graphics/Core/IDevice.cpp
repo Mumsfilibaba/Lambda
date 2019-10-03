@@ -1,10 +1,5 @@
 #include "LambdaPch.h"
 #include "Graphics/Core/IDevice.h"
-#if defined(LAMBDA_PLAT_WINDOWS)
-	#include "../Platform/DX12/DX12GraphicsDevice.h"
-#endif
-#include "../Platform/Vulkan/VKNDevice.h"
-
 namespace Lambda
 {
     //-------

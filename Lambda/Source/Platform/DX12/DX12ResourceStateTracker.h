@@ -19,7 +19,7 @@ namespace Lambda
 
 	class DX12ResourceStateTracker final
 	{
-		friend class DX12GraphicsDevice;
+		friend class DX12Device;
 
 	public:
 		using ResourceMap = std::unordered_map<ID3D12Resource*, DX12ResourceState>;

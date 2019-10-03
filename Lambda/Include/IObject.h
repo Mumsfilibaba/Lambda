@@ -93,13 +93,7 @@ namespace Lambda
 		}
 
 
-		inline TObject* Get()
-		{
-			return m_pObject;
-		}
-
-
-		inline const TObject* Get() const
+		inline TObject* Get() const
 		{
 			return m_pObject;
 		}
@@ -111,19 +105,25 @@ namespace Lambda
 		}
 
 
-		inline const TObject* const * GetAdressOf() const
+		inline TObject* const * GetAdressOf() const
 		{
 			return &m_pObject;
 		}
 
 
-		inline TObject* operator->()
+		inline RefCountValue Release()
 		{
-			return m_pObject;
+			RefCountValue counter = 0;
+			if (m_pObject)
+			{
+				counter = m_pObject->Release();
+				m_pObject = nullptr;
+			}
+			return counter;
 		}
 
 
-		inline const TObject* operator->() const
+		inline TObject* operator->() const
 		{
 			return m_pObject;
 		}
@@ -149,19 +149,7 @@ namespace Lambda
 		}
 
 
-		inline RefCountValue Release()
-		{
-			RefCountValue counter = 0;
-			if (m_pObject)
-			{
-				counter = m_pObject->Release();
-				m_pObject = nullptr;
-			}
-			return counter;
-		}
-
-
-		inline const TObject* const * operator&() const
+		inline TObject* const * operator&() const
 		{
 			return &m_pObject;
 		}

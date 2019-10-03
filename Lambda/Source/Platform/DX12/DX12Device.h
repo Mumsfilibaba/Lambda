@@ -2,7 +2,7 @@
 #include "Graphics/Core/IDevice.h"
 #include "System/IWindow.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
-	#include "DX12CommandList.h"
+	#include "DX12DeviceContext.h"
 	#include "DX12CommandQueue.h"
 	#include "DX12DescriptorAllocator.h"
 	#include <dxgi1_6.h>
@@ -12,17 +12,17 @@ namespace Lambda
 {
 	class DX12Texture;
 
-	//------------------
-	//DX12GraphicsDevice
-	//------------------
+	//----------
+	//DX12Device
+	//----------
 
-	class DX12GraphicsDevice final : public RefCountedObject<IDevice>
+	class DX12Device final : public RefCountedObject<IDevice>
 	{
 	public:
-		LAMBDA_NO_COPY(DX12GraphicsDevice);
+		LAMBDA_NO_COPY(DX12Device);
 
-		DX12GraphicsDevice(const DeviceDesc& desc);
-		~DX12GraphicsDevice();
+		DX12Device(const DeviceDesc& desc);
+		~DX12Device();
 
 		virtual void CreateCommandList(IDeviceContext** ppList, CommandListType type) override final;
 		virtual void CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) override final;
@@ -68,7 +68,7 @@ namespace Lambda
 		Microsoft::WRL::ComPtr<ID3D12Device5>	m_DXRDevice;
 		Microsoft::WRL::ComPtr<ID3D12Debug>		m_Debug;
 		Microsoft::WRL::ComPtr<IDXGISwapChain3>	m_SwapChain;
-		DX12CommandList*						m_pCommandList;
+		DX12DeviceContext*						m_pCommandList;
 		DX12CommandQueue						m_DirectQueue;
 		DX12CommandQueue						m_ComputeQueue;
 		DX12CommandQueue						m_CopyQueue;
@@ -89,13 +89,13 @@ namespace Lambda
 		mutable uint32							m_CurrentBackBuffer;
 		uint32									m_NumBackbuffers;
 		bool									m_DXRSupported;
-		DeviceDesc						m_Desc;
+		DeviceDesc								m_Desc;
 	public:
-		static DX12GraphicsDevice& Get();
+		static DX12Device& Get();
 	};
 
 
-	inline ID3D12Device* DX12GraphicsDevice::GetDevice() const
+	inline ID3D12Device* DX12Device::GetDevice() const
 	{
 		return m_Device.Get();
 	}

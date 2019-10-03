@@ -219,27 +219,26 @@ namespace Lambda
         //Update material
 		MaterialBuffer materialBuffer = {};
 		materialBuffer.Color		= material.Color;
-		materialBuffer.HasAlbedoMap = material.pAlbedoMap ? 1 : 0;
-		materialBuffer.HasNormalMap = material.pNormalMap ? 1 : 0;
+		materialBuffer.HasAlbedoMap = material.HasAlbedoMap;
+		materialBuffer.HasNormalMap = material.HasNormalMap;
 
 		ResourceData materialData = {};
 		materialData.pData			= &materialBuffer;
 		materialData.SizeInBytes	= sizeof(MaterialBuffer);
 		m_pCurrentList->UpdateBuffer(m_MaterialBuffer.Get(), &materialData);
-		//Set resources
-		IBuffer* ppBuffers[]		     = { m_CameraBuffer.Get(), m_TransformBuffer.Get(), m_MaterialBuffer.Get(), m_LightBuffer.Get() };
-		ITexture* ppTextures[]		     = { material.pAlbedoMap, material.pNormalMap };
-		ISamplerState* ppSamplerStates[] = { material.pSamplerState };
-		
-		IPipelineState* pPipelineState = material.pPipelineState;
-		pPipelineState->SetConstantBuffers(ppBuffers, 4, 0);
-		pPipelineState->SetTextures(ppTextures, 2, 4);
-		pPipelineState->SetSamplerStates(ppSamplerStates, 1, 6);
+	
+		//Set variables
+		material.pVariableTable->GetVariableByName(SHADER_STAGE_VERTEX, "u_CameraBuffer")->SetConstantBuffer(m_CameraBuffer.Get());
+		material.pVariableTable->GetVariableByName(SHADER_STAGE_VERTEX, "u_TransformBuffer")->SetConstantBuffer(m_TransformBuffer.Get());
+		material.pVariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_MaterialBuffer")->SetConstantBuffer(m_MaterialBuffer.Get());
+		material.pVariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_LightBuffer")->SetConstantBuffer(m_LightBuffer.Get());
+
 		//Set mesh
         m_pCurrentList->SetVertexBuffer(model.pVertexBuffer, 0);
         m_pCurrentList->SetIndexBuffer(model.pIndexBuffer, FORMAT_R32_UINT);
         //Set pipelinestate
-		m_pCurrentList->SetPipelineState(pPipelineState);
+		m_pCurrentList->SetShaderVariableTable(material.pVariableTable);
+		m_pCurrentList->SetPipelineState(material.pPipelineState);
         //Draw
         m_pCurrentList->DrawIndexedInstanced(model.IndexCount, 1, 0, 0, 0);
 	}

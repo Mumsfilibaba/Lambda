@@ -12,7 +12,7 @@ namespace Lambda
 	//-------------
 
 	VKNRenderPass::VKNRenderPass(VKNDevice* pDevice, const RenderPassDesc& desc)
-		: VKNDeviceObject<IRenderPass>(pDevice),
+		: DeviceObjectBase<VKNDevice, IRenderPass>(pDevice),
 		m_RenderPass(VK_NULL_HANDLE),
 		m_Framebuffer(VK_NULL_HANDLE),
 		m_FramebufferExtent(),
@@ -21,7 +21,6 @@ namespace Lambda
 	{
 		//Add a ref to the refcounter
 		this->AddRef();
-
 		Init(desc);
 	}
 	

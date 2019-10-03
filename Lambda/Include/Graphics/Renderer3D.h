@@ -60,10 +60,10 @@ namespace Lambda
 
 	struct Material
 	{
-		ITexture* pAlbedoMap			= nullptr;
-		ITexture* pNormalMap			= nullptr;
-		ISamplerState* pSamplerState	= nullptr;
+		IShaderVariableTable* pVariableTable = nullptr;
 		IPipelineState* pPipelineState	= nullptr;
+		uint32 HasNormalMap = 0;
+		uint32 HasAlbedoMap = 0;
 		glm::vec4 Color;
 	};
 

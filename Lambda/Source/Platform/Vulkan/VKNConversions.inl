@@ -234,4 +234,35 @@ namespace Lambda
             default: return VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
         }
     }
+
+
+	inline VkDescriptorType ConvertResourceToDescriptorType(ResourceType type)
+	{
+		switch (type)
+		{
+			case RESOURCE_TYPE_TEXTURE:			return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+			case RESOURCE_TYPE_CONSTANT_BUFFER: return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			case RESOURCE_TYPE_SAMPLER_STATE:	return VK_DESCRIPTOR_TYPE_SAMPLER;
+		}
+	}
+
+
+	inline uint32 ConvertShaderStages(uint32 stages)
+	{
+		uint32 vkStages = 0;
+		if (stages & SHADER_STAGE_VERTEX)
+			vkStages |= VK_SHADER_STAGE_VERTEX_BIT;
+		if (stages & SHADER_STAGE_HULL)
+			vkStages |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+		if (stages & SHADER_STAGE_DOMAIN)
+			vkStages |= VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+		if (stages & SHADER_STAGE_GEOMETRY)
+			vkStages |= VK_SHADER_STAGE_GEOMETRY_BIT;
+		if (stages & SHADER_STAGE_PIXEL)
+			vkStages |= VK_SHADER_STAGE_FRAGMENT_BIT;
+		if (stages & SHADER_STAGE_COMPUTE)
+			vkStages |= VK_SHADER_STAGE_COMPUTE_BIT;
+
+		return vkStages;
+	}
 }

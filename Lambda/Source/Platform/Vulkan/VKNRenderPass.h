@@ -1,7 +1,7 @@
 #pragma once
 #include "Graphics/Core/IRenderPass.h"
+#include "Graphics/Core/DeviceObjectBase.h"
 #include <vulkan/vulkan.h>
-#include "VKNDeviceObject.h"
 #include "VKNConversions.inl"
 
 namespace Lambda
@@ -12,7 +12,7 @@ namespace Lambda
 	//VKNRenderPass
 	//-------------
 
-	class VKNRenderPass final : public VKNDeviceObject<IRenderPass>
+	class VKNRenderPass final : public DeviceObjectBase<VKNDevice, IRenderPass>
 	{
 	public:
 		LAMBDA_NO_COPY(VKNRenderPass);

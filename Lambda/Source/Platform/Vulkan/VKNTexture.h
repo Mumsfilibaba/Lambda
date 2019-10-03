@@ -1,5 +1,6 @@
 #pragma once
 #include "Graphics/Core/ITexture.h"
+#include "Graphics/Core/DeviceObjectBase.h"
 #include "VKNAllocator.h"
 #include "VKNConversions.inl"
 
@@ -11,7 +12,7 @@ namespace Lambda
     //VKNTexture
     //----------
     
-    class VKNTexture final : public VKNDeviceObject<ITexture>
+    class VKNTexture final : public DeviceObjectBase<VKNDevice, ITexture>
     {
         friend class VKNDevice;  
     public:

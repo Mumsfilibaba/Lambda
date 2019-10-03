@@ -12,7 +12,7 @@ namespace Lambda
 	//----------
 
     VKNTexture::VKNTexture(VKNDevice* pDevice, IVKNAllocator* pAllocator, const TextureDesc& desc)
-        : VKNDeviceObject<ITexture>(pDevice),
+        : DeviceObjectBase<VKNDevice, ITexture>(pDevice),
 		m_pAllocator(pAllocator),
 		m_Memory(),
         m_IsOwner(false),
@@ -30,7 +30,7 @@ namespace Lambda
     
     
     VKNTexture::VKNTexture(VKNDevice* pDevice, VkImage image, const TextureDesc& desc)
-		:	VKNDeviceObject<ITexture>(pDevice),
+		: DeviceObjectBase<VKNDevice, ITexture>(pDevice),
 		m_pAllocator(nullptr),
 		m_Memory(),
 		m_IsOwner(false),

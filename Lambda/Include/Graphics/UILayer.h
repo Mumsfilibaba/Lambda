@@ -62,5 +62,6 @@ namespace Lambda
 		AutoRef<ITexture>		m_FontTexture;
 		AutoRef<IBuffer>		m_VertexBuffer;
 		AutoRef<IBuffer>		m_IndexBuffer;
+		AutoRef<IShaderVariableTable> m_VariableTable;
 	};
 }

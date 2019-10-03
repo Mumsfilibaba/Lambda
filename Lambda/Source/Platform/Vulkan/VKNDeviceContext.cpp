@@ -17,12 +17,13 @@ namespace Lambda
 	//----------------
 
     VKNDeviceContext::VKNDeviceContext(VKNDevice* pDevice, IVKNAllocator* pAllocator, CommandListType type)
-        : VKNDeviceObject<IDeviceContext>(pDevice),
+        : DeviceObjectBase<VKNDevice, IDeviceContext>(pDevice),
 		m_CommandPool(VK_NULL_HANDLE),
         m_CommandBuffer(VK_NULL_HANDLE),
 		m_pBufferUpload(nullptr),
 		m_pTextureUpload(nullptr),
         m_PipelineState(nullptr),
+		m_VariableTable(nullptr),
         m_pRenderPass(nullptr),
         m_Type(COMMAND_LIST_TYPE_UNKNOWN),
 		m_Name()
@@ -88,16 +89,20 @@ namespace Lambda
     }
 
 
-	inline void VKNDeviceContext::CommitResources()
+	inline void VKNDeviceContext::CommitAndTransitionResources()
 	{
-		m_PipelineState->CommitBindings();
+		m_VariableTable->CommitAndTransitionResources();
+		const uint32* pOffsets	= m_VariableTable->GetDynamicOffsets();
+		uint32 offsetCount		= m_VariableTable->GetDynamicOffsetCount();
 
-		const uint32* pOffsets	= m_PipelineState->GetDynamicOffsets();
-		uint32 offsetCount		= m_PipelineState->GetDynamicOffsetCount();
-
-		VkDescriptorSet descriptorSet	= m_PipelineState->GetVkDescriptorSet();
+		VkDescriptorSet descriptorSet	= m_VariableTable->GetVkDescriptorSet();
 		VkPipelineLayout pipelineLayout = m_PipelineState->GetVkPipelineLayout();
-		vkCmdBindDescriptorSets(m_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, offsetCount, pOffsets);
+
+		const PipelineStateDesc& desc = m_PipelineState->GetDesc();
+		if (desc.Type == PIPELINE_TYPE_GRAPHICS)
+			vkCmdBindDescriptorSets(m_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, offsetCount, pOffsets);
+		else if (desc.Type == PIPELINE_TYPE_COMPUTE)
+			vkCmdBindDescriptorSets(m_CommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipelineLayout, 0, 1, &descriptorSet, offsetCount, pOffsets);
 	}
     
     
@@ -236,11 +241,26 @@ namespace Lambda
     
     void VKNDeviceContext::SetPipelineState(IPipelineState* pPipelineState)
     {
-		pPipelineState->AddRef();
-		m_PipelineState = reinterpret_cast<VKNPipelineState*>(pPipelineState);
+		VKNPipelineState* pVkVariableTable = reinterpret_cast<VKNPipelineState*>(pPipelineState);
+		pVkVariableTable->AddRef();
+		m_PipelineState = pVkVariableTable;
         
-		vkCmdBindPipeline(m_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineState->GetVkPipeline());
+		VkPipeline pipeline = m_PipelineState->GetVkPipeline();
+
+		const PipelineStateDesc& desc = m_PipelineState->GetDesc();
+		if (desc.Type == PIPELINE_TYPE_GRAPHICS)
+			vkCmdBindPipeline(m_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+		else if (desc.Type == PIPELINE_TYPE_COMPUTE)
+			vkCmdBindPipeline(m_CommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
     }
+
+	
+	void VKNDeviceContext::SetShaderVariableTable(IShaderVariableTable* pVariableTable)
+	{
+		VKNShaderVariableTable* pVkVariableTable = reinterpret_cast<VKNShaderVariableTable*>(pVariableTable);
+		pVkVariableTable->AddRef();
+		m_VariableTable = pVkVariableTable;
+	}
     
     
     void VKNDeviceContext::SetVertexBuffer(IBuffer* pBuffer, uint32 slot)
@@ -278,19 +298,7 @@ namespace Lambda
 	
 	void VKNDeviceContext::SetConstantBlocks(ShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData)
 	{
-		VkShaderStageFlags shaderStageFlags = 0;
-		if (stage == SHADER_STAGE_VERTEX)
-			shaderStageFlags |= VK_SHADER_STAGE_VERTEX_BIT;
-		else if (stage == SHADER_STAGE_HULL)
-			shaderStageFlags |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
-		else if (stage == SHADER_STAGE_DOMAIN)
-			shaderStageFlags |= VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
-		else if (stage == SHADER_STAGE_GEOMETRY)
-			shaderStageFlags |= VK_SHADER_STAGE_GEOMETRY_BIT;
-		else if (stage == SHADER_STAGE_PIXEL)
-			shaderStageFlags |= VK_SHADER_STAGE_FRAGMENT_BIT;
-		else if (stage == SHADER_STAGE_COMPUTE)
-			shaderStageFlags |= VK_SHADER_STAGE_COMPUTE_BIT;
+		VkShaderStageFlags shaderStageFlags = ConvertShaderStages(stage);
 
 		VkPipelineLayout pipelineLayout = m_PipelineState->GetVkPipelineLayout();
 		vkCmdPushConstants(m_CommandBuffer, pipelineLayout, shaderStageFlags, offset, sizeInBytes, pData);
@@ -554,7 +562,7 @@ namespace Lambda
 		{
 			LAMBDA_ASSERT_PRINT(m_PipelineState, "Vulkan: DrawInstanced must have a valid PipelineState bound when called\n");
 
-			CommitResources();
+			CommitAndTransitionResources();
 			vkCmdDraw(m_CommandBuffer, vertexCountPerInstance, instanceCount, startVertexLocation, startInstanceLocation);
 		}
 		else
@@ -570,7 +578,7 @@ namespace Lambda
 		{
 			LAMBDA_ASSERT_PRINT(m_PipelineState, "Vulkan: DrawInstanced must have a valid PipelineState bound when called\n");
 
-            CommitResources();
+			CommitAndTransitionResources();
 			vkCmdDrawIndexed(m_CommandBuffer, indexCountPerInstance, instanceCount, startIndexLocation, baseVertexLocation, startInstanceLocation);
 		}
 		else

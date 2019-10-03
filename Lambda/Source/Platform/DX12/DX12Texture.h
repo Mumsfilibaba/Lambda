@@ -2,27 +2,28 @@
 #include "Graphics/Core/ITexture.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include <wrl/client.h>
+	#include "Graphics/Core/DeviceObjectBase.h"
 	#include "DX12DescriptorHandle.h"
 	#include "DX12Conversions.inl"
 
 namespace Lambda
 {
-	class DX12Texture final : public RefCountedObject<ITexture>
+	class DX12Texture final : public DeviceObjectBase<DX12Device, ITexture>
 	{
-		friend class DX12CommandList;
-		friend class DX12GraphicsDevice;
+		friend class DX12DeviceContext;
+		friend class DX12Device;
 
 	public:
 		LAMBDA_NO_COPY(DX12Texture);
 
-		DX12Texture(ID3D12Resource* pResource);
-		DX12Texture(ID3D12Device* pDevice, const TextureDesc& desc);
+		DX12Texture(DX12Device* pDevice, ID3D12Resource* pResource);
+		DX12Texture(DX12Device* pDevice, const TextureDesc& desc);
 		~DX12Texture() = default;
 
 		virtual void* GetNativeHandle() const override final;
 		virtual const TextureDesc& GetDesc() const override final;
 	private:
-		void Init(ID3D12Device* pDevice, const TextureDesc& desc);
+		void Init(const TextureDesc& desc);
 		void InitFromResource(ID3D12Resource* pResource);
 
 		void SetResource(ID3D12Resource* pResource);

@@ -11,7 +11,7 @@ namespace Lambda
 	//VKNBuffer
 	//---------
 
-    class VKNBuffer final : public VKNDeviceObject<IBuffer>
+    class VKNBuffer final : public DeviceObjectBase<VKNDevice, IBuffer>
     {
     public:
         LAMBDA_NO_COPY(VKNBuffer);
