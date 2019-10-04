@@ -17,7 +17,7 @@ namespace Lambda
 		DeviceObjectBase(DeviceImpl* pDevice) : RefCountedObject<BaseInterface>(), m_pDevice(pDevice) { LAMBDA_ASSERT(pDevice != nullptr); }
 		~DeviceObjectBase() = default;
 
-		virtual IDevice* GetDevice() const override final
+		virtual IDevice* GetDevice() const override
 		{
 			IDevice* pDevice = reinterpret_cast<IDevice*>(m_pDevice);
 			pDevice->AddRef();

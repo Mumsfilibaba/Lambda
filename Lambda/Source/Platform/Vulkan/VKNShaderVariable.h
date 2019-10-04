@@ -25,15 +25,16 @@ namespace Lambda
 		virtual void SetSamplerState(ISamplerState* pSamplerState) override final;
 		virtual IShaderVariableTable* GetShaderVariableTable() const override final;
 		virtual const ShaderVariableDesc& GetDesc() const override final;
-		void Verify();
+		bool Validate();
 
 		uint32 GetDynamicOffset() const;
-		inline VkDescriptorBufferInfo* GetVkDescriptorBufferInfo()	{ return &m_BufferInfo; };
-		inline VkDescriptorImageInfo* GetVkDescriptorImageInfo()	{ return &m_ImageInfo; };
+		inline const VkWriteDescriptorSet& GetVkWriteDescriptorSet() { return m_DescriptorWrite; };
 	private:
 		VKNShaderVariableTable* m_pVariableTable;
 		AutoRef<IDeviceObject>	m_Resource;
 		ShaderVariableDesc		m_Desc;
+        VkWriteDescriptorSet    m_DescriptorWrite;
+        uint64                  m_ResourceHandle;
 		union
 		{
 			VkDescriptorBufferInfo	m_BufferInfo;

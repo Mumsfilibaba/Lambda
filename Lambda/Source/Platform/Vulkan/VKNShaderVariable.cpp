@@ -15,7 +15,8 @@ namespace Lambda
 		: DeviceObjectBase<VKNDevice, IShaderVariable>(pDevice),
 		m_pVariableTable(nullptr),
 		m_Resource(nullptr),
-		m_Desc()
+		m_Desc(),
+        m_ResourceHandle(VK_NULL_HANDLE)
 	{
 		this->AddRef();
 
@@ -25,13 +26,50 @@ namespace Lambda
 		//shadervariable we only need a weak pointer to shadervariable
 		m_pVariableTable = pVariableTable;
 		m_Desc = desc;
-
-		//Get static sampler
-		if (m_Desc.pSamplerState == nullptr)
-			m_ImageInfo.sampler = VK_NULL_HANDLE;
-		else
-			m_ImageInfo.sampler = reinterpret_cast<VKNSamplerState*>(m_Desc.pSamplerState)->GetVkSampler();
-	}
+        
+        //Setup descriptor write
+        m_DescriptorWrite.sType             = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        m_DescriptorWrite.pNext             = nullptr;
+        m_DescriptorWrite.descriptorCount   = 1;
+        m_DescriptorWrite.dstArrayElement   = 0;
+        m_DescriptorWrite.dstBinding        = m_Desc.Slot;
+        m_DescriptorWrite.pTexelBufferView  = nullptr;
+        m_DescriptorWrite.descriptorType    = ConvertResourceToDescriptorType(m_Desc.Type, m_Desc.Usage);
+        if (m_DescriptorWrite.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE)
+        {
+            //Init imageinfo
+            m_ImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            m_ImageInfo.imageView   = VK_NULL_HANDLE;
+            //Get static sampler
+            if (m_Desc.pSamplerState != nullptr)
+            {
+                m_DescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                m_ImageInfo.sampler = reinterpret_cast<VKNSamplerState*>(m_Desc.pSamplerState)->GetVkSampler();
+            }
+            else
+            {
+                m_ImageInfo.sampler = VK_NULL_HANDLE;
+            }
+            
+            m_DescriptorWrite.pImageInfo = &m_ImageInfo;
+        }
+        else if (m_DescriptorWrite.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER || m_DescriptorWrite.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC)
+        {
+            //Init bufferinfo
+            m_BufferInfo.buffer = VK_NULL_HANDLE;
+            m_BufferInfo.offset = 0;
+            m_BufferInfo.range  = 0;
+            m_DescriptorWrite.pBufferInfo = &m_BufferInfo;
+        }
+        else if (m_DescriptorWrite.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLER)
+        {
+            //Init imageinfo
+            m_ImageInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+            m_ImageInfo.imageView   = VK_NULL_HANDLE;
+            m_ImageInfo.sampler     = VK_NULL_HANDLE;
+            m_DescriptorWrite.pImageInfo = &m_ImageInfo;
+        }
+    }
 
 
 	void VKNShaderVariable::SetTexture(ITexture* pTexture)
@@ -41,17 +79,9 @@ namespace Lambda
 		
 		if (m_Resource.Get() != pTexture)
 		{
-			//Setup descriptor write
-			VKNTexture* pVkTexture  = reinterpret_cast<VKNTexture*>(pTexture);
-			m_ImageInfo.imageView	= pVkTexture->GetVkImageView();
-			m_ImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
 			//Make sure we have a reference to the resource
 			pTexture->AddRef();
 			m_Resource = pTexture;
-
-			//Make sure the table gets updated
-			m_pVariableTable->Invalidate();
 		}
 	}
 
@@ -63,20 +93,9 @@ namespace Lambda
 
 		if (m_Resource.Get() != pBuffer)
 		{
-			//Setup descriptor write
-			VKNBuffer* pVkBuffer = reinterpret_cast<VKNBuffer*>(pBuffer);
-			m_BufferInfo.buffer  = pVkBuffer->GetVkBuffer();
-			m_BufferInfo.offset  = pVkBuffer->GetDynamicOffset();
-		
-			const BufferDesc& desc = pVkBuffer->GetDesc();
-			m_BufferInfo.range = desc.SizeInBytes;
-
 			//Make sure we have a reference to the resource
 			pBuffer->AddRef();
 			m_Resource = pBuffer;
-
-			//Make sure the table gets updated
-			m_pVariableTable->Invalidate();
 		}
 	}
 
@@ -88,18 +107,9 @@ namespace Lambda
 
 		if (m_Resource.Get() != pSamplerState)
 		{
-			//Setup descriptor write
-			VKNSamplerState* pVkSamplerState = reinterpret_cast<VKNSamplerState*>(pSamplerState);
-			m_ImageInfo.imageView	= VK_NULL_HANDLE;
-			m_ImageInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			m_ImageInfo.sampler		= pVkSamplerState->GetVkSampler();
-
 			//Make sure we have a reference to the resource
 			pSamplerState->AddRef();
 			m_Resource = pSamplerState;
-
-			//Make sure the table gets updated
-			m_pVariableTable->Invalidate();
 		}
 	}
 
@@ -117,8 +127,44 @@ namespace Lambda
 	}
 
 	
-	void VKNShaderVariable::Verify()
+	bool VKNShaderVariable::Validate()
 	{
+        //Here we get the handle to the resource that is bound,
+        uint64 currentHandle = VK_NULL_HANDLE;
+        if (m_Desc.Type == RESOURCE_TYPE_TEXTURE)
+        {
+            VKNTexture* pVkTexture = m_Resource.GetAs<VKNTexture>();
+            m_ImageInfo.imageView   = pVkTexture->GetVkImageView();
+            m_ImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+            currentHandle = uint64(m_ImageInfo.imageView);
+        }
+        else if (m_Desc.Type == RESOURCE_TYPE_CONSTANT_BUFFER)
+        {
+            VKNBuffer* pVkBuffer = m_Resource.GetAs<VKNBuffer>();
+            m_BufferInfo.buffer  = pVkBuffer->GetVkBuffer();
+            m_BufferInfo.offset  = 0;
+        
+            const BufferDesc& desc = pVkBuffer->GetDesc();
+            m_BufferInfo.range = desc.SizeInBytes;
+            
+            currentHandle = uint64(m_BufferInfo.buffer);
+        }
+        else if (m_Desc.Type == RESOURCE_TYPE_SAMPLER_STATE)
+        {
+            VKNSamplerState* pVkSamplerState = m_Resource.GetAs<VKNSamplerState>();
+            m_ImageInfo.imageView   = VK_NULL_HANDLE;
+            m_ImageInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+            m_ImageInfo.sampler     = pVkSamplerState->GetVkSampler();
+            
+            currentHandle = uint64(m_ImageInfo.sampler);
+        }
+        
+        //We check if the handle that is bound is the same as the one we have written to the descriptorset.
+        //In that case the validation passes and we do not need to write this descriptor again
+        uint64 oldHandle = m_ResourceHandle;
+        m_ResourceHandle = currentHandle;
+        return oldHandle == currentHandle;
 	}
 	
 	

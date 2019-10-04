@@ -259,10 +259,10 @@ namespace Lambda
 	{
 		VKNShaderVariableTable* pVkVariableTable = reinterpret_cast<VKNShaderVariableTable*>(pVariableTable);
 		pVkVariableTable->AddRef();
-		m_VariableTable = pVkVariableTable;
+        m_VariableTable = pVkVariableTable;
 	}
     
-    
+
     void VKNDeviceContext::SetVertexBuffer(IBuffer* pBuffer, uint32 slot)
     {
 		VKNBuffer*	pVkBuffer = reinterpret_cast<VKNBuffer*>(pBuffer);

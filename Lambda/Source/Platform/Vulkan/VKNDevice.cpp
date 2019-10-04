@@ -882,11 +882,11 @@ namespace Lambda
 		{
 			//Set name on object
 			VkDebugUtilsObjectNameInfoEXT info = {};
-			info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
-			info.pNext = nullptr;
-			info.objectType = type;
-			info.pObjectName = name.c_str();
-			info.objectHandle = objectHandle;
+			info.sType          = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+			info.pNext          = nullptr;
+			info.objectType     = type;
+			info.pObjectName    = name.c_str();
+			info.objectHandle   = objectHandle;
 
 			if (SetDebugUtilsObjectNameEXT(m_Device, &info) != VK_SUCCESS)
 			{

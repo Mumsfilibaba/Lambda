@@ -236,13 +236,14 @@ namespace Lambda
     }
 
 
-	inline VkDescriptorType ConvertResourceToDescriptorType(ResourceType type)
+	inline VkDescriptorType ConvertResourceToDescriptorType(ResourceType type, ResourceUsage usage)
 	{
 		switch (type)
 		{
 			case RESOURCE_TYPE_TEXTURE:			return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-			case RESOURCE_TYPE_CONSTANT_BUFFER: return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            case RESOURCE_TYPE_CONSTANT_BUFFER: return usage == RESOURCE_USAGE_DYNAMIC ? VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC : VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			case RESOURCE_TYPE_SAMPLER_STATE:	return VK_DESCRIPTOR_TYPE_SAMPLER;
+            default:                            return VK_DESCRIPTOR_TYPE_MAX_ENUM;
 		}
 	}
 

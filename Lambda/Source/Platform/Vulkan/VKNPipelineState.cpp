@@ -19,8 +19,13 @@ namespace Lambda
 
     VKNPipelineState::VKNPipelineState(VKNDevice* pDevice, const PipelineStateDesc& desc)
         : DeviceObjectBase<VKNDevice, IPipelineState>(pDevice),
-		m_Pipeline(VK_NULL_HANDLE),
-		m_IsDirty(true)
+		m_pAllocator(nullptr),
+        m_Pipeline(VK_NULL_HANDLE),
+        m_PipelineLayout(VK_NULL_HANDLE),
+        m_DescriptorSetLayout(VK_NULL_HANDLE),
+        m_ShaderVariableDescs(),
+        m_ConstantBlockDescs(),
+        m_Desc()
     {
 		//Add a ref to the refcounter
 		this->AddRef();
@@ -73,13 +78,6 @@ namespace Lambda
     {
 		//Copy the resourceslots
 		const ShaderVariableTableDesc& varibleLayout = desc.ShaderVariableTable;
-		for (uint32 i = 0; i < varibleLayout.NumVariables; i++)
-		{
-			auto& variable	= m_ResourceBindings[varibleLayout.pVariables[i].Slot];
-			variable.Slot	= varibleLayout.pVariables[i];
-			variable.ImageInfo.sampler = VK_NULL_HANDLE;
-			variable.pBuffer = nullptr;
-		}
 
 		//Create descriptor bindings for each shadervariable
 		std::vector<VkDescriptorSetLayoutBinding> layoutBindings;
@@ -93,21 +91,15 @@ namespace Lambda
 			layoutBinding.binding				= variable.Slot;
 			layoutBinding.pImmutableSamplers	= nullptr;
 			layoutBinding.stageFlags			= ConvertShaderStages(variable.Stage);
-			layoutBinding.descriptorType		= ConvertResourceToDescriptorType(variable.Type);
-			if (layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER && variable.Usage == RESOURCE_USAGE_DYNAMIC)
-			{
-				layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-			}
-			else if (layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE && variable.pSamplerState != nullptr)
+			layoutBinding.descriptorType		= ConvertResourceToDescriptorType(variable.Type, variable.Usage);
+            if (layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE && variable.pSamplerState != nullptr)
 			{
 				layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 
 				//Bind sampler to slot permanently
 				VKNSamplerState* pSampler = reinterpret_cast<VKNSamplerState*>(variable.pSamplerState);
-				auto& slot = m_ResourceBindings[variable.Slot];
-				slot.ImageInfo.sampler = reinterpret_cast<VkSampler>(pSampler->GetNativeHandle());
-
-				layoutBinding.pImmutableSamplers = &slot.ImageInfo.sampler;
+                VkSampler sampler = pSampler->GetVkSampler();
+				layoutBinding.pImmutableSamplers = &sampler;
 			}
 
 			layoutBindings.emplace_back(layoutBinding);
@@ -163,8 +155,6 @@ namespace Lambda
 		{
 			LOG_DEBUG_INFO("Vulkan: Created PipelineLayout\n");
 
-			//Set to dirty when we create so that we will always allocate a descriptorset
-			m_IsDirty = true;
 			//Create allocator
 			m_pAllocator = DBG_NEW VKNDescriptorSetAllocator(8, 8, 8, 8, 8, 8);
 		}
@@ -428,202 +418,6 @@ namespace Lambda
 		}
     }
 
-
-	void VKNPipelineState::SetTextures(ITexture** ppTextures, uint32 numTextures, uint32 startSlot)
-	{
-		for (uint32 i = 0; i < numTextures; i++)
-		{
-			if (ppTextures[i] == nullptr)
-				continue;
-
-			auto& resourceBinding = m_ResourceBindings[startSlot + i];
-			if (resourceBinding.Slot.Type == RESOURCE_TYPE_TEXTURE)
-			{
-				if (resourceBinding.pTexture != ppTextures[i])
-				{
-					resourceBinding.pTexture = reinterpret_cast<VKNTexture*>(ppTextures[i]);
-					resourceBinding.ImageInfo.imageView = resourceBinding.pTexture->GetVkImageView();
-					resourceBinding.ImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-					if (resourceBinding.Slot.pSamplerState == nullptr)
-					{
-						resourceBinding.ImageInfo.sampler = VK_NULL_HANDLE;
-					}
-					m_IsDirty = true;
-				}
-			}
-			else
-			{
-				LOG_DEBUG_ERROR("Vulkan: Slot at '%u' is not set to bind a Texture\n", startSlot + i);
-			}
-		}
-	}
-
-
-	void VKNPipelineState::SetSamplerStates(ISamplerState** ppSamplerStates, uint32 numSamplerStates, uint32 startSlot)
-	{
-		for (uint32 i = 0; i < numSamplerStates; i++)
-		{
-			if (ppSamplerStates[i] == nullptr)
-			{
-				continue;
-			}
-
-			auto& resourceBinding = m_ResourceBindings[startSlot + i];
-			if (resourceBinding.Slot.Type == RESOURCE_TYPE_SAMPLER_STATE)
-			{
-				if (resourceBinding.pSamplerState != ppSamplerStates[i])
-				{
-					resourceBinding.pSamplerState = reinterpret_cast<VKNSamplerState*>(ppSamplerStates[i]);
-					resourceBinding.ImageInfo.imageView = VK_NULL_HANDLE;
-					resourceBinding.ImageInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-					resourceBinding.ImageInfo.sampler = reinterpret_cast<VkSampler>(ppSamplerStates[i]->GetNativeHandle());
-					m_IsDirty = true;
-				}
-			}
-			else
-			{
-				LOG_DEBUG_ERROR("Vulkan: Slot at '%u' is not set to bind a SamplerState\n", startSlot + i);
-			}
-		}
-	}
-
-
-	void VKNPipelineState::SetConstantBuffers(IBuffer** ppBuffers, uint32 numBuffers, uint32 startSlot)
-	{
-		for (uint32 i = 0; i < numBuffers; i++)
-		{
-			if (ppBuffers[i] == nullptr)
-			{
-				continue;
-			}
-
-			auto& resourceBinding = m_ResourceBindings[startSlot + i];
-			if (resourceBinding.Slot.Type == RESOURCE_TYPE_CONSTANT_BUFFER)
-			{
-				if (resourceBinding.pBuffer != ppBuffers[i])
-				{
-					resourceBinding.pBuffer = reinterpret_cast<VKNBuffer*>(ppBuffers[i]);
-
-					const BufferDesc& bufferDesc = resourceBinding.pBuffer->GetDesc();
-					resourceBinding.BufferInfo.buffer = reinterpret_cast<VkBuffer>(resourceBinding.pBuffer->GetNativeHandle());
-					resourceBinding.BufferInfo.offset = 0;
-					resourceBinding.BufferInfo.range = bufferDesc.SizeInBytes;
-					m_IsDirty = true;
-				}
-			}
-			else
-			{
-				LOG_DEBUG_ERROR("Vulkan: Slot at '%u' is not set to bind a ConstantBuffer\n", startSlot + i);
-			}
-		}
-	}
-
-
-	void VKNPipelineState::CommitBindings()
-	{
-		//Update bufferoffsets
-		for (auto pBuffer : m_DynamicBuffers)
-		{
-			if (pBuffer->IsDirty())
-			{
-				m_IsDirty = true;
-				break;
-			}
-		}
-
-		//Update descriptorset
-		if (m_IsDirty)
-		{
-			//Allocate descriptorset
-			m_DescriptorSet = m_pAllocator->Allocate(m_DescriptorSetLayout);
-
-			//Clear dynamic buffers
-			m_DynamicBuffers.clear();
-			m_DynamicOffsets.clear();
-
-			//Setup writinginfos
-			VkWriteDescriptorSet writeInfo = {};
-			writeInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			writeInfo.pNext = nullptr;
-			writeInfo.dstArrayElement = 0;
-			writeInfo.dstSet = m_DescriptorSet;
-			writeInfo.pImageInfo = nullptr;
-			writeInfo.pTexelBufferView = nullptr;
-
-			for (auto& resourceBinding : m_ResourceBindings)
-			{
-				VKNSlot& binding = resourceBinding.second;
-				writeInfo.descriptorCount = 1;
-				writeInfo.dstBinding = binding.Slot.Slot;
-
-				//Write constantbuffer
-				if (binding.Slot.Type == RESOURCE_TYPE_CONSTANT_BUFFER && binding.pBuffer != nullptr)
-				{
-					writeInfo.pBufferInfo = &binding.BufferInfo;
-					if (binding.Slot.Usage == RESOURCE_USAGE_DYNAMIC)
-					{
-						const BufferDesc& bufferDesc = binding.pBuffer->GetDesc();
-						binding.BufferInfo.buffer = reinterpret_cast<VkBuffer>(binding.pBuffer->GetNativeHandle());
-						binding.BufferInfo.offset = 0;
-						binding.BufferInfo.range = bufferDesc.SizeInBytes;
-
-						writeInfo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-
-						m_DynamicBuffers.push_back(binding.pBuffer);
-						binding.pBuffer->SetIsClean();
-					}
-					else
-					{
-						writeInfo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-					}
-
-					//Add to descriptor writes
-					m_DescriptorWrites.emplace_back(writeInfo);
-				}
-				//Bind texture
-				else if (binding.Slot.Type == RESOURCE_TYPE_TEXTURE && binding.pTexture != nullptr)
-				{
-					writeInfo.pImageInfo = &binding.ImageInfo;
-					if (binding.ImageInfo.sampler == VK_NULL_HANDLE)
-					{
-						writeInfo.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-					}
-					else
-					{
-						writeInfo.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-					}
-
-					//Add to descriptor writes
-					m_DescriptorWrites.emplace_back(writeInfo);
-				}
-				//Bind samplerstate
-				else if (binding.Slot.Type == RESOURCE_TYPE_SAMPLER_STATE && binding.pSamplerState != nullptr)
-				{
-					writeInfo.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-					writeInfo.pImageInfo = &binding.ImageInfo;
-
-					//Add to descriptor writes
-					m_DescriptorWrites.emplace_back(writeInfo);
-				}
-			}
-
-			//Write all descriptors
-			if (m_DescriptorWrites.size() > 0)
-			{
-				vkUpdateDescriptorSets(m_pDevice->GetVkDevice(), uint32(m_DescriptorWrites.size()), m_DescriptorWrites.data(), 0, nullptr);
-				m_DescriptorWrites.clear();
-			}
-
-			m_DynamicOffsets.resize(m_DynamicBuffers.size());
-			m_IsDirty = false;
-		}
-
-
-		//Update bufferoffsets
-		for (size_t i = 0; i < m_DynamicBuffers.size(); i++)
-			m_DynamicOffsets[i] = uint32(m_DynamicBuffers[i]->GetDynamicOffset());
-	}
-    
     
     void* VKNPipelineState::GetNativeHandle() const
     {

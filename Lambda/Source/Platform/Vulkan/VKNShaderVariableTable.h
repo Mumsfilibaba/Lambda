@@ -25,21 +25,19 @@ namespace Lambda
 		virtual IPipelineState* GetPipelineState() const override final;
 		virtual uint32 GetVariableCount() const override final;
 		void CommitAndTransitionResources();
-
-		inline void Invalidate() { m_IsDirty = true; }
-		inline VkDescriptorSet GetVkDescriptorSet() const { return m_DescriptorSet; }
-		inline uint32* GetDynamicOffsets() const { return m_pDynamicOffsets; }
-		inline uint32 GetDynamicOffsetCount() const { return m_NumDynamicOffsets; }
+        
+        inline uint32* GetDynamicOffsets() const            { return m_pDynamicOffsets; }
+        inline uint32 GetDynamicOffsetCount() const         { return uint32(m_DynamicVars.size()); }
+        inline VkDescriptorSet GetVkDescriptorSet() const   { return m_DescriptorSet; }
 	private:
 		void Init(const ShaderVariableTableDesc& desc);
 	private:
-		AutoRef<VKNPipelineState> m_PipelineState;
-		VkDescriptorSet	m_DescriptorSet;
-		VkWriteDescriptorSet* m_pDescriptorWrites;
+		AutoRef<VKNPipelineState>   m_PipelineState;
+		VkDescriptorSet	            m_DescriptorSet;
 		uint32* m_pDynamicOffsets;
-		uint32 m_NumDynamicOffsets;
-		std::vector<AutoRef<VKNShaderVariable>> m_ShaderVariables;
+        std::vector<VKNShaderVariable*>         m_DynamicVars;
+        std::vector<VkWriteDescriptorSet>       m_DescriptorWrites;
+        std::vector<AutoRef<VKNShaderVariable>> m_ShaderVariables;
 		std::unordered_map<std::string, VKNShaderVariable*> m_NameTable;
-		bool m_IsDirty;
 	};
 }

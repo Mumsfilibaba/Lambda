@@ -35,7 +35,7 @@ namespace Lambda
 		RefCountedObject() : Base(), m_StrongReferences(0) {}
 		virtual ~RefCountedObject() = default;
 
-		virtual RefCountValue Release() override final
+		virtual RefCountValue Release() override
 		{
 			RefCountValue counter = --m_StrongReferences;
 			if (counter < 1)
@@ -44,7 +44,7 @@ namespace Lambda
 			return counter;
 		}
 
-		virtual RefCountValue AddRef() override final
+		virtual RefCountValue AddRef() override
 		{
 			return ++m_StrongReferences;
 		}
@@ -97,6 +97,13 @@ namespace Lambda
 		{
 			return m_pObject;
 		}
+        
+        
+        template<typename T>
+        inline T* GetAs() const
+        {
+            return reinterpret_cast<T*>(m_pObject);
+        }
 
 
 		inline TObject** GetAdressOf()
