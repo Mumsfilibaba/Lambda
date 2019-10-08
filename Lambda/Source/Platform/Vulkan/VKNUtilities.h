@@ -10,12 +10,13 @@ namespace Lambda
     //Helperstruct for when finding queuefamilies
     struct QueueFamilyIndices
     {
-        int32 GraphicsFamily = -1;
-        int32 PresentFamily = -1;
+        int32 GraphicsFamily    = -1;
+        int32 PresentFamily     = -1;
+        int32 ComputeFamily     = -1;
         
         inline bool Valid()
         {
-            return (GraphicsFamily >= 0) && (PresentFamily >= 0);
+            return (GraphicsFamily >= 0) && (PresentFamily >= 0) && (ComputeFamily >= 0);
         }
     };
     
@@ -67,7 +68,7 @@ namespace Lambda
     
     
     //Function to retrive queuefamilies from physicaldevice
-    inline QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice adapter, VkSurfaceKHR surface)
+    inline QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice adapter)
     {
         //Get all queuefamilies for this adapter
         uint32 queueFamilyCount = 0;
@@ -81,25 +82,20 @@ namespace Lambda
         QueueFamilyIndices indices;
         for (const auto& queueFamiliy : queueFamilies)
         {
-            //Check for graphics support
+            //Check for graphics support (Assume presenation support)
             if (queueFamiliy.queueCount > 0 && queueFamiliy.queueFlags & VK_QUEUE_GRAPHICS_BIT)
             {
-                indices.GraphicsFamily = i;
+                indices.GraphicsFamily  = i;
+                indices.PresentFamily   = i;
             }
             
-            //Check for presentationsupport
-            VkBool32 presentSupport = false;
-            vkGetPhysicalDeviceSurfaceSupportKHR(adapter, i, surface, &presentSupport);
-            if (queueFamiliy.queueCount > 0 && presentSupport)
-            {
-                indices.PresentFamily = i;
-            }
+            //Check for compute support
+            if (queueFamiliy.queueCount > 0 && queueFamiliy.queueFlags & VK_QUEUE_COMPUTE_BIT)
+                indices.ComputeFamily  = i;
             
-            //If we have found a queuefamiliy for both presentation and graphics we break
+            //If we have found a queuefamiliy for presentation, graphics and compute -> we break
             if (indices.Valid())
-            {
                 break;
-            }
             
             i++;
         }

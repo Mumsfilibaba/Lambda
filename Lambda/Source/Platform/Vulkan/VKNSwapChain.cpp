@@ -4,6 +4,9 @@
 #include "VKNUtilities.h"
 #include "VKNDevice.h"
 #include "VKNConversions.inl"
+#if defined(LAMBDA_PLAT_MACOS)
+    #include <GLFW/glfw3.h>
+#endif
 
 namespace Lambda
 {
@@ -11,38 +14,150 @@ namespace Lambda
 	//VKNSwapChain
 	//------------
 
-	VKNSwapChain::VKNSwapChain(VKNDevice* pDevice, const VKNSwapChainDesc& desc)
-		: m_pDevice(pDevice),
-		m_SwapChain(VK_NULL_HANDLE),
-		m_Format(),
-		m_Extent(),
-		m_PresentationMode(),
-		m_ImageCount(0),
+	VKNSwapChain::VKNSwapChain(VKNDevice* pDevice, const SwapChainDesc& desc)
+		: DeviceObjectBase<VKNDevice, ISwapChain>(pDevice),
+		m_VkSwapChain(VK_NULL_HANDLE),
+        m_VkFormat(),
+        m_PresentationMode(),
+        m_Desc(),
+        m_SampleBuffer(nullptr),
+        m_DepthStencilBuffer(nullptr),
 		m_CurrentBufferIndex(0),
 		m_Buffers()
 	{
+        this->AddRef();
 		Init(desc);
 	}
 
 
-	void VKNSwapChain::Init(const VKNSwapChainDesc& desc)
-	{
-        //Get the swapchain capabilities from the adapter
-        SwapChainCapabilities cap			= QuerySwapChainSupport(m_pDevice->GetVkPhysicalDevice(), m_pDevice->GetVkSurface());
-        QueueFamilyIndices familyIndices	= m_pDevice->GetQueueFamilyIndices();
+    VKNSwapChain::~VKNSwapChain()
+    {
+        //Release resources
+        ReleaseResources();
         
-		//Choose a swapchain format
-		m_Format = cap.Formats[0];
+        //Destroy semaphores
+        for (uint32 i = 0; i < m_Desc.BufferCount; i++)
+        {
+            if (m_ImageSemaphores[i] != VK_NULL_HANDLE)
+            {
+                vkDestroySemaphore(m_pDevice->GetVkDevice(), m_ImageSemaphores[i], nullptr);
+                m_ImageSemaphores[i] = VK_NULL_HANDLE;
+            }
+            if (m_RenderSemaphores[i] != VK_NULL_HANDLE)
+            {
+                vkDestroySemaphore(m_pDevice->GetVkDevice(), m_RenderSemaphores[i], nullptr);
+                m_RenderSemaphores[i] = VK_NULL_HANDLE;
+            }
+        }
+        
+        //Destroy surface
+        if (m_Surface != VK_NULL_HANDLE)
+        {
+            vkDestroySurfaceKHR(m_pDevice->GetVkInstance(), m_Surface, nullptr);
+            m_Surface = VK_NULL_HANDLE;
+        }
+    }
+
+
+	void VKNSwapChain::Init(const SwapChainDesc& desc)
+	{
+        //Create window surface
+#if defined(LAMBDA_PLAT_MACOS)
+        //Create surface for macOS
+        GLFWwindow* pGLFWWindow = reinterpret_cast<GLFWwindow*>(desc.pWindowHandle);
+        if (glfwCreateWindowSurface(m_pDevice->GetVkInstance(), pGLFWWindow, nullptr, &m_Surface) != VK_SUCCESS)
+            m_Surface = VK_NULL_HANDLE;
+#elif defined(LAMBDA_PLAT_WINDOWS)
+        //Create a surface for windows
+        VkWin32SurfaceCreateInfoKHR info = {};
+        info.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+        info.pNext = nullptr;
+        info.flags = 0;
+        info.hwnd = reinterpret_cast<HWND>(desc.pWindowHandle);
+        info.hinstance = GetModuleHandle(nullptr);
+        if (vkCreateWin32SurfaceKHR(m_Instance, &info, nullptr, &surface) != VK_SUCCESS)
+            m_Surface = VK_NULL_HANDLE;
+#endif
+        if (m_Surface == VK_NULL_HANDLE)
+        {
+            LOG_DEBUG_ERROR("Vulkan: Failed to create surface for SwapChain\n");
+            return;
+        }
+        else
+        {
+            LOG_DEBUG_INFO("Vulkan: Created Surface\n");
+        }
+        
+        
+        //Check for presentationsupport
+        VkBool32 presentSupport = false;
+        QueueFamilyIndices familyIndices = m_pDevice->GetQueueFamilyIndices();
+        vkGetPhysicalDeviceSurfaceSupportKHR(m_pDevice->GetVkPhysicalDevice(), familyIndices.PresentFamily, m_Surface, &presentSupport);
+        if (!presentSupport)
+        {
+            LOG_DEBUG_ERROR("Vulkan: Current queuefamily does not support presentation\n");
+            return;
+        }
+        
+        
+        //Setup semaphore structure
+        VkSemaphoreCreateInfo semaphoreInfo = {};
+        semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+        semaphoreInfo.pNext = nullptr;
+        semaphoreInfo.flags = 0;
+        
+        //Create sync-objects
+        m_ImageSemaphores.resize(desc.BufferCount);
+        m_RenderSemaphores.resize(desc.BufferCount);
+        for (uint32 i = 0; i < desc.BufferCount; i++)
+        {
+            //Create semaphores
+            if (vkCreateSemaphore(m_pDevice->GetVkDevice(), &semaphoreInfo, nullptr, &m_ImageSemaphores[i]) != VK_SUCCESS ||
+                vkCreateSemaphore(m_pDevice->GetVkDevice(), &semaphoreInfo, nullptr, &m_RenderSemaphores[i]) != VK_SUCCESS)
+            {
+                LOG_DEBUG_ERROR("Vulkan: Failed to create Semaphore\n");
+                return;
+            }
+            else
+            {
+                m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_SEMAPHORE, (uint64)m_ImageSemaphores[i],  "ImageSemaphore[" +  std::to_string(i) + "]");
+                m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_SEMAPHORE, (uint64)m_RenderSemaphores[i], "RenderSemaphore[" + std::to_string(i) + "]");
+            }
+        }
+        
+        LOG_DEBUG_INFO("Vulkan: Created Semaphores\n");
+        
+        
+        
+        //Get the swapchain capabilities from the adapter
+        SwapChainCapabilities cap = QuerySwapChainSupport(m_pDevice->GetVkPhysicalDevice(), m_Surface);
+        
+		//Find the swapchain format we want
+        bool foundFormat = false;
+        VkFormat lookingFor = ConvertFormat(desc.BufferFormat);
 		for (const auto& availableFormat : cap.Formats)
 		{
-			if (availableFormat.format == desc.Format.format && availableFormat.colorSpace == desc.Format.colorSpace)
+			if (availableFormat.format == lookingFor && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
 			{
-				m_Format = availableFormat;
+                foundFormat = true;
+                m_VkFormat = availableFormat;
 				break;
 			}
 		}
     
-		LOG_DEBUG_INFO("Vulkan: Chosen SwapChain format '%s'\n", VkFormatToString(m_Format.format));
+        //Did we find it?
+        if (foundFormat)
+        {
+            LOG_DEBUG_INFO("Vulkan: Chosen SwapChain format '%s'\n", VkFormatToString(m_VkFormat.format));
+        }
+        else
+        {
+            LOG_DEBUG_ERROR("Vulkan: Format %s is not supported on. Following formats is supported for Creating a SwapChain\n", VkFormatToString(lookingFor));
+            for (const auto& availableFormat : cap.Formats)
+                LOG_DEBUG_ERROR("    %s\n", VkFormatToString(availableFormat.format));
+            
+            return;
+        }
 
 		//Choose a presentationmode
 		m_PresentationMode = VK_PRESENT_MODE_FIFO_KHR;
@@ -75,25 +190,21 @@ namespace Lambda
 		LOG_DEBUG_INFO("Vulkan: Chosen SwapChain PresentationMode '%s'\n", VkPresentatModeToString(m_PresentationMode));
 
 		//Setup swapchain images
-        m_ImageCount = desc.ImageCount;
-        if (m_ImageCount < cap.Capabilities.minImageCount)
+        if (desc.BufferCount >= cap.Capabilities.minImageCount && desc.BufferCount <= cap.Capabilities.maxImageCount)
         {
-            m_ImageCount = cap.Capabilities.minImageCount + 1;
+            LOG_DEBUG_INFO("Vulkan: Number of buffers in SwapChain '%u'\n", desc.BufferCount);
+            this->InitSwapChain({ desc.BufferWidth, desc.BufferHeight });
         }
-		if (cap.Capabilities.maxImageCount > 0 && m_ImageCount > cap.Capabilities.maxImageCount)
-		{
-			m_ImageCount = cap.Capabilities.maxImageCount;
-		}
-
-		LOG_DEBUG_INFO("Vulkan: Number of images in SwapChain '%u'\n", m_ImageCount);
-        
-        InitSwapChain(desc.Extent);
+        else
+        {
+            LOG_DEBUG_ERROR("Vulkan: Number of buffers(=%u) is not supported. MinBuffers=%u MaxBuffers=%u\n", desc.BufferCount, cap.Capabilities.minImageCount, cap.Capabilities.maxImageCount);
+        }
 	}
     
     
     void VKNSwapChain::InitSwapChain(VkExtent2D extent)
     {
-		SwapChainCapabilities cap	= QuerySwapChainSupport(m_pDevice->GetVkPhysicalDevice(), m_pDevice->GetVkSurface());
+		SwapChainCapabilities cap = QuerySwapChainSupport(m_pDevice->GetVkPhysicalDevice(), m_Surface);
         
         //Choose swapchain extent (Size)
         VkExtent2D newExtent;
@@ -114,10 +225,10 @@ namespace Lambda
         VkSwapchainCreateInfoKHR info = {};
         info.sType                = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
         info.pNext                = nullptr;
-        info.surface              = m_pDevice->GetVkSurface();
-        info.minImageCount        = m_ImageCount;
-        info.imageFormat          = m_Format.format;
-        info.imageColorSpace      = m_Format.colorSpace;
+        info.surface              = m_Surface;
+        info.minImageCount        = m_Desc.BufferCount;
+        info.imageFormat          = m_VkFormat.format;
+        info.imageColorSpace      = m_VkFormat.colorSpace;
         info.imageExtent          = newExtent;
         info.imageArrayLayers     = 1;
         info.imageUsage           = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT; //Use as color attachment and clear
@@ -144,37 +255,36 @@ namespace Lambda
             info.queueFamilyIndexCount   = 0;
             info.pQueueFamilyIndices     = nullptr;
         }
-
-        if (vkCreateSwapchainKHR(m_pDevice->GetVkDevice(), &info, nullptr, &m_SwapChain) != VK_SUCCESS)
+        //Create swapchain
+        if (vkCreateSwapchainKHR(m_pDevice->GetVkDevice(), &info, nullptr, &m_VkSwapChain) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create SwapChain\n");
-            
-            m_SwapChain = VK_NULL_HANDLE;
+            m_VkSwapChain = VK_NULL_HANDLE;
             return;
         }
         else
         {
             LOG_DEBUG_INFO("Vulkan: Created SwapChain\n");
-            m_Extent = newExtent;
+            m_Desc.BufferWidth  = newExtent.width;
+            m_Desc.BufferHeight = newExtent.height;
         }
         
         //Get SwapChain images
         uint32 imageCount = 0;
-        vkGetSwapchainImagesKHR(m_pDevice->GetVkDevice(), m_SwapChain, &imageCount, nullptr);
-        m_ImageCount = imageCount;
+        vkGetSwapchainImagesKHR(m_pDevice->GetVkDevice(), m_VkSwapChain, &imageCount, nullptr);
+        m_Desc.BufferCount = imageCount;
         
-        //Init textures
+        //Init buffers
         std::vector<VkImage> textures(imageCount);
-        vkGetSwapchainImagesKHR(m_pDevice->GetVkDevice(), m_SwapChain, &imageCount, textures.data());
+        vkGetSwapchainImagesKHR(m_pDevice->GetVkDevice(), m_VkSwapChain, &imageCount, textures.data());
         for (uint32 i = 0; i < imageCount; i++)
         {
             TextureDesc desc = {};
             desc.Type				= TEXTURE_TYPE_2D;
-            desc.pResolveResource	= nullptr;
             desc.Flags				= TEXTURE_FLAGS_RENDER_TARGET;
-            desc.Format				= ConvertVkFormat(m_Format.format);
-            desc.Width				= m_Extent.width;
-            desc.Height				= m_Extent.height;
+            desc.Format				= m_Desc.BufferFormat;
+            desc.Width				= m_Desc.BufferWidth;
+            desc.Height				= m_Desc.BufferHeight;
             desc.Depth				= 1;
             desc.ArraySize			= 1;
             desc.MipLevels			= 1;
@@ -183,58 +293,77 @@ namespace Lambda
 
             m_Buffers.push_back(AutoRef(DBG_NEW VKNTexture(m_pDevice, textures[i], desc)));
         }
+        
+        LOG_DEBUG_INFO("Vulkan: Created Backbuffers\n");
+        
+        //Create depthbuffer
+        TextureDesc depthBufferDesc = {};
+        depthBufferDesc.Flags       = TEXTURE_FLAGS_DEPTH_STENCIL;
+        depthBufferDesc.Type        = TEXTURE_TYPE_2D;
+        depthBufferDesc.Usage       = RESOURCE_USAGE_DEFAULT;
+        depthBufferDesc.ArraySize   = 1;
+        depthBufferDesc.Width       = m_Desc.BufferWidth;
+        depthBufferDesc.Height      = m_Desc.BufferHeight;
+        depthBufferDesc.Format      = m_Desc.DepthBufferFormat;
+        depthBufferDesc.SampleCount = uint32(m_Desc.BufferSampleCount);
+        depthBufferDesc.MipLevels   = 1;
+        depthBufferDesc.Depth       = 1;
+        m_pDevice->CreateTexture((ITexture**)m_DepthStencilBuffer.GetAdressOf(), nullptr, depthBufferDesc);
 
-        LOG_DEBUG_INFO("Vulkan: Created ImageViews\n");
+        //Create MSAA-buffer
+        if (m_Desc.BufferSampleCount > 1)
+        {
+            TextureDesc msaaBufferDesc = {};
+            msaaBufferDesc.Type        = TEXTURE_TYPE_2D;
+            msaaBufferDesc.Usage       = RESOURCE_USAGE_DEFAULT;
+            msaaBufferDesc.Flags       = TEXTURE_FLAGS_RENDER_TARGET;
+            msaaBufferDesc.ArraySize   = 1;
+            msaaBufferDesc.Width       = m_Desc.BufferWidth;
+            msaaBufferDesc.Height      = m_Desc.BufferHeight;
+            msaaBufferDesc.Format      = m_Desc.BufferFormat;
+            msaaBufferDesc.SampleCount = uint32(m_Desc.BufferSampleCount);
+            msaaBufferDesc.MipLevels   = 1;
+            msaaBufferDesc.Depth       = 1;
+            m_pDevice->CreateTexture((ITexture**)m_SampleBuffer.GetAdressOf(), nullptr, msaaBufferDesc);
+        }
     }
 
 
 	void VKNSwapChain::AquireNextImage(VkSemaphore signalSemaphore)
 	{
 		//LOG_DEBUG_INFO("Vulkan: vkAcquireNextImageKHR with semaphore %x\n", signalSemaphore);
-		vkAcquireNextImageKHR(m_pDevice->GetVkDevice(), m_SwapChain, 0xffffffffffffffff, signalSemaphore, VK_NULL_HANDLE, &m_CurrentBufferIndex);
+		vkAcquireNextImageKHR(m_pDevice->GetVkDevice(), m_VkSwapChain, 0xffffffffffffffff, signalSemaphore, VK_NULL_HANDLE, &m_CurrentBufferIndex);
 	}
 
 
-	VkFormat VKNSwapChain::GetFormat() const
+	ITexture* VKNSwapChain::GetBuffer()
 	{
-		return m_Format.format;
+        //Get the new buffer
+        if (m_LastFrameIndex != m_FrameIndex)
+        {
+            AquireNextImage(m_ImageSemaphores[m_FrameIndex]);
+            m_LastFrameIndex = m_FrameIndex;
+        }
+        
+		return (m_Desc.BufferSampleCount > 1) ? m_SampleBuffer.Get() : m_Buffers[m_CurrentBufferIndex].Get();
 	}
 
 
-	uint32 VKNSwapChain::GetWidth() const
-	{
-		return m_Extent.width;
-	}
+    ITexture* VKNSwapChain::GetDepthBuffer()
+    {
+        return m_DepthStencilBuffer.Get();
+    }
 
 
-	uint32 VKNSwapChain::GetHeight() const
-	{
-		return m_Extent.height;
-	}
-
-
-	uint32 VKNSwapChain::GetBufferCount() const
-	{
-		return uint32(m_Buffers.size());
-	}
-
-
-	uint32 VKNSwapChain::GetBackBufferIndex() const
-	{
-		return m_CurrentBufferIndex;
-	}
-
-
-	ITexture* VKNSwapChain::GetCurrentBuffer() const
-	{
-		return m_Buffers[m_CurrentBufferIndex].Get();
-	}
-
+    const SwapChainDesc& VKNSwapChain::GetDesc() const
+    {
+        return m_Desc;
+    }
 
 	void VKNSwapChain::ResizeBuffers(uint32 width, uint32 height)
     {
         //Relase the old resources
-		Release(m_pDevice->GetVkDevice());
+		ReleaseResources();
         
         //Create swapchain again
         VkExtent2D extent = { width, height };
@@ -242,41 +371,39 @@ namespace Lambda
 	}
 
 
-	void VKNSwapChain::Present(VkQueue presentQueue, VkSemaphore waitSemaphore)
+	void VKNSwapChain::Present()
 	{
-		VkSemaphore waitSemaphores[] = { waitSemaphore };
+		VkSemaphore waitSemaphores[] = { m_RenderSemaphores[m_FrameIndex] };
 		VkPresentInfoKHR info = {};
 		info.sType				= VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 		info.pNext				= nullptr;
 		info.waitSemaphoreCount = 1;
 		info.pWaitSemaphores	= waitSemaphores;
 		info.swapchainCount		= 1;
-		info.pSwapchains		= &m_SwapChain;
+		info.pSwapchains		= &m_VkSwapChain;
 		info.pImageIndices		= &m_CurrentBufferIndex;
 		info.pResults			= nullptr;
 
 		vkQueuePresentKHR(presentQueue, &info);
+        
+        m_FrameIndex = (m_FrameIndex+1) % m_Desc.BufferCount;
 	}
 
 
-	void VKNSwapChain::Release(VkDevice device)
+	void VKNSwapChain::ReleaseResources()
 	{
+        //Release DepthStencil- and SampleBuffer
+        m_DepthStencilBuffer.Release();
+        m_SampleBuffer.Release();
+        
 		//Release backbuffers
 		m_Buffers.clear();
 
-		if (m_SwapChain != VK_NULL_HANDLE)
+        //Destroy swapchain
+		if (m_VkSwapChain != VK_NULL_HANDLE)
 		{
-			vkDestroySwapchainKHR(device, m_SwapChain, nullptr);
-			m_SwapChain = VK_NULL_HANDLE;
+			vkDestroySwapchainKHR(m_pDevice->GetVkDevice(), m_VkSwapChain, nullptr);
+			m_VkSwapChain = VK_NULL_HANDLE;
 		}
-	}
-
-
-	void VKNSwapChain::Destroy(VkDevice device)
-	{
-		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
-
-		Release(device);
-		delete this;
 	}
 }

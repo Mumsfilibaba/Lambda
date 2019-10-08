@@ -1,5 +1,4 @@
 #pragma once
-#include "Graphics/Core/IRenderPass.h"
 #include "Graphics/Core/DeviceObjectBase.h"
 #include <vulkan/vulkan.h>
 #include "VKNConversions.inl"
@@ -12,7 +11,7 @@ namespace Lambda
 	//VKNRenderPass
 	//-------------
 
-	class VKNRenderPass final : public DeviceObjectBase<VKNDevice, IRenderPass>
+	/*class VKNRenderPass final : public DeviceObjectBase<VKNDevice, IRenderPass>
 	{
 	public:
 		LAMBDA_NO_COPY(VKNRenderPass);
@@ -39,5 +38,5 @@ namespace Lambda
 		VkExtent2D		m_FramebufferExtent;
         RenderPassDesc	m_Desc;
 		VkClearValue	m_ClearValues[LAMBDA_MAX_RENDERTARGET_COUNT + 1];
-	};
+	};*/
 }

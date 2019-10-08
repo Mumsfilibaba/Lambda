@@ -1,6 +1,7 @@
 #pragma once
 #include "Defines.h"
 #include "Types.h"
+
 namespace Lambda
 {
 	typedef uint32 RefCountValue;

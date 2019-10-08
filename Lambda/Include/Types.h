@@ -344,7 +344,7 @@ namespace Lambda
     
     
     //Graphics-APIs defines
-    enum GraphicsApi : uint32
+    enum GraphicsAPI : uint32
     {
         GRAPHICS_API_UNKNOWN    = 0,
         GRAPHICS_API_D3D12      = 1,
@@ -393,12 +393,14 @@ namespace Lambda
 
 
 	//Enum describing a commandlisttype
-	enum CommandListType : uint32
+	enum DeviceContextType : uint32
 	{
-		COMMAND_LIST_TYPE_UNKNOWN	= 0,
-		COMMAND_LIST_TYPE_GRAPHICS	= 1,
-		COMMAND_LIST_TYPE_COMPUTE	= 2,
-		COMMAND_LIST_TYPE_COPY		= 3,
+		DEVICE_CONTEXT_TYPE_UNKNOWN	    = 0,
+		DEVICE_CONTEXT_TYPE_GRAPHICS    = 1,
+		DEVICE_CONTEXT_TYPE_COMPUTE	    = 2,
+		DEVICE_CONTEXT_TYPE_COPY		= 3,
+        DEVICE_CONTEXT_TYPE_IMMEDIATE   = 4,
+        DEVICE_CONTEXT_TYPE_DEFFERED    = 5,
 	};
     
 

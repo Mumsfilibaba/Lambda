@@ -3,7 +3,6 @@
 #include "Graphics/Core/IShader.h"
 #include "Graphics/Core/ISamplerState.h"
 #include "Graphics/Core/IPipelineState.h"
-#include "Graphics/Core/IRenderPass.h"
 #include "Graphics/Core/ITexture.h"
 #include "Graphics/Core/IBuffer.h"
 #include "System/Application.h"
@@ -190,10 +189,11 @@ namespace Lambda
     }
 
 
-	void UILayer::Init(IRenderPass* pRenderPass, IDeviceContext* pList)
+	void UILayer::Init()
 	{
 		//Create graphics objects
-		IDevice* pDevice = IDevice::Get();
+        Application& app = Application::Get();
+		IDevice* pDevice = app.GetGraphicsDevice();
 
 		//Create shaders
 		ShaderDesc shaderDesc = {};
@@ -205,8 +205,8 @@ namespace Lambda
 		shaderDesc.pEntryPoint = "main";
 		shaderDesc.Type = SHADER_STAGE_VERTEX;
 
-		const DeviceDesc& deviceDesc = pDevice->GetDesc();
-		if (deviceDesc.Api == GRAPHICS_API_VULKAN)
+		const DeviceProperties& deviceProps = pDevice->GetProperties();
+		if (deviceProps.Api == GRAPHICS_API_VULKAN)
 		{
 			shaderDesc.pSource		= reinterpret_cast<const char*>(__glsl_shader_vert_spv);
 			shaderDesc.SourceLength = sizeof(__glsl_shader_vert_spv);
@@ -215,7 +215,7 @@ namespace Lambda
 		pDevice->CreateShader(&m_VS, shaderDesc);
 
 		shaderDesc.Type = SHADER_STAGE_PIXEL;
-		if (deviceDesc.Api == GRAPHICS_API_VULKAN)
+		if (deviceProps.Api == GRAPHICS_API_VULKAN)
 		{
 			shaderDesc.pSource		= reinterpret_cast<const char*>(__glsl_shader_frag_spv);
 			shaderDesc.SourceLength = sizeof(__glsl_shader_frag_spv);
@@ -231,8 +231,7 @@ namespace Lambda
 		samplerDesc.MinMipLOD	= -1000.0f;
 		samplerDesc.MipLODBias	= 0.0f;
 		pDevice->CreateSamplerState(&m_SamplerState, samplerDesc);
-
-
+        
 		//Create pipelineresourcestate
 		ShaderVariableDesc shaderVariables[1];
 		shaderVariables[0].pName			= "sTexture";
@@ -278,12 +277,14 @@ namespace Lambda
 		GraphicsPipelineStateDesc graphicsPipeline  = {};
 		graphicsPipeline.pVertexShader		= m_VS.Get();
 		graphicsPipeline.pPixelShader		= m_PS.Get();
-		graphicsPipeline.pRenderPass		= pRenderPass;
 		graphicsPipeline.VertexInput		= vertexInput;
 		graphicsPipeline.RasterizerState	= rasterizerState;
 		graphicsPipeline.BlendState			= blendState;
 		graphicsPipeline.DepthStencilState	= depthStencilState;
+        graphicsPipeline.RenderTargetFormats[0] = FORMAT_B8G8R8A8_UNORM;
+        graphicsPipeline.DepthStencilFormat = FORMAT_D24_UNORM_S8_UINT;
 		graphicsPipeline.Topology			= PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+        graphicsPipeline.SampleCount        = app.GetEngineParams().SampleCount;
 
 		PipelineStateDesc pipelineDesc = {};
 		pipelineDesc.pName	= "ImGui PipelineState";
@@ -312,14 +313,12 @@ namespace Lambda
 		fontTextureDesc.MipLevels			= 1;
 		fontTextureDesc.ArraySize			= 1;
 		fontTextureDesc.SampleCount			= 1;
-		fontTextureDesc.pResolveResource	= nullptr;
 		fontTextureDesc.Usage				= RESOURCE_USAGE_DEFAULT;
 
 		ResourceData initalData = {};
 		initalData.pData		= pPixels;
 		initalData.SizeInBytes	= uploadSize;
 		pDevice->CreateTexture(&m_FontTexture, &initalData, fontTextureDesc);
-		pList->TransitionTexture(m_FontTexture.Get(), RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0, LAMBDA_TRANSITION_ALL_MIPS);
 
 		m_VariableTable->GetVariableByIndex(SHADER_STAGE_PIXEL, 0)->SetTexture(m_FontTexture.Get());
 		m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "sTexture")->SetTexture(m_FontTexture.Get());
@@ -353,6 +352,8 @@ namespace Lambda
 	
 	void UILayer::OnRenderUI(Timestep dt)
 	{
+        Application& app = Application::Get();
+        
         const float DISTANCE = 10.0f;
         static int corner = 0;
         ImGuiIO& io = ImGui::GetIO();
@@ -368,21 +369,22 @@ namespace Lambda
         {
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 0.0f, 1.0f));
 
-			IDevice* pDevice = IDevice::Get();
-            const DeviceDesc& desc = pDevice->GetDesc();
-			DeviceProperties props = pDevice->GetProperties();
-			if (desc.Api == GRAPHICS_API_VULKAN)
+			IDevice* pDevice = app.GetGraphicsDevice();
+			const DeviceProperties props = pDevice->GetProperties();
+			if (props.Api == GRAPHICS_API_VULKAN)
 				ImGui::Text("Renderer [Vulkan]");
-			else if (desc.Api == GRAPHICS_API_D3D12)
+			else if (props.Api == GRAPHICS_API_D3D12)
 				ImGui::Text("Renderer [D3D12]");
             ImGui::Separator();
             
+            ISwapChain* pSwapChain = app.GetSwapChain();
+            const SwapChainDesc& swapChainDesc = pSwapChain->GetDesc();
 			ImGui::Text("Vendor: %s", props.VendorString);
 			ImGui::Text("Adapter: %s", props.AdapterString);
-            ImGui::Text("Resolution: %u x %u", pDevice->GetSwapChainWidth(), pDevice->GetSwapChainHeight());
-            ImGui::Text("MSAA: %ux", desc.SampleCount);
-            ImGui::Text("BackBufferCount: %u", desc.BackBufferCount);
-            ImGui::Text("VerticalSync: %s", desc.VerticalSync ? "On" : "Off");
+            ImGui::Text("Resolution: %u x %u", swapChainDesc.BufferWidth, swapChainDesc.BufferHeight);
+            ImGui::Text("MSAA: %ux", swapChainDesc.BufferSampleCount);
+            ImGui::Text("BackBufferCount: %u", swapChainDesc.BufferCount);
+            ImGui::Text("VerticalSync: %s", swapChainDesc.VerticalSync ? "On" : "Off");
             
             ImGui::Separator();
             ImGui::Text("Timings:");
@@ -459,7 +461,7 @@ namespace Lambda
 	}
 
 
-	void UILayer::Draw(IDeviceContext* pList)
+	void UILayer::Draw(IDeviceContext* pContext)
 	{
 		ImGuiIO& io = ImGui::GetIO();
 		ImDrawData* pDrawData = ImGui::GetDrawData();
@@ -487,13 +489,13 @@ namespace Lambda
 		}
 
 		//Setup pipelinestate
-		pList->SetPipelineState(m_PipelineState.Get());
+		pContext->SetPipelineState(m_PipelineState.Get());
 		//Set shader variable list
-		pList->SetShaderVariableTable(m_VariableTable.Get());
+		pContext->SetShaderVariableTable(m_VariableTable.Get());
 
 		//Setup vertex and indexbuffer
-		pList->SetVertexBuffer(m_VertexBuffer.Get(), 0);
-		pList->SetIndexBuffer(m_IndexBuffer.Get(), sizeof(ImDrawIdx) == 2 ? FORMAT_R16_UINT : FORMAT_R32_UINT);
+		pContext->SetVertexBuffers(&m_VertexBuffer, 1, 0);
+		pContext->SetIndexBuffer(m_IndexBuffer.Get(), sizeof(ImDrawIdx) == 2 ? FORMAT_R16_UINT : FORMAT_R32_UINT);
 		
 		//Setup viewport
 		Viewport viewport = {};
@@ -503,7 +505,7 @@ namespace Lambda
 		viewport.Height		= io.DisplaySize.y;
 		viewport.MinDepth	= 0.0f;
 		viewport.MaxDepth	= 1.0f;
-		pList->SetViewport(viewport);
+		pContext->SetViewports(&viewport, 1);
 
 		// Setup scale and translation:
 		// Our visible imgui space lies from draw_data->DisplayPps (top left) to draw_data->DisplayPos+data_data->DisplaySize (bottom right). DisplayPos is (0,0) for single viewport apps.
@@ -515,8 +517,8 @@ namespace Lambda
 			translate[0] = -1.0f + pDrawData->DisplayPos.x * scale[0];
 			translate[1] = 1.0f - pDrawData->DisplayPos.y * scale[1];
 
-			pList->SetConstantBlocks(SHADER_STAGE_VERTEX, sizeof(float) * 0, sizeof(float) * 2, scale);
-			pList->SetConstantBlocks(SHADER_STAGE_VERTEX, sizeof(float) * 2, sizeof(float) * 2, translate);
+			pContext->SetConstantBlocks(SHADER_STAGE_VERTEX, sizeof(float) * 0, sizeof(float) * 2, scale);
+			pContext->SetConstantBlocks(SHADER_STAGE_VERTEX, sizeof(float) * 2, sizeof(float) * 2, translate);
 		}
 
 		// Will project scissor/clipping rectangles into framebuffer space
@@ -554,10 +556,10 @@ namespace Lambda
 					scissor.Y		= clipRect.y;
 					scissor.Width	= clipRect.z - clipRect.x;
 					scissor.Height	= clipRect.w - clipRect.y;
-					pList->SetScissorRect(scissor);
+					pContext->SetScissorRects(&scissor, 1);
 
 					// Draw
-					pList->DrawIndexedInstanced(pCmd->ElemCount, 1, pCmd->IdxOffset + globalIdxOffset, pCmd->VtxOffset + globalVtxOffset, 0);
+					pContext->DrawIndexedInstanced(pCmd->ElemCount, 1, pCmd->IdxOffset + globalIdxOffset, pCmd->VtxOffset + globalVtxOffset, 0);
 				}
 			}
 			globalIdxOffset += pCmdList->IdxBuffer.Size;

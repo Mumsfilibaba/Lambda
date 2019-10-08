@@ -13,9 +13,6 @@
 #include "VKNQuery.h"
 #include "VKNUtilities.h"
 #include "VKNConversions.inl"
-#if defined(LAMBDA_PLAT_MACOS)
-    #include <GLFW/glfw3.h>
-#endif
 
 namespace Lambda
 {   
@@ -23,76 +20,43 @@ namespace Lambda
 	//VKNDevice
 	//---------
 
-	PFN_vkSetDebugUtilsObjectNameEXT	VKNDevice::SetDebugUtilsObjectNameEXT = nullptr;
-	PFN_vkCreateDebugUtilsMessengerEXT	VKNDevice::CreateDebugUtilsMessengerEXT = nullptr;
-	PFN_vkDestroyDebugUtilsMessengerEXT	VKNDevice::DestroyDebugUtilsMessengerEXT = nullptr;
+    VKNDevice* VKNDevice::s_pInstance = nullptr;
+	PFN_vkSetDebugUtilsObjectNameEXT	VKNDevice::SetDebugUtilsObjectNameEXT       = nullptr;
+	PFN_vkCreateDebugUtilsMessengerEXT	VKNDevice::CreateDebugUtilsMessengerEXT     = nullptr;
+	PFN_vkDestroyDebugUtilsMessengerEXT	VKNDevice::DestroyDebugUtilsMessengerEXT    = nullptr;
 
     VKNDevice::VKNDevice(const DeviceDesc& desc)
         : m_GraphicsQueue(VK_NULL_HANDLE),
         m_PresentationQueue(VK_NULL_HANDLE),
-		m_Fences(),
-        m_RenderSemaphores(),
-		m_ImageSemaphores(),
 		m_pBufferManager(nullptr),
 		m_pFramebufferCache(nullptr),
-		m_pSwapChain(nullptr),
-		m_pDepthStencil(nullptr),
-		m_pMSAABuffer(nullptr),
-		m_pCommandList(nullptr),
+		m_pImmediateContext(nullptr),
 		m_DeviceAllocator(nullptr),
 		m_Instance(VK_NULL_HANDLE),
 		m_DebugMessenger(VK_NULL_HANDLE),
 		m_Device(VK_NULL_HANDLE),
 		m_PhysicalDevice(VK_NULL_HANDLE),
-		m_Surface(VK_NULL_HANDLE),
 		m_FamiliyIndices(),
 		m_PhysicalDeviceProperties(),
 		m_CurrentFrame(0)
     {   
-		//Add a ref to the refcounter
-		this->AddRef();
-
-		LAMBDA_ASSERT(s_pInstance == nullptr);
+        LAMBDA_ASSERT(s_pInstance == nullptr);
         s_pInstance = this;
-        
+
+        //Add a ref to the refcounter
+        this->AddRef();
         Init(desc);
     }
     
     
     VKNDevice::~VKNDevice()
     {
-        m_pCommandList->Release();
-		m_pCommandList = nullptr;
-
-        for (uint32 i = 0; i < m_Desc.BackBufferCount; i++)
-        {
-			if (m_ImageSemaphores[i] != VK_NULL_HANDLE)
-			{
-				vkDestroySemaphore(m_Device, m_ImageSemaphores[i], nullptr);
-				m_ImageSemaphores[i] = VK_NULL_HANDLE;
-			}
-            if (m_RenderSemaphores[i] != VK_NULL_HANDLE)
-            {
-                vkDestroySemaphore(m_Device, m_RenderSemaphores[i], nullptr);
-                m_RenderSemaphores[i] = VK_NULL_HANDLE;
-            }
-            if (m_Fences[i] != VK_NULL_HANDLE)
-            {
-                vkDestroyFence(m_Device, m_Fences[i], nullptr);
-                m_Fences[i] = VK_NULL_HANDLE;
-            }
-        }        
-
+        m_pImmediateContext->Release();
+		m_pImmediateContext = nullptr;
+        
 		//Release all framebuffers
 		if (m_pFramebufferCache)
-		{
 			m_pFramebufferCache->ReleaseAll(m_Device);
-		}
-
-		//Destroy window framebuffer
-		m_pSwapChain->Destroy(m_Device);
-        ReleaseDepthStencil();
-		ReleaseMSAABuffer();
 
 		SafeDelete(m_pFramebufferCache);
 		SafeDelete(m_pBufferManager);
@@ -111,11 +75,6 @@ namespace Lambda
 			DestroyDebugUtilsMessengerEXT(m_Instance, m_DebugMessenger, nullptr);
 			m_DebugMessenger = VK_NULL_HANDLE;
 		}
-		if (m_Surface != VK_NULL_HANDLE)
-		{
-			vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
-			m_Surface = VK_NULL_HANDLE;
-		}
 		if (m_Instance != VK_NULL_HANDLE)
 		{
 			vkDestroyInstance(m_Instance, nullptr);
@@ -130,18 +89,15 @@ namespace Lambda
     
     void VKNDevice::Init(const DeviceDesc& desc)
     {
-		LAMBDA_ASSERT(desc.pWindow != nullptr);
-
 		VkApplicationInfo applicationInfo = {};
-		applicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-		applicationInfo.pNext = nullptr;
-		applicationInfo.pApplicationName = "Lambda Engine";
-		applicationInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-		applicationInfo.pEngineName = "Lambda Engine";
-		applicationInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-		applicationInfo.apiVersion = VK_API_VERSION_1_0;
-
-
+		applicationInfo.sType               = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+		applicationInfo.pNext               = nullptr;
+		applicationInfo.pApplicationName    = "Lambda Engine";
+		applicationInfo.applicationVersion  =  VK_MAKE_VERSION(1, 0, 0);
+        applicationInfo.pEngineName         = "Lambda Engine";
+		applicationInfo.engineVersion       = VK_MAKE_VERSION(1, 0, 0);
+		applicationInfo.apiVersion          = VK_API_VERSION_1_0;
+        
 		//Get all the available extensions
 		uint32 availableExtensionsCount = 0;
 		vkEnumerateInstanceExtensionProperties(nullptr, &availableExtensionsCount, nullptr);
@@ -313,20 +269,7 @@ namespace Lambda
 			}
 		}
 
-
-		//Create window surface
-		m_Surface = CreateSurface(desc.pWindow);
-		if (m_Surface == VK_NULL_HANDLE)
-		{
-			LOG_DEBUG_ERROR("Vulkan: Failed to create surface\n");
-			return;
-		}
-		else
-		{
-			LOG_SYSTEM_PRINT("Vulkan: Created surface\n");
-		}
-
-
+        
 		//Choose an physical device (GPU) 
 		m_PhysicalDevice = QueryPhyscialDevice();
 		if (m_PhysicalDevice == VK_NULL_HANDLE)
@@ -337,7 +280,7 @@ namespace Lambda
 		else
 		{
 			vkGetPhysicalDeviceProperties(m_PhysicalDevice, &m_PhysicalDeviceProperties);
-			m_FamiliyIndices = FindQueueFamilies(m_PhysicalDevice, m_Surface);
+			m_FamiliyIndices = FindQueueFamilies(m_PhysicalDevice);
 
 			//Get memory available on the physical device
 			VkPhysicalDeviceMemoryProperties memoryProperties = {};
@@ -352,14 +295,6 @@ namespace Lambda
 
 			vram = vram / (1024 * 1024);
 			LOG_SYSTEM_PRINT("Vulkan: Selected GPU '%s'\n        VRAM: %llu MB\n", m_PhysicalDeviceProperties.deviceName, vram);
-
-			//Check so that the MSAA count is valid
-			uint32 highestSampleCount = GetHighestSampleCount();
-			if (desc.SampleCount > highestSampleCount)
-			{
-				LOG_DEBUG_ERROR("Vulkan: DeviceDesc::SampleCount (=%u), is higher than the maximum supported on the device (=%u)\n", desc.SampleCount, highestSampleCount);
-				return;
-			}
 		}
 
 		//Find the queuefamily indices for the adapter that we have chosen
@@ -459,49 +394,7 @@ namespace Lambda
 		//Get queues
 		vkGetDeviceQueue(m_Device, m_FamiliyIndices.GraphicsFamily, 0, &m_GraphicsQueue);
 		vkGetDeviceQueue(m_Device, m_FamiliyIndices.PresentFamily, 0, &m_PresentationQueue);
-
-        //Setup semaphore structure
-        VkSemaphoreCreateInfo semaphoreInfo = {};
-        semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-        semaphoreInfo.pNext = nullptr;
-        semaphoreInfo.flags = 0;
         
-        //Setup fence struct
-        VkFenceCreateInfo fenceInfo = {};
-        fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-        
-        //Create sync-objects
-        m_Fences.resize(desc.BackBufferCount);
-        m_ImageSemaphores.resize(desc.BackBufferCount);
-        m_RenderSemaphores.resize(desc.BackBufferCount);
-        for (uint32 i = 0; i < desc.BackBufferCount; i++)
-        {
-            //Create semaphores
-            if (vkCreateSemaphore(m_Device, &semaphoreInfo, nullptr, &m_ImageSemaphores[i]) != VK_SUCCESS ||
-                vkCreateSemaphore(m_Device, &semaphoreInfo, nullptr, &m_RenderSemaphores[i]) != VK_SUCCESS)
-            {
-                LOG_DEBUG_ERROR("Vulkan: Failed to create Semaphore\n");
-                return;
-            }
-            else
-            {
-                SetVulkanObjectName(VK_OBJECT_TYPE_SEMAPHORE, (uint64)m_ImageSemaphores[i], "ImageSemaphore[" +  std::to_string(i) + "]");
-                SetVulkanObjectName(VK_OBJECT_TYPE_SEMAPHORE, (uint64)m_RenderSemaphores[i], "RenderSemaphore[" + std::to_string(i) + "]");
-            }
-            
-            //Create fence
-            if (vkCreateFence(m_Device, &fenceInfo, nullptr, &m_Fences[i]) != VK_SUCCESS)
-            {
-                LOG_DEBUG_ERROR("Vulkan: Failed to create fence\n");
-                return;
-            }
-            else
-            {
-				SetVulkanObjectName(VK_OBJECT_TYPE_FENCE, (uint64)m_Fences[i], "Fence[" +  std::to_string(i) + "]");
-            }
-        }
-        
-        LOG_DEBUG_INFO("Vulkan: Created Semaphores and fences\n");
         
 		//Create allocator
 		m_DeviceAllocator = DBG_NEW VKNAllocator(this);
@@ -512,107 +405,17 @@ namespace Lambda
 		//Create framebuffercache
 		m_pFramebufferCache = DBG_NEW VKNFramebufferCache();
         
-        //Create swapchain
-        VKNSwapChainDesc swapChainInfo = {};
-        swapChainInfo.VerticalSync       = desc.VerticalSync;
-        swapChainInfo.Format.format      = VK_FORMAT_B8G8R8A8_UNORM;
-        swapChainInfo.Format.colorSpace  = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
-        swapChainInfo.Extent             = { desc.pWindow->GetWidth(), desc.pWindow->GetHeight() };
-        swapChainInfo.ImageCount         = desc.BackBufferCount;
-        m_pSwapChain = DBG_NEW VKNSwapChain(this, swapChainInfo);
-
-		//If we are using MSAA we need to create a seperate texture
-		if (desc.SampleCount > VK_SAMPLE_COUNT_1_BIT)
-		{
-			if (!CreateMSAABuffer())
-			{
-				LOG_DEBUG_INFO("Vulkan: Failed to create MSAABuffer\n");
-				return;
-			}
-		}
-
-        //Create depthbuffer
-        if (!CreateDepthStencil())
-        {
-            LOG_DEBUG_INFO("Vulkan: Failed to create DepthBuffer\n");
-            return;
-        }
          
         //Init internal commandlist, used for copying from staging buffers to final resource etc.
-		IDeviceContext* pList = nullptr;
-        CreateCommandList(&pList, COMMAND_LIST_TYPE_GRAPHICS);
-		if (pList)
-		{
-			m_pCommandList = reinterpret_cast<VKNDeviceContext*>(pList);
-			m_pCommandList->SetName("Graphics Device Internal CommandList");
-		}
+        m_pImmediateContext = DBG_NEW VKNDeviceContext(this, m_DeviceAllocator.Get(), DEVICE_CONTEXT_TYPE_IMMEDIATE);
+        m_pImmediateContext->SetName("Graphics Device ImmediateContext");
     }
     
     
-    bool VKNDevice::CreateDepthStencil()
+    void VKNDevice::CreateDefferedContext(IDeviceContext** ppDefferedContext)
     {
-        TextureDesc depthBufferDesc			= {};
-        depthBufferDesc.pResolveResource	= nullptr;
-        depthBufferDesc.Flags				= TEXTURE_FLAGS_DEPTH_STENCIL;
-        depthBufferDesc.Type				= TEXTURE_TYPE_2D;
-        depthBufferDesc.Usage				= RESOURCE_USAGE_DEFAULT;
-        depthBufferDesc.ArraySize			= 1;
-        depthBufferDesc.Width				= m_pSwapChain->GetWidth();
-        depthBufferDesc.Height				= m_pSwapChain->GetHeight();
-        depthBufferDesc.Format				= FORMAT_D24_UNORM_S8_UINT;
-        depthBufferDesc.SampleCount			= uint32(m_Desc.SampleCount);
-        depthBufferDesc.MipLevels			= 1;
-		depthBufferDesc.Depth				= 1;
-        
-        m_pDepthStencil = DBG_NEW VKNTexture(this, m_DeviceAllocator.Get(), depthBufferDesc);
-        return true;
-    }
-
-
-	bool VKNDevice::CreateMSAABuffer()
-	{
-		TextureDesc msaaBufferDesc		= {};
-        msaaBufferDesc.pResolveResource = m_pSwapChain->GetCurrentBuffer();
-		msaaBufferDesc.Type				= TEXTURE_TYPE_2D;
-		msaaBufferDesc.Usage			= RESOURCE_USAGE_DEFAULT;
-		msaaBufferDesc.Flags			= TEXTURE_FLAGS_RENDER_TARGET;
-		msaaBufferDesc.ArraySize		= 1;
-		msaaBufferDesc.Width			= m_pSwapChain->GetWidth();
-		msaaBufferDesc.Height			= m_pSwapChain->GetHeight();
-		msaaBufferDesc.Format			= FORMAT_B8G8R8A8_UNORM;
-		msaaBufferDesc.SampleCount		= uint32(m_Desc.SampleCount);
-		msaaBufferDesc.MipLevels		= 1;
-		msaaBufferDesc.Depth			= 1;
-
-		m_pMSAABuffer = DBG_NEW VKNTexture(this, m_DeviceAllocator.Get(), msaaBufferDesc);
-		return true;
-	}
-    
-    
-    void VKNDevice::ReleaseDepthStencil()
-    {
-        if (m_pDepthStencil != nullptr)
-        {
-            m_pDepthStencil->Release();
-            m_pDepthStencil = nullptr;
-        }
-    }
-
-
-	void VKNDevice::ReleaseMSAABuffer()
-	{
-		if (m_pMSAABuffer != nullptr)
-		{
-			m_pMSAABuffer->Release();
-			m_pMSAABuffer = nullptr;
-		}
-	}
-    
-    
-    void VKNDevice::CreateCommandList(IDeviceContext** ppList, CommandListType type)
-    {
-		LAMBDA_ASSERT(ppList != nullptr);
-        (*ppList) = DBG_NEW VKNDeviceContext(this, m_DeviceAllocator.Get(), type);
+		LAMBDA_ASSERT(ppDefferedContext != nullptr);
+        (*ppDefferedContext) = DBG_NEW VKNDeviceContext(this, m_DeviceAllocator.Get(), DEVICE_CONTEXT_TYPE_DEFFERED);
     }
     
     
@@ -642,11 +445,11 @@ namespace Lambda
             else if (desc.Usage == RESOURCE_USAGE_DEFAULT)
             {
 				//Setup copy with staging buffer if other usecase
-				m_pCommandList->Reset();
-                m_pCommandList->UpdateBuffer(pVkBuffer, pInitalData);
-                m_pCommandList->Close();
+				m_pImmediateContext->Begin();
+                m_pImmediateContext->UpdateBuffer(pVkBuffer, pInitalData);
+                m_pImmediateContext->End();
             
-                IDeviceContext* ppLists[] = { m_pCommandList };
+                IDeviceContext* ppLists[] = { m_pImmediateContext };
                 ExecuteCommandList(ppLists, 1);
 
                 WaitForGPU();
@@ -669,9 +472,9 @@ namespace Lambda
         {
             LAMBDA_ASSERT(pInitalData->pData != nullptr && pInitalData->SizeInBytes != 0);
             
-            m_pCommandList->Reset();
+            m_pImmediateContext->Begin();
             //Upload data
-            m_pCommandList->UpdateTexture(pVkTexture, pInitalData, 0);
+            m_pImmediateContext->UpdateTexture(pVkTexture, pInitalData, 0);
 
             //Generate mipmaps
             if (desc.Flags & TEXTURE_FLAGS_GENEATE_MIPS)
@@ -687,9 +490,9 @@ namespace Lambda
                     uint32 mipLevels = textureDesc.MipLevels;
                     for (uint32 i = 1; i < mipLevels; i++)
                     {
-                        m_pCommandList->TransitionTexture(pVkTexture, RESOURCE_STATE_COPY_SRC, i-1, 1);
-                        m_pCommandList->BlitTexture(pVkTexture, mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, i, pVkTexture, mipWidth, mipHeight, i-1);
-                        m_pCommandList->TransitionTexture(pVkTexture, RESOURCE_STATE_COPY_DEST, i-1, 1);
+                        m_pImmediateContext->TransitionTexture(pVkTexture, RESOURCE_STATE_COPY_SRC, i-1, 1);
+                        m_pImmediateContext->BlitTexture(pVkTexture, mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, i, pVkTexture, mipWidth, mipHeight, i-1);
+                        m_pImmediateContext->TransitionTexture(pVkTexture, RESOURCE_STATE_COPY_DEST, i-1, 1);
                         
                         if (mipWidth > 1)
                             mipWidth /= 2;
@@ -705,9 +508,9 @@ namespace Lambda
             }
             
             //Execute and wait for GPU
-            m_pCommandList->Close();
+            m_pImmediateContext->End();
             
-            IDeviceContext* ppLists[] = { m_pCommandList };
+            IDeviceContext* ppLists[] = { m_pImmediateContext };
             ExecuteCommandList(ppLists, 1);
 
             WaitForGPU();
@@ -738,13 +541,6 @@ namespace Lambda
         (*ppPipelineState) = DBG_NEW VKNPipelineState(this, desc);
     }
 
-
-	void VKNDevice::CreateRenderPass(IRenderPass** ppRenderPass, const RenderPassDesc& desc)
-	{
-		LAMBDA_ASSERT(ppRenderPass != nullptr);
-		(*ppRenderPass) = DBG_NEW VKNRenderPass(this, desc);
-	}
-
     
     void VKNDevice::CreateQuery(Lambda::IQuery** ppQuery, const QueryDesc& desc)
     {
@@ -752,7 +548,14 @@ namespace Lambda
         (*ppQuery) = DBG_NEW VKNQuery(this, desc);
     }
     
+
+    IDeviceContext* VKNDevice::GetImmediateContext() const
+    {
+        m_pImmediateContext->AddRef();
+        return m_pImmediateContext;
+    }
     
+
     void VKNDevice::ExecuteCommandList(IDeviceContext* const * ppLists, uint32 numLists) const
     {
         //Retrive commandbuffers
@@ -780,32 +583,20 @@ namespace Lambda
         }
     }
 
-
-	void VKNDevice::PresentBegin() const
-	{
-		m_pSwapChain->AquireNextImage(m_ImageSemaphores[m_CurrentFrame]);
-
-		//if we use MSAA we want to set a texture that we can resolve onto, in this case the current backbuffer since we render to the window
-		if (m_pMSAABuffer)
-		{
-			VKNTexture* pResolveResource = reinterpret_cast<VKNTexture*>(m_pSwapChain->GetCurrentBuffer());
-			m_pMSAABuffer->SetResolveResource(pResolveResource);
-		}
-	}
-
     
-	void VKNDevice::PresentEnd(IDeviceContext* const* ppLists, uint32 numLists) const
+	void VKNDevice::PresentEnd(IDeviceContext* const* ppContexts, uint32 numLists) const
 	{
 		//LOG_DEBUG_INFO("Vulkan: VKNDevice::ExecuteCommandListAndPresent  Frame '%d' - WaitSemaphore='%x', SignalSemaphore='%x'\n", m_CurrentFrame, m_ImageSemaphores[m_CurrentFrame], m_RenderSemaphores[m_CurrentFrame]);
 
 		//Retrive commandbuffers
+        VKNDeviceContext* pVkContext = reinterpret_cast<VKNDeviceContext*>(ppContexts[0]);
 		std::vector<VkCommandBuffer> buffers;
 		for (uint32 i = 0; i < numLists; i++)
 		{
-			buffers.push_back(reinterpret_cast<VkCommandBuffer>(ppLists[i]->GetNativeHandle()));
+			buffers.push_back(reinterpret_cast<VkCommandBuffer>(ppContexts[i]->GetNativeHandle()));
 		}
 
-		//Setup "syncobjects"
+		//Setup "syncobjects"s
 		VkSemaphore waitSemaphores[]		= { m_ImageSemaphores[m_CurrentFrame] };
 		VkSemaphore signalSemaphores[]		= { m_RenderSemaphores[m_CurrentFrame] };
 		VkPipelineStageFlags waitStages[]	= { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
@@ -821,8 +612,7 @@ namespace Lambda
 		submitInfo.pCommandBuffers		= buffers.data();
 		submitInfo.signalSemaphoreCount = 1;
 		submitInfo.pSignalSemaphores	= signalSemaphores;
-
-		if (vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, m_Fences[m_CurrentFrame]) != VK_SUCCESS)
+		if (vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, pVkContext->GetVkFence()) != VK_SUCCESS)
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to submit CommandBuffers\n");
 		}
@@ -836,10 +626,6 @@ namespace Lambda
     
     void VKNDevice::GPUWaitForFrame() const
     {
-        //Wait for last frame
-        vkWaitForFences(m_Device, 1, &m_Fences[m_CurrentFrame], VK_TRUE, std::numeric_limits<uint64_t>::max());
-        vkResetFences(m_Device, 1, &m_Fences[m_CurrentFrame]);
-        
 		//Advance current frame counter
 		m_CurrentFrame = (m_CurrentFrame + 1) % m_Desc.BackBufferCount;
 
@@ -966,7 +752,7 @@ namespace Lambda
 
 
 		//Find indices for queuefamilies
-		QueueFamilyIndices indices = FindQueueFamilies(adapter, m_Surface);
+		QueueFamilyIndices indices = FindQueueFamilies(adapter);
 		if (!indices.Valid())
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to find a suitable queuefamilies\n");
@@ -1063,44 +849,6 @@ namespace Lambda
 		}
 
 		return requiredExtensions;
-	}
-
-
-	VkSurfaceKHR VKNDevice::CreateSurface(IWindow* pWindow)
-	{
-#if defined(LAMBDA_PLAT_MACOS)
-		VkSurfaceKHR surface = VK_NULL_HANDLE;
-
-		GLFWwindow* pGLFWWindow = reinterpret_cast<GLFWwindow*>(pWindow->GetNativeHandle());
-		if (glfwCreateWindowSurface(m_Instance, pGLFWWindow, nullptr, &surface) != VK_SUCCESS)
-		{
-			return VK_NULL_HANDLE;
-		}
-		else
-		{
-			return surface;
-		}
-#elif defined(LAMBDA_PLAT_WINDOWS)
-		VkSurfaceKHR surface = VK_NULL_HANDLE;
-		HWND hWnd = reinterpret_cast<HWND>(pWindow->GetNativeHandle());
-
-		//Create a surface for windows
-		VkWin32SurfaceCreateInfoKHR info = {};
-		info.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-		info.pNext = nullptr;
-		info.flags = 0;
-		info.hwnd = hWnd;
-		info.hinstance = GetModuleHandle(nullptr);
-
-		if (vkCreateWin32SurfaceKHR(m_Instance, &info, nullptr, &surface) != VK_SUCCESS)
-		{
-			return VK_NULL_HANDLE;
-		}
-		else
-		{
-			return surface;
-		}
-#endif
 	}
 
 
@@ -1227,8 +975,6 @@ namespace Lambda
 	VKNDevice& VKNDevice::Get()
 	{
 		LAMBDA_ASSERT(s_pInstance != nullptr);
-		
-		VKNDevice* pVkDevice = reinterpret_cast<VKNDevice*>(s_pInstance);
-		return *pVkDevice;
+		return *s_pInstance;
     }
 }

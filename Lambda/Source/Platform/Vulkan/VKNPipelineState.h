@@ -64,6 +64,8 @@ namespace Lambda
         VkPipeline                      m_Pipeline;
         VkPipelineLayout                m_PipelineLayout;
         VkDescriptorSetLayout           m_DescriptorSetLayout;
+        VkRenderPass                    m_FirstRenderPass;
+        VkRenderPass                    m_SecondRenderPass;
         std::vector<ShaderVariableDesc> m_ShaderVariableDescs;
         std::vector<ConstantBlockDesc>  m_ConstantBlockDescs;
 		PipelineStateDesc			    m_Desc;

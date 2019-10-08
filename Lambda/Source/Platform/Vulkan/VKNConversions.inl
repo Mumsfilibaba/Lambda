@@ -3,7 +3,7 @@
 
 namespace Lambda
 {
-    inline VkFormat ConvertResourceFormat(Format format)
+    inline VkFormat ConvertFormat(Format format)
     {
         switch (format)
         {
@@ -35,7 +35,7 @@ namespace Lambda
             case FORMAT_R32_FLOAT:              return VK_FORMAT_R32_SFLOAT;
             case FORMAT_R32_UINT:               return VK_FORMAT_R32_UINT;
             case FORMAT_R32_SINT:               return VK_FORMAT_R32_SINT;
-            case FORMAT_D32_FLOAT_S8X24_UINT:    return VK_FORMAT_D32_SFLOAT_S8_UINT;
+            case FORMAT_D32_FLOAT_S8X24_UINT:   return VK_FORMAT_D32_SFLOAT_S8_UINT;
             case FORMAT_D24_UNORM_S8_UINT:      return VK_FORMAT_D24_UNORM_S8_UINT;
             case FORMAT_R8G8_UNORM:             return VK_FORMAT_R8G8_UNORM;
             case FORMAT_R8G8_UINT:              return VK_FORMAT_R8G8_UINT;

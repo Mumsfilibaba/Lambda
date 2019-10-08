@@ -34,10 +34,10 @@ namespace Lambda
 		UILayer();
 		~UILayer() = default;
 
-		void Init(IRenderPass* pRenderPass, IDeviceContext* pList);
+		void Init();
         void Begin(Timestep time);
         void End();
-        void Draw(IDeviceContext* pList);
+        void Draw(IDeviceContext* pContext);
 
         virtual void OnLoad() override final;
         virtual void OnRenderUI(Timestep dt) override final;

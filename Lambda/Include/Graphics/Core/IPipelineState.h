@@ -6,7 +6,6 @@ namespace Lambda
 	class IShader;
 	class IBuffer;
 	class ITexture;
-	class IRenderPass;
 	class ISamplerState;
 
 	//------------
@@ -74,34 +73,36 @@ namespace Lambda
 		bool DepthTest = true;
 	};
 
-	//-------------------------
-	//GraphicsPipelineStateDesc
-	//-------------------------
+    //-------------------------
+    //GraphicsPipelineStateDesc
+    //-------------------------
 
-	struct GraphicsPipelineStateDesc
-	{
-		IShader* pVertexShader		= nullptr;
-		IShader* pHullShader		= nullptr;
-		IShader* pDomainShader		= nullptr;
-		IShader* pGeometryShader	= nullptr;
-		IShader* pPixelShader		= nullptr;
-		IRenderPass* pRenderPass	= nullptr;
-		PrimitiveTopology Topology	= PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-		InputLayoutDesc	VertexInput;
-		RasterizerStateDesc	RasterizerState;
-		BlendStateDesc BlendState;
-		DepthStencilStateDesc DepthStencilState;
-	};
+    struct GraphicsPipelineStateDesc
+    {
+        IShader* pVertexShader      = nullptr;
+        IShader* pHullShader        = nullptr;
+        IShader* pDomainShader      = nullptr;
+        IShader* pGeometryShader    = nullptr;
+        IShader* pPixelShader       = nullptr;
+        PrimitiveTopology Topology  = PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+        uint32 SampleCount          = 1;
+        Format DepthStencilFormat   = FORMAT_D24_UNORM_S8_UINT;
+        Format RenderTargetFormats[LAMBDA_MAX_RENDERTARGET_COUNT];
+        InputLayoutDesc VertexInput;
+        DepthStencilStateDesc DepthStencilState;
+        BlendStateDesc BlendState;
+        RasterizerStateDesc RasterizerState;
+    };
 
-	//------------------------
-	//ComputePipelineStateDesc
-	//------------------------
+    //------------------------
+    //ComputePipelineStateDesc
+    //------------------------
 
-	struct ComputePipelineStateDesc
-	{
-		IShader* pComputeShader = nullptr;
-	};
-    
+    struct ComputePipelineStateDesc
+    {
+        IShader* pComputeShader = nullptr;
+    };
+
     //-----------------
     //PipelineStateDesc
     //-----------------

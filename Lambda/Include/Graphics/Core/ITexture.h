@@ -31,8 +31,7 @@ namespace Lambda
 	{
 		TextureType Type            = TEXTURE_TYPE_UNKNOWN;
         ResourceUsage Usage         = RESOURCE_USAGE_UNKNOWN;
-        Format Format       = FORMAT_UNKNOWN;
-        ITexture* pResolveResource  = nullptr;
+        Format Format               = FORMAT_UNKNOWN;
         uint32 Flags                = TEXTURE_FLAGS_NONE;
 		uint32 SampleCount          = 1;
 		uint32 MipLevels            = 0;

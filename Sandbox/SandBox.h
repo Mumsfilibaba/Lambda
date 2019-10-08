@@ -6,7 +6,6 @@
 #include "Graphics/Core/IBuffer.h"
 #include "Graphics/Core/ITexture.h"
 #include "Graphics/Core/ISamplerState.h"
-#include "Graphics/Core/IRenderPass.h"
 #include "Graphics/Core/IQuery.h"
 #include "Graphics/Camera.h"
 #include "Events/WindowEvent.h"

@@ -16,7 +16,6 @@ namespace Lambda
 	{
 		//Add a ref to the refcounter
 		this->AddRef();
-
 		Init(desc);
 	}
 

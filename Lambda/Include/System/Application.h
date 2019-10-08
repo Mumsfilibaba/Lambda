@@ -4,6 +4,7 @@
 #include "Time/Clock.h"
 #include "Events/EventDispatcher.h"
 #include "Graphics/Core/IDevice.h"
+#include "Graphics/Core/ISwapChain.h"
 #include "Graphics/UILayer.h"
 #include "Graphics/Renderer3D.h"
 #include "Debug/DebugLayer.h"
@@ -17,7 +18,7 @@ namespace Lambda
 	struct EngineParams
 	{
 		const char* pTitle              = nullptr;
-		GraphicsApi GraphicsDeviceApi   = GRAPHICS_API_VULKAN;
+		GraphicsAPI GraphicsDeviceApi   = GRAPHICS_API_VULKAN;
 		uint32 WindowWidth              = 1920;
 		uint32 WindowHeight             = 1080;
 		uint32 SampleCount              = 1;
@@ -54,6 +55,8 @@ namespace Lambda
         
         IWindow* GetWindow() const;
         UILayer* GetUILayer() const;
+        IDevice* GetGraphicsDevice() const;
+        ISwapChain* GetSwapChain() const;
 		Renderer3D& GetRenderer();
 		const Renderer3D& GetRenderer() const;
         const EngineParams& GetEngineParams() const;
@@ -71,6 +74,9 @@ namespace Lambda
 		void Quit(int32 exitCode = 0);
 	private:
 		IWindow* 			m_pWindow;
+        AutoRef<IDevice>    m_GraphicsDeivce;
+        AutoRef<IDeviceContext> m_Context;
+        AutoRef<ISwapChain> m_SwapChain;
 		UILayer*	 		m_pUILayer;
         EventDispatcher     m_Dispatcher;
         LayerStack          m_LayerStack;

@@ -1,6 +1,7 @@
 #pragma once
+#include "Core/IDevice.h"
 #include "Core/IDeviceContext.h"
-#include "Core/IRenderPass.h"
+#include "Core/ISwapChain.h"
 #include "Core/IBuffer.h"
 #include "Core/IQuery.h"
 #include "Time/Clock.h"
@@ -113,14 +114,13 @@ namespace Lambda
 		IBuffer* GetCameraCB();
 		IBuffer* GetLightCB();
 		IBuffer* GetTransformCB();
-		IRenderPass* GetRenderPass();
 		const FrameStatistics& GetFrameStatistics() const;
 	private:
-		IDeviceContext*				m_pCurrentList;
+        AutoRef<IDevice>            m_Device;
+        AutoRef<ISwapChain>         m_SwapChain;
+        AutoRef<IDeviceContext>     m_Context;
 		IQuery*						m_pCurrentQuery;
-		std::vector<AutoRef<IDeviceContext>> m_Lists;
 		std::vector<AutoRef<IQuery>> m_Queries;
-		AutoRef<IRenderPass>		m_RenderPass;
 		AutoRef<IBuffer>			m_CameraBuffer;
 		AutoRef<IBuffer>			m_LightBuffer;
 		AutoRef<IBuffer>			m_TransformBuffer;
@@ -130,5 +130,6 @@ namespace Lambda
 		FrameStatistics				m_FrameInfo;
 		Clock						m_FrameClock;
 		uint32						m_CurrentFPS;
+        uint32                      m_QueryIndex;
 	};
 }
