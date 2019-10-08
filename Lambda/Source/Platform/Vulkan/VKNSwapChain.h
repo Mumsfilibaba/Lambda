@@ -5,6 +5,7 @@
 #if defined(LAMBDA_PLAT_WINDOWS)
     #define VK_USE_PLATFORM_WIN32_KHR
 #endif
+#include "VKNDeviceContext.h"
 #include "VKNUtilities.h"
 
 namespace Lambda
@@ -41,6 +42,7 @@ namespace Lambda
         void InitSwapChain(VkExtent2D extent);
         void ReleaseResources();
 	private:
+		AutoRef<VKNDeviceContext> m_Context;
         VkSurfaceKHR        m_Surface;
 		VkSwapchainKHR		m_VkSwapChain;
 		VkSurfaceFormatKHR	m_VkFormat;

@@ -39,23 +39,28 @@ namespace Lambda
         virtual IDeviceContext* GetImmediateContext() const override final;
         
         virtual void* GetNativeHandle() const override final;
-		virtual DeviceProperties GetProperties() const override final;
+		virtual const DeviceProperties& GetProperties() const override final;
         virtual const DeviceDesc& GetDesc() const override final;
 
+		void ExecuteContext(VkSubmitInfo* pInfo) const;
+		void Present(VkPresentInfoKHR* pInfo);
+		void FinishFrame() const;
+		void WaitUntilIdle() const;
+		
 		void SetVulkanObjectName(VkObjectType type, uint64 objectHandle, const std::string& name);
 		VkSampleCountFlagBits GetHighestSampleCount() const;
+		VKNDeviceContext* GetVKNImmediateContext() const;
 
-		inline VkInstance GetVkInstance() const { return m_Instance; }
-		inline VkPhysicalDevice GetVkPhysicalDevice() const { return m_PhysicalDevice; }
-		inline VkDevice GetVkDevice() const { return m_Device; }
-		inline QueueFamilyIndices GetQueueFamilyIndices() const { return m_FamiliyIndices; }
-		inline VkPhysicalDeviceProperties GetPhysicalDeviceProperties() const { return m_PhysicalDeviceProperties; }
+		inline VkInstance GetVkInstance() const									{ return m_Instance; }
+		inline VkPhysicalDevice GetVkPhysicalDevice() const						{ return m_PhysicalDevice; }
+		inline VkDevice GetVkDevice() const										{ return m_Device; }
+		inline QueueFamilyIndices GetQueueFamilyIndices() const					{ return m_FamiliyIndices; }
+		inline VkPhysicalDeviceProperties GetPhysicalDeviceProperties() const	{ return m_PhysicalDeviceProperties; }
 	private:
 		void Init(const DeviceDesc& desc);
 		void InitDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo);
 		
 		VkPhysicalDevice QueryPhyscialDevice();
-		VkSurfaceKHR CreateSurface(IWindow* pWindow);
 		bool PhysicalDeviceIsSuitable(VkPhysicalDevice physcialDevice);
         
 		std::vector<const char*> GetRequiredValidationLayers(bool debug);

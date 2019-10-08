@@ -76,141 +76,17 @@ namespace Lambda
     
     void VKNPipelineState::Init(const PipelineStateDesc& desc)
     {
-        const RenderPassDesc& renderPassDesc = desc.GraphicsPipeline.RenderPass;
-        //Setup color attachments
-        std::vector<VkAttachmentReference>      colorAttachentRefs;
-        std::vector<VkAttachmentDescription>    attachments;
-        std::vector<VkAttachmentDescription>    resolveAttachments;
+		//Get renderpass        
+		VKNRenderPassCache& cache = VKNRenderPassCache::Get();
+		VKNRenderPassCacheKey key = {};
+		key.SampleCount			= desc.GraphicsPipeline.SampleCount;
+		key.DepthStencilFormat	= desc.GraphicsPipeline.DepthStencilFormat;
+		key.NumRenderTargets	= desc.GraphicsPipeline.NumRenderTargets;
+		for (uint32 i = 0; i < key.NumRenderTargets; i++)
+			key.RenderTargetFormats[i] = desc.GraphicsPipeline.RenderTargetFormats[i];
 
-        //Number of samples (MSAA)
-        VkSampleCountFlagBits sampleCount = ConvertSampleCount(desc.GraphicsPipeline.SampleCount);
-        VkSampleCountFlagBits highestSampleCount = m_pDevice->GetHighestSampleCount();
-        if (sampleCount > highestSampleCount)
-        {
-            LOG_DEBUG_ERROR("Vulkan: RenderPassDesc::SampleCount (=%u) is higher than the maximum of the device (=%u)\n", sampleCount, highestSampleCount);
-            return;
-        }
+		VkRenderPass renderPass = cache.GetRenderPass(key);
 
-
-        //Setup colorattachments
-        for (uint32 i = 0; i < renderPassDesc.NumRenderTargets; i++)
-        {
-            //Setup attachments
-            VkAttachmentDescription colorAttachment = {};
-            colorAttachment.flags = 0;
-            colorAttachment.format = ConvertResourceFormat(renderPassDesc.RenderTargets[i].Format);
-            colorAttachment.samples = sampleCount;
-            colorAttachment.loadOp = ConvertLoadOp(renderPassDesc.RenderTargets[i].LoadOperation);
-            colorAttachment.storeOp = ConvertStoreOp(renderPassDesc.RenderTargets[i].StoreOperation);
-            colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-            colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-            colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-            colorAttachment.finalLayout = ConvertResourceStateToImageLayout(renderPassDesc.RenderTargets[i].FinalState);
-
-            if (renderPassDesc.RenderTargets[i].Flags & RENDER_PASS_ATTACHMENT_FLAG_RESOLVE && sampleCount > VK_SAMPLE_COUNT_1_BIT)
-            {
-                VkAttachmentDescription resolveAttachment = colorAttachment;
-                resolveAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-                resolveAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-                resolveAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-                if (renderPassDesc.RenderTargets[i].FinalState == RESOURCE_STATE_RENDERTARGET_PRESENT)
-                {
-                    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-                    resolveAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-                    resolveAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-                }
-                resolveAttachments.emplace_back(resolveAttachment);
-            }
-            attachments.emplace_back(colorAttachment);
-
-            VkAttachmentReference colorAttachmentRef = {};
-            colorAttachmentRef.attachment = i;
-            colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-            colorAttachentRefs.emplace_back(colorAttachmentRef);
-        }
-
-
-        //Describe subpass
-        VkSubpassDescription subpass = {};
-        subpass.flags = 0;
-        subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-        subpass.colorAttachmentCount = uint32(colorAttachentRefs.size());
-        subpass.pColorAttachments = colorAttachentRefs.data();
-        subpass.preserveAttachmentCount = 0;
-        subpass.pPreserveAttachments = nullptr;
-        subpass.inputAttachmentCount = 0;
-        subpass.pInputAttachments = nullptr;
-
-
-        //Setup depthstencil
-        VkAttachmentReference depthAttachmentRef = {};
-        if (renderPassDesc.DepthStencil.Format == FORMAT_UNKNOWN)
-        {
-            subpass.pDepthStencilAttachment = nullptr;
-        }
-        else
-        {
-            VkAttachmentDescription depthAttachment = {};
-            depthAttachment.flags = 0;
-            depthAttachment.format = ConvertResourceFormat(renderPassDesc.DepthStencil.Format);
-            depthAttachment.samples = sampleCount;
-            depthAttachment.loadOp = ConvertLoadOp(renderPassDesc.DepthStencil.LoadOperation);
-            depthAttachment.storeOp = ConvertStoreOp(renderPassDesc.DepthStencil.StoreOperation);;
-            depthAttachment.stencilLoadOp = depthAttachment.loadOp;
-            depthAttachment.stencilStoreOp = depthAttachment.storeOp;
-            depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-            depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-            if (renderPassDesc.DepthStencil.Flags & RENDER_PASS_ATTACHMENT_FLAG_RESOLVE)
-            {
-                VkAttachmentDescription resolveAttachment = depthAttachment;
-                resolveAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-                resolveAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-                resolveAttachments.emplace_back(resolveAttachment);
-            }
-            attachments.emplace_back(depthAttachment);
-
-            depthAttachmentRef.attachment = uint32(attachments.size() - 1);
-            depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-            subpass.pDepthStencilAttachment = &depthAttachmentRef;
-        }
-
-
-        //Setup ResolveTargets
-        std::vector<VkAttachmentReference> resolveRefs;
-        for (auto& attachment : resolveAttachments)
-        {
-            attachments.emplace_back(attachment);
-
-            VkAttachmentReference resolveAttachmentRef = {};
-            resolveAttachmentRef.attachment = uint32(attachments.size() - 1);
-            resolveAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-            resolveRefs.push_back(resolveAttachmentRef);
-        }
-        subpass.pResolveAttachments = resolveRefs.size() > 0 ? resolveRefs.data() : nullptr;
-
-
-        //Create renderpass
-        VkRenderPassCreateInfo renderPassInfo = {};
-        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-        renderPassInfo.flags = 0;
-        renderPassInfo.pNext = nullptr;
-        renderPassInfo.attachmentCount = uint32(attachments.size());
-        renderPassInfo.pAttachments = attachments.data();
-        renderPassInfo.subpassCount = 1;
-        renderPassInfo.pSubpasses = &subpass;
-        renderPassInfo.pDependencies = nullptr;
-        if (vkCreateRenderPass(m_pDevice->GetVkDevice(), &renderPassInfo, nullptr, &m_FirstRenderPass) != VK_SUCCESS)
-        {
-            LOG_DEBUG_ERROR("Vulkan: Failed to create renderpass\n");
-        }
-        else
-        {
-            LOG_DEBUG_INFO("Vulkan: Created renderpass\n");
-            m_Desc = desc;
-        }
-        
-        
 		//Copy the resourceslots
 		const ShaderVariableTableDesc& varibleLayout = desc.ShaderVariableTable;
 
@@ -366,7 +242,7 @@ namespace Lambda
 				attributeDescription.binding    = vertexInputDesc.pElements[i].BindingSlot;
 				attributeDescription.location   = vertexInputDesc.pElements[i].InputSlot;
 				attributeDescription.offset     = vertexInputDesc.pElements[i].StructureOffset;
-				attributeDescription.format     = ConvertResourceFormat(vertexInputDesc.pElements[i].Format);
+				attributeDescription.format     = ConvertFormat(vertexInputDesc.pElements[i].Format);
 				attributeDescriptions.push_back(attributeDescription);
             
 				//Check if binding is unique
@@ -464,7 +340,7 @@ namespace Lambda
 			VkPipelineMultisampleStateCreateInfo multisampling = {};
 			multisampling.sType                 = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 			multisampling.sampleShadingEnable   = VK_FALSE;
-			multisampling.rasterizationSamples  = sampleCount;
+			multisampling.rasterizationSamples  = ConvertSampleCount(desc.GraphicsPipeline.SampleCount);
 			multisampling.minSampleShading      = 1.0f;
 			multisampling.pSampleMask           = nullptr;
 			multisampling.alphaToCoverageEnable = VK_FALSE;
@@ -528,7 +404,7 @@ namespace Lambda
 			pipelineInfo.pColorBlendState       = &colorBlending;
 			pipelineInfo.pDynamicState          = &dynamicState;
 			pipelineInfo.layout                 = m_PipelineLayout;
-			pipelineInfo.renderPass             = m_FirstRenderPass;
+			pipelineInfo.renderPass             = renderPass;
 			pipelineInfo.subpass                = 0;
 			pipelineInfo.basePipelineHandle     = VK_NULL_HANDLE;
 			pipelineInfo.basePipelineIndex      = -1;

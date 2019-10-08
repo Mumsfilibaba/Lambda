@@ -16,25 +16,20 @@ namespace Lambda
 		NumAttachmentViews(0),
 		AttachmentViews()
 	{
-		for (uint32 i = 0; i < (LAMBDA_MAX_RENDERTARGET_COUNT + 1) * 2; i++)
+		for (uint32 i = 0; i < (LAMBDA_MAX_RENDERTARGET_COUNT + 1); i++)
 			AttachmentViews[i] = VK_NULL_HANDLE;
 	}
 
 
 	bool VKNFramebufferCacheKey::operator==(const VKNFramebufferCacheKey& other) const
 	{
-		if (RenderPass != other.RenderPass ||
-			NumAttachmentViews != other.NumAttachmentViews)
-		{
+		if (GetHash() != other.GetHash() || RenderPass != other.RenderPass || NumAttachmentViews != other.NumAttachmentViews)
 			return false;
-		}
 
 		for (uint32 i = 0; i < NumAttachmentViews; i++)
 		{
 			if (AttachmentViews[i] != other.AttachmentViews[i])
-			{
 				return false;
-			}
 		}
 
 		return true;
@@ -45,10 +40,9 @@ namespace Lambda
 	{
 		if (Hash == 0)
 		{
+			HashCombine<VkRenderPass>(Hash, RenderPass);
 			for (uint32 i = 0; i < NumAttachmentViews; i++)
-			{
 				HashCombine<VkImageView>(Hash, AttachmentViews[i]);
-			}
 		}
 
 		return Hash;
@@ -61,9 +55,7 @@ namespace Lambda
 		for (uint32 i = 0; i < NumAttachmentViews; i++)
 		{
 			if (AttachmentViews[i] == view)
-			{
 				return true;
-			}
 		}
 
 		return false;
@@ -90,7 +82,7 @@ namespace Lambda
 	}
 
 
-	VkFramebuffer VKNFramebufferCache::GetFramebuffer(const VKNFramebufferCacheKey& fbKey, uint32 width, uint32 height)
+	VkFramebuffer VKNFramebufferCache::GetFramebuffer(const VKNFramebufferCacheKey& fbKey, VkExtent2D extent)
 	{
 		//Check if a framebuffer exists
 		auto fb = m_Framebuffers.find(fbKey);
@@ -106,8 +98,8 @@ namespace Lambda
 		info.renderPass			= fbKey.RenderPass;
 		info.attachmentCount	= fbKey.NumAttachmentViews;
 		info.pAttachments		= fbKey.AttachmentViews;
-		info.width				= width;
-		info.height				= height;
+		info.width				= extent.width;
+		info.height				= extent.height;
 		info.layers				= 1;
 
 		VkFramebuffer framebuffer = VK_NULL_HANDLE;
@@ -154,7 +146,7 @@ namespace Lambda
 		//Destroy all framebuffers
 		for (auto& buffer : m_Framebuffers)
 		{
-			VkFramebuffer fb = buffer.second;
+			VkFramebuffer& fb = buffer.second;
 			vkDestroyFramebuffer(device, fb, nullptr);
 			fb = VK_NULL_HANDLE;
 		}

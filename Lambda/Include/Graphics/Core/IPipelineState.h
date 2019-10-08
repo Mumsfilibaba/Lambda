@@ -86,6 +86,7 @@ namespace Lambda
         IShader* pPixelShader       = nullptr;
         PrimitiveTopology Topology  = PRIMITIVE_TOPOLOGY_TRIANGLELIST;
         uint32 SampleCount          = 1;
+		uint32 NumRenderTargets		= 0;
         Format DepthStencilFormat   = FORMAT_D24_UNORM_S8_UINT;
         Format RenderTargetFormats[LAMBDA_MAX_RENDERTARGET_COUNT];
         InputLayoutDesc VertexInput;

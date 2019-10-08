@@ -1,42 +1,65 @@
 #pragma once
-#include "Graphics/Core/DeviceObjectBase.h"
 #include <vulkan/vulkan.h>
-#include "VKNConversions.inl"
+#include <unordered_map>
 
 namespace Lambda
 {
-	class VKNDevice;
+	class VKNTexture;
 
-	//-------------
-	//VKNRenderPass
-	//-------------
+	//---------------------
+	//VKNRenderPassCacheKey
+	//---------------------
 
-	/*class VKNRenderPass final : public DeviceObjectBase<VKNDevice, IRenderPass>
+	struct VKNRenderPassCacheKey
 	{
 	public:
-		LAMBDA_NO_COPY(VKNRenderPass);
+		VKNRenderPassCacheKey();
+		~VKNRenderPassCacheKey() = default;
 
-		VKNRenderPass(VKNDevice* pDevice, const RenderPassDesc& desc);
-		~VKNRenderPass();
+		size_t	GetHash() const;
+		bool	operator==(const VKNRenderPassCacheKey& other) const;
+	public:
+		mutable size_t	Hash;
+		uint32 NumRenderTargets;
+		uint32 SampleCount;
+		Format DepthStencilFormat;
+		Format RenderTargetFormats[LAMBDA_MAX_RENDERTARGET_COUNT];
+	};
 
-		virtual void SetRenderTargets(const ITexture* const* const ppRenderTargets, uint32 numRenderTargets, const ITexture* pDepthStencil) override final;
-		virtual void SetClearValues(float color[4], float depth, uint8 stencil) override final;
-		virtual void* GetNativeHandle() const override final;
-		virtual const RenderPassDesc& GetDesc() const override final;
+	//-------------------------
+	//VKNRenderPassCacheKeyHash
+	//-------------------------
 
-		inline VkRenderPass	GetVkRenderPass() const { return m_RenderPass; }
-		inline VkFramebuffer GetVkFramebuffer() const { return m_Framebuffer; }
-		inline VkExtent2D GetFramebufferExtent() const { return m_FramebufferExtent; }
-		inline VkSampleCountFlagBits GetSampleCount() const { return ConvertSampleCount(m_Desc.SampleCount); }
-		inline const VkClearValue* GetClearValues() const { return m_ClearValues; }
-		inline uint32 GetAttachmentCount() const { return m_Desc.NumRenderTargets + ((m_Desc.DepthStencil.Format != FORMAT_UNKNOWN) ? 1 : 0); }
+	struct VKNRenderPassCacheKeyHash
+	{
+		size_t operator()(const VKNRenderPassCacheKey& key) const
+		{
+			return key.GetHash();
+		}
+	};
+
+	//------------------
+	//VKNRenderPassCache
+	//------------------
+
+	class VKNRenderPassCache final
+	{
+	public:
+		LAMBDA_NO_COPY(VKNRenderPassCache);
+
+		VKNRenderPassCache();
+		~VKNRenderPassCache();
+
+		void ReleaseAll(VkDevice device);
+		VkRenderPass GetRenderPass(const VKNRenderPassCacheKey& key);
+
 	private:
-		void Init(const RenderPassDesc& desc);
+		std::unordered_map<VKNRenderPassCacheKey, VkRenderPass, VKNRenderPassCacheKeyHash> m_RenderPasses;
+
+	public:
+		static VKNRenderPassCache& Get();
+
 	private:
-		VkRenderPass	m_RenderPass;
-		VkFramebuffer	m_Framebuffer;
-		VkExtent2D		m_FramebufferExtent;
-        RenderPassDesc	m_Desc;
-		VkClearValue	m_ClearValues[LAMBDA_MAX_RENDERTARGET_COUNT + 1];
-	};*/
+		static VKNRenderPassCache* s_pInstance;
+	};
 }

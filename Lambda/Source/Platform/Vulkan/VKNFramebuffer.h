@@ -23,7 +23,7 @@ namespace Lambda
 		mutable size_t	Hash;
         VkRenderPass	RenderPass;
         uint32			NumAttachmentViews;
-        VkImageView		AttachmentViews[(LAMBDA_MAX_RENDERTARGET_COUNT + 1) * 2];
+        VkImageView		AttachmentViews[LAMBDA_MAX_RENDERTARGET_COUNT + 1];
     };
     
 	//--------------------------
@@ -50,9 +50,9 @@ namespace Lambda
 		VKNFramebufferCache();
 		~VKNFramebufferCache();
 
-        void			ReleaseAll(VkDevice device);
-        void			ReleaseAllContainingTexture(VkDevice device, const VKNTexture* pTexture);
-        VkFramebuffer	GetFramebuffer(const VKNFramebufferCacheKey& key, uint32 width, uint32 height);
+        void ReleaseAll(VkDevice device);
+        void ReleaseAllContainingTexture(VkDevice device, const VKNTexture* pTexture);
+        VkFramebuffer GetFramebuffer(const VKNFramebufferCacheKey& key, VkExtent2D extent);
         
     private:
         std::unordered_map<VKNFramebufferCacheKey, VkFramebuffer, VKNFramebufferCacheKeyHash> m_Framebuffers;

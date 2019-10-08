@@ -3,6 +3,7 @@
 #include "VKNTexture.h"
 #include "VKNUtilities.h"
 #include "VKNDevice.h"
+#include "VKNDeviceContext.h"
 #include "VKNConversions.inl"
 #if defined(LAMBDA_PLAT_MACOS)
     #include <GLFW/glfw3.h>
@@ -16,6 +17,7 @@ namespace Lambda
 
 	VKNSwapChain::VKNSwapChain(VKNDevice* pDevice, const SwapChainDesc& desc)
 		: DeviceObjectBase<VKNDevice, ISwapChain>(pDevice),
+		m_Context(nullptr),
 		m_VkSwapChain(VK_NULL_HANDLE),
         m_VkFormat(),
         m_PresentationMode(),
@@ -25,7 +27,10 @@ namespace Lambda
 		m_CurrentBufferIndex(0),
 		m_Buffers()
 	{
-        this->AddRef();
+		//Add ref to context
+		m_Context = m_pDevice->GetVKNImmediateContext();
+		//Init
+		this->AddRef();
 		Init(desc);
 	}
 
@@ -75,9 +80,11 @@ namespace Lambda
         info.flags = 0;
         info.hwnd = reinterpret_cast<HWND>(desc.pWindowHandle);
         info.hinstance = GetModuleHandle(nullptr);
-        if (vkCreateWin32SurfaceKHR(m_Instance, &info, nullptr, &surface) != VK_SUCCESS)
+        if (vkCreateWin32SurfaceKHR(m_pDevice->GetVkInstance(), &info, nullptr, &m_Surface) != VK_SUCCESS)
             m_Surface = VK_NULL_HANDLE;
 #endif
+
+		//Did we successfully create a surface?
         if (m_Surface == VK_NULL_HANDLE)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create surface for SwapChain\n");
@@ -106,12 +113,11 @@ namespace Lambda
         semaphoreInfo.pNext = nullptr;
         semaphoreInfo.flags = 0;
         
-        //Create sync-objects
+        //Create semaphores
         m_ImageSemaphores.resize(desc.BufferCount);
         m_RenderSemaphores.resize(desc.BufferCount);
         for (uint32 i = 0; i < desc.BufferCount; i++)
         {
-            //Create semaphores
             if (vkCreateSemaphore(m_pDevice->GetVkDevice(), &semaphoreInfo, nullptr, &m_ImageSemaphores[i]) != VK_SUCCESS ||
                 vkCreateSemaphore(m_pDevice->GetVkDevice(), &semaphoreInfo, nullptr, &m_RenderSemaphores[i]) != VK_SUCCESS)
             {
@@ -126,7 +132,6 @@ namespace Lambda
         }
         
         LOG_DEBUG_INFO("Vulkan: Created Semaphores\n");
-        
         
         
         //Get the swapchain capabilities from the adapter
@@ -331,7 +336,6 @@ namespace Lambda
 
 	void VKNSwapChain::AquireNextImage(VkSemaphore signalSemaphore)
 	{
-		//LOG_DEBUG_INFO("Vulkan: vkAcquireNextImageKHR with semaphore %x\n", signalSemaphore);
 		vkAcquireNextImageKHR(m_pDevice->GetVkDevice(), m_VkSwapChain, 0xffffffffffffffff, signalSemaphore, VK_NULL_HANDLE, &m_CurrentBufferIndex);
 	}
 
@@ -362,17 +366,34 @@ namespace Lambda
 
 	void VKNSwapChain::ResizeBuffers(uint32 width, uint32 height)
     {
+		//Syncronize the GPU so no operations are in flight when recreating swapchain
+		m_pDevice->WaitUntilIdle();
+
         //Relase the old resources
 		ReleaseResources();
         
         //Create swapchain again
         VkExtent2D extent = { width, height };
         InitSwapChain(extent);
+		
+		LOG_DEBUG_INFO("VKNSwapChain: Resized w: %d h: %d\n", width, height);
 	}
 
 
 	void VKNSwapChain::Present()
 	{
+		//If we are using MSAA we need to resolve the resource
+		if (m_Desc.BufferSampleCount > 1)
+			m_Context->ResolveTexture(m_Buffers[m_CurrentBufferIndex].Get(), 0, m_SampleBuffer.Get(), 0);
+
+		//Add semaphores so the syncronization gets correct
+		m_Context->AddWaitSemaphore(m_ImageSemaphores[m_FrameIndex], VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+		m_Context->AddSignalSemaphore(m_RenderSemaphores[m_FrameIndex]);
+
+		//Flush context
+		m_Context->Flush();
+
+		//Present
 		VkSemaphore waitSemaphores[] = { m_RenderSemaphores[m_FrameIndex] };
 		VkPresentInfoKHR info = {};
 		info.sType				= VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -383,10 +404,19 @@ namespace Lambda
 		info.pSwapchains		= &m_VkSwapChain;
 		info.pImageIndices		= &m_CurrentBufferIndex;
 		info.pResults			= nullptr;
-
-		vkQueuePresentKHR(presentQueue, &info);
+		m_pDevice->Present(&info);
         
+		//Finish frame
+		m_pDevice->FinishFrame();
+
+		//Increase frameindex
         m_FrameIndex = (m_FrameIndex+1) % m_Desc.BufferCount;
+	}
+
+	
+	void* VKNSwapChain::GetNativeHandle() const
+	{
+		return reinterpret_cast<void*>(m_VkSwapChain);
 	}
 
 

@@ -7,7 +7,7 @@ namespace Lambda
     //VKNFactory
     //----------
 
-    class VKNFactory : final : public RefCountedObject<IFactory>
+    class VKNFactory final : public RefCountedObject<IFactory>
     {
     public:
         LAMBDA_NO_COPY(VKNFactory);

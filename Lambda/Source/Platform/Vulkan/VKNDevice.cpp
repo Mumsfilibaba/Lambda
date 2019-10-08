@@ -405,7 +405,7 @@ namespace Lambda
 		//Create framebuffercache
 		m_pFramebufferCache = DBG_NEW VKNFramebufferCache();
         
-         
+      
         //Init internal commandlist, used for copying from staging buffers to final resource etc.
         m_pImmediateContext = DBG_NEW VKNDeviceContext(this, m_DeviceAllocator.Get(), DEVICE_CONTEXT_TYPE_IMMEDIATE);
         m_pImmediateContext->SetName("Graphics Device ImmediateContext");
@@ -448,11 +448,7 @@ namespace Lambda
 				m_pImmediateContext->Begin();
                 m_pImmediateContext->UpdateBuffer(pVkBuffer, pInitalData);
                 m_pImmediateContext->End();
-            
-                IDeviceContext* ppLists[] = { m_pImmediateContext };
-                ExecuteCommandList(ppLists, 1);
-
-                WaitForGPU();
+				m_pImmediateContext->Flush();
             }
         }
 
@@ -509,11 +505,7 @@ namespace Lambda
             
             //Execute and wait for GPU
             m_pImmediateContext->End();
-            
-            IDeviceContext* ppLists[] = { m_pImmediateContext };
-            ExecuteCommandList(ppLists, 1);
-
-            WaitForGPU();
+			m_pImmediateContext->Flush();
         }
         
         //Return texture
@@ -556,50 +548,28 @@ namespace Lambda
     }
     
 
-    void VKNDevice::ExecuteCommandList(IDeviceContext* const * ppLists, uint32 numLists) const
+    void VKNDevice::ExecuteContext(VkSubmitInfo* pInfo) const
     {
-        //Retrive commandbuffers
-        std::vector<VkCommandBuffer> buffers;
-        for (uint32 i = 0; i < numLists; i++)
-		{
-            buffers.push_back(reinterpret_cast<VkCommandBuffer>(ppLists[i]->GetNativeHandle()));
-		}
-
-        //submit commandbuffers
-        VkSubmitInfo submitInfo = {};
-        submitInfo.sType				= VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        submitInfo.pNext				= nullptr;
-        submitInfo.waitSemaphoreCount	= 0;
-        submitInfo.pWaitSemaphores		= nullptr;
-        submitInfo.pWaitDstStageMask	= nullptr;
-        submitInfo.commandBufferCount	= numLists;
-        submitInfo.pCommandBuffers		= buffers.data();
-        submitInfo.signalSemaphoreCount = 0;
-        submitInfo.pSignalSemaphores	= nullptr;
-
-        if (vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS)
+        if (vkQueueSubmit(m_GraphicsQueue, 1, pInfo, VK_NULL_HANDLE) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to submit CommandBuffers\n");
         }
     }
 
-    
-	void VKNDevice::PresentEnd(IDeviceContext* const* ppContexts, uint32 numLists) const
+
+	VKNDeviceContext* VKNDevice::GetVKNImmediateContext() const
 	{
-		//LOG_DEBUG_INFO("Vulkan: VKNDevice::ExecuteCommandListAndPresent  Frame '%d' - WaitSemaphore='%x', SignalSemaphore='%x'\n", m_CurrentFrame, m_ImageSemaphores[m_CurrentFrame], m_RenderSemaphores[m_CurrentFrame]);
+		m_pImmediateContext->AddRef();
+		return m_pImmediateContext;
+	}
 
-		//Retrive commandbuffers
-        VKNDeviceContext* pVkContext = reinterpret_cast<VKNDeviceContext*>(ppContexts[0]);
-		std::vector<VkCommandBuffer> buffers;
-		for (uint32 i = 0; i < numLists; i++)
-		{
-			buffers.push_back(reinterpret_cast<VkCommandBuffer>(ppContexts[i]->GetNativeHandle()));
-		}
-
+    
+	void VKNDevice::Present(VkPresentInfoKHR* pInfo) const
+	{
 		//Setup "syncobjects"s
 		VkSemaphore waitSemaphores[]		= { m_ImageSemaphores[m_CurrentFrame] };
 		VkSemaphore signalSemaphores[]		= { m_RenderSemaphores[m_CurrentFrame] };
-		VkPipelineStageFlags waitStages[]	= { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+		VkPipelineStageFlags waitStages[]	= {  };
 
 		//submit commandbuffers
 		VkSubmitInfo submitInfo = {};
@@ -624,7 +594,7 @@ namespace Lambda
 	}
     
     
-    void VKNDevice::GPUWaitForFrame() const
+    void VKNDevice::FinishFrame() const
     {
 		//Advance current frame counter
 		m_CurrentFrame = (m_CurrentFrame + 1) % m_Desc.BackBufferCount;
@@ -637,7 +607,7 @@ namespace Lambda
     }
     
     
-    void VKNDevice::WaitForGPU() const
+    void VKNDevice::WaitUntilIdle() const
     {
         //LOG_DEBUG_INFO("VKNDevice::WaitForGPU\n");
         vkDeviceWaitIdle(m_Device);
@@ -792,15 +762,6 @@ namespace Lambda
 			}
 		}
 
-
-		//Check if the adapter and surface has the required support 
-		SwapChainCapabilities swapChainInfo = QuerySwapChainSupport(adapter, m_Surface);
-		if (!swapChainInfo.Valid())
-		{
-			LOG_DEBUG_ERROR("Vulkan: Adapter does not have valid SwapChain support\n");
-			return false;
-		}
-
 		return true;
 	}
 
@@ -886,19 +847,13 @@ namespace Lambda
 	}
 
     
-    Format VKNDevice::GetBackBufferFormat() const
-    {
-        return ConvertVkFormat(m_pSwapChain->GetFormat());
-    }
-    
-    
     void* VKNDevice::GetNativeHandle() const
     {
         return reinterpret_cast<void*>(m_Device);
     }
 
 	
-	DeviceProperties VKNDevice::GetProperties() const
+	const DeviceProperties& VKNDevice::GetProperties() const
 	{
 		return m_Properties;
 	}
@@ -907,68 +862,6 @@ namespace Lambda
     const DeviceDesc& VKNDevice::GetDesc() const
     {
         return m_Desc;
-    }
-    
-    
-    ITexture* VKNDevice::GetRenderTarget() const
-    {
-        return (m_Desc.SampleCount > VK_SAMPLE_COUNT_1_BIT) ? m_pMSAABuffer : m_pSwapChain->GetCurrentBuffer();
-    }
-    
-    
-    ITexture* VKNDevice::GetDepthStencil() const
-    {
-        return m_pDepthStencil;
-    }
-    
-    
-    uint32 VKNDevice::GetBackBufferIndex() const
-    {
-        return m_pSwapChain->GetBackBufferIndex();
-    }
-    
-    
-    uint32 VKNDevice::GetSwapChainWidth() const
-    {
-        return m_pSwapChain->GetWidth();
-    }
-    
-    
-    uint32 VKNDevice::GetSwapChainHeight() const
-    {
-        return m_pSwapChain->GetHeight();
-    }
-    
-    
-    bool VKNDevice::OnResize(const WindowResizeEvent& event)
-    {
-        //When we minimize or any other reason the size is zero
-        //Do not resize if the size is the same as the current one
-        if ((event.GetWidth() == 0 || event.GetHeight() == 0) ||
-            (event.GetWidth() == m_pSwapChain->GetWidth() && event.GetHeight() == m_pSwapChain->GetHeight()))
-        {
-            return false;
-        }
-            
-        //Syncronize the GPU so no operations are in flight when recreating swapchain
-        WaitForGPU();
-           
-        m_pSwapChain->ResizeBuffers(event.GetWidth(), event.GetHeight());
-
-		//Recreate depthstencil
-        ReleaseDepthStencil();
-        CreateDepthStencil();
-
-		//Recreate MSAA buffer if MSAA is used
-		if (m_Desc.SampleCount > VK_SAMPLE_COUNT_1_BIT)
-		{
-			ReleaseMSAABuffer();
-			CreateMSAABuffer();
-		}
-            
-        LOG_DEBUG_INFO("VulkanGraphicsDevice: Window resized w: %d h: %d\n", event.GetWidth(), event.GetHeight());
-
-        return false;
     }
 
 

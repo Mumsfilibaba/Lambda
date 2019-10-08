@@ -196,29 +196,6 @@ namespace Lambda
 		default: return VK_SAMPLE_COUNT_FLAG_BITS_MAX_ENUM;
 		}
 	}
-
-
-	inline VkAttachmentLoadOp ConvertLoadOp(LoadOp loadOp)
-	{
-		switch (loadOp)
-		{
-		case LOAD_OP_CLEAR:   return VK_ATTACHMENT_LOAD_OP_CLEAR;
-		case LOAD_OP_LOAD:   return VK_ATTACHMENT_LOAD_OP_LOAD;
-		case LOAD_OP_UNKNOWN:
-		default: return VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		}
-	}
-
-
-	inline VkAttachmentStoreOp ConvertStoreOp(StoreOp storeOp)
-	{
-		switch (storeOp)
-		{
-		case STORE_OP_STORE:   return VK_ATTACHMENT_STORE_OP_STORE;
-		case STORE_OP_UNKNOWN:
-		default: return VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		}
-	}
     
     
     inline VkPipelineStageFlagBits ConvertPipelineStage(PipelineStage stage)
