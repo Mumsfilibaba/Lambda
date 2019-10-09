@@ -44,14 +44,13 @@ namespace Lambda
 		//If dynamic we allocate extra size so we can use dynamic offsets
 		if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
 		{
-            const DeviceDesc& deviceDesc          = m_pDevice->GetDesc();
             VkPhysicalDeviceProperties properties = m_pDevice->GetPhysicalDeviceProperties();
 
 			//If dynamic we allocate extra space (NUM_UPDATES updates per frame)
 			constexpr uint32 numUpdatesPerFrame = 4;
 			m_SizePerUpdate = Math::AlignUp<uint64>(desc.SizeInBytes, properties.limits.minUniformBufferOffsetAlignment);
 			m_SizePerFrame	= m_SizePerUpdate * numUpdatesPerFrame;
-            m_TotalSize     = m_SizePerFrame * deviceDesc.BackBufferCount;
+            m_TotalSize     = m_SizePerFrame * FRAMES_AHEAD;
             info.size		= m_TotalSize;
 		}
 		else
@@ -177,12 +176,11 @@ namespace Lambda
 		info.pQueueFamilyIndices	= nullptr;
 		info.sharingMode			= VK_SHARING_MODE_EXCLUSIVE;
 
-        const DeviceDesc& desc = m_pDevice->GetDesc(); 
         //Set new size
         m_SizePerFrame  = sizePerFrame;
         m_DynamicOffset = 0;
         m_FrameOffset   = 0;
-        m_TotalSize     = m_SizePerFrame * desc.BackBufferCount;
+        m_TotalSize     = m_SizePerFrame * FRAMES_AHEAD;
         info.size       = m_TotalSize;
 
         LOG_DEBUG_WARNING("Vulkan: Reallocated buffer. Old size: %llu bytes, New size: %llu\n", m_Memory.Size, info.size);

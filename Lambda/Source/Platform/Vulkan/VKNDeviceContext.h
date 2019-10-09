@@ -85,6 +85,7 @@ namespace Lambda
         void Init(IVKNAllocator* pAllocator, DeviceContextType type);
         void BeginRenderPass();
         void EndRenderPass();
+		void PrepareForDraw();
 		inline bool HasRenderPassInstance() { return m_HasRenderPass; }
     private:
         VkCommandPool	    m_CommandPool;
@@ -106,6 +107,7 @@ namespace Lambda
 		bool			m_HasRenderPass;
         VkRenderPass    m_RenderPass;
         VkFramebuffer   m_Framebuffer;
+		VkExtent2D		m_FramebufferExtent;
 		const VKNTexture* m_DepthStencil;
 		const VKNTexture* m_ppRenderTargets[LAMBDA_MAX_RENDERTARGET_COUNT];
 		AutoRef<VKNPipelineState> m_PipelineState;

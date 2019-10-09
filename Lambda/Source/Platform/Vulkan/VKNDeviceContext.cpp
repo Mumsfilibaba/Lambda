@@ -31,6 +31,7 @@ namespace Lambda
 		m_VariableTable(nullptr),
         m_NumCommandBuffers(0),
         m_FrameIndex(0),
+		m_HasRenderPass(false),
         m_Type(DEVICE_CONTEXT_TYPE_UNKNOWN),
 		m_Name()
     {
@@ -88,11 +89,8 @@ namespace Lambda
         poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         poolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
         poolInfo.pNext = nullptr;
-        if (type == DEVICE_CONTEXT_TYPE_GRAPHICS)
-            poolInfo.queueFamilyIndex = familyIndices.GraphicsFamily;
-        else
-            poolInfo.queueFamilyIndex = uint32(-1);
-    
+		//We use the graphicsqueue only for now
+        poolInfo.queueFamilyIndex = familyIndices.GraphicsFamily;
         if (vkCreateCommandPool(m_pDevice->GetVkDevice(), &poolInfo, nullptr, &m_CommandPool) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create commandpool\n");
@@ -121,12 +119,9 @@ namespace Lambda
                 LOG_DEBUG_ERROR("Vulkan: Failed to create commandbuffer\n");
                 return;
             }
-            else
-            {
-                LOG_DEBUG_INFO("Vulkan: Created commandbuffer\n");
-            }
         }
         
+		LOG_DEBUG_INFO("Vulkan: Created commandbuffers\n");
         
         //Setup fences
         VkFenceCreateInfo fenceInfo = {};
@@ -146,8 +141,13 @@ namespace Lambda
             else
             {
                 m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_FENCE, (uint64)m_pFences[i], "Fence[" +  std::to_string(i) + "]");
+
+				//Initial fence signal
+				m_pDevice->ExecuteCommandBuffer(nullptr, 0, m_pFences[i]);
             }
         }
+		
+		LOG_DEBUG_INFO("Vulkan: Created fences\n");
 
         //Init uploadbuffers
 		m_pBufferUpload		= DBG_NEW VKNUploadBuffer(pAllocator, MB(1));
@@ -214,8 +214,9 @@ namespace Lambda
 
 	void VKNDeviceContext::ClearRenderTarget(ITexture* pRenderTarget, float color[4])
     {
-        LAMBDA_ASSERT_PRINT(m_RenderPass == VK_NULL_HANDLE, "Vulkan: EndRenderPass must be called before ClearRenderTarget\n");
-        
+		//Transition texture before clearing
+		TransitionTexture(pRenderTarget, RESOURCE_STATE_RENDERTARGET_CLEAR, 0, LAMBDA_TRANSITION_ALL_MIPS);
+
         VkClearColorValue col = {};
         memcpy(col.float32, color, sizeof(float)*4);
     
@@ -234,8 +235,9 @@ namespace Lambda
     
     void VKNDeviceContext::ClearDepthStencil(ITexture* pDepthStencil, float depth, uint8 stencil)
     {
-         LAMBDA_ASSERT_PRINT(m_RenderPass == VK_NULL_HANDLE, "Vulkan: EndRenderPass must be called before ClearDepthStencil\n");
-        
+		//Transition texture before clearing
+		TransitionTexture(pDepthStencil, RESORUCE_STATE_DEPTH_STENCIL_CLEAR, 0, LAMBDA_TRANSITION_ALL_MIPS);
+
         VkClearDepthStencilValue value = {};
         value.depth     = depth;
         value.stencil   = stencil;
@@ -255,51 +257,59 @@ namespace Lambda
     
 	void VKNDeviceContext::SetRendertargets(const ITexture* const* ppRenderTargets, uint32 numRendertargets, const ITexture* pDepthStencil)
 	{
-		//TODO: Get renderpass
-		VKNRenderPassCache& cache = VKNRenderPassCache::Get();
-		VKNRenderPassCacheKey key = {};
-		key.SampleCount			= desc.GraphicsPipeline.SampleCount;
-		key.DepthStencilFormat	= desc.GraphicsPipeline.DepthStencilFormat;
-		key.NumRenderTargets	= desc.GraphicsPipeline.NumRenderTargets;
-		for (uint32 i = 0; i < key.NumRenderTargets; i++)
-			key.RenderTargetFormats[i] = desc.GraphicsPipeline.RenderTargetFormats[i];
+		//End renderpass when setting new rendertargets
+		if (HasRenderPassInstance())
+			EndRenderPass();
 
-		m_RenderPass = cache.GetRenderPass(key);
-
-		//Get rendertargets
-		VKNFramebufferCacheKey key = {};
-		key.NumAttachmentViews = numRendertargets;
+		//Setup renderpass
+		VKNRenderPassCacheKey renderPasskey = {};
+		renderPasskey.NumRenderTargets = numRendertargets;
+		//Setup framebuffer
+		VKNFramebufferCacheKey framebufferKey = {};
+		framebufferKey.NumAttachmentViews = numRendertargets;
 		for (uint32 i = 0; i < numRendertargets; i++)
 		{
 			m_ppRenderTargets[i] = reinterpret_cast<const VKNTexture*>(ppRenderTargets[i]);
 			//Get view
-			key.AttachmentViews[i] = m_ppRenderTargets[i]->GetVkImageView();
+			framebufferKey.AttachmentViews[i] = m_ppRenderTargets[i]->GetVkImageView();
+			//Get format
+			const TextureDesc& desc = m_ppRenderTargets[i]->GetDesc();
+			renderPasskey.RenderTargetFormats[i] = desc.Format;
 		}
 
-		VkExtent2D extent = { 0, 0 };		
-		
 		//Get depthstencil
 		m_DepthStencil = reinterpret_cast<const VKNTexture*>(pDepthStencil);
+		uint32 sampleCount	= 0;
 		if (pDepthStencil)
 		{
-			key.AttachmentViews[key.NumAttachmentViews++] = m_DepthStencil->GetVkImageView();
-
+			framebufferKey.AttachmentViews[framebufferKey.NumAttachmentViews++] = m_DepthStencil->GetVkImageView();
+			//Get extent
 			const TextureDesc& desc = pDepthStencil->GetDesc();
-			extent.width = desc.Width;
-			extent.height = desc.Height;
+			m_FramebufferExtent.width	= desc.Width;
+			m_FramebufferExtent.height	= desc.Height;
+			//Get samplecount
+			sampleCount		= desc.SampleCount;
+			renderPasskey.DepthStencilFormat = desc.Format;
 		}
 		else
 		{
+			//Get extent
 			const TextureDesc& desc = ppRenderTargets[0]->GetDesc();
-			extent.width = desc.Width;
-			extent.height = desc.Height;
+			m_FramebufferExtent.width	= desc.Width;
+			m_FramebufferExtent.height	= desc.Height;
+			//Get samplecount
+			sampleCount		= desc.SampleCount;
+			renderPasskey.DepthStencilFormat = FORMAT_UNKNOWN;
 		}
 
-		//Set renderpass
-		key.RenderPass = m_RenderPass;
+		//Get renderpass
+		VKNRenderPassCache& renderPassCache = VKNRenderPassCache::Get();
+		renderPasskey.SampleCount = sampleCount;
+		m_RenderPass = renderPassCache.GetRenderPass(renderPasskey);
 		//Get framebuffer
-		VKNFramebufferCache& fbCache = VKNFramebufferCache::Get();
-		m_Framebuffer = fbCache.GetFramebuffer(key, extent);
+		VKNFramebufferCache& framebufferCache = VKNFramebufferCache::Get();
+		framebufferKey.RenderPass = m_RenderPass;
+		m_Framebuffer = framebufferCache.GetFramebuffer(framebufferKey, m_FramebufferExtent);
 	}
 
 
@@ -429,8 +439,10 @@ namespace Lambda
     
     void VKNDeviceContext::TransitionTexture(const ITexture* pTexture, ResourceState state, uint32 startMipLevel, uint32 numMipLevels)
     {
-        LAMBDA_ASSERT_PRINT(m_RenderPass == VK_NULL_HANDLE, "Vulkan: EndRenderPass must be called before calling TransitionTexture\n");
-        
+		//Transitions can only happen outside a renderpass
+		if (HasRenderPassInstance())
+			EndRenderPass();
+
         const VKNTexture* pVkTexture = reinterpret_cast<const VKNTexture*>(pTexture);
         VkImageLayout newLayout = ConvertResourceStateToImageLayout(state);
 
@@ -590,7 +602,6 @@ namespace Lambda
     
     void VKNDeviceContext::UpdateTexture(ITexture* pResource, const ResourceData* pData, uint32 mipLevel)
     {
-        LAMBDA_ASSERT_PRINT(m_RenderPass == VK_NULL_HANDLE, "Vulkan: EndRenderPass must be called before CopyBuffer\n");
 		LAMBDA_ASSERT_PRINT(pData != nullptr, "Vulkan: pData cannot be nullptr\n");
 		LAMBDA_ASSERT_PRINT(pData->pData != nullptr && pData->SizeInBytes != 0, "Vulkan: ResourceData::pData or ResourceData::SizeInBytes cannot be null\n");
 
@@ -617,16 +628,19 @@ namespace Lambda
         region.imageOffset                      = { 0, 0, 0 };
         region.imageExtent                      = { textureDesc.Width, textureDesc.Height, textureDesc.Depth };
     
-        VkBuffer buffer = m_pTextureUpload->GetVkBuffer();
-        VkImage image = pVkResource->GetVkImage();
+        VkBuffer	buffer = m_pTextureUpload->GetVkBuffer();
+        VkImage		image = pVkResource->GetVkImage();
         vkCmdCopyBufferToImage(m_CurrentCommandBuffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
     }
     
     
     void VKNDeviceContext::CopyBuffer(IBuffer* pDst, IBuffer* pSrc)
     {
-		LAMBDA_ASSERT_PRINT(m_RenderPass == VK_NULL_HANDLE, "Vulkan: EndRenderPass must be called before CopyBuffer\n");
-        
+		//End renderpass when clearing depthstencil
+		if (HasRenderPassInstance())
+			EndRenderPass();
+
+		//Copy buffer
         VkBufferCopy copyRegion = {};
         copyRegion.srcOffset = 0;
         copyRegion.dstOffset = 0;
@@ -637,53 +651,58 @@ namespace Lambda
         vkCmdCopyBuffer(m_CurrentCommandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
     }
 
+
 	void VKNDeviceContext::MapBuffer(IBuffer* pBuffer, void** ppData)
 	{
 	}
+
 
 	void VKNDeviceContext::Unmap(IBuffer* pBuffer)
 	{
 	}
 
+
 	void VKNDeviceContext::ResolveTexture(ITexture* pDst, uint32 dstMipLevel, ITexture* pSrc, uint32 srcMipLevel)
 	{
+		LOG_DEBUG_INFO("ResolveTexture()\n");
+
+		//Transitions can only happen outside a renderpass
+		if (HasRenderPassInstance())
+			EndRenderPass();
 	}
+
 
 	void VKNDeviceContext::Draw(uint32 vertexCount, uint32 startVertex)
 	{
-		LAMBDA_ASSERT_PRINT(m_RenderPass != VK_NULL_HANDLE, "Vulkan: BeginRenderPass must be called before DrawInstanced\n");
-		LAMBDA_ASSERT_PRINT(m_PipelineState, "Vulkan: DrawInstanced must have a valid PipelineState bound when called\n");
+		LAMBDA_ASSERT_PRINT(m_PipelineState, "Vulkan: Draw must have a valid PipelineState bound when called\n");
 
-		CommitAndTransitionResources();
+		PrepareForDraw();
 		vkCmdDraw(m_CurrentCommandBuffer, vertexCount, 1, startVertex, 0);
 	}
 
 	void VKNDeviceContext::DrawIndexed(uint32 indexCount, uint32 startIndexLocation, uint32 baseVertexLocation)
 	{
-		LAMBDA_ASSERT_PRINT(m_RenderPass != VK_NULL_HANDLE, "Vulkan: BeginRenderPass must be called before DrawInstanced\n");
-		LAMBDA_ASSERT_PRINT(m_PipelineState, "Vulkan: DrawInstanced must have a valid PipelineState bound when called\n");
+		LAMBDA_ASSERT_PRINT(m_PipelineState, "Vulkan: DrawIndexed must have a valid PipelineState bound when called\n");
 
-		CommitAndTransitionResources();
+		PrepareForDraw();
 		vkCmdDrawIndexed(m_CurrentCommandBuffer, indexCount, 1, startIndexLocation, baseVertexLocation, 0);
 	}
     
     
     void VKNDeviceContext::DrawInstanced(uint32 vertexCountPerInstance, uint32 instanceCount, uint32 startVertexLocation, uint32 startInstanceLocation)
     {        
-        LAMBDA_ASSERT_PRINT(m_RenderPass != VK_NULL_HANDLE, "Vulkan: BeginRenderPass must be called before DrawInstanced\n");
         LAMBDA_ASSERT_PRINT(m_PipelineState, "Vulkan: DrawInstanced must have a valid PipelineState bound when called\n");
         
-        CommitAndTransitionResources();
+		PrepareForDraw();
         vkCmdDraw(m_CurrentCommandBuffer, vertexCountPerInstance, instanceCount, startVertexLocation, startInstanceLocation);
     }
     
     
     void VKNDeviceContext::DrawIndexedInstanced(uint32 indexCountPerInstance, uint32 instanceCount, uint32 startIndexLocation, uint32 baseVertexLocation, uint32 startInstanceLocation)
     {
-        LAMBDA_ASSERT_PRINT(m_RenderPass != VK_NULL_HANDLE, "Vulkan: BeginRenderPass must be called before DrawIndexedInstanced\n");
         LAMBDA_ASSERT_PRINT(m_PipelineState, "Vulkan: DrawIndexedInstanced must have a valid PipelineState bound when called\n");
 
-        CommitAndTransitionResources();
+		PrepareForDraw();
         vkCmdDrawIndexed(m_CurrentCommandBuffer, indexCountPerInstance, instanceCount, startIndexLocation, baseVertexLocation, startInstanceLocation);
     }
 
@@ -710,19 +729,29 @@ namespace Lambda
     
     void VKNDeviceContext::End()
     {
+		LOG_DEBUG_INFO("End()\n");
+
+		//End renderpass before ending commmandsubmition
+		if (HasRenderPassInstance())
+			EndRenderPass();
+
+		//End commandbuffer
         if (vkEndCommandBuffer(m_CurrentCommandBuffer) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to End CommandBuffer\n");
         }
+
+		m_FrameIndex = (m_FrameIndex + 1) % m_NumCommandBuffers;
     }
     
     
     void VKNDeviceContext::Begin()
     {
-        m_FrameIndex = (m_FrameIndex+1) % m_NumCommandBuffers;
+		LOG_DEBUG_INFO("Begin()\n");
+
         //Get next buffer
-        m_CurrentCommandBuffer = m_pCommandBuffers[m_FrameIndex];
-        m_CurrentFence = m_pFences[m_FrameIndex];
+        m_CurrentCommandBuffer	= m_pCommandBuffers[m_FrameIndex];
+        m_CurrentFence			= m_pFences[m_FrameIndex];
         //Wait for last frame
         vkWaitForFences(m_pDevice->GetVkDevice(), 1, &m_CurrentFence, VK_TRUE, std::numeric_limits<uint64_t>::max());
         vkResetFences(m_pDevice->GetVkDevice(), 1, &m_CurrentFence);
@@ -746,10 +775,16 @@ namespace Lambda
 
     void VKNDeviceContext::Flush()
     {
-        //Wait for fence and execute
-		VkCommandBuffer buffers[] = { m_CurrentCommandBuffer };
+		LOG_DEBUG_INFO("Flush()\n");
+
+		//End renderpass before flushing
+		if (HasRenderPassInstance())
+			EndRenderPass();
 
 		LAMBDA_ASSERT_PRINT(m_WaitSemaphores.size() == m_WaitDstStageMasks.size(), "Vulkan: Number of WaitSemaphores and WaitDstStageMasks must be the same\n");
+
+		//Wait for fence and execute
+		VkCommandBuffer buffers[] = { m_CurrentCommandBuffer };
 
 		//submit commandbuffers
 		VkSubmitInfo submitInfo = {};
@@ -762,7 +797,7 @@ namespace Lambda
 		submitInfo.pCommandBuffers		= buffers;
 		submitInfo.signalSemaphoreCount = 0;
 		submitInfo.pSignalSemaphores	= nullptr;
-		m_pDevice->ExecuteContext(&submitInfo);
+		m_pDevice->ExecuteCommandBuffer(&submitInfo, 1, m_CurrentFence);
 
 		//Clear semaphores
 		m_WaitSemaphores.clear();
@@ -779,7 +814,10 @@ namespace Lambda
 
 	void VKNDeviceContext::BeginRenderPass()
 	{
-        LAMBDA_ASSERT_PRINT(HasRenderPassInstance(), "Vulkan: EndRenderPass must be called before a new call to BeginRenderPass\n");
+        LAMBDA_ASSERT_PRINT(!HasRenderPassInstance(), "Vulkan: EndRenderPass must be called before a new call to BeginRenderPass\n");
+		LAMBDA_ASSERT_PRINT(m_RenderPass != VK_NULL_HANDLE && m_Framebuffer != VK_NULL_HANDLE, "Vulkan: SetRenderTargets must be called before BeginRenderPass\n");
+
+		LOG_DEBUG_INFO("BeginRenderPass()\n");
 
         VkRenderPassBeginInfo info = {};
         info.sType				= VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -787,7 +825,7 @@ namespace Lambda
         info.renderPass			= m_RenderPass;
         info.framebuffer		= m_Framebuffer;
         info.renderArea.offset	= { 0, 0 };
-        info.renderArea.extent	= extent;
+        info.renderArea.extent	= m_FramebufferExtent;
         info.clearValueCount	= 0;
         info.pClearValues		= nullptr;
         vkCmdBeginRenderPass(m_CurrentCommandBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
@@ -797,10 +835,23 @@ namespace Lambda
 
 	void VKNDeviceContext::EndRenderPass()
 	{
-        LAMBDA_ASSERT_PRINT(!HasRenderPassInstance(), "Vulkan: EndRenderPass must be called after BeginRenderPass\n");
+        LAMBDA_ASSERT_PRINT(HasRenderPassInstance(), "Vulkan: EndRenderPass must be called after BeginRenderPass\n");
         
+		LOG_DEBUG_INFO("EndRenderPass()\n");
+
         vkCmdEndRenderPass(m_CurrentCommandBuffer);
 		m_HasRenderPass = false;
+	}
+
+
+	void VKNDeviceContext::PrepareForDraw()
+	{
+		//Begin renderpass when before drawing
+		if (!HasRenderPassInstance())
+			BeginRenderPass();
+
+		//Commit and draw
+		CommitAndTransitionResources();
 	}
     
     

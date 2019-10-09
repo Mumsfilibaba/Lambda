@@ -275,16 +275,17 @@ namespace Lambda
 		depthStencilState.DepthTest = false;
 
 		GraphicsPipelineStateDesc graphicsPipeline  = {};
-		graphicsPipeline.pVertexShader		= m_VS.Get();
-		graphicsPipeline.pPixelShader		= m_PS.Get();
-		graphicsPipeline.VertexInput		= vertexInput;
-		graphicsPipeline.RasterizerState	= rasterizerState;
-		graphicsPipeline.BlendState			= blendState;
-		graphicsPipeline.DepthStencilState	= depthStencilState;
+		graphicsPipeline.pVertexShader			= m_VS.Get();
+		graphicsPipeline.pPixelShader			= m_PS.Get();
+		graphicsPipeline.VertexInput			= vertexInput;
+		graphicsPipeline.RasterizerState		= rasterizerState;
+		graphicsPipeline.BlendState				= blendState;
+		graphicsPipeline.DepthStencilState		= depthStencilState;
+		graphicsPipeline.NumRenderTargets		= 1;
         graphicsPipeline.RenderTargetFormats[0] = FORMAT_B8G8R8A8_UNORM;
-        graphicsPipeline.DepthStencilFormat = FORMAT_D24_UNORM_S8_UINT;
-		graphicsPipeline.Topology			= PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-        graphicsPipeline.SampleCount        = app.GetEngineParams().SampleCount;
+        graphicsPipeline.DepthStencilFormat		= FORMAT_D24_UNORM_S8_UINT;
+		graphicsPipeline.Topology				= PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+        graphicsPipeline.SampleCount			= app.GetEngineParams().SampleCount;
 
 		PipelineStateDesc pipelineDesc = {};
 		pipelineDesc.pName	= "ImGui PipelineState";

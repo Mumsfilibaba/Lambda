@@ -79,9 +79,9 @@ namespace Lambda
     void VKNTexture::InitFromResource(VkImage image, const TextureDesc& desc)
     {
         //Init data
-        m_Desc = desc;
-        m_Image = image;
-        m_IsOwner = false;
+        m_Desc		= desc;
+        m_Image		= image;
+        m_IsOwner	= false;
         
         //Set aspectflags
         if (desc.Flags & TEXTURE_FLAGS_SHADER_RESOURCE || desc.Flags & TEXTURE_FLAGS_RENDER_TARGET)
@@ -91,13 +91,9 @@ namespace Lambda
         if (desc.Flags & TEXTURE_FLAGS_DEPTH_STENCIL)
         {
             if (desc.Format == FORMAT_D24_UNORM_S8_UINT || desc.Format == FORMAT_D32_FLOAT_S8X24_UINT)
-            {
                 m_AspectFlags |= VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
-            }
             else
-            {
                 m_AspectFlags |= VK_IMAGE_ASPECT_DEPTH_BIT;
-            }
         }
         
         //Create view
@@ -121,16 +117,13 @@ namespace Lambda
         //Set miplevels
         uint32 mipLevels = desc.MipLevels;
         if (desc.Flags & TEXTURE_FLAGS_GENEATE_MIPS)
-        {
-            mipLevels = uint32(std::floor(std::log2(std::max(desc.Width, desc.Height))));
-        }
-        
+            mipLevels = uint32(std::floor(std::log2(std::max(desc.Width, desc.Height))));      
 
 		//Setup
         VkImageCreateInfo info = {};
-        info.sType                  = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-        info.pNext                  = nullptr;
-        info.flags                  = 0;
+        info.sType  = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+        info.pNext  = nullptr;
+        info.flags  = 0;
 		//Set type
 		if (desc.Type == TEXTURE_TYPE_2D)
 		{
@@ -148,16 +141,15 @@ namespace Lambda
         info.arrayLayers            = desc.ArraySize;
         info.pQueueFamilyIndices    = nullptr;
         info.queueFamilyIndexCount  = 0;
-        info.format                 = ConvertResourceFormat(desc.Format);
+        info.format                 = ConvertFormat(desc.Format);
         info.tiling                 = VK_IMAGE_TILING_OPTIMAL;
         info.initialLayout          = VK_IMAGE_LAYOUT_UNDEFINED;
         info.sharingMode            = VK_SHARING_MODE_EXCLUSIVE;
         info.samples                = ConvertSampleCount(desc.SampleCount);
         //Set special usage
         if (desc.Flags & TEXTURE_FLAGS_GENEATE_MIPS)
-        {
             info.usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-        }
+
         if (desc.Flags & TEXTURE_FLAGS_SHADER_RESOURCE)
         {
             info.usage |= VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
@@ -165,20 +157,16 @@ namespace Lambda
         }
 		if (desc.Flags & TEXTURE_FLAGS_RENDER_TARGET)
 		{
-			info.usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
+			info.usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 			m_AspectFlags |= VK_IMAGE_ASPECT_COLOR_BIT;
 		}
         if (desc.Flags & TEXTURE_FLAGS_DEPTH_STENCIL)
         {
             info.usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 			if (info.format == VK_FORMAT_D24_UNORM_S8_UINT || info.format == VK_FORMAT_D32_SFLOAT_S8_UINT)
-			{
                 m_AspectFlags |= VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
-			}
 			else
-			{
                 m_AspectFlags |= VK_IMAGE_ASPECT_DEPTH_BIT;
-			}
         }
 
 		//Create image

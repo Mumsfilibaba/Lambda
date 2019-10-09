@@ -1,4 +1,5 @@
 #include "LambdaPch.h"
+#include "Types.h"
 #include "VKNSwapChain.h"
 #include "VKNTexture.h"
 #include "VKNUtilities.h"
@@ -25,6 +26,8 @@ namespace Lambda
         m_SampleBuffer(nullptr),
         m_DepthStencilBuffer(nullptr),
 		m_CurrentBufferIndex(0),
+		m_FrameIndex(0),
+		m_LastFrameIndex(0xffffffff),
 		m_Buffers()
 	{
 		//Add ref to context
@@ -132,26 +135,24 @@ namespace Lambda
         }
         
         LOG_DEBUG_INFO("Vulkan: Created Semaphores\n");
-        
-        
+              
         //Get the swapchain capabilities from the adapter
         SwapChainCapabilities cap = QuerySwapChainSupport(m_pDevice->GetVkPhysicalDevice(), m_Surface);
         
 		//Find the swapchain format we want
-        bool foundFormat = false;
         VkFormat lookingFor = ConvertFormat(desc.BufferFormat);
+		m_VkFormat = { VK_FORMAT_UNDEFINED, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR };
 		for (const auto& availableFormat : cap.Formats)
 		{
 			if (availableFormat.format == lookingFor && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
 			{
-                foundFormat = true;
-                m_VkFormat = availableFormat;
+                m_VkFormat	= availableFormat;
 				break;
 			}
 		}
     
         //Did we find it?
-        if (foundFormat)
+        if (m_VkFormat.format != VK_FORMAT_UNDEFINED)
         {
             LOG_DEBUG_INFO("Vulkan: Chosen SwapChain format '%s'\n", VkFormatToString(m_VkFormat.format));
         }
@@ -197,6 +198,10 @@ namespace Lambda
 		//Setup swapchain images
         if (desc.BufferCount >= cap.Capabilities.minImageCount && desc.BufferCount <= cap.Capabilities.maxImageCount)
         {
+			//Set desc
+			m_Desc = desc;
+
+			//Continue to init swapchain
             LOG_DEBUG_INFO("Vulkan: Number of buffers in SwapChain '%u'\n", desc.BufferCount);
             this->InitSwapChain({ desc.BufferWidth, desc.BufferHeight });
         }
@@ -213,17 +218,22 @@ namespace Lambda
         
         //Choose swapchain extent (Size)
         VkExtent2D newExtent;
-        if (cap.Capabilities.currentExtent.width	!= std::numeric_limits<uint32_t>::max() ||
-			cap.Capabilities.currentExtent.height	!= std::numeric_limits<uint32_t>::max())
+        if (cap.Capabilities.currentExtent.width  != std::numeric_limits<uint32_t>::max() ||
+			cap.Capabilities.currentExtent.height != std::numeric_limits<uint32_t>::max() ||
+			extent.width == 0 || extent.height == 0)
         {
             newExtent = cap.Capabilities.currentExtent;
         }
         else
         {
-            newExtent.width = std::max(cap.Capabilities.minImageExtent.width, std::min(cap.Capabilities.maxImageExtent.width, extent.width));
-            newExtent.height = std::max(cap.Capabilities.minImageExtent.height, std::min(cap.Capabilities.maxImageExtent.height, extent.height));
+            newExtent.width		= std::max(cap.Capabilities.minImageExtent.width, std::min(cap.Capabilities.maxImageExtent.width,	extent.width));
+            newExtent.height	= std::max(cap.Capabilities.minImageExtent.height, std::min(cap.Capabilities.maxImageExtent.height, extent.height));
         }
-        
+		newExtent.width		= std::max(newExtent.width,	 1u);
+		newExtent.height	= std::max(newExtent.height, 1u);
+		m_Desc.BufferWidth	= newExtent.width;
+		m_Desc.BufferHeight	= newExtent.height;
+
         LOG_DEBUG_INFO("Vulkan: Chosen SwapChain size w: %u h: %u\n", newExtent.width, newExtent.height);
     
         //Setup swapchain
@@ -285,16 +295,16 @@ namespace Lambda
         for (uint32 i = 0; i < imageCount; i++)
         {
             TextureDesc desc = {};
-            desc.Type				= TEXTURE_TYPE_2D;
-            desc.Flags				= TEXTURE_FLAGS_RENDER_TARGET;
-            desc.Format				= m_Desc.BufferFormat;
-            desc.Width				= m_Desc.BufferWidth;
-            desc.Height				= m_Desc.BufferHeight;
-            desc.Depth				= 1;
-            desc.ArraySize			= 1;
-            desc.MipLevels			= 1;
-            desc.SampleCount		= 1;
-            desc.Usage				= RESOURCE_USAGE_DEFAULT;
+            desc.Type		 = TEXTURE_TYPE_2D;
+            desc.Flags		 = TEXTURE_FLAGS_RENDER_TARGET;
+            desc.Format		 = m_Desc.BufferFormat;
+            desc.Width		 = m_Desc.BufferWidth;
+            desc.Height		 = m_Desc.BufferHeight;
+            desc.Depth		 = 1;
+            desc.ArraySize	 = 1;
+            desc.MipLevels	 = 1;
+            desc.SampleCount = 1;
+            desc.Usage		 = RESOURCE_USAGE_DEFAULT;
 
             m_Buffers.push_back(AutoRef(DBG_NEW VKNTexture(m_pDevice, textures[i], desc)));
         }
@@ -364,6 +374,7 @@ namespace Lambda
         return m_Desc;
     }
 
+
 	void VKNSwapChain::ResizeBuffers(uint32 width, uint32 height)
     {
 		//Syncronize the GPU so no operations are in flight when recreating swapchain
@@ -386,6 +397,9 @@ namespace Lambda
 		if (m_Desc.BufferSampleCount > 1)
 			m_Context->ResolveTexture(m_Buffers[m_CurrentBufferIndex].Get(), 0, m_SampleBuffer.Get(), 0);
 
+		//Transition resource
+		m_Context->TransitionTexture(m_Buffers[m_CurrentBufferIndex].Get(), RESOURCE_STATE_RENDERTARGET_PRESENT, 0, LAMBDA_TRANSITION_ALL_MIPS);
+
 		//Add semaphores so the syncronization gets correct
 		m_Context->AddWaitSemaphore(m_ImageSemaphores[m_FrameIndex], VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 		m_Context->AddSignalSemaphore(m_RenderSemaphores[m_FrameIndex]);
@@ -405,9 +419,6 @@ namespace Lambda
 		info.pImageIndices		= &m_CurrentBufferIndex;
 		info.pResults			= nullptr;
 		m_pDevice->Present(&info);
-        
-		//Finish frame
-		m_pDevice->FinishFrame();
 
 		//Increase frameindex
         m_FrameIndex = (m_FrameIndex+1) % m_Desc.BufferCount;

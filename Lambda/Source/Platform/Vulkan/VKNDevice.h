@@ -11,10 +11,11 @@ namespace Lambda
     class VKNTexture;
     class VKNSwapChain;
     class VKNAllocator;
-    class VKNDeviceContext;
     class VKNSamplerState;
     class VKNUploadBuffer;
+    class VKNDeviceContext;
     class VKNBufferManager;
+	class VKNRenderPassCache;
     class VKNFramebufferCache;
     
 	//---------
@@ -42,7 +43,7 @@ namespace Lambda
 		virtual const DeviceProperties& GetProperties() const override final;
         virtual const DeviceDesc& GetDesc() const override final;
 
-		void ExecuteContext(VkSubmitInfo* pInfo) const;
+		void ExecuteCommandBuffer(VkSubmitInfo* pInfo, uint32 numBuffers, VkFence fence) const;
 		void Present(VkPresentInfoKHR* pInfo);
 		void FinishFrame() const;
 		void WaitUntilIdle() const;
@@ -70,11 +71,11 @@ namespace Lambda
 		VKNBufferManager*			  m_pBufferManager;
 		VKNDescriptorPoolManager*	  m_pDescriptorPoolManager;
 		VKNFramebufferCache*		  m_pFramebufferCache;
+		VKNRenderPassCache*			  m_pRenderPassCache;
 		VKNDeviceContext*		      m_pImmediateContext;
 		mutable AutoRef<VKNAllocator> m_DeviceAllocator;
         VkQueue						  m_GraphicsQueue;
         VkQueue						  m_PresentationQueue;
-        mutable uint64				  m_CurrentFrame;
 		DeviceProperties			  m_Properties;
 		VkInstance					  m_Instance;
 		VkDebugUtilsMessengerEXT	  m_DebugMessenger;
@@ -90,9 +91,7 @@ namespace Lambda
 		static PFN_vkDestroyDebugUtilsMessengerEXT	DestroyDebugUtilsMessengerEXT;
 	private:
 		static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-			VkDebugUtilsMessageTypeFlagsEXT messageType,
-			const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-			void* pUserData);
+			VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
     public:
 		static VKNDevice& Get();
     };

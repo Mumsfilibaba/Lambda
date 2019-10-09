@@ -618,7 +618,7 @@ namespace Lambda
 
 		VKNDevice& device = VKNDevice::Get();
 		const DeviceDesc& deviceDesc = device.GetDesc();
-		m_FrameCount = deviceDesc.BackBufferCount;
+		m_FrameCount = FRAMES_AHEAD;
 
 		m_OldPools.resize(m_FrameCount);
 	}

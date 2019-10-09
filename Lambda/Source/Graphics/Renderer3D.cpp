@@ -55,9 +55,8 @@ namespace Lambda
 			m_Queries.emplace_back(pQuery);
 		}
 
-		//Reset current list
+		//Get context
         m_Context = m_Device->GetImmediateContext();
-		m_Context->Begin();
 
 		//Current query
         m_pCurrentQuery = m_Queries[0].Get();
@@ -105,11 +104,7 @@ namespace Lambda
 
         //Init UILayer
         Application& app = Application::Get();
-        app.GetUILayer()->Init(m_Context.Get());
-        
-		//Execute commandlist
-		m_Context->End();
-        m_Context->Flush();
+        app.GetUILayer()->Init();
 
 		//Setup viewport
 		IWindow* pWindow = Application::Get().GetWindow();
@@ -172,6 +167,9 @@ namespace Lambda
         ITexture* pDepthBuffer = m_SwapChain->GetDepthBuffer();
         m_Context->ClearDepthStencil(pDepthBuffer, 1.0f, 0);
         
+		//Set rendertargets
+		m_Context->SetRendertargets(&pRenderTarget, 1, pDepthBuffer);
+
 		//Write query
 		m_Context->WriteTimeStamp(m_pCurrentQuery, PIPELINE_STAGE_VERTEX);
 		//Set viewport
@@ -275,6 +273,9 @@ namespace Lambda
 		m_ScissorRect.Height = float(height);
 		m_ScissorRect.X		 = 0.0f;
 		m_ScissorRect.Y		 = 0.0f;
+
+		//Resize
+		m_SwapChain->ResizeBuffers(width, height);
 	}
 
 	

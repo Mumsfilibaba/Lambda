@@ -21,66 +21,56 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(DX12DeviceContext);
 
-		DX12DeviceContext(DX12Device* pDevice, CommandListType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV);
+		DX12DeviceContext(DX12Device* pDevice, DeviceContextType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV);
 		~DX12DeviceContext() = default;
 	
-		virtual void ClearRenderTarget(ITexture* pRenderTarget, float color[4]) override final;
-		virtual void ClearDepthStencil(ITexture* pDepthStencil, float depth, uint8 stencil) override final;
-
-		virtual void BeginRenderPass(IRenderPass* pRenderPass) override final;
-		virtual void EndRenderPass() override final;
+		virtual void Begin() override final;
 
 		virtual void ResetQuery(IQuery* pQuery) override final;
 		virtual void WriteTimeStamp(IQuery* pQuery, PipelineStage stage) override final;
 
-		virtual void SetViewport(const Viewport& viewport) override final;
-		virtual void SetScissorRect(const Rectangle& scissorRect) override final;
-		virtual void SetVertexBuffer(IBuffer* pBuffer, uint32 slot) override final; 
-		virtual void SetIndexBuffer(IBuffer* pIndexBuffer, Format format) override final;
-		virtual void SetPipelineState(IPipelineState* pPiplineState) override final;
+		virtual void ClearRenderTarget(ITexture* pRenderTarget, float color[4]) override final;
+		virtual void ClearDepthStencil(ITexture* pDepthStencil, float depth, uint8 stencil) override final;
+
+		virtual void SetRendertargets(const ITexture* const* ppRenderTargets, uint32 numRendertargets, const ITexture* pDepthStencil) override final;
+		virtual void SetViewports(const Viewport* pViewports, uint32 numViewports) override final;
+		virtual void SetScissorRects(const Rectangle* pScissorRect, uint32 numRects) override final;
+		virtual void SetVertexBuffers(IBuffer* const* pBuffers, uint32 numBuffers, uint32 slot) override final;
+		virtual void SetIndexBuffer(IBuffer* pBuffer, Format format) override final;
+		virtual void SetPipelineState(IPipelineState* pPipelineState) override final;
 		virtual void SetShaderVariableTable(IShaderVariableTable* pVariableTable) override final;
 		virtual void SetConstantBlocks(ShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData) override final;
-
-		virtual void TransitionBuffer(const IBuffer* pResource, ResourceState resourceState) override final;
-		virtual void TransitionTexture(const ITexture* pResource, ResourceState resourceState, uint32 startMipLevel, uint32 numMipLevels) override final;
-
-		virtual void VSSetConstantBuffers(const IBuffer* const* ppBuffers, uint32 numBuffers, uint32 startSlot);
-		virtual void VSSetTextures(const ITexture* const* ppTextures, uint32 numTextures, uint32 startSlot);
-		virtual void VSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot);
-
-		virtual void HSSetConstantBuffers(const IBuffer* const* ppBuffers, uint32 numBuffers, uint32 startSlot);
-		virtual void HSSetTextures(const ITexture* const* ppTextures, uint32 numTextures, uint32 startSlot);
-		virtual void HSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot);
-
-		virtual void DSSetConstantBuffers(const IBuffer* const* ppBuffers, uint32 numBuffers, uint32 startSlot);
-		virtual void DSSetTextures(const ITexture* const* ppTextures, uint32 numTextures, uint32 startSlot);
-		virtual void DSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot);
-
-		virtual void GSSetConstantBuffers(const IBuffer* const* ppBuffers, uint32 numBuffers, uint32 startSlot);
-		virtual void GSSetTextures(const ITexture* const* ppTextures, uint32 numTextures, uint32 startSlot);
-		virtual void GSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot);
-
-		virtual void PSSetConstantBuffers(const IBuffer* const* ppBuffers, uint32 numBuffers, uint32 startSlot);
-		virtual void PSSetTextures(const ITexture* const* ppTextures, uint32 numTextures, uint32 startSlot);
-		virtual void PSSetSamplers(const ISamplerState* const* ppSamplerStates, uint32 numSamplers, uint32 startSlot);
 
 		virtual void UpdateBuffer(IBuffer* pResource, const ResourceData* pData) override final;
 		virtual void UpdateTexture(ITexture* pResource, const ResourceData* pData, uint32 mipLevel) override final;
 
 		virtual void CopyBuffer(IBuffer* pDst, IBuffer* pSrc) override final;
 
+		virtual void MapBuffer(IBuffer* pBuffer, void** ppData) override final;
+		virtual void Unmap(IBuffer* pBuffer) override final;
+
+		virtual void ResolveTexture(ITexture* pDst, uint32 dstMipLevel, ITexture* pSrc, uint32 srcMipLevel) override final;
+
+		virtual void Draw(uint32 vertexCount, uint32 startVertex) override final;
+		virtual void DrawIndexed(uint32 indexCount, uint32 startIndexLocation, uint32 baseVertexLocation) override final;
 		virtual void DrawInstanced(uint32 vertexCountPerInstance, uint32 instanceCount, uint32 startVertexLocation, uint32 startInstanceLocation) override final;
 		virtual void DrawIndexedInstanced(uint32 indexCountPerInstance, uint32 instanceCount, uint32 startIndexLocation, uint32 baseVertexLocation, uint32 startInstanceLocation) override final;
 
+		virtual void ExecuteDefferedContext(IDeviceContext* pContext) override final;
+
+		virtual void End() override final;
+		virtual void Flush() override final;
+		virtual void ClearState() override final;
+
 		virtual void SetName(const char* pName) override final;
 
+		virtual DeviceContextType GetType() const override final;
 		virtual void* GetNativeHandle() const override final;
-		virtual	CommandListType GetType() const override final;
 
-		virtual void Close() override final;
-		virtual void Reset() override final;
+		void TransitionBuffer(const IBuffer* pResource, ResourceState resourceState);
+		void TransitionTexture(const ITexture* pResource, ResourceState resourceState, uint32 startMipLevel, uint32 numMipLevels);
 	private:
-		void Init(CommandListType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV);
+		void Init(DeviceContextType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV);
 		void AllocateDescriptors();
 		void InternalCopyAndSetDescriptors();
 		void InternalSetResourceDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE hDest, D3D12_CPU_DESCRIPTOR_HANDLE hSrc, uint32 slot, uint32 range);
@@ -90,19 +80,19 @@ namespace Lambda
 	private:
 		Microsoft::WRL::ComPtr<ID3D12CommandAllocator>		m_Allocator;
 		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4>	m_List;
-		DX12DescriptorHandle								m_hResourceDescriptorTables[5];
-		DX12DescriptorHandle								m_hSamplerDescriptorTables[5];
-		DX12DescriptorHandle								m_NullDescriptors[4];
-		DX12ResourceStateTracker							m_ResourceTracker;
-		DX12LinearAllocator									m_BufferAllocator;
-		DX12LinearAllocator									m_TextureAllocator;
-		DX12LinearDescriptorAllocator						m_ResourceAllocator;
-		DX12LinearDescriptorAllocator						m_SamplerAllocator;
-		DX12DescriptorCache									m_ResourceCache;
-		DX12DescriptorCache									m_SamplerCache;
-		uint32												m_SamplerDescriptorSize;
-		uint32												m_ResourceDescriptorSize;
-		CommandListType										m_Type;
+		DX12DescriptorHandle	 m_hResourceDescriptorTables[5];
+		DX12DescriptorHandle	 m_hSamplerDescriptorTables[5];
+		DX12DescriptorHandle	 m_NullDescriptors[4];
+		DX12ResourceStateTracker m_ResourceTracker;
+		DX12LinearAllocator		 m_BufferAllocator;
+		DX12LinearAllocator		 m_TextureAllocator;
+		DX12LinearDescriptorAllocator	m_ResourceAllocator;
+		DX12LinearDescriptorAllocator	m_SamplerAllocator;
+		DX12DescriptorCache	m_ResourceCache;
+		DX12DescriptorCache	m_SamplerCache;
+		uint32				m_SamplerDescriptorSize;
+		uint32				m_ResourceDescriptorSize;
+		DeviceContextType	m_Type;
 	};
 
 

@@ -13,14 +13,11 @@ namespace Lambda
     {
 		//Add a ref to the refcounter
 		this->AddRef();
-
         Init(desc);
         
-		VKNDevice& device = VKNDevice::Get();
+		//Get period of a timestamp
         if (m_Desc.Type == QUERY_TYPE_TIMESTAMP)
-        {
-            m_TimeStampPeriod = device.GetPhysicalDeviceProperties().limits.timestampPeriod;
-        }
+            m_TimeStampPeriod = pDevice->GetPhysicalDeviceProperties().limits.timestampPeriod;
     }
 
 
@@ -71,9 +68,7 @@ namespace Lambda
 			if (m_Desc.Type == QUERY_TYPE_TIMESTAMP)
 			{
 				for (uint32 i = 0; i < numResults; i++)
-				{
 					pResults[i] *= uint64(m_TimeStampPeriod);
-				}
 			}
 		}
     }

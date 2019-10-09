@@ -94,26 +94,23 @@ namespace Lambda
 		m_Camera.CreateView();
 
 		//Init size
-		IDevice* pDevice = IDevice::Get();
+		Application& app = Application::Get();
+		IDevice* pDevice = app.GetGraphicsDevice();
         if (pDevice)
         {
-            AutoRef<IDeviceContext> context = pDevice->GetImmediateContext();
-			context->Begin();
-
             //Create shaders
-			DeviceDesc deviceDesc = pDevice->GetDesc();
-			if (deviceDesc.Api == GRAPHICS_API_VULKAN)
+			const DeviceProperties& deviceProps = pDevice->GetProperties();
+			if (deviceProps.Api == GRAPHICS_API_VULKAN)
 			{
 				m_VS = IShader::CreateShaderFromFile(pDevice, "vert.spv", "main", SHADER_STAGE_VERTEX, SHADER_LANG_SPIRV);
 				m_PS = IShader::CreateShaderFromFile(pDevice, "frag.spv", "main", SHADER_STAGE_PIXEL,	SHADER_LANG_SPIRV);
 			}
-			else if (deviceDesc.Api == GRAPHICS_API_D3D12)
+			else if (deviceProps.Api == GRAPHICS_API_D3D12)
 			{
 				m_VS = IShader::CreateShaderFromFile(pDevice, "Triangle.hlsl", "VSMain", SHADER_STAGE_VERTEX,	SHADER_LANG_HLSL);
 				m_PS = IShader::CreateShaderFromFile(pDevice, "Triangle.hlsl", "PSMain", SHADER_STAGE_PIXEL,	SHADER_LANG_HLSL);
 			}
             
-
             //Create pipelinestate
             {
 				InputElementDesc elements[]
@@ -138,30 +135,22 @@ namespace Lambda
 
 				DepthStencilStateDesc depthStencilState = {};
 				depthStencilState.DepthTest = true;
+              
 
-                //Create backbuffer renderpass
-                RenderPassDesc renderPassDesc = {};
-                renderPassDesc.NumRenderTargets                  = 1;
-                renderPassDesc.RenderTargets[0].Format           = pDevice->GetBackBufferFormat();
-                renderPassDesc.RenderTargets[0].Flags            = RENDER_PASS_ATTACHMENT_FLAG_RESOLVE;
-                renderPassDesc.RenderTargets[0].LoadOperation    = LOAD_OP_CLEAR;
-                renderPassDesc.RenderTargets[0].StoreOperation   = STORE_OP_STORE;
-                renderPassDesc.RenderTargets[0].FinalState       = RESOURCE_STATE_RENDERTARGET_PRESENT;
-                renderPassDesc.DepthStencil.Format               = FORMAT_D24_UNORM_S8_UINT;
-                renderPassDesc.DepthStencil.Flags                = 0;
-                renderPassDesc.DepthStencil.LoadOperation        = LOAD_OP_CLEAR;
-                renderPassDesc.DepthStencil.StoreOperation       = STORE_OP_UNKNOWN;
-                renderPassDesc.DepthStencil.FinalState           = RESOURCE_STATE_DEPTH_STENCIL;
-                
+				ISwapChain* pSwapChain = app.GetSwapChain();
+				const SwapChainDesc& swapChainDesc = pSwapChain->GetDesc();
                 GraphicsPipelineStateDesc graphicsPipeline = {};
-                graphicsPipeline.pVertexShader      = m_VS.Get();
-                graphicsPipeline.pPixelShader       = m_PS.Get();
-				graphicsPipeline.Topology           = PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-				graphicsPipeline.VertexInput		= vertexInput;
-				graphicsPipeline.RasterizerState	= rasterizerState;
-				graphicsPipeline.RenderPass		    = renderPassDesc;
-				graphicsPipeline.BlendState			= blendState;
-				graphicsPipeline.DepthStencilState	= depthStencilState;
+                graphicsPipeline.pVertexShader			= m_VS.Get();
+                graphicsPipeline.pPixelShader			= m_PS.Get();
+				graphicsPipeline.Topology				= PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+				graphicsPipeline.VertexInput			= vertexInput;
+				graphicsPipeline.RasterizerState		= rasterizerState;
+				graphicsPipeline.SampleCount			= swapChainDesc.BufferSampleCount;
+				graphicsPipeline.NumRenderTargets		= 1;
+				graphicsPipeline.RenderTargetFormats[0] = FORMAT_B8G8R8A8_UNORM;
+				graphicsPipeline.DepthStencilFormat		= FORMAT_D24_UNORM_S8_UINT;
+				graphicsPipeline.BlendState				= blendState;
+				graphicsPipeline.DepthStencilState		= depthStencilState;
 
 				ShaderVariableDesc shaderVariables[] =
 				{
@@ -261,8 +250,6 @@ namespace Lambda
             //Create texture
             m_AlbedoMap = ITexture::CreateTextureFromFile(pDevice, "revolver_albedo.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
             m_NormalMap = ITexture::CreateTextureFromFile(pDevice, "revolver_normal.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
-			context->TransitionTexture(m_AlbedoMap.Get(), RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0, LAMBDA_TRANSITION_ALL_MIPS);
-			context->TransitionTexture(m_NormalMap.Get(), RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0, LAMBDA_TRANSITION_ALL_MIPS);
 
             //Create samplerstate
             TextureDesc textureDesc = m_AlbedoMap->GetDesc();
@@ -273,10 +260,6 @@ namespace Lambda
 			desc.MipLODBias	= 0.0f;
 			desc.Anisotropy = 16.0f;
             pDevice->CreateSamplerState(&m_SamplerState, desc);
-
-            //Close and execute commandlist
-			context->End();
-            context->Flush();
 
 			//Setup materials
 			m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Albedo")->SetTexture(m_AlbedoMap.Get());
@@ -376,23 +359,17 @@ namespace Lambda
 
 	void SandBoxLayer::OnRelease()
 	{
-		IDevice* pDevice = IDevice::Get();
-        if (pDevice)
-        {
-            pDevice->WaitForGPU();
-
-			m_VS.Release();
-			m_PS.Release();
-			m_PipelineState.Release();
-			m_VariableTable.Release();
-			m_Mesh.pVertexBuffer->Release();
-			m_Mesh.pIndexBuffer->Release();
-			m_SphereMesh.pVertexBuffer->Release();
-			m_SphereMesh.pIndexBuffer->Release();
-			m_AlbedoMap.Release();
-			m_NormalMap.Release();
-			m_SamplerState.Release();
-        }
+		m_VS.Release();
+		m_PS.Release();
+		m_PipelineState.Release();
+		m_VariableTable.Release();
+		m_Mesh.pVertexBuffer->Release();
+		m_Mesh.pIndexBuffer->Release();
+		m_SphereMesh.pVertexBuffer->Release();
+		m_SphereMesh.pIndexBuffer->Release();
+		m_AlbedoMap.Release();
+		m_NormalMap.Release();
+		m_SamplerState.Release();
 	}
 
 

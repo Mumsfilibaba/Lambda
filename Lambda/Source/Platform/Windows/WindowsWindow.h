@@ -29,7 +29,6 @@ namespace Lambda
 		virtual void SetEventCallback(IEventCallback* pCallback) override final;
         virtual bool SetFullscreen(bool fullscreen) override final;
         virtual bool GetFullscreen() const override final;
-        virtual const IDevice* GetGraphicsDevice() const override final;
         virtual void* GetNativeHandle() const override;
         virtual uint32 GetHeight() const override;
         virtual uint32 GetWidth() const override;

@@ -15,8 +15,9 @@ namespace Lambda
         LAMBDA_ASSERT_PRINT(ppSwapChain != nullptr, "VKNFactory::CreateDeviceAndSwapChain: ppSwapChain cannot be nullptr\n");
         
         //Create device and swapchain
-        (*ppDevice)     = DBG_NEW VKNDevice(deviceDesc);
-        (*ppSwapChain)  = DBG_NEW VKNSwapChain(swapChainDesc);
+		VKNDevice* pVkDevice = DBG_NEW VKNDevice(deviceDesc);
+		(*ppDevice)		= pVkDevice;
+        (*ppSwapChain)  = DBG_NEW VKNSwapChain(pVkDevice, swapChainDesc);
         
         //Check if we are gonna get the immediate context aswell
         if (ppImmediateContext)

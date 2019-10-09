@@ -20,7 +20,7 @@ namespace Lambda
 	//DX12DeviceContext
 	//-----------------
 
-	DX12DeviceContext::DX12DeviceContext(DX12Device* pDevice, CommandListType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV)
+	DX12DeviceContext::DX12DeviceContext(DX12Device* pDevice, DeviceContextType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV)
 		: DeviceObjectBase<DX12Device, IDeviceContext>(pDevice),
 		m_Allocator(nullptr),
 		m_List(nullptr),
@@ -35,13 +35,13 @@ namespace Lambda
 		m_hSamplerDescriptorTables(),
 		m_SamplerDescriptorSize(0),
 		m_ResourceDescriptorSize(0),
-		m_Type(COMMAND_LIST_TYPE_UNKNOWN)
+		m_Type(DEVICE_CONTEXT_TYPE_UNKNOWN)
 	{
 		Init(type, nullSampler, nullSRV, nullUAV, nullCBV);
 	}
 
 
-	void DX12DeviceContext::Init(CommandListType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV)
+	void DX12DeviceContext::Init(DeviceContextType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV)
 	{
 		using namespace Microsoft::WRL;
 
@@ -130,19 +130,10 @@ namespace Lambda
 	}
 
 
-	void DX12DeviceContext::BeginRenderPass(IRenderPass* pRenderPass)
-	{
-		LAMBDA_ASSERT(pRenderPass);
-	}
-
-
-	void DX12DeviceContext::EndRenderPass()
-	{
-	}
-
 	void DX12DeviceContext::ResetQuery(IQuery* pQuery)
 	{
 	}
+
 
 	void DX12DeviceContext::WriteTimeStamp(IQuery* pQuery, PipelineStage stage)
 	{
@@ -173,17 +164,21 @@ namespace Lambda
 	}*/
 
 
-	void DX12DeviceContext::SetViewport(const Viewport& viewport)
+	void DX12DeviceContext::SetRendertargets(const ITexture* const* ppRenderTargets, uint32 numRendertargets, const ITexture* pDepthStencil)
 	{
-		D3D12_VIEWPORT port = { viewport.TopX, viewport.TopY, viewport.Width, viewport.Height, viewport.MinDepth, viewport.MaxDepth };
-		m_List->RSSetViewports( 1, &port );
+	}
+
+	void DX12DeviceContext::SetViewports(const Viewport* pViewports, uint32 numViewports)
+	{
+		//D3D12_VIEWPORT port = { viewport.TopX, viewport.TopY, viewport.Width, viewport.Height, viewport.MinDepth, viewport.MaxDepth };
+		//m_List->RSSetViewports( 1, &port );
 	}
 
 
-	void DX12DeviceContext::SetScissorRect(const Rectangle& scissorRect)
+	void DX12DeviceContext::SetScissorRects(const Rectangle* pScissorRect, uint32 numScissorRects)
 	{
-		D3D12_RECT rect = { (LONG)scissorRect.X, (LONG)scissorRect.Y, (LONG)scissorRect.X + (LONG)scissorRect.Width, (LONG)scissorRect.Y + (LONG)scissorRect.Height };
-		m_List->RSSetScissorRects(1, &rect);
+		//D3D12_RECT rect = { (LONG)scissorRect.X, (LONG)scissorRect.Y, (LONG)scissorRect.X + (LONG)scissorRect.Width, (LONG)scissorRect.Y + (LONG)scissorRect.Height };
+		//m_List->RSSetScissorRects(1, &rect);
 	}
 
 
@@ -212,10 +207,10 @@ namespace Lambda
 	}
 
 
-	void DX12DeviceContext::SetVertexBuffer(IBuffer* pBuffer, uint32 slot)
+	void DX12DeviceContext::SetVertexBuffers(IBuffer* const * ppBuffers, uint32 numBuffers, uint32 slot)
 	{
-		D3D12_VERTEX_BUFFER_VIEW view = reinterpret_cast<DX12Buffer*>(pBuffer)->GetVertexBufferView();
-		m_List->IASetVertexBuffers(slot, 1, &view);
+		//D3D12_VERTEX_BUFFER_VIEW view = reinterpret_cast<DX12Buffer*>(pBuffer)->GetVertexBufferView();
+		//m_List->IASetVertexBuffers(slot, 1, &view);
 	}
 
 
@@ -231,7 +226,7 @@ namespace Lambda
 	}
 
 
-	CommandListType DX12DeviceContext::GetType() const
+	DeviceContextType DX12DeviceContext::GetType() const
 	{
 		return m_Type;
 	}
@@ -251,7 +246,7 @@ namespace Lambda
 	}
 
 
-	void DX12DeviceContext::VSSetConstantBuffers(const IBuffer* const * ppBuffers, uint32 numBuffers, uint32 startSlot)
+	/*void DX12DeviceContext::VSSetConstantBuffers(const IBuffer* const * ppBuffers, uint32 numBuffers, uint32 startSlot)
 	{
 		for (uint32 i = 0; i < numBuffers; i++)
 		{
@@ -383,7 +378,7 @@ namespace Lambda
 		{
 			InternalSetSamplerDescriptor(m_hSamplerDescriptorTables[4].CPU, reinterpret_cast<const DX12SamplerState*>(ppSamplerStates[i])->GetDescriptorHandle().CPU, startSlot + i);
 		}
-	}
+	}*/
 
 
 	void DX12DeviceContext::UpdateBuffer(IBuffer* pResource, const ResourceData* pData)
@@ -445,6 +440,31 @@ namespace Lambda
 	}
 
 
+	void DX12DeviceContext::MapBuffer(IBuffer* pBuffer, void** ppData)
+	{
+	}
+
+
+	void DX12DeviceContext::Unmap(IBuffer* pBuffer)
+	{
+	}
+
+
+	void DX12DeviceContext::ResolveTexture(ITexture* pDst, uint32 dstMipLevel, ITexture* pSrc, uint32 srcMipLevel)
+	{
+	}
+
+
+	void DX12DeviceContext::Draw(uint32 vertexCount, uint32 startVertex)
+	{
+	}
+
+
+	void DX12DeviceContext::DrawIndexed(uint32 indexCount, uint32 startIndexLocation, uint32 baseVertexLocation)
+	{
+	}
+
+
 	void DX12DeviceContext::DrawInstanced(uint32 vertexCountPerInstance, uint32 instanceCount, uint32 startVertexLocation, uint32 startInstanceLocation)
 	{
 		m_ResourceTracker.FlushBarriers(m_List.Get());
@@ -463,6 +483,11 @@ namespace Lambda
 	}
 
 
+	void DX12DeviceContext::ExecuteDefferedContext(IDeviceContext* pContext)
+	{
+	}
+
+
 	void DX12DeviceContext::SetName(const char* pName)
 	{
 		m_List->SetName(StringToWidestring(pName).c_str());
@@ -475,14 +500,22 @@ namespace Lambda
 	}
 
 
-	void DX12DeviceContext::Close()
+	void DX12DeviceContext::End()
 	{
 		m_ResourceTracker.FlushBarriers(m_List.Get());
 		m_List->Close();
 	}
 
+	void DX12DeviceContext::Flush()
+	{
+	}
 
-	void DX12DeviceContext::Reset()
+	void DX12DeviceContext::ClearState()
+	{
+	}
+
+
+	void DX12DeviceContext::Begin()
 	{
 		//Reset commandallocator and commandlist
 		if (FAILED(m_Allocator->Reset()))

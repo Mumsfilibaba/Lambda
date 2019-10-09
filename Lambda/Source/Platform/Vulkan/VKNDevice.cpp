@@ -30,6 +30,7 @@ namespace Lambda
         m_PresentationQueue(VK_NULL_HANDLE),
 		m_pBufferManager(nullptr),
 		m_pFramebufferCache(nullptr),
+		m_pRenderPassCache(nullptr),
 		m_pImmediateContext(nullptr),
 		m_DeviceAllocator(nullptr),
 		m_Instance(VK_NULL_HANDLE),
@@ -37,8 +38,7 @@ namespace Lambda
 		m_Device(VK_NULL_HANDLE),
 		m_PhysicalDevice(VK_NULL_HANDLE),
 		m_FamiliyIndices(),
-		m_PhysicalDeviceProperties(),
-		m_CurrentFrame(0)
+		m_PhysicalDeviceProperties()
     {   
         LAMBDA_ASSERT(s_pInstance == nullptr);
         s_pInstance = this;
@@ -46,6 +46,9 @@ namespace Lambda
         //Add a ref to the refcounter
         this->AddRef();
         Init(desc);
+
+		//Set api to properties
+		m_Properties.Api = GRAPHICS_API_VULKAN;
     }
     
     
@@ -395,7 +398,6 @@ namespace Lambda
 		vkGetDeviceQueue(m_Device, m_FamiliyIndices.GraphicsFamily, 0, &m_GraphicsQueue);
 		vkGetDeviceQueue(m_Device, m_FamiliyIndices.PresentFamily, 0, &m_PresentationQueue);
         
-        
 		//Create allocator
 		m_DeviceAllocator = DBG_NEW VKNAllocator(this);
 		//Create descriptorpoolmanager
@@ -404,7 +406,8 @@ namespace Lambda
 		m_pBufferManager = DBG_NEW VKNBufferManager();
 		//Create framebuffercache
 		m_pFramebufferCache = DBG_NEW VKNFramebufferCache();
-        
+		//Create renderpasscache
+		m_pRenderPassCache = DBG_NEW VKNRenderPassCache();        
       
         //Init internal commandlist, used for copying from staging buffers to final resource etc.
         m_pImmediateContext = DBG_NEW VKNDeviceContext(this, m_DeviceAllocator.Get(), DEVICE_CONTEXT_TYPE_IMMEDIATE);
@@ -548,13 +551,23 @@ namespace Lambda
     }
     
 
-    void VKNDevice::ExecuteContext(VkSubmitInfo* pInfo) const
+    void VKNDevice::ExecuteCommandBuffer(VkSubmitInfo* pInfo, uint32 numBuffers, VkFence fence) const
     {
-        if (vkQueueSubmit(m_GraphicsQueue, 1, pInfo, VK_NULL_HANDLE) != VK_SUCCESS)
+        if (vkQueueSubmit(m_GraphicsQueue, numBuffers, pInfo, fence) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to submit CommandBuffers\n");
         }
+		else
+		{
+			FinishFrame();
+		}
     }
+
+	
+	void VKNDevice::Present(VkPresentInfoKHR* pInfo)
+	{
+		vkQueuePresentKHR(m_PresentationQueue, pInfo);
+	}
 
 
 	VKNDeviceContext* VKNDevice::GetVKNImmediateContext() const
@@ -562,43 +575,10 @@ namespace Lambda
 		m_pImmediateContext->AddRef();
 		return m_pImmediateContext;
 	}
-
-    
-	void VKNDevice::Present(VkPresentInfoKHR* pInfo) const
-	{
-		//Setup "syncobjects"s
-		VkSemaphore waitSemaphores[]		= { m_ImageSemaphores[m_CurrentFrame] };
-		VkSemaphore signalSemaphores[]		= { m_RenderSemaphores[m_CurrentFrame] };
-		VkPipelineStageFlags waitStages[]	= {  };
-
-		//submit commandbuffers
-		VkSubmitInfo submitInfo = {};
-		submitInfo.sType				= VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submitInfo.pNext				= nullptr;
-		submitInfo.waitSemaphoreCount	= 1;
-		submitInfo.pWaitSemaphores		= waitSemaphores;
-		submitInfo.pWaitDstStageMask	= waitStages;
-		submitInfo.commandBufferCount	= numLists;
-		submitInfo.pCommandBuffers		= buffers.data();
-		submitInfo.signalSemaphoreCount = 1;
-		submitInfo.pSignalSemaphores	= signalSemaphores;
-		if (vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, pVkContext->GetVkFence()) != VK_SUCCESS)
-		{
-			LOG_DEBUG_ERROR("Vulkan: Failed to submit CommandBuffers\n");
-		}
-		else
-		{
-			m_pSwapChain->Present(m_PresentationQueue, m_RenderSemaphores[m_CurrentFrame]);
-			GPUWaitForFrame();
-		}
-	}
     
     
     void VKNDevice::FinishFrame() const
     {
-		//Advance current frame counter
-		m_CurrentFrame = (m_CurrentFrame + 1) % m_Desc.BackBufferCount;
-
         //Cleanup memory
         m_pBufferManager->AdvanceFrame();
         m_DeviceAllocator->EmptyGarbageMemory();
