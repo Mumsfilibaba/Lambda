@@ -125,10 +125,7 @@ namespace Lambda
 			m_CurrentFPS = 0;
 		}
 		m_CurrentFPS++;
-
-        //Begin frame
-		m_Context->Begin();
-		
+	
 		//Get last frame's values from query
 		uint64 values[2] = { 0, 0 };
 		m_pCurrentQuery->GetResults(values, 2, 0);
@@ -225,7 +222,6 @@ namespace Lambda
 
 	void Renderer3D::End()
 	{
-		m_Context->End();
 	}
 
 

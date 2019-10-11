@@ -1,8 +1,8 @@
 #include "LambdaPch.h"
 #include "VKNTexture.h"
 #include "VKNDevice.h"
-#include "VKNFramebuffer.h"
 #include "VKNUtilities.h"
+#include "VKNFramebufferCache.h"
 #include "VKNConversions.inl"
 
 namespace Lambda
@@ -54,7 +54,7 @@ namespace Lambda
 
 		//Remove associated framebuffer if there is any
 
-		VKNFramebufferCache::Get().ReleaseAllContainingTexture(m_pDevice->GetVkDevice(), this);
+		VKNFramebufferCache::Get().OnReleaseTexture(m_pDevice->GetVkDevice(), this);
 
 		if (m_ImageView != VK_NULL_HANDLE)
 		{
@@ -146,23 +146,32 @@ namespace Lambda
         info.initialLayout          = VK_IMAGE_LAYOUT_UNDEFINED;
         info.sharingMode            = VK_SHARING_MODE_EXCLUSIVE;
         info.samples                = ConvertSampleCount(desc.SampleCount);
-        //Set special usage
-        if (desc.Flags & TEXTURE_FLAGS_GENEATE_MIPS)
-            info.usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-
+        
+		if (desc.Flags & TEXTURE_FLAGS_GENEATE_MIPS || info.samples > 1)
+		{
+			//VK_IMAGE_USAGE_TRANSFER_SRC_BIT - We we are using msaa, we should be able to resolve the image
+			//VK_IMAGE_USAGE_TRANSFER_SRC_BIT - We need to blit from a previous mip so we have to be able to use it as a copy source
+			info.usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+		}
         if (desc.Flags & TEXTURE_FLAGS_SHADER_RESOURCE)
         {
-            info.usage |= VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
             m_AspectFlags |= VK_IMAGE_ASPECT_COLOR_BIT;
+			//VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT - Texture, VK_IMAGE_USAGE_TRANSFER_DST_BIT - So we can load up inital data
+            info.usage |= VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
         }
 		if (desc.Flags & TEXTURE_FLAGS_RENDER_TARGET)
 		{
-			info.usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 			m_AspectFlags |= VK_IMAGE_ASPECT_COLOR_BIT;
+			//VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT - Rendertarget, VK_IMAGE_USAGE_TRANSFER_DST_BIT -So we can clear the rendertarget
+			info.usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+			
 		}
         if (desc.Flags & TEXTURE_FLAGS_DEPTH_STENCIL)
         {
+			//VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT - Depth, VK_IMAGE_USAGE_TRANSFER_DST_BIT -So we can clear the depthstencil
             info.usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+			
+			//Set stencil aspect if format has a stencil-part
 			if (info.format == VK_FORMAT_D24_UNORM_S8_UINT || info.format == VK_FORMAT_D32_SFLOAT_S8_UINT)
                 m_AspectFlags |= VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
 			else
@@ -205,11 +214,11 @@ namespace Lambda
     {
         //Create image views
         VkImageViewCreateInfo viewInfo = {};
-        viewInfo.sType      = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        viewInfo.pNext      = nullptr;
-        viewInfo.flags      = 0;
-        viewInfo.image      = m_Image;
-        viewInfo.format     = GetVkFormat();
+        viewInfo.sType  = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        viewInfo.pNext  = nullptr;
+        viewInfo.flags  = 0;
+        viewInfo.image  = m_Image;
+        viewInfo.format = GetVkFormat();
         if (m_Desc.Type == TEXTURE_TYPE_2D)
         {
             viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;

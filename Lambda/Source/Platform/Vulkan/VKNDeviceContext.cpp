@@ -2,12 +2,12 @@
 #include "Utilities/MathHelper.h"
 #include "VKNDeviceContext.h"
 #include "VKNDevice.h"
-#include "VKNBuffer.h"
-#include "VKNSamplerState.h"
-#include "VKNTexture.h"
-#include "VKNFramebuffer.h"
 #include "VKNQuery.h"
-#include "VKNRenderPass.h"
+#include "VKNBuffer.h"
+#include "VKNTexture.h"
+#include "VKNSamplerState.h"
+#include "VKNRenderPassCache.h"
+#include "VKNFramebufferCache.h"
 #include "VKNConversions.inl"
 
 namespace Lambda
@@ -31,7 +31,7 @@ namespace Lambda
 		m_VariableTable(nullptr),
         m_NumCommandBuffers(0),
         m_FrameIndex(0),
-		m_HasRenderPass(false),
+		m_ContextState(DEVICE_CONTEXT_STATE_WAITING),
         m_Type(DEVICE_CONTEXT_TYPE_UNKNOWN),
 		m_Name()
     {
@@ -190,6 +190,9 @@ namespace Lambda
     
     void VKNDeviceContext::BlitTexture(VKNTexture* pDst, uint32 dstWidth, uint32 dstHeight, uint32 dstMipLevel, VKNTexture* pSrc, uint32 srcWidth, uint32 srcHeight, uint32 srcMipLevel)
     {
+		//Make sure that we have a commandbuffer
+		QueryCommandBuffer();
+
         LAMBDA_ASSERT_PRINT(m_RenderPass == VK_NULL_HANDLE, "Vulkan: EndRenderPass must be called before BlitTexture\n");
         
         VkImageBlit blitInfo = {};
@@ -257,21 +260,22 @@ namespace Lambda
     
 	void VKNDeviceContext::SetRendertargets(const ITexture* const* ppRenderTargets, uint32 numRendertargets, const ITexture* pDepthStencil)
 	{
-		//End renderpass when setting new rendertargets
-		if (HasRenderPassInstance())
-			EndRenderPass();
-
 		//Setup renderpass
 		VKNRenderPassCacheKey renderPasskey = {};
 		renderPasskey.NumRenderTargets = numRendertargets;
+
 		//Setup framebuffer
 		VKNFramebufferCacheKey framebufferKey = {};
 		framebufferKey.NumAttachmentViews = numRendertargets;
 		for (uint32 i = 0; i < numRendertargets; i++)
 		{
+			//Get rendertarget and transition
 			m_ppRenderTargets[i] = reinterpret_cast<const VKNTexture*>(ppRenderTargets[i]);
+			TransitionTexture(ppRenderTargets[i], RESOURCE_STATE_RENDERTARGET, 0, LAMBDA_TRANSITION_ALL_MIPS);
+
 			//Get view
 			framebufferKey.AttachmentViews[i] = m_ppRenderTargets[i]->GetVkImageView();
+
 			//Get format
 			const TextureDesc& desc = m_ppRenderTargets[i]->GetDesc();
 			renderPasskey.RenderTargetFormats[i] = desc.Format;
@@ -282,21 +286,28 @@ namespace Lambda
 		uint32 sampleCount	= 0;
 		if (pDepthStencil)
 		{
+			//Set and transition depthstencil
 			framebufferKey.AttachmentViews[framebufferKey.NumAttachmentViews++] = m_DepthStencil->GetVkImageView();
+			TransitionTexture(pDepthStencil, RESOURCE_STATE_DEPTH_STENCIL, 0, LAMBDA_TRANSITION_ALL_MIPS);
+
 			//Get extent
 			const TextureDesc& desc = pDepthStencil->GetDesc();
 			m_FramebufferExtent.width	= desc.Width;
 			m_FramebufferExtent.height	= desc.Height;
+			
 			//Get samplecount
 			sampleCount		= desc.SampleCount;
 			renderPasskey.DepthStencilFormat = desc.Format;
 		}
 		else
 		{
+			framebufferKey.AttachmentViews[framebufferKey.NumAttachmentViews++] = VK_NULL_HANDLE;
+
 			//Get extent
 			const TextureDesc& desc = ppRenderTargets[0]->GetDesc();
 			m_FramebufferExtent.width	= desc.Width;
 			m_FramebufferExtent.height	= desc.Height;
+
 			//Get samplecount
 			sampleCount		= desc.SampleCount;
 			renderPasskey.DepthStencilFormat = FORMAT_UNKNOWN;
@@ -306,6 +317,7 @@ namespace Lambda
 		VKNRenderPassCache& renderPassCache = VKNRenderPassCache::Get();
 		renderPasskey.SampleCount = sampleCount;
 		m_RenderPass = renderPassCache.GetRenderPass(renderPasskey);
+		
 		//Get framebuffer
 		VKNFramebufferCache& framebufferCache = VKNFramebufferCache::Get();
 		framebufferKey.RenderPass = m_RenderPass;
@@ -317,6 +329,10 @@ namespace Lambda
     {
 		LAMBDA_ASSERT(pViewport != nullptr);
 		
+		//Make sure that we have a commandbuffer
+		QueryCommandBuffer();
+
+		//Set viewports
         VkViewport views[LAMBDA_MAX_VIEWPORT_COUNT] = {};
 		for (uint32 i = 0; i < numViewports; i++)
 		{
@@ -333,6 +349,12 @@ namespace Lambda
     
     void VKNDeviceContext::SetScissorRects(const Rectangle* pScissorRect, uint32 numRects)
     {
+		LAMBDA_ASSERT(pScissorRect != nullptr);
+
+		//Make sure that we have a commandbuffer
+		QueryCommandBuffer();
+
+		//Set scissorrects
         VkRect2D rects[LAMBDA_MAX_SCISSOR_RECT_COUNT] = {};
 		for (uint32 i = 0; i < numRects; i++)
 		{
@@ -348,6 +370,9 @@ namespace Lambda
     
     void VKNDeviceContext::SetPipelineState(IPipelineState* pPipelineState)
     {
+		//Make sure that we have a commandbuffer
+		QueryCommandBuffer();
+
 		//Get a ref to the bound pipelinestate
 		VKNPipelineState* pVkPipelineState = reinterpret_cast<VKNPipelineState*>(pPipelineState);
 		pVkPipelineState->AddRef();
@@ -374,6 +399,9 @@ namespace Lambda
 
     void VKNDeviceContext::SetVertexBuffers(IBuffer* const* pBuffers, uint32 numBuffers, uint32 slot)
     {
+		//Make sure that we have a commandbuffer
+		QueryCommandBuffer();
+
 		VkBuffer	 buffers[LAMBDA_MAX_VERTEXBUFFER_COUNT];
         VkDeviceSize offsets[LAMBDA_MAX_VERTEXBUFFER_COUNT];
 		for (uint32 i = 0; i < numBuffers; i++)
@@ -389,6 +417,10 @@ namespace Lambda
     
     void VKNDeviceContext::SetIndexBuffer(IBuffer* pBuffer, Format format)
     {
+		//Make sure that we have a commandbuffer
+		QueryCommandBuffer();
+
+		//Bind indexbuffer
 		VKNBuffer*	pVkBuffer = reinterpret_cast<VKNBuffer*>(pBuffer);
         VkBuffer	buffer = reinterpret_cast<VkBuffer>(pBuffer->GetNativeHandle());
 
@@ -412,6 +444,9 @@ namespace Lambda
 	
 	void VKNDeviceContext::SetConstantBlocks(ShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData)
 	{
+		//Make sure that we have a commandbuffer
+		QueryCommandBuffer();
+
 		VkShaderStageFlags shaderStageFlags = ConvertShaderStages(stage);
 
 		VkPipelineLayout pipelineLayout = m_PipelineState->GetVkPipelineLayout();
@@ -439,8 +474,11 @@ namespace Lambda
     
     void VKNDeviceContext::TransitionTexture(const ITexture* pTexture, ResourceState state, uint32 startMipLevel, uint32 numMipLevels)
     {
+		//Make sure that we have a commandbuffer
+		QueryCommandBuffer();
+
 		//Transitions can only happen outside a renderpass
-		if (HasRenderPassInstance())
+		if (IsInsideRenderPass())
 			EndRenderPass();
 
         const VKNTexture* pVkTexture = reinterpret_cast<const VKNTexture*>(pTexture);
@@ -456,21 +494,15 @@ namespace Lambda
         barrier.image                           = pVkTexture->GetVkImage();
         barrier.subresourceRange.aspectMask     = pVkTexture->GetAspectFlags();
         barrier.subresourceRange.baseMipLevel   = startMipLevel;
-        
-        const TextureDesc& textureDesc = pVkTexture->GetDesc();
-        if (numMipLevels == LAMBDA_TRANSITION_ALL_MIPS)
-        {
-            barrier.subresourceRange.levelCount = textureDesc.MipLevels;
-        }
-        else
-        {
-            barrier.subresourceRange.levelCount = numMipLevels;
-        }
-    
-        barrier.subresourceRange.baseArrayLayer = 0;
-        barrier.subresourceRange.layerCount     = 1;
         barrier.srcAccessMask                   = 0;
         barrier.dstAccessMask                   = 0;
+        barrier.subresourceRange.baseArrayLayer = 0;
+        barrier.subresourceRange.layerCount     = 1;        
+        const TextureDesc& textureDesc = pVkTexture->GetDesc();
+        if (numMipLevels == LAMBDA_TRANSITION_ALL_MIPS)
+            barrier.subresourceRange.levelCount = textureDesc.MipLevels;
+        else
+            barrier.subresourceRange.levelCount = numMipLevels;
     
         //Set flags and stage
         VkPipelineStageFlags sourceStage        = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
@@ -578,8 +610,13 @@ namespace Lambda
 		}
 		else
 		{
-			LAMBDA_ASSERT_PRINT(m_RenderPass == VK_NULL_HANDLE, "Vulkan: Only buffers with 'usage=RESOURCE_USAGE_DYNAMIC' can be updated during a RenderPass instance\n");
-            
+			//Make sure that we have a commandbuffer
+			QueryCommandBuffer();
+
+			//End renderpass before updating default buffer
+			if (IsInsideRenderPass())
+				EndRenderPass();
+
             //Get offset before allocating
             uint64 deviceOffset = m_pBufferUpload->GetDeviceOffset();
 
@@ -636,8 +673,11 @@ namespace Lambda
     
     void VKNDeviceContext::CopyBuffer(IBuffer* pDst, IBuffer* pSrc)
     {
+		//Make sure that we have a commandbuffer
+		QueryCommandBuffer();
+
 		//End renderpass when clearing depthstencil
-		if (HasRenderPassInstance())
+		if (IsInsideRenderPass())
 			EndRenderPass();
 
 		//Copy buffer
@@ -666,9 +706,32 @@ namespace Lambda
 	{
 		LOG_DEBUG_INFO("ResolveTexture()\n");
 
+		//Transition texture before clearing
+		TransitionTexture(pDst, RESOURCE_STATE_COPY_DEST, 0, LAMBDA_TRANSITION_ALL_MIPS);
+		TransitionTexture(pSrc, RESOURCE_STATE_COPY_SRC, 0, LAMBDA_TRANSITION_ALL_MIPS);
+
 		//Transitions can only happen outside a renderpass
-		if (HasRenderPassInstance())
+		if (IsInsideRenderPass())
 			EndRenderPass();
+
+		VKNTexture* pVkDst = reinterpret_cast<VKNTexture*>(pDst);
+		VKNTexture* pVKSrc = reinterpret_cast<VKNTexture*>(pSrc);
+		
+		VkImageResolve resolve = {};
+		resolve.dstOffset = { 0, 0, 0 };
+		resolve.srcOffset = { 0, 0, 0 };
+		resolve.extent.width  = pVkDst->GetDesc().Width;
+		resolve.extent.height = pVkDst->GetDesc().Height;
+		resolve.extent.depth  = 1;
+		resolve.dstSubresource.aspectMask	  = pVkDst->GetAspectFlags();
+		resolve.dstSubresource.baseArrayLayer = 0;
+		resolve.dstSubresource.layerCount	  = 1;
+		resolve.dstSubresource.mipLevel		  = 0;
+		resolve.srcSubresource.aspectMask	  = pVKSrc->GetAspectFlags();
+		resolve.srcSubresource.baseArrayLayer = 0;
+		resolve.srcSubresource.layerCount	  = 1;
+		resolve.srcSubresource.mipLevel		  = 0;
+		vkCmdResolveImage(m_CurrentCommandBuffer, pVKSrc->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, pVkDst->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &resolve);
 	}
 
 
@@ -721,18 +784,19 @@ namespace Lambda
             for (uint32 i = 0; i < m_NumCommandBuffers; i++)
             {
                 std::string name = m_Name + "[" + std::to_string(i) + "]";
-                m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64)m_pCommandBuffers[i], name);
+				VkCommandBuffer buffer = m_pCommandBuffers[i];
+                m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64)buffer, name);
             }
 		}
     }
     
     
-    void VKNDeviceContext::End()
+    void VKNDeviceContext::EndCommanBuffer()
     {
-		LOG_DEBUG_INFO("End()\n");
+		LOG_DEBUG_INFO("EndCommanBuffer()\n");
 
 		//End renderpass before ending commmandsubmition
-		if (HasRenderPassInstance())
+		if (IsInsideRenderPass())
 			EndRenderPass();
 
 		//End commandbuffer
@@ -741,35 +805,44 @@ namespace Lambda
             LOG_DEBUG_ERROR("Vulkan: Failed to End CommandBuffer\n");
         }
 
-		m_FrameIndex = (m_FrameIndex + 1) % m_NumCommandBuffers;
+		//Move to next frame
+		m_FrameIndex = (m_FrameIndex+1) % m_NumCommandBuffers;
+		//Set context state
+		m_ContextState = DEVICE_CONTEXT_STATE_WAITING;
     }
     
     
-    void VKNDeviceContext::Begin()
+    void VKNDeviceContext::QueryCommandBuffer()
     {
-		LOG_DEBUG_INFO("Begin()\n");
+		if (m_ContextState == DEVICE_CONTEXT_STATE_WAITING)
+		{
+			LOG_DEBUG_INFO("QueryCommandBuffer()\n");
+			
+			//Get next buffer
+			m_CurrentCommandBuffer	= m_pCommandBuffers[m_FrameIndex];
+			m_CurrentFence			= m_pFences[m_FrameIndex];
+			//Wait for last frame
+			vkWaitForFences(m_pDevice->GetVkDevice(), 1, &m_CurrentFence, VK_TRUE, std::numeric_limits<uint64_t>::max());
+			vkResetFences(m_pDevice->GetVkDevice(), 1, &m_CurrentFence);
+        
+			//Begin commandbuffer
+			VkCommandBufferBeginInfo info = {};
+			info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+			info.pNext = nullptr;
+			info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+			info.pInheritanceInfo = nullptr;
+			if (vkBeginCommandBuffer(m_CurrentCommandBuffer, &info) != VK_SUCCESS)
+			{
+				LOG_DEBUG_ERROR("Vulkan: Failed to Begin CommandBuffer\n");
+			}
+        
+			//Reset dependencies, when mapping a UploadBuffer, reset is called aswell
+			m_pBufferUpload->Reset();
+			m_pTextureUpload->Reset();
 
-        //Get next buffer
-        m_CurrentCommandBuffer	= m_pCommandBuffers[m_FrameIndex];
-        m_CurrentFence			= m_pFences[m_FrameIndex];
-        //Wait for last frame
-        vkWaitForFences(m_pDevice->GetVkDevice(), 1, &m_CurrentFence, VK_TRUE, std::numeric_limits<uint64_t>::max());
-        vkResetFences(m_pDevice->GetVkDevice(), 1, &m_CurrentFence);
-        
-        //Begin commandbuffer
-        VkCommandBufferBeginInfo info = {};
-        info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        info.pNext = nullptr;
-        info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-        info.pInheritanceInfo = nullptr;
-        if (vkBeginCommandBuffer(m_CurrentCommandBuffer, &info) != VK_SUCCESS)
-        {
-            LOG_DEBUG_ERROR("Vulkan: Failed to Begin CommandBuffer\n");
-        }
-        
-		//Reset dependencies, when mapping a UploadBuffer, reset is called aswell
-        m_pBufferUpload->Reset();
-		m_pTextureUpload->Reset();
+			//Set context state
+			m_ContextState = DEVICE_CONTEXT_STATE_RECORDING;
+		}
     }
     
 
@@ -777,9 +850,8 @@ namespace Lambda
     {
 		LOG_DEBUG_INFO("Flush()\n");
 
-		//End renderpass before flushing
-		if (HasRenderPassInstance())
-			EndRenderPass();
+		//End the recording
+		EndCommanBuffer();
 
 		LAMBDA_ASSERT_PRINT(m_WaitSemaphores.size() == m_WaitDstStageMasks.size(), "Vulkan: Number of WaitSemaphores and WaitDstStageMasks must be the same\n");
 
@@ -795,14 +867,17 @@ namespace Lambda
 		submitInfo.pWaitDstStageMask	= m_WaitDstStageMasks.data();
 		submitInfo.commandBufferCount	= 1;
 		submitInfo.pCommandBuffers		= buffers;
-		submitInfo.signalSemaphoreCount = 0;
-		submitInfo.pSignalSemaphores	= nullptr;
+		submitInfo.signalSemaphoreCount = uint32(m_SignalSemaphores.size());
+		submitInfo.pSignalSemaphores	= m_SignalSemaphores.data();
 		m_pDevice->ExecuteCommandBuffer(&submitInfo, 1, m_CurrentFence);
 
+		//Finish device frame
+		m_pDevice->FinishFrame();
+
 		//Clear semaphores
+		m_SignalSemaphores.clear();
 		m_WaitSemaphores.clear();
 		m_WaitDstStageMasks.clear();
-		m_SignalSemaphores.clear();
     }
 
 
@@ -814,7 +889,7 @@ namespace Lambda
 
 	void VKNDeviceContext::BeginRenderPass()
 	{
-        LAMBDA_ASSERT_PRINT(!HasRenderPassInstance(), "Vulkan: EndRenderPass must be called before a new call to BeginRenderPass\n");
+        LAMBDA_ASSERT_PRINT(!IsInsideRenderPass(), "Vulkan: EndRenderPass must be called before a new call to BeginRenderPass\n");
 		LAMBDA_ASSERT_PRINT(m_RenderPass != VK_NULL_HANDLE && m_Framebuffer != VK_NULL_HANDLE, "Vulkan: SetRenderTargets must be called before BeginRenderPass\n");
 
 		LOG_DEBUG_INFO("BeginRenderPass()\n");
@@ -829,25 +904,32 @@ namespace Lambda
         info.clearValueCount	= 0;
         info.pClearValues		= nullptr;
         vkCmdBeginRenderPass(m_CurrentCommandBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
-		m_HasRenderPass = true;
+		
+		//Set context state
+		m_ContextState = DEVICE_CONTEXT_STATE_RENDERPASS;
 	}
 
 
 	void VKNDeviceContext::EndRenderPass()
 	{
-        LAMBDA_ASSERT_PRINT(HasRenderPassInstance(), "Vulkan: EndRenderPass must be called after BeginRenderPass\n");
+        LAMBDA_ASSERT_PRINT(IsInsideRenderPass(), "Vulkan: EndRenderPass must be called after BeginRenderPass\n");
         
 		LOG_DEBUG_INFO("EndRenderPass()\n");
 
+		//End renderpass
         vkCmdEndRenderPass(m_CurrentCommandBuffer);
-		m_HasRenderPass = false;
+		//Set context state
+		m_ContextState = DEVICE_CONTEXT_STATE_RECORDING;
 	}
 
 
 	void VKNDeviceContext::PrepareForDraw()
 	{
+		//Make sure that we have a commandbuffer
+		QueryCommandBuffer();
+
 		//Begin renderpass when before drawing
-		if (!HasRenderPassInstance())
+		if (!IsInsideRenderPass())
 			BeginRenderPass();
 
 		//Commit and draw
@@ -858,13 +940,16 @@ namespace Lambda
     void VKNDeviceContext::ResetQuery(IQuery* pQuery)
     {
         LAMBDA_ASSERT(pQuery != nullptr);
-        
+     
+		//Make sure that we have a commandbuffer
+		QueryCommandBuffer();
+
+		//Reset the query
         VKNQuery* pVkQuery = reinterpret_cast<VKNQuery*>(pQuery);
-        
         const QueryDesc& desc   = pVkQuery->GetDesc();
+        
         VkQueryPool queryPool   = reinterpret_cast<VkQueryPool>(pVkQuery->GetNativeHandle());
         vkCmdResetQueryPool(m_CurrentCommandBuffer, queryPool, 0, desc.QueryCount);
-        
         pVkQuery->Reset();
     }
     
@@ -873,11 +958,13 @@ namespace Lambda
     {
         LAMBDA_ASSERT(pQuery != nullptr);
         
-        VKNQuery* pVkQuery = reinterpret_cast<VKNQuery*>(pQuery);
-        
-        VkQueryPool queryPool = reinterpret_cast<VkQueryPool>(pVkQuery->GetNativeHandle());
+		//Make sure that we have a commandbuffer
+		QueryCommandBuffer();
+
+		//Write timestamp
+        VKNQuery* pVkQuery		= reinterpret_cast<VKNQuery*>(pQuery);
+        VkQueryPool queryPool	= reinterpret_cast<VkQueryPool>(pVkQuery->GetNativeHandle());
         vkCmdWriteTimestamp(m_CurrentCommandBuffer, ConvertPipelineStage(stage), queryPool, pVkQuery->GetQueryIndex());
-        
         pVkQuery->NextQuery();
     }
 }

@@ -9,7 +9,13 @@ namespace Lambda
     //VKNFactory
     //----------
 
-    void VKNFactory::CreateDeviceAndSwapChain(IDevice** ppDevice, const DeviceDesc& deviceDesc, IDeviceContext** ppImmediateContext, ISwapChain** ppSwapChain, const SwapChainDesc& swapChainDesc)
+	VKNFactory::VKNFactory()
+	{
+		this->AddRef();
+	}
+
+
+	void VKNFactory::CreateDeviceAndSwapChain(IDevice** ppDevice, const DeviceDesc& deviceDesc, IDeviceContext** ppImmediateContext, ISwapChain** ppSwapChain, const SwapChainDesc& swapChainDesc)
     {
         LAMBDA_ASSERT_PRINT(ppDevice != nullptr, "VKNFactory::CreateDeviceAndSwapChain: ppDevice cannot be nullptr\n");
         LAMBDA_ASSERT_PRINT(ppSwapChain != nullptr, "VKNFactory::CreateDeviceAndSwapChain: ppSwapChain cannot be nullptr\n");

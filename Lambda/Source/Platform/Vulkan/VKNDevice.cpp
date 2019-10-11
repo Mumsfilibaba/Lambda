@@ -1,17 +1,17 @@
 #include "LambdaPch.h"
 #include "Events/WindowEvent.h"
 #include "VKNDevice.h"
+#include "VKNQuery.h"
+#include "VKNBuffer.h"
 #include "VKNShader.h"
-#include "VKNPipelineState.h"
 #include "VKNTexture.h"
+#include "VKNUtilities.h"
+#include "VKNSwapChain.h"
 #include "VKNSamplerState.h"
 #include "VKNDeviceContext.h"
-#include "VKNFramebuffer.h"
-#include "VKNBuffer.h"
-#include "VKNSwapChain.h"
-#include "VKNRenderPass.h"
-#include "VKNQuery.h"
-#include "VKNUtilities.h"
+#include "VKNPipelineState.h"
+#include "VKNRenderPassCache.h"
+#include "VKNFramebufferCache.h"
 #include "VKNConversions.inl"
 
 namespace Lambda
@@ -54,13 +54,21 @@ namespace Lambda
     
     VKNDevice::~VKNDevice()
     {
+		//Idle device before destroying
+		WaitUntilIdle();
+
         m_pImmediateContext->Release();
 		m_pImmediateContext = nullptr;
         
+		//Release all renderpasses
+		if (m_pRenderPassCache)
+			m_pRenderPassCache->ReleaseAll(m_Device);
+
 		//Release all framebuffers
 		if (m_pFramebufferCache)
 			m_pFramebufferCache->ReleaseAll(m_Device);
 
+		SafeDelete(m_pRenderPassCache);
 		SafeDelete(m_pFramebufferCache);
 		SafeDelete(m_pBufferManager);
 		SafeDelete(m_pDescriptorPoolManager);
@@ -448,9 +456,7 @@ namespace Lambda
             else if (desc.Usage == RESOURCE_USAGE_DEFAULT)
             {
 				//Setup copy with staging buffer if other usecase
-				m_pImmediateContext->Begin();
                 m_pImmediateContext->UpdateBuffer(pVkBuffer, pInitalData);
-                m_pImmediateContext->End();
 				m_pImmediateContext->Flush();
             }
         }
@@ -471,7 +477,6 @@ namespace Lambda
         {
             LAMBDA_ASSERT(pInitalData->pData != nullptr && pInitalData->SizeInBytes != 0);
             
-            m_pImmediateContext->Begin();
             //Upload data
             m_pImmediateContext->UpdateTexture(pVkTexture, pInitalData, 0);
 
@@ -507,7 +512,6 @@ namespace Lambda
             }
             
             //Execute and wait for GPU
-            m_pImmediateContext->End();
 			m_pImmediateContext->Flush();
         }
         

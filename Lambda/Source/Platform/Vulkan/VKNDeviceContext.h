@@ -14,6 +14,18 @@ namespace Lambda
     class VKNRenderPass;
 	class VKNUploadBuffer;
 
+	//------------------
+	//DeviceContextState
+	//------------------
+
+	enum DeviceContextState : uint32
+	{
+		DEVICE_CONTEXT_STATE_UNKNOWN	= 0,
+		DEVICE_CONTEXT_STATE_WAITING	= (1 << 0),
+		DEVICE_CONTEXT_STATE_RECORDING	= (1 << 1),
+		DEVICE_CONTEXT_STATE_RENDERPASS	= (1 << 2) | DEVICE_CONTEXT_STATE_RECORDING,
+	};
+
 	//----------------
 	//VKNDeviceContext
 	//----------------
@@ -28,11 +40,6 @@ namespace Lambda
         VKNDeviceContext(VKNDevice* pDevice, IVKNAllocator* pAllocator, DeviceContextType type);
         ~VKNDeviceContext();
         
-        virtual void Begin() override final;
-
-        virtual void ResetQuery(IQuery* pQuery) override final;
-        virtual void WriteTimeStamp(IQuery* pQuery, PipelineStage stage) override final;
-
         virtual void ClearRenderTarget(ITexture* pRenderTarget, float color[4]) override final;
         virtual void ClearDepthStencil(ITexture* pDepthStencil, float depth, uint8 stencil) override final;
         
@@ -62,7 +69,9 @@ namespace Lambda
         
 		virtual void ExecuteDefferedContext(IDeviceContext* pContext) override final;
 
-        virtual void End() override final;
+		virtual void ResetQuery(IQuery* pQuery) override final;
+		virtual void WriteTimeStamp(IQuery* pQuery, PipelineStage stage) override final;
+
         virtual void Flush() override final;
         virtual void ClearState() override final;
         
@@ -71,13 +80,18 @@ namespace Lambda
 		virtual DeviceContextType GetType() const override final;
         virtual void* GetNativeHandle() const override final;
 		
+		void QueryCommandBuffer();
+        void EndCommanBuffer();
+		
 		void TransitionBuffer(const IBuffer* pBuffer, ResourceState state);
 		void TransitionTexture(const ITexture* pTexture, ResourceState state, uint32 startMipLevel, uint32 numMipLevels);
         
-        void AddWaitSemaphore(VkSemaphore waitSemaphore, VkPipelineStageFlags waitDstStageMask);
+		void BlitTexture(VKNTexture* pDst, uint32 dstWidth, uint32 dstHeight, uint32 dstMipLevel, VKNTexture* pSrc, uint32 srcWidth, uint32 srcHeight, uint32 srcMipLevel);
+        
+		void AddWaitSemaphore(VkSemaphore waitSemaphore, VkPipelineStageFlags waitDstStageMask);
 		void AddSignalSemaphore(VkSemaphore signalSemaphore);
+		
 		void CommitAndTransitionResources();
-        void BlitTexture(VKNTexture* pDst, uint32 dstWidth, uint32 dstHeight, uint32 dstMipLevel, VKNTexture* pSrc, uint32 srcWidth, uint32 srcHeight, uint32 srcMipLevel);
         
         inline VkFence GetVkFence() const					{ return m_CurrentFence; }
 		inline VkCommandBuffer GetVkCommandBuffer() const	{ return m_CurrentCommandBuffer; }
@@ -86,7 +100,7 @@ namespace Lambda
         void BeginRenderPass();
         void EndRenderPass();
 		void PrepareForDraw();
-		inline bool HasRenderPassInstance() { return m_HasRenderPass; }
+		inline bool IsInsideRenderPass() { return m_ContextState == DEVICE_CONTEXT_STATE_RENDERPASS; }
     private:
         VkCommandPool	    m_CommandPool;
         VkCommandBuffer*	m_pCommandBuffers;
@@ -103,11 +117,10 @@ namespace Lambda
         std::vector<VkPipelineStageFlags>	m_WaitDstStageMasks;
         DeviceContextType	m_Type;
         std::string		    m_Name;
-		//State
-		bool			m_HasRenderPass;
-        VkRenderPass    m_RenderPass;
-        VkFramebuffer   m_Framebuffer;
-		VkExtent2D		m_FramebufferExtent;
+		DeviceContextState	m_ContextState;
+        VkRenderPass		m_RenderPass;
+        VkFramebuffer		m_Framebuffer;
+		VkExtent2D			m_FramebufferExtent;
 		const VKNTexture* m_DepthStencil;
 		const VKNTexture* m_ppRenderTargets[LAMBDA_MAX_RENDERTARGET_COUNT];
 		AutoRef<VKNPipelineState> m_PipelineState;

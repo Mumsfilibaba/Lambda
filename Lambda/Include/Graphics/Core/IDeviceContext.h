@@ -20,12 +20,7 @@ namespace Lambda
 	{
 	public:
 		LAMBDA_IOBJECT_INTERFACE(IDeviceContext);
-
-        virtual void Begin() = 0;
-        
-        virtual void ResetQuery(IQuery* pQuery) = 0;
-        virtual void WriteTimeStamp(IQuery* pQuery, PipelineStage stage) = 0;
-        
+       
         virtual void ClearRenderTarget(ITexture* pRenderTarget, float color[4]) = 0;
         virtual void ClearDepthStencil(ITexture* pDepthStencil, float depth, uint8 stencil) = 0;
         
@@ -55,7 +50,9 @@ namespace Lambda
        
         virtual void ExecuteDefferedContext(IDeviceContext* pContext) = 0;
         
-        virtual void End() = 0;
+		virtual void ResetQuery(IQuery* pQuery) = 0;
+		virtual void WriteTimeStamp(IQuery* pQuery, PipelineStage stage) = 0;
+
         virtual void Flush() = 0;
         virtual void ClearState() = 0;
 

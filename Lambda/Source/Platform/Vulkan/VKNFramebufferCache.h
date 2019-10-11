@@ -16,9 +16,10 @@ namespace Lambda
 		VKNFramebufferCacheKey();
 		~VKNFramebufferCacheKey() = default;
 
-		size_t	GetHash() const;
-		bool	ContainsTexture(const VKNTexture* pTexture) const;
-		bool	operator==(const VKNFramebufferCacheKey& other) const;
+		size_t GetHash() const;
+		bool ContainsTexture(const VKNTexture* pTexture) const;
+		bool ContainsRenderPass(VkRenderPass renderpass) const;
+		bool operator==(const VKNFramebufferCacheKey& other) const;
 	public:
 		mutable size_t	Hash;
         VkRenderPass	RenderPass;
@@ -51,7 +52,8 @@ namespace Lambda
 		~VKNFramebufferCache();
 
         void ReleaseAll(VkDevice device);
-        void ReleaseAllContainingTexture(VkDevice device, const VKNTexture* pTexture);
+        void OnReleaseTexture(VkDevice device, const VKNTexture* pTexture);
+		void OnReleaseRenderPass(VkDevice device, VkRenderPass renderpass);
         VkFramebuffer GetFramebuffer(const VKNFramebufferCacheKey& key, VkExtent2D extent);
         
     private:

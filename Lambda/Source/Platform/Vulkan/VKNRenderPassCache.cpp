@@ -1,7 +1,8 @@
 #include "LambdaPch.h"
-#include "VKNRenderPass.h"
+#include "VKNRenderPassCache.h"
 #include "VKNDevice.h"
 #include "VKNTexture.h"
+#include "VKNFramebufferCache.h"
 #include "VKNConversions.inl"
 #include "Utilities/HashHelper.h"
 
@@ -101,7 +102,7 @@ namespace Lambda
 			colorAttachment.storeOp			= VK_ATTACHMENT_STORE_OP_STORE;
 			colorAttachment.stencilLoadOp	= VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 			colorAttachment.stencilStoreOp	= VK_ATTACHMENT_STORE_OP_DONT_CARE;
-			colorAttachment.initialLayout	= VK_IMAGE_LAYOUT_UNDEFINED;
+			colorAttachment.initialLayout	= VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 			colorAttachment.finalLayout		= VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 			attachments.emplace_back(colorAttachment);
 
@@ -139,12 +140,12 @@ namespace Lambda
 			depthAttachment.storeOp			= VK_ATTACHMENT_STORE_OP_STORE;
 			depthAttachment.stencilLoadOp	= depthAttachment.loadOp;
 			depthAttachment.stencilStoreOp	= depthAttachment.storeOp;
-			depthAttachment.initialLayout	= VK_IMAGE_LAYOUT_UNDEFINED;
+			depthAttachment.initialLayout	= VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 			depthAttachment.finalLayout		= VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 			attachments.emplace_back(depthAttachment);
 
-			depthAttachmentRef.attachment = uint32(attachments.size() - 1);
-			depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+			depthAttachmentRef.attachment	= uint32(attachments.size() - 1);
+			depthAttachmentRef.layout		= VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 			subpass.pDepthStencilAttachment = &depthAttachmentRef;
 		}
 
@@ -179,12 +180,16 @@ namespace Lambda
 
 	void VKNRenderPassCache::ReleaseAll(VkDevice device)
 	{
+		VKNFramebufferCache& frameBufferCache = VKNFramebufferCache::Get();
+
 		//Destroy all renderpasses
 		for (auto& pass : m_RenderPasses)
 		{
-			VkRenderPass& rp = pass.second;
-			vkDestroyRenderPass(device, rp, nullptr);
-			rp = VK_NULL_HANDLE;
+			VkRenderPass& renderpass = pass.second;
+			frameBufferCache.OnReleaseRenderPass(device, renderpass);
+
+			vkDestroyRenderPass(device, renderpass, nullptr);
+			renderpass = VK_NULL_HANDLE;
 		}
 
 		m_RenderPasses.clear();

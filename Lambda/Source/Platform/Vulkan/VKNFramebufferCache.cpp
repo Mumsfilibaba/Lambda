@@ -1,5 +1,5 @@
 #include "LambdaPch.h"
-#include "VKNFramebuffer.h"
+#include "VKNFramebufferCache.h"
 #include "VKNDevice.h"
 #include "VKNTexture.h"
 #include "Utilities/HashHelper.h"
@@ -61,6 +61,12 @@ namespace Lambda
 		return false;
 	}
 
+
+	bool VKNFramebufferCacheKey::ContainsRenderPass(VkRenderPass renderpass) const
+	{
+		return renderpass == RenderPass;
+	}
+
 	//-------------------
 	//VKNFramebufferCache
 	//-------------------
@@ -120,7 +126,7 @@ namespace Lambda
 	}
 
 
-	void VKNFramebufferCache::ReleaseAllContainingTexture(VkDevice device, const VKNTexture* pTexture)
+	void VKNFramebufferCache::OnReleaseTexture(VkDevice device, const VKNTexture* pTexture)
 	{
 		//Find all framebuffers containing this texture
 		for (auto it = m_Framebuffers.begin(); it != m_Framebuffers.end();)
@@ -137,6 +143,27 @@ namespace Lambda
             {
                 it++;
             }
+		}
+	}
+
+
+	void VKNFramebufferCache::OnReleaseRenderPass(VkDevice device, VkRenderPass renderpass)
+	{
+		//Find all framebuffers containing this renderpass
+		for (auto it = m_Framebuffers.begin(); it != m_Framebuffers.end();)
+		{
+			if (it->first.ContainsRenderPass(renderpass))
+			{
+				//Destroy framebuffer
+				vkDestroyFramebuffer(device, it->second, nullptr);
+				it->second = VK_NULL_HANDLE;
+
+				it = m_Framebuffers.erase(it);
+			}
+			else
+			{
+				it++;
+			}
 		}
 	}
 

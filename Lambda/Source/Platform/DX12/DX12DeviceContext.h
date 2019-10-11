@@ -24,11 +24,6 @@ namespace Lambda
 		DX12DeviceContext(DX12Device* pDevice, DeviceContextType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV);
 		~DX12DeviceContext() = default;
 	
-		virtual void Begin() override final;
-
-		virtual void ResetQuery(IQuery* pQuery) override final;
-		virtual void WriteTimeStamp(IQuery* pQuery, PipelineStage stage) override final;
-
 		virtual void ClearRenderTarget(ITexture* pRenderTarget, float color[4]) override final;
 		virtual void ClearDepthStencil(ITexture* pDepthStencil, float depth, uint8 stencil) override final;
 
@@ -58,7 +53,9 @@ namespace Lambda
 
 		virtual void ExecuteDefferedContext(IDeviceContext* pContext) override final;
 
-		virtual void End() override final;
+		virtual void ResetQuery(IQuery* pQuery) override final;
+		virtual void WriteTimeStamp(IQuery* pQuery, PipelineStage stage) override final;
+
 		virtual void Flush() override final;
 		virtual void ClearState() override final;
 
@@ -67,6 +64,9 @@ namespace Lambda
 		virtual DeviceContextType GetType() const override final;
 		virtual void* GetNativeHandle() const override final;
 
+		void Begin();
+		void End();
+		
 		void TransitionBuffer(const IBuffer* pResource, ResourceState resourceState);
 		void TransitionTexture(const ITexture* pResource, ResourceState resourceState, uint32 startMipLevel, uint32 numMipLevels);
 	private:

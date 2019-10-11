@@ -40,6 +40,9 @@ namespace Lambda
 
     VKNSwapChain::~VKNSwapChain()
     {
+		//Wait for device to become idle
+		m_pDevice->WaitUntilIdle();
+
         //Release resources
         ReleaseResources();
         
@@ -130,11 +133,12 @@ namespace Lambda
             else
             {
                 m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_SEMAPHORE, (uint64)m_ImageSemaphores[i],  "ImageSemaphore[" +  std::to_string(i) + "]");
+				LOG_DEBUG_INFO("Vulkan: Created Semaphore %p\n", m_ImageSemaphores[i]);
+
                 m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_SEMAPHORE, (uint64)m_RenderSemaphores[i], "RenderSemaphore[" + std::to_string(i) + "]");
+				LOG_DEBUG_INFO("Vulkan: Created Semaphores %p\n", m_ImageSemaphores[i]);
             }
         }
-        
-        LOG_DEBUG_INFO("Vulkan: Created Semaphores\n");
               
         //Get the swapchain capabilities from the adapter
         SwapChainCapabilities cap = QuerySwapChainSupport(m_pDevice->GetVkPhysicalDevice(), m_Surface);
@@ -404,6 +408,8 @@ namespace Lambda
 		m_Context->AddWaitSemaphore(m_ImageSemaphores[m_FrameIndex], VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 		m_Context->AddSignalSemaphore(m_RenderSemaphores[m_FrameIndex]);
 
+		LOG_DEBUG_INFO("Signal Semaphore %p\n", m_RenderSemaphores[m_FrameIndex]);
+
 		//Flush context
 		m_Context->Flush();
 
@@ -418,6 +424,8 @@ namespace Lambda
 		info.pSwapchains		= &m_VkSwapChain;
 		info.pImageIndices		= &m_CurrentBufferIndex;
 		info.pResults			= nullptr;
+
+		LOG_DEBUG_INFO("Waiting Semaphore %p\n", m_RenderSemaphores[m_FrameIndex]);
 		m_pDevice->Present(&info);
 
 		//Increase frameindex

@@ -29,7 +29,6 @@ namespace Lambda
 	VKNShaderVariableTable::~VKNShaderVariableTable()
 	{
 		SafeDeleteArr(m_pDynamicOffsets);
-
 		LOG_DEBUG_INFO("Vulkan: Destroyed VKNShaderVariableTable\n");
 	}
 
@@ -107,11 +106,8 @@ namespace Lambda
         for (auto pDynamicVar : m_DynamicVars)
         {
             //Get dynamic offset
-            const ShaderVariableDesc& varDesc = pDynamicVar->GetDesc();
-            if (varDesc.Type == RESOURCE_TYPE_CONSTANT_BUFFER)
-            {
-                m_pDynamicOffsets[dynamicOffsetIndex++] = pDynamicVar->GetDynamicOffset();
-            }
+			LAMBDA_ASSERT(pDynamicVar->GetDesc().Type == RESOURCE_TYPE_CONSTANT_BUFFER);
+            m_pDynamicOffsets[dynamicOffsetIndex++] = pDynamicVar->GetDynamicOffset();
         }
         
         
