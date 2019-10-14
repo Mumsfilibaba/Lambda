@@ -29,7 +29,7 @@ namespace Lambda
 	VKNShaderVariableTable::~VKNShaderVariableTable()
 	{
 		SafeDeleteArr(m_pDynamicOffsets);
-		LOG_DEBUG_INFO("Vulkan: Destroyed VKNShaderVariableTable\n");
+		LOG_DEBUG_INFO("Vulkan: Destroyed ShaderVariableTable\n");
 	}
 
 

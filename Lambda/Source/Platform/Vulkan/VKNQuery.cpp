@@ -24,10 +24,7 @@ namespace Lambda
 	VKNQuery::~VKNQuery()
 	{
 		if (m_QueryPool != VK_NULL_HANDLE)
-		{
-			vkDestroyQueryPool(m_pDevice->GetVkDevice(), m_QueryPool, nullptr);
-			m_QueryPool = VK_NULL_HANDLE;
-		}
+			m_pDevice->SafeReleaseVulkanResource<VkQueryPool>(m_QueryPool);
 
 		LOG_DEBUG_INFO("Vulkan: Destroyed Query\n");
 	}

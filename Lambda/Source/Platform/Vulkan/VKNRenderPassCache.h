@@ -4,6 +4,7 @@
 
 namespace Lambda
 {
+	class VKNDevice;
 	class VKNTexture;
 
 	//---------------------
@@ -47,13 +48,14 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(VKNRenderPassCache);
 
-		VKNRenderPassCache();
+		VKNRenderPassCache(VKNDevice* pDevice);
 		~VKNRenderPassCache();
 
-		void ReleaseAll(VkDevice device);
+		void ReleaseAll();
 		VkRenderPass GetRenderPass(const VKNRenderPassCacheKey& key);
 
 	private:
+		VKNDevice* m_pDevice;
 		std::unordered_map<VKNRenderPassCacheKey, VkRenderPass, VKNRenderPassCacheKeyHash> m_RenderPasses;
 
 	public:

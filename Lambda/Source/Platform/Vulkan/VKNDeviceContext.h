@@ -10,7 +10,6 @@ namespace Lambda
 {
     class VKNDevice;
     class VKNTexture;
-	class IVKNAllocator;
     class VKNRenderPass;
 	class VKNUploadBuffer;
 
@@ -37,7 +36,7 @@ namespace Lambda
     public:
         LAMBDA_NO_COPY(VKNDeviceContext);
         
-        VKNDeviceContext(VKNDevice* pDevice, IVKNAllocator* pAllocator, DeviceContextType type);
+        VKNDeviceContext(VKNDevice* pDevice, DeviceContextType type);
         ~VKNDeviceContext();
         
         virtual void ClearRenderTarget(ITexture* pRenderTarget, float color[4]) override final;
@@ -96,7 +95,7 @@ namespace Lambda
         inline VkFence GetVkFence() const					{ return m_CurrentFence; }
 		inline VkCommandBuffer GetVkCommandBuffer() const	{ return m_CurrentCommandBuffer; }
     private:
-        void Init(IVKNAllocator* pAllocator, DeviceContextType type);
+        void Init(DeviceContextType type);
         void BeginRenderPass();
         void EndRenderPass();
 		void PrepareForDraw();
@@ -109,7 +108,6 @@ namespace Lambda
         VkFence             m_CurrentFence;
         uint32              m_NumCommandBuffers;
         uint32              m_FrameIndex;
-		IVKNAllocator*	    m_pAllocator;
         VKNUploadBuffer*    m_pBufferUpload;
         VKNUploadBuffer*    m_pTextureUpload;
 		std::vector<VkSemaphore>			m_SignalSemaphores;

@@ -2,7 +2,6 @@
 #include "VKNTexture.h"
 #include "VKNDevice.h"
 #include "VKNUtilities.h"
-#include "VKNFramebufferCache.h"
 #include "VKNConversions.inl"
 
 namespace Lambda
@@ -11,9 +10,8 @@ namespace Lambda
 	//VKNTexture
 	//----------
 
-    VKNTexture::VKNTexture(VKNDevice* pDevice, IVKNAllocator* pAllocator, const TextureDesc& desc)
+    VKNTexture::VKNTexture(VKNDevice* pDevice, const TextureDesc& desc)
         : DeviceObjectBase<VKNDevice, ITexture>(pDevice),
-		m_pAllocator(pAllocator),
 		m_Memory(),
         m_IsOwner(false),
 		m_Image(VK_NULL_HANDLE),
@@ -31,7 +29,6 @@ namespace Lambda
     
     VKNTexture::VKNTexture(VKNDevice* pDevice, VkImage image, const TextureDesc& desc)
 		: DeviceObjectBase<VKNDevice, ITexture>(pDevice),
-		m_pAllocator(nullptr),
 		m_Memory(),
 		m_IsOwner(false),
 		m_Image(VK_NULL_HANDLE),
@@ -52,25 +49,16 @@ namespace Lambda
 	{
 		LOG_DEBUG_INFO("Vulkan: Destroying Texture2D '%p'\n", this);
 
-		//Remove associated framebuffer if there is any
-
-		VKNFramebufferCache::Get().OnReleaseTexture(m_pDevice->GetVkDevice(), this);
-
+		//Destroy view
 		if (m_ImageView != VK_NULL_HANDLE)
-		{
-			vkDestroyImageView(m_pDevice->GetVkDevice(), m_ImageView, nullptr);
-			m_ImageView = VK_NULL_HANDLE;
-		}
-
+			m_pDevice->SafeReleaseVulkanResource<VkImageView>(m_ImageView);
 		//Destroy if texture was created from init
 		if (m_IsOwner)
 		{
 			if (m_Image != VK_NULL_HANDLE)
 			{
-				m_pAllocator->Deallocate(m_Memory);
-
-				vkDestroyImage(m_pDevice->GetVkDevice(), m_Image, nullptr);
-				m_Image = VK_NULL_HANDLE;
+				m_pDevice->Deallocate(m_Memory);
+				m_pDevice->SafeReleaseVulkanResource<VkImage>(m_Image);
 			}
 		}
 	}
@@ -103,8 +91,6 @@ namespace Lambda
     
     void VKNTexture::Init(const TextureDesc& desc)
     {
-		LAMBDA_ASSERT(m_pAllocator != nullptr);
-
         //Number of samples (MSAA)
         VkSampleCountFlagBits sampleCount = ConvertSampleCount(desc.SampleCount);
 		VkSampleCountFlagBits highestSampleCount = m_pDevice->GetHighestSampleCount();
@@ -194,16 +180,8 @@ namespace Lambda
         }
         
 		//Allocate memory
-		VkMemoryRequirements memoryRequirements = {};
-		vkGetImageMemoryRequirements(m_pDevice->GetVkDevice(), m_Image, &memoryRequirements);
-		if (m_pAllocator->Allocate(m_Memory, memoryRequirements, desc.Usage))
-		{
-			vkBindImageMemory(m_pDevice->GetVkDevice(), m_Image, m_Memory.DeviceMemory, m_Memory.DeviceMemoryOffset);
-		}
-        else
-        {
-            LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for texture\n");
-        }
+		if (!m_pDevice->AllocateImage(m_Memory, m_Image, m_Desc.Usage))
+			return;
         
         //Create the view
         CreateImageView();

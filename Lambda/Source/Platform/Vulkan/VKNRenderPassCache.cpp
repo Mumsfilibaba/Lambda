@@ -2,7 +2,6 @@
 #include "VKNRenderPassCache.h"
 #include "VKNDevice.h"
 #include "VKNTexture.h"
-#include "VKNFramebufferCache.h"
 #include "VKNConversions.inl"
 #include "Utilities/HashHelper.h"
 
@@ -61,8 +60,9 @@ namespace Lambda
 
 	VKNRenderPassCache* VKNRenderPassCache::s_pInstance = nullptr;
 
-	VKNRenderPassCache::VKNRenderPassCache()
-		: m_RenderPasses()
+	VKNRenderPassCache::VKNRenderPassCache(VKNDevice* pDevice)
+		: m_pDevice(pDevice),
+		m_RenderPasses()
 	{
 		LAMBDA_ASSERT(s_pInstance == nullptr);
 		s_pInstance = this;
@@ -178,18 +178,13 @@ namespace Lambda
 	}
 
 
-	void VKNRenderPassCache::ReleaseAll(VkDevice device)
+	void VKNRenderPassCache::ReleaseAll()
 	{
-		VKNFramebufferCache& frameBufferCache = VKNFramebufferCache::Get();
-
 		//Destroy all renderpasses
 		for (auto& pass : m_RenderPasses)
 		{
-			VkRenderPass& renderpass = pass.second;
-			frameBufferCache.OnReleaseRenderPass(device, renderpass);
-
-			vkDestroyRenderPass(device, renderpass, nullptr);
-			renderpass = VK_NULL_HANDLE;
+			if (pass.second != VK_NULL_HANDLE)
+				m_pDevice->SafeReleaseVulkanResource(pass.second);
 		}
 
 		m_RenderPasses.clear();

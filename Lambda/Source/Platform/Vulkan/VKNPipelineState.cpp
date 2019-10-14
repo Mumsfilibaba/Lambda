@@ -41,20 +41,11 @@ namespace Lambda
 			m_pAllocator = nullptr;
 		}
 		if (m_Pipeline != VK_NULL_HANDLE)
-		{
-			vkDestroyPipeline(m_pDevice->GetVkDevice(), m_Pipeline, nullptr);
-			m_Pipeline = VK_NULL_HANDLE;
-		}
+			m_pDevice->SafeReleaseVulkanResource<VkPipeline>(m_Pipeline);
 		if (m_DescriptorSetLayout != VK_NULL_HANDLE)
-		{
-			vkDestroyDescriptorSetLayout(m_pDevice->GetVkDevice(), m_DescriptorSetLayout, nullptr);
-			m_DescriptorSetLayout = VK_NULL_HANDLE;
-		}
+			m_pDevice->SafeReleaseVulkanResource<VkDescriptorSetLayout>(m_DescriptorSetLayout);
 		if (m_PipelineLayout != VK_NULL_HANDLE)
-		{
-			vkDestroyPipelineLayout(m_pDevice->GetVkDevice(), m_PipelineLayout, nullptr);
-			m_PipelineLayout = VK_NULL_HANDLE;
-		}
+			m_pDevice->SafeReleaseVulkanResource<VkPipelineLayout>(m_PipelineLayout);
 
 		LOG_DEBUG_INFO("Vulkan: Destroyed PipelineState\n");
 	}
@@ -167,7 +158,7 @@ namespace Lambda
 			LOG_DEBUG_INFO("Vulkan: Created PipelineLayout\n");
 
 			//Create allocator
-			m_pAllocator = DBG_NEW VKNDescriptorSetAllocator(8, 8, 8, 8, 8, 8);
+			m_pAllocator = DBG_NEW VKNDescriptorSetAllocator(m_pDevice, 8, 8, 8, 8, 8, 8);
 		}
 
 

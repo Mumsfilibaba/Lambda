@@ -49,9 +49,8 @@ namespace Lambda
 	}
 
 
-	bool VKNFramebufferCacheKey::ContainsTexture(const VKNTexture* pTexture) const
+	bool VKNFramebufferCacheKey::ContainsImageView(VkImageView view) const
 	{
-		VkImageView view = pTexture->GetVkImageView();
 		for (uint32 i = 0; i < NumAttachmentViews; i++)
 		{
 			if (AttachmentViews[i] == view)
@@ -73,8 +72,9 @@ namespace Lambda
 
 	VKNFramebufferCache* VKNFramebufferCache::s_pInstance = nullptr;
 
-	VKNFramebufferCache::VKNFramebufferCache()
-		: m_Framebuffers()
+	VKNFramebufferCache::VKNFramebufferCache(VKNDevice* pDevice)
+		: m_pDevice(pDevice),
+		m_Framebuffers()
 	{
 		LAMBDA_ASSERT(s_pInstance == nullptr);
 		s_pInstance = this;
@@ -109,9 +109,7 @@ namespace Lambda
 		info.layers				= 1;
 
 		VkFramebuffer framebuffer = VK_NULL_HANDLE;
-		
-		VKNDevice& device = VKNDevice::Get();
-		if (vkCreateFramebuffer(device.GetVkDevice(), &info, nullptr, &framebuffer) != VK_SUCCESS)
+		if (vkCreateFramebuffer(m_pDevice->GetVkDevice(), &info, nullptr, &framebuffer) != VK_SUCCESS)
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to create Framebuffer\n");
 			return VK_NULL_HANDLE;
@@ -126,18 +124,16 @@ namespace Lambda
 	}
 
 
-	void VKNFramebufferCache::OnReleaseTexture(VkDevice device, const VKNTexture* pTexture)
+	void VKNFramebufferCache::OnReleaseImageView(VkImageView view)
 	{
 		//Find all framebuffers containing this texture
 		for (auto it = m_Framebuffers.begin(); it != m_Framebuffers.end();)
 		{
-			if (it->first.ContainsTexture(pTexture))
+			if (it->first.ContainsImageView(view))
 			{
 				//Destroy framebuffer
-				vkDestroyFramebuffer(device, it->second, nullptr);
-				it->second = VK_NULL_HANDLE;
-
-				it = m_Framebuffers.erase(it);
+				if (it->second != VK_NULL_HANDLE)
+					m_pDevice->SafeReleaseVulkanResource<VkFramebuffer>(it->second);
 			}
             else
             {
@@ -147,7 +143,7 @@ namespace Lambda
 	}
 
 
-	void VKNFramebufferCache::OnReleaseRenderPass(VkDevice device, VkRenderPass renderpass)
+	void VKNFramebufferCache::OnReleaseRenderPass(VkRenderPass renderpass)
 	{
 		//Find all framebuffers containing this renderpass
 		for (auto it = m_Framebuffers.begin(); it != m_Framebuffers.end();)
@@ -155,10 +151,8 @@ namespace Lambda
 			if (it->first.ContainsRenderPass(renderpass))
 			{
 				//Destroy framebuffer
-				vkDestroyFramebuffer(device, it->second, nullptr);
-				it->second = VK_NULL_HANDLE;
-
-				it = m_Framebuffers.erase(it);
+				if (it->second != VK_NULL_HANDLE)
+					m_pDevice->SafeReleaseVulkanResource<VkFramebuffer>(it->second);
 			}
 			else
 			{
@@ -168,14 +162,13 @@ namespace Lambda
 	}
 
 
-	void VKNFramebufferCache::ReleaseAll(VkDevice device)
+	void VKNFramebufferCache::ReleaseAll()
 	{
 		//Destroy all framebuffers
 		for (auto& buffer : m_Framebuffers)
 		{
-			VkFramebuffer& fb = buffer.second;
-			vkDestroyFramebuffer(device, fb, nullptr);
-			fb = VK_NULL_HANDLE;
+			if (buffer.second != VK_NULL_HANDLE)
+				m_pDevice->SafeReleaseVulkanResource<VkFramebuffer>(buffer.second);
 		}
 
 		m_Framebuffers.clear();

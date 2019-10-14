@@ -24,10 +24,7 @@ namespace Lambda
 	VKNShader::~VKNShader()
 	{
 		if (m_Shader != VK_NULL_HANDLE)
-		{
-			vkDestroyShaderModule(m_pDevice->GetVkDevice(), m_Shader, nullptr);
-			m_Shader = VK_NULL_HANDLE;
-		}
+			m_pDevice->SafeReleaseVulkanResource<VkShaderModule>(m_Shader);
 
 		LOG_DEBUG_INFO("Vulkan: Destroyed Shader\n");
 	}

@@ -16,7 +16,7 @@ namespace Lambda
     public:
         LAMBDA_NO_COPY(VKNBuffer);
         
-        VKNBuffer(VKNDevice* pDevice, IVKNAllocator* pAllocator, const BufferDesc& desc);
+        VKNBuffer(VKNDevice* pDevice, const BufferDesc& desc);
         ~VKNBuffer();
         
         virtual void Map(void** ppMem) override final;
@@ -35,7 +35,6 @@ namespace Lambda
     private:
         void Init(const BufferDesc& desc);
     private:
-		IVKNAllocator*	m_pAllocator;
         VKNMemory		m_Memory;
         VkBuffer		m_Buffer;
 		uint64			m_SizePerFrame;
@@ -56,12 +55,11 @@ namespace Lambda
     public:
         LAMBDA_NO_COPY(VKNUploadBuffer);
         
-        VKNUploadBuffer(IVKNAllocator* pAllocator, uint64 sizeInBytes);
-        ~VKNUploadBuffer() = default;
+        VKNUploadBuffer(VKNDevice* pDevice, uint64 sizeInBytes);
+        ~VKNUploadBuffer();
 
         void* Allocate(uint64 bytesToAllocate);
         void Reset();
-        void Destroy(VkDevice device);
         
 		inline uint64 GetDeviceOffset() const { return uint64(m_pCurrent - m_Memory.pHostMemory); }
 		inline VkBuffer GetVkBuffer() const { return m_Buffer; }
@@ -69,12 +67,12 @@ namespace Lambda
         bool Init(uint64 sizeInBytes);
         void Reallocate(uint64 sizeInBytes);
     private:
-        IVKNAllocator* const m_pAllocator;
-        uint8*               m_pCurrent;
-        VKNMemory            m_Memory;
-        VkBuffer             m_Buffer;
-        uint64               m_BytesLeft;
-        uint64               m_SizeInBytes;
+        VKNDevice* m_pDevice;
+        VkBuffer  m_Buffer;
+        VKNMemory m_Memory;
+        uint8*    m_pCurrent;
+        uint64    m_BytesLeft;
+        uint64    m_SizeInBytes;
     };
 
 	//----------------
@@ -90,15 +88,11 @@ namespace Lambda
 		~VKNBufferManager();
 
 		void AdvanceFrame();
-        void DestroyBuffer(VkBuffer buffer);
 		void RegisterBuffer(VKNBuffer* pBuffer);
 		void UnregisterBuffer(VKNBuffer* pBuffer);
-    private:
-        void EmptyGarbageBuffers();
 	private:
-        uint64                              m_FrameIndex;
-        std::vector<VKNBuffer*>				m_Buffers;
-        std::vector<std::vector<VkBuffer>>  m_BuffersToDelete;
+        uint64  m_FrameIndex;
+        std::vector<VKNBuffer*>	m_Buffers;
 	public:
 		static VKNBufferManager& GetInstance();
 	private:

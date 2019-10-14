@@ -18,7 +18,7 @@ namespace Lambda
     public:
         LAMBDA_NO_COPY(VKNTexture);
 
-        VKNTexture(VKNDevice* pDevice, IVKNAllocator* pAllocator, const TextureDesc& desc);
+        VKNTexture(VKNDevice* pDevice, const TextureDesc& desc);
         VKNTexture(VKNDevice* pDevice, VkImage image, const TextureDesc& desc);
         ~VKNTexture();
         
@@ -36,7 +36,6 @@ namespace Lambda
         void InitFromResource(VkImage image, const TextureDesc& desc);
         void CreateImageView(); 
     private:
-		IVKNAllocator* const m_pAllocator;
 		VKNMemory	m_Memory;
         VkImage     m_Image;
         VkImageView m_ImageView;

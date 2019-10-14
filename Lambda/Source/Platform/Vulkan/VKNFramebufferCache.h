@@ -4,6 +4,7 @@
 
 namespace Lambda
 {
+	class VKNDevice;
     class VKNTexture;
     
 	//----------------------
@@ -17,7 +18,7 @@ namespace Lambda
 		~VKNFramebufferCacheKey() = default;
 
 		size_t GetHash() const;
-		bool ContainsTexture(const VKNTexture* pTexture) const;
+		bool ContainsImageView(VkImageView view) const;
 		bool ContainsRenderPass(VkRenderPass renderpass) const;
 		bool operator==(const VKNFramebufferCacheKey& other) const;
 	public:
@@ -48,15 +49,16 @@ namespace Lambda
     public:
         LAMBDA_NO_COPY(VKNFramebufferCache);
         
-		VKNFramebufferCache();
+		VKNFramebufferCache(VKNDevice* pDevice);
 		~VKNFramebufferCache();
 
-        void ReleaseAll(VkDevice device);
-        void OnReleaseTexture(VkDevice device, const VKNTexture* pTexture);
-		void OnReleaseRenderPass(VkDevice device, VkRenderPass renderpass);
+        void ReleaseAll();
+        void OnReleaseImageView(VkImageView view);
+		void OnReleaseRenderPass(VkRenderPass renderpass);
         VkFramebuffer GetFramebuffer(const VKNFramebufferCacheKey& key, VkExtent2D extent);
         
     private:
+		VKNDevice* m_pDevice;
         std::unordered_map<VKNFramebufferCacheKey, VkFramebuffer, VKNFramebufferCacheKeyHash> m_Framebuffers;
 
 	public:

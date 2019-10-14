@@ -16,26 +16,6 @@ namespace Lambda
 	class VKNSamplerState;
 	class VKNDescriptorSetAllocator;
 
-	//-------
-	//VKNSlot
-	//-------
-
-	struct VKNSlot
-	{
-		ShaderVariableDesc Slot;
-		union
-		{
-			VKNBuffer* pBuffer;
-			VKNTexture* pTexture;
-			VKNSamplerState* pSamplerState;
-		};
-		union
-		{
-			VkDescriptorBufferInfo	BufferInfo;
-			VkDescriptorImageInfo	ImageInfo;
-		};
-	};
-
 	//----------------
 	//VKNPipelineState
 	//----------------

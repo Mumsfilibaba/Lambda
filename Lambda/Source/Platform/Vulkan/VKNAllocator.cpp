@@ -316,7 +316,7 @@ namespace Lambda
     constexpr size_t numFrames = 5;
 
 	VKNAllocator::VKNAllocator(VKNDevice* pDevice)
-		: DeviceObjectBase<VKNDevice, IVKNAllocator>(pDevice),
+		: m_pDevice(pDevice),
 		m_MaxAllocations(0),
         m_TotalReserved(0),
         m_TotalAllocated(0),
@@ -324,9 +324,6 @@ namespace Lambda
 		m_Chunks(),
 		m_MemoryToDeallocate()
 	{
-		//Add a ref to the refcounter
-		this->AddRef();
-
         //Resize the number of garbage memory vectors
         m_MemoryToDeallocate.resize(numFrames);
         
@@ -457,8 +454,9 @@ namespace Lambda
 	//VKNDescriptorSetAllocator
 	//-------------------------
 
-	VKNDescriptorSetAllocator::VKNDescriptorSetAllocator(uint32 uniformBufferCount, uint32 dynamicUniformBufferCount, uint32 samplerCount, uint32 sampledImageCount, uint32 combinedImageSamplerCount, uint32 numSets)
-		: m_Pool(VK_NULL_HANDLE),
+	VKNDescriptorSetAllocator::VKNDescriptorSetAllocator(VKNDevice* pDevice, uint32 uniformBufferCount, uint32 dynamicUniformBufferCount, uint32 samplerCount, uint32 sampledImageCount, uint32 combinedImageSamplerCount, uint32 numSets)
+		: m_pDevice(pDevice),
+		m_Pool(VK_NULL_HANDLE),
 		m_NumSets(0),
 		m_UniformBufferCount(uniformBufferCount),
 		m_DynamicUniformBufferCount(dynamicUniformBufferCount),
@@ -486,9 +484,7 @@ namespace Lambda
 		descriptorAllocInfo.descriptorPool		= m_Pool;
 		descriptorAllocInfo.descriptorSetCount	= 1;
 		descriptorAllocInfo.pSetLayouts			= &descriptorSetLayout;
-
-		VKNDevice& device = VKNDevice::Get();
-		if (vkAllocateDescriptorSets(device.GetVkDevice(), &descriptorAllocInfo, &set))
+		if (vkAllocateDescriptorSets(m_pDevice->GetVkDevice(), &descriptorAllocInfo, &set))
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to allocate DescriptorSets\n");
 			return VK_NULL_HANDLE;
@@ -508,10 +504,7 @@ namespace Lambda
 		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
 
 		if (m_Pool != VK_NULL_HANDLE)
-		{
-			vkDestroyDescriptorPool(device, m_Pool, nullptr);
-			m_Pool = VK_NULL_HANDLE;
-		}
+			m_pDevice->SafeReleaseVulkanResource<VkDescriptorPool>(m_Pool);
 
 		delete this;
 	}
@@ -568,9 +561,7 @@ namespace Lambda
 		descriptorPoolInfo.poolSizeCount	= uint32(poolSizes.size());
 		descriptorPoolInfo.pPoolSizes		= poolSizes.data();
 		descriptorPoolInfo.maxSets			= m_SetCount;
-
-		VKNDevice& device = VKNDevice::Get();
-		if (vkCreateDescriptorPool(device.GetVkDevice(), &descriptorPoolInfo, nullptr, &pool) != VK_SUCCESS)
+		if (vkCreateDescriptorPool(m_pDevice->GetVkDevice(), &descriptorPoolInfo, nullptr, &pool) != VK_SUCCESS)
 		{
 			if (m_Pool == VK_NULL_HANDLE)
 			{
@@ -580,8 +571,6 @@ namespace Lambda
 			{
 				LOG_DEBUG_ERROR("Vulkan: Failed to reallocate DescriptorPool\n");
 			}
-
-			return;
 		}
 		else
 		{
@@ -592,70 +581,11 @@ namespace Lambda
 			else
 			{
 				LOG_DEBUG_INFO("Vulkan: Reallocated DescriptorPool\n");
-
-				VKNDescriptorPoolManager& descriptorPoolManager = VKNDescriptorPoolManager::GetInstance();
-				descriptorPoolManager.DeallocatePool(m_Pool);
+				m_pDevice->SafeReleaseVulkanResource<VkDescriptorPool>(m_Pool);
 			}
 
 			m_Pool = pool;
 			m_NumSets = m_SetCount;
 		}
-	}
-
-	//------------------------
-	//VKNDescriptorPoolManager
-	//------------------------
-
-	VKNDescriptorPoolManager* VKNDescriptorPoolManager::s_pInstance = nullptr;
-
-	VKNDescriptorPoolManager::VKNDescriptorPoolManager()
-		: m_FrameCount(0),
-		m_CurrentFrame(0),
-		m_OldPools()
-	{
-		LAMBDA_ASSERT(s_pInstance == nullptr);
-		s_pInstance = this;
-
-		VKNDevice& device = VKNDevice::Get();
-		const DeviceDesc& deviceDesc = device.GetDesc();
-		m_FrameCount = FRAMES_AHEAD;
-
-		m_OldPools.resize(m_FrameCount);
-	}
-
-
-	void VKNDescriptorPoolManager::DeallocatePool(VkDescriptorPool pool)
-	{
-		if (pool != VK_NULL_HANDLE)
-		{
-			auto& oldpools = m_OldPools[m_CurrentFrame];
-			oldpools.push_back(pool);
-		}
-	}
-
-
-	void VKNDescriptorPoolManager::Cleanup()
-	{
-		//Advance frame
-		m_CurrentFrame = (m_CurrentFrame + 1) % m_FrameCount;
-		
-		//Cleanup old pools
-		auto& oldpools = m_OldPools[m_CurrentFrame];
-		if (oldpools.size() > 0)
-		{
-			VKNDevice& device = VKNDevice::Get();
-			for (auto& pool : oldpools)
-			{
-				vkDestroyDescriptorPool(device.GetVkDevice(), pool, nullptr);
-				pool = VK_NULL_HANDLE;
-			}
-		}
-	}
-	
-	
-	VKNDescriptorPoolManager& VKNDescriptorPoolManager::GetInstance()
-	{
-		LAMBDA_ASSERT(s_pInstance != nullptr);
-		return *s_pInstance;
 	}
 }

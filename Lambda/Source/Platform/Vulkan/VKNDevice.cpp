@@ -32,7 +32,7 @@ namespace Lambda
 		m_pFramebufferCache(nullptr),
 		m_pRenderPassCache(nullptr),
 		m_pImmediateContext(nullptr),
-		m_DeviceAllocator(nullptr),
+		m_pDeviceAllocator(nullptr),
 		m_Instance(VK_NULL_HANDLE),
 		m_DebugMessenger(VK_NULL_HANDLE),
 		m_Device(VK_NULL_HANDLE),
@@ -62,19 +62,17 @@ namespace Lambda
         
 		//Release all renderpasses
 		if (m_pRenderPassCache)
-			m_pRenderPassCache->ReleaseAll(m_Device);
+			m_pRenderPassCache->ReleaseAll();
 
 		//Release all framebuffers
 		if (m_pFramebufferCache)
-			m_pFramebufferCache->ReleaseAll(m_Device);
+			m_pFramebufferCache->ReleaseAll();
 
+		SafeDelete(m_pSafeReleaseManager);
 		SafeDelete(m_pRenderPassCache);
 		SafeDelete(m_pFramebufferCache);
 		SafeDelete(m_pBufferManager);
-		SafeDelete(m_pDescriptorPoolManager);
-
-		//Release all memory
-		m_DeviceAllocator.Release();
+		SafeDelete(m_pDeviceAllocator);
 
 		if (m_Device != VK_NULL_HANDLE)
 		{
@@ -407,18 +405,18 @@ namespace Lambda
 		vkGetDeviceQueue(m_Device, m_FamiliyIndices.PresentFamily, 0, &m_PresentationQueue);
         
 		//Create allocator
-		m_DeviceAllocator = DBG_NEW VKNAllocator(this);
-		//Create descriptorpoolmanager
-		m_pDescriptorPoolManager = DBG_NEW VKNDescriptorPoolManager();
+		m_pDeviceAllocator = DBG_NEW VKNAllocator(this);
+		//Create SafeReleaseManager
+		m_pSafeReleaseManager = DBG_NEW VKNSafeReleaseManager(this);
 		//Create dynamic buffer manager
 		m_pBufferManager = DBG_NEW VKNBufferManager();
 		//Create framebuffercache
-		m_pFramebufferCache = DBG_NEW VKNFramebufferCache();
+		m_pFramebufferCache = DBG_NEW VKNFramebufferCache(this);
 		//Create renderpasscache
-		m_pRenderPassCache = DBG_NEW VKNRenderPassCache();        
+		m_pRenderPassCache = DBG_NEW VKNRenderPassCache(this);        
       
         //Init internal commandlist, used for copying from staging buffers to final resource etc.
-        m_pImmediateContext = DBG_NEW VKNDeviceContext(this, m_DeviceAllocator.Get(), DEVICE_CONTEXT_TYPE_IMMEDIATE);
+        m_pImmediateContext = DBG_NEW VKNDeviceContext(this, DEVICE_CONTEXT_TYPE_IMMEDIATE);
         m_pImmediateContext->SetName("Graphics Device ImmediateContext");
     }
     
@@ -426,7 +424,7 @@ namespace Lambda
     void VKNDevice::CreateDefferedContext(IDeviceContext** ppDefferedContext)
     {
 		LAMBDA_ASSERT(ppDefferedContext != nullptr);
-        (*ppDefferedContext) = DBG_NEW VKNDeviceContext(this, m_DeviceAllocator.Get(), DEVICE_CONTEXT_TYPE_DEFFERED);
+        (*ppDefferedContext) = DBG_NEW VKNDeviceContext(this, DEVICE_CONTEXT_TYPE_DEFFERED);
     }
     
     
@@ -435,7 +433,7 @@ namespace Lambda
 		LAMBDA_ASSERT(ppBuffer != nullptr);
         
         //Create buffer
-        VKNBuffer* pVkBuffer = DBG_NEW VKNBuffer(this, m_DeviceAllocator.Get(), desc);
+        VKNBuffer* pVkBuffer = DBG_NEW VKNBuffer(this, desc);
         if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
             m_pBufferManager->RegisterBuffer(pVkBuffer);
         
@@ -470,7 +468,7 @@ namespace Lambda
 		LAMBDA_ASSERT(ppTexture != nullptr);
         
         //Create texture object
-        VKNTexture* pVkTexture = DBG_NEW VKNTexture(this, m_DeviceAllocator.Get(), desc);
+        VKNTexture* pVkTexture = DBG_NEW VKNTexture(this, desc);
         
         //Handle inital data
         if (pInitalData)
@@ -585,9 +583,8 @@ namespace Lambda
     {
         //Cleanup memory
         m_pBufferManager->AdvanceFrame();
-        m_DeviceAllocator->EmptyGarbageMemory();
-		//Cleanup descriptorpool
-		m_pDescriptorPoolManager->Cleanup();
+		m_pSafeReleaseManager->EmptyResources();
+		m_pDeviceAllocator->EmptyGarbageMemory();
     }
     
     
@@ -596,6 +593,46 @@ namespace Lambda
         //LOG_DEBUG_INFO("VKNDevice::WaitForGPU\n");
         vkDeviceWaitIdle(m_Device);
     }
+
+
+	bool VKNDevice::AllocateImage(VKNMemory& allocation, VkImage image, ResourceUsage usage)
+	{
+		VkMemoryRequirements memoryRequirements = {};
+		vkGetImageMemoryRequirements(m_Device, image, &memoryRequirements);
+		if (m_pDeviceAllocator->Allocate(allocation, memoryRequirements, usage))
+		{
+			vkBindImageMemory(m_Device, image, allocation.DeviceMemory, allocation.DeviceMemoryOffset);
+			return true;
+		}
+		else
+		{
+			LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for texture\n");
+			return false;
+		}
+	}
+
+
+	bool VKNDevice::AllocateBuffer(VKNMemory& allocation, VkBuffer buffer, ResourceUsage usage)
+	{
+		VkMemoryRequirements memoryRequirements = {};
+		vkGetBufferMemoryRequirements(m_Device, buffer, &memoryRequirements);
+		if (m_pDeviceAllocator->Allocate(allocation, memoryRequirements, usage))
+		{
+			vkBindBufferMemory(m_Device, buffer, allocation.DeviceMemory, allocation.DeviceMemoryOffset);
+			return true;
+		}
+		else
+		{
+			LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for buffer\n");
+			return false;
+		}
+	}
+
+
+	void VKNDevice::Deallocate(VKNMemory& allocation)
+	{
+		m_pDeviceAllocator->Deallocate(allocation);
+	}
 
 
 	VkSampleCountFlagBits VKNDevice::GetHighestSampleCount() const
@@ -704,7 +741,6 @@ namespace Lambda
 			return false;
 		}
 
-
 		//Find indices for queuefamilies
 		QueueFamilyIndices indices = FindQueueFamilies(adapter);
 		if (!indices.Valid())
@@ -716,7 +752,6 @@ namespace Lambda
 		{
 			LOG_DEBUG_INFO("Vulkan: Using queueFamily-Index '%d' for graphics and '%d' for presentation\n", indices.GraphicsFamily, indices.PresentFamily);
 		}
-
 
 		//Check if required extension for device is supported
 		std::vector<const char*> deviceExtensions = GetRequiredDeviceExtensions();
@@ -810,7 +845,6 @@ namespace Lambda
 		default: return VK_FALSE;
 		}
 
-
 		//Get type of message
 		const char* pTypeStr = nullptr;
 		if (messageType == VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT)
@@ -820,12 +854,11 @@ namespace Lambda
 		else if (messageType == VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT)
 			pTypeStr = "PERFORMANCE";
 
-
 		//Get objectinfo
 		uint64 object = (pCallbackData->objectCount != 0) ? pCallbackData->pObjects->objectHandle : 0;
 		const char* pObjectName = (pCallbackData->objectCount != 0) ? pCallbackData->pObjects->pObjectName : "";
 
-
+		//Log
 		Log::GetDebugLog().Print(severity, "[Vulkan Validation Layer - type=%s, object=0x%llx, objectname=%s] %s\n", pTypeStr, object, pObjectName, pCallbackData->pMessage);
 		return VK_FALSE;
 	}

@@ -29,10 +29,7 @@ namespace Lambda
 	VKNSamplerState::~VKNSamplerState()
 	{
 		if (m_Sampler != VK_NULL_HANDLE)
-		{
-			vkDestroySampler(m_pDevice->GetVkDevice(), m_Sampler, nullptr);
-			m_Sampler = VK_NULL_HANDLE;
-		}
+			m_pDevice->SafeReleaseVulkanResource<VkSampler>(m_Sampler);
 
 		LOG_DEBUG_INFO("Vulkan: Destroyed SamplerState\n");
 	}

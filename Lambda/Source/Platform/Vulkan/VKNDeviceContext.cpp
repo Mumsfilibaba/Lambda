@@ -16,7 +16,7 @@ namespace Lambda
 	//VKNDeviceContext
 	//----------------
 
-    VKNDeviceContext::VKNDeviceContext(VKNDevice* pDevice, IVKNAllocator* pAllocator, DeviceContextType type)
+    VKNDeviceContext::VKNDeviceContext(VKNDevice* pDevice, DeviceContextType type)
         : DeviceObjectBase<VKNDevice, IDeviceContext>(pDevice),
 		m_CommandPool(VK_NULL_HANDLE),
         m_pCommandBuffers(nullptr),
@@ -37,22 +37,16 @@ namespace Lambda
     {
 		//Add a ref to the refcounter
 		this->AddRef();
-        Init(pAllocator, type);
+        Init(type);
     }
 
 
     VKNDeviceContext::~VKNDeviceContext()
     {
-        if (m_pBufferUpload)
-        {
-            m_pBufferUpload->Destroy(m_pDevice->GetVkDevice());
-            m_pBufferUpload = nullptr;
-        }
-        if (m_pTextureUpload)
-        {
-            m_pTextureUpload->Destroy(m_pDevice->GetVkDevice());
-            m_pTextureUpload = nullptr;
-        }
+		//Delete uploadbuffers
+		SafeDelete(m_pBufferUpload);
+		SafeDelete(m_pTextureUpload);
+
         //Delete commandbuffers
         if (m_pCommandBuffers)
         {
@@ -79,7 +73,7 @@ namespace Lambda
     }
     
 
-    void VKNDeviceContext::Init(IVKNAllocator* pAllocator, DeviceContextType type)
+    void VKNDeviceContext::Init(DeviceContextType type)
     {
         //Get queuefamiliy indices
         QueueFamilyIndices familyIndices = m_pDevice->GetQueueFamilyIndices();
@@ -150,8 +144,8 @@ namespace Lambda
 		LOG_DEBUG_INFO("Vulkan: Created fences\n");
 
         //Init uploadbuffers
-		m_pBufferUpload		= DBG_NEW VKNUploadBuffer(pAllocator, MB(1));
-		m_pTextureUpload	= DBG_NEW VKNUploadBuffer(pAllocator, MB(16));
+		m_pBufferUpload  = DBG_NEW VKNUploadBuffer(m_pDevice, MB(1));
+		m_pTextureUpload = DBG_NEW VKNUploadBuffer(m_pDevice, MB(16));
     }
 
 
@@ -870,9 +864,6 @@ namespace Lambda
 		submitInfo.signalSemaphoreCount = uint32(m_SignalSemaphores.size());
 		submitInfo.pSignalSemaphores	= m_SignalSemaphores.data();
 		m_pDevice->ExecuteCommandBuffer(&submitInfo, 1, m_CurrentFence);
-
-		//Finish device frame
-		m_pDevice->FinishFrame();
 
 		//Clear semaphores
 		m_SignalSemaphores.clear();

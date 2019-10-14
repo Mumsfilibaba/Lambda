@@ -40,25 +40,16 @@ namespace Lambda
 
     VKNSwapChain::~VKNSwapChain()
     {
-		//Wait for device to become idle
-		m_pDevice->WaitUntilIdle();
-
         //Release resources
         ReleaseResources();
         
         //Destroy semaphores
         for (uint32 i = 0; i < m_Desc.BufferCount; i++)
         {
-            if (m_ImageSemaphores[i] != VK_NULL_HANDLE)
-            {
-                vkDestroySemaphore(m_pDevice->GetVkDevice(), m_ImageSemaphores[i], nullptr);
-                m_ImageSemaphores[i] = VK_NULL_HANDLE;
-            }
+			if (m_ImageSemaphores[i] != VK_NULL_HANDLE)
+				m_pDevice->SafeReleaseVulkanResource<VkSemaphore>(m_ImageSemaphores[i]);
             if (m_RenderSemaphores[i] != VK_NULL_HANDLE)
-            {
-                vkDestroySemaphore(m_pDevice->GetVkDevice(), m_RenderSemaphores[i], nullptr);
-                m_RenderSemaphores[i] = VK_NULL_HANDLE;
-            }
+				m_pDevice->SafeReleaseVulkanResource<VkSemaphore>(m_RenderSemaphores[i]);
         }
         
         //Destroy surface
@@ -101,7 +92,6 @@ namespace Lambda
             LOG_DEBUG_INFO("Vulkan: Created Surface\n");
         }
         
-        
         //Check for presentationsupport
         VkBool32 presentSupport = false;
         QueueFamilyIndices familyIndices = m_pDevice->GetQueueFamilyIndices();
@@ -111,8 +101,7 @@ namespace Lambda
             LOG_DEBUG_ERROR("Vulkan: Current queuefamily does not support presentation\n");
             return;
         }
-        
-        
+          
         //Setup semaphore structure
         VkSemaphoreCreateInfo semaphoreInfo = {};
         semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -407,7 +396,6 @@ namespace Lambda
 		//Add semaphores so the syncronization gets correct
 		m_Context->AddWaitSemaphore(m_ImageSemaphores[m_FrameIndex], VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 		m_Context->AddSignalSemaphore(m_RenderSemaphores[m_FrameIndex]);
-
 		LOG_DEBUG_INFO("Signal Semaphore %p\n", m_RenderSemaphores[m_FrameIndex]);
 
 		//Flush context
@@ -424,10 +412,11 @@ namespace Lambda
 		info.pSwapchains		= &m_VkSwapChain;
 		info.pImageIndices		= &m_CurrentBufferIndex;
 		info.pResults			= nullptr;
-
-		LOG_DEBUG_INFO("Waiting Semaphore %p\n", m_RenderSemaphores[m_FrameIndex]);
 		m_pDevice->Present(&info);
+		LOG_DEBUG_INFO("Waiting Semaphore %p\n", m_RenderSemaphores[m_FrameIndex]);
 
+		//Finish device frame
+		m_pDevice->FinishFrame();
 		//Increase frameindex
         m_FrameIndex = (m_FrameIndex+1) % m_Desc.BufferCount;
 	}
