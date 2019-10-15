@@ -219,8 +219,8 @@ namespace Lambda
         }
         else
         {
-            newExtent.width		= std::max(cap.Capabilities.minImageExtent.width, std::min(cap.Capabilities.maxImageExtent.width,	extent.width));
-            newExtent.height	= std::max(cap.Capabilities.minImageExtent.height, std::min(cap.Capabilities.maxImageExtent.height, extent.height));
+            newExtent.width	 = std::max(cap.Capabilities.minImageExtent.width, std::min(cap.Capabilities.maxImageExtent.width,	extent.width));
+            newExtent.height = std::max(cap.Capabilities.minImageExtent.height, std::min(cap.Capabilities.maxImageExtent.height, extent.height));
         }
 		newExtent.width		= std::max(newExtent.width,	 1u);
 		newExtent.height	= std::max(newExtent.height, 1u);
@@ -370,6 +370,9 @@ namespace Lambda
 
 	void VKNSwapChain::ResizeBuffers(uint32 width, uint32 height)
     {
+		if (width == m_Desc.BufferWidth && height == m_Desc.BufferHeight)
+			return;
+
 		//Syncronize the GPU so no operations are in flight when recreating swapchain
 		m_pDevice->WaitUntilIdle();
 

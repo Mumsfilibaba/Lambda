@@ -123,6 +123,14 @@ namespace Lambda
 	}
 
 
+	template<>
+	void VKNResource<VkFence>::DestroyResource()
+	{
+		vkDestroyFence(m_pDevice->GetVkDevice(), m_Resource, nullptr);
+		m_Resource = VK_NULL_HANDLE;
+	}
+
+
 	//---------------------
 	//VKNSafeReleaseManager
 	//---------------------
@@ -157,6 +165,8 @@ namespace Lambda
 				i = m_Resources.erase(i);
 			else
 				i++;
+			
+			LOG_DEBUG_INFO("Deleting\n");
 		}
 	}
 }

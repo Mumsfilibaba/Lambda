@@ -33,6 +33,15 @@ namespace Lambda
     {
         friend class VKNDevice;
         
+	private:
+		struct FrameResource
+		{
+			VkFence				Fence			= VK_NULL_HANDLE;
+			VkCommandBuffer		CommandBuffer	= VK_NULL_HANDLE;
+			VKNUploadBuffer*	BufferUpload	= nullptr;
+			VKNUploadBuffer*	TextureUpload	= nullptr;
+		};
+
     public:
         LAMBDA_NO_COPY(VKNDeviceContext);
         
@@ -92,8 +101,8 @@ namespace Lambda
 		
 		void CommitAndTransitionResources();
         
-        inline VkFence GetVkFence() const					{ return m_CurrentFence; }
-		inline VkCommandBuffer GetVkCommandBuffer() const	{ return m_CurrentCommandBuffer; }
+        inline VkFence GetVkFence() const					{ return m_pCurrentFrameResource->Fence; }
+		inline VkCommandBuffer GetVkCommandBuffer() const	{ return m_pCurrentFrameResource->CommandBuffer; }
     private:
         void Init(DeviceContextType type);
         void BeginRenderPass();
@@ -101,15 +110,11 @@ namespace Lambda
 		void PrepareForDraw();
 		inline bool IsInsideRenderPass() { return m_ContextState == DEVICE_CONTEXT_STATE_RENDERPASS; }
     private:
-        VkCommandPool	    m_CommandPool;
-        VkCommandBuffer*	m_pCommandBuffers;
-        VkCommandBuffer     m_CurrentCommandBuffer;
-        VkFence*            m_pFences;
-        VkFence             m_CurrentFence;
-        uint32              m_NumCommandBuffers;
-        uint32              m_FrameIndex;
-        VKNUploadBuffer*    m_pBufferUpload;
-        VKNUploadBuffer*    m_pTextureUpload;
+        VkCommandPool	m_CommandPool;
+		FrameResource*	m_pFrameResources;
+		FrameResource*	m_pCurrentFrameResource;
+        uint32          m_NumFrameResources;
+        uint32          m_FrameIndex;
 		std::vector<VkSemaphore>			m_SignalSemaphores;
         std::vector<VkSemaphore>			m_WaitSemaphores;
         std::vector<VkPipelineStageFlags>	m_WaitDstStageMasks;

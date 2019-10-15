@@ -345,17 +345,30 @@ namespace Lambda
     }
 
 
-	void* VKNUploadBuffer::Allocate(uint64 bytesToAllocate)
+	UploadAllocation VKNUploadBuffer::Allocate(uint64 bytesToAllocate, uint64 alignment)
     {
+		UploadAllocation allocation = {};
+
+		//Align
+		uint8* pAlignedCurrent = Math::AlignUp<uint8*>(m_pCurrent, alignment);
+		uint64 padding = pAlignedCurrent - m_pCurrent;
+
         //Do we have enough space? If no reallocate
-        if (bytesToAllocate > m_BytesLeft)
-            Reallocate(bytesToAllocate + MB(1));
+		uint64 alignedSize = bytesToAllocate + padding;
+        if (alignedSize > m_BytesLeft)
+            Reallocate(alignedSize + MB(1));
 
         //Move pointer
-        void* pAllocation = reinterpret_cast<void*>(m_pCurrent);
-        m_pCurrent  += bytesToAllocate;
-        m_BytesLeft -= bytesToAllocate;
-        return pAllocation;
+        allocation.pHostMemory = reinterpret_cast<void*>(pAlignedCurrent);
+        m_pCurrent  += alignedSize;
+        m_BytesLeft -= alignedSize;
+
+		//Set offset
+		allocation.DeviceOffset = pAlignedCurrent - m_Memory.pHostMemory;
+		
+		//Set buffer
+		allocation.Buffer = m_Buffer;
+        return allocation;
     }
     
     

@@ -35,20 +35,29 @@ namespace Lambda
     private:
         void Init(const BufferDesc& desc);
     private:
-        VKNMemory		m_Memory;
-        VkBuffer		m_Buffer;
-		uint64			m_SizePerFrame;
-		uint64			m_SizePerUpdate;
-        uint64			m_TotalSize;
-        uint64			m_FrameOffset;
-		uint64			m_DynamicOffset;
-        BufferDesc		m_Desc;
-		bool			m_IsDirty;
+        VKNMemory  m_Memory;
+        VkBuffer   m_Buffer;
+		uint64	   m_SizePerFrame;
+		uint64	   m_SizePerUpdate;
+        uint64	   m_TotalSize;
+        uint64	   m_FrameOffset;
+		uint64	   m_DynamicOffset;
+        BufferDesc m_Desc;
+		bool	   m_IsDirty;
     };
 
     //---------------
     //VKNUploadBuffer
     //---------------
+
+	struct UploadAllocation
+	{
+		VkBuffer	Buffer			= VK_NULL_HANDLE;
+		uint64		DeviceOffset	= 0;
+		uint64		SizeInBytes		= 0;
+		void*		pHostMemory		= nullptr;
+	};
+
 
     class VKNUploadBuffer final
     {
@@ -58,10 +67,9 @@ namespace Lambda
         VKNUploadBuffer(VKNDevice* pDevice, uint64 sizeInBytes);
         ~VKNUploadBuffer();
 
-        void* Allocate(uint64 bytesToAllocate);
+		UploadAllocation Allocate(uint64 bytesToAllocate, uint64 alignment);
         void Reset();
         
-		inline uint64 GetDeviceOffset() const { return uint64(m_pCurrent - m_Memory.pHostMemory); }
 		inline VkBuffer GetVkBuffer() const { return m_Buffer; }
     private:
         bool Init(uint64 sizeInBytes);

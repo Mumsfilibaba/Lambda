@@ -559,10 +559,6 @@ namespace Lambda
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to submit CommandBuffers\n");
         }
-		else
-		{
-			FinishFrame();
-		}
     }
 
 	
@@ -582,9 +578,9 @@ namespace Lambda
     void VKNDevice::FinishFrame() const
     {
         //Cleanup memory
-        m_pBufferManager->AdvanceFrame();
 		m_pSafeReleaseManager->EmptyResources();
 		m_pDeviceAllocator->EmptyGarbageMemory();
+        m_pBufferManager->AdvanceFrame();
     }
     
     

@@ -19,17 +19,13 @@ namespace Lambda
     VKNDeviceContext::VKNDeviceContext(VKNDevice* pDevice, DeviceContextType type)
         : DeviceObjectBase<VKNDevice, IDeviceContext>(pDevice),
 		m_CommandPool(VK_NULL_HANDLE),
-        m_pCommandBuffers(nullptr),
-        m_CurrentCommandBuffer(VK_NULL_HANDLE),
-        m_pFences(nullptr),
-        m_CurrentFence(VK_NULL_HANDLE),
+		m_pFrameResources(nullptr),
+        m_pCurrentFrameResource(nullptr),
         m_RenderPass(VK_NULL_HANDLE),
         m_Framebuffer(VK_NULL_HANDLE),
-		m_pBufferUpload(nullptr),
-		m_pTextureUpload(nullptr),
         m_PipelineState(nullptr),
 		m_VariableTable(nullptr),
-        m_NumCommandBuffers(0),
+        m_NumFrameResources(0),
         m_FrameIndex(0),
 		m_ContextState(DEVICE_CONTEXT_STATE_WAITING),
         m_Type(DEVICE_CONTEXT_TYPE_UNKNOWN),
@@ -43,33 +39,30 @@ namespace Lambda
 
     VKNDeviceContext::~VKNDeviceContext()
     {
-		//Delete uploadbuffers
-		SafeDelete(m_pBufferUpload);
-		SafeDelete(m_pTextureUpload);
+		//Delete frameresources
+		for (uint32 i = 0; i < m_NumFrameResources; i++)
+		{
+			//Delete uploadbuffers
+			SafeDelete(m_pFrameResources[i].BufferUpload);
+			SafeDelete(m_pFrameResources[i].TextureUpload);
 
-        //Delete commandbuffers
-        if (m_pCommandBuffers)
-        {
-            vkFreeCommandBuffers(m_pDevice->GetVkDevice(), m_CommandPool, m_NumCommandBuffers, m_pCommandBuffers);
-        }
-        SafeDeleteArr(m_pCommandBuffers);
-        //Delete fences
-        if (m_pFences)
-        {
-            for (uint32 i = 0; i < m_NumCommandBuffers; i++)
-            {
-                vkDestroyFence(m_pDevice->GetVkDevice(), m_pFences[i], nullptr);
-                m_pFences[i] = VK_NULL_HANDLE;
-            }
-        }
-        SafeDeleteArr(m_pFences);
+			//Free commandbuffer
+			vkFreeCommandBuffers(m_pDevice->GetVkDevice(), m_CommandPool, 1, &m_pFrameResources[i].CommandBuffer);
+
+			//Delete fence
+			if (m_pFrameResources[i].Fence != VK_NULL_HANDLE)
+				m_pDevice->SafeReleaseVulkanResource<VkFence>(m_pFrameResources[i].Fence);
+		}
+        SafeDeleteArr(m_pFrameResources);
+
+		//Destroy commandpool
         if (m_CommandPool != VK_NULL_HANDLE)
         {
             vkDestroyCommandPool(m_pDevice->GetVkDevice(), m_CommandPool, nullptr);
             m_CommandPool = VK_NULL_HANDLE;
         }
 
-        LOG_DEBUG_INFO("Vulkan: Destroyed CommandList '%s'\n", m_Name.c_str());
+        LOG_DEBUG_INFO("Vulkan: Destroyed DeviceContext '%s'\n", m_Name.c_str());
     }
     
 
@@ -94,11 +87,10 @@ namespace Lambda
         {
             LOG_DEBUG_INFO("Vulkan: Created commandpool\n");
         }
-        
-        
+         
         //Setup commandbuffers
-        m_NumCommandBuffers = FRAMES_AHEAD;
-        m_pCommandBuffers	= DBG_NEW VkCommandBuffer[m_NumCommandBuffers];
+        m_NumFrameResources = FRAMES_AHEAD;
+		m_pFrameResources	= DBG_NEW FrameResource[m_NumFrameResources];
         
 		//Allocate commandbuffer
         VkCommandBufferAllocateInfo allocInfo = {};
@@ -106,9 +98,9 @@ namespace Lambda
         allocInfo.commandPool			= m_CommandPool;
         allocInfo.level					= VK_COMMAND_BUFFER_LEVEL_PRIMARY;
         allocInfo.commandBufferCount	= 1;
-        for (uint32 i = 0; i < m_NumCommandBuffers; i++)
+        for (uint32 i = 0; i < m_NumFrameResources; i++)
         {
-            if (vkAllocateCommandBuffers(m_pDevice->GetVkDevice(), &allocInfo, &m_pCommandBuffers[i]) != VK_SUCCESS)
+            if (vkAllocateCommandBuffers(m_pDevice->GetVkDevice(), &allocInfo, &m_pFrameResources[i].CommandBuffer) != VK_SUCCESS)
             {
                 LOG_DEBUG_ERROR("Vulkan: Failed to create commandbuffer\n");
                 return;
@@ -122,30 +114,31 @@ namespace Lambda
         fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
         fenceInfo.pNext = nullptr;
         fenceInfo.flags = 0;
-
-        m_pFences = DBG_NEW VkFence[m_NumCommandBuffers];
-        for (uint32 i = 0; i < m_NumCommandBuffers; i++)
+        for (uint32 i = 0; i < m_NumFrameResources; i++)
         {
             //Create fence
-            if (vkCreateFence(m_pDevice->GetVkDevice(), &fenceInfo, nullptr, &m_pFences[i]) != VK_SUCCESS)
+            if (vkCreateFence(m_pDevice->GetVkDevice(), &fenceInfo, nullptr, &m_pFrameResources[i].Fence) != VK_SUCCESS)
             {
                 LOG_DEBUG_ERROR("Vulkan: Failed to create fence\n");
                 return;
             }
             else
             {
-                m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_FENCE, (uint64)m_pFences[i], "Fence[" +  std::to_string(i) + "]");
-
+				//Set fence name
+                m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_FENCE, (uint64)m_pFrameResources[i].Fence, "Fence[" +  std::to_string(i) + "]");
 				//Initial fence signal
-				m_pDevice->ExecuteCommandBuffer(nullptr, 0, m_pFences[i]);
+				m_pDevice->ExecuteCommandBuffer(nullptr, 0, m_pFrameResources[i].Fence);
             }
         }
 		
 		LOG_DEBUG_INFO("Vulkan: Created fences\n");
 
         //Init uploadbuffers
-		m_pBufferUpload  = DBG_NEW VKNUploadBuffer(m_pDevice, MB(1));
-		m_pTextureUpload = DBG_NEW VKNUploadBuffer(m_pDevice, MB(16));
+		for (uint32 i = 0; i < m_NumFrameResources; i++)
+		{
+			m_pFrameResources[i].BufferUpload  = DBG_NEW VKNUploadBuffer(m_pDevice, MB(1));
+			m_pFrameResources[i].TextureUpload = DBG_NEW VKNUploadBuffer(m_pDevice, MB(16));
+		}
     }
 
 
@@ -176,9 +169,9 @@ namespace Lambda
 
 		const PipelineStateDesc& desc = m_PipelineState->GetDesc();
 		if (desc.Type == PIPELINE_TYPE_GRAPHICS)
-			vkCmdBindDescriptorSets(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, offsetCount, pOffsets);
+			vkCmdBindDescriptorSets(m_pCurrentFrameResource->CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, offsetCount, pOffsets);
 		else if (desc.Type == PIPELINE_TYPE_COMPUTE)
-			vkCmdBindDescriptorSets(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipelineLayout, 0, 1, &descriptorSet, offsetCount, pOffsets);
+			vkCmdBindDescriptorSets(m_pCurrentFrameResource->CommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipelineLayout, 0, 1, &descriptorSet, offsetCount, pOffsets);
 	}
     
     
@@ -205,7 +198,7 @@ namespace Lambda
     
         VkImage srcImage = reinterpret_cast<VkImage>(pSrc->GetNativeHandle());
         VkImage dstImage = reinterpret_cast<VkImage>(pDst->GetNativeHandle());
-        vkCmdBlitImage(m_CurrentCommandBuffer, srcImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blitInfo, VK_FILTER_LINEAR);
+        vkCmdBlitImage(m_pCurrentFrameResource->CommandBuffer, srcImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blitInfo, VK_FILTER_LINEAR);
     }
 
 
@@ -226,7 +219,7 @@ namespace Lambda
         imageSubresourceRange.layerCount     = 1;
 
         VkImage vkRenderTarget = reinterpret_cast<VkImage>(pRenderTarget->GetNativeHandle());
-        vkCmdClearColorImage(m_CurrentCommandBuffer, vkRenderTarget, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &col, 1, &imageSubresourceRange);
+        vkCmdClearColorImage(m_pCurrentFrameResource->CommandBuffer, vkRenderTarget, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &col, 1, &imageSubresourceRange);
     }
     
     
@@ -248,7 +241,7 @@ namespace Lambda
         imageSubresourceRange.layerCount     = 1;
     
         VkImage vkDepthStencil = reinterpret_cast<VkImage>(pDepthStencil->GetNativeHandle());
-        vkCmdClearDepthStencilImage(m_CurrentCommandBuffer, vkDepthStencil, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &value, 1, &imageSubresourceRange);
+        vkCmdClearDepthStencilImage(m_pCurrentFrameResource->CommandBuffer, vkDepthStencil, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &value, 1, &imageSubresourceRange);
     }
 
     
@@ -337,7 +330,7 @@ namespace Lambda
 			views[i].x        =  pViewport[i].TopX;
 			views[i].y		  =  pViewport[i].TopY + pViewport[i].Height;
 		}
-        vkCmdSetViewport(m_CurrentCommandBuffer, 0, numViewports, views);
+        vkCmdSetViewport(m_pCurrentFrameResource->CommandBuffer, 0, numViewports, views);
     }
     
     
@@ -358,7 +351,7 @@ namespace Lambda
 			rects[i].extent.width   = uint32(pScissorRect[i].Width);
 		}
         
-        vkCmdSetScissor(m_CurrentCommandBuffer, 0, numRects, rects);
+        vkCmdSetScissor(m_pCurrentFrameResource->CommandBuffer, 0, numRects, rects);
     }
     
     
@@ -377,9 +370,9 @@ namespace Lambda
 
 		const PipelineStateDesc& desc = m_PipelineState->GetDesc();
 		if (desc.Type == PIPELINE_TYPE_GRAPHICS)
-			vkCmdBindPipeline(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+			vkCmdBindPipeline(m_pCurrentFrameResource->CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 		else if (desc.Type == PIPELINE_TYPE_COMPUTE)
-			vkCmdBindPipeline(m_CurrentCommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
+			vkCmdBindPipeline(m_pCurrentFrameResource->CommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
     }
 
 	
@@ -405,7 +398,7 @@ namespace Lambda
 			offsets[i] = pVkBuffer->GetDynamicOffset();
 		}
 
-        vkCmdBindVertexBuffers(m_CurrentCommandBuffer, slot, numBuffers, buffers, offsets);
+        vkCmdBindVertexBuffers(m_pCurrentFrameResource->CommandBuffer, slot, numBuffers, buffers, offsets);
     }
     
     
@@ -432,7 +425,7 @@ namespace Lambda
 			LOG_DEBUG_ERROR("Vulkan: Only supported index formats are VK_INDEX_TYPE_UINT16 or VK_INDEX_TYPE_UINT32\n");
 		}
 
-        vkCmdBindIndexBuffer(m_CurrentCommandBuffer, buffer, pVkBuffer->GetDynamicOffset(), indexType);
+        vkCmdBindIndexBuffer(m_pCurrentFrameResource->CommandBuffer, buffer, pVkBuffer->GetDynamicOffset(), indexType);
     }
 
 	
@@ -444,7 +437,7 @@ namespace Lambda
 		VkShaderStageFlags shaderStageFlags = ConvertShaderStages(stage);
 
 		VkPipelineLayout pipelineLayout = m_PipelineState->GetVkPipelineLayout();
-		vkCmdPushConstants(m_CurrentCommandBuffer, pipelineLayout, shaderStageFlags, offset, sizeInBytes, pData);
+		vkCmdPushConstants(m_pCurrentFrameResource->CommandBuffer, pipelineLayout, shaderStageFlags, offset, sizeInBytes, pData);
 	}
 
     
@@ -456,7 +449,7 @@ namespace Lambda
     
     void* VKNDeviceContext::GetNativeHandle() const
     {
-        return reinterpret_cast<void*>(m_CurrentCommandBuffer);
+        return reinterpret_cast<void*>(m_pCurrentFrameResource->CommandBuffer);
     }
     
     
@@ -584,7 +577,7 @@ namespace Lambda
             LOG_DEBUG_ERROR("Vulkan: Unsupported dst-image layout transition '%d'\n", barrier.newLayout);
         }
     
-        vkCmdPipelineBarrier(m_CurrentCommandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+        vkCmdPipelineBarrier(m_pCurrentFrameResource->CommandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
         pVkTexture->SetVkImageLayout(barrier.newLayout);
     }
     
@@ -611,22 +604,23 @@ namespace Lambda
 			if (IsInsideRenderPass())
 				EndRenderPass();
 
-            //Get offset before allocating
-            uint64 deviceOffset = m_pBufferUpload->GetDeviceOffset();
+			//Get device properties
+			VkPhysicalDeviceProperties properties = m_pDevice->GetPhysicalDeviceProperties();
+			uint64 alignment = VkDeviceSize(4);
+			if (bufferDesc.Flags & BUFFER_FLAGS_CONSTANT_BUFFER)
+				alignment = std::max(alignment, properties.limits.minUniformBufferOffsetAlignment);
 
             //Allocate memory in the uploadbuffer
-            void* pMem = m_pBufferUpload->Allocate(pData->SizeInBytes);
-            memcpy(pMem, pData->pData, pData->SizeInBytes);
+            UploadAllocation mem = m_pCurrentFrameResource->BufferUpload->Allocate(pData->SizeInBytes, alignment);
+            memcpy(mem.pHostMemory, pData->pData, pData->SizeInBytes);
 
             //Copy buffer
             VkBufferCopy copyRegion = {};
-            copyRegion.srcOffset    = deviceOffset;
+            copyRegion.srcOffset    = mem.DeviceOffset;
             copyRegion.dstOffset    = 0;
             copyRegion.size         = pData->SizeInBytes;
-
-            VkBuffer srcBuffer = m_pBufferUpload->GetVkBuffer();
             VkBuffer dstBuffer = reinterpret_cast<VkBuffer>(pVkResource->GetNativeHandle());
-            vkCmdCopyBuffer(m_CurrentCommandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+            vkCmdCopyBuffer(m_pCurrentFrameResource->CommandBuffer, mem.Buffer, dstBuffer, 1, &copyRegion);
 		}
     }
     
@@ -639,17 +633,18 @@ namespace Lambda
         TransitionTexture(pResource, RESOURCE_STATE_COPY_DEST, 0, LAMBDA_TRANSITION_ALL_MIPS);
         VKNTexture* pVkResource = reinterpret_cast<VKNTexture*>(pResource);
     
-        //Get offset before allocating
-        uint64 offset = m_pTextureUpload->GetDeviceOffset();
-    
+		//Get device properties
+		VkPhysicalDeviceProperties properties = m_pDevice->GetPhysicalDeviceProperties();
+		uint64 alignment = std::max(properties.limits.optimalBufferCopyOffsetAlignment, VkDeviceSize(4));
+
         //Allocate memory in the uploadbuffer
-        void* pMappedMemory = m_pTextureUpload->Allocate(pData->SizeInBytes);
-        memcpy(pMappedMemory, pData->pData, pData->SizeInBytes);
+		UploadAllocation mem = m_pCurrentFrameResource->TextureUpload->Allocate(pData->SizeInBytes, alignment);
+        memcpy(mem.pHostMemory, pData->pData, pData->SizeInBytes);
     
         //Perform copy
         const TextureDesc& textureDesc = pVkResource->GetDesc();
         VkBufferImageCopy region = {};
-        region.bufferOffset                     = offset;
+        region.bufferOffset                     = mem.DeviceOffset;
         region.bufferRowLength                  = 0;
         region.bufferImageHeight                = 0;
         region.imageSubresource.aspectMask      = pVkResource->GetAspectFlags();
@@ -659,9 +654,8 @@ namespace Lambda
         region.imageOffset                      = { 0, 0, 0 };
         region.imageExtent                      = { textureDesc.Width, textureDesc.Height, textureDesc.Depth };
     
-        VkBuffer	buffer = m_pTextureUpload->GetVkBuffer();
-        VkImage		image = pVkResource->GetVkImage();
-        vkCmdCopyBufferToImage(m_CurrentCommandBuffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+        VkImage	 image	= pVkResource->GetVkImage();
+        vkCmdCopyBufferToImage(m_pCurrentFrameResource->CommandBuffer, mem.Buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
     }
     
     
@@ -682,7 +676,7 @@ namespace Lambda
     
         VkBuffer srcBuffer = reinterpret_cast<VkBuffer>(pSrc->GetNativeHandle());
         VkBuffer dstBuffer = reinterpret_cast<VkBuffer>(pDst->GetNativeHandle());
-        vkCmdCopyBuffer(m_CurrentCommandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+        vkCmdCopyBuffer(m_pCurrentFrameResource->CommandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
     }
 
 
@@ -725,7 +719,7 @@ namespace Lambda
 		resolve.srcSubresource.baseArrayLayer = 0;
 		resolve.srcSubresource.layerCount	  = 1;
 		resolve.srcSubresource.mipLevel		  = 0;
-		vkCmdResolveImage(m_CurrentCommandBuffer, pVKSrc->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, pVkDst->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &resolve);
+		vkCmdResolveImage(m_pCurrentFrameResource->CommandBuffer, pVKSrc->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, pVkDst->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &resolve);
 	}
 
 
@@ -734,7 +728,7 @@ namespace Lambda
 		LAMBDA_ASSERT_PRINT(m_PipelineState, "Vulkan: Draw must have a valid PipelineState bound when called\n");
 
 		PrepareForDraw();
-		vkCmdDraw(m_CurrentCommandBuffer, vertexCount, 1, startVertex, 0);
+		vkCmdDraw(m_pCurrentFrameResource->CommandBuffer, vertexCount, 1, startVertex, 0);
 	}
 
 	void VKNDeviceContext::DrawIndexed(uint32 indexCount, uint32 startIndexLocation, uint32 baseVertexLocation)
@@ -742,7 +736,7 @@ namespace Lambda
 		LAMBDA_ASSERT_PRINT(m_PipelineState, "Vulkan: DrawIndexed must have a valid PipelineState bound when called\n");
 
 		PrepareForDraw();
-		vkCmdDrawIndexed(m_CurrentCommandBuffer, indexCount, 1, startIndexLocation, baseVertexLocation, 0);
+		vkCmdDrawIndexed(m_pCurrentFrameResource->CommandBuffer, indexCount, 1, startIndexLocation, baseVertexLocation, 0);
 	}
     
     
@@ -751,7 +745,7 @@ namespace Lambda
         LAMBDA_ASSERT_PRINT(m_PipelineState, "Vulkan: DrawInstanced must have a valid PipelineState bound when called\n");
         
 		PrepareForDraw();
-        vkCmdDraw(m_CurrentCommandBuffer, vertexCountPerInstance, instanceCount, startVertexLocation, startInstanceLocation);
+        vkCmdDraw(m_pCurrentFrameResource->CommandBuffer, vertexCountPerInstance, instanceCount, startVertexLocation, startInstanceLocation);
     }
     
     
@@ -760,7 +754,7 @@ namespace Lambda
         LAMBDA_ASSERT_PRINT(m_PipelineState, "Vulkan: DrawIndexedInstanced must have a valid PipelineState bound when called\n");
 
 		PrepareForDraw();
-        vkCmdDrawIndexed(m_CurrentCommandBuffer, indexCountPerInstance, instanceCount, startIndexLocation, baseVertexLocation, startInstanceLocation);
+        vkCmdDrawIndexed(m_pCurrentFrameResource->CommandBuffer, indexCountPerInstance, instanceCount, startIndexLocation, baseVertexLocation, startInstanceLocation);
     }
 
 	
@@ -775,34 +769,13 @@ namespace Lambda
 		if (pName != nullptr)
 		{
 			m_Name = std::string(pName);
-            for (uint32 i = 0; i < m_NumCommandBuffers; i++)
+            for (uint32 i = 0; i < m_NumFrameResources; i++)
             {
                 std::string name = m_Name + "[" + std::to_string(i) + "]";
-				VkCommandBuffer buffer = m_pCommandBuffers[i];
+				VkCommandBuffer buffer = m_pFrameResources[i].CommandBuffer;
                 m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64)buffer, name);
             }
 		}
-    }
-    
-    
-    void VKNDeviceContext::EndCommanBuffer()
-    {
-		LOG_DEBUG_INFO("EndCommanBuffer()\n");
-
-		//End renderpass before ending commmandsubmition
-		if (IsInsideRenderPass())
-			EndRenderPass();
-
-		//End commandbuffer
-        if (vkEndCommandBuffer(m_CurrentCommandBuffer) != VK_SUCCESS)
-        {
-            LOG_DEBUG_ERROR("Vulkan: Failed to End CommandBuffer\n");
-        }
-
-		//Move to next frame
-		m_FrameIndex = (m_FrameIndex+1) % m_NumCommandBuffers;
-		//Set context state
-		m_ContextState = DEVICE_CONTEXT_STATE_WAITING;
     }
     
     
@@ -813,11 +786,10 @@ namespace Lambda
 			LOG_DEBUG_INFO("QueryCommandBuffer()\n");
 			
 			//Get next buffer
-			m_CurrentCommandBuffer	= m_pCommandBuffers[m_FrameIndex];
-			m_CurrentFence			= m_pFences[m_FrameIndex];
+			m_pCurrentFrameResource = &m_pFrameResources[m_FrameIndex];
 			//Wait for last frame
-			vkWaitForFences(m_pDevice->GetVkDevice(), 1, &m_CurrentFence, VK_TRUE, std::numeric_limits<uint64_t>::max());
-			vkResetFences(m_pDevice->GetVkDevice(), 1, &m_CurrentFence);
+			vkWaitForFences(m_pDevice->GetVkDevice(), 1, &m_pCurrentFrameResource->Fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
+			vkResetFences(m_pDevice->GetVkDevice(), 1, &m_pCurrentFrameResource->Fence);
         
 			//Begin commandbuffer
 			VkCommandBufferBeginInfo info = {};
@@ -825,19 +797,40 @@ namespace Lambda
 			info.pNext = nullptr;
 			info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 			info.pInheritanceInfo = nullptr;
-			if (vkBeginCommandBuffer(m_CurrentCommandBuffer, &info) != VK_SUCCESS)
+			if (vkBeginCommandBuffer(m_pCurrentFrameResource->CommandBuffer, &info) != VK_SUCCESS)
 			{
 				LOG_DEBUG_ERROR("Vulkan: Failed to Begin CommandBuffer\n");
 			}
         
 			//Reset dependencies, when mapping a UploadBuffer, reset is called aswell
-			m_pBufferUpload->Reset();
-			m_pTextureUpload->Reset();
+			m_pCurrentFrameResource->BufferUpload->Reset();
+			m_pCurrentFrameResource->TextureUpload->Reset();
 
 			//Set context state
 			m_ContextState = DEVICE_CONTEXT_STATE_RECORDING;
 		}
     }
+
+
+	void VKNDeviceContext::EndCommanBuffer()
+	{
+		LOG_DEBUG_INFO("EndCommanBuffer()\n");
+
+		//End renderpass before ending commmandsubmition
+		if (IsInsideRenderPass())
+			EndRenderPass();
+
+		//End commandbuffer
+		if (vkEndCommandBuffer(m_pCurrentFrameResource->CommandBuffer) != VK_SUCCESS)
+		{
+			LOG_DEBUG_ERROR("Vulkan: Failed to End CommandBuffer\n");
+		}
+
+		//Move to next frame
+		m_FrameIndex = (m_FrameIndex + 1) % m_NumFrameResources;
+		//Set context state
+		m_ContextState = DEVICE_CONTEXT_STATE_WAITING;
+	}
     
 
     void VKNDeviceContext::Flush()
@@ -850,7 +843,7 @@ namespace Lambda
 		LAMBDA_ASSERT_PRINT(m_WaitSemaphores.size() == m_WaitDstStageMasks.size(), "Vulkan: Number of WaitSemaphores and WaitDstStageMasks must be the same\n");
 
 		//Wait for fence and execute
-		VkCommandBuffer buffers[] = { m_CurrentCommandBuffer };
+		VkCommandBuffer buffers[] = { m_pCurrentFrameResource->CommandBuffer };
 
 		//submit commandbuffers
 		VkSubmitInfo submitInfo = {};
@@ -863,11 +856,11 @@ namespace Lambda
 		submitInfo.pCommandBuffers		= buffers;
 		submitInfo.signalSemaphoreCount = uint32(m_SignalSemaphores.size());
 		submitInfo.pSignalSemaphores	= m_SignalSemaphores.data();
-		m_pDevice->ExecuteCommandBuffer(&submitInfo, 1, m_CurrentFence);
+		m_pDevice->ExecuteCommandBuffer(&submitInfo, 1, m_pCurrentFrameResource->Fence);
 
 		//Clear semaphores
-		m_SignalSemaphores.clear();
 		m_WaitSemaphores.clear();
+		m_SignalSemaphores.clear();
 		m_WaitDstStageMasks.clear();
     }
 
@@ -894,7 +887,7 @@ namespace Lambda
         info.renderArea.extent	= m_FramebufferExtent;
         info.clearValueCount	= 0;
         info.pClearValues		= nullptr;
-        vkCmdBeginRenderPass(m_CurrentCommandBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
+        vkCmdBeginRenderPass(m_pCurrentFrameResource->CommandBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
 		
 		//Set context state
 		m_ContextState = DEVICE_CONTEXT_STATE_RENDERPASS;
@@ -908,7 +901,7 @@ namespace Lambda
 		LOG_DEBUG_INFO("EndRenderPass()\n");
 
 		//End renderpass
-        vkCmdEndRenderPass(m_CurrentCommandBuffer);
+        vkCmdEndRenderPass(m_pCurrentFrameResource->CommandBuffer);
 		//Set context state
 		m_ContextState = DEVICE_CONTEXT_STATE_RECORDING;
 	}
@@ -940,7 +933,7 @@ namespace Lambda
         const QueryDesc& desc   = pVkQuery->GetDesc();
         
         VkQueryPool queryPool   = reinterpret_cast<VkQueryPool>(pVkQuery->GetNativeHandle());
-        vkCmdResetQueryPool(m_CurrentCommandBuffer, queryPool, 0, desc.QueryCount);
+        vkCmdResetQueryPool(m_pCurrentFrameResource->CommandBuffer, queryPool, 0, desc.QueryCount);
         pVkQuery->Reset();
     }
     
@@ -955,7 +948,7 @@ namespace Lambda
 		//Write timestamp
         VKNQuery* pVkQuery		= reinterpret_cast<VKNQuery*>(pQuery);
         VkQueryPool queryPool	= reinterpret_cast<VkQueryPool>(pVkQuery->GetNativeHandle());
-        vkCmdWriteTimestamp(m_CurrentCommandBuffer, ConvertPipelineStage(stage), queryPool, pVkQuery->GetQueryIndex());
+        vkCmdWriteTimestamp(m_pCurrentFrameResource->CommandBuffer, ConvertPipelineStage(stage), queryPool, pVkQuery->GetQueryIndex());
         pVkQuery->NextQuery();
     }
 }

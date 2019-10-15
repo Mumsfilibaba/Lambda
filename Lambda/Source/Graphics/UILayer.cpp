@@ -305,16 +305,16 @@ namespace Lambda
 		uint64 uploadSize = width * height * 4 * sizeof(char);
 
 		TextureDesc fontTextureDesc = {};
-		fontTextureDesc.Type				= TEXTURE_TYPE_2D;
-		fontTextureDesc.Flags				= TEXTURE_FLAGS_SHADER_RESOURCE;
-		fontTextureDesc.Format				= FORMAT_R8G8B8A8_UNORM;
-		fontTextureDesc.Width				= width;
-		fontTextureDesc.Height				= height;
-		fontTextureDesc.Depth				= 1;
-		fontTextureDesc.MipLevels			= 1;
-		fontTextureDesc.ArraySize			= 1;
-		fontTextureDesc.SampleCount			= 1;
-		fontTextureDesc.Usage				= RESOURCE_USAGE_DEFAULT;
+		fontTextureDesc.Type		= TEXTURE_TYPE_2D;
+		fontTextureDesc.Flags		= TEXTURE_FLAGS_SHADER_RESOURCE;
+		fontTextureDesc.Format		= FORMAT_R8G8B8A8_UNORM;
+		fontTextureDesc.Width		= width;
+		fontTextureDesc.Height		= height;
+		fontTextureDesc.Depth		= 1;
+		fontTextureDesc.MipLevels	= 1;
+		fontTextureDesc.ArraySize	= 1;
+		fontTextureDesc.SampleCount	= 1;
+		fontTextureDesc.Usage		= RESOURCE_USAGE_DEFAULT;
 
 		ResourceData initalData = {};
 		initalData.pData		= pPixels;
@@ -322,7 +322,6 @@ namespace Lambda
 		pDevice->CreateTexture(&m_FontTexture, &initalData, fontTextureDesc);
 
 		m_VariableTable->GetVariableByIndex(SHADER_STAGE_PIXEL, 0)->SetTexture(m_FontTexture.Get());
-		m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "sTexture")->SetTexture(m_FontTexture.Get());
 
 		//Create vertex and indexbuffer
 		BufferDesc bufferDesc = {};
@@ -469,7 +468,7 @@ namespace Lambda
 
 		//uint64 vertexSize	= pDrawData->TotalVtxCount * sizeof(ImDrawVert);
 		//uint64 indexSize	= pDrawData->TotalIdxCount * sizeof(ImDrawIdx);
-		// Upload vertex/index data into a single contiguous GPU buffer
+		// pload vertex/index data into a single contiguous GPU buffer
 		{
 			ImDrawVert* vtxDst  = NULL;
 			ImDrawIdx* idxDst   = NULL;
