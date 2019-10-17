@@ -4,6 +4,7 @@
 #include <string>
 #include "VKNPipelineState.h"
 #include "VKNShaderVariableTable.h"
+#include "VKNResourceLayoutTracker.h"
 #include "VKNUtilities.h"
 
 namespace Lambda
@@ -34,6 +35,11 @@ namespace Lambda
         friend class VKNDevice;
         
 	private:
+
+		//-------------
+		//FrameResource
+		//-------------
+
 		struct FrameResource
 		{
 			VkFence				Fence			= VK_NULL_HANDLE;
@@ -115,6 +121,7 @@ namespace Lambda
 		FrameResource*	m_pCurrentFrameResource;
         uint32          m_NumFrameResources;
         uint32          m_FrameIndex;
+		VKNResourceLayoutTracker* m_ImageLayoutTracker;
 		std::vector<VkSemaphore>			m_SignalSemaphores;
         std::vector<VkSemaphore>			m_WaitSemaphores;
         std::vector<VkPipelineStageFlags>	m_WaitDstStageMasks;

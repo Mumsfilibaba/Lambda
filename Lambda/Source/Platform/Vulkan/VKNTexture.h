@@ -27,7 +27,7 @@ namespace Lambda
 
 		inline void SetVkImageLayout(VkImageLayout resourceState) const		{ m_ImageLayout = resourceState; }
 		inline VkFormat GetVkFormat() const									{ return ConvertFormat(m_Desc.Format); }
-		inline VkImageAspectFlags GetAspectFlags() const					{ return m_AspectFlags; }
+		inline VkImageAspectFlags GetVkAspectFlags() const					{ return m_AspectFlags; }
 		inline VkImage GetVkImage() const									{ return m_Image; }
 		inline VkImageView GetVkImageView() const							{ return m_ImageView; }
 		inline VkImageLayout GetVkImageLayout() const						{ return m_ImageLayout; }

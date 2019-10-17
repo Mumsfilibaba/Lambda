@@ -21,6 +21,7 @@ namespace Lambda
 		m_CommandPool(VK_NULL_HANDLE),
 		m_pFrameResources(nullptr),
         m_pCurrentFrameResource(nullptr),
+		m_ImageLayoutTracker(nullptr),
         m_RenderPass(VK_NULL_HANDLE),
         m_Framebuffer(VK_NULL_HANDLE),
         m_PipelineState(nullptr),
@@ -61,6 +62,9 @@ namespace Lambda
             vkDestroyCommandPool(m_pDevice->GetVkDevice(), m_CommandPool, nullptr);
             m_CommandPool = VK_NULL_HANDLE;
         }
+
+		//Destroy layout-tracker
+		SafeDelete(m_ImageLayoutTracker);
 
         LOG_DEBUG_INFO("Vulkan: Destroyed DeviceContext '%s'\n", m_Name.c_str());
     }
@@ -139,6 +143,9 @@ namespace Lambda
 			m_pFrameResources[i].BufferUpload  = DBG_NEW VKNUploadBuffer(m_pDevice, MB(1));
 			m_pFrameResources[i].TextureUpload = DBG_NEW VKNUploadBuffer(m_pDevice, MB(16));
 		}
+
+		//Create imagelayout-tracker
+		m_ImageLayoutTracker = DBG_NEW VKNResourceLayoutTracker();
     }
 
 
@@ -185,13 +192,13 @@ namespace Lambda
         VkImageBlit blitInfo = {};
         blitInfo.srcOffsets[0] = { 0, 0, 0 };
         blitInfo.srcOffsets[1] = { int32(srcWidth), int32(srcHeight), 1 };
-        blitInfo.srcSubresource.aspectMask = pSrc->GetAspectFlags();
+        blitInfo.srcSubresource.aspectMask = pSrc->GetVkAspectFlags();
         blitInfo.srcSubresource.mipLevel = srcMipLevel;
         blitInfo.srcSubresource.baseArrayLayer = 0;
         blitInfo.srcSubresource.layerCount = 1;
         blitInfo.dstOffsets[0] = { 0, 0, 0 };
         blitInfo.dstOffsets[1] = { int32(dstWidth), int32(dstHeight), 1 };
-        blitInfo.dstSubresource.aspectMask = pDst->GetAspectFlags();
+        blitInfo.dstSubresource.aspectMask = pDst->GetVkAspectFlags();
         blitInfo.dstSubresource.mipLevel = dstMipLevel;
         blitInfo.dstSubresource.baseArrayLayer = 0;
         blitInfo.dstSubresource.layerCount = 1;
@@ -461,124 +468,23 @@ namespace Lambda
     
     void VKNDeviceContext::TransitionTexture(const ITexture* pTexture, ResourceState state, uint32 startMipLevel, uint32 numMipLevels)
     {
+		const VKNTexture* pVkTexture = reinterpret_cast<const VKNTexture*>(pTexture);
+		VkImageLayout newLayout = ConvertResourceStateToImageLayout(state);
+		m_ImageLayoutTracker->TransitionImage(pVkTexture->GetVkImage(), pVkTexture->GetVkAspectFlags(), 1, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+		m_ImageLayoutTracker->TransitionImage(pVkTexture->GetVkImage(), pVkTexture->GetVkAspectFlags(), 3, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		m_ImageLayoutTracker->TransitionImage(pVkTexture->GetVkImage(), pVkTexture->GetVkAspectFlags(), VK_REMAINING_MIP_LEVELS, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+		//m_ImageLayoutTracker->TransitionImage(pVkTexture->GetVkImage(), pVkTexture->GetVkAspectFlags(), startMipLevel, numMipLevels, newLayout);
+
 		//Make sure that we have a commandbuffer
 		QueryCommandBuffer();
+
+		//m_ImageLayoutTracker->FlushBarriers(m_pCurrentFrameResource->CommandBuffer);
 
 		//Transitions can only happen outside a renderpass
 		if (IsInsideRenderPass())
 			EndRenderPass();
 
-        const VKNTexture* pVkTexture = reinterpret_cast<const VKNTexture*>(pTexture);
-        VkImageLayout newLayout = ConvertResourceStateToImageLayout(state);
-
-        //Setup barrier
-        VkImageMemoryBarrier barrier = {};
-        barrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-        barrier.oldLayout                       = pVkTexture->GetVkImageLayout();
-        barrier.newLayout                       = newLayout;
-        barrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
-        barrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
-        barrier.image                           = pVkTexture->GetVkImage();
-        barrier.subresourceRange.aspectMask     = pVkTexture->GetAspectFlags();
-        barrier.subresourceRange.baseMipLevel   = startMipLevel;
-        barrier.srcAccessMask                   = 0;
-        barrier.dstAccessMask                   = 0;
-        barrier.subresourceRange.baseArrayLayer = 0;
-        barrier.subresourceRange.layerCount     = 1;        
-        const TextureDesc& textureDesc = pVkTexture->GetDesc();
-        if (numMipLevels == LAMBDA_TRANSITION_ALL_MIPS)
-            barrier.subresourceRange.levelCount = textureDesc.MipLevels;
-        else
-            barrier.subresourceRange.levelCount = numMipLevels;
-    
-        //Set flags and stage
-        VkPipelineStageFlags sourceStage        = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        VkPipelineStageFlags destinationStage   = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-    
-        //Set source- mask and stage
-        if (barrier.oldLayout == VK_IMAGE_LAYOUT_UNDEFINED)
-        {
-            barrier.srcAccessMask = 0;
-            sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        }
-        else if (barrier.oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
-        {
-            barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-            sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-        }
-        else if (barrier.oldLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
-        {
-            barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-            sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-        }
-        else if (barrier.newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-        {
-            barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-            sourceStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-        }
-        else if (barrier.oldLayout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
-        {
-            barrier.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-            sourceStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-        }
-        else if (barrier.oldLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
-        {
-            barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-            sourceStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-        }
-        else if (barrier.oldLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
-        {
-            barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-            sourceStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        }
-        else
-        {
-            LOG_DEBUG_ERROR("Vulkan: Unsupported src-image layout transition '%d'\n", barrier.oldLayout);
-        }
-    
-        //Set destination- mask and stage
-        if (barrier.oldLayout == VK_IMAGE_LAYOUT_UNDEFINED)
-        {
-            barrier.dstAccessMask = 0;
-            destinationStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        }
-        else if (barrier.newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
-        {
-            barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-            destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-        }
-        else if (barrier.newLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
-        {
-            barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-            destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-        }
-        else if (barrier.newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-        {
-            barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-            destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-        }
-        else if (barrier.newLayout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
-        {
-            barrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-            destinationStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        }
-        else if (barrier.newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
-        {
-            barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-            destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-        }
-        else if (barrier.newLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
-        {
-            barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-            destinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        }
-        else
-        {
-            LOG_DEBUG_ERROR("Vulkan: Unsupported dst-image layout transition '%d'\n", barrier.newLayout);
-        }
-    
-        vkCmdPipelineBarrier(m_pCurrentFrameResource->CommandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-        pVkTexture->SetVkImageLayout(barrier.newLayout);
     }
     
     
@@ -647,7 +553,7 @@ namespace Lambda
         region.bufferOffset                     = mem.DeviceOffset;
         region.bufferRowLength                  = 0;
         region.bufferImageHeight                = 0;
-        region.imageSubresource.aspectMask      = pVkResource->GetAspectFlags();
+        region.imageSubresource.aspectMask      = pVkResource->GetVkAspectFlags();
         region.imageSubresource.mipLevel        = mipLevel;
         region.imageSubresource.baseArrayLayer  = 0;
         region.imageSubresource.layerCount      = 1;
@@ -711,11 +617,11 @@ namespace Lambda
 		resolve.extent.width  = pVkDst->GetDesc().Width;
 		resolve.extent.height = pVkDst->GetDesc().Height;
 		resolve.extent.depth  = 1;
-		resolve.dstSubresource.aspectMask	  = pVkDst->GetAspectFlags();
+		resolve.dstSubresource.aspectMask	  = pVkDst->GetVkAspectFlags();
 		resolve.dstSubresource.baseArrayLayer = 0;
 		resolve.dstSubresource.layerCount	  = 1;
 		resolve.dstSubresource.mipLevel		  = 0;
-		resolve.srcSubresource.aspectMask	  = pVKSrc->GetAspectFlags();
+		resolve.srcSubresource.aspectMask	  = pVKSrc->GetVkAspectFlags();
 		resolve.srcSubresource.baseArrayLayer = 0;
 		resolve.srcSubresource.layerCount	  = 1;
 		resolve.srcSubresource.mipLevel		  = 0;

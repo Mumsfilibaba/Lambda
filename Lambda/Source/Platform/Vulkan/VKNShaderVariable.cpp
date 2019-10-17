@@ -171,7 +171,7 @@ namespace Lambda
 	uint32 VKNShaderVariable::GetDynamicOffset() const
 	{
 		if (m_Desc.Type == RESOURCE_TYPE_CONSTANT_BUFFER && m_Desc.Usage == RESOURCE_USAGE_DYNAMIC)
-			return reinterpret_cast<VKNBuffer*>(m_Resource.Get())->GetDynamicOffset();
+			return uint32(reinterpret_cast<VKNBuffer*>(m_Resource.Get())->GetDynamicOffset());
 
 		return 0;
 	}
