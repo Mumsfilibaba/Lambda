@@ -6,6 +6,7 @@
 namespace Lambda
 {
 	class VKNDevice;
+	class VKNDeviceContext;
 	class VKNShaderVariableTable;
 
 	//----------------------
@@ -25,6 +26,7 @@ namespace Lambda
 		virtual void SetSamplerState(ISamplerState* pSamplerState) override final;
 		virtual IShaderVariableTable* GetShaderVariableTable() const override final;
 		virtual const ShaderVariableDesc& GetDesc() const override final;
+		void Transition(VKNDeviceContext* pContext);
 		bool Validate();
 
 		uint32 GetDynamicOffset() const;

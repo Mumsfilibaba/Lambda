@@ -54,16 +54,15 @@ namespace Lambda
 		bool AllocateBuffer(VKNMemory& allocation, VkBuffer buffer, ResourceUsage usage);
 		void Deallocate(VKNMemory& allocation);
 
-		void SetVulkanObjectName(VkObjectType type, uint64 objectHandle, const std::string& name);
-		VkSampleCountFlagBits GetHighestSampleCount() const;
-		VKNDeviceContext* GetVKNImmediateContext() const;
-
 		template<typename VkResourceType>
 		void SafeReleaseVulkanResource(const VkResourceType& resource)
 		{
 			m_pSafeReleaseManager->ReleaseResource<VkResourceType>(resource);
 		}
 
+		void SetVulkanObjectName(VkObjectType type, uint64 objectHandle, const std::string& name);
+		VkSampleCountFlagBits GetHighestSampleCount() const;
+		VKNDeviceContext* GetVKNImmediateContext() const;
 		inline VkInstance GetVkInstance() const									{ return m_Instance; }
 		inline VkDevice GetVkDevice() const										{ return m_Device; }
 		inline VkPhysicalDevice GetVkPhysicalDevice() const						{ return m_PhysicalDevice; }
@@ -71,11 +70,9 @@ namespace Lambda
 		inline VkPhysicalDeviceProperties GetPhysicalDeviceProperties() const	{ return m_PhysicalDeviceProperties; }
 	private:
 		void Init(const DeviceDesc& desc);
-		void InitDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo);
-		
+		void InitDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo);		
 		VkPhysicalDevice QueryPhyscialDevice();
-		bool PhysicalDeviceIsSuitable(VkPhysicalDevice physcialDevice);
-        
+		bool PhysicalDeviceIsSuitable(VkPhysicalDevice physcialDevice);        
 		std::vector<const char*> GetRequiredValidationLayers(bool debug);
 		std::vector<const char*> GetRequiredDeviceExtensions();
 		std::vector<const char*> GetRequiredInstanceExtensions(bool debug);
@@ -97,14 +94,11 @@ namespace Lambda
 		VkPhysicalDeviceProperties m_PhysicalDeviceProperties;
 		DeviceDesc				   m_Desc;
 	private:
-        static VKNDevice* s_pInstance;
 		static PFN_vkSetDebugUtilsObjectNameEXT		SetDebugUtilsObjectNameEXT;
 		static PFN_vkCreateDebugUtilsMessengerEXT	CreateDebugUtilsMessengerEXT;
 		static PFN_vkDestroyDebugUtilsMessengerEXT	DestroyDebugUtilsMessengerEXT;
 	private:
 		static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 			VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
-    public:
-		static VKNDevice& Get();
     };
 }

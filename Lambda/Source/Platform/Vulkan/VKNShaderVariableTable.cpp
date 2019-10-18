@@ -1,6 +1,7 @@
 #include "LambdaPch.h"
 #include "VKNShaderVariableTable.h"
 #include "VKNDevice.h"
+#include "VKNDeviceContext.h"
 #include "VKNAllocator.h"
 #include "VKNConversions.inl"
 
@@ -86,7 +87,7 @@ namespace Lambda
 	}
 	
 
-	void VKNShaderVariableTable::CommitAndTransitionResources()
+	void VKNShaderVariableTable::CommitAndTransitionResources(VKNDeviceContext* pContext)
 	{
 		//Varify all variables (Have the resources changed)
         bool writeDescriptors = false;
@@ -96,6 +97,10 @@ namespace Lambda
             if (!pVar->Validate())
                 writeDescriptors = true;
             
+			//Transition variable
+			pVar->Transition(pContext);
+
+			//Setup write info
             const VkWriteDescriptorSet& writeInfo = pVar->GetVkWriteDescriptorSet();
             m_DescriptorWrites.emplace_back(writeInfo);
         }

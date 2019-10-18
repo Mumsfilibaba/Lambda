@@ -20,7 +20,6 @@ namespace Lambda
 	//VKNDevice
 	//---------
 
-    VKNDevice* VKNDevice::s_pInstance = nullptr;
 	PFN_vkSetDebugUtilsObjectNameEXT	VKNDevice::SetDebugUtilsObjectNameEXT       = nullptr;
 	PFN_vkCreateDebugUtilsMessengerEXT	VKNDevice::CreateDebugUtilsMessengerEXT     = nullptr;
 	PFN_vkDestroyDebugUtilsMessengerEXT	VKNDevice::DestroyDebugUtilsMessengerEXT    = nullptr;
@@ -40,9 +39,6 @@ namespace Lambda
 		m_FamiliyIndices(),
 		m_PhysicalDeviceProperties()
     {   
-        LAMBDA_ASSERT(s_pInstance == nullptr);
-        s_pInstance = this;
-
         //Add a ref to the refcounter
         this->AddRef();
         Init(desc);
@@ -89,10 +85,6 @@ namespace Lambda
 			vkDestroyInstance(m_Instance, nullptr);
 			m_Instance = VK_NULL_HANDLE;
 		}
-
-		//Set global instance to nullptr
-		if (s_pInstance == this)
-			s_pInstance = nullptr;
     }
     
     
@@ -218,14 +210,14 @@ namespace Lambda
 
 		//Create instance
 		VkInstanceCreateInfo instanceInfo = {};
-		instanceInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-		instanceInfo.pNext = (desc.Flags & DEVICE_FLAG_DEBUG) ? (VkDebugUtilsMessengerCreateInfoEXT*)& dInfo : nullptr;
-		instanceInfo.flags = 0;
-		instanceInfo.pApplicationInfo = &applicationInfo;
-		instanceInfo.enabledExtensionCount = uint32(requiredExtensions.size());
-		instanceInfo.ppEnabledExtensionNames = requiredExtensions.data();
-		instanceInfo.enabledLayerCount = uint32(requiredLayers.size());
-		instanceInfo.ppEnabledLayerNames = requiredLayers.data();
+		instanceInfo.sType						= VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+		instanceInfo.pNext						= (desc.Flags & DEVICE_FLAG_DEBUG) ? (VkDebugUtilsMessengerCreateInfoEXT*)& dInfo : nullptr;
+		instanceInfo.flags						= 0;
+		instanceInfo.pApplicationInfo			= &applicationInfo;
+		instanceInfo.enabledExtensionCount		= uint32(requiredExtensions.size());
+		instanceInfo.ppEnabledExtensionNames	= requiredExtensions.data();
+		instanceInfo.enabledLayerCount			= uint32(requiredLayers.size());
+		instanceInfo.ppEnabledLayerNames		= requiredLayers.data();
 
 		VkResult res = vkCreateInstance(&instanceInfo, nullptr, &m_Instance);
 		if (res != VK_SUCCESS)
@@ -492,9 +484,9 @@ namespace Lambda
                     uint32 mipLevels = textureDesc.MipLevels;
                     for (uint32 i = 1; i < mipLevels; i++)
                     {
-                        m_pImmediateContext->TransitionTexture(pVkTexture, RESOURCE_STATE_COPY_SRC, i-1, 1);
+                        m_pImmediateContext->TransitionTexture(pVkTexture, RESOURCE_STATE_COPY_SRC, i-1);
                         m_pImmediateContext->BlitTexture(pVkTexture, mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, i, pVkTexture, mipWidth, mipHeight, i-1);
-                        m_pImmediateContext->TransitionTexture(pVkTexture, RESOURCE_STATE_COPY_DEST, i-1, 1);
+                        m_pImmediateContext->TransitionTexture(pVkTexture, RESOURCE_STATE_COPY_DEST, i-1);
                         
                         if (mipWidth > 1)
                             mipWidth /= 2;
@@ -586,7 +578,7 @@ namespace Lambda
     
     void VKNDevice::WaitUntilIdle() const
     {
-        //LOG_DEBUG_INFO("VKNDevice::WaitForGPU\n");
+        LOG_DEBUG_INFO("VKNDevice::WaitUntilIdle\n");
         vkDeviceWaitIdle(m_Device);
     }
 
@@ -638,12 +630,12 @@ namespace Lambda
 			std::min(m_PhysicalDeviceProperties.limits.framebufferColorSampleCounts, m_PhysicalDeviceProperties.limits.framebufferDepthSampleCounts));
 		VkSampleCountFlagBits sampleCount = VK_SAMPLE_COUNT_1_BIT;
 
-		if (sampleCountFlags & VK_SAMPLE_COUNT_64_BIT) { sampleCount = VK_SAMPLE_COUNT_64_BIT; }
+		if (sampleCountFlags & VK_SAMPLE_COUNT_64_BIT)		{ sampleCount = VK_SAMPLE_COUNT_64_BIT; }
 		else if (sampleCountFlags & VK_SAMPLE_COUNT_32_BIT) { sampleCount = VK_SAMPLE_COUNT_32_BIT; }
 		else if (sampleCountFlags & VK_SAMPLE_COUNT_16_BIT) { sampleCount = VK_SAMPLE_COUNT_16_BIT; }
-		else if (sampleCountFlags & VK_SAMPLE_COUNT_8_BIT) { sampleCount = VK_SAMPLE_COUNT_8_BIT; }
-		else if (sampleCountFlags & VK_SAMPLE_COUNT_4_BIT) { sampleCount = VK_SAMPLE_COUNT_4_BIT; }
-		else if (sampleCountFlags & VK_SAMPLE_COUNT_2_BIT) { sampleCount = VK_SAMPLE_COUNT_2_BIT; }
+		else if (sampleCountFlags & VK_SAMPLE_COUNT_8_BIT)	{ sampleCount = VK_SAMPLE_COUNT_8_BIT; }
+		else if (sampleCountFlags & VK_SAMPLE_COUNT_4_BIT)	{ sampleCount = VK_SAMPLE_COUNT_4_BIT; }
+		else if (sampleCountFlags & VK_SAMPLE_COUNT_2_BIT)	{ sampleCount = VK_SAMPLE_COUNT_2_BIT; }
 
 		return sampleCount;
 	}
@@ -875,12 +867,5 @@ namespace Lambda
     const DeviceDesc& VKNDevice::GetDesc() const
     {
         return m_Desc;
-    }
-
-
-	VKNDevice& VKNDevice::Get()
-	{
-		LAMBDA_ASSERT(s_pInstance != nullptr);
-		return *s_pInstance;
     }
 }

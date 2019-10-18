@@ -12,7 +12,7 @@ namespace Lambda
 
 	constexpr float mb = 1024.0f * 1024.0f;
 
-	VKNMemoryChunk::VKNMemoryChunk(uint32 id, VkDeviceSize sizeInBytes, uint32 memoryType, ResourceUsage usage)
+	VKNMemoryChunk::VKNMemoryChunk(VKNDevice* pDevice, uint32 id, VkDeviceSize sizeInBytes, uint32 memoryType, ResourceUsage usage)
 		: m_Usage(usage),
 		m_ID(id),
 		m_MemoryType(memoryType),
@@ -22,11 +22,11 @@ namespace Lambda
 		m_pHostMemory(nullptr),
 		m_IsMapped(false)
 	{
-		Init();
+		Init(pDevice);
 	}
 
 
-	void VKNMemoryChunk::Init()
+	void VKNMemoryChunk::Init(VKNDevice* pDevice)
 	{
 		//Allocate device memory
 		VkMemoryAllocateInfo allocInfo  = {};
@@ -34,9 +34,7 @@ namespace Lambda
 		allocInfo.pNext				    = nullptr;
 		allocInfo.allocationSize	    = m_SizeInBytes;
 		allocInfo.memoryTypeIndex	    = m_MemoryType;
-
-		VKNDevice& device = VKNDevice::Get();
-		if (vkAllocateMemory(device.GetVkDevice(), &allocInfo, nullptr, &m_DeviceMemory) != VK_SUCCESS)
+		if (vkAllocateMemory(pDevice->GetVkDevice(), &allocInfo, nullptr, &m_DeviceMemory) != VK_SUCCESS)
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to allocate MemoryChunk\n");
 			return;
@@ -58,7 +56,7 @@ namespace Lambda
 		//If this is CPU visible -> Map
 		if (m_Usage == RESOURCE_USAGE_DYNAMIC)
 		{
-			Map();
+			Map(pDevice);
 		}
 	}
 
@@ -181,15 +179,13 @@ namespace Lambda
     }
 
 
-	void VKNMemoryChunk::Map()
+	void VKNMemoryChunk::Map(VKNDevice* pDevice)
 	{
 		//If not mapped -> map
 		if (!m_IsMapped)
 		{
-			VKNDevice& device = VKNDevice::Get();
-
 			void* pMemory = nullptr;
-			vkMapMemory(device.GetVkDevice(), m_DeviceMemory, 0, VK_WHOLE_SIZE, 0, &pMemory);
+			vkMapMemory(pDevice->GetVkDevice(), m_DeviceMemory, 0, VK_WHOLE_SIZE, 0, &pMemory);
 
 			m_pHostMemory   = reinterpret_cast<uint8*>(pMemory);
 			m_IsMapped      = true;
@@ -197,14 +193,12 @@ namespace Lambda
 	}
 
 
-	void VKNMemoryChunk::Unmap()
+	void VKNMemoryChunk::Unmap(VKNDevice* pDevice)
 	{
 		//If mapped -> unmap
 		if (m_IsMapped)
 		{
-			VKNDevice& device = VKNDevice::Get();
-			vkUnmapMemory(device.GetVkDevice(), m_DeviceMemory);
-
+			vkUnmapMemory(pDevice->GetVkDevice(), m_DeviceMemory);
 			m_pHostMemory = nullptr;
 			m_IsMapped    = false;
 		}
@@ -276,14 +270,14 @@ namespace Lambda
 	}
 
 
-	void VKNMemoryChunk::Destroy(VkDevice device)
+	void VKNMemoryChunk::Destroy(VKNDevice* pDevice)
 	{
 		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
 
 		if (m_DeviceMemory != VK_NULL_HANDLE)
 		{
 			//Unmap
-			Unmap();
+			Unmap(pDevice);
 
 			//Print memoryleaks
 #if defined(LAMBDA_DEBUG)
@@ -300,7 +294,7 @@ namespace Lambda
 			SafeDelete(m_pBlockHead);
 
 			//Free memory
-			vkFreeMemory(device, m_DeviceMemory, nullptr);
+			vkFreeMemory(pDevice->GetVkDevice(), m_DeviceMemory, nullptr);
 			m_DeviceMemory = VK_NULL_HANDLE;
 
 			LOG_SYSTEM(LOG_SEVERITY_WARNING, "Vulkan: Deallocated MemoryChunk\n");
@@ -313,7 +307,7 @@ namespace Lambda
 	//VKNAllocator
 	//------------
 
-    constexpr size_t numFrames = 5;
+    constexpr size_t numFrames = 10;
 
 	VKNAllocator::VKNAllocator(VKNDevice* pDevice)
 		: m_pDevice(pDevice),
@@ -345,7 +339,7 @@ namespace Lambda
 		for (auto chunk : m_Chunks)
 		{
 			if (chunk)
-				chunk->Destroy(m_pDevice->GetVkDevice());
+				chunk->Destroy(m_pDevice);
 		}
 
 		LOG_DEBUG_INFO("Vulkan: Destroyed buffer\n");
@@ -390,7 +384,7 @@ namespace Lambda
 		m_TotalReserved += bytesToReserve;
 		
 		//Allocate new chunk
-		VKNMemoryChunk* pChunk = DBG_NEW VKNMemoryChunk(uint32(m_Chunks.size()), bytesToReserve, memoryType, usage);
+		VKNMemoryChunk* pChunk = DBG_NEW VKNMemoryChunk(m_pDevice, uint32(m_Chunks.size()), bytesToReserve, memoryType, usage);
 		m_Chunks.emplace_back(pChunk);
 
         return pChunk->Allocate(allocation, memoryRequirements.size, memoryRequirements.alignment, m_BufferImageGranularity);

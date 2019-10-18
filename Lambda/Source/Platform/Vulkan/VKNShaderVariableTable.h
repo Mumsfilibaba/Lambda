@@ -7,6 +7,7 @@
 namespace Lambda
 {
 	class VKNDevice;
+	class VKNDeviceContext;
 
 	//----------------------
 	//VKNShaderVariableTable
@@ -24,7 +25,7 @@ namespace Lambda
 		virtual IShaderVariable* GetVariableByIndex(ShaderStage shader, uint32 index) override final;
 		virtual IPipelineState* GetPipelineState() const override final;
 		virtual uint32 GetVariableCount() const override final;
-		void CommitAndTransitionResources();
+		void CommitAndTransitionResources(VKNDeviceContext* pContext);
         
         inline uint32* GetDynamicOffsets() const            { return m_pDynamicOffsets; }
         inline uint32 GetDynamicOffsetCount() const         { return uint32(m_DynamicVars.size()); }

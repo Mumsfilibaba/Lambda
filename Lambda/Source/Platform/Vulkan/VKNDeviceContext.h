@@ -95,10 +95,10 @@ namespace Lambda
         virtual void* GetNativeHandle() const override final;
 		
 		void QueryCommandBuffer();
-        void EndCommanBuffer();
+        void EndCommandBuffer();
 		
 		void TransitionBuffer(const IBuffer* pBuffer, ResourceState state);
-		void TransitionTexture(const ITexture* pTexture, ResourceState state, uint32 startMipLevel, uint32 numMipLevels);
+		void TransitionTexture(const ITexture* pTexture, ResourceState state, uint32 mipLevel);
         
 		void BlitTexture(VKNTexture* pDst, uint32 dstWidth, uint32 dstHeight, uint32 dstMipLevel, VKNTexture* pSrc, uint32 srcWidth, uint32 srcHeight, uint32 srcMipLevel);
         
@@ -114,6 +114,7 @@ namespace Lambda
         void BeginRenderPass();
         void EndRenderPass();
 		void PrepareForDraw();
+		void FlushResourceBarriers();
 		inline bool IsInsideRenderPass() { return m_ContextState == DEVICE_CONTEXT_STATE_RENDERPASS; }
     private:
         VkCommandPool	m_CommandPool;
@@ -121,7 +122,7 @@ namespace Lambda
 		FrameResource*	m_pCurrentFrameResource;
         uint32          m_NumFrameResources;
         uint32          m_FrameIndex;
-		VKNResourceLayoutTracker* m_ImageLayoutTracker;
+		VKNResourceLayoutTracker* m_pResourceTracker;
 		std::vector<VkSemaphore>			m_SignalSemaphores;
         std::vector<VkSemaphore>			m_WaitSemaphores;
         std::vector<VkPipelineStageFlags>	m_WaitDstStageMasks;

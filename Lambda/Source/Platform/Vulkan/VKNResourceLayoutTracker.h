@@ -48,6 +48,7 @@ namespace Lambda
 		void FlushBarriers(VkCommandBuffer cmdBuffer);
 
 		VkImageLayout GetLayout(VkImage image, uint32 mipLevel) const;
+		inline bool NeedsFlush() const { return !m_DefferedBarriers.empty(); };
 	private:
 		void SyncGlobalLayouts();
 		void FinishBarrier(ImageBarrier& barrier);

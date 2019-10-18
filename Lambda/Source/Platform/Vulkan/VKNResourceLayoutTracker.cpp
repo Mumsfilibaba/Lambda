@@ -46,85 +46,34 @@ namespace Lambda
 			{
 				if (!currentLayout->second.SubLayouts.empty())
 				{
-					//If we have transitioned an image-subresource before we need to know what layout the rest of the resource is in.
-					//because we transition each
-					//subresource and then add a final barrier that tranitions all resources. This greatly simplifies how to 
-					//handle the resourcestates. Since newLayout cannot be VK_IMAGE_LAYOUT_UNDEFINED, images needs to be in
-					//a known state when being transitioned. This means that VK_IMAGE_LAYOUT_UNDEFINED should be avoided at all
-					//cost. 
-					VkImageLayout firstLayout = currentLayout->second.SubLayouts[startMipLevel];
-					VkImageLayout previousLayout = firstLayout;
-					barrier.Barrier.subresourceRange.levelCount = 0;
-
-					//Set all subresource states to the same as the first
-					uint32 endMipLevel = startMipLevel + numMipLevels;
-					for (uint32 i = startMipLevel; i < endMipLevel; i++)
-					{
-						//Is this the same layout as the last, we add a barrier
-						if (currentLayout->second.SubLayouts[i] != previousLayout)
-						{
-							//Add barrier
-							if (previousLayout != firstLayout)
-							{
-								FinishBarrier(barrier);
-								m_DefferedBarriers.emplace_back(barrier);
-							}
-
-							//Check for this layout
-							previousLayout = currentLayout->second.SubLayouts[i];
-							barrier.Barrier.oldLayout = previousLayout;
-							barrier.Barrier.subresourceRange.baseMipLevel = i;
-							barrier.Barrier.subresourceRange.levelCount = 1;
-						}
-						else
-						{
-							currentLayout->second.SubLayouts[i] = layout;
-							barrier.Barrier.subresourceRange.levelCount++;
-						}
-					}
-
-					//Setup initial barrier
-
-					barrier.Barrier.oldLayout = previousLayout;
-
-
-					//Add barrier if layouts are not the same
-					if (barrier.Barrier.subresourceRange.levelCount > 0 && barrier.Barrier.oldLayout != layout)
-					{
-						//Add to barriers
-						FinishBarrier(barrier);
-						m_DefferedBarriers.emplace_back(barrier);
-					}
-
-					//Set layout for all resources since all have the same layout
-					currentLayout->second.Layout = toLayout;
-					currentLayout->second.SubLayouts.clear();
-				}
-				else
-				{
-					//Avoid unnecceassary barrier
-					if (currentLayout->second.Layout != toLayout)
+					//If we have transitioned an image-subresource (i.e a miplevel) before we need to know what layout the rest of 
+					//the resource is in so that we can transition each subresource into this layout. Then we can tranistion the whole
+					//resource into the layout that we want
+					for (auto& sublayout : currentLayout->second.SubLayouts)
 					{
 						//Setup new layout
-						barrier.Barrier.oldLayout						= currentLayout->second.Layout;
-						barrier.Barrier.subresourceRange.baseMipLevel	= 0;
-						barrier.Barrier.subresourceRange.levelCount		= VK_REMAINING_MIP_LEVELS;
-						currentLayout->second.Layout = toLayout;
+						barrier.Barrier.oldLayout						= sublayout.second;
+						barrier.Barrier.newLayout						= currentLayout->second.Layout;
+						barrier.Barrier.subresourceRange.baseMipLevel	= sublayout.first;
+						barrier.Barrier.subresourceRange.levelCount		= 1;
 
 						//Add barrier
 						FinishBarrier(barrier);
 						m_DefferedBarriers.emplace_back(barrier);
 					}
+
+					//Set layout for all resources since all have the same layout
+					currentLayout->second.SubLayouts.clear();
 				}
-			}
-			else
-			{
-				if (currentLayout->second.SubLayouts[mipLevel] != toLayout)
+
+				//Avoid unnecceassary barrier
+				if (currentLayout->second.Layout != toLayout)
 				{
 					//Setup new layout
 					barrier.Barrier.oldLayout						= currentLayout->second.Layout;
-					barrier.Barrier.subresourceRange.baseMipLevel	= mipLevel;
-					barrier.Barrier.subresourceRange.levelCount		= 1;
+					barrier.Barrier.newLayout						= toLayout;
+					barrier.Barrier.subresourceRange.baseMipLevel	= 0;
+					barrier.Barrier.subresourceRange.levelCount		= VK_REMAINING_MIP_LEVELS;
 					currentLayout->second.Layout = toLayout;
 
 					//Add barrier
@@ -132,18 +81,52 @@ namespace Lambda
 					m_DefferedBarriers.emplace_back(barrier);
 				}
 			}
+			else
+			{
+				//If we are trying to change layout into one we already are in
+				auto& sublayout = currentLayout->second.SubLayouts.find(mipLevel);
+				if (!(sublayout == currentLayout->second.SubLayouts.end() && currentLayout->second.Layout == toLayout))
+				{
+					//Make sure we are not setting a state we are already in
+					if (currentLayout->second.SubLayouts[mipLevel] != toLayout)
+					{
+						//Setup new layout
+						barrier.Barrier.subresourceRange.baseMipLevel	= mipLevel;
+						barrier.Barrier.subresourceRange.levelCount		= 1;
+						if (sublayout == currentLayout->second.SubLayouts.end())
+							barrier.Barrier.oldLayout = currentLayout->second.Layout;
+						else
+							barrier.Barrier.oldLayout = currentLayout->second.SubLayouts[mipLevel];
+
+						//If we change the layout to the same as the rest we remove the sublayout
+						if (toLayout == currentLayout->second.Layout)
+							currentLayout->second.SubLayouts.erase(mipLevel);
+						else
+							currentLayout->second.SubLayouts[mipLevel] = toLayout;
+
+						//Add barrier
+						FinishBarrier(barrier);
+						m_DefferedBarriers.emplace_back(barrier);
+					}
+				}
+			}
 		}
 		else
 		{
 			//Setup a new layout
+			barrier.Barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED; //This layout is undefined
 			if (mipLevel == VK_REMAINING_MIP_LEVELS)
-				m_ResourceLayouts[image].Layout = toLayout;
+			{
+				m_ResourceLayouts[image].Layout					= toLayout;
+				barrier.Barrier.subresourceRange.baseMipLevel	= 0;
+				barrier.Barrier.subresourceRange.levelCount		= VK_REMAINING_MIP_LEVELS;
+			}
 			else
-				m_ResourceLayouts[image].SubLayouts[mipLevel] = toLayout;
-
-			//This layout is undefined
-			barrier.Barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			barrier.Barrier.newLayout = toLayout;
+			{
+				m_ResourceLayouts[image].SubLayouts[mipLevel]	= toLayout;
+				barrier.Barrier.subresourceRange.baseMipLevel	= mipLevel;
+				barrier.Barrier.subresourceRange.levelCount		= 1;
+			}
 
 			//Add barrier
 			FinishBarrier(barrier);
@@ -155,6 +138,8 @@ namespace Lambda
 	void VKNResourceLayoutTracker::FlushBarriers(VkCommandBuffer cmdBuffer)
 	{
 		LAMBDA_ASSERT(cmdBuffer != VK_NULL_HANDLE);
+
+		//Lock global states
 		std::lock_guard<std::mutex> lock(s_GlobalMutex);
 
 		//Make sure the states are still valid
@@ -162,112 +147,82 @@ namespace Lambda
 		commitedBarriers.reserve(m_DefferedBarriers.size());
 		for (auto& barrier : m_DefferedBarriers)
 		{
-			//Check with global layout
+			//Do we have a global state
 			auto globalState = s_GlobalResourceLayouts.find(barrier.Barrier.image);
 			if (globalState != s_GlobalResourceLayouts.end())
 			{
-				uint32 baseMipLevel = barrier.Barrier.subresourceRange.baseMipLevel;
-				uint32 levelCount = barrier.Barrier.subresourceRange.levelCount;
-				if (baseMipLevel == 0 && levelCount == VK_REMAINING_MIP_LEVELS)
+				if (barrier.Barrier.subresourceRange.levelCount == VK_REMAINING_MIP_LEVELS)
 				{
-					if (globalState->second.SubLayouts.empty())
+					if (!globalState->second.SubLayouts.empty())
 					{
-						if (globalState->second.Layout != barrier.Barrier.oldLayout)
+						//If we have a global state that contains sublayouts, we have had a local layout that thinks that
+						//the whole resource has the same state. We need to add barriers to fix this.
+						for (auto& sublayout : globalState->second.SubLayouts)
 						{
-							//If barrier does not equal the global state we need to update the old layout
-							barrier.Barrier.oldLayout = globalState->second.Layout;
+							//Setup new layout
+							ImageBarrier newBarrier = barrier;
+							newBarrier.Barrier.oldLayout						= sublayout.second;
+							newBarrier.Barrier.newLayout						= globalState->second.Layout;
+							newBarrier.Barrier.subresourceRange.baseMipLevel	= sublayout.first;
+							newBarrier.Barrier.subresourceRange.levelCount		= 1;
+
+							//Add barrier
 							FinishBarrier(barrier);
+							commitedBarriers.emplace_back(barrier);
 						}
 
-						//Commit barrier
-						commitedBarriers.emplace_back(barrier);
+						//Remove the gloabl sublayouts
+						globalState->second.SubLayouts.clear();
 					}
-					else
-					{
-						for (auto& subLayout : globalState->second.SubLayouts)
-						{
-							//Is this the same layout as the last, we add a barrier
-							/*if (subLayout != previousLayout)
-							{
-								//Add barrier
-								if (previousLayout != layout)
-								{
-									FinishBarrier(barrier);
-									m_DefferedBarriers.emplace_back(barrier);
-								}
 
-								//Check for this layout
-								previousLayout = subLayout;
-								barrier.ImageBarrier.oldLayout = previousLayout;
-								barrier.ImageBarrier.subresourceRange.baseMipLevel += barrier.ImageBarrier.subresourceRange.levelCount;
-								barrier.ImageBarrier.subresourceRange.levelCount = 1;
-							}
-							else
-							{
-								//Add one mipbarrier
-								barrier.ImageBarrier.subresourceRange.levelCount++;
-							}*/
-						}
+					//If barrier does not equal the global state we need to update the old layout
+					if (globalState->second.Layout != barrier.Barrier.oldLayout)
+					{
+						barrier.Barrier.oldLayout = globalState->second.Layout;
+						FinishBarrier(barrier);
+					}
+
+					//Commit barrier if the state is not the same
+					if (barrier.Barrier.oldLayout != barrier.Barrier.newLayout)
+					{
+						commitedBarriers.emplace_back(barrier);
+						globalState->second.Layout = barrier.Barrier.newLayout;
 					}
 				}
 				else
 				{
-					uint32 endMipLevel = baseMipLevel + levelCount;
-					for (uint32 i = baseMipLevel; i < endMipLevel; i++)
+					//Are we are trying to change layout into one we already are in
+					auto& sublayout = globalState->second.SubLayouts.find(barrier.Barrier.subresourceRange.baseMipLevel);
+					if (sublayout != globalState->second.SubLayouts.end())
 					{
-						//if (globalState->second.SubLayouts)
-					}
-
-					/*if (globalState->second.SubLayouts[barrier.Transition.Subresource] != barrier.Transition.StateBefore)
-						barrier.Transition.StateBefore = globalState->second.State;*/
-
-					//Setup initial barrier
-					VkImageLayout layoutCurrentlyChecked = globalState->second.SubLayouts[baseMipLevel];
-
-					//Set all subresource states to the correct one
-					for (uint32 i = baseMipLevel; i < endMipLevel; i++)
-					{
-						//Is this the same layout as the last, we add a barrier
-						/*if (currentLayout.SubLayouts[i] != previousLayout)
+						//Make sure the oldstate matches the actual oldstate
+						if (barrier.Barrier.oldLayout != sublayout->second)
 						{
-							//If this is the first one we set count to 1
-							if (barrier.ImageBarrier.subresourceRange.levelCount == 0)
-								barrier.ImageBarrier.subresourceRange.levelCount = 1;
-
-							//Add barrier
+							barrier.Barrier.oldLayout = sublayout->second;
 							FinishBarrier(barrier);
-
-							//Check for this layout
-							previousLayout = currentLayout.SubLayouts[i];
-							barrier.ImageBarrier.oldLayout = previousLayout;
-							barrier.ImageBarrier.subresourceRange.baseMipLevel = i;
-							barrier.ImageBarrier.subresourceRange.levelCount = 0;
 						}
-
-						//If layout is not correct add a barrier
-						if (previousLayout != layout)
-						{
-							currentLayout.SubLayouts[i] = layout;
-							barrier.ImageBarrier.subresourceRange.levelCount++;
-						}*/
+					}
+					else if (barrier.Barrier.oldLayout != globalState->second.Layout)
+					{
+						//If sublayout does not exist globaly we need to make sure that old layout is the current layout of the resource
+						barrier.Barrier.oldLayout = globalState->second.Layout;
+						FinishBarrier(barrier);
 					}
 
-					//Add barrier if layouts are not the same
-					if (barrier.Barrier.subresourceRange.levelCount > 0)
-						FinishBarrier(barrier);
-
-				}
-
-				//Remove barrier if same
-				if (barrier.Barrier.oldLayout == barrier.Barrier.newLayout)
-				{
-					barrier = m_DefferedBarriers.back();
-					m_DefferedBarriers.pop_back();
+					//Commit barrier if the state is not the same
+					if (barrier.Barrier.oldLayout != barrier.Barrier.newLayout)
+					{
+						commitedBarriers.emplace_back(barrier);
+						if (barrier.Barrier.newLayout != globalState->second.Layout)
+							globalState->second.SubLayouts[barrier.Barrier.subresourceRange.baseMipLevel] = barrier.Barrier.newLayout;
+						else
+							globalState->second.SubLayouts.erase(barrier.Barrier.subresourceRange.baseMipLevel);
+					}
 				}
 			}
 			else
 			{
-				//If barrier does not exist in global state commit anyway
+				//If the resource does not currently have a global layout, it must be new
 				commitedBarriers.emplace_back(barrier);
 			}
 		}
@@ -279,17 +234,6 @@ namespace Lambda
 				vkCmdPipelineBarrier(cmdBuffer, barrier.SourceStage, barrier.DestinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier.Barrier);
 
 			m_DefferedBarriers.clear();
-			SyncGlobalLayouts();
-		}
-	}
-
-
-	void VKNResourceLayoutTracker::SyncGlobalLayouts()
-	{
-		for (auto& iter : m_ResourceLayouts)
-		{
-			auto& globalState = s_GlobalResourceLayouts[iter.first];
-			globalState = iter.second;
 		}
 	}
 
@@ -300,6 +244,10 @@ namespace Lambda
 		switch (barrier.Barrier.oldLayout)
 		{
 		case VK_IMAGE_LAYOUT_UNDEFINED:
+			barrier.Barrier.srcAccessMask = 0;
+			barrier.SourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+			break;
+		case VK_IMAGE_LAYOUT_GENERAL:
 			barrier.Barrier.srcAccessMask = 0;
 			barrier.SourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 			break;
@@ -336,6 +284,9 @@ namespace Lambda
 		switch (barrier.Barrier.newLayout)
 		{
 		case VK_IMAGE_LAYOUT_UNDEFINED:
+			LOG_DEBUG_ERROR("Vulkan: Cannot transition to undefined\n");
+			break;
+		case VK_IMAGE_LAYOUT_GENERAL:
 			barrier.Barrier.dstAccessMask = 0;
 			barrier.DestinationStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 			break;
@@ -391,6 +342,9 @@ namespace Lambda
 	{
 		LAMBDA_ASSERT(image != VK_NULL_HANDLE);
 
+		//Lock global states
+		std::lock_guard<std::mutex> lock(s_GlobalMutex);
+
 		//Return the layout
 		auto resourceLayout = s_GlobalResourceLayouts.find(image);
 		return resourceLayout->second;
@@ -400,6 +354,9 @@ namespace Lambda
 	bool VKNResourceLayoutTracker::HasGlobalLayout(VkImage image)
 	{
 		LAMBDA_ASSERT(image != VK_NULL_HANDLE);
+
+		//Lock global states
+		std::lock_guard<std::mutex> lock(s_GlobalMutex);
 
 		//Does the resource have a layout
 		auto resourceLayout = s_GlobalResourceLayouts.find(image);
@@ -411,6 +368,9 @@ namespace Lambda
 	{
 		LAMBDA_ASSERT(image != VK_NULL_HANDLE);
 
+		//Lock global states
+		std::lock_guard<std::mutex> lock(s_GlobalMutex);
+
 		//Add a new globalstate
 		auto& resourceLayout = s_GlobalResourceLayouts.find(image);
 		if (resourceLayout == s_GlobalResourceLayouts.end())
@@ -421,7 +381,8 @@ namespace Lambda
 	void VKNResourceLayoutTracker::RemoveGlobalLayout(VkImage image)
 	{
 		LAMBDA_ASSERT(image != VK_NULL_HANDLE);
-
+		
+		//Lock global states and erase
 		std::lock_guard<std::mutex> lock(s_GlobalMutex);
 		s_GlobalResourceLayouts.erase(image);
 	}

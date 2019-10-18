@@ -273,9 +273,7 @@ namespace Lambda
         info.sharingMode            = VK_SHARING_MODE_EXCLUSIVE;
         info.size                   = sizeInBytes;
         info.usage                  = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-        
-		VKNDevice& device = VKNDevice::Get();
-        if (vkCreateBuffer(device.GetVkDevice(), &info, nullptr, &m_Buffer) != VK_SUCCESS)
+        if (vkCreateBuffer(m_pDevice->GetVkDevice(), &info, nullptr, &m_Buffer) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create buffer for UploadBuffer\n");
             return false;
@@ -314,9 +312,7 @@ namespace Lambda
         info.sharingMode            = VK_SHARING_MODE_EXCLUSIVE;
         info.size                   = sizeInBytes;
         info.usage                  = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-
-		VKNDevice& device = VKNDevice::Get();
-        if (vkCreateBuffer(device.GetVkDevice(), &info, nullptr, &newBuffer) != VK_SUCCESS)
+        if (vkCreateBuffer(m_pDevice->GetVkDevice(), &info, nullptr, &newBuffer) != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to reallocate buffer for UploadBuffer\n");
         }

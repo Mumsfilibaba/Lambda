@@ -162,8 +162,7 @@ namespace Lambda
 		renderPassInfo.pDependencies = nullptr;
 
 		VkRenderPass renderPass = VK_NULL_HANDLE;
-		VKNDevice& device = VKNDevice::Get();
-		if (vkCreateRenderPass(device.GetVkDevice(), &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
+		if (vkCreateRenderPass(m_pDevice->GetVkDevice(), &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to create renderpass\n");
 			return VK_NULL_HANDLE;

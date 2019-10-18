@@ -394,7 +394,7 @@ namespace Lambda
 			m_Context->ResolveTexture(m_Buffers[m_CurrentBufferIndex].Get(), 0, m_SampleBuffer.Get(), 0);
 
 		//Transition resource
-		m_Context->TransitionTexture(m_Buffers[m_CurrentBufferIndex].Get(), RESOURCE_STATE_RENDERTARGET_PRESENT, 0, LAMBDA_TRANSITION_ALL_MIPS);
+		m_Context->TransitionTexture(m_Buffers[m_CurrentBufferIndex].Get(), RESOURCE_STATE_RENDERTARGET_PRESENT, VK_REMAINING_MIP_LEVELS);
 
 		//Add semaphores so the syncronization gets correct
 		m_Context->AddWaitSemaphore(m_ImageSemaphores[m_FrameIndex], VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);

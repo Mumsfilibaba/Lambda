@@ -21,7 +21,7 @@ namespace Lambda
 		m_CommandPool(VK_NULL_HANDLE),
 		m_pFrameResources(nullptr),
         m_pCurrentFrameResource(nullptr),
-		m_ImageLayoutTracker(nullptr),
+		m_pResourceTracker(nullptr),
         m_RenderPass(VK_NULL_HANDLE),
         m_Framebuffer(VK_NULL_HANDLE),
         m_PipelineState(nullptr),
@@ -64,7 +64,7 @@ namespace Lambda
         }
 
 		//Destroy layout-tracker
-		SafeDelete(m_ImageLayoutTracker);
+		SafeDelete(m_pResourceTracker);
 
         LOG_DEBUG_INFO("Vulkan: Destroyed DeviceContext '%s'\n", m_Name.c_str());
     }
@@ -145,7 +145,7 @@ namespace Lambda
 		}
 
 		//Create imagelayout-tracker
-		m_ImageLayoutTracker = DBG_NEW VKNResourceLayoutTracker();
+		m_pResourceTracker = DBG_NEW VKNResourceLayoutTracker();
     }
 
 
@@ -165,12 +165,17 @@ namespace Lambda
 	}
 
 
-	inline void VKNDeviceContext::CommitAndTransitionResources()
+	void VKNDeviceContext::CommitAndTransitionResources()
 	{
-		m_VariableTable->CommitAndTransitionResources();
+		//Commit resources
+		m_VariableTable->CommitAndTransitionResources(this);
+		FlushResourceBarriers();
+
+		//Get dynamic offset info
 		const uint32* pOffsets	= m_VariableTable->GetDynamicOffsets();
 		uint32 offsetCount		= m_VariableTable->GetDynamicOffsetCount();
 
+		//Bind descriptorset
 		VkDescriptorSet descriptorSet	= m_VariableTable->GetVkDescriptorSet();
 		VkPipelineLayout pipelineLayout = m_PipelineState->GetVkPipelineLayout();
 
@@ -184,8 +189,8 @@ namespace Lambda
     
     void VKNDeviceContext::BlitTexture(VKNTexture* pDst, uint32 dstWidth, uint32 dstHeight, uint32 dstMipLevel, VKNTexture* pSrc, uint32 srcWidth, uint32 srcHeight, uint32 srcMipLevel)
     {
-		//Make sure that we have a commandbuffer
-		QueryCommandBuffer();
+		//Make sure that we transition resources and that we have a commandbuffer
+		FlushResourceBarriers();
 
         LAMBDA_ASSERT_PRINT(m_RenderPass == VK_NULL_HANDLE, "Vulkan: EndRenderPass must be called before BlitTexture\n");
         
@@ -212,7 +217,8 @@ namespace Lambda
 	void VKNDeviceContext::ClearRenderTarget(ITexture* pRenderTarget, float color[4])
     {
 		//Transition texture before clearing
-		TransitionTexture(pRenderTarget, RESOURCE_STATE_RENDERTARGET_CLEAR, 0, LAMBDA_TRANSITION_ALL_MIPS);
+		TransitionTexture(pRenderTarget, RESOURCE_STATE_RENDERTARGET_CLEAR, VK_REMAINING_MIP_LEVELS);
+		FlushResourceBarriers();
 
         VkClearColorValue col = {};
         memcpy(col.float32, color, sizeof(float)*4);
@@ -233,7 +239,8 @@ namespace Lambda
     void VKNDeviceContext::ClearDepthStencil(ITexture* pDepthStencil, float depth, uint8 stencil)
     {
 		//Transition texture before clearing
-		TransitionTexture(pDepthStencil, RESORUCE_STATE_DEPTH_STENCIL_CLEAR, 0, LAMBDA_TRANSITION_ALL_MIPS);
+		TransitionTexture(pDepthStencil, RESORUCE_STATE_DEPTH_STENCIL_CLEAR, VK_REMAINING_MIP_LEVELS);
+		FlushResourceBarriers();
 
         VkClearDepthStencilValue value = {};
         value.depth     = depth;
@@ -265,7 +272,7 @@ namespace Lambda
 		{
 			//Get rendertarget and transition
 			m_ppRenderTargets[i] = reinterpret_cast<const VKNTexture*>(ppRenderTargets[i]);
-			TransitionTexture(ppRenderTargets[i], RESOURCE_STATE_RENDERTARGET, 0, LAMBDA_TRANSITION_ALL_MIPS);
+			TransitionTexture(ppRenderTargets[i], RESOURCE_STATE_RENDERTARGET, VK_REMAINING_MIP_LEVELS);
 
 			//Get view
 			framebufferKey.AttachmentViews[i] = m_ppRenderTargets[i]->GetVkImageView();
@@ -282,7 +289,7 @@ namespace Lambda
 		{
 			//Set and transition depthstencil
 			framebufferKey.AttachmentViews[framebufferKey.NumAttachmentViews++] = m_DepthStencil->GetVkImageView();
-			TransitionTexture(pDepthStencil, RESOURCE_STATE_DEPTH_STENCIL, 0, LAMBDA_TRANSITION_ALL_MIPS);
+			TransitionTexture(pDepthStencil, RESOURCE_STATE_DEPTH_STENCIL, VK_REMAINING_MIP_LEVELS);
 
 			//Get extent
 			const TextureDesc& desc = pDepthStencil->GetDesc();
@@ -466,26 +473,28 @@ namespace Lambda
     }
     
     
-    void VKNDeviceContext::TransitionTexture(const ITexture* pTexture, ResourceState state, uint32 startMipLevel, uint32 numMipLevels)
+    void VKNDeviceContext::TransitionTexture(const ITexture* pTexture, ResourceState state, uint32 mipLevel)
     {
 		const VKNTexture* pVkTexture = reinterpret_cast<const VKNTexture*>(pTexture);
 		VkImageLayout newLayout = ConvertResourceStateToImageLayout(state);
-		m_ImageLayoutTracker->TransitionImage(pVkTexture->GetVkImage(), pVkTexture->GetVkAspectFlags(), 1, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-		m_ImageLayoutTracker->TransitionImage(pVkTexture->GetVkImage(), pVkTexture->GetVkAspectFlags(), 3, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-		m_ImageLayoutTracker->TransitionImage(pVkTexture->GetVkImage(), pVkTexture->GetVkAspectFlags(), VK_REMAINING_MIP_LEVELS, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-
-		//m_ImageLayoutTracker->TransitionImage(pVkTexture->GetVkImage(), pVkTexture->GetVkAspectFlags(), startMipLevel, numMipLevels, newLayout);
-
-		//Make sure that we have a commandbuffer
-		QueryCommandBuffer();
-
-		//m_ImageLayoutTracker->FlushBarriers(m_pCurrentFrameResource->CommandBuffer);
-
-		//Transitions can only happen outside a renderpass
-		if (IsInsideRenderPass())
-			EndRenderPass();
-
+		m_pResourceTracker->TransitionImage(pVkTexture->GetVkImage(), pVkTexture->GetVkAspectFlags(), mipLevel, newLayout);
     }
+
+
+	void VKNDeviceContext::FlushResourceBarriers()
+	{
+		if (m_pResourceTracker->NeedsFlush())
+		{
+			//Make sure that we have a commandbuffer
+			QueryCommandBuffer();
+
+			//Transitions can only happen outside a renderpass
+			if (IsInsideRenderPass())
+				EndRenderPass();
+
+			m_pResourceTracker->FlushBarriers(m_pCurrentFrameResource->CommandBuffer);
+		}
+	}
     
     
     void VKNDeviceContext::UpdateBuffer(IBuffer* pResource, const ResourceData* pData)
@@ -536,7 +545,9 @@ namespace Lambda
 		LAMBDA_ASSERT_PRINT(pData != nullptr, "Vulkan: pData cannot be nullptr\n");
 		LAMBDA_ASSERT_PRINT(pData->pData != nullptr && pData->SizeInBytes != 0, "Vulkan: ResourceData::pData or ResourceData::SizeInBytes cannot be null\n");
 
-        TransitionTexture(pResource, RESOURCE_STATE_COPY_DEST, 0, LAMBDA_TRANSITION_ALL_MIPS);
+        TransitionTexture(pResource, RESOURCE_STATE_COPY_DEST, VK_REMAINING_MIP_LEVELS);
+		FlushResourceBarriers();
+
         VKNTexture* pVkResource = reinterpret_cast<VKNTexture*>(pResource);
     
 		//Get device properties
@@ -601,8 +612,9 @@ namespace Lambda
 		LOG_DEBUG_INFO("ResolveTexture()\n");
 
 		//Transition texture before clearing
-		TransitionTexture(pDst, RESOURCE_STATE_COPY_DEST, 0, LAMBDA_TRANSITION_ALL_MIPS);
-		TransitionTexture(pSrc, RESOURCE_STATE_COPY_SRC, 0, LAMBDA_TRANSITION_ALL_MIPS);
+		TransitionTexture(pDst, RESOURCE_STATE_COPY_DEST,	VK_REMAINING_MIP_LEVELS);
+		TransitionTexture(pSrc, RESOURCE_STATE_COPY_SRC,	VK_REMAINING_MIP_LEVELS);
+		FlushResourceBarriers();
 
 		//Transitions can only happen outside a renderpass
 		if (IsInsideRenderPass())
@@ -718,9 +730,9 @@ namespace Lambda
     }
 
 
-	void VKNDeviceContext::EndCommanBuffer()
+	void VKNDeviceContext::EndCommandBuffer()
 	{
-		LOG_DEBUG_INFO("EndCommanBuffer()\n");
+		LOG_DEBUG_INFO("EndCommandBuffer()\n");
 
 		//End renderpass before ending commmandsubmition
 		if (IsInsideRenderPass())
@@ -743,8 +755,10 @@ namespace Lambda
     {
 		LOG_DEBUG_INFO("Flush()\n");
 
+		//Before flushing we need to flush the deffered barriers since the application is expecting all the resources to be in correct layout
+		FlushResourceBarriers();
 		//End the recording
-		EndCommanBuffer();
+		EndCommandBuffer();
 
 		LAMBDA_ASSERT_PRINT(m_WaitSemaphores.size() == m_WaitDstStageMasks.size(), "Vulkan: Number of WaitSemaphores and WaitDstStageMasks must be the same\n");
 
@@ -815,17 +829,14 @@ namespace Lambda
 
 	void VKNDeviceContext::PrepareForDraw()
 	{
-		//Make sure that we have a commandbuffer
-		QueryCommandBuffer();
-
-		//Begin renderpass when before drawing
-		if (!IsInsideRenderPass())
-			BeginRenderPass();
-
 		//Commit and draw
 		CommitAndTransitionResources();
+
+		//Draw-calls can only issued inside a renderpass
+		if (!IsInsideRenderPass())
+			BeginRenderPass();
 	}
-    
+
     
     void VKNDeviceContext::ResetQuery(IQuery* pQuery)
     {

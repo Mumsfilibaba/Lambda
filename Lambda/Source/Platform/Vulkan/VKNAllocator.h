@@ -44,18 +44,18 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(VKNMemoryChunk);
 
-		VKNMemoryChunk(uint32 id, VkDeviceSize sizeInBytes, uint32 memoryType, ResourceUsage usage);
+		VKNMemoryChunk(VKNDevice* pDevice, uint32 id, VkDeviceSize sizeInBytes, uint32 memoryType, ResourceUsage usage);
 		~VKNMemoryChunk() = default;
 
 		bool Allocate(VKNMemory& allocation, VkDeviceSize sizeInBytes, VkDeviceSize alignment, VkDeviceSize granularity);
         bool IsOnSamePage(VkDeviceSize aOffset, VkDeviceSize aSize, VkDeviceSize bOffset, VkDeviceSize pageSize);
         void Deallocate(VKNMemory& allocation);
-		void Destroy(VkDevice device);
+		void Destroy(VKNDevice* pDevice);
 		inline uint32 GetMemoryType() const { return m_MemoryType; }
 	private:
-		void Init();
-		void Map();
-		void Unmap();
+		void Init(VKNDevice* pDevice);
+		void Map(VKNDevice* pDevice);
+		void Unmap(VKNDevice* pDevice);
 	private:
 		uint8*				m_pHostMemory;
 		VkDeviceMemory		m_DeviceMemory;

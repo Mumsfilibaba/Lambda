@@ -4,6 +4,7 @@
 #include "VKNBuffer.h"
 #include "VKNTexture.h"
 #include "VKNSamplerState.h"
+#include "VKNDeviceContext.h"
 
 namespace Lambda
 {
@@ -124,6 +125,16 @@ namespace Lambda
 	const ShaderVariableDesc& VKNShaderVariable::GetDesc() const
 	{
 		return m_Desc;
+	}
+
+	
+	void VKNShaderVariable::Transition(VKNDeviceContext* pContext)
+	{
+		if (m_Desc.Type == RESOURCE_TYPE_TEXTURE)
+		{
+			VKNTexture* pVkTexture = m_Resource.GetAs<VKNTexture>();
+			pContext->TransitionTexture(pVkTexture, RESOURCE_STATE_PIXEL_SHADER_RESOURCE, VK_REMAINING_MIP_LEVELS);
+		}
 	}
 
 	
