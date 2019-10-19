@@ -90,6 +90,7 @@ namespace Lambda
 	void VKNShaderVariableTable::CommitAndTransitionResources(VKNDeviceContext* pContext)
 	{
 		//Varify all variables (Have the resources changed)
+		m_DescriptorWrites.clear();
         bool writeDescriptors = false;
         for (auto& pVar : m_ShaderVariables)
         {

@@ -35,7 +35,7 @@ namespace Lambda
     private:
         void Init(const BufferDesc& desc);
     private:
-        VKNMemory  m_Memory;
+        VKNAllocation  m_Memory;
         VkBuffer   m_Buffer;
 		uint64	   m_SizePerFrame;
 		uint64	   m_SizePerUpdate;
@@ -77,10 +77,8 @@ namespace Lambda
     private:
         VKNDevice* m_pDevice;
         VkBuffer  m_Buffer;
-        VKNMemory m_Memory;
-        uint8*    m_pCurrent;
-        uint64    m_BytesLeft;
-        uint64    m_SizeInBytes;
+        VKNAllocation m_Memory;
+        uint64    m_Offset;
     };
 
 	//----------------

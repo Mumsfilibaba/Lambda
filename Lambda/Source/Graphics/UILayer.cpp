@@ -305,6 +305,7 @@ namespace Lambda
 		uint64 uploadSize = width * height * 4 * sizeof(char);
 
 		TextureDesc fontTextureDesc = {};
+		fontTextureDesc.pName		= "FontTexture";
 		fontTextureDesc.Type		= TEXTURE_TYPE_2D;
 		fontTextureDesc.Flags		= TEXTURE_FLAGS_SHADER_RESOURCE;
 		fontTextureDesc.Format		= FORMAT_R8G8B8A8_UNORM;

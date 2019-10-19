@@ -133,7 +133,10 @@ namespace Lambda
 			{
 				//Destroy framebuffer
 				if (it->second != VK_NULL_HANDLE)
+				{
 					m_pDevice->SafeReleaseVulkanResource<VkFramebuffer>(it->second);
+					it->second = VK_NULL_HANDLE;
+				}
 
 				//Erase from vector
 				it = m_Framebuffers.erase(it);
@@ -155,7 +158,10 @@ namespace Lambda
 			{
 				//Destroy framebuffer
 				if (it->second != VK_NULL_HANDLE)
+				{
 					m_pDevice->SafeReleaseVulkanResource<VkFramebuffer>(it->second);
+					it->second = VK_NULL_HANDLE;
+				}
 
 				//Erase from vector
 				it = m_Framebuffers.erase(it);

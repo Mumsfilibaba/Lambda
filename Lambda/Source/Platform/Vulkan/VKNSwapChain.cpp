@@ -383,7 +383,7 @@ namespace Lambda
         VkExtent2D extent = { width, height };
         InitSwapChain(extent);
 		
-		LOG_DEBUG_INFO("VKNSwapChain: Resized w: %d h: %d\n", width, height);
+		LOG_DEBUG_INFO("VKNSwapChain: RESIZED w: %d h: %d\n", width, height);
 	}
 
 
@@ -399,7 +399,7 @@ namespace Lambda
 		//Add semaphores so the syncronization gets correct
 		m_Context->AddWaitSemaphore(m_ImageSemaphores[m_FrameIndex], VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 		m_Context->AddSignalSemaphore(m_RenderSemaphores[m_FrameIndex]);
-		LOG_DEBUG_INFO("Signal Semaphore %p\n", m_RenderSemaphores[m_FrameIndex]);
+		//LOG_DEBUG_INFO("Signal Semaphore %p\n", m_RenderSemaphores[m_FrameIndex]);
 
 		//Flush context
 		m_Context->Flush();
@@ -416,7 +416,7 @@ namespace Lambda
 		info.pImageIndices		= &m_CurrentBufferIndex;
 		info.pResults			= nullptr;
 		m_pDevice->Present(&info);
-		LOG_DEBUG_INFO("Waiting Semaphore %p\n", m_RenderSemaphores[m_FrameIndex]);
+		//LOG_DEBUG_INFO("Waiting Semaphore %p\n", m_RenderSemaphores[m_FrameIndex]);
 
 		//Finish device frame
 		m_pDevice->FinishFrame();

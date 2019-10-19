@@ -50,9 +50,9 @@ namespace Lambda
 		void FinishFrame() const;
 		void WaitUntilIdle() const;
 		
-		bool AllocateImage(VKNMemory& allocation, VkImage image, ResourceUsage usage);
-		bool AllocateBuffer(VKNMemory& allocation, VkBuffer buffer, ResourceUsage usage);
-		void Deallocate(VKNMemory& allocation);
+		bool AllocateImage(VKNAllocation& allocation, VkImage image, ResourceUsage usage);
+		bool AllocateBuffer(VKNAllocation& allocation, VkBuffer buffer, ResourceUsage usage);
+		void Deallocate(VKNAllocation& allocation);
 
 		template<typename VkResourceType>
 		void SafeReleaseVulkanResource(const VkResourceType& resource)

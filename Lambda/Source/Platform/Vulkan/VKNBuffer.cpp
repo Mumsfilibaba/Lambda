@@ -75,23 +75,22 @@ namespace Lambda
         }
         else
         {
+            m_Desc = desc;
 			if (m_Desc.pName)
 			{
-				LOG_DEBUG_INFO("Vulkan: Created Buffer. Name=\"%s\"\n", m_Desc.pName);
+				LOG_DEBUG_INFO("Vulkan: Created Buffer. Name=\"%s\". '%p'\n", m_Desc.pName, m_Buffer);
 				m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_BUFFER, uint64(m_Buffer), std::string(m_Desc.pName));
 			}
 			else
 			{
-				LOG_DEBUG_INFO("Vulkan: Created Buffer\n");
+				LOG_DEBUG_INFO("Vulkan: Created Buffer '%p'\n", m_Buffer);
 			}
-
-            m_Desc = desc;
         }
         
 		//Allocate memory
         if (!m_pDevice->AllocateBuffer(m_Memory, m_Buffer, m_Desc.Usage))
         {
-            LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for buffer\n");
+            LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for buffer '%p'\n", m_Buffer);
         }
     }
     
@@ -106,7 +105,7 @@ namespace Lambda
 		VKNBufferManager& bufferManager = VKNBufferManager::GetInstance();
 		bufferManager.UnregisterBuffer(this);
 
-		LOG_DEBUG_INFO("Vulkan: Destroyed buffer\n");
+		LOG_DEBUG_INFO("Vulkan: Destroyed buffer '%p'\n", m_Buffer);
 	}
 
 
@@ -199,20 +198,20 @@ namespace Lambda
 		{
 			if (m_Desc.pName)
 			{
-				LOG_DEBUG_INFO("Vulkan: Recreated Buffer. Name=\"%s\"\n", m_Desc.pName);
+				LOG_DEBUG_INFO("Vulkan: Recreated Buffer. Name=\"%s\". '%p'\n", m_Desc.pName, newBuffer);
 				m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_BUFFER, uint64(m_Buffer), std::string(m_Desc.pName));
 			}
 			else
 			{
-				LOG_DEBUG_INFO("Vulkan: Recreated Buffer\n");
+				LOG_DEBUG_INFO("Vulkan: Recreated Buffer '%p'\n", newBuffer);
 			}
 		}
 
 		//Allocate memory
-        VKNMemory newMemory = {};
+        VKNAllocation newMemory = {};
 		if (!m_pDevice->AllocateBuffer(newMemory, newBuffer, m_Desc.Usage))
 		{
-			LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for resize of buffer\n");
+			LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for resize of Buffer '%p'\n", newBuffer);
 			return;
 		}
 
@@ -237,11 +236,9 @@ namespace Lambda
 
     VKNUploadBuffer::VKNUploadBuffer(VKNDevice* pDevice, uint64 sizeInBytes)
         : m_pDevice(pDevice),
-        m_pCurrent(nullptr),
+        m_Offset(0),
         m_Memory(),
-        m_Buffer(VK_NULL_HANDLE),
-        m_BytesLeft(0),
-        m_SizeInBytes(0)
+        m_Buffer(VK_NULL_HANDLE)
     {
         Init(sizeInBytes);
     }
@@ -257,7 +254,7 @@ namespace Lambda
 			m_pDevice->SafeReleaseVulkanResource<VkBuffer>(m_Buffer);
 		}
 
-		LOG_DEBUG_INFO("Vulkan: Destroyed UploadBuffer\n");
+		LOG_DEBUG_INFO("Vulkan: Destroyed UploadBuffer '%p'\n", m_Buffer);
 	}
 
     
@@ -280,8 +277,7 @@ namespace Lambda
         }
         else
         {
-            LOG_DEBUG_INFO("Vulkan: Created buffer for UploadBuffer\n");
-            m_SizeInBytes = sizeInBytes;
+            LOG_DEBUG_INFO("Vulkan: Created buffer for UploadBuffer '%p'\n", m_Buffer);
         }
         
         //Allocate memory
@@ -292,6 +288,7 @@ namespace Lambda
 		}
 		else
 		{
+			LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for UploadBuffer '%p'\n", m_Buffer);
 			return false;
 		}
     }
@@ -300,7 +297,7 @@ namespace Lambda
     void VKNUploadBuffer::Reallocate(uint64 sizeInBytes)
     {
         VkBuffer  newBuffer = VK_NULL_HANDLE;
-        VKNMemory newMemory = {};
+        VKNAllocation newMemory = {};
 
         //Create buffer
         VkBufferCreateInfo info = {};
@@ -314,12 +311,11 @@ namespace Lambda
         info.usage                  = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
         if (vkCreateBuffer(m_pDevice->GetVkDevice(), &info, nullptr, &newBuffer) != VK_SUCCESS)
         {
-            LOG_DEBUG_ERROR("Vulkan: Failed to reallocate buffer for UploadBuffer\n");
+            LOG_DEBUG_ERROR("Vulkan: Failed to recreate buffer for UploadBuffer\n");
         }
         else
         {
-            LOG_DEBUG_WARNING("Vulkan: Reallocated buffer for UploadBuffer\n");
-            m_SizeInBytes = sizeInBytes;
+            LOG_DEBUG_WARNING("Vulkan: Recreated buffer for UploadBuffer '%p'\n", newBuffer);
         }
 
         //Allocate memory
@@ -336,7 +332,7 @@ namespace Lambda
         }
         else
         {
-            LOG_DEBUG_ERROR("Vulkan: Failed to reallocate uploadbuffer\n");
+            LOG_DEBUG_ERROR("Vulkan: Failed to reallocate UploadBuffer '%p'\n", m_Buffer);
         }
     }
 
@@ -346,21 +342,20 @@ namespace Lambda
 		UploadAllocation allocation = {};
 
 		//Align
-		uint8* pAlignedCurrent = Math::AlignUp<uint8*>(m_pCurrent, alignment);
-		uint64 padding = pAlignedCurrent - m_pCurrent;
+		uint64 alignedOffset = Math::AlignUp<uint64>(m_Offset, alignment);
+		uint64 padding = alignedOffset - m_Offset;
 
         //Do we have enough space? If no reallocate
 		uint64 alignedSize = bytesToAllocate + padding;
-        if (alignedSize > m_BytesLeft)
-            Reallocate(alignedSize + MB(1));
+        if ((alignedOffset + alignedSize) >= m_Memory.Size)
+            Reallocate(m_Memory.Size + alignedSize + MB(1));
 
         //Move pointer
-        allocation.pHostMemory = reinterpret_cast<void*>(pAlignedCurrent);
-        m_pCurrent  += alignedSize;
-        m_BytesLeft -= alignedSize;
+        allocation.pHostMemory = reinterpret_cast<void*>(m_Memory.pHostMemory + alignedOffset);
+		m_Offset += alignedSize;
 
 		//Set offset
-		allocation.DeviceOffset = pAlignedCurrent - m_Memory.pHostMemory;
+		allocation.DeviceOffset = alignedOffset;
 		
 		//Set buffer
 		allocation.Buffer = m_Buffer;
@@ -371,8 +366,7 @@ namespace Lambda
     void VKNUploadBuffer::Reset()
     {
         //Reset buffer by resetting current to the start
-        m_pCurrent  = m_Memory.pHostMemory;
-        m_BytesLeft = m_SizeInBytes;
+		m_Offset = 0;
     }
 
 	//----------------

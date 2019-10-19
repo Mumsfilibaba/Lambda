@@ -131,11 +131,11 @@ workspace "Lambda"
 			}
 			libdirs
 			{
-				"C:/VulkanSDK/1.1.114.0/Lib"
+				"C:/VulkanSDK/1.1.121.2/Lib"
 			}
 			sysincludedirs
 			{
-				"C:/VulkanSDK/1.1.114.0/Include"
+				"C:/VulkanSDK/1.1.121.2/Include"
 			}
 			sysincludedirs
 			{

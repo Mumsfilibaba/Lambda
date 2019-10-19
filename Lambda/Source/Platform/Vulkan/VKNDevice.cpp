@@ -570,9 +570,9 @@ namespace Lambda
     void VKNDevice::FinishFrame() const
     {
         //Cleanup memory
-		m_pSafeReleaseManager->EmptyResources();
-		m_pDeviceAllocator->EmptyGarbageMemory();
         m_pBufferManager->AdvanceFrame();
+		m_pDeviceAllocator->EmptyGarbageMemory();
+		m_pSafeReleaseManager->EmptyResources();
     }
     
     
@@ -583,7 +583,7 @@ namespace Lambda
     }
 
 
-	bool VKNDevice::AllocateImage(VKNMemory& allocation, VkImage image, ResourceUsage usage)
+	bool VKNDevice::AllocateImage(VKNAllocation& allocation, VkImage image, ResourceUsage usage)
 	{
 		VkMemoryRequirements memoryRequirements = {};
 		vkGetImageMemoryRequirements(m_Device, image, &memoryRequirements);
@@ -600,7 +600,7 @@ namespace Lambda
 	}
 
 
-	bool VKNDevice::AllocateBuffer(VKNMemory& allocation, VkBuffer buffer, ResourceUsage usage)
+	bool VKNDevice::AllocateBuffer(VKNAllocation& allocation, VkBuffer buffer, ResourceUsage usage)
 	{
 		VkMemoryRequirements memoryRequirements = {};
 		vkGetBufferMemoryRequirements(m_Device, buffer, &memoryRequirements);
@@ -617,7 +617,7 @@ namespace Lambda
 	}
 
 
-	void VKNDevice::Deallocate(VKNMemory& allocation)
+	void VKNDevice::Deallocate(VKNAllocation& allocation)
 	{
 		m_pDeviceAllocator->Deallocate(allocation);
 	}

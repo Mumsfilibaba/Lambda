@@ -2,6 +2,7 @@
 #include "VKNRenderPassCache.h"
 #include "VKNDevice.h"
 #include "VKNTexture.h"
+#include "VKnFrameBufferCache.h"
 #include "VKNConversions.inl"
 #include "Utilities/HashHelper.h"
 
@@ -73,6 +74,8 @@ namespace Lambda
 	{
 		if (s_pInstance == this)
 			s_pInstance = nullptr;
+
+		ReleaseAll();
 	}
 
 
@@ -179,13 +182,20 @@ namespace Lambda
 
 	void VKNRenderPassCache::ReleaseAll()
 	{
+		VKNFramebufferCache& cache = VKNFramebufferCache::Get();
+
 		//Destroy all renderpasses
 		for (auto& pass : m_RenderPasses)
 		{
+			//Release all framebuffers with this renderpass
+			cache.OnReleaseRenderPass(pass.second);
+
+			//Safely destroy this renderpass
 			if (pass.second != VK_NULL_HANDLE)
 				m_pDevice->SafeReleaseVulkanResource(pass.second);
 		}
 
+		//Clear all
 		m_RenderPasses.clear();
 	}
 

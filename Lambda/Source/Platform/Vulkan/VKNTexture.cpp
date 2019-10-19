@@ -1,6 +1,7 @@
 #include "LambdaPch.h"
 #include "VKNTexture.h"
 #include "VKNDevice.h"
+#include "VKNFramebufferCache.h"
 #include "VKNUtilities.h"
 #include "VKNConversions.inl"
 
@@ -22,7 +23,6 @@ namespace Lambda
     {
 		//Add a ref to the refcounter
 		this->AddRef();
-
         Init(desc);
     }
     
@@ -37,10 +37,10 @@ namespace Lambda
 		m_Desc(),
 		m_ImageLayout(VK_IMAGE_LAYOUT_UNDEFINED)
     {
+		LAMBDA_ASSERT(image != VK_NULL_HANDLE);
+		
 		//Add a ref to the refcounter
 		this->AddRef();
-
-		LAMBDA_ASSERT(image != VK_NULL_HANDLE);
         InitFromResource(image, desc);
     }
     
@@ -51,7 +51,14 @@ namespace Lambda
 
 		//Destroy view
 		if (m_ImageView != VK_NULL_HANDLE)
+		{
+			//Release all framebuffers with this imageview
+			VKNFramebufferCache& cache = VKNFramebufferCache::Get();
+			cache.OnReleaseImageView(m_ImageView);
+
 			m_pDevice->SafeReleaseVulkanResource<VkImageView>(m_ImageView);
+		}
+
 		//Destroy if texture was created from init
 		if (m_IsOwner)
 		{
@@ -73,9 +80,8 @@ namespace Lambda
         
         //Set aspectflags
         if (desc.Flags & TEXTURE_FLAGS_SHADER_RESOURCE || desc.Flags & TEXTURE_FLAGS_RENDER_TARGET)
-        {
             m_AspectFlags |= VK_IMAGE_ASPECT_COLOR_BIT;
-        }
+
         if (desc.Flags & TEXTURE_FLAGS_DEPTH_STENCIL)
         {
             if (desc.Format == FORMAT_D24_UNORM_S8_UINT || desc.Format == FORMAT_D32_FLOAT_S8X24_UINT)
@@ -167,21 +173,33 @@ namespace Lambda
 		//Create image
         if (vkCreateImage(m_pDevice->GetVkDevice(), &info, nullptr, &m_Image) != VK_SUCCESS)
         {
-            LOG_DEBUG_ERROR("Vulkan: Failed to create image\n");
+            LOG_DEBUG_ERROR("Vulkan: Failed to create Image\n");
             return;
         }
         else
         {
-            LOG_DEBUG_INFO("Vulkan: Created image. w=%u, h=%u, format=%s, adress=%p\n", desc.Width, desc.Height, VkFormatToString(info.format), m_Image);
             m_Desc = desc;
             m_Desc.MipLevels = mipLevels;
             //Set that we have created the texture and not external memory
             m_IsOwner = true;
+
+			if (m_Desc.pName)
+			{
+				LOG_DEBUG_INFO("Vulkan: Created Image '%p'. w=%u, h=%u, format=%s, name='%s'\n", m_Image, desc.Width, desc.Height, VkFormatToString(info.format), m_Desc.pName);
+				m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_IMAGE, (uint64)m_Image, std::string(m_Desc.pName));
+			}
+			else
+			{
+				LOG_DEBUG_INFO("Vulkan: Created Image '%p'. w=%u, h=%u, format=%s\n", m_Image, desc.Width, desc.Height, VkFormatToString(info.format));
+			}
         }
         
 		//Allocate memory
 		if (!m_pDevice->AllocateImage(m_Memory, m_Image, m_Desc.Usage))
+		{
+			LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for Image '%p'\n", m_Image);
 			return;
+		}
         
         //Create the view
         CreateImageView();
@@ -213,11 +231,11 @@ namespace Lambda
         viewInfo.subresourceRange.layerCount        = 1;
         if (vkCreateImageView(m_pDevice->GetVkDevice(), &viewInfo, nullptr, &m_ImageView) != VK_SUCCESS)
         {
-            LOG_DEBUG_ERROR("Vulkan: Failed to create image view\n");
+            LOG_DEBUG_ERROR("Vulkan: Failed to create ImageView\n");
         }
         else
         {
-            LOG_DEBUG_INFO("Vulkan: Created image view. Handle=%p\n", m_ImageView);
+            LOG_DEBUG_INFO("Vulkan: Created ImageView '%p'\n", m_ImageView);
         }
     }
 

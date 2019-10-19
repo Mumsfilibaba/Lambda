@@ -12,26 +12,22 @@ namespace Lambda
 	template<>
 	void VKNResource<VkImageView>::DestroyResource()
 	{
-		//Release all framebuffers with this imageview
-		VKNFramebufferCache& cache = VKNFramebufferCache::Get();
-		cache.OnReleaseImageView(m_Resource);
-
 		//Release resource
 		vkDestroyImageView(m_pDevice->GetVkDevice(), m_Resource, nullptr);
 		m_Resource = VK_NULL_HANDLE;
+
+		LOG_DEBUG_INFO("Releasing VkImageView\n");
 	}
 
 
 	template<>
 	void VKNResource<VkRenderPass>::DestroyResource()
 	{
-		//Release all framebuffers with this renderpass
-		VKNFramebufferCache& cache = VKNFramebufferCache::Get();
-		cache.OnReleaseRenderPass(m_Resource);
-
 		//Release resource
 		vkDestroyRenderPass(m_pDevice->GetVkDevice(), m_Resource, nullptr);
 		m_Resource = VK_NULL_HANDLE;
+
+		LOG_DEBUG_INFO("Releasing VkRenderPass\n");
 	}
 
 
@@ -40,6 +36,8 @@ namespace Lambda
 	{
 		vkDestroyDescriptorPool(m_pDevice->GetVkDevice(), m_Resource, nullptr);
 		m_Resource = VK_NULL_HANDLE;
+
+		LOG_DEBUG_INFO("Releasing VkDescriptorPool\n");
 	}
 
 
@@ -48,6 +46,8 @@ namespace Lambda
 	{
 		vkDestroyPipelineLayout(m_pDevice->GetVkDevice(), m_Resource, nullptr);
 		m_Resource = VK_NULL_HANDLE;
+
+		LOG_DEBUG_INFO("Releasing VkPipelineLayout\n");
 	}
 
 
@@ -56,6 +56,8 @@ namespace Lambda
 	{
 		vkDestroyPipeline(m_pDevice->GetVkDevice(), m_Resource, nullptr);
 		m_Resource = VK_NULL_HANDLE;
+
+		LOG_DEBUG_INFO("Releasing VkPipeline\n");
 	}
 
 
@@ -64,6 +66,8 @@ namespace Lambda
 	{
 		vkDestroyDescriptorSetLayout(m_pDevice->GetVkDevice(), m_Resource, nullptr);
 		m_Resource = VK_NULL_HANDLE;
+
+		LOG_DEBUG_INFO("Releasing VkDescriptorSetLayout\n");
 	}
 
 
@@ -72,6 +76,8 @@ namespace Lambda
 	{
 		vkDestroyQueryPool(m_pDevice->GetVkDevice(), m_Resource, nullptr);
 		m_Resource = VK_NULL_HANDLE;
+
+		LOG_DEBUG_INFO("Releasing VkQueryPool\n");
 	}
 
 
@@ -80,6 +86,8 @@ namespace Lambda
 	{
 		vkDestroySampler(m_pDevice->GetVkDevice(), m_Resource, nullptr);
 		m_Resource = VK_NULL_HANDLE;
+
+		LOG_DEBUG_INFO("Releasing VkSampler\n");
 	}
 	
 
@@ -88,6 +96,8 @@ namespace Lambda
 	{
 		vkDestroyShaderModule(m_pDevice->GetVkDevice(), m_Resource, nullptr);
 		m_Resource = VK_NULL_HANDLE;
+
+		LOG_DEBUG_INFO("Releasing VkShaderModule\n");
 	}
 
 
@@ -96,6 +106,8 @@ namespace Lambda
 	{
 		vkDestroyImage(m_pDevice->GetVkDevice(), m_Resource, nullptr);
 		m_Resource = VK_NULL_HANDLE;
+
+		LOG_DEBUG_INFO("Releasing VkImage\n");
 	}
 
 
@@ -104,6 +116,8 @@ namespace Lambda
 	{
 		vkDestroySemaphore(m_pDevice->GetVkDevice(), m_Resource, nullptr);
 		m_Resource = VK_NULL_HANDLE;
+
+		LOG_DEBUG_INFO("Releasing VkSemaphore\n");
 	}
 
 
@@ -112,6 +126,8 @@ namespace Lambda
 	{
 		vkDestroyBuffer(m_pDevice->GetVkDevice(), m_Resource, nullptr);
 		m_Resource = VK_NULL_HANDLE;
+
+		LOG_DEBUG_INFO("Releasing VkBuffer\n");
 	}
 
 
@@ -120,6 +136,8 @@ namespace Lambda
 	{
 		vkDestroyFramebuffer(m_pDevice->GetVkDevice(), m_Resource, nullptr);
 		m_Resource = VK_NULL_HANDLE;
+
+		LOG_DEBUG_INFO("Releasing VkFramebuffer\n");
 	}
 
 
@@ -128,6 +146,8 @@ namespace Lambda
 	{
 		vkDestroyFence(m_pDevice->GetVkDevice(), m_Resource, nullptr);
 		m_Resource = VK_NULL_HANDLE;
+
+		LOG_DEBUG_INFO("Releasing VkFence\n");
 	}
 
 
@@ -156,15 +176,19 @@ namespace Lambda
 	void VKNSafeReleaseManager::EmptyResources()
 	{
 		//Increase frameindex
-		m_FrameIndex = (m_FrameIndex + 1) % numFrames;
-		
-		//Erase resources
-		for (auto i = m_Resources.begin(); i != m_Resources.end();)
+		m_FrameIndex = (m_FrameIndex+1) % numFrames;
+		for (auto it = m_Resources.begin(); it != m_Resources.end();)
 		{
-			if (i->first == m_FrameIndex)
-				i = m_Resources.erase(i);
+			uint32 frame = it->first;
+			if (frame == m_FrameIndex)
+			{
+				//Erase from vector
+				it = m_Resources.erase(it);
+			}
 			else
-				i++;
+			{
+				it++;
+			}
 		}
 	}
 }

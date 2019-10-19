@@ -7,11 +7,11 @@ namespace Lambda
 {
 	class VKNDevice;
 
-	//---------
-	//VKNMemory
-	//---------
+	//-------------
+	//VKNAllocation
+	//-------------
 
-	struct VKNMemory
+	struct VKNAllocation
 	{
         int32			ChunkID             = -1;
         int32           BlockID             = -1;
@@ -47,9 +47,9 @@ namespace Lambda
 		VKNMemoryChunk(VKNDevice* pDevice, uint32 id, VkDeviceSize sizeInBytes, uint32 memoryType, ResourceUsage usage);
 		~VKNMemoryChunk() = default;
 
-		bool Allocate(VKNMemory& allocation, VkDeviceSize sizeInBytes, VkDeviceSize alignment, VkDeviceSize granularity);
+		bool Allocate(VKNAllocation& allocation, VkDeviceSize sizeInBytes, VkDeviceSize alignment, VkDeviceSize granularity);
         bool IsOnSamePage(VkDeviceSize aOffset, VkDeviceSize aSize, VkDeviceSize bOffset, VkDeviceSize pageSize);
-        void Deallocate(VKNMemory& allocation);
+        void Deallocate(VKNAllocation& allocation);
 		void Destroy(VKNDevice* pDevice);
 		inline uint32 GetMemoryType() const { return m_MemoryType; }
 	private:
@@ -80,8 +80,8 @@ namespace Lambda
 		VKNAllocator(VKNDevice* pDevice);
 		~VKNAllocator();
 
-		virtual bool Allocate(VKNMemory& allocation, const VkMemoryRequirements& memoryRequirements, ResourceUsage usage);
-		virtual void Deallocate(VKNMemory& allocation);
+		virtual bool Allocate(VKNAllocation& allocation, const VkMemoryRequirements& memoryRequirements, ResourceUsage usage);
+		virtual void Deallocate(VKNAllocation& allocation);
 		virtual void EmptyGarbageMemory();
 		virtual uint64 GetTotalReserved() const;
 		virtual uint64 GetTotalAllocated() const;
@@ -93,7 +93,7 @@ namespace Lambda
         uint64 m_FrameIndex;
         VkDeviceSize m_BufferImageGranularity;
 		std::vector<VKNMemoryChunk*> m_Chunks;
-		std::vector<std::vector<VKNMemory>>	m_MemoryToDeallocate;
+		std::vector<std::vector<VKNAllocation>>	m_MemoryToDeallocate;
 	};
 
 	//-------------------------

@@ -35,7 +35,6 @@ namespace Lambda
 		void DestroyResource();
 		virtual void Release() override final
 		{
-			LOG_DEBUG_INFO("Releasing resource\n");
 			DestroyResource();
 			delete this;
 		}
@@ -52,7 +51,7 @@ namespace Lambda
 	{
 	public:
 		VKNWrapper::VKNWrapper(VKNWrapper&& other)
-			: m_pResource(std::move(other.m_pResource))
+			: m_pResource(other.m_pResource)
 		{
 			other.m_pResource = nullptr;
 		}
@@ -60,7 +59,10 @@ namespace Lambda
 		~VKNWrapper()
 		{
 			if (m_pResource)
+			{
 				m_pResource->Release();
+				m_pResource = nullptr;
+			}
 		}
 
 		VKNWrapper& operator=(VKNWrapper&& other)
@@ -80,7 +82,7 @@ namespace Lambda
 		VKNWrapper(const VKNWrapper& other)				= delete;
 		VKNWrapper& operator=(const VKNWrapper& other)	= delete;
 	private:
-		VKNWrapper(VKNResourceBase* pResource)
+		VKNWrapper(VKNResourceBase* pResource = nullptr)
 			:m_pResource(pResource)
 		{
 		}
@@ -109,8 +111,7 @@ namespace Lambda
 		template<typename VkResourceType>
 		void ReleaseResource(const VkResourceType& resource)
 		{
-			VKNWrapper wrapper = std::move(VKNWrapper::Create<VkResourceType>(m_pDevice, resource));
-			m_Resources.emplace_back(std::pair<uint64, VKNWrapper>(m_FrameIndex, std::move(wrapper)));
+			m_Resources.emplace_back(std::pair<uint64, VKNWrapper>(m_FrameIndex, std::move(VKNWrapper::Create<VkResourceType>(m_pDevice, resource))));
 		}
 
 		void EmptyResources();

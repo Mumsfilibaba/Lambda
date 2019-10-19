@@ -609,7 +609,7 @@ namespace Lambda
 
 	void VKNDeviceContext::ResolveTexture(ITexture* pDst, uint32 dstMipLevel, ITexture* pSrc, uint32 srcMipLevel)
 	{
-		LOG_DEBUG_INFO("ResolveTexture()\n");
+		//LOG_DEBUG_INFO("ResolveTexture()\n");
 
 		//Transition texture before clearing
 		TransitionTexture(pDst, RESOURCE_STATE_COPY_DEST,	VK_REMAINING_MIP_LEVELS);
@@ -701,14 +701,17 @@ namespace Lambda
     {
 		if (m_ContextState == DEVICE_CONTEXT_STATE_WAITING)
 		{
-			LOG_DEBUG_INFO("QueryCommandBuffer()\n");
-			
+			//LOG_DEBUG_INFO("QueryCommandBuffer()\n");
+
 			//Get next buffer
 			m_pCurrentFrameResource = &m_pFrameResources[m_FrameIndex];
 			//Wait for last frame
 			vkWaitForFences(m_pDevice->GetVkDevice(), 1, &m_pCurrentFrameResource->Fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
 			vkResetFences(m_pDevice->GetVkDevice(), 1, &m_pCurrentFrameResource->Fence);
         
+			//Move to next frame
+			m_FrameIndex = (m_FrameIndex+1) % m_NumFrameResources;
+
 			//Begin commandbuffer
 			VkCommandBufferBeginInfo info = {};
 			info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -732,7 +735,7 @@ namespace Lambda
 
 	void VKNDeviceContext::EndCommandBuffer()
 	{
-		LOG_DEBUG_INFO("EndCommandBuffer()\n");
+		//LOG_DEBUG_INFO("EndCommandBuffer()\n");
 
 		//End renderpass before ending commmandsubmition
 		if (IsInsideRenderPass())
@@ -744,8 +747,6 @@ namespace Lambda
 			LOG_DEBUG_ERROR("Vulkan: Failed to End CommandBuffer\n");
 		}
 
-		//Move to next frame
-		m_FrameIndex = (m_FrameIndex + 1) % m_NumFrameResources;
 		//Set context state
 		m_ContextState = DEVICE_CONTEXT_STATE_WAITING;
 	}
@@ -753,7 +754,7 @@ namespace Lambda
 
     void VKNDeviceContext::Flush()
     {
-		LOG_DEBUG_INFO("Flush()\n");
+		//LOG_DEBUG_INFO("Flush()\n");
 
 		//Before flushing we need to flush the deffered barriers since the application is expecting all the resources to be in correct layout
 		FlushResourceBarriers();
@@ -796,7 +797,7 @@ namespace Lambda
         LAMBDA_ASSERT_PRINT(!IsInsideRenderPass(), "Vulkan: EndRenderPass must be called before a new call to BeginRenderPass\n");
 		LAMBDA_ASSERT_PRINT(m_RenderPass != VK_NULL_HANDLE && m_Framebuffer != VK_NULL_HANDLE, "Vulkan: SetRenderTargets must be called before BeginRenderPass\n");
 
-		LOG_DEBUG_INFO("BeginRenderPass()\n");
+		//LOG_DEBUG_INFO("BeginRenderPass()\n");
 
         VkRenderPassBeginInfo info = {};
         info.sType				= VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -818,7 +819,7 @@ namespace Lambda
 	{
         LAMBDA_ASSERT_PRINT(IsInsideRenderPass(), "Vulkan: EndRenderPass must be called after BeginRenderPass\n");
         
-		LOG_DEBUG_INFO("EndRenderPass()\n");
+		//LOG_DEBUG_INFO("EndRenderPass()\n");
 
 		//End renderpass
         vkCmdEndRenderPass(m_pCurrentFrameResource->CommandBuffer);

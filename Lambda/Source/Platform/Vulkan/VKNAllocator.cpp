@@ -4,6 +4,8 @@
 #include "VKNAllocator.h"
 #include "VKNUtilities.h"
 
+//#define LAMBDA_ALLOCATOR_DEBUG
+
 namespace Lambda
 {
 	//--------------
@@ -61,9 +63,9 @@ namespace Lambda
 	}
 
 
-	bool VKNMemoryChunk::Allocate(VKNMemory& allocation, VkDeviceSize sizeInBytes, VkDeviceSize alignment, VkDeviceSize granularity)
+	bool VKNMemoryChunk::Allocate(VKNAllocation& allocation, VkDeviceSize sizeInBytes, VkDeviceSize alignment, VkDeviceSize granularity)
 	{
-        VkDeviceSize padding = 0;
+        VkDeviceSize padding			= 0;
         VkDeviceSize paddedDeviceOffset = 0;
         VkDeviceSize paddedSizeInBytes  = 0;
         VKNMemoryBlock* pBestFit = nullptr;
@@ -123,10 +125,12 @@ namespace Lambda
         }
 
         //Did we find a suitable block to make the allocation?
-        if (pBestFit == nullptr)
-            return false;
+		if (pBestFit == nullptr)
+		{
+            return false;       
+		}
         
-        
+
         //        Free block
         //|--------------------------|
         //padding Allocation Remaining
@@ -162,6 +166,27 @@ namespace Lambda
             allocation.pHostMemory = m_pHostMemory + allocation.DeviceMemoryOffset;
         else
             allocation.pHostMemory = nullptr;
+
+#if defined (LAMBDA_ALLOCATOR_DEBUG)
+		{
+			LOG_DEBUG_INFO("Vulkan: Memory Chunk '%d'\n", m_ID);
+			for (VKNMemoryBlock* pCurrent = m_pBlockHead; pCurrent != nullptr; pCurrent = pCurrent->pNext)
+			{
+				LOG_DEBUG_INFO("----Block %d----\n", pCurrent->ID);
+				LOG_DEBUG_INFO("Starts at: %llu\n", pCurrent->DeviceMemoryOffset);
+				if (pCurrent->pPrevious)
+				{
+					VKNMemoryBlock* pPrevious = pCurrent->pPrevious;
+					if ((pPrevious->DeviceMemoryOffset + pPrevious->Size) > pCurrent->DeviceMemoryOffset)
+					{
+						LOG_DEBUG_WARNING("Overlapping memory in chunk '%d' between blocks '%d' and '%d'\n", m_ID, pPrevious->ID, pCurrent->ID);
+					}
+				}
+				LOG_DEBUG_INFO("   End at: %llu\n", pCurrent->DeviceMemoryOffset + pCurrent->Size);
+				LOG_DEBUG_INFO("----------------\n", pCurrent->ID);
+			}
+		}
+#endif
 
 		return true;
 	}
@@ -205,7 +230,7 @@ namespace Lambda
 	}
 
 
-	void VKNMemoryChunk::Deallocate(VKNMemory& allocation)
+	void VKNMemoryChunk::Deallocate(VKNAllocation& allocation)
 	{
         LOG_DEBUG_INFO("Vulkan: Deallocated block ID=%u\n", allocation.BlockID);
         
@@ -272,7 +297,7 @@ namespace Lambda
 
 	void VKNMemoryChunk::Destroy(VKNDevice* pDevice)
 	{
-		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
+		LAMBDA_ASSERT(pDevice != nullptr);
 
 		if (m_DeviceMemory != VK_NULL_HANDLE)
 		{
@@ -307,7 +332,7 @@ namespace Lambda
 	//VKNAllocator
 	//------------
 
-    constexpr size_t numFrames = 10;
+    constexpr size_t numFrames = 5;
 
 	VKNAllocator::VKNAllocator(VKNDevice* pDevice)
 		: m_pDevice(pDevice),
@@ -346,7 +371,7 @@ namespace Lambda
 	}
 
 
-	bool VKNAllocator::Allocate(VKNMemory& allocation, const VkMemoryRequirements& memoryRequirements, ResourceUsage usage)
+	bool VKNAllocator::Allocate(VKNAllocation& allocation, const VkMemoryRequirements& memoryRequirements, ResourceUsage usage)
 	{
 		//Set memoryproperty based on resource usage
 		VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
@@ -391,7 +416,7 @@ namespace Lambda
 	}
 
 
-	void VKNAllocator::Deallocate(VKNMemory& allocation)
+	void VKNAllocator::Deallocate(VKNAllocation& allocation)
 	{
         //Set it to be removed
         if (size_t(allocation.ChunkID) < m_Chunks.size() && allocation.DeviceMemory != VK_NULL_HANDLE)

@@ -36,7 +36,7 @@ namespace Lambda
         void InitFromResource(VkImage image, const TextureDesc& desc);
         void CreateImageView(); 
     private:
-		VKNMemory	m_Memory;
+		VKNAllocation	m_Memory;
         VkImage     m_Image;
         VkImageView m_ImageView;
         VkImageAspectFlags  m_AspectFlags;
