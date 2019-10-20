@@ -103,19 +103,19 @@ workspace "Lambda"
 			{
 				"glfw.3.3",
 				"vulkan.1",
-				"vulkan.1.1.114",
+				"vulkan.1.1.121",
 				"assimp",
 				"ImGui"
 			}
 			libdirs
 			{
 				"/usr/local/lib",
-				"../vulkansdk-macos-1.1.114.0/macOS/lib"
+				"../vulkansdk-macos-1.1.121.1/macOS/lib"
 			}
 			sysincludedirs
 			{
 				"/usr/local/include",
-				"../vulkansdk-macos-1.1.114.0/macOS/include"
+				"../vulkansdk-macos-1.1.121.1/macOS/include"
 			}
 		-- WINDOWS SPECIFIC
 		filter "system:windows"
