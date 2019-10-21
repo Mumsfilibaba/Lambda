@@ -27,7 +27,7 @@ namespace Lambda
 		virtual void ClearRenderTarget(ITexture* pRenderTarget, float color[4]) override final;
 		virtual void ClearDepthStencil(ITexture* pDepthStencil, float depth, uint8 stencil) override final;
 
-		virtual void SetRendertargets(const ITexture* const* ppRenderTargets, uint32 numRendertargets, const ITexture* pDepthStencil) override final;
+		virtual void SetRendertargets(ITexture* const* ppRenderTargets, uint32 numRendertargets, ITexture* pDepthStencil) override final;
 		virtual void SetViewports(const Viewport* pViewports, uint32 numViewports) override final;
 		virtual void SetScissorRects(const Rectangle* pScissorRect, uint32 numRects) override final;
 		virtual void SetVertexBuffers(IBuffer* const* pBuffers, uint32 numBuffers, uint32 slot) override final;
@@ -41,8 +41,8 @@ namespace Lambda
 
 		virtual void CopyBuffer(IBuffer* pDst, IBuffer* pSrc) override final;
 
-		virtual void MapBuffer(IBuffer* pBuffer, void** ppData) override final;
-		virtual void Unmap(IBuffer* pBuffer) override final;
+		virtual void MapBuffer(IBuffer* pBuffer, MapFlag mapFlag, void** ppData) override final;
+		virtual void UnmapBuffer(IBuffer* pBuffer) override final;
 
 		virtual void ResolveTexture(ITexture* pDst, uint32 dstMipLevel, ITexture* pSrc, uint32 srcMipLevel) override final;
 

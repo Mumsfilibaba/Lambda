@@ -64,7 +64,7 @@ namespace Lambda
 	class AutoRef
 	{
 	public:
-		inline AutoRef(TObject* pObject)
+		inline AutoRef(TObject* pObject = nullptr)
 			: m_pObject(pObject)
 		{
 		}

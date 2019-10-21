@@ -11,7 +11,7 @@ namespace Lambda
 	//---------
 
     VKNBuffer::VKNBuffer(VKNDevice* pDevice, const BufferDesc& desc)
-		: DeviceObjectBase<VKNDevice, IBuffer>(pDevice),
+		: BufferBase<VKNDevice>(pDevice),
         m_Memory(),
 		m_Buffer(VK_NULL_HANDLE),
         m_FrameOffset(0),
@@ -19,7 +19,6 @@ namespace Lambda
         m_SizePerFrame(0),
         m_SizePerUpdate(0),
         m_DynamicOffset(0),
-        m_Desc(),
 		m_IsDirty(false)
     {
 		//Add a ref to the refcounter
@@ -37,6 +36,17 @@ namespace Lambda
         info.queueFamilyIndexCount	= 0;
         info.pQueueFamilyIndices	= nullptr;
         info.sharingMode			= VK_SHARING_MODE_EXCLUSIVE;
+		//Set usage
+		info.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+		
+		if (desc.Flags & BUFFER_FLAGS_VERTEX_BUFFER)
+            info.usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+		
+		if (desc.Flags & BUFFER_FLAGS_INDEX_BUFFER)
+            info.usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+
+		if (desc.Flags & BUFFER_FLAGS_CONSTANT_BUFFER)
+            info.usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 
 		//If dynamic we allocate extra size so we can use dynamic offsets
 		if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
@@ -54,19 +64,7 @@ namespace Lambda
 		{
 			info.size = desc.SizeInBytes;
 		}
-        
-		//Set usage
-		info.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-		
-		if (desc.Flags & BUFFER_FLAGS_VERTEX_BUFFER)
-            info.usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-		
-		if (desc.Flags & BUFFER_FLAGS_INDEX_BUFFER)
-            info.usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-
-		if (desc.Flags & BUFFER_FLAGS_CONSTANT_BUFFER)
-            info.usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-        
+      
 		//Create buffer
 		if (vkCreateBuffer(m_pDevice->GetVkDevice(), &info, nullptr, &m_Buffer) != VK_SUCCESS)
         {
@@ -129,12 +127,6 @@ namespace Lambda
         return reinterpret_cast<void*>(m_Buffer);
     }
 
-    
-    const BufferDesc& VKNBuffer::GetDesc() const
-    {
-        return m_Desc;
-    }
-
 
 	void VKNBuffer::AdvanceFrame()
 	{
@@ -174,7 +166,7 @@ namespace Lambda
         m_TotalSize     = m_SizePerFrame * FRAMES_AHEAD;
         info.size       = m_TotalSize;
 
-        LOG_DEBUG_WARNING("Vulkan: Reallocated buffer. Old size: %llu bytes, New size: %llu\n", m_Memory.Size, info.size);
+        LOG_DEBUG_WARNING("Vulkan: Reallocated buffer. Old size: %llu bytes, New size: %llu\n", m_Memory.SizeInBytes, info.size);
         
         //Set usage
         info.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
@@ -272,12 +264,12 @@ namespace Lambda
         info.usage                  = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
         if (vkCreateBuffer(m_pDevice->GetVkDevice(), &info, nullptr, &m_Buffer) != VK_SUCCESS)
         {
-            LOG_DEBUG_ERROR("Vulkan: Failed to create buffer for UploadBuffer\n");
+            LOG_DEBUG_ERROR("Vulkan: Failed to create UploadBuffer\n");
             return false;
         }
         else
         {
-            LOG_DEBUG_INFO("Vulkan: Created buffer for UploadBuffer '%p'\n", m_Buffer);
+            LOG_DEBUG_INFO("Vulkan: Created UploadBuffer '%p'\n", m_Buffer);
         }
         
         //Allocate memory
@@ -311,11 +303,11 @@ namespace Lambda
         info.usage                  = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
         if (vkCreateBuffer(m_pDevice->GetVkDevice(), &info, nullptr, &newBuffer) != VK_SUCCESS)
         {
-            LOG_DEBUG_ERROR("Vulkan: Failed to recreate buffer for UploadBuffer\n");
+            LOG_DEBUG_ERROR("Vulkan: Failed to recreate UploadBuffer\n");
         }
         else
         {
-            LOG_DEBUG_WARNING("Vulkan: Recreated buffer for UploadBuffer '%p'\n", newBuffer);
+            LOG_DEBUG_WARNING("Vulkan: Recreated UploadBuffer '%p'\n", newBuffer);
         }
 
         //Allocate memory
@@ -332,14 +324,14 @@ namespace Lambda
         }
         else
         {
-            LOG_DEBUG_ERROR("Vulkan: Failed to reallocate UploadBuffer '%p'\n", m_Buffer);
+            LOG_DEBUG_ERROR("Vulkan: Failed to reallocate memory for UploadBuffer '%p'\n", m_Buffer);
         }
     }
 
 
-	UploadAllocation VKNUploadBuffer::Allocate(uint64 bytesToAllocate, uint64 alignment)
+	VKNUploadAllocation VKNUploadBuffer::Allocate(uint64 bytesToAllocate, uint64 alignment)
     {
-		UploadAllocation allocation = {};
+		VKNUploadAllocation allocation = {};
 
 		//Align
 		uint64 alignedOffset = Math::AlignUp<uint64>(m_Offset, alignment);
@@ -347,14 +339,15 @@ namespace Lambda
 
         //Do we have enough space? If no reallocate
 		uint64 alignedSize = bytesToAllocate + padding;
-        if ((alignedOffset + alignedSize) >= m_Memory.Size)
-            Reallocate(m_Memory.Size + alignedSize + MB(1));
+        if ((alignedOffset + alignedSize) >= m_Memory.SizeInBytes)
+            Reallocate(m_Memory.SizeInBytes + alignedSize + MB(1));
 
         //Move pointer
         allocation.pHostMemory = reinterpret_cast<void*>(m_Memory.pHostMemory + alignedOffset);
 		m_Offset += alignedSize;
 
 		//Set offset
+		allocation.SizeInBytes	= alignedSize;
 		allocation.DeviceOffset = alignedOffset;
 		
 		//Set buffer

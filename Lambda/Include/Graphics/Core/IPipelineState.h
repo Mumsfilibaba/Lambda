@@ -127,7 +127,6 @@ namespace Lambda
 		LAMBDA_IOBJECT_INTERFACE(IPipelineState);
         
 		virtual void CreateShaderVariableTable(IShaderVariableTable** ppVariableTable) = 0;
-        virtual void SetName(const char* pName) = 0;
         virtual void* GetNativeHandle() const = 0;
 		virtual const PipelineStateDesc& GetDesc() const = 0;
 	};

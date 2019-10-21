@@ -17,12 +17,11 @@ namespace Lambda
 	//------------
 
 	VKNSwapChain::VKNSwapChain(VKNDevice* pDevice, const SwapChainDesc& desc)
-		: DeviceObjectBase<VKNDevice, ISwapChain>(pDevice),
+		: SwapChainBase<VKNDevice>(pDevice),
 		m_Context(nullptr),
 		m_VkSwapChain(VK_NULL_HANDLE),
         m_VkFormat(),
         m_PresentationMode(),
-        m_Desc(),
         m_SampleBuffer(nullptr),
         m_DepthStencilBuffer(nullptr),
 		m_CurrentBufferIndex(0),
@@ -125,7 +124,7 @@ namespace Lambda
 				LOG_DEBUG_INFO("Vulkan: Created Semaphore %p\n", m_ImageSemaphores[i]);
 
                 m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_SEMAPHORE, (uint64)m_RenderSemaphores[i], "RenderSemaphore[" + std::to_string(i) + "]");
-				LOG_DEBUG_INFO("Vulkan: Created Semaphores %p\n", m_ImageSemaphores[i]);
+				LOG_DEBUG_INFO("Vulkan: Created Semaphore %p\n", m_RenderSemaphores[i]);
             }
         }
               
@@ -344,14 +343,7 @@ namespace Lambda
 
 
 	ITexture* VKNSwapChain::GetBuffer()
-	{
-        //Get the new buffer
-        if (m_LastFrameIndex != m_FrameIndex)
-        {
-            AquireNextImage(m_ImageSemaphores[m_FrameIndex]);
-            m_LastFrameIndex = m_FrameIndex;
-        }
-        
+	{       
 		return (m_Desc.BufferSampleCount > 1) ? m_SampleBuffer.Get() : m_Buffers[m_CurrentBufferIndex].Get();
 	}
 
@@ -359,12 +351,6 @@ namespace Lambda
     ITexture* VKNSwapChain::GetDepthBuffer()
     {
         return m_DepthStencilBuffer.Get();
-    }
-
-
-    const SwapChainDesc& VKNSwapChain::GetDesc() const
-    {
-        return m_Desc;
     }
 
 
@@ -396,6 +382,9 @@ namespace Lambda
 		//Transition resource
 		m_Context->TransitionTexture(m_Buffers[m_CurrentBufferIndex].Get(), RESOURCE_STATE_RENDERTARGET_PRESENT, VK_REMAINING_MIP_LEVELS);
 
+		//Aquire next image
+		AquireNextImage(m_ImageSemaphores[m_FrameIndex]);
+
 		//Add semaphores so the syncronization gets correct
 		m_Context->AddWaitSemaphore(m_ImageSemaphores[m_FrameIndex], VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 		m_Context->AddSignalSemaphore(m_RenderSemaphores[m_FrameIndex]);
@@ -420,7 +409,8 @@ namespace Lambda
 
 		//Finish device frame
 		m_pDevice->FinishFrame();
-		//Increase frameindex
+
+		//Increase frameindex and get next image
         m_FrameIndex = (m_FrameIndex+1) % m_Desc.BufferCount;
 	}
 

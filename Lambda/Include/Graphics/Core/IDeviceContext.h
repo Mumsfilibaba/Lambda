@@ -24,7 +24,7 @@ namespace Lambda
         virtual void ClearRenderTarget(ITexture* pRenderTarget, float color[4]) = 0;
         virtual void ClearDepthStencil(ITexture* pDepthStencil, float depth, uint8 stencil) = 0;
         
-        virtual void SetRendertargets(const ITexture* const* const ppRenderTargets, uint32 numRenderTargets, const ITexture* pDepthStencil) = 0;
+        virtual void SetRendertargets(ITexture* const* ppRenderTargets, uint32 numRenderTargets, ITexture* pDepthStencil) = 0;
         virtual void SetViewports(const Viewport* pViewports, uint32 numViewports) = 0;
         virtual void SetScissorRects(const Rectangle* pScissorRects, uint32 numScissorRects) = 0;
         virtual void SetVertexBuffers(IBuffer* const * pBuffers, uint32 numBuffers, uint32 startSlot) = 0;
@@ -38,8 +38,8 @@ namespace Lambda
 
         virtual void CopyBuffer(IBuffer* pDst, IBuffer* pSrc) = 0;
 
-        virtual void MapBuffer(IBuffer* pBuffer, void** ppData) = 0;
-        virtual void Unmap(IBuffer* pBuffer) = 0;
+        virtual void MapBuffer(IBuffer* pBuffer, MapFlag mapFlag, void** ppData) = 0;
+        virtual void UnmapBuffer(IBuffer* pBuffer) = 0;
         
         virtual void ResolveTexture(ITexture* pDst, uint32 dstMipLevel, ITexture* pSrc, uint32 srcMipLevel) = 0;
         
@@ -55,8 +55,6 @@ namespace Lambda
 
         virtual void Flush() = 0;
         virtual void ClearState() = 0;
-
-        virtual void SetName(const char* pName) = 0;
 
         virtual DeviceContextType GetType() const = 0;
         virtual void* GetNativeHandle() const = 0;

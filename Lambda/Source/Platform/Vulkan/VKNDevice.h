@@ -2,6 +2,7 @@
 #include "Graphics/Core/IDevice.h"
 #include "VKNAllocator.h"
 #include "VKNSafeReleaseManager.h"
+
 #include "VKNUtilities.h"
 
 #define FRAMES_AHEAD 3
@@ -11,14 +12,12 @@ namespace Lambda
     class VKNBuffer;
     class VKNTexture;
     class VKNSwapChain;
-    class VKNAllocator;
     class VKNSamplerState;
     class VKNUploadBuffer;
     class VKNDeviceContext;
     class VKNBufferManager;
 	class VKNRenderPassCache;
     class VKNFramebufferCache;
-	class VKNSafeReleaseManager;
     
 	//---------
 	//VKNDevice
@@ -53,6 +52,8 @@ namespace Lambda
 		bool AllocateImage(VKNAllocation& allocation, VkImage image, ResourceUsage usage);
 		bool AllocateBuffer(VKNAllocation& allocation, VkBuffer buffer, ResourceUsage usage);
 		void Deallocate(VKNAllocation& allocation);
+		bool AllocateDynamicMemory(VKNDynamicAllocation& allocation, uint64 sizeInBytes, uint64 alignment);
+		void DeallocateDynamicMemory(VKNDynamicAllocation& allocation);
 
 		template<typename VkResourceType>
 		void SafeReleaseVulkanResource(const VkResourceType& resource)
@@ -63,11 +64,11 @@ namespace Lambda
 		void SetVulkanObjectName(VkObjectType type, uint64 objectHandle, const std::string& name);
 		VkSampleCountFlagBits GetHighestSampleCount() const;
 		VKNDeviceContext* GetVKNImmediateContext() const;
-		inline VkInstance GetVkInstance() const									{ return m_Instance; }
-		inline VkDevice GetVkDevice() const										{ return m_Device; }
-		inline VkPhysicalDevice GetVkPhysicalDevice() const						{ return m_PhysicalDevice; }
-		inline QueueFamilyIndices GetQueueFamilyIndices() const					{ return m_FamiliyIndices; }
-		inline VkPhysicalDeviceProperties GetPhysicalDeviceProperties() const	{ return m_PhysicalDeviceProperties; }
+		inline VkInstance GetVkInstance() const				{ return m_Instance; }
+		inline VkDevice GetVkDevice() const					{ return m_Device; }
+		inline VkPhysicalDevice GetVkPhysicalDevice() const	{ return m_PhysicalDevice; }
+		inline const QueueFamilyIndices& GetQueueFamilyIndices() const				 { return m_FamiliyIndices; }
+		inline const VkPhysicalDeviceProperties& GetPhysicalDeviceProperties() const { return m_PhysicalDeviceProperties; }
 	private:
 		void Init(const DeviceDesc& desc);
 		void InitDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo);		
@@ -78,6 +79,7 @@ namespace Lambda
 		std::vector<const char*> GetRequiredInstanceExtensions(bool debug);
     private:
 		VKNAllocator*			   m_pDeviceAllocator;
+		VKNDynamicMemoryAllocator* m_pDynamicMemoryAllocator;
 		VKNDeviceContext*		   m_pImmediateContext;
 		VKNBufferManager*		   m_pBufferManager;
 		VKNRenderPassCache*		   m_pRenderPassCache;

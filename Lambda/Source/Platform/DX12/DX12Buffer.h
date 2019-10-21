@@ -24,11 +24,11 @@ namespace Lambda
 		DX12Buffer(DX12Device* pDevice, const BufferDesc& desc);
 		~DX12Buffer() = default;
 
-		virtual void Map(void** ppMem) override final;
-		virtual void Unmap() override final;
-
 		virtual void* GetNativeHandle() const override final;
 		virtual const BufferDesc& GetDesc() const override final;
+		
+		void Map(void** ppMem);
+		void Unmap();
 	private:
 		void Init(const BufferDesc& desc);
 		

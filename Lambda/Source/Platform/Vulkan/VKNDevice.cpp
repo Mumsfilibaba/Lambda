@@ -27,11 +27,12 @@ namespace Lambda
     VKNDevice::VKNDevice(const DeviceDesc& desc)
         : m_GraphicsQueue(VK_NULL_HANDLE),
         m_PresentationQueue(VK_NULL_HANDLE),
+		m_pDeviceAllocator(nullptr),
+		m_pDynamicMemoryAllocator(nullptr),
 		m_pBufferManager(nullptr),
 		m_pFramebufferCache(nullptr),
 		m_pRenderPassCache(nullptr),
 		m_pImmediateContext(nullptr),
-		m_pDeviceAllocator(nullptr),
 		m_Instance(VK_NULL_HANDLE),
 		m_DebugMessenger(VK_NULL_HANDLE),
 		m_Device(VK_NULL_HANDLE),
@@ -68,6 +69,7 @@ namespace Lambda
 		SafeDelete(m_pRenderPassCache);
 		SafeDelete(m_pFramebufferCache);
 		SafeDelete(m_pBufferManager);
+		SafeDelete(m_pDynamicMemoryAllocator);
 		SafeDelete(m_pDeviceAllocator);
 
 		if (m_Device != VK_NULL_HANDLE)
@@ -398,6 +400,8 @@ namespace Lambda
         
 		//Create allocator
 		m_pDeviceAllocator = DBG_NEW VKNAllocator(this);
+		//Create dynamic memory allocator
+		m_pDynamicMemoryAllocator = DBG_NEW VKNDynamicMemoryAllocator(this);
 		//Create SafeReleaseManager
 		m_pSafeReleaseManager = DBG_NEW VKNSafeReleaseManager(this);
 		//Create dynamic buffer manager
@@ -447,7 +451,6 @@ namespace Lambda
             {
 				//Setup copy with staging buffer if other usecase
                 m_pImmediateContext->UpdateBuffer(pVkBuffer, pInitalData);
-				m_pImmediateContext->Flush();
             }
         }
 
@@ -462,6 +465,9 @@ namespace Lambda
         //Create texture object
         VKNTexture* pVkTexture = DBG_NEW VKNTexture(this, desc);
         
+		//A texture needs to be in a general layout
+		m_pImmediateContext->TransitionTexture(pVkTexture, RESOURCE_STATE_GENERAL, VK_REMAINING_MIP_LEVELS);
+
         //Handle inital data
         if (pInitalData)
         {
@@ -500,11 +506,8 @@ namespace Lambda
                     LOG_DEBUG_ERROR("Vulkan: PhysicalDevice does not support mipmap generation for this format\n");
                 }
             }
-            
-            //Execute and wait for GPU
-			m_pImmediateContext->Flush();
         }
-        
+
         //Return texture
         (*ppTexture) = pVkTexture;
     }
@@ -620,6 +623,18 @@ namespace Lambda
 	void VKNDevice::Deallocate(VKNAllocation& allocation)
 	{
 		m_pDeviceAllocator->Deallocate(allocation);
+	}
+
+	
+	bool VKNDevice::AllocateDynamicMemory(VKNDynamicAllocation& allocation, uint64 sizeInBytes, uint64 alignment)
+	{
+		return m_pDynamicMemoryAllocator->Allocate(allocation, sizeInBytes, alignment);
+	}
+
+	
+	void VKNDevice::DeallocateDynamicMemory(VKNDynamicAllocation& allocation)
+	{
+		m_pDynamicMemoryAllocator->Deallocate(allocation);
 	}
 
 

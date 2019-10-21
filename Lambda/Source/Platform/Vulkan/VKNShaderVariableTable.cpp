@@ -89,6 +89,12 @@ namespace Lambda
 
 	void VKNShaderVariableTable::CommitAndTransitionResources(VKNDeviceContext* pContext)
 	{
+		//If table is empty we return
+		if (m_ShaderVariables.empty())
+		{
+			return;
+		}
+
 		//Varify all variables (Have the resources changed)
 		m_DescriptorWrites.clear();
         bool writeDescriptors = false;

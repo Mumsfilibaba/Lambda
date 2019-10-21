@@ -197,8 +197,8 @@ namespace Lambda
 		//Set variables
 		material.pVariableTable->GetVariableByName(SHADER_STAGE_VERTEX, "u_CameraBuffer")->SetConstantBuffer(m_CameraBuffer.Get());
 		material.pVariableTable->GetVariableByName(SHADER_STAGE_VERTEX, "u_TransformBuffer")->SetConstantBuffer(m_TransformBuffer.Get());
-		material.pVariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_MaterialBuffer")->SetConstantBuffer(m_MaterialBuffer.Get());
-		material.pVariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_LightBuffer")->SetConstantBuffer(m_LightBuffer.Get());
+		material.pVariableTable->GetVariableByName(SHADER_STAGE_PIXEL,	"u_MaterialBuffer")->SetConstantBuffer(m_MaterialBuffer.Get());
+		material.pVariableTable->GetVariableByName(SHADER_STAGE_PIXEL,	"u_LightBuffer")->SetConstantBuffer(m_LightBuffer.Get());
 
 		//Set mesh
         m_Context->SetVertexBuffers(&model.pVertexBuffer, 1, 0);
@@ -213,7 +213,7 @@ namespace Lambda
 
 	void Renderer3D::EndScene() const
 	{
-		//Draw UI before ending renderpass
+		//Draw UI before ending
 		Application::Get().GetUILayer()->Draw(m_Context.Get());
 		//End by writing a timestamp
 		m_Context->WriteTimeStamp(m_pCurrentQuery, PIPELINE_STAGE_PIXEL);
@@ -227,7 +227,7 @@ namespace Lambda
 
 	void Renderer3D::Swapbuffers()
 	{
-		//Get current device
+		//Present
 		m_SwapChain->Present();
         m_QueryIndex = (m_QueryIndex+1) % m_SwapChain->GetDesc().BufferCount;
 	}
@@ -237,16 +237,21 @@ namespace Lambda
 	{
         //Release queries
         for (auto& query : m_Queries)
-            query.Get();
+            query.Release();
         m_Queries.clear();
-        //Destroy camerabuffer
+        
+		//Destroy camerabuffer
         m_CameraBuffer.Release();
-        //Destroy lightbuffer
+        
+		//Destroy lightbuffer
         m_LightBuffer.Release();
-        //Destroy transformbuffer
+        
+		//Destroy transformbuffer
         m_TransformBuffer.Release();
-        //Destroy materialbuffer
+        
+		//Destroy materialbuffer
         m_MaterialBuffer.Release();
+
         //Release context, device and swapchain
         m_SwapChain.Release();
         m_Context.Release();

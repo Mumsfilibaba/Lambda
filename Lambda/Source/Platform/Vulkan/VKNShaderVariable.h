@@ -1,6 +1,5 @@
 #pragma once
-#include "Graphics/Core/IShaderVariableTable.h"
-#include "Graphics/Core/DeviceObjectBase.h"
+#include "Graphics/Core/ShaderVariableBase.h"
 #include <vulkan/vulkan.h>
 
 namespace Lambda
@@ -13,7 +12,7 @@ namespace Lambda
 	//VKNShaderVariableTable
 	//----------------------
 
-	class VKNShaderVariable : public DeviceObjectBase<VKNDevice, IShaderVariable>
+	class VKNShaderVariable : public ShaderVariableBase<VKNDevice>
 	{
 	public:
 		LAMBDA_NO_COPY(VKNShaderVariable);
@@ -25,7 +24,6 @@ namespace Lambda
 		virtual void SetConstantBuffer(IBuffer* pBuffer) override final;
 		virtual void SetSamplerState(ISamplerState* pSamplerState) override final;
 		virtual IShaderVariableTable* GetShaderVariableTable() const override final;
-		virtual const ShaderVariableDesc& GetDesc() const override final;
 		void Transition(VKNDeviceContext* pContext);
 		bool Validate();
 
@@ -34,7 +32,6 @@ namespace Lambda
 	private:
 		VKNShaderVariableTable* m_pVariableTable;
 		AutoRef<IDeviceObject>	m_Resource;
-		ShaderVariableDesc		m_Desc;
         VkWriteDescriptorSet    m_DescriptorWrite;
         uint64                  m_ResourceHandle;
 		union

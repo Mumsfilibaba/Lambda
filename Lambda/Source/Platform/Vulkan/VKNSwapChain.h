@@ -1,6 +1,5 @@
 #pragma once
-#include "Graphics/Core/ISwapChain.h"
-#include "Graphics/Core/DeviceObjectBase.h"
+#include "Graphics/Core/SwapChainBase.h"
 #include <vector>
 #if defined(LAMBDA_PLAT_WINDOWS)
     #define VK_USE_PLATFORM_WIN32_KHR
@@ -18,7 +17,7 @@ namespace Lambda
 	//VKNSwapChain
 	//------------
 
-	class VKNSwapChain final : public DeviceObjectBase<VKNDevice, ISwapChain>
+	class VKNSwapChain final : public SwapChainBase<VKNDevice>
 	{
 	public:
 		LAMBDA_NO_COPY(VKNSwapChain);
@@ -31,7 +30,6 @@ namespace Lambda
         virtual ITexture* GetDepthBuffer() override final;
         virtual void Present() override final;
         virtual void* GetNativeHandle() const override final;
-        virtual const SwapChainDesc& GetDesc() const override final;
         
 		void AquireNextImage(VkSemaphore signalSemaphore);
 
@@ -47,7 +45,6 @@ namespace Lambda
 		VkSwapchainKHR		m_VkSwapChain;
 		VkSurfaceFormatKHR	m_VkFormat;
         VkPresentModeKHR	m_PresentationMode;
-        SwapChainDesc       m_Desc;
         AutoRef<VKNTexture> m_SampleBuffer;
         AutoRef<VKNTexture> m_DepthStencilBuffer;
 		mutable uint32		m_CurrentBufferIndex;

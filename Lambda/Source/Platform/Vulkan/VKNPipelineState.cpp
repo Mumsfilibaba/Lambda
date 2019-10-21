@@ -18,14 +18,13 @@ namespace Lambda
 	//----------------
 
     VKNPipelineState::VKNPipelineState(VKNDevice* pDevice, const PipelineStateDesc& desc)
-        : DeviceObjectBase<VKNDevice, IPipelineState>(pDevice),
+        : PipelineStateBase<VKNDevice>(pDevice),
 		m_pAllocator(nullptr),
         m_Pipeline(VK_NULL_HANDLE),
         m_PipelineLayout(VK_NULL_HANDLE),
         m_DescriptorSetLayout(VK_NULL_HANDLE),
         m_ShaderVariableDescs(),
-        m_ConstantBlockDescs(),
-        m_Desc()
+        m_ConstantBlockDescs()
     {
 		//Add a ref to the refcounter
 		this->AddRef();
@@ -425,12 +424,6 @@ namespace Lambda
     {
         return reinterpret_cast<void*>(m_Pipeline);
     }
-
-	
-	const PipelineStateDesc& VKNPipelineState::GetDesc() const
-	{
-		return m_Desc;
-	}
 
 
 	void VKNPipelineState::SetName(const char* pName)

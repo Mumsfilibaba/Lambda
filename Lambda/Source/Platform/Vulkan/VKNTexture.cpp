@@ -12,14 +12,12 @@ namespace Lambda
 	//----------
 
     VKNTexture::VKNTexture(VKNDevice* pDevice, const TextureDesc& desc)
-        : DeviceObjectBase<VKNDevice, ITexture>(pDevice),
+        : TextureBase<VKNDevice>(pDevice),
 		m_Memory(),
         m_IsOwner(false),
 		m_Image(VK_NULL_HANDLE),
         m_ImageView(VK_NULL_HANDLE),
-        m_AspectFlags(0),
-        m_Desc(),
-        m_ImageLayout(VK_IMAGE_LAYOUT_UNDEFINED)
+        m_AspectFlags(0)
     {
 		//Add a ref to the refcounter
 		this->AddRef();
@@ -28,14 +26,12 @@ namespace Lambda
     
     
     VKNTexture::VKNTexture(VKNDevice* pDevice, VkImage image, const TextureDesc& desc)
-		: DeviceObjectBase<VKNDevice, ITexture>(pDevice),
+		: TextureBase<VKNDevice>(pDevice),
 		m_Memory(),
 		m_IsOwner(false),
 		m_Image(VK_NULL_HANDLE),
 		m_ImageView(VK_NULL_HANDLE),
-		m_AspectFlags(0),
-		m_Desc(),
-		m_ImageLayout(VK_IMAGE_LAYOUT_UNDEFINED)
+		m_AspectFlags(0)
     {
 		LAMBDA_ASSERT(image != VK_NULL_HANDLE);
 		
@@ -243,11 +239,5 @@ namespace Lambda
 	void* VKNTexture::GetNativeHandle() const
     {
         return reinterpret_cast<void*>(m_Image);
-    }
-    
-    
-	const TextureDesc& VKNTexture::GetDesc() const
-    {
-        return m_Desc;
     }
 }

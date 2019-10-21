@@ -161,6 +161,7 @@ namespace Lambda
             case RESORUCE_STATE_DEPTH_STENCIL_CLEAR:    return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
             case RESOURCE_STATE_COPY_DEST:              return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
             case RESOURCE_STATE_COPY_SRC:               return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+			case RESOURCE_STATE_GENERAL:				return VK_IMAGE_LAYOUT_GENERAL;
             case RESOURCE_STATE_UNKNOWN:
             default: return VK_IMAGE_LAYOUT_UNDEFINED;
         }

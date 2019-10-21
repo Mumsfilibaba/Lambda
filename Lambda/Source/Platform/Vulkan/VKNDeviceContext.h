@@ -1,7 +1,7 @@
 #pragma once
-#include "Graphics/Core/IDeviceContext.h"
-#include "Graphics/Core/DeviceObjectBase.h"
-#include <string>
+#include "Graphics/Core/DeviceContextBase.h"
+#include "VKNBuffer.h"
+#include "VKNTexture.h"
 #include "VKNPipelineState.h"
 #include "VKNShaderVariableTable.h"
 #include "VKNResourceLayoutTracker.h"
@@ -10,8 +10,6 @@
 namespace Lambda
 {
     class VKNDevice;
-    class VKNTexture;
-    class VKNRenderPass;
 	class VKNUploadBuffer;
 
 	//------------------
@@ -30,10 +28,12 @@ namespace Lambda
 	//VKNDeviceContext
 	//----------------
 
-    class VKNDeviceContext final : public DeviceObjectBase<VKNDevice, IDeviceContext>
+    class VKNDeviceContext final : public DeviceContextBase<VKNDevice, VKNTexture, VKNBuffer, VKNPipelineState, VKNShaderVariableTable>
     {
         friend class VKNDevice;
         
+		using TDeviceContext = DeviceContextBase<VKNDevice, VKNTexture, VKNBuffer, VKNPipelineState, VKNShaderVariableTable>;
+
 	private:
 
 		//-------------
@@ -57,7 +57,7 @@ namespace Lambda
         virtual void ClearRenderTarget(ITexture* pRenderTarget, float color[4]) override final;
         virtual void ClearDepthStencil(ITexture* pDepthStencil, float depth, uint8 stencil) override final;
         
-		virtual void SetRendertargets(const ITexture* const * ppRenderTargets, uint32 numRendertargets, const ITexture* pDepthStencil) override final;
+		virtual void SetRendertargets(ITexture* const* ppRenderTargets, uint32 numRenderTargets, ITexture* pDepthStencil) override final;
         virtual void SetViewports(const Viewport* pViewports, uint32 numViewports) override final;
         virtual void SetScissorRects(const Rectangle* pScissorRect, uint32 numRects) override final;
         virtual void SetVertexBuffers(IBuffer* const * pBuffers, uint32 numBuffers, uint32 slot) override final;
@@ -71,8 +71,8 @@ namespace Lambda
         
         virtual void CopyBuffer(IBuffer* pDst, IBuffer* pSrc) override final;
 
-		virtual void MapBuffer(IBuffer* pBuffer, void** ppData) override final;
-		virtual void Unmap(IBuffer* pBuffer) override final;
+		virtual void MapBuffer(IBuffer* pBuffer, MapFlag mapFlag, void** ppData) override final;
+		virtual void UnmapBuffer(IBuffer* pBuffer) override final;
 
 		virtual void ResolveTexture(ITexture* pDst, uint32 dstMipLevel, ITexture* pSrc, uint32 srcMipLevel) override final;
 
@@ -87,13 +87,9 @@ namespace Lambda
 		virtual void WriteTimeStamp(IQuery* pQuery, PipelineStage stage) override final;
 
         virtual void Flush() override final;
-        virtual void ClearState() override final;
-        
-        virtual void SetName(const char* pName) override final;
-        
-		virtual DeviceContextType GetType() const override final;
         virtual void* GetNativeHandle() const override final;
-		
+		virtual void SetName(const char* pName) override final;
+
 		void QueryCommandBuffer();
         void EndCommandBuffer();
 		
@@ -105,7 +101,13 @@ namespace Lambda
 		void AddWaitSemaphore(VkSemaphore waitSemaphore, VkPipelineStageFlags waitDstStageMask);
 		void AddSignalSemaphore(VkSemaphore signalSemaphore);
 		
+		void CommitPipelineState();
 		void CommitAndTransitionResources();
+		void CommitVertexBuffers();
+		void CommitIndexBuffer();
+		void CommitRenderTargetsAndDepthStencil();
+		void CommitViewports();
+		void CommitScissorRects();
         
         inline VkFence GetVkFence() const					{ return m_pCurrentFrameResource->Fence; }
 		inline VkCommandBuffer GetVkCommandBuffer() const	{ return m_pCurrentFrameResource->CommandBuffer; }
@@ -120,21 +122,15 @@ namespace Lambda
         VkCommandPool	m_CommandPool;
 		FrameResource*	m_pFrameResources;
 		FrameResource*	m_pCurrentFrameResource;
-        uint32          m_NumFrameResources;
-        uint32          m_FrameIndex;
+		uint32 m_NumCommands;
+        uint32 m_NumFrameResources;
+        uint32 m_FrameIndex;
 		VKNResourceLayoutTracker* m_pResourceTracker;
-		std::vector<VkSemaphore>			m_SignalSemaphores;
-        std::vector<VkSemaphore>			m_WaitSemaphores;
-        std::vector<VkPipelineStageFlags>	m_WaitDstStageMasks;
-        DeviceContextType	m_Type;
-        std::string		    m_Name;
-		DeviceContextState	m_ContextState;
-        VkRenderPass		m_RenderPass;
-        VkFramebuffer		m_Framebuffer;
-		VkExtent2D			m_FramebufferExtent;
-		const VKNTexture* m_DepthStencil;
-		const VKNTexture* m_ppRenderTargets[LAMBDA_MAX_RENDERTARGET_COUNT];
-		AutoRef<VKNPipelineState> m_PipelineState;
-		AutoRef<VKNShaderVariableTable> m_VariableTable;
+		std::vector<VkSemaphore> m_SignalSemaphores;
+        std::vector<VkSemaphore> m_WaitSemaphores;
+        std::vector<VkPipelineStageFlags> m_WaitDstStageMasks;
+        VkRenderPass  m_RenderPass;
+        VkFramebuffer m_Framebuffer;
+		DeviceContextState m_ContextState;
     };
 }

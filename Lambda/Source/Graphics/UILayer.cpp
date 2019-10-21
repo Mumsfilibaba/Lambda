@@ -473,8 +473,8 @@ namespace Lambda
 		{
 			ImDrawVert* vtxDst  = NULL;
 			ImDrawIdx* idxDst   = NULL;
-			m_VertexBuffer->Map(reinterpret_cast<void**>(&vtxDst));
-			m_IndexBuffer->Map(reinterpret_cast<void**>(&idxDst));
+			pContext->MapBuffer(m_VertexBuffer.Get(), MAP_FLAG_WRITE_DISCARD, reinterpret_cast<void**>(&vtxDst));
+			pContext->MapBuffer(m_IndexBuffer.Get(), MAP_FLAG_WRITE_DISCARD, reinterpret_cast<void**>(&idxDst));
 
 			for (int n = 0; n < pDrawData->CmdListsCount; n++)
 			{
@@ -485,8 +485,8 @@ namespace Lambda
 				idxDst += pCmdList->IdxBuffer.Size;
 			}
 
-			m_VertexBuffer->Unmap();
-			m_IndexBuffer->Unmap();
+			pContext->UnmapBuffer(m_VertexBuffer.Get());
+			pContext->UnmapBuffer(m_IndexBuffer.Get());
 		}
 
 		//Setup pipelinestate

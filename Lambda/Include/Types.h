@@ -216,6 +216,15 @@ namespace Lambda
         TEXTURE_FLAGS_GENEATE_MIPS      = (1 << 5),
 	};
 
+
+	//How a resource should be mapped to a context
+	enum MapFlag : uint32
+	{
+		MAP_FLAG_UNKNOWN		= 0,
+		MAP_FLAG_WRITE			= 1,
+		MAP_FLAG_WRITE_DISCARD	= 2,
+	};
+
     
     //Stage of pipeline
     enum PipelineStage : uint32
@@ -309,6 +318,7 @@ namespace Lambda
 		RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER   = 9,
 		RESOURCE_STATE_PIXEL_SHADER_RESOURCE        = 10,
 		RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE    = 11,
+		RESOURCE_STATE_GENERAL						= 12,
 	};
     
     

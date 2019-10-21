@@ -5,11 +5,10 @@
 namespace Lambda
 {
 	VKNQuery::VKNQuery(VKNDevice* pDevice, const QueryDesc& desc)
-		: DeviceObjectBase<VKNDevice, IQuery>(pDevice),
+		: QueryBase<VKNDevice>(pDevice),
 		m_QueryPool(VK_NULL_HANDLE),
         m_CurrentQuery(0),
-        m_TimeStampPeriod(0),
-        m_Desc()
+        m_TimeStampPeriod(0)
     {
 		//Add a ref to the refcounter
 		this->AddRef();
@@ -74,12 +73,6 @@ namespace Lambda
     void* VKNQuery::GetNativeHandle() const
     {
         return reinterpret_cast<void*>(m_QueryPool);
-    }
-    
-    
-    const QueryDesc& VKNQuery::GetDesc() const
-    {
-        return m_Desc;
     }
     
     

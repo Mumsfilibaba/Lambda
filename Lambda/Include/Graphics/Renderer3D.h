@@ -116,20 +116,20 @@ namespace Lambda
 		IBuffer* GetTransformCB();
 		const FrameStatistics& GetFrameStatistics() const;
 	private:
-        AutoRef<IDevice>            m_Device;
-        AutoRef<ISwapChain>         m_SwapChain;
-        AutoRef<IDeviceContext>     m_Context;
-		IQuery*						m_pCurrentQuery;
+        AutoRef<IDevice>        m_Device;
+        AutoRef<ISwapChain>     m_SwapChain;
+        AutoRef<IDeviceContext> m_Context;
+		IQuery*	m_pCurrentQuery;
 		std::vector<AutoRef<IQuery>> m_Queries;
-		AutoRef<IBuffer>			m_CameraBuffer;
-		AutoRef<IBuffer>			m_LightBuffer;
-		AutoRef<IBuffer>			m_TransformBuffer;
-		AutoRef<IBuffer>			m_MaterialBuffer;
-		Viewport					m_Viewport;
-		Rectangle					m_ScissorRect;
-		FrameStatistics				m_FrameInfo;
-		Clock						m_FrameClock;
-		uint32						m_CurrentFPS;
-        uint32                      m_QueryIndex;
+		AutoRef<IBuffer> m_CameraBuffer;
+		AutoRef<IBuffer> m_LightBuffer;
+		AutoRef<IBuffer> m_TransformBuffer;
+		AutoRef<IBuffer> m_MaterialBuffer;
+		Viewport  m_Viewport;
+		Rectangle m_ScissorRect;
+		FrameStatistics	 m_FrameInfo;
+		Clock  m_FrameClock;
+		uint32 m_CurrentFPS;
+        uint32 m_QueryIndex;
 	};
 }

@@ -14,7 +14,7 @@
 
 namespace Lambda
 {
-    struct Transform
+   /* struct Transform
     {
         glm::vec3 Position = glm::vec3(0.0f, 0.0f, 0.0f);
         glm::vec3 Rotation = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -25,7 +25,7 @@ namespace Lambda
     static Transform transformRevolver;
 	static Transform transformRevolver2;
 	static std::vector<Transform> sphereTransforms;
-	static glm::vec4 lightColor;
+	static glm::vec4 lightColor;*/
 
     //-------
     //SandBox
@@ -37,26 +37,27 @@ namespace Lambda
         PushLayer(DBG_NEW SandBoxLayer());
     }
 
-
     //------------
     //SandBoxLayer
     //------------
 
 	SandBoxLayer::SandBoxLayer()
          : Layer("SandBoxLayer"),
+		m_SwapChain(nullptr),
+		m_Context(nullptr),
 		m_VS(nullptr),
 		m_PS(nullptr),
 		m_Mesh(),
-		m_SphereMesh(),
-		m_Material(),
-		m_RedMaterial(),
-		m_AlbedoMap(nullptr),
-		m_NormalMap(nullptr),
-		m_SamplerState(nullptr),
+		//m_SphereMesh(),
+		//m_Material(),
+		//m_RedMaterial(),
+		//m_AlbedoMap(nullptr),
+		//m_NormalMap(nullptr),
+		//m_SamplerState(nullptr),
 		m_PipelineState(nullptr),
-		m_VariableTable(nullptr),
-		m_Camera(),
-		m_TransformBuffer()
+		m_VariableTable(nullptr)
+		//m_Camera(),
+		//m_TransformBuffer()
 	{
 	}
 
@@ -64,7 +65,7 @@ namespace Lambda
 	void SandBoxLayer::OnLoad()
 	{
         //Init transforms
-        transformRevolver.Position.y = -1.0f;
+        /*transformRevolver.Position.y = -1.0f;
         transformRevolver.Rotation.y = 180.0f;
 
 		transformRevolver2.Position.x = 2.0f;
@@ -73,9 +74,9 @@ namespace Lambda
        
         transformLight.Position.x = -1.5f;
         transformLight.Position.y = 0.5f;
-        transformLight.Position.z = -1.0f;
+        transformLight.Position.z = -1.0f;*/
 
-		constexpr uint32 sphereWidth = 2;
+		/*constexpr uint32 sphereWidth = 2;
 		for (uint32 y = 0; y < sphereWidth; y++)
 		{
 			for (uint32 x = 0; x < sphereWidth; x++)
@@ -84,26 +85,33 @@ namespace Lambda
 				transform.Position = glm::vec3(-(float(sphereWidth) / 2.0f) + float(x), -(float(sphereWidth) / 2.0f) + float(y), 2.0f);
 				sphereTransforms.emplace_back(transform);
 			}
-		}
+		}*/
         
         //Init color
-        lightColor = glm::vec4(255.0f / 255.0f, 241.0f / 255.0f, 224.0f / 255.0f, 1.0f);
+        //lightColor = glm::vec4(255.0f / 255.0f, 241.0f / 255.0f, 224.0f / 255.0f, 1.0f);
 
 		//Setup camera
-		m_Camera.SetPosition(glm::vec3(0.0f, 0.0f, -2.0f));
-		m_Camera.CreateView();
+		//m_Camera.SetPosition(glm::vec3(0.0f, 0.0f, -2.0f));
+		//m_Camera.CreateView();
 
 		//Init size
 		Application& app = Application::Get();
 		IDevice* pDevice = app.GetGraphicsDevice();
         if (pDevice)
         {
+			//Get context
+			m_Context = pDevice->GetImmediateContext();
+
+			//Get swapchain
+			m_SwapChain = app.GetSwapChain();
+			m_SwapChain->AddRef();
+
             //Create shaders
 			const DeviceProperties& deviceProps = pDevice->GetProperties();
 			if (deviceProps.Api == GRAPHICS_API_VULKAN)
 			{
 				m_VS = IShader::CreateShaderFromFile(pDevice, "vert.spv", "main", SHADER_STAGE_VERTEX, SHADER_LANG_SPIRV);
-				m_PS = IShader::CreateShaderFromFile(pDevice, "frag.spv", "main", SHADER_STAGE_PIXEL,	SHADER_LANG_SPIRV);
+				m_PS = IShader::CreateShaderFromFile(pDevice, "frag.spv", "main", SHADER_STAGE_PIXEL,  SHADER_LANG_SPIRV);
 			}
 			else if (deviceProps.Api == GRAPHICS_API_D3D12)
 			{
@@ -116,9 +124,9 @@ namespace Lambda
 				InputElementDesc elements[]
                 {
                     { "POSITION",   FORMAT_R32G32B32_FLOAT, 0, 0, sizeof(Vertex), 0,                     false },
-                    { "NORMAL",     FORMAT_R32G32B32_FLOAT, 0, 1, sizeof(Vertex), sizeof(glm::vec3),     false },
-                    { "TANGENT",    FORMAT_R32G32B32_FLOAT, 0, 2, sizeof(Vertex), sizeof(glm::vec3) * 2, false },
-                    { "TEXCOORD",   FORMAT_R32G32_FLOAT,    0, 3, sizeof(Vertex), sizeof(glm::vec3) * 3, false },
+                    //{ "NORMAL",     FORMAT_R32G32B32_FLOAT, 0, 1, sizeof(Vertex), sizeof(glm::vec3),     false },
+                    //{ "TANGENT",    FORMAT_R32G32B32_FLOAT, 0, 2, sizeof(Vertex), sizeof(glm::vec3) * 2, false },
+                    //{ "TEXCOORD",   FORMAT_R32G32_FLOAT,    0, 3, sizeof(Vertex), sizeof(glm::vec3) * 3, false },
                 };
                 
 				InputLayoutDesc vertexInput = {};
@@ -136,9 +144,9 @@ namespace Lambda
 				DepthStencilStateDesc depthStencilState = {};
 				depthStencilState.DepthTest = true;
               
-
 				ISwapChain* pSwapChain = app.GetSwapChain();
 				const SwapChainDesc& swapChainDesc = pSwapChain->GetDesc();
+
                 GraphicsPipelineStateDesc graphicsPipeline = {};
                 graphicsPipeline.pVertexShader			= m_VS.Get();
                 graphicsPipeline.pPixelShader			= m_PS.Get();
@@ -152,7 +160,7 @@ namespace Lambda
 				graphicsPipeline.BlendState				= blendState;
 				graphicsPipeline.DepthStencilState		= depthStencilState;
 
-				ShaderVariableDesc shaderVariables[] =
+				/*ShaderVariableDesc shaderVariables[] =
 				{
 					{ "u_CameraBuffer",		nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_VERTEX,	RESOURCE_USAGE_DEFAULT, 0 },
 					{ "u_TransformBuffer",	nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_VERTEX,	RESOURCE_USAGE_DYNAMIC, 1 },
@@ -161,11 +169,11 @@ namespace Lambda
 					{ "u_Albedo",			nullptr, RESOURCE_TYPE_TEXTURE,			SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DEFAULT, 4 },
 					{ "u_Normal",			nullptr, RESOURCE_TYPE_TEXTURE,			SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DEFAULT, 5 },
 					{ "u_Sampler",			nullptr, RESOURCE_TYPE_SAMPLER_STATE,	SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DEFAULT, 6 },
-				};
+				};*/
 
 				ShaderVariableTableDesc variableTableDesc = {};
-				variableTableDesc.NumVariables	= 7;
-				variableTableDesc.pVariables	= shaderVariables;
+				variableTableDesc.NumVariables	= 0;
+				variableTableDesc.pVariables	= nullptr;// shaderVariables;
 				variableTableDesc.NumConstantBlocks	= 0;
 				variableTableDesc.pConstantBlocks	= nullptr;
 
@@ -179,7 +187,7 @@ namespace Lambda
             }
 
             //Create vertexbuffer
-			MeshData mesh = MeshFactory::CreateFromFile("revolver.obj");
+			MeshData mesh = MeshFactory::CreatePlane();//MeshFactory::CreateFromFile("revolver.obj");
 			m_Mesh.IndexCount = uint32(mesh.Indices.size());
 			{
                 BufferDesc desc     = {};
@@ -211,8 +219,11 @@ namespace Lambda
                 pDevice->CreateBuffer(&m_Mesh.pIndexBuffer, &data, desc);
             }
 
+			IWindow* pWindow = app.GetWindow();
+			CreateCamera(pWindow->GetWidth(), pWindow->GetHeight());
+
 			//Create vertexbuffer
-			MeshData mesh2 = MeshFactory::CreateSphere(4, 0.45);
+			/*MeshData mesh2 = MeshFactory::CreateSphere(4, 0.45);
 			m_SphereMesh.IndexCount = uint32(mesh2.Indices.size());
 			{
 				BufferDesc desc = {};
@@ -242,27 +253,27 @@ namespace Lambda
 				data.SizeInBytes	= desc.SizeInBytes;
 
 				pDevice->CreateBuffer(&m_SphereMesh.pIndexBuffer, &data, desc);
-			}
+			}*/
 
-            //Init transforms
-            m_TransformBuffer.Model = glm::mat4(1.0f);
+            //Init transformbuffer
+            //m_TransformBuffer.Model = glm::mat4(1.0f);
 
             //Create texture
-            m_AlbedoMap = ITexture::CreateTextureFromFile(pDevice, "revolver_albedo.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
-            m_NormalMap = ITexture::CreateTextureFromFile(pDevice, "revolver_normal.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
+            //m_AlbedoMap = ITexture::CreateTextureFromFile(pDevice, "revolver_albedo.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
+            //m_NormalMap = ITexture::CreateTextureFromFile(pDevice, "revolver_normal.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
 
             //Create samplerstate
-            TextureDesc textureDesc = m_AlbedoMap->GetDesc();
+            /*TextureDesc textureDesc = m_AlbedoMap->GetDesc();
             SamplerStateDesc desc = {};
             desc.AdressMode = SAMPLER_ADDRESS_MODE_REPEAT;
 			desc.MinMipLOD	= 0.0f;
 			desc.MaxMipLOD	= float(textureDesc.MipLevels);
 			desc.MipLODBias	= 0.0f;
 			desc.Anisotropy = 16.0f;
-            pDevice->CreateSamplerState(&m_SamplerState, desc);
+            pDevice->CreateSamplerState(&m_SamplerState, desc);*/
 
 			//Setup materials
-			m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Albedo")->SetTexture(m_AlbedoMap.Get());
+			/*m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Albedo")->SetTexture(m_AlbedoMap.Get());
 			m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Normal")->SetTexture(m_NormalMap.Get());
 			m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Sampler")->SetSamplerState(m_SamplerState.Get());
 
@@ -276,13 +287,14 @@ namespace Lambda
 			m_RedMaterial.pPipelineState	= m_PipelineState.Get();
 			m_RedMaterial.HasNormalMap		= 0;
 			m_RedMaterial.HasAlbedoMap		= 0;
-			m_RedMaterial.Color				= glm::vec4(RGB_F(255, 0, 0), 1.0f);
+			m_RedMaterial.Color				= glm::vec4(RGB_F(255, 0, 0), 1.0f);*/
         }
 	}
 
 
 	void SandBoxLayer::OnUpdate(Timestep dt)
 	{
+		/*
         //Move camera
         constexpr float speed = 2.0f;
         if (Input::IsKeyDown(KEY_W))
@@ -317,14 +329,14 @@ namespace Lambda
         else if (Input::IsKeyDown(KEY_E))
             m_Camera.Rotate(glm::vec3(0.0f, 0.0f, -rotation) * dt.AsSeconds());
         
-        m_Camera.CreateView();
+        m_Camera.CreateView();*/
 	}
 
 
 	void SandBoxLayer::OnRender(Renderer3D& renderer, Timestep dt)
 	{
         //Update light
-        static LightBuffer lightBuffer  =
+        /*static LightBuffer lightBuffer  =
         {
             glm::vec4(lightColor[0], lightColor[1], lightColor[2], lightColor[3]),
             glm::vec3(transformLight.Position[0], transformLight.Position[1], transformLight.Position[2])
@@ -343,7 +355,7 @@ namespace Lambda
 		renderer.Submit(m_Mesh, m_Material, m_TransformBuffer);
 		
 		//draw spheres
-		for (auto& transform : sphereTransforms)
+		/*for (auto& transform : sphereTransforms)
 		{
 			translation = glm::translate(glm::mat4(1.0f), transform.Position);
 			rotation	= glm::eulerAngleYXZ(glm::radians(transform.Rotation.y), glm::radians(transform.Rotation.x), glm::radians(transform.Rotation.z));
@@ -351,30 +363,90 @@ namespace Lambda
 			m_TransformBuffer.Model = translation * rotation * scale;
 
 			renderer.Submit(m_SphereMesh, m_RedMaterial, m_TransformBuffer);
+		}*/
+
+		//renderer.EndScene();
+
+		//Clear rendertarget
+		float color[] = { 0.392f, 0.584f, 0.929f, 1.0f };
+		ITexture* pRenderTarget = m_SwapChain->GetBuffer();
+		m_Context->ClearRenderTarget(pRenderTarget, color);
+
+		//Clear depthbuffer
+		ITexture* pDepthBuffer = m_SwapChain->GetDepthBuffer();
+		m_Context->ClearDepthStencil(pDepthBuffer, 1.0f, 0);
+
+		//Set rendertargets
+		m_Context->SetRendertargets(&pRenderTarget, 1, pDepthBuffer);
+
+		//Set viewport
+		m_Context->SetViewports(&m_Viewport, 1);
+		m_Context->SetScissorRects(&m_ScissorRect, 1);
+
+		ResourceData data = {};
+		MeshData meshData = MeshFactory::CreatePlane();
+		for (auto& vertex : meshData.Vertices)
+		{
+			vertex.Position.x += 0.5f;
+			vertex.Position.y += 0.5f;
+			vertex.Position *= 0.1f;
+			vertex.Position.x -= 0.95f;
+			vertex.Position.y += 0.85f;
+		}
+		
+		//Set mesh
+		m_Context->SetVertexBuffers(&m_Mesh.pVertexBuffer, 1, 0);
+		m_Context->SetIndexBuffer(m_Mesh.pIndexBuffer, FORMAT_R32_UINT);
+		//Set pipelinestate
+		//m_Context->SetShaderVariableTable(material.pVariableTable);
+		m_Context->SetPipelineState(m_PipelineState.Get());
+
+		float xpos = 0.0f;
+		for (uint32 y = 0; y < 16; y++)
+		{
+			xpos = 0.0f;
+			for (uint32 x = 0; x < 16; x++)
+			{
+				data.pData = meshData.Vertices.data();
+				data.SizeInBytes = sizeof(Vertex) * meshData.Vertices.size();
+		
+				//Update buffer
+				m_Context->UpdateBuffer(m_Mesh.pVertexBuffer, &data);
+				//Draw
+				m_Context->DrawIndexedInstanced(m_Mesh.IndexCount, 1, 0, 0, 0);
+
+				xpos += 0.15f;
+				for (auto& vertex : meshData.Vertices)
+					vertex.Position.x += 0.15f;
+			}
+
+			for (auto& vertex : meshData.Vertices)
+				vertex.Position.x -= xpos;
+
+			for (auto& vertex : meshData.Vertices)
+				vertex.Position.y -= 0.15f;
 		}
 
-		renderer.EndScene();
+		//Present
+		m_SwapChain->Present();
 	}
 
 
 	void SandBoxLayer::OnRelease()
 	{
-		m_VS.Release();
-		m_PS.Release();
-		m_PipelineState.Release();
-		m_VariableTable.Release();
 		m_Mesh.pVertexBuffer->Release();
 		m_Mesh.pIndexBuffer->Release();
-		m_SphereMesh.pVertexBuffer->Release();
-		m_SphereMesh.pIndexBuffer->Release();
-		m_AlbedoMap.Release();
-		m_NormalMap.Release();
-		m_SamplerState.Release();
+		//m_SphereMesh.pVertexBuffer->Release();
+		//m_SphereMesh.pIndexBuffer->Release();
+		//m_AlbedoMap.Release();
+		//m_NormalMap.Release();
+		//m_SamplerState.Release();
 	}
 
 
     void SandBoxLayer::OnRenderUI(Timestep dt)
     {
+		/*
         //Update userinterface
 		ImGui::SetNextWindowSize(ImVec2(430, 450), ImGuiCond_FirstUseEver);
 		if (!ImGui::Begin("Entities", NULL))
@@ -508,7 +580,7 @@ namespace Lambda
 		ImGui::Columns(1);
 		ImGui::Separator();
 		ImGui::PopStyleVar();
-		ImGui::End();
+		ImGui::End();*/
     }
 
 
@@ -550,7 +622,24 @@ namespace Lambda
 
 	void SandBoxLayer::CreateCamera(uint32 width, uint32 height)
     {
-        m_Camera.SetAspect(float(width), float(height));
-        m_Camera.CreateProjection();
+        //m_Camera.SetAspect(float(width), float(height));
+        //m_Camera.CreateProjection();
+
+		//Viewport
+		m_Viewport.Width = float(width);
+		m_Viewport.Height = float(height);
+		m_Viewport.MaxDepth = 1.0f;
+		m_Viewport.MinDepth = 0.0f;
+		m_Viewport.TopX = 0.0f;
+		m_Viewport.TopY = 0.0f;
+
+		//Scissorrect
+		m_ScissorRect.Width = float(width);
+		m_ScissorRect.Height = float(height);
+		m_ScissorRect.X = 0.0f;
+		m_ScissorRect.Y = 0.0f;
+
+		//Resize
+		m_SwapChain->ResizeBuffers(width, height);
 	}
 }

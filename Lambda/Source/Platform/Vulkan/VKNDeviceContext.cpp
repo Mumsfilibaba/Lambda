@@ -10,6 +10,8 @@
 #include "VKNFramebufferCache.h"
 #include "VKNConversions.inl"
 
+#define LAMBDA_VK_MAX_COMMANDS 128
+
 namespace Lambda
 {
 	//----------------
@@ -17,20 +19,17 @@ namespace Lambda
 	//----------------
 
     VKNDeviceContext::VKNDeviceContext(VKNDevice* pDevice, DeviceContextType type)
-        : DeviceObjectBase<VKNDevice, IDeviceContext>(pDevice),
+        : TDeviceContext(pDevice, type),
 		m_CommandPool(VK_NULL_HANDLE),
 		m_pFrameResources(nullptr),
         m_pCurrentFrameResource(nullptr),
 		m_pResourceTracker(nullptr),
         m_RenderPass(VK_NULL_HANDLE),
         m_Framebuffer(VK_NULL_HANDLE),
-        m_PipelineState(nullptr),
-		m_VariableTable(nullptr),
         m_NumFrameResources(0),
+		m_NumCommands(0),
         m_FrameIndex(0),
-		m_ContextState(DEVICE_CONTEXT_STATE_WAITING),
-        m_Type(DEVICE_CONTEXT_TYPE_UNKNOWN),
-		m_Name()
+		m_ContextState(DEVICE_CONTEXT_STATE_WAITING)
     {
 		//Add a ref to the refcounter
 		this->AddRef();
@@ -146,6 +145,9 @@ namespace Lambda
 
 		//Create imagelayout-tracker
 		m_pResourceTracker = DBG_NEW VKNResourceLayoutTracker();
+
+		//Set type
+		m_Type = type;
     }
 
 
@@ -165,30 +167,183 @@ namespace Lambda
 	}
 
 
+	void VKNDeviceContext::CommitPipelineState()
+	{
+		if (m_PipelineState)
+		{
+			//Make sure that we have a commandbuffer
+			QueryCommandBuffer();
+
+			//Bind pipeline
+			VkPipeline pipeline = m_PipelineState->GetVkPipeline();
+
+			const PipelineStateDesc& desc = m_PipelineState->GetDesc();
+			if (desc.Type == PIPELINE_TYPE_GRAPHICS)
+				vkCmdBindPipeline(m_pCurrentFrameResource->CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+			else if (desc.Type == PIPELINE_TYPE_COMPUTE)
+				vkCmdBindPipeline(m_pCurrentFrameResource->CommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
+		}
+	}
+
+
 	void VKNDeviceContext::CommitAndTransitionResources()
 	{
 		//Commit resources
-		m_VariableTable->CommitAndTransitionResources(this);
-		FlushResourceBarriers();
+		if (m_ShaderVariableTable)
+		{
+			m_ShaderVariableTable->CommitAndTransitionResources(this);
+			FlushResourceBarriers();
 
-		//Get dynamic offset info
-		const uint32* pOffsets	= m_VariableTable->GetDynamicOffsets();
-		uint32 offsetCount		= m_VariableTable->GetDynamicOffsetCount();
+			//Get dynamic offset info
+			const uint32* pOffsets	= m_ShaderVariableTable->GetDynamicOffsets();
+			uint32 offsetCount		= m_ShaderVariableTable->GetDynamicOffsetCount();
 
-		//Bind descriptorset
-		VkDescriptorSet descriptorSet	= m_VariableTable->GetVkDescriptorSet();
-		VkPipelineLayout pipelineLayout = m_PipelineState->GetVkPipelineLayout();
+			//Bind descriptorset
+			VkDescriptorSet descriptorSet	= m_ShaderVariableTable->GetVkDescriptorSet();
+			VkPipelineLayout pipelineLayout = m_PipelineState->GetVkPipelineLayout();
 
-		const PipelineStateDesc& desc = m_PipelineState->GetDesc();
-		if (desc.Type == PIPELINE_TYPE_GRAPHICS)
-			vkCmdBindDescriptorSets(m_pCurrentFrameResource->CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, offsetCount, pOffsets);
-		else if (desc.Type == PIPELINE_TYPE_COMPUTE)
-			vkCmdBindDescriptorSets(m_pCurrentFrameResource->CommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipelineLayout, 0, 1, &descriptorSet, offsetCount, pOffsets);
+			const PipelineStateDesc& desc = m_PipelineState->GetDesc();
+			if (desc.Type == PIPELINE_TYPE_GRAPHICS)
+				vkCmdBindDescriptorSets(m_pCurrentFrameResource->CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, offsetCount, pOffsets);
+			else if (desc.Type == PIPELINE_TYPE_COMPUTE)
+				vkCmdBindDescriptorSets(m_pCurrentFrameResource->CommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipelineLayout, 0, 1, &descriptorSet, offsetCount, pOffsets);
+		}
+	}
+
+
+	void VKNDeviceContext::CommitVertexBuffers()
+	{
+		//Make sure that we have a commandbuffer
+		QueryCommandBuffer();
+
+		VkBuffer	 buffers[LAMBDA_MAX_VERTEXBUFFER_COUNT];
+		VkDeviceSize offsets[LAMBDA_MAX_VERTEXBUFFER_COUNT];
+		for (uint32 i = 0; i < m_NumVertexBuffers; i++)
+		{
+			if (m_VertexBuffers[i])
+			{
+				buffers[i] = m_VertexBuffers[i]->GetVkBuffer();
+				offsets[i] = m_VertexBuffers[i]->GetDynamicOffset();
+			}
+			else
+			{
+				buffers[i] = VK_NULL_HANDLE;
+				offsets[i] = 0;
+			}
+		}
+		vkCmdBindVertexBuffers(m_pCurrentFrameResource->CommandBuffer, 0, m_NumVertexBuffers, buffers, offsets);
+	}
+
+
+	void VKNDeviceContext::CommitIndexBuffer()
+	{
+		//Make sure that we have a commandbuffer
+		QueryCommandBuffer();
+
+		//Bind indexbuffer
+		VkBuffer	buffer		= m_IndexBuffer->GetVkBuffer();
+		VkIndexType indexType	= (m_IndexBufferFormat == FORMAT_R32_UINT) ? VK_INDEX_TYPE_UINT32 : VK_INDEX_TYPE_UINT16;
+		vkCmdBindIndexBuffer(m_pCurrentFrameResource->CommandBuffer, buffer, m_IndexBuffer->GetDynamicOffset(), indexType);
+	}
+
+
+	void VKNDeviceContext::CommitRenderTargetsAndDepthStencil()
+	{
+		//Setup renderpass
+		VKNRenderPassCacheKey renderPasskey = {};
+		renderPasskey.NumRenderTargets = m_NumRenderTargets;
+
+		//Setup framebuffer
+		VKNFramebufferCacheKey framebufferKey = {};
+		framebufferKey.NumAttachmentViews = m_NumRenderTargets;
+		for (uint32 i = 0; i < m_NumRenderTargets; i++)
+		{
+			//Get rendertarget and transition
+			TransitionTexture(m_RenderTargets[i].Get(), RESOURCE_STATE_RENDERTARGET, VK_REMAINING_MIP_LEVELS);
+
+			//Get view
+			framebufferKey.AttachmentViews[i] = m_RenderTargets[i]->GetVkImageView();
+
+			//Get format
+			const TextureDesc& desc = m_RenderTargets[i]->GetDesc();
+			renderPasskey.RenderTargetFormats[i] = desc.Format;
+		}
+
+		//Get depthstencil
+		if (m_DepthStencil)
+		{
+			//Set and transition depthstencil
+			TransitionTexture(m_DepthStencil.Get(), RESOURCE_STATE_DEPTH_STENCIL, VK_REMAINING_MIP_LEVELS);
+			framebufferKey.AttachmentViews[framebufferKey.NumAttachmentViews++] = m_DepthStencil->GetVkImageView();
+
+			//Get format
+			const TextureDesc& desc = m_DepthStencil->GetDesc();
+			renderPasskey.DepthStencilFormat = desc.Format;
+		}
+		else
+		{
+			framebufferKey.AttachmentViews[framebufferKey.NumAttachmentViews++] = VK_NULL_HANDLE;
+			renderPasskey.DepthStencilFormat = FORMAT_UNKNOWN;
+		}
+
+		//Get renderpass
+		VKNRenderPassCache& renderPassCache = VKNRenderPassCache::Get();
+		renderPasskey.SampleCount = m_FrameBufferSampleCount;
+		m_RenderPass = renderPassCache.GetRenderPass(renderPasskey);
+
+		//Get framebuffer
+		VKNFramebufferCache& framebufferCache = VKNFramebufferCache::Get();
+		framebufferKey.RenderPass = m_RenderPass;
+		m_Framebuffer = framebufferCache.GetFramebuffer(framebufferKey, { m_FrameBufferWidth, m_FrameBufferHeight });
+	}
+
+
+	void VKNDeviceContext::CommitViewports()
+	{
+		//Make sure that we have a commandbuffer
+		QueryCommandBuffer();
+
+		//Set viewports
+		VkViewport views[LAMBDA_MAX_VIEWPORT_COUNT] = {};
+		for (uint32 i = 0; i < m_NumViewports; i++)
+		{
+			views[i].width		=  m_Viewports[i].Width;
+			views[i].height		= -m_Viewports[i].Height;
+			views[i].minDepth	=  m_Viewports[i].MinDepth;
+			views[i].maxDepth	=  m_Viewports[i].MaxDepth;
+			views[i].x			=  m_Viewports[i].TopX;
+			views[i].y			=  m_Viewports[i].TopY + m_Viewports[i].Height;
+		}
+		vkCmdSetViewport(m_pCurrentFrameResource->CommandBuffer, 0, m_NumViewports, views);
+	}
+
+
+	void VKNDeviceContext::CommitScissorRects()
+	{
+		//Make sure that we have a commandbuffer
+		QueryCommandBuffer();
+
+		//Set scissorrects
+		VkRect2D rects[LAMBDA_MAX_SCISSOR_RECT_COUNT] = {};
+		for (uint32 i = 0; i < m_NumScissorRects; i++)
+		{
+			rects[i].offset.x		= int32(m_ScissorRects[i].X);
+			rects[i].offset.y		= int32(m_ScissorRects[i].Y);
+			rects[i].extent.height	= uint32(m_ScissorRects[i].Height);
+			rects[i].extent.width	= uint32(m_ScissorRects[i].Width);
+		}
+		vkCmdSetScissor(m_pCurrentFrameResource->CommandBuffer, 0, m_NumScissorRects, rects);
 	}
     
     
     void VKNDeviceContext::BlitTexture(VKNTexture* pDst, uint32 dstWidth, uint32 dstHeight, uint32 dstMipLevel, VKNTexture* pSrc, uint32 srcWidth, uint32 srcHeight, uint32 srcMipLevel)
     {
+		//Check if we should flush the context
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
+		{																					
+			this->Flush();																	
+		}																					
+
 		//Make sure that we transition resources and that we have a commandbuffer
 		FlushResourceBarriers();
 
@@ -211,11 +366,20 @@ namespace Lambda
         VkImage srcImage = reinterpret_cast<VkImage>(pSrc->GetNativeHandle());
         VkImage dstImage = reinterpret_cast<VkImage>(pDst->GetNativeHandle());
         vkCmdBlitImage(m_pCurrentFrameResource->CommandBuffer, srcImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blitInfo, VK_FILTER_LINEAR);
+
+		//Count command
+		m_NumCommands++;
     }
 
 
 	void VKNDeviceContext::ClearRenderTarget(ITexture* pRenderTarget, float color[4])
     {
+		//Check if we should flush the context
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
+		{
+			this->Flush();
+		}
+
 		//Transition texture before clearing
 		TransitionTexture(pRenderTarget, RESOURCE_STATE_RENDERTARGET_CLEAR, VK_REMAINING_MIP_LEVELS);
 		FlushResourceBarriers();
@@ -233,11 +397,20 @@ namespace Lambda
 
         VkImage vkRenderTarget = reinterpret_cast<VkImage>(pRenderTarget->GetNativeHandle());
         vkCmdClearColorImage(m_pCurrentFrameResource->CommandBuffer, vkRenderTarget, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &col, 1, &imageSubresourceRange);
+
+		//Count command
+		m_NumCommands++;
     }
     
     
     void VKNDeviceContext::ClearDepthStencil(ITexture* pDepthStencil, float depth, uint8 stencil)
     {
+		//Check if we should flush the context
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
+		{
+			this->Flush();
+		}
+
 		//Transition texture before clearing
 		TransitionTexture(pDepthStencil, RESORUCE_STATE_DEPTH_STENCIL_CLEAR, VK_REMAINING_MIP_LEVELS);
 		FlushResourceBarriers();
@@ -256,195 +429,132 @@ namespace Lambda
     
         VkImage vkDepthStencil = reinterpret_cast<VkImage>(pDepthStencil->GetNativeHandle());
         vkCmdClearDepthStencilImage(m_pCurrentFrameResource->CommandBuffer, vkDepthStencil, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &value, 1, &imageSubresourceRange);
+
+		//Count command
+		m_NumCommands++;
     }
 
     
-	void VKNDeviceContext::SetRendertargets(const ITexture* const* ppRenderTargets, uint32 numRendertargets, const ITexture* pDepthStencil)
+	void VKNDeviceContext::SetRendertargets(ITexture* const* ppRenderTargets, uint32 numRenderTargets, ITexture* pDepthStencil)
 	{
-		//Setup renderpass
-		VKNRenderPassCacheKey renderPasskey = {};
-		renderPasskey.NumRenderTargets = numRendertargets;
-
-		//Setup framebuffer
-		VKNFramebufferCacheKey framebufferKey = {};
-		framebufferKey.NumAttachmentViews = numRendertargets;
-		for (uint32 i = 0; i < numRendertargets; i++)
+		//Check if we should flush the context
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
 		{
-			//Get rendertarget and transition
-			m_ppRenderTargets[i] = reinterpret_cast<const VKNTexture*>(ppRenderTargets[i]);
-			TransitionTexture(ppRenderTargets[i], RESOURCE_STATE_RENDERTARGET, VK_REMAINING_MIP_LEVELS);
-
-			//Get view
-			framebufferKey.AttachmentViews[i] = m_ppRenderTargets[i]->GetVkImageView();
-
-			//Get format
-			const TextureDesc& desc = m_ppRenderTargets[i]->GetDesc();
-			renderPasskey.RenderTargetFormats[i] = desc.Format;
+			this->Flush();
 		}
 
-		//Get depthstencil
-		m_DepthStencil = reinterpret_cast<const VKNTexture*>(pDepthStencil);
-		uint32 sampleCount	= 0;
-		if (pDepthStencil)
-		{
-			//Set and transition depthstencil
-			framebufferKey.AttachmentViews[framebufferKey.NumAttachmentViews++] = m_DepthStencil->GetVkImageView();
-			TransitionTexture(pDepthStencil, RESOURCE_STATE_DEPTH_STENCIL, VK_REMAINING_MIP_LEVELS);
+		//Call base
+		TDeviceContext::SetRendertargets(ppRenderTargets, numRenderTargets, pDepthStencil);
 
-			//Get extent
-			const TextureDesc& desc = pDepthStencil->GetDesc();
-			m_FramebufferExtent.width	= desc.Width;
-			m_FramebufferExtent.height	= desc.Height;
-			
-			//Get samplecount
-			sampleCount		= desc.SampleCount;
-			renderPasskey.DepthStencilFormat = desc.Format;
-		}
-		else
-		{
-			framebufferKey.AttachmentViews[framebufferKey.NumAttachmentViews++] = VK_NULL_HANDLE;
-
-			//Get extent
-			const TextureDesc& desc = ppRenderTargets[0]->GetDesc();
-			m_FramebufferExtent.width	= desc.Width;
-			m_FramebufferExtent.height	= desc.Height;
-
-			//Get samplecount
-			sampleCount		= desc.SampleCount;
-			renderPasskey.DepthStencilFormat = FORMAT_UNKNOWN;
-		}
-
-		//Get renderpass
-		VKNRenderPassCache& renderPassCache = VKNRenderPassCache::Get();
-		renderPasskey.SampleCount = sampleCount;
-		m_RenderPass = renderPassCache.GetRenderPass(renderPasskey);
-		
-		//Get framebuffer
-		VKNFramebufferCache& framebufferCache = VKNFramebufferCache::Get();
-		framebufferKey.RenderPass = m_RenderPass;
-		m_Framebuffer = framebufferCache.GetFramebuffer(framebufferKey, m_FramebufferExtent);
+		//Count command
+		m_NumCommands++;
 	}
 
 
-	void VKNDeviceContext::SetViewports(const Viewport* pViewport, uint32 numViewports)
+	void VKNDeviceContext::SetViewports(const Viewport* pViewports, uint32 numViewports)
     {
-		LAMBDA_ASSERT(pViewport != nullptr);
-		
-		//Make sure that we have a commandbuffer
-		QueryCommandBuffer();
-
-		//Set viewports
-        VkViewport views[LAMBDA_MAX_VIEWPORT_COUNT] = {};
-		for (uint32 i = 0; i < numViewports; i++)
+		//Check if we should flush the context
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
 		{
-			views[i].width    =  pViewport[i].Width;
-			views[i].height   = -pViewport[i].Height;
-			views[i].minDepth =  pViewport[i].MinDepth;
-			views[i].maxDepth =  pViewport[i].MaxDepth;
-			views[i].x        =  pViewport[i].TopX;
-			views[i].y		  =  pViewport[i].TopY + pViewport[i].Height;
+			this->Flush();
 		}
-        vkCmdSetViewport(m_pCurrentFrameResource->CommandBuffer, 0, numViewports, views);
+
+		//Call base
+		TDeviceContext::SetViewports(pViewports, numViewports);
+
+		//Count command
+		m_NumCommands++;
     }
     
     
-    void VKNDeviceContext::SetScissorRects(const Rectangle* pScissorRect, uint32 numRects)
+    void VKNDeviceContext::SetScissorRects(const Rectangle* pScissorRects, uint32 numRects)
     {
-		LAMBDA_ASSERT(pScissorRect != nullptr);
-
-		//Make sure that we have a commandbuffer
-		QueryCommandBuffer();
-
-		//Set scissorrects
-        VkRect2D rects[LAMBDA_MAX_SCISSOR_RECT_COUNT] = {};
-		for (uint32 i = 0; i < numRects; i++)
+		//Check if we should flush the context
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
 		{
-			rects[i].offset.x       = int32(pScissorRect[i].X);
-			rects[i].offset.y       = int32(pScissorRect[i].Y);
-			rects[i].extent.height  = uint32(pScissorRect[i].Height);
-			rects[i].extent.width   = uint32(pScissorRect[i].Width);
+			this->Flush();
 		}
-        
-        vkCmdSetScissor(m_pCurrentFrameResource->CommandBuffer, 0, numRects, rects);
+
+		//Call base
+		TDeviceContext::SetScissorRects(pScissorRects, numRects);
+
+		//Count command
+		m_NumCommands++;
     }
     
     
     void VKNDeviceContext::SetPipelineState(IPipelineState* pPipelineState)
     {
-		//Make sure that we have a commandbuffer
-		QueryCommandBuffer();
+		//Check if we should flush the context
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
+		{
+			this->Flush();
+		}
 
-		//Get a ref to the bound pipelinestate
-		VKNPipelineState* pVkPipelineState = reinterpret_cast<VKNPipelineState*>(pPipelineState);
-		pVkPipelineState->AddRef();
-		m_PipelineState = pVkPipelineState;
-        
-		//Bind pipeline
-		VkPipeline pipeline = m_PipelineState->GetVkPipeline();
+		//Call base
+		TDeviceContext::SetPipelineState(pPipelineState);
 
-		const PipelineStateDesc& desc = m_PipelineState->GetDesc();
-		if (desc.Type == PIPELINE_TYPE_GRAPHICS)
-			vkCmdBindPipeline(m_pCurrentFrameResource->CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-		else if (desc.Type == PIPELINE_TYPE_COMPUTE)
-			vkCmdBindPipeline(m_pCurrentFrameResource->CommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
+		//Count command
+		m_NumCommands++;
     }
 
 	
 	void VKNDeviceContext::SetShaderVariableTable(IShaderVariableTable* pVariableTable)
 	{
-		VKNShaderVariableTable* pVkVariableTable = reinterpret_cast<VKNShaderVariableTable*>(pVariableTable);
-		pVkVariableTable->AddRef();
-        m_VariableTable = pVkVariableTable;
+		//Check if we should flush the context
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
+		{
+			this->Flush();
+		}
+
+		//Call base
+		TDeviceContext::SetShaderVariableTable(pVariableTable);
+
+		//Count command
+		m_NumCommands++;
 	}
     
 
     void VKNDeviceContext::SetVertexBuffers(IBuffer* const* pBuffers, uint32 numBuffers, uint32 slot)
     {
-		//Make sure that we have a commandbuffer
-		QueryCommandBuffer();
-
-		VkBuffer	 buffers[LAMBDA_MAX_VERTEXBUFFER_COUNT];
-        VkDeviceSize offsets[LAMBDA_MAX_VERTEXBUFFER_COUNT];
-		for (uint32 i = 0; i < numBuffers; i++)
+		//Check if we should flush the context
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
 		{
-			VKNBuffer* pVkBuffer = reinterpret_cast<VKNBuffer*>(pBuffers[i]);
-			buffers[i] = pVkBuffer->GetVkBuffer();
-			offsets[i] = pVkBuffer->GetDynamicOffset();
+			this->Flush();
 		}
 
-        vkCmdBindVertexBuffers(m_pCurrentFrameResource->CommandBuffer, slot, numBuffers, buffers, offsets);
+		//Call base
+		TDeviceContext::SetVertexBuffers(pBuffers, numBuffers, slot);
+
+		//Count command
+		m_NumCommands++;
     }
     
     
     void VKNDeviceContext::SetIndexBuffer(IBuffer* pBuffer, Format format)
     {
-		//Make sure that we have a commandbuffer
-		QueryCommandBuffer();
-
-		//Bind indexbuffer
-		VKNBuffer*	pVkBuffer = reinterpret_cast<VKNBuffer*>(pBuffer);
-        VkBuffer	buffer = reinterpret_cast<VkBuffer>(pBuffer->GetNativeHandle());
-
-		VkIndexType indexType = VK_INDEX_TYPE_NONE_NV;
-		if (format == FORMAT_R32_UINT)
+		//Check if we should flush the context
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
 		{
-			indexType = VK_INDEX_TYPE_UINT32;
-		}
-		else if (format == FORMAT_R16_UINT)
-		{
-			indexType = VK_INDEX_TYPE_UINT16;
-		}
-		else
-		{
-			LOG_DEBUG_ERROR("Vulkan: Only supported index formats are VK_INDEX_TYPE_UINT16 or VK_INDEX_TYPE_UINT32\n");
+			this->Flush();
 		}
 
-        vkCmdBindIndexBuffer(m_pCurrentFrameResource->CommandBuffer, buffer, pVkBuffer->GetDynamicOffset(), indexType);
+		//Call base
+		TDeviceContext::SetIndexBuffer(pBuffer, format);
+
+		//Count command
+		m_NumCommands++;
     }
 
 	
 	void VKNDeviceContext::SetConstantBlocks(ShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData)
 	{
+		//Check if we should flush the context
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
+		{
+			this->Flush();
+		}
+
 		//Make sure that we have a commandbuffer
 		QueryCommandBuffer();
 
@@ -452,13 +562,10 @@ namespace Lambda
 
 		VkPipelineLayout pipelineLayout = m_PipelineState->GetVkPipelineLayout();
 		vkCmdPushConstants(m_pCurrentFrameResource->CommandBuffer, pipelineLayout, shaderStageFlags, offset, sizeInBytes, pData);
-	}
 
-    
-    DeviceContextType VKNDeviceContext::GetType() const
-    {
-        return m_Type;
-    }
+		//Count command
+		m_NumCommands++;
+	}
     
     
     void* VKNDeviceContext::GetNativeHandle() const
@@ -502,15 +609,17 @@ namespace Lambda
         LAMBDA_ASSERT_PRINT(pData != nullptr, "Vulkan: pData cannot be nullptr\n");
         LAMBDA_ASSERT_PRINT(pData->pData != nullptr && pData->SizeInBytes != 0, "Vulkan: ResourceData::pData or ResourceData::SizeInBytes cannot be null\n");
 
+		//Check if we should flush the context
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
+		{
+			this->Flush();
+		}
+
 		VKNBuffer* pVkResource = reinterpret_cast<VKNBuffer*>(pResource);
 		
 		//Update dynamic resource with dynamic offset
 		const BufferDesc& bufferDesc = pResource->GetDesc();
-		if (bufferDesc.Usage == RESOURCE_USAGE_DYNAMIC)
-		{
-			pVkResource->DynamicUpdate(pData);
-		}
-		else
+		if (bufferDesc.Usage == RESOURCE_USAGE_DEFAULT)
 		{
 			//Make sure that we have a commandbuffer
 			QueryCommandBuffer();
@@ -526,7 +635,8 @@ namespace Lambda
 				alignment = std::max(alignment, properties.limits.minUniformBufferOffsetAlignment);
 
             //Allocate memory in the uploadbuffer
-            UploadAllocation mem = m_pCurrentFrameResource->BufferUpload->Allocate(pData->SizeInBytes, alignment);
+            VKNUploadAllocation mem = m_pCurrentFrameResource->BufferUpload->Allocate(pData->SizeInBytes, alignment);
+			LAMBDA_ASSERT_PRINT(pData->SizeInBytes <= mem.SizeInBytes, "Vulkan: ResourceData::SizeInBytes is bigger than the allocated space\n");
             memcpy(mem.pHostMemory, pData->pData, pData->SizeInBytes);
 
             //Copy buffer
@@ -536,6 +646,13 @@ namespace Lambda
             copyRegion.size         = pData->SizeInBytes;
             VkBuffer dstBuffer = reinterpret_cast<VkBuffer>(pVkResource->GetNativeHandle());
             vkCmdCopyBuffer(m_pCurrentFrameResource->CommandBuffer, mem.Buffer, dstBuffer, 1, &copyRegion);
+
+			//Count command
+			m_NumCommands++;
+		}
+		else if (bufferDesc.Usage == RESOURCE_USAGE_DYNAMIC)
+		{
+			LOG_DEBUG_ERROR("Vulkan: RESOURCE_USAGE_DYNAMIC can only be updated with MapBuffer\n");
 		}
     }
     
@@ -544,6 +661,12 @@ namespace Lambda
     {
 		LAMBDA_ASSERT_PRINT(pData != nullptr, "Vulkan: pData cannot be nullptr\n");
 		LAMBDA_ASSERT_PRINT(pData->pData != nullptr && pData->SizeInBytes != 0, "Vulkan: ResourceData::pData or ResourceData::SizeInBytes cannot be null\n");
+
+		//Check if we should flush the context
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
+		{
+			this->Flush();
+		}
 
         TransitionTexture(pResource, RESOURCE_STATE_COPY_DEST, VK_REMAINING_MIP_LEVELS);
 		FlushResourceBarriers();
@@ -555,7 +678,7 @@ namespace Lambda
 		uint64 alignment = std::max(properties.limits.optimalBufferCopyOffsetAlignment, VkDeviceSize(4));
 
         //Allocate memory in the uploadbuffer
-		UploadAllocation mem = m_pCurrentFrameResource->TextureUpload->Allocate(pData->SizeInBytes, alignment);
+		VKNUploadAllocation mem = m_pCurrentFrameResource->TextureUpload->Allocate(pData->SizeInBytes, alignment);
         memcpy(mem.pHostMemory, pData->pData, pData->SizeInBytes);
     
         //Perform copy
@@ -573,11 +696,20 @@ namespace Lambda
     
         VkImage	 image	= pVkResource->GetVkImage();
         vkCmdCopyBufferToImage(m_pCurrentFrameResource->CommandBuffer, mem.Buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+		//Count command
+		m_NumCommands++;
     }
     
     
     void VKNDeviceContext::CopyBuffer(IBuffer* pDst, IBuffer* pSrc)
     {
+		//Check if we should flush the context
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
+		{
+			this->Flush();
+		}
+
 		//Make sure that we have a commandbuffer
 		QueryCommandBuffer();
 
@@ -594,22 +726,71 @@ namespace Lambda
         VkBuffer srcBuffer = reinterpret_cast<VkBuffer>(pSrc->GetNativeHandle());
         VkBuffer dstBuffer = reinterpret_cast<VkBuffer>(pDst->GetNativeHandle());
         vkCmdCopyBuffer(m_pCurrentFrameResource->CommandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+
+		//Count command
+		m_NumCommands++;
     }
 
 
-	void VKNDeviceContext::MapBuffer(IBuffer* pBuffer, void** ppData)
+	void VKNDeviceContext::MapBuffer(IBuffer* pBuffer, MapFlag mapFlag, void** ppData)
 	{
+		//Check if we should flush the context
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
+		{
+			this->Flush();
+		}
+
+		const BufferDesc& desc = pBuffer->GetDesc();
+		if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
+		{
+			if (mapFlag == MAP_FLAG_WRITE)
+			{
+				if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE)
+				{
+
+				}
+				else
+				{
+					LOG_DEBUG_ERROR("Vulkan: Only an ImmediateContext can map with MAP_FLAG_WRITE\n");
+				}
+			}
+			else if (mapFlag == MAP_FLAG_WRITE_DISCARD)
+			{
+				
+			}
+		}
+		else
+		{
+			LOG_DEBUG_ERROR("Vulkan: Cannot map a buffer without usage RESOURCE_USAGE_DYNAMIC\n");
+		}
+
+		//Count command
+		m_NumCommands++;
 	}
 
 
-	void VKNDeviceContext::Unmap(IBuffer* pBuffer)
+	void VKNDeviceContext::UnmapBuffer(IBuffer* pBuffer)
 	{
+		//Check if we should flush the context
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
+		{
+			this->Flush();
+		}
+
+		//Count command
+		m_NumCommands++;
 	}
 
 
 	void VKNDeviceContext::ResolveTexture(ITexture* pDst, uint32 dstMipLevel, ITexture* pSrc, uint32 srcMipLevel)
 	{
 		//LOG_DEBUG_INFO("ResolveTexture()\n");
+
+		//Check if we should flush the context
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
+		{
+			this->Flush();
+		}
 
 		//Transition texture before clearing
 		TransitionTexture(pDst, RESOURCE_STATE_COPY_DEST,	VK_REMAINING_MIP_LEVELS);
@@ -638,6 +819,9 @@ namespace Lambda
 		resolve.srcSubresource.layerCount	  = 1;
 		resolve.srcSubresource.mipLevel		  = 0;
 		vkCmdResolveImage(m_pCurrentFrameResource->CommandBuffer, pVKSrc->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, pVkDst->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &resolve);
+
+		//Count command
+		m_NumCommands++;
 	}
 
 
@@ -647,6 +831,9 @@ namespace Lambda
 
 		PrepareForDraw();
 		vkCmdDraw(m_pCurrentFrameResource->CommandBuffer, vertexCount, 1, startVertex, 0);
+
+		//Count command
+		m_NumCommands++;
 	}
 
 	void VKNDeviceContext::DrawIndexed(uint32 indexCount, uint32 startIndexLocation, uint32 baseVertexLocation)
@@ -655,6 +842,9 @@ namespace Lambda
 
 		PrepareForDraw();
 		vkCmdDrawIndexed(m_pCurrentFrameResource->CommandBuffer, indexCount, 1, startIndexLocation, baseVertexLocation, 0);
+
+		//Count command
+		m_NumCommands++;
 	}
     
     
@@ -664,6 +854,9 @@ namespace Lambda
         
 		PrepareForDraw();
         vkCmdDraw(m_pCurrentFrameResource->CommandBuffer, vertexCountPerInstance, instanceCount, startVertexLocation, startInstanceLocation);
+
+		//Count command
+		m_NumCommands++;
     }
     
     
@@ -673,20 +866,32 @@ namespace Lambda
 
 		PrepareForDraw();
         vkCmdDrawIndexed(m_pCurrentFrameResource->CommandBuffer, indexCountPerInstance, instanceCount, startIndexLocation, baseVertexLocation, startInstanceLocation);
+
+		//Count command
+		m_NumCommands++;
     }
 
 	
 	void VKNDeviceContext::ExecuteDefferedContext(IDeviceContext* pContext)
 	{
+		//Check if we should flush the context
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
+		{
+			this->Flush();
+		}
+
 		//TODO:
+
+		//Count command
+		m_NumCommands++;
 	}
     
     
     void VKNDeviceContext::SetName(const char* pName)
     {
-		if (pName != nullptr)
+		DeviceObjectBase::SetName(pName);
+		if (pName)
 		{
-			m_Name = std::string(pName);
             for (uint32 i = 0; i < m_NumFrameResources; i++)
             {
                 std::string name = m_Name + "[" + std::to_string(i) + "]";
@@ -754,7 +959,7 @@ namespace Lambda
 
     void VKNDeviceContext::Flush()
     {
-		//LOG_DEBUG_INFO("Flush()\n");
+		//LOG_DEBUG_INFO("VKNDeviceContext::Flush()\n");
 
 		//Before flushing we need to flush the deffered barriers since the application is expecting all the resources to be in correct layout
 		FlushResourceBarriers();
@@ -783,12 +988,9 @@ namespace Lambda
 		m_WaitSemaphores.clear();
 		m_SignalSemaphores.clear();
 		m_WaitDstStageMasks.clear();
-    }
 
-
-    void VKNDeviceContext::ClearState()
-    {
-        //Clear state. e.i Reset all values, clear color etc.
+		//Set commandcount
+		m_NumCommands = 0;
     }
     
 
@@ -799,13 +1001,16 @@ namespace Lambda
 
 		//LOG_DEBUG_INFO("BeginRenderPass()\n");
 
+		//Before starting a renderpass we need to transition all texture resources
+		FlushResourceBarriers();
+
         VkRenderPassBeginInfo info = {};
         info.sType				= VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
         info.pNext				= nullptr;
         info.renderPass			= m_RenderPass;
         info.framebuffer		= m_Framebuffer;
         info.renderArea.offset	= { 0, 0 };
-        info.renderArea.extent	= m_FramebufferExtent;
+		info.renderArea.extent	= { m_FrameBufferWidth, m_FrameBufferHeight };
         info.clearValueCount	= 0;
         info.pClearValues		= nullptr;
         vkCmdBeginRenderPass(m_pCurrentFrameResource->CommandBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
@@ -830,8 +1035,22 @@ namespace Lambda
 
 	void VKNDeviceContext::PrepareForDraw()
 	{
-		//Commit and draw
+		//Check if we should flush the context
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
+		{
+			this->Flush();
+		}
+
+		//Commit
 		CommitAndTransitionResources();
+
+
+		CommitPipelineState();
+		CommitVertexBuffers();
+		CommitIndexBuffer();
+		CommitRenderTargetsAndDepthStencil();
+		CommitViewports();
+		CommitScissorRects();
 
 		//Draw-calls can only issued inside a renderpass
 		if (!IsInsideRenderPass())
@@ -843,6 +1062,12 @@ namespace Lambda
     {
         LAMBDA_ASSERT(pQuery != nullptr);
      
+		//Check if we should flush the context
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
+		{
+			this->Flush();
+		}
+
 		//Make sure that we have a commandbuffer
 		QueryCommandBuffer();
 
@@ -853,6 +1078,9 @@ namespace Lambda
         VkQueryPool queryPool   = reinterpret_cast<VkQueryPool>(pVkQuery->GetNativeHandle());
         vkCmdResetQueryPool(m_pCurrentFrameResource->CommandBuffer, queryPool, 0, desc.QueryCount);
         pVkQuery->Reset();
+
+		//Count command
+		m_NumCommands++;
     }
     
     
@@ -860,6 +1088,12 @@ namespace Lambda
     {
         LAMBDA_ASSERT(pQuery != nullptr);
         
+		//Check if we should flush the context
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
+		{
+			this->Flush();
+		}
+
 		//Make sure that we have a commandbuffer
 		QueryCommandBuffer();
 
@@ -868,5 +1102,8 @@ namespace Lambda
         VkQueryPool queryPool	= reinterpret_cast<VkQueryPool>(pVkQuery->GetNativeHandle());
         vkCmdWriteTimestamp(m_pCurrentFrameResource->CommandBuffer, ConvertPipelineStage(stage), queryPool, pVkQuery->GetQueryIndex());
         pVkQuery->NextQuery();
+
+		//Count command
+		m_NumCommands++;
     }
 }

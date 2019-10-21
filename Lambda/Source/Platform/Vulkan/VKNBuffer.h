@@ -1,5 +1,5 @@
 #pragma once
-#include "Graphics/Core/IBuffer.h"
+#include "Graphics/Core/BufferBase.h"
 #include <string>
 #include "VKNAllocator.h"
 
@@ -11,7 +11,7 @@ namespace Lambda
 	//VKNBuffer
 	//---------
 
-    class VKNBuffer final : public DeviceObjectBase<VKNDevice, IBuffer>
+    class VKNBuffer final : public BufferBase<VKNDevice>
     {
     public:
         LAMBDA_NO_COPY(VKNBuffer);
@@ -19,10 +19,10 @@ namespace Lambda
         VKNBuffer(VKNDevice* pDevice, const BufferDesc& desc);
         ~VKNBuffer();
         
-        virtual void Map(void** ppMem) override final;
-        virtual void Unmap() override final;
         virtual void* GetNativeHandle() const override final;
-        virtual const BufferDesc& GetDesc() const override final;
+
+		void Map(void** ppMem);
+        void Unmap();
 
 		void AdvanceFrame();
 		void DynamicUpdate(const ResourceData* pData);
@@ -35,22 +35,22 @@ namespace Lambda
     private:
         void Init(const BufferDesc& desc);
     private:
-        VKNAllocation  m_Memory;
-        VkBuffer   m_Buffer;
-		uint64	   m_SizePerFrame;
-		uint64	   m_SizePerUpdate;
-        uint64	   m_TotalSize;
-        uint64	   m_FrameOffset;
-		uint64	   m_DynamicOffset;
-        BufferDesc m_Desc;
-		bool	   m_IsDirty;
+        VkBuffer m_Buffer;
+        VKNAllocation m_Memory;
+		VKNDynamicAllocation m_DynamicState;
+		uint64 m_SizePerFrame;
+		uint64 m_SizePerUpdate;
+        uint64 m_TotalSize;
+        uint64 m_FrameOffset;
+		uint64 m_DynamicOffset;
+		bool m_IsDirty;
     };
 
-    //---------------
-    //VKNUploadBuffer
-    //---------------
+	//-------------------
+	//VKNUploadAllocation
+	//-------------------
 
-	struct UploadAllocation
+	struct VKNUploadAllocation
 	{
 		VkBuffer	Buffer			= VK_NULL_HANDLE;
 		uint64		DeviceOffset	= 0;
@@ -58,6 +58,9 @@ namespace Lambda
 		void*		pHostMemory		= nullptr;
 	};
 
+	//---------------
+	//VKNUploadBuffer
+	//---------------
 
     class VKNUploadBuffer final
     {
@@ -67,7 +70,7 @@ namespace Lambda
         VKNUploadBuffer(VKNDevice* pDevice, uint64 sizeInBytes);
         ~VKNUploadBuffer();
 
-		UploadAllocation Allocate(uint64 bytesToAllocate, uint64 alignment);
+		VKNUploadAllocation Allocate(uint64 bytesToAllocate, uint64 alignment);
         void Reset();
         
 		inline VkBuffer GetVkBuffer() const { return m_Buffer; }

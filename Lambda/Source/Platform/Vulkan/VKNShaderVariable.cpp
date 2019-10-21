@@ -13,10 +13,9 @@ namespace Lambda
 	//-----------------
 
 	VKNShaderVariable::VKNShaderVariable(VKNDevice* pDevice, VKNShaderVariableTable* pVariableTable, const ShaderVariableDesc& desc)
-		: DeviceObjectBase<VKNDevice, IShaderVariable>(pDevice),
+		: ShaderVariableBase<VKNDevice>(pDevice),
 		m_pVariableTable(nullptr),
 		m_Resource(nullptr),
-		m_Desc(),
         m_ResourceHandle(VK_NULL_HANDLE)
 	{
 		this->AddRef();
@@ -119,12 +118,6 @@ namespace Lambda
 	{
 		m_pVariableTable->AddRef();
 		return m_pVariableTable;
-	}
-
-
-	const ShaderVariableDesc& VKNShaderVariable::GetDesc() const
-	{
-		return m_Desc;
 	}
 
 	

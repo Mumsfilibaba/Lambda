@@ -25,8 +25,6 @@ namespace Lambda
 	public:
 		LAMBDA_IOBJECT_INTERFACE(IBuffer);
 
-		virtual void Map(void** ppMem) = 0;
-		virtual void Unmap() = 0;
         virtual void* GetNativeHandle() const = 0;
         virtual const BufferDesc& GetDesc() const = 0;
 	};

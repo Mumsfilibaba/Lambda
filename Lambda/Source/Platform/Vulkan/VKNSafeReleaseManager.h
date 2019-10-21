@@ -43,59 +43,6 @@ namespace Lambda
 		VkResourceType m_Resource;
 	};
 
-	//----------
-	//VKNWrapper
-	//----------
-
-	class VKNWrapper
-	{
-	public:
-		VKNWrapper::VKNWrapper(VKNWrapper&& other)
-			: m_pResource(other.m_pResource)
-		{
-			other.m_pResource = nullptr;
-		}
-
-		~VKNWrapper()
-		{
-			if (m_pResource)
-			{
-				m_pResource->Release();
-				m_pResource = nullptr;
-			}
-		}
-
-		VKNWrapper& operator=(VKNWrapper&& other)
-		{
-			if (this != &other)
-			{
-				if (m_pResource)
-					m_pResource->Release();
-
-				m_pResource = other.m_pResource;
-				other.m_pResource = nullptr;
-			}
-
-			return *this;
-		}
-
-		VKNWrapper(const VKNWrapper& other)				= delete;
-		VKNWrapper& operator=(const VKNWrapper& other)	= delete;
-	private:
-		VKNWrapper(VKNResourceBase* pResource = nullptr)
-			:m_pResource(pResource)
-		{
-		}
-	private:
-		VKNResourceBase* m_pResource;
-	public:
-		template <typename VkResourceType>
-		static VKNWrapper Create(VKNDevice* pDevice, const VkResourceType& resource)
-		{
-			return VKNWrapper(DBG_NEW VKNResource<VkResourceType>(pDevice, resource));
-		}
-	};
-
 	//---------------------
 	//VKNSafeReleaseManager
 	//---------------------
@@ -111,13 +58,13 @@ namespace Lambda
 		template<typename VkResourceType>
 		void ReleaseResource(const VkResourceType& resource)
 		{
-			m_Resources.emplace_back(std::pair<uint64, VKNWrapper>(m_FrameIndex, std::move(VKNWrapper::Create<VkResourceType>(m_pDevice, resource))));
+			m_Resources.emplace_back(std::pair<uint64, VKNResourceBase*>(m_FrameIndex, DBG_NEW VKNResource<VkResourceType>(m_pDevice, resource)));
 		}
 
 		void EmptyResources();
 	private:
 		VKNDevice* m_pDevice;
 		uint64 m_FrameIndex;
-		std::vector<std::pair<uint64, VKNWrapper>> m_Resources;
+		std::vector<std::pair<uint64, VKNResourceBase*>> m_Resources;
 	};
 }

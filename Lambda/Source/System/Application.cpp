@@ -65,7 +65,7 @@ namespace Lambda
 			}
             
 			//Draw UI
-            OnRenderUI(clock.GetDeltaTime());
+            //OnRenderUI(clock.GetDeltaTime());
             
 			//Render
 #if defined(LAMBDA_PLAT_MACOS)
@@ -136,15 +136,15 @@ namespace Lambda
         factory->CreateDeviceAndSwapChain(&m_GraphicsDeivce, deviceDesc, &m_Context, &m_SwapChain, swapChainDesc);
     
 		//Create UI-Layer
-		m_pUILayer = DBG_NEW UILayer();
+		//m_pUILayer = DBG_NEW UILayer();
 		//Push ImGui-Layer
-        PushLayer(m_pUILayer);
+        //PushLayer(m_pUILayer);
 		
 		//Set joystick-pollingrate
 		JoystickManager::SetPollrate(Timestep::Seconds(1.0f / 60.0f));
 
 		//Init renderer
-		m_Renderer.Init();
+		//m_Renderer.Init();
 
 		//Load rest of application
 		for (auto it = m_LayerStack.Begin(); it != m_LayerStack.End(); it++)
@@ -172,7 +172,7 @@ namespace Lambda
 
 	void Application::OnRender(Timestep dt)
 	{
-		m_Renderer.Begin();
+		//m_Renderer.Begin();
 
 		for (auto it = m_LayerStack.Begin(); it != m_LayerStack.End(); it++)
 		{
@@ -180,8 +180,8 @@ namespace Lambda
             pLayer->OnRender(m_Renderer, dt);
 		}
 
-		m_Renderer.End();
-		m_Renderer.Swapbuffers();
+		//m_Renderer.End();
+		//m_Renderer.Swapbuffers();
 	}
 
 
@@ -200,19 +200,24 @@ namespace Lambda
 	void Application::OnRelease()
 	{
 		//Release renderer
-		m_Renderer.Release();
+		//m_Renderer.Release();
+		
 		//Remove callback
 		m_pWindow->SetEventCallback(nullptr);
+		
 		//Release all layers
 		for (auto it = m_LayerStack.Begin(); it != m_LayerStack.End(); it++)
 		{
 			Layer* pLayer = (*it);
 			pLayer->OnRelease();
 		}
-        //Release LayerStack
+        
+		//Release LayerStack
         m_LayerStack.Release();
-        //Release Eventdispatcher
+        
+		//Release Eventdispatcher
         m_Dispatcher.Release();
+
 		//Destroy window
 		SafeDelete(m_pWindow);
 	}
@@ -270,7 +275,7 @@ namespace Lambda
 	
 	bool Application::OnWindowResize(const WindowResizeEvent& event)
 	{
-		m_Renderer.SetDisplaySize(event.GetWidth(), event.GetHeight());
+		//m_Renderer.SetDisplaySize(event.GetWidth(), event.GetHeight());
 		return false;
 	}
 

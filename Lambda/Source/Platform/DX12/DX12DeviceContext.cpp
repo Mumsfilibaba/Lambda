@@ -164,9 +164,10 @@ namespace Lambda
 	}*/
 
 
-	void DX12DeviceContext::SetRendertargets(const ITexture* const* ppRenderTargets, uint32 numRendertargets, const ITexture* pDepthStencil)
+	void DX12DeviceContext::SetRendertargets(ITexture* const* ppRenderTargets, uint32 numRendertargets, ITexture* pDepthStencil)
 	{
 	}
+
 
 	void DX12DeviceContext::SetViewports(const Viewport* pViewports, uint32 numViewports)
 	{
@@ -440,12 +441,12 @@ namespace Lambda
 	}
 
 
-	void DX12DeviceContext::MapBuffer(IBuffer* pBuffer, void** ppData)
+	void DX12DeviceContext::MapBuffer(IBuffer* pBuffer, MapFlag mapFlag, void** ppData)
 	{
 	}
 
 
-	void DX12DeviceContext::Unmap(IBuffer* pBuffer)
+	void DX12DeviceContext::UnmapBuffer(IBuffer* pBuffer)
 	{
 	}
 

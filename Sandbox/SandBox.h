@@ -38,26 +38,31 @@ namespace Lambda
         bool OnKeyPressed(const KeyPressedEvent& event);
         void CreateCamera(uint32 width, uint32 height);
     private:
+		//Context
+		AutoRef<ISwapChain> m_SwapChain;
+		AutoRef<IDeviceContext> m_Context;
         //Shaders
         AutoRef<IShader> m_VS;
         AutoRef<IShader> m_PS;
-        //Meshes
-		Model m_Mesh;
-		Model m_SphereMesh;
-		//Material
-		Material m_Material;
-		Material m_RedMaterial;
-        //Textures
-		AutoRef<ITexture> m_AlbedoMap;
-		AutoRef<ITexture> m_NormalMap;
-        //Samplers
-		AutoRef<ISamplerState> m_SamplerState;
         //Pipelinestates
 		AutoRef<IPipelineState> m_PipelineState;
 		//Variable tables
 		AutoRef<IShaderVariableTable> m_VariableTable;
-        Camera m_Camera;
-        TransformBuffer m_TransformBuffer;
+        //Meshes
+		Model m_Mesh;
+		Viewport  m_Viewport;
+		Rectangle m_ScissorRect;
+		//Model m_SphereMesh;
+		//Material
+		//Material m_Material;
+		//Material m_RedMaterial;
+        //Textures
+		//AutoRef<ITexture> m_AlbedoMap;
+		//AutoRef<ITexture> m_NormalMap;
+        //Samplers
+		//AutoRef<ISamplerState> m_SamplerState;
+        //Camera m_Camera;
+        //TransformBuffer m_TransformBuffer;
     };
 
     //-------
