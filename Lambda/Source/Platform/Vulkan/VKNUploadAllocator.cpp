@@ -6,10 +6,10 @@
 namespace Lambda
 {
 	//---------------
-	//VKNUploadBuffer
+	//VKNUploadAllocator
 	//---------------
 
-	VKNUploadBuffer::VKNUploadBuffer(VKNDevice* pDevice, uint64 sizeInBytes)
+	VKNUploadAllocator::VKNUploadAllocator(VKNDevice* pDevice, uint64 sizeInBytes)
 		: m_pDevice(pDevice),
 		m_Offset(0),
 		m_Memory(),
@@ -19,7 +19,7 @@ namespace Lambda
 	}
 
 
-	VKNUploadBuffer::~VKNUploadBuffer()
+	VKNUploadAllocator::~VKNUploadAllocator()
 	{
 		Reset();
 
@@ -33,7 +33,7 @@ namespace Lambda
 	}
 
 
-	bool VKNUploadBuffer::Init(uint64 sizeInBytes)
+	bool VKNUploadAllocator::Init(uint64 sizeInBytes)
 	{
 		//Create buffer
 		VkBufferCreateInfo info = {};
@@ -69,7 +69,7 @@ namespace Lambda
 	}
 
 
-	void VKNUploadBuffer::Reallocate(uint64 sizeInBytes)
+	void VKNUploadAllocator::Reallocate(uint64 sizeInBytes)
 	{
 		VkBuffer  newBuffer = VK_NULL_HANDLE;
 		VKNAllocation newMemory = {};
@@ -112,7 +112,7 @@ namespace Lambda
 	}
 
 
-	VKNUploadAllocation VKNUploadBuffer::Allocate(uint64 bytesToAllocate, uint64 alignment)
+	VKNUploadAllocation VKNUploadAllocator::Allocate(uint64 bytesToAllocate, uint64 alignment)
 	{
 		VKNUploadAllocation allocation = {};
 
@@ -139,7 +139,7 @@ namespace Lambda
 	}
 
 
-	void VKNUploadBuffer::Reset()
+	void VKNUploadAllocator::Reset()
 	{
 		//Reset buffer by resetting current to the start
 		m_Offset = 0;

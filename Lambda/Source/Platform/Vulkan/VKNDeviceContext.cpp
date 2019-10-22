@@ -145,8 +145,8 @@ namespace Lambda
         //Init uploadbuffers
 		for (uint32 i = 0; i < m_NumFrameResources; i++)
 		{
-			m_pFrameResources[i].BufferUpload  = DBG_NEW VKNUploadBuffer(m_pDevice, MB(1));
-			m_pFrameResources[i].TextureUpload = DBG_NEW VKNUploadBuffer(m_pDevice, MB(16));
+			m_pFrameResources[i].BufferUpload  = DBG_NEW VKNUploadAllocator(m_pDevice, MB(1));
+			m_pFrameResources[i].TextureUpload = DBG_NEW VKNUploadAllocator(m_pDevice, MB(16));
 		}
 
 		//Create imagelayout-tracker

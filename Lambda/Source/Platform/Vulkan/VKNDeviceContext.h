@@ -10,7 +10,7 @@
 namespace Lambda
 {
     class VKNDevice;
-	class VKNUploadBuffer;
+	class VKNUploadAllocator;
 
 	//------------------
 	//DeviceContextState
@@ -43,8 +43,8 @@ namespace Lambda
 		{
 			VkFence				Fence		  = VK_NULL_HANDLE;
 			VkCommandBuffer		CommandBuffer = VK_NULL_HANDLE;
-			VKNUploadBuffer*	BufferUpload  = nullptr;
-			VKNUploadBuffer*	TextureUpload = nullptr;
+			VKNUploadAllocator*	BufferUpload  = nullptr;
+			VKNUploadAllocator*	TextureUpload = nullptr;
 		};
 
     public:
