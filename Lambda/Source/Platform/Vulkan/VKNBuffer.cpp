@@ -3,6 +3,7 @@
 #include "VKNBuffer.h"
 #include "VKNUtilities.h"
 #include "VKNDevice.h"
+#include "VKNDeviceContext.h"
 
 namespace Lambda
 {
@@ -10,216 +11,213 @@ namespace Lambda
 	//VKNBuffer
 	//---------
 
-    VKNBuffer::VKNBuffer(VKNDevice* pDevice, const BufferDesc& desc)
-		: BufferBase<VKNDevice>(pDevice),
+    VKNBuffer::VKNBuffer(VKNDevice* pDevice, const ResourceData* pInitalData, const BufferDesc& desc)
+		: TBuffer(pDevice, desc),
+		m_VkBuffer(VK_NULL_HANDLE),
         m_Memory(),
-		m_Buffer(VK_NULL_HANDLE),
-        m_FrameOffset(0),
-        m_TotalSize(0),
-        m_SizePerFrame(0),
-        m_SizePerUpdate(0),
-        m_DynamicOffset(0),
-		m_IsDirty(false)
+		m_DynamicState()
     {
 		//Add a ref to the refcounter
 		this->AddRef();
-        Init(desc);
+        Init(pInitalData, desc);
     }
-    
-    
-    void VKNBuffer::Init(const BufferDesc& desc)
-    {
-        VkBufferCreateInfo info = {};
-        info.sType					= VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        info.pNext					= nullptr;
-        info.flags					= 0;
-        info.queueFamilyIndexCount	= 0;
-        info.pQueueFamilyIndices	= nullptr;
-        info.sharingMode			= VK_SHARING_MODE_EXCLUSIVE;
-		//Set usage
-		info.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-		
-		if (desc.Flags & BUFFER_FLAGS_VERTEX_BUFFER)
-            info.usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-		
-		if (desc.Flags & BUFFER_FLAGS_INDEX_BUFFER)
-            info.usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
 
-		if (desc.Flags & BUFFER_FLAGS_CONSTANT_BUFFER)
-            info.usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 
-		//If dynamic we allocate extra size so we can use dynamic offsets
-		if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
+	VKNBuffer::~VKNBuffer()
+	{
+		//Deallocate the dynamic resource
+		if (m_Desc.Usage == RESOURCE_USAGE_DYNAMIC)
 		{
-            VkPhysicalDeviceProperties properties = m_pDevice->GetPhysicalDeviceProperties();
-
-			//If dynamic we allocate extra space (NUM_UPDATES updates per frame)
-			constexpr uint32 numUpdatesPerFrame = 4;
-			m_SizePerUpdate = Math::AlignUp<uint64>(desc.SizeInBytes, properties.limits.minUniformBufferOffsetAlignment);
-			m_SizePerFrame	= m_SizePerUpdate * numUpdatesPerFrame;
-            m_TotalSize     = m_SizePerFrame * FRAMES_AHEAD;
-            info.size		= m_TotalSize;
+			m_pDevice->DeallocateDynamicMemory(m_DynamicState);
 		}
 		else
 		{
-			info.size = desc.SizeInBytes;
+			//Deallocate from global memory if this is not a global resource and then release the native buffer handle
+			m_pDevice->Deallocate(m_Memory);
+			if (m_VkBuffer != VK_NULL_HANDLE)
+				m_pDevice->SafeReleaseVulkanResource<VkBuffer>(m_VkBuffer);
 		}
-      
+
+		LOG_DEBUG_INFO("Vulkan: Destroyed buffer '%p'\n", m_VkBuffer);
+	}
+    
+    
+    void VKNBuffer::Init(const ResourceData* pInitalData, const BufferDesc& desc)
+    {
+		//Set alignment for buffer
+		VkPhysicalDeviceProperties properties = m_pDevice->GetPhysicalDeviceProperties();
+		m_DynamicOffsetAlignment = std::max(VkDeviceSize(4), properties.limits.minUniformBufferOffsetAlignment);
+
+
+		//Setup buffer info
+		VkBufferCreateInfo info = {};
+		info.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+		if (desc.Flags & BUFFER_FLAGS_CONSTANT_BUFFER)
+		{
+			info.usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+			m_DynamicOffsetAlignment = std::max(m_DynamicOffsetAlignment, properties.limits.minUniformBufferOffsetAlignment);
+		}
+
+		if (desc.Flags & BUFFER_FLAGS_VERTEX_BUFFER)
+			info.usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+
+		if (desc.Flags & BUFFER_FLAGS_INDEX_BUFFER)
+			info.usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+
+
 		//Create buffer
-		if (vkCreateBuffer(m_pDevice->GetVkDevice(), &info, nullptr, &m_Buffer) != VK_SUCCESS)
-        {
-            LOG_DEBUG_ERROR("Vulkan: Failed to create Buffer\n");
-            return;
-        }
-        else
-        {
-            m_Desc = desc;
-			if (m_Desc.pName)
+		if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
+		{
+			/*std::vector<VKNDynamicAllocation> allocs;
+			for (uint32 i = 0; i < 10; i++)
 			{
-				LOG_DEBUG_INFO("Vulkan: Created Buffer. Name=\"%s\". '%p'\n", m_Desc.pName, m_Buffer);
-				m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_BUFFER, uint64(m_Buffer), std::string(m_Desc.pName));
+				VKNDynamicAllocation mem = {};
+				m_pDevice->AllocateDynamicMemory(mem, m_Desc.SizeInBytes, m_DynamicOffsetAlignment);
+				allocs.emplace_back(mem);
+			}
+
+			for (uint32 i = 3; i < 8; i++)
+				m_pDevice->DeallocateDynamicMemory(allocs[i]);
+
+
+			for (uint32 i = 0; i < 10; i++)
+			{
+				VKNDynamicAllocation mem = {};
+				m_pDevice->AllocateDynamicMemory(mem, m_Desc.SizeInBytes, m_DynamicOffsetAlignment);
+				allocs.emplace_back(mem);
+			}
+
+			for (uint32 i = 0; i < 10; i++)
+				m_pDevice->FinishFrame();
+
+
+			for (uint32 i = 0; i < 10; i++)
+			{
+				VKNDynamicAllocation mem = {};
+				m_pDevice->AllocateDynamicMemory(mem, m_Desc.SizeInBytes, m_DynamicOffsetAlignment);
+				allocs.emplace_back(mem);
+			}*/
+
+			//If dynamic we allocate dynamic memory
+			if (!m_pDevice->AllocateDynamicMemory(m_DynamicState, m_Desc.SizeInBytes, m_DynamicOffsetAlignment))
+			{
+				LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for Buffer\n");
+				return;
 			}
 			else
 			{
-				LOG_DEBUG_INFO("Vulkan: Created Buffer '%p'\n", m_Buffer);
+				LOG_DEBUG_INFO("Vulkan: Allocated memory for Dynamic Buffer\n");
+				SetName(m_Desc.pName);
 			}
-        }
-        
-		//Allocate memory
-        if (!m_pDevice->AllocateBuffer(m_Memory, m_Buffer, m_Desc.Usage))
-        {
-            LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for buffer '%p'\n", m_Buffer);
-        }
-    }
-    
-    
-	VKNBuffer::~VKNBuffer()
-	{
-		//Set the new handles and delete the old ones
-		m_pDevice->Deallocate(m_Memory);
-		if (m_Buffer != VK_NULL_HANDLE)
-			m_pDevice->SafeReleaseVulkanResource<VkBuffer>(m_Buffer);
+		}
+		else
+		{
+			//Otherwise create a vulkanbuffer
+			info.sType	= VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+			info.pNext	= nullptr;
+			info.flags	= 0;
+			info.size	= desc.SizeInBytes;
+			info.queueFamilyIndexCount	= 0;
+			info.pQueueFamilyIndices	= nullptr;
+			info.sharingMode			= VK_SHARING_MODE_EXCLUSIVE;
+			if (vkCreateBuffer(m_pDevice->GetVkDevice(), &info, nullptr, &m_VkBuffer) != VK_SUCCESS)
+			{
+				LOG_DEBUG_ERROR("Vulkan: Failed to create Buffer\n");
+				return;
+			}
+			else
+			{
+				SetName(m_Desc.pName);
+				if (m_Desc.pName)
+				{
+					LOG_DEBUG_INFO("Vulkan: Created Buffer. Name=\"%s\". '%p'\n", m_Desc.pName, m_VkBuffer);
+				}
+				else
+				{
+					LOG_DEBUG_INFO("Vulkan: Created Buffer '%p'\n", m_VkBuffer);
+				}
+			}
 
-		VKNBufferManager& bufferManager = VKNBufferManager::GetInstance();
-		bufferManager.UnregisterBuffer(this);
+			//Allocate memory
+			if (!m_pDevice->AllocateBuffer(m_Memory, m_VkBuffer, m_Desc.Usage))
+			{
+				LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for buffer '%p'\n", m_VkBuffer);
+			}
+		}
 
-		LOG_DEBUG_INFO("Vulkan: Destroyed buffer '%p'\n", m_Buffer);
-	}
+		//Write to the memory if we have any inital data
+		if (pInitalData)
+		{
+			LAMBDA_ASSERT_PRINT(pInitalData->pData != nullptr && pInitalData->SizeInBytes != 0, "Vulkan: pInitalData->pData cannot be null\n");
+			LAMBDA_ASSERT_PRINT(pInitalData->SizeInBytes <= m_Desc.SizeInBytes, "Vulkan: pInitalData->SizeInBytes cannot be larger than the buffer. pInitalData->SizeInBytes=%d and BufferDesc::SizeInBytes=%d\n", pInitalData->SizeInBytes, m_Desc.SizeInBytes);
 
+			if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
+			{
+				//If the resource is dynamic we can simply write to the dynamic memory with memcpy
+				memcpy(m_DynamicState.pHostMemory, pInitalData->pData, pInitalData->SizeInBytes);
+			}
+			else
+			{
+				//Otherwise we create a staging buffer
+				VkBuffer stagingBuffer = VK_NULL_HANDLE;
+				if (vkCreateBuffer(m_pDevice->GetVkDevice(), &info, nullptr, &stagingBuffer) != VK_SUCCESS)
+				{
+					LOG_DEBUG_ERROR("Vulkan: Failed to create Staging-Buffer\n");
+					return;
+				}
+				else
+				{
+					LOG_DEBUG_INFO("Vulkan: Created Staging-Buffer '%p'\n", m_VkBuffer);
+				}
 
-	void VKNBuffer::Map(void** ppMem)
-    {
-		LAMBDA_ASSERT(ppMem != nullptr);
+				//Allocate memory
+				VKNAllocation stagingMemory = {};
+				if (!m_pDevice->AllocateBuffer(stagingMemory, stagingBuffer, RESOURCE_USAGE_DYNAMIC))
+				{
+					LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for Staging-Buffer '%p'\n", stagingBuffer);
+					return;
+				}
+				else
+				{
+					//Copy over data
+					memcpy(stagingMemory.pHostMemory, pInitalData->pData, pInitalData->SizeInBytes);
+				}
 
-		uint8* pMemory = m_Memory.pHostMemory + GetDynamicOffset();
-        (*ppMem) = reinterpret_cast<void*>(pMemory);
-    }
-    
-    
-    void VKNBuffer::Unmap()
-    {
-		//Unmapping a vulkan buffer does nothing since a whole memoryblock is mapped and stays mapped during its lifetime.
+				//Get devicecontext and copy over the stagingbuffers context to the buffer
+				VKNDeviceContext* pContext = m_pDevice->GetVKNImmediateContext();
+				pContext->CopyBuffer(m_VkBuffer, 0, stagingBuffer, 0, pInitalData->SizeInBytes);
+				
+				//Release this reference to the context
+				pContext->Release();
+
+				//Delete the stagingbuffer
+				m_pDevice->Deallocate(stagingMemory);
+				m_pDevice->SafeReleaseVulkanResource<VkBuffer>(stagingBuffer);
+			}
+		}
     }
     
     
     void* VKNBuffer::GetNativeHandle() const
     {
-        return reinterpret_cast<void*>(m_Buffer);
+        return reinterpret_cast<void*>(m_VkBuffer);
     }
 
-
-	void VKNBuffer::AdvanceFrame()
+	
+	void VKNBuffer::SetName(const char* pName)
 	{
-		//Move on a frame
-        m_FrameOffset   = 0;
-        m_DynamicOffset = (m_DynamicOffset+m_SizePerFrame) % m_TotalSize;
+		TBuffer::SetName(pName);
+		if (m_VkBuffer != VK_NULL_HANDLE)
+			m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_BUFFER, (uint64)m_VkBuffer, m_Name);
 	}
 
-
-	void VKNBuffer::DynamicUpdate(const ResourceData* pData)
+	
+	VkBuffer VKNBuffer::GetVkBuffer() const
 	{
-		//Calculate offset and see if there are enough space
-		m_FrameOffset += m_SizePerUpdate;
-        if (m_FrameOffset >= m_SizePerFrame)
-            Reallocate(m_SizePerFrame * 2);
-        
-		//Update buffer
-		uint8* pCurrent = m_Memory.pHostMemory + GetDynamicOffset();
-		memcpy(pCurrent, pData->pData, pData->SizeInBytes);
-	}
-
-
-	void VKNBuffer::Reallocate(uint32 sizePerFrame)
-	{
-		VkBufferCreateInfo info = {};
-		info.sType					= VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		info.pNext					= nullptr;
-		info.flags					= 0;
-		info.queueFamilyIndexCount	= 0;
-		info.pQueueFamilyIndices	= nullptr;
-		info.sharingMode			= VK_SHARING_MODE_EXCLUSIVE;
-
-        //Set new size
-        m_SizePerFrame  = sizePerFrame;
-        m_DynamicOffset = 0;
-        m_FrameOffset   = 0;
-        m_TotalSize     = m_SizePerFrame * FRAMES_AHEAD;
-        info.size       = m_TotalSize;
-
-        LOG_DEBUG_WARNING("Vulkan: Reallocated buffer. Old size: %llu bytes, New size: %llu\n", m_Memory.SizeInBytes, info.size);
-        
-        //Set usage
-        info.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-        if (m_Desc.Flags & BUFFER_FLAGS_VERTEX_BUFFER)
-            info.usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-        
-        if (m_Desc.Flags & BUFFER_FLAGS_INDEX_BUFFER)
-            info.usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-
-        if (m_Desc.Flags & BUFFER_FLAGS_CONSTANT_BUFFER)
-            info.usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-
-        //Create buffer
-        VkBuffer newBuffer = VK_NULL_HANDLE;
-		if (vkCreateBuffer(m_pDevice->GetVkDevice(), &info, nullptr, &newBuffer) != VK_SUCCESS)
-		{
-			LOG_DEBUG_ERROR("Vulkan: Failed to recreate Buffer\n");
-			return;
-		}
-		else
-		{
-			if (m_Desc.pName)
-			{
-				LOG_DEBUG_INFO("Vulkan: Recreated Buffer. Name=\"%s\". '%p'\n", m_Desc.pName, newBuffer);
-				m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_BUFFER, uint64(m_Buffer), std::string(m_Desc.pName));
-			}
-			else
-			{
-				LOG_DEBUG_INFO("Vulkan: Recreated Buffer '%p'\n", newBuffer);
-			}
-		}
-
-		//Allocate memory
-        VKNAllocation newMemory = {};
-		if (!m_pDevice->AllocateBuffer(newMemory, newBuffer, m_Desc.Usage))
-		{
-			LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for resize of Buffer '%p'\n", newBuffer);
-			return;
-		}
-
-		//Set the new handles and delete the old ones
-		m_pDevice->Deallocate(m_Memory);
-		m_pDevice->SafeReleaseVulkanResource<VkBuffer>(m_Buffer);
-        
-		m_Buffer = newBuffer;
-		m_Memory = newMemory;
-        
-        //Set offsets
-        m_FrameOffset   = 0;
-        m_DynamicOffset = 0;
-
-		//Set to dirty
-		m_IsDirty = true;
+		if (m_Desc.Usage == RESOURCE_USAGE_DYNAMIC)
+			return m_DynamicState.Buffer;
+		
+		return m_VkBuffer;
 	}
 
     //---------------
@@ -361,69 +359,4 @@ namespace Lambda
         //Reset buffer by resetting current to the start
 		m_Offset = 0;
     }
-
-	//----------------
-	//VKNBufferManager
-	//----------------
-
-    constexpr size_t frameCount = 5;
-	VKNBufferManager* VKNBufferManager::s_pInstance = nullptr;
-
-	VKNBufferManager::VKNBufferManager()
-		: m_FrameIndex(0),
-        m_Buffers()
-	{
-		LAMBDA_ASSERT(s_pInstance == nullptr);
-		s_pInstance = this;
-	}
-
-
-	VKNBufferManager::~VKNBufferManager()
-	{
-		if (s_pInstance == this)
-			s_pInstance = nullptr;
-	}
-    
-
-	void VKNBufferManager::AdvanceFrame()
-	{       
-        //Update dynamic buffers
-		for (auto buffer : m_Buffers)
-			buffer->AdvanceFrame();
-	}
-
-
-	void VKNBufferManager::RegisterBuffer(VKNBuffer* pBuffer)
-	{
-		for (auto buffer : m_Buffers)
-		{
-			if (buffer == pBuffer)
-				return;
-		}
-
-		LOG_DEBUG_INFO("Vulkan: Registered buffer\n");
-		m_Buffers.emplace_back(pBuffer);
-	}
-
-
-	void VKNBufferManager::UnregisterBuffer(VKNBuffer* pBuffer)
-	{
-		for (auto i = m_Buffers.begin(); i < m_Buffers.end(); i++)
-		{
-			if (*i == pBuffer)
-			{
-				LOG_DEBUG_INFO("Vulkan: Unregistered buffer\n");
-
-				m_Buffers.erase(i);
-				return;
-			}
-		}
-	}
-	
-	
-	VKNBufferManager& VKNBufferManager::GetInstance()
-	{
-		LAMBDA_ASSERT(s_pInstance != nullptr);
-		return *s_pInstance;
-	}
 }

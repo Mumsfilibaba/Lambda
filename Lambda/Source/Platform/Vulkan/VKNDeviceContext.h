@@ -30,8 +30,7 @@ namespace Lambda
 
     class VKNDeviceContext final : public DeviceContextBase<VKNDevice, VKNTexture, VKNBuffer, VKNPipelineState, VKNShaderVariableTable>
     {
-        friend class VKNDevice;
-        
+        friend class VKNDevice;    
 		using TDeviceContext = DeviceContextBase<VKNDevice, VKNTexture, VKNBuffer, VKNPipelineState, VKNShaderVariableTable>;
 
 	private:
@@ -42,10 +41,10 @@ namespace Lambda
 
 		struct FrameResource
 		{
-			VkFence				Fence			= VK_NULL_HANDLE;
-			VkCommandBuffer		CommandBuffer	= VK_NULL_HANDLE;
-			VKNUploadBuffer*	BufferUpload	= nullptr;
-			VKNUploadBuffer*	TextureUpload	= nullptr;
+			VkFence				Fence		  = VK_NULL_HANDLE;
+			VkCommandBuffer		CommandBuffer = VK_NULL_HANDLE;
+			VKNUploadBuffer*	BufferUpload  = nullptr;
+			VKNUploadBuffer*	TextureUpload = nullptr;
 		};
 
     public:
@@ -71,7 +70,7 @@ namespace Lambda
         
         virtual void CopyBuffer(IBuffer* pDst, IBuffer* pSrc) override final;
 
-		virtual void MapBuffer(IBuffer* pBuffer, MapFlag mapFlag, void** ppData) override final;
+		virtual void MapBuffer(IBuffer* pBuffer, uint32 mapFlags, void** ppData) override final;
 		virtual void UnmapBuffer(IBuffer* pBuffer) override final;
 
 		virtual void ResolveTexture(ITexture* pDst, uint32 dstMipLevel, ITexture* pSrc, uint32 srcMipLevel) override final;
@@ -96,6 +95,7 @@ namespace Lambda
 		void TransitionBuffer(const IBuffer* pBuffer, ResourceState state);
 		void TransitionTexture(const ITexture* pTexture, ResourceState state, uint32 mipLevel);
         
+		void CopyBuffer(VkBuffer dstBuffer, VkDeviceSize dstOffset, VkBuffer srcBuffer, VkDeviceSize srcOffset, VkDeviceSize sizeInBytes);
 		void BlitTexture(VKNTexture* pDst, uint32 dstWidth, uint32 dstHeight, uint32 dstMipLevel, VKNTexture* pSrc, uint32 srcWidth, uint32 srcHeight, uint32 srcMipLevel);
         
 		void AddWaitSemaphore(VkSemaphore waitSemaphore, VkPipelineStageFlags waitDstStageMask);
@@ -119,9 +119,9 @@ namespace Lambda
 		void FlushResourceBarriers();
 		inline bool IsInsideRenderPass() { return m_ContextState == DEVICE_CONTEXT_STATE_RENDERPASS; }
     private:
-        VkCommandPool	m_CommandPool;
-		FrameResource*	m_pFrameResources;
-		FrameResource*	m_pCurrentFrameResource;
+        VkCommandPool m_CommandPool;
+		FrameResource* m_pFrameResources;
+		FrameResource* m_pCurrentFrameResource;
 		uint32 m_NumCommands;
         uint32 m_NumFrameResources;
         uint32 m_FrameIndex;
@@ -131,6 +131,11 @@ namespace Lambda
         std::vector<VkPipelineStageFlags> m_WaitDstStageMasks;
         VkRenderPass  m_RenderPass;
         VkFramebuffer m_Framebuffer;
+		VkPipeline	  m_Pipeline;
 		DeviceContextState m_ContextState;
+		bool m_CommitScissorRects;
+		bool m_CommitViewports;
+		bool m_CommitVertexBuffers;
+		bool m_CommitIndexBuffer;
     };
 }

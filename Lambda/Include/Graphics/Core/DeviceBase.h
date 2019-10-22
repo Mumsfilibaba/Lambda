@@ -1,32 +1,30 @@
 #pragma once
-#include "DeviceObjectBase.h"
 #include "IDevice.h"
 
 namespace Lambda
 {
 	//----------
-	//BufferBase
+	//DeviceBase
 	//----------
 
-	template<typename TDeviceImpl>
-	class BufferBase : public DeviceObjectBase<TDeviceImpl, IBuffer>
+	class DeviceBase : public RefCountedObject<IDevice>
 	{
 	public:
-		LAMBDA_NO_COPY(BufferBase);
+		LAMBDA_NO_COPY(DeviceBase);
 
-		BufferBase(TDeviceImpl* pDevice)
-			: DeviceObjectBase<TDeviceImpl, IBuffer>(pDevice),
+		DeviceBase()
+			: RefCountedObject<IDevice>(),
 			m_Desc()
 		{
 		}
-		~BufferBase() = default;
+		~DeviceBase() = default;
 
 
-		virtual const BufferDesc& GetDesc() const override
+		virtual const DeviceDesc& GetDesc() const override
 		{
 			return m_Desc;
 		}
 	protected:
-		BufferDesc m_Desc;
+		DeviceDesc m_Desc;
 	};
 }

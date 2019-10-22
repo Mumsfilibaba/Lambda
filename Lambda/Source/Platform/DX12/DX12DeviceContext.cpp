@@ -441,7 +441,7 @@ namespace Lambda
 	}
 
 
-	void DX12DeviceContext::MapBuffer(IBuffer* pBuffer, MapFlag mapFlag, void** ppData)
+	void DX12DeviceContext::MapBuffer(IBuffer* pBuffer, uint32 mapFlags, void** ppData)
 	{
 	}
 

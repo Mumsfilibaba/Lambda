@@ -10,7 +10,7 @@
 #include "VKNFramebufferCache.h"
 #include "VKNConversions.inl"
 
-#define LAMBDA_VK_MAX_COMMANDS 128
+#define LAMBDA_VK_MAX_COMMANDS 256
 
 namespace Lambda
 {
@@ -18,18 +18,23 @@ namespace Lambda
 	//VKNDeviceContext
 	//----------------
 
-    VKNDeviceContext::VKNDeviceContext(VKNDevice* pDevice, DeviceContextType type)
-        : TDeviceContext(pDevice, type),
+	VKNDeviceContext::VKNDeviceContext(VKNDevice* pDevice, DeviceContextType type)
+		: TDeviceContext(pDevice, type),
 		m_CommandPool(VK_NULL_HANDLE),
 		m_pFrameResources(nullptr),
-        m_pCurrentFrameResource(nullptr),
+		m_pCurrentFrameResource(nullptr),
 		m_pResourceTracker(nullptr),
-        m_RenderPass(VK_NULL_HANDLE),
-        m_Framebuffer(VK_NULL_HANDLE),
-        m_NumFrameResources(0),
+		m_RenderPass(VK_NULL_HANDLE),
+		m_Framebuffer(VK_NULL_HANDLE),
+		m_Pipeline(VK_NULL_HANDLE),
+		m_NumFrameResources(0),
 		m_NumCommands(0),
-        m_FrameIndex(0),
-		m_ContextState(DEVICE_CONTEXT_STATE_WAITING)
+		m_FrameIndex(0),
+		m_ContextState(DEVICE_CONTEXT_STATE_WAITING),
+		m_CommitVertexBuffers(true),
+		m_CommitScissorRects(true),
+		m_CommitViewports(true),
+		m_CommitIndexBuffer(true)
     {
 		//Add a ref to the refcounter
 		this->AddRef();
@@ -169,19 +174,22 @@ namespace Lambda
 
 	void VKNDeviceContext::CommitPipelineState()
 	{
-		if (m_PipelineState)
+		//Check if the pipeline needs to be commited
+		if (m_Pipeline == VK_NULL_HANDLE)
 		{
+			LAMBDA_ASSERT_PRINT(m_PipelineState, "Vulkan: No PipelineState bound\n");
+
 			//Make sure that we have a commandbuffer
 			QueryCommandBuffer();
 
-			//Bind pipeline
-			VkPipeline pipeline = m_PipelineState->GetVkPipeline();
+			//Get pipeline
+			m_Pipeline = m_PipelineState->GetVkPipeline();
 
 			const PipelineStateDesc& desc = m_PipelineState->GetDesc();
 			if (desc.Type == PIPELINE_TYPE_GRAPHICS)
-				vkCmdBindPipeline(m_pCurrentFrameResource->CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+				vkCmdBindPipeline(m_pCurrentFrameResource->CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
 			else if (desc.Type == PIPELINE_TYPE_COMPUTE)
-				vkCmdBindPipeline(m_pCurrentFrameResource->CommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
+				vkCmdBindPipeline(m_pCurrentFrameResource->CommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, m_Pipeline);
 		}
 	}
 
@@ -213,42 +221,74 @@ namespace Lambda
 
 	void VKNDeviceContext::CommitVertexBuffers()
 	{
-		//Make sure that we have a commandbuffer
-		QueryCommandBuffer();
-
-		VkBuffer	 buffers[LAMBDA_MAX_VERTEXBUFFER_COUNT];
-		VkDeviceSize offsets[LAMBDA_MAX_VERTEXBUFFER_COUNT];
-		for (uint32 i = 0; i < m_NumVertexBuffers; i++)
+		if (m_CommitVertexBuffers)
 		{
-			if (m_VertexBuffers[i])
+			//Do not commit at next drawcall
+			m_CommitVertexBuffers = false;
+
+			//Make sure that we have a commandbuffer
+			QueryCommandBuffer();
+
+			VkBuffer	 buffers[LAMBDA_MAX_VERTEXBUFFER_COUNT];
+			VkDeviceSize offsets[LAMBDA_MAX_VERTEXBUFFER_COUNT];
+			for (uint32 i = 0; i < m_NumVertexBuffers; i++)
 			{
-				buffers[i] = m_VertexBuffers[i]->GetVkBuffer();
-				offsets[i] = m_VertexBuffers[i]->GetDynamicOffset();
+				if (m_VertexBuffers[i])
+				{
+					//Dynamic buffers always needs to be commited since they can change from drawcall to drawcall without need to be rebound
+					const BufferDesc& desc = m_VertexBuffers[i]->GetDesc();
+					if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
+						m_CommitVertexBuffers = true;
+
+					buffers[i] = m_VertexBuffers[i]->GetVkBuffer();
+					offsets[i] = m_VertexBuffers[i]->GetDynamicOffset();
+				}
+				else
+				{
+					buffers[i] = VK_NULL_HANDLE;
+					offsets[i] = 0;
+				}
 			}
-			else
-			{
-				buffers[i] = VK_NULL_HANDLE;
-				offsets[i] = 0;
-			}
+			vkCmdBindVertexBuffers(m_pCurrentFrameResource->CommandBuffer, 0, m_NumVertexBuffers, buffers, offsets);
 		}
-		vkCmdBindVertexBuffers(m_pCurrentFrameResource->CommandBuffer, 0, m_NumVertexBuffers, buffers, offsets);
 	}
 
 
 	void VKNDeviceContext::CommitIndexBuffer()
 	{
-		//Make sure that we have a commandbuffer
-		QueryCommandBuffer();
+		if (m_CommitIndexBuffer)
+		{
+			//We do not need to commit next frame
+			m_CommitIndexBuffer = false;
 
-		//Bind indexbuffer
-		VkBuffer	buffer		= m_IndexBuffer->GetVkBuffer();
-		VkIndexType indexType	= (m_IndexBufferFormat == FORMAT_R32_UINT) ? VK_INDEX_TYPE_UINT32 : VK_INDEX_TYPE_UINT16;
-		vkCmdBindIndexBuffer(m_pCurrentFrameResource->CommandBuffer, buffer, m_IndexBuffer->GetDynamicOffset(), indexType);
+			//Check of we have a indexbuffer
+			if (m_IndexBuffer)
+			{
+				//Make sure that we have a commandbuffer
+				QueryCommandBuffer();
+
+				//Dynamic buffers needs to be commited every drawcall
+				const BufferDesc& desc = m_IndexBuffer->GetDesc();
+				if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
+					m_CommitIndexBuffer = true;
+
+				//Bind indexbuffer
+				VkBuffer	buffer		= m_IndexBuffer->GetVkBuffer();
+				VkIndexType indexType	= (m_IndexBufferFormat == FORMAT_R32_UINT) ? VK_INDEX_TYPE_UINT32 : VK_INDEX_TYPE_UINT16;
+				vkCmdBindIndexBuffer(m_pCurrentFrameResource->CommandBuffer, buffer, m_IndexBuffer->GetDynamicOffset(), indexType);
+			}
+		}
 	}
 
 
 	void VKNDeviceContext::CommitRenderTargetsAndDepthStencil()
 	{
+		//If we have a framebuffer we return
+		if (m_Framebuffer != VK_NULL_HANDLE)
+		{
+			return;
+		}
+
 		//Setup renderpass
 		VKNRenderPassCacheKey renderPasskey = {};
 		renderPasskey.NumRenderTargets = m_NumRenderTargets;
@@ -300,43 +340,82 @@ namespace Lambda
 
 	void VKNDeviceContext::CommitViewports()
 	{
-		//Make sure that we have a commandbuffer
-		QueryCommandBuffer();
-
-		//Set viewports
-		VkViewport views[LAMBDA_MAX_VIEWPORT_COUNT] = {};
-		for (uint32 i = 0; i < m_NumViewports; i++)
+		if (m_CommitViewports)
 		{
-			views[i].width		=  m_Viewports[i].Width;
-			views[i].height		= -m_Viewports[i].Height;
-			views[i].minDepth	=  m_Viewports[i].MinDepth;
-			views[i].maxDepth	=  m_Viewports[i].MaxDepth;
-			views[i].x			=  m_Viewports[i].TopX;
-			views[i].y			=  m_Viewports[i].TopY + m_Viewports[i].Height;
+			//Commit not needed anymore
+			m_CommitViewports = false;
+
+			//Make sure that we have a commandbuffer
+			QueryCommandBuffer();
+
+			//Set viewports
+			VkViewport views[LAMBDA_MAX_VIEWPORT_COUNT] = {};
+			for (uint32 i = 0; i < m_NumViewports; i++)
+			{
+				views[i].width		=  m_Viewports[i].Width;
+				views[i].height		= -m_Viewports[i].Height;
+				views[i].minDepth	=  m_Viewports[i].MinDepth;
+				views[i].maxDepth	=  m_Viewports[i].MaxDepth;
+				views[i].x			=  m_Viewports[i].TopX;
+				views[i].y			=  m_Viewports[i].TopY + m_Viewports[i].Height;
+			}
+			vkCmdSetViewport(m_pCurrentFrameResource->CommandBuffer, 0, m_NumViewports, views);
 		}
-		vkCmdSetViewport(m_pCurrentFrameResource->CommandBuffer, 0, m_NumViewports, views);
 	}
 
 
 	void VKNDeviceContext::CommitScissorRects()
 	{
-		//Make sure that we have a commandbuffer
-		QueryCommandBuffer();
-
-		//Set scissorrects
-		VkRect2D rects[LAMBDA_MAX_SCISSOR_RECT_COUNT] = {};
-		for (uint32 i = 0; i < m_NumScissorRects; i++)
+		if (m_CommitScissorRects)
 		{
-			rects[i].offset.x		= int32(m_ScissorRects[i].X);
-			rects[i].offset.y		= int32(m_ScissorRects[i].Y);
-			rects[i].extent.height	= uint32(m_ScissorRects[i].Height);
-			rects[i].extent.width	= uint32(m_ScissorRects[i].Width);
+			//We do not need commits anymore
+			m_CommitScissorRects = false;
+
+			//Make sure that we have a commandbuffer
+			QueryCommandBuffer();
+
+			//Set scissorrects
+			VkRect2D rects[LAMBDA_MAX_SCISSOR_RECT_COUNT] = {};
+			for (uint32 i = 0; i < m_NumScissorRects; i++)
+			{
+				rects[i].offset.x		= int32(m_ScissorRects[i].X);
+				rects[i].offset.y		= int32(m_ScissorRects[i].Y);
+				rects[i].extent.height	= uint32(m_ScissorRects[i].Height);
+				rects[i].extent.width	= uint32(m_ScissorRects[i].Width);
+			}
+			vkCmdSetScissor(m_pCurrentFrameResource->CommandBuffer, 0, m_NumScissorRects, rects);
 		}
-		vkCmdSetScissor(m_pCurrentFrameResource->CommandBuffer, 0, m_NumScissorRects, rects);
 	}
     
     
-    void VKNDeviceContext::BlitTexture(VKNTexture* pDst, uint32 dstWidth, uint32 dstHeight, uint32 dstMipLevel, VKNTexture* pSrc, uint32 srcWidth, uint32 srcHeight, uint32 srcMipLevel)
+	void VKNDeviceContext::CopyBuffer(VkBuffer dstBuffer, VkDeviceSize dstOffset, VkBuffer srcBuffer, VkDeviceSize srcOffset, VkDeviceSize sizeInBytes)
+	{
+		//Check if we should flush the context
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
+		{
+			this->Flush();
+		}
+
+		//Make sure that we have a commandbuffer
+		QueryCommandBuffer();
+
+		//End renderpass when clearing depthstencil
+		if (IsInsideRenderPass())
+			EndRenderPass();
+
+		//Copy buffer
+		VkBufferCopy copyRegion = {};
+		copyRegion.srcOffset	= srcOffset;
+		copyRegion.dstOffset	= dstOffset;
+		copyRegion.size			= sizeInBytes;
+		vkCmdCopyBuffer(m_pCurrentFrameResource->CommandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+
+		//Count command
+		m_NumCommands++;
+	}
+
+
+	void VKNDeviceContext::BlitTexture(VKNTexture* pDst, uint32 dstWidth, uint32 dstHeight, uint32 dstMipLevel, VKNTexture* pSrc, uint32 srcWidth, uint32 srcHeight, uint32 srcMipLevel)
     {
 		//Check if we should flush the context
 		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
@@ -446,6 +525,10 @@ namespace Lambda
 		//Call base
 		TDeviceContext::SetRendertargets(ppRenderTargets, numRenderTargets, pDepthStencil);
 
+		//Set framebuffer and renderpass to null
+		m_Framebuffer	= VK_NULL_HANDLE;
+		m_RenderPass	= VK_NULL_HANDLE;
+
 		//Count command
 		m_NumCommands++;
 	}
@@ -462,6 +545,9 @@ namespace Lambda
 		//Call base
 		TDeviceContext::SetViewports(pViewports, numViewports);
 
+		//We need to commit Viewports now
+		m_CommitViewports = true;
+
 		//Count command
 		m_NumCommands++;
     }
@@ -477,6 +563,9 @@ namespace Lambda
 
 		//Call base
 		TDeviceContext::SetScissorRects(pScissorRects, numRects);
+		
+		//We need to commit Scissor rects now
+		m_CommitScissorRects = true;
 
 		//Count command
 		m_NumCommands++;
@@ -493,6 +582,9 @@ namespace Lambda
 
 		//Call base
 		TDeviceContext::SetPipelineState(pPipelineState);
+
+		//PipelineState needs to be commited
+		m_Pipeline = VK_NULL_HANDLE;
 
 		//Count command
 		m_NumCommands++;
@@ -525,6 +617,9 @@ namespace Lambda
 
 		//Call base
 		TDeviceContext::SetVertexBuffers(pBuffers, numBuffers, slot);
+
+		//We now need to commit
+		m_CommitVertexBuffers = true;
 
 		//Count command
 		m_NumCommands++;
@@ -609,46 +704,21 @@ namespace Lambda
         LAMBDA_ASSERT_PRINT(pData != nullptr, "Vulkan: pData cannot be nullptr\n");
         LAMBDA_ASSERT_PRINT(pData->pData != nullptr && pData->SizeInBytes != 0, "Vulkan: ResourceData::pData or ResourceData::SizeInBytes cannot be null\n");
 
-		//Check if we should flush the context
-		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
-		{
-			this->Flush();
-		}
-
-		VKNBuffer* pVkResource = reinterpret_cast<VKNBuffer*>(pResource);
+		VKNBuffer* pVkBuffer = reinterpret_cast<VKNBuffer*>(pResource);
 		
-		//Update dynamic resource with dynamic offset
-		const BufferDesc& bufferDesc = pResource->GetDesc();
+		//Update a not dynamic buffer
+		const BufferDesc& bufferDesc = pVkBuffer->GetDesc();
 		if (bufferDesc.Usage == RESOURCE_USAGE_DEFAULT)
 		{
-			//Make sure that we have a commandbuffer
-			QueryCommandBuffer();
-
-			//End renderpass before updating default buffer
-			if (IsInsideRenderPass())
-				EndRenderPass();
-
-			//Get device properties
-			VkPhysicalDeviceProperties properties = m_pDevice->GetPhysicalDeviceProperties();
-			uint64 alignment = VkDeviceSize(4);
-			if (bufferDesc.Flags & BUFFER_FLAGS_CONSTANT_BUFFER)
-				alignment = std::max(alignment, properties.limits.minUniformBufferOffsetAlignment);
-
             //Allocate memory in the uploadbuffer
+			VkDeviceSize alignment	= pVkBuffer->GetAlignment();
             VKNUploadAllocation mem = m_pCurrentFrameResource->BufferUpload->Allocate(pData->SizeInBytes, alignment);
+
 			LAMBDA_ASSERT_PRINT(pData->SizeInBytes <= mem.SizeInBytes, "Vulkan: ResourceData::SizeInBytes is bigger than the allocated space\n");
-            memcpy(mem.pHostMemory, pData->pData, pData->SizeInBytes);
+			memcpy(mem.pHostMemory, pData->pData, pData->SizeInBytes);
 
-            //Copy buffer
-            VkBufferCopy copyRegion = {};
-            copyRegion.srcOffset    = mem.DeviceOffset;
-            copyRegion.dstOffset    = 0;
-            copyRegion.size         = pData->SizeInBytes;
-            VkBuffer dstBuffer = reinterpret_cast<VkBuffer>(pVkResource->GetNativeHandle());
-            vkCmdCopyBuffer(m_pCurrentFrameResource->CommandBuffer, mem.Buffer, dstBuffer, 1, &copyRegion);
-
-			//Count command
-			m_NumCommands++;
+			//Update buffer
+			CopyBuffer(pVkBuffer->GetVkBuffer(), 0, mem.Buffer, mem.DeviceOffset, pData->SizeInBytes);
 		}
 		else if (bufferDesc.Usage == RESOURCE_USAGE_DYNAMIC)
 		{
@@ -668,14 +738,14 @@ namespace Lambda
 			this->Flush();
 		}
 
+		//Transition resource state
+        VKNTexture* pVkResource = reinterpret_cast<VKNTexture*>(pResource);
         TransitionTexture(pResource, RESOURCE_STATE_COPY_DEST, VK_REMAINING_MIP_LEVELS);
 		FlushResourceBarriers();
 
-        VKNTexture* pVkResource = reinterpret_cast<VKNTexture*>(pResource);
-    
 		//Get device properties
 		VkPhysicalDeviceProperties properties = m_pDevice->GetPhysicalDeviceProperties();
-		uint64 alignment = std::max(properties.limits.optimalBufferCopyOffsetAlignment, VkDeviceSize(4));
+		uint64 alignment = std::max(VkDeviceSize(4), properties.limits.optimalBufferCopyOffsetAlignment);
 
         //Allocate memory in the uploadbuffer
 		VKNUploadAllocation mem = m_pCurrentFrameResource->TextureUpload->Allocate(pData->SizeInBytes, alignment);
@@ -704,35 +774,13 @@ namespace Lambda
     
     void VKNDeviceContext::CopyBuffer(IBuffer* pDst, IBuffer* pSrc)
     {
-		//Check if we should flush the context
-		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
-		{
-			this->Flush();
-		}
-
-		//Make sure that we have a commandbuffer
-		QueryCommandBuffer();
-
-		//End renderpass when clearing depthstencil
-		if (IsInsideRenderPass())
-			EndRenderPass();
-
-		//Copy buffer
-        VkBufferCopy copyRegion = {};
-        copyRegion.srcOffset = 0;
-        copyRegion.dstOffset = 0;
-        copyRegion.size = pDst->GetDesc().SizeInBytes;
-    
-        VkBuffer srcBuffer = reinterpret_cast<VkBuffer>(pSrc->GetNativeHandle());
-        VkBuffer dstBuffer = reinterpret_cast<VkBuffer>(pDst->GetNativeHandle());
-        vkCmdCopyBuffer(m_pCurrentFrameResource->CommandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
-
-		//Count command
-		m_NumCommands++;
+        VKNBuffer* pSrcBuffer = reinterpret_cast<VKNBuffer*>(pSrc);
+		VKNBuffer* pDstBuffer = reinterpret_cast<VKNBuffer*>(pDst);
+		CopyBuffer(pDstBuffer->GetVkBuffer(), 0, pSrcBuffer->GetVkBuffer(), 0, pDstBuffer->GetDesc().SizeInBytes);
     }
 
 
-	void VKNDeviceContext::MapBuffer(IBuffer* pBuffer, MapFlag mapFlag, void** ppData)
+	void VKNDeviceContext::MapBuffer(IBuffer* pBuffer, uint32 mapFlags, void** ppData)
 	{
 		//Check if we should flush the context
 		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
@@ -741,27 +789,39 @@ namespace Lambda
 		}
 
 		const BufferDesc& desc = pBuffer->GetDesc();
-		if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
+		if (desc.Usage != RESOURCE_USAGE_DYNAMIC)
 		{
-			if (mapFlag == MAP_FLAG_WRITE)
+			LOG_DEBUG_ERROR("Vulkan: Cannot map a buffer without usage RESOURCE_USAGE_DYNAMIC\n");
+		}
+
+		//Only writing supported for now
+		if (mapFlags & MAP_FLAG_WRITE)
+		{
+			//Get the dynamic memory
+			VKNBuffer* pVkBuffer		= reinterpret_cast<VKNBuffer*>(pBuffer);
+			VKNDynamicAllocation& mem	= pVkBuffer->m_DynamicState;
+
+			//If we have the discard-flag we allocate new memory and use that
+			if (mapFlags & MAP_FLAG_WRITE_DISCARD)
 			{
 				if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE)
 				{
+					//Discard the old memory
+					m_pDevice->DeallocateDynamicMemory(mem);
 
+					//Allocate new memory
+					m_pDevice->AllocateDynamicMemory(mem, pVkBuffer->m_Desc.SizeInBytes, pVkBuffer->GetAlignment());
 				}
 				else
 				{
 					LOG_DEBUG_ERROR("Vulkan: Only an ImmediateContext can map with MAP_FLAG_WRITE\n");
 				}
 			}
-			else if (mapFlag == MAP_FLAG_WRITE_DISCARD)
-			{
-				
-			}
-		}
-		else
-		{
-			LOG_DEBUG_ERROR("Vulkan: Cannot map a buffer without usage RESOURCE_USAGE_DYNAMIC\n");
+
+			//TODO: Some syncronization should probably be done here
+
+			//Then return the memory
+			(*ppData) = mem.pHostMemory;
 		}
 
 		//Count command
@@ -776,6 +836,8 @@ namespace Lambda
 		{
 			this->Flush();
 		}
+
+		//TODO: ??
 
 		//Count command
 		m_NumCommands++;
@@ -875,7 +937,7 @@ namespace Lambda
 	void VKNDeviceContext::ExecuteDefferedContext(IDeviceContext* pContext)
 	{
 		//Check if we should flush the context
-		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
+		/*if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
 		{
 			this->Flush();
 		}
@@ -883,7 +945,7 @@ namespace Lambda
 		//TODO:
 
 		//Count command
-		m_NumCommands++;
+		m_NumCommands++;*/
 	}
     
     
@@ -991,13 +1053,21 @@ namespace Lambda
 
 		//Set commandcount
 		m_NumCommands = 0;
+
+		//Reset commits
+		m_Pipeline	  = VK_NULL_HANDLE;
+		m_Framebuffer = VK_NULL_HANDLE;
+		m_CommitVertexBuffers = true;
+		m_CommitViewports	  = true;
+		m_CommitScissorRects  = true;
+		m_CommitIndexBuffer	  = true;
     }
     
 
 	void VKNDeviceContext::BeginRenderPass()
 	{
         LAMBDA_ASSERT_PRINT(!IsInsideRenderPass(), "Vulkan: EndRenderPass must be called before a new call to BeginRenderPass\n");
-		LAMBDA_ASSERT_PRINT(m_RenderPass != VK_NULL_HANDLE && m_Framebuffer != VK_NULL_HANDLE, "Vulkan: SetRenderTargets must be called before BeginRenderPass\n");
+		LAMBDA_ASSERT_PRINT(m_RenderPass != VK_NULL_HANDLE && m_Framebuffer != VK_NULL_HANDLE, "Vulkan: CommitRenderTargetsAndDepthStencil must be called before BeginRenderPass\n");
 
 		//LOG_DEBUG_INFO("BeginRenderPass()\n");
 

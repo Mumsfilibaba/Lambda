@@ -2,7 +2,6 @@
 #include "Graphics/Core/IDevice.h"
 #include "VKNAllocator.h"
 #include "VKNSafeReleaseManager.h"
-
 #include "VKNUtilities.h"
 
 #define FRAMES_AHEAD 3
@@ -15,7 +14,6 @@ namespace Lambda
     class VKNSamplerState;
     class VKNUploadBuffer;
     class VKNDeviceContext;
-    class VKNBufferManager;
 	class VKNRenderPassCache;
     class VKNFramebufferCache;
     
@@ -51,24 +49,66 @@ namespace Lambda
 		
 		bool AllocateImage(VKNAllocation& allocation, VkImage image, ResourceUsage usage);
 		bool AllocateBuffer(VKNAllocation& allocation, VkBuffer buffer, ResourceUsage usage);
-		void Deallocate(VKNAllocation& allocation);
-		bool AllocateDynamicMemory(VKNDynamicAllocation& allocation, uint64 sizeInBytes, uint64 alignment);
-		void DeallocateDynamicMemory(VKNDynamicAllocation& allocation);
+
+		VkSampleCountFlagBits GetHighestSampleCount() const;
+		VKNDeviceContext* GetVKNImmediateContext() const;
+
+		void SetVulkanObjectName(VkObjectType type, uint64 objectHandle, const std::string& name);
+
+
+		inline void VKNDevice::Deallocate(VKNAllocation& allocation)
+		{
+			m_pDeviceAllocator->Deallocate(allocation);
+		}
+
+
+		inline bool VKNDevice::AllocateDynamicMemory(VKNDynamicAllocation& allocation, uint64 sizeInBytes, uint64 alignment)
+		{
+			return m_pDynamicMemoryAllocator->Allocate(allocation, sizeInBytes, alignment);
+		}
+
+
+		inline void VKNDevice::DeallocateDynamicMemory(VKNDynamicAllocation& allocation)
+		{
+			m_pDynamicMemoryAllocator->Deallocate(allocation);
+		}
+
+
+		inline VkInstance GetVkInstance() const				
+		{ 
+			return m_Instance; 
+		}
+		
+
+		inline VkDevice GetVkDevice() const					
+		{ 
+			return m_Device; 
+		}
+		
+		
+		inline VkPhysicalDevice GetVkPhysicalDevice() const	
+		{ 
+			return m_PhysicalDevice; 
+		}
+		
+		
+		inline const QueueFamilyIndices& GetQueueFamilyIndices() const				 
+		{ 
+			return m_FamiliyIndices; 
+		}
+		
+
+		inline const VkPhysicalDeviceProperties& GetPhysicalDeviceProperties() const 
+		{ 
+			return m_PhysicalDeviceProperties; 
+		}
+
 
 		template<typename VkResourceType>
-		void SafeReleaseVulkanResource(const VkResourceType& resource)
+		inline void SafeReleaseVulkanResource(const VkResourceType& resource)
 		{
 			m_pSafeReleaseManager->ReleaseResource<VkResourceType>(resource);
 		}
-
-		void SetVulkanObjectName(VkObjectType type, uint64 objectHandle, const std::string& name);
-		VkSampleCountFlagBits GetHighestSampleCount() const;
-		VKNDeviceContext* GetVKNImmediateContext() const;
-		inline VkInstance GetVkInstance() const				{ return m_Instance; }
-		inline VkDevice GetVkDevice() const					{ return m_Device; }
-		inline VkPhysicalDevice GetVkPhysicalDevice() const	{ return m_PhysicalDevice; }
-		inline const QueueFamilyIndices& GetQueueFamilyIndices() const				 { return m_FamiliyIndices; }
-		inline const VkPhysicalDeviceProperties& GetPhysicalDeviceProperties() const { return m_PhysicalDeviceProperties; }
 	private:
 		void Init(const DeviceDesc& desc);
 		void InitDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo);		
@@ -81,7 +121,6 @@ namespace Lambda
 		VKNAllocator*			   m_pDeviceAllocator;
 		VKNDynamicMemoryAllocator* m_pDynamicMemoryAllocator;
 		VKNDeviceContext*		   m_pImmediateContext;
-		VKNBufferManager*		   m_pBufferManager;
 		VKNRenderPassCache*		   m_pRenderPassCache;
 		VKNFramebufferCache*	   m_pFramebufferCache;
 		VKNSafeReleaseManager*	   m_pSafeReleaseManager;

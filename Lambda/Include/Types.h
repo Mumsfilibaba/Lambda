@@ -221,8 +221,8 @@ namespace Lambda
 	enum MapFlag : uint32
 	{
 		MAP_FLAG_UNKNOWN		= 0,
-		MAP_FLAG_WRITE			= 1,
-		MAP_FLAG_WRITE_DISCARD	= 2,
+		MAP_FLAG_WRITE			= (1 << 0),
+		MAP_FLAG_WRITE_DISCARD	= (1 << 1),
 	};
 
     

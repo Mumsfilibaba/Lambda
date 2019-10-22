@@ -13,12 +13,12 @@ namespace Lambda
 
 	struct VKNAllocation
 	{
-        int32			ChunkID             = -1;
-        int32           BlockID             = -1;
-        uint8*          pHostMemory         = nullptr;
-        VkDeviceSize    SizeInBytes         = 0;
-        VkDeviceSize    DeviceMemoryOffset  = 0;
-        VkDeviceMemory  DeviceMemory        = VK_NULL_HANDLE;
+        int32			PageID			   = -1;
+        int32           BlockID            = -1;
+        uint8*          pHostMemory        = nullptr;
+        VkDeviceSize    SizeInBytes        = 0;
+        VkDeviceSize    DeviceMemoryOffset = 0;
+        VkDeviceMemory  DeviceMemory       = VK_NULL_HANDLE;
 	};
 
     //--------------
@@ -59,28 +59,28 @@ namespace Lambda
 		void Map(VKNDevice* pDevice);
 		void Unmap(VKNDevice* pDevice);
 	private:
-		uint8*				m_pHostMemory;
-		VkDeviceMemory		m_DeviceMemory;
+		VkDeviceMemory	m_DeviceMemory;
+		VKNMemoryBlock*	m_pHead;
+		uint8* m_pHostMemory;
 		const ResourceUsage	m_Usage;
-		const uint32		m_ID;
-		const uint32		m_MemoryType;
-		const uint64		m_SizeInBytes;
-        uint32              m_BlockCount;
-		VKNMemoryBlock*		m_pBlockHead;
-		bool				m_IsMapped;
+		const uint32 m_ID;
+		const uint32 m_MemoryType;
+		const uint64 m_SizeInBytes;
+        uint32 m_BlockCount;
+		bool m_IsMapped;
 	};
 
-	//------------
-	//VKNAllocator
-	//------------
+	//------------------
+	//VKNDeviceAllocator
+	//------------------
 
-	class VKNAllocator final
+	class VKNDeviceAllocator final
 	{
 	public:
-		LAMBDA_NO_COPY(VKNAllocator);
+		LAMBDA_NO_COPY(VKNDeviceAllocator);
 
-		VKNAllocator(VKNDevice* pDevice);
-		~VKNAllocator();
+		VKNDeviceAllocator(VKNDevice* pDevice);
+		~VKNDeviceAllocator();
 
 		bool Allocate(VKNAllocation& allocation, const VkMemoryRequirements& memoryRequirements, ResourceUsage usage);
 		void Deallocate(VKNAllocation& allocation);
@@ -91,94 +91,12 @@ namespace Lambda
 	private:
 		VKNDevice* m_pDevice;
         uint64 m_FrameIndex;
-		std::vector<VKNMemoryPage*> m_Chunks;
+		std::vector<VKNMemoryPage*> m_Pages;
 		std::vector<std::vector<VKNAllocation>>	m_MemoryToDeallocate;
 		uint64 m_TotalAllocated;
 		uint64 m_TotalReserved;
 		uint64 m_MaxAllocations;
         VkDeviceSize m_BufferImageGranularity;
-	};
-
-	//--------------------
-	//VKNDynamicAllocation
-	//--------------------
-
-	struct VKNDynamicAllocation
-	{
-		int32			ChunkID = -1;
-		int32           BlockID = -1;
-		VkDeviceSize    SizeInBytes		= 0;
-		VkDeviceSize    BufferOffset	= 0;
-		uint8*			pHostMemory		= nullptr;
-		VkBuffer		Buffer			= VK_NULL_HANDLE;
-	};
-
-	//---------------------
-	//VKNDynamicMemoryBlock
-	//---------------------
-
-	struct VKNDynamicMemoryBlock
-	{
-		VKNDynamicMemoryBlock* pNext = nullptr;
-		VKNDynamicMemoryBlock* pPrevious = nullptr;
-		uint32          ID					= 0;
-		VkDeviceSize    SizeInBytes			= 0;
-		VkDeviceSize    PaddedSizeInBytes	= 0;
-		VkDeviceSize    BufferOffset		= 0;
-		bool            IsFree				= true;
-	};
-
-	//---------------------
-	//VKNDynamicMemoryPage
-	//---------------------
-
-	class VKNDynamicMemoryPage
-	{
-	public:
-		LAMBDA_NO_COPY(VKNDynamicMemoryPage);
-
-		VKNDynamicMemoryPage(VKNDevice* pDevice, uint32 id, VkDeviceSize sizeInBytes);
-		~VKNDynamicMemoryPage() = default;
-
-		bool Allocate(VKNDynamicAllocation& allocation, VkDeviceSize sizeInBytes, VkDeviceSize alignment);
-		void Deallocate(VKNDynamicAllocation& allocation);
-		void Destroy(VKNDevice* pDevice);
-	private:
-		void Init(VKNDevice* pDevice);
-	private:
-		VKNDynamicMemoryBlock* m_pBlockHead;
-		VkBuffer m_Buffer;
-		VKNAllocation m_Memory;
-		const uint32 m_ID;
-		const uint64 m_SizeInBytes;
-		uint32 m_BlockCount;
-	};
-
-	//-------------------------
-	//VKNDynamicMemoryAllocator
-	//-------------------------
-
-	class VKNDynamicMemoryAllocator final
-	{
-	public:
-		LAMBDA_NO_COPY(VKNDynamicMemoryAllocator);
-
-		VKNDynamicMemoryAllocator(VKNDevice* pDevice);
-		~VKNDynamicMemoryAllocator();
-
-		bool Allocate(VKNDynamicAllocation& allocation, uint64 sizeInBytes, uint64 alignment);
-		void Deallocate(VKNDynamicAllocation& allocation);
-		void EmptyGarbageMemory();
-
-		inline uint64 GetTotalReserved() const	{ return m_TotalReserved; }
-		inline uint64 GetTotalAllocated() const { return m_TotalAllocated; }
-	private:
-		VKNDevice* m_pDevice;
-		uint64 m_FrameIndex;
-		std::vector<VKNDynamicMemoryPage*> m_Chunks;
-		std::vector<std::vector<VKNDynamicAllocation>>	m_MemoryToDeallocate;
-		uint64 m_TotalReserved;
-		uint64 m_TotalAllocated;
 	};
 
 	//-------------------------

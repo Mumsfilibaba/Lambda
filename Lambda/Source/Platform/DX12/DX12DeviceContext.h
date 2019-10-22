@@ -41,7 +41,7 @@ namespace Lambda
 
 		virtual void CopyBuffer(IBuffer* pDst, IBuffer* pSrc) override final;
 
-		virtual void MapBuffer(IBuffer* pBuffer, MapFlag mapFlag, void** ppData) override final;
+		virtual void MapBuffer(IBuffer* pBuffer, uint32 mapFlags, void** ppData) override final;
 		virtual void UnmapBuffer(IBuffer* pBuffer) override final;
 
 		virtual void ResolveTexture(ITexture* pDst, uint32 dstMipLevel, ITexture* pSrc, uint32 srcMipLevel) override final;

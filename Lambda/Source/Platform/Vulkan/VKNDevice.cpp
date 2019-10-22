@@ -29,7 +29,6 @@ namespace Lambda
         m_PresentationQueue(VK_NULL_HANDLE),
 		m_pDeviceAllocator(nullptr),
 		m_pDynamicMemoryAllocator(nullptr),
-		m_pBufferManager(nullptr),
 		m_pFramebufferCache(nullptr),
 		m_pRenderPassCache(nullptr),
 		m_pImmediateContext(nullptr),
@@ -65,11 +64,10 @@ namespace Lambda
 		if (m_pFramebufferCache)
 			m_pFramebufferCache->ReleaseAll();
 
+		SafeDelete(m_pDynamicMemoryAllocator);
 		SafeDelete(m_pSafeReleaseManager);
 		SafeDelete(m_pRenderPassCache);
 		SafeDelete(m_pFramebufferCache);
-		SafeDelete(m_pBufferManager);
-		SafeDelete(m_pDynamicMemoryAllocator);
 		SafeDelete(m_pDeviceAllocator);
 
 		if (m_Device != VK_NULL_HANDLE)
@@ -404,8 +402,6 @@ namespace Lambda
 		m_pDynamicMemoryAllocator = DBG_NEW VKNDynamicMemoryAllocator(this);
 		//Create SafeReleaseManager
 		m_pSafeReleaseManager = DBG_NEW VKNSafeReleaseManager(this);
-		//Create dynamic buffer manager
-		m_pBufferManager = DBG_NEW VKNBufferManager();
 		//Create framebuffercache
 		m_pFramebufferCache = DBG_NEW VKNFramebufferCache(this);
 		//Create renderpasscache
@@ -427,34 +423,7 @@ namespace Lambda
     void VKNDevice::CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc)
     {
 		LAMBDA_ASSERT(ppBuffer != nullptr);
-        
-        //Create buffer
-        VKNBuffer* pVkBuffer = DBG_NEW VKNBuffer(this, desc);
-        if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
-            m_pBufferManager->RegisterBuffer(pVkBuffer);
-        
-        //Upload inital data
-        if (pInitalData)
-        {
-            LAMBDA_ASSERT(pInitalData->pData != nullptr && pInitalData->SizeInBytes != 0);
-            
-            if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
-            {
-                //Upload directly to buffer if it is dynamic
-                void* pMappedData = nullptr;
-                
-                pVkBuffer->Map(&pMappedData);
-                memcpy(pMappedData, pInitalData->pData, pInitalData->SizeInBytes);
-                pVkBuffer->Unmap();
-            }
-            else if (desc.Usage == RESOURCE_USAGE_DEFAULT)
-            {
-				//Setup copy with staging buffer if other usecase
-                m_pImmediateContext->UpdateBuffer(pVkBuffer, pInitalData);
-            }
-        }
-
-        (*ppBuffer) = pVkBuffer;
+		(*ppBuffer) = DBG_NEW VKNBuffer(this, pInitalData, desc);
     }
     
     
@@ -573,8 +542,8 @@ namespace Lambda
     void VKNDevice::FinishFrame() const
     {
         //Cleanup memory
-        m_pBufferManager->AdvanceFrame();
 		m_pDeviceAllocator->EmptyGarbageMemory();
+		m_pDynamicMemoryAllocator->EmptyGarbageMemory();
 		m_pSafeReleaseManager->EmptyResources();
     }
     
@@ -617,24 +586,6 @@ namespace Lambda
 			LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for buffer\n");
 			return false;
 		}
-	}
-
-
-	void VKNDevice::Deallocate(VKNAllocation& allocation)
-	{
-		m_pDeviceAllocator->Deallocate(allocation);
-	}
-
-	
-	bool VKNDevice::AllocateDynamicMemory(VKNDynamicAllocation& allocation, uint64 sizeInBytes, uint64 alignment)
-	{
-		return m_pDynamicMemoryAllocator->Allocate(allocation, sizeInBytes, alignment);
-	}
-
-	
-	void VKNDevice::DeallocateDynamicMemory(VKNDynamicAllocation& allocation)
-	{
-		m_pDynamicMemoryAllocator->Deallocate(allocation);
 	}
 
 

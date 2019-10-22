@@ -383,15 +383,15 @@ namespace Lambda
 		m_Context->SetViewports(&m_Viewport, 1);
 		m_Context->SetScissorRects(&m_ScissorRect, 1);
 
-		ResourceData data = {};
+		ResourceData data;
 		MeshData meshData = MeshFactory::CreatePlane();
 		for (auto& vertex : meshData.Vertices)
 		{
 			vertex.Position.x += 0.5f;
 			vertex.Position.y += 0.5f;
-			vertex.Position *= 0.1f;
-			vertex.Position.x -= 0.95f;
-			vertex.Position.y += 0.85f;
+			vertex.Position *= 0.05f;
+			vertex.Position.x -= 1.0f;
+			vertex.Position.y += 1.0f;
 		}
 		
 		//Set mesh
@@ -402,29 +402,33 @@ namespace Lambda
 		m_Context->SetPipelineState(m_PipelineState.Get());
 
 		float xpos = 0.0f;
-		for (uint32 y = 0; y < 16; y++)
+		for (uint32 y = 0; y < 27; y++)
 		{
 			xpos = 0.0f;
-			for (uint32 x = 0; x < 16; x++)
-			{
-				data.pData = meshData.Vertices.data();
-				data.SizeInBytes = sizeof(Vertex) * meshData.Vertices.size();
-		
+			for (uint32 x = 0; x < 27; x++)
+			{	
 				//Update buffer
+				/*void* pMappedData = nullptr;
+				m_Context->MapBuffer(m_Mesh.pVertexBuffer, MAP_FLAG_WRITE | MAP_FLAG_WRITE_DISCARD, &pMappedData);
+				memcpy(pMappedData, meshData.Vertices.data(), sizeof(Vertex) * meshData.Vertices.size());
+				m_Context->UnmapBuffer(m_Mesh.pVertexBuffer);*/
+
+				data.pData			= meshData.Vertices.data();
+				data.SizeInBytes	= sizeof(Vertex) * meshData.Vertices.size();
 				m_Context->UpdateBuffer(m_Mesh.pVertexBuffer, &data);
+
 				//Draw
 				m_Context->DrawIndexedInstanced(m_Mesh.IndexCount, 1, 0, 0, 0);
-
-				xpos += 0.15f;
+				xpos += 0.075f;
 				for (auto& vertex : meshData.Vertices)
-					vertex.Position.x += 0.15f;
+					vertex.Position.x += 0.075f;
 			}
 
 			for (auto& vertex : meshData.Vertices)
 				vertex.Position.x -= xpos;
 
 			for (auto& vertex : meshData.Vertices)
-				vertex.Position.y -= 0.15f;
+				vertex.Position.y -= 0.075f;
 		}
 
 		//Present
@@ -436,11 +440,6 @@ namespace Lambda
 	{
 		m_Mesh.pVertexBuffer->Release();
 		m_Mesh.pIndexBuffer->Release();
-		//m_SphereMesh.pVertexBuffer->Release();
-		//m_SphereMesh.pIndexBuffer->Release();
-		//m_AlbedoMap.Release();
-		//m_NormalMap.Release();
-		//m_SamplerState.Release();
 	}
 
 

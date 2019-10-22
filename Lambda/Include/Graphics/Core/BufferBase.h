@@ -14,9 +14,9 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(BufferBase);
 
-		BufferBase(TDeviceImpl* pDevice)
+		BufferBase(TDeviceImpl* pDevice, const BufferDesc& desc)
 			: DeviceObjectBase<TDeviceImpl, IBuffer>(pDevice),
-			m_Desc()
+			m_Desc(desc)
 		{
 		}
 		~BufferBase() = default;

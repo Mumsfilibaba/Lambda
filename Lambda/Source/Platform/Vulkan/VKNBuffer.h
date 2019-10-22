@@ -13,37 +13,28 @@ namespace Lambda
 
     class VKNBuffer final : public BufferBase<VKNDevice>
     {
+		friend class VKNDeviceContext;
+		using TBuffer = BufferBase<VKNDevice>;
+
     public:
         LAMBDA_NO_COPY(VKNBuffer);
         
-        VKNBuffer(VKNDevice* pDevice, const BufferDesc& desc);
+        VKNBuffer(VKNDevice* pDevice, const ResourceData* pInitalData, const BufferDesc& desc);
         ~VKNBuffer();
         
         virtual void* GetNativeHandle() const override final;
+		virtual void SetName(const char* pName) override final;
 
-		void Map(void** ppMem);
-        void Unmap();
-
-		void AdvanceFrame();
-		void DynamicUpdate(const ResourceData* pData);
-		void Reallocate(uint32 sizeInBytes);
-		
-		inline VkBuffer GetVkBuffer() const		{ return m_Buffer; }
-		inline bool   IsDirty() const			{ return m_IsDirty; }
-		inline void   SetIsClean()				{ m_IsDirty = false; }
-		inline uint64 GetDynamicOffset() const	{ return  m_DynamicOffset + m_FrameOffset; }
+		VkBuffer GetVkBuffer() const;
+		inline VkDeviceSize GetDynamicOffset() const	{ return m_DynamicState.BufferOffset; }
+		inline VkDeviceSize GetAlignment() const		{ return m_DynamicOffsetAlignment; }
     private:
-        void Init(const BufferDesc& desc);
+        void Init(const ResourceData* pInitalData, const BufferDesc& desc);
     private:
-        VkBuffer m_Buffer;
+        VkBuffer m_VkBuffer;
         VKNAllocation m_Memory;
 		VKNDynamicAllocation m_DynamicState;
-		uint64 m_SizePerFrame;
-		uint64 m_SizePerUpdate;
-        uint64 m_TotalSize;
-        uint64 m_FrameOffset;
-		uint64 m_DynamicOffset;
-		bool m_IsDirty;
+		VkDeviceSize m_DynamicOffsetAlignment;
     };
 
 	//-------------------
@@ -83,28 +74,4 @@ namespace Lambda
         VKNAllocation m_Memory;
         uint64    m_Offset;
     };
-
-	//----------------
-	//VKNBufferManager
-	//----------------
-
-	class VKNBufferManager final
-	{
-	public:
-		LAMBDA_NO_COPY(VKNBufferManager);
-
-		VKNBufferManager();
-		~VKNBufferManager();
-
-		void AdvanceFrame();
-		void RegisterBuffer(VKNBuffer* pBuffer);
-		void UnregisterBuffer(VKNBuffer* pBuffer);
-	private:
-        uint64  m_FrameIndex;
-        std::vector<VKNBuffer*>	m_Buffers;
-	public:
-		static VKNBufferManager& GetInstance();
-	private:
-		static VKNBufferManager* s_pInstance;
-	};
 }

@@ -17,7 +17,7 @@ int main()
 #endif
     params.Fullscreen   = false;
     params.VerticalSync = false;
-    params.SampleCount  = 8;
+    params.SampleCount  = 1;
     params.WindowWidth  = 1920;
     params.WindowHeight = 1080;
 

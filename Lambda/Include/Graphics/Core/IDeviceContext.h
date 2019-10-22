@@ -38,7 +38,7 @@ namespace Lambda
 
         virtual void CopyBuffer(IBuffer* pDst, IBuffer* pSrc) = 0;
 
-        virtual void MapBuffer(IBuffer* pBuffer, MapFlag mapFlag, void** ppData) = 0;
+        virtual void MapBuffer(IBuffer* pBuffer, uint32 mapFlags, void** ppData) = 0;
         virtual void UnmapBuffer(IBuffer* pBuffer) = 0;
         
         virtual void ResolveTexture(ITexture* pDst, uint32 dstMipLevel, ITexture* pSrc, uint32 srcMipLevel) = 0;
