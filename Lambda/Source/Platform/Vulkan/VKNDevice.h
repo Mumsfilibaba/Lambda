@@ -1,6 +1,7 @@
 #pragma once
 #include "Graphics/Core/IDevice.h"
-#include "VKNAllocator.h"
+#include "VKNDeviceAllocator.h"
+#include "VKNDynamicMemoryAllocator.h"
 #include "VKNSafeReleaseManager.h"
 #include "VKNUtilities.h"
 
@@ -12,7 +13,6 @@ namespace Lambda
     class VKNTexture;
     class VKNSwapChain;
     class VKNSamplerState;
-    class VKNUploadBuffer;
     class VKNDeviceContext;
 	class VKNRenderPassCache;
     class VKNFramebufferCache;
@@ -50,10 +50,10 @@ namespace Lambda
 		bool AllocateImage(VKNAllocation& allocation, VkImage image, ResourceUsage usage);
 		bool AllocateBuffer(VKNAllocation& allocation, VkBuffer buffer, ResourceUsage usage);
 
+		void SetVulkanObjectName(VkObjectType type, uint64 objectHandle, const std::string& name);
+
 		VkSampleCountFlagBits GetHighestSampleCount() const;
 		VKNDeviceContext* GetVKNImmediateContext() const;
-
-		void SetVulkanObjectName(VkObjectType type, uint64 objectHandle, const std::string& name);
 
 
 		inline void VKNDevice::Deallocate(VKNAllocation& allocation)
@@ -118,7 +118,7 @@ namespace Lambda
 		std::vector<const char*> GetRequiredDeviceExtensions();
 		std::vector<const char*> GetRequiredInstanceExtensions(bool debug);
     private:
-		VKNAllocator*			   m_pDeviceAllocator;
+		VKNDeviceAllocator*			m_pDeviceAllocator;
 		VKNDynamicMemoryAllocator* m_pDynamicMemoryAllocator;
 		VKNDeviceContext*		   m_pImmediateContext;
 		VKNRenderPassCache*		   m_pRenderPassCache;

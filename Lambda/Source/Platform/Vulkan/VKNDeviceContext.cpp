@@ -8,6 +8,7 @@
 #include "VKNSamplerState.h"
 #include "VKNRenderPassCache.h"
 #include "VKNFramebufferCache.h"
+#include "VKNUploadAllocator.h"
 #include "VKNConversions.inl"
 
 #define LAMBDA_VK_MAX_COMMANDS 256

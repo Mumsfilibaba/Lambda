@@ -1,5 +1,5 @@
 #pragma once
-#include "VKNAllocator.h"
+#include "VKNDeviceAllocator.h"
 
 namespace Lambda
 {

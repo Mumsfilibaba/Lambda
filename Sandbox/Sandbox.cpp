@@ -192,7 +192,7 @@ namespace Lambda
 			{
                 BufferDesc desc     = {};
                 desc.pName          = "Mesh VertexBuffer";
-                desc.Usage          = RESOURCE_USAGE_DEFAULT;
+                desc.Usage          = RESOURCE_USAGE_DYNAMIC;
                 desc.Flags          = BUFFER_FLAGS_VERTEX_BUFFER;
                 desc.SizeInBytes    = sizeof(Vertex) * uint32(mesh.Vertices.size());
                 desc.StrideInBytes  = sizeof(Vertex);
@@ -408,14 +408,14 @@ namespace Lambda
 			for (uint32 x = 0; x < 27; x++)
 			{	
 				//Update buffer
-				/*void* pMappedData = nullptr;
+				void* pMappedData = nullptr;
 				m_Context->MapBuffer(m_Mesh.pVertexBuffer, MAP_FLAG_WRITE | MAP_FLAG_WRITE_DISCARD, &pMappedData);
 				memcpy(pMappedData, meshData.Vertices.data(), sizeof(Vertex) * meshData.Vertices.size());
-				m_Context->UnmapBuffer(m_Mesh.pVertexBuffer);*/
+				m_Context->UnmapBuffer(m_Mesh.pVertexBuffer);
 
-				data.pData			= meshData.Vertices.data();
+				/*data.pData			= meshData.Vertices.data();
 				data.SizeInBytes	= sizeof(Vertex) * meshData.Vertices.size();
-				m_Context->UpdateBuffer(m_Mesh.pVertexBuffer, &data);
+				m_Context->UpdateBuffer(m_Mesh.pVertexBuffer, &data);*/
 
 				//Draw
 				m_Context->DrawIndexedInstanced(m_Mesh.IndexCount, 1, 0, 0, 0);

@@ -5,11 +5,6 @@
 #include "VKNUtilities.h"
 
 //#define LAMBDA_ALLOCATOR_DEBUG
-//#define LAMBDA_DYNAMIC_ALLOCATOR_DEBUG
-#if defined(LAMBDA_DYNAMIC_ALLOCATOR_DEBUG)
-	#define LAMBDA_DYNAMIC_ALLOCATOR_DEBUG_ALLOC
-	#define LAMBDA_DYNAMIC_ALLOCATOR_DEBUG_DEALLOC
-#endif
 #define LAMBDA_ALLOCATOR_MAX MB(16)
 
 namespace Lambda
@@ -72,7 +67,6 @@ namespace Lambda
 
 	bool VKNMemoryPage::Allocate(VKNAllocation& allocation, VkDeviceSize sizeInBytes, VkDeviceSize alignment, VkDeviceSize granularity)
 	{
-        VkDeviceSize padding			= 0;
         VkDeviceSize paddedDeviceOffset = 0;
         VkDeviceSize paddedSizeInBytes  = 0;
         VKNMemoryBlock* pBestFit = nullptr;
@@ -329,9 +323,9 @@ namespace Lambda
 		delete this;
 	}
 
-	//------------
+	//------------------
 	//VKNDeviceAllocator
-	//------------
+	//------------------
 
     constexpr size_t numFrames = 5;
 

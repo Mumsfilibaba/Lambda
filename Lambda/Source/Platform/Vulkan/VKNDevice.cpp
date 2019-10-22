@@ -1,5 +1,4 @@
 #include "LambdaPch.h"
-#include "Events/WindowEvent.h"
 #include "VKNDevice.h"
 #include "VKNQuery.h"
 #include "VKNBuffer.h"
@@ -397,7 +396,7 @@ namespace Lambda
 		vkGetDeviceQueue(m_Device, m_FamiliyIndices.PresentFamily, 0, &m_PresentationQueue);
         
 		//Create allocator
-		m_pDeviceAllocator = DBG_NEW VKNAllocator(this);
+		m_pDeviceAllocator = DBG_NEW VKNDeviceAllocator(this);
 		//Create dynamic memory allocator
 		m_pDynamicMemoryAllocator = DBG_NEW VKNDynamicMemoryAllocator(this);
 		//Create SafeReleaseManager

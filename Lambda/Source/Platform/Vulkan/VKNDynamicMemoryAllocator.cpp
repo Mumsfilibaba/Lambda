@@ -3,6 +3,12 @@
 #include "VKNDynamicMemoryAllocator.h"
 #include "VKNDevice.h"
 
+//#define LAMBDA_DYNAMIC_ALLOCATOR_DEBUG
+#if defined(LAMBDA_DYNAMIC_ALLOCATOR_DEBUG)
+	#define LAMBDA_DYNAMIC_ALLOCATOR_DEBUG_ALLOC
+	#define LAMBDA_DYNAMIC_ALLOCATOR_DEBUG_DEALLOC
+#endif
+
 namespace Lambda
 {
 	//---------------------
@@ -315,6 +321,8 @@ namespace Lambda
 	//-------------------------
 	//VKNDynamicMemoryAllocator
 	//-------------------------
+
+	constexpr size_t numFrames = 5;
 
 	VKNDynamicMemoryAllocator::VKNDynamicMemoryAllocator(VKNDevice* pDevice)
 		: m_pDevice(pDevice),

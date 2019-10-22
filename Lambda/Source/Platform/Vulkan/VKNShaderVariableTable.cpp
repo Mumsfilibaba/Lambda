@@ -2,7 +2,7 @@
 #include "VKNShaderVariableTable.h"
 #include "VKNDevice.h"
 #include "VKNDeviceContext.h"
-#include "VKNAllocator.h"
+#include "VKNDeviceAllocator.h"
 #include "VKNConversions.inl"
 
 namespace Lambda

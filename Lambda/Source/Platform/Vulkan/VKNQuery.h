@@ -1,9 +1,11 @@
 #pragma once
 #include "Graphics/Core/QueryBase.h"
-#include "VKNAllocator.h"
+#include <vulkan/vulkan.h>
 
 namespace Lambda
 {
+	class VKNDevice;
+
     //--------
     //VKNQuery
     //--------
