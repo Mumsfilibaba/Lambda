@@ -52,6 +52,7 @@ namespace Lambda
 		Model m_Mesh;
 		Viewport  m_Viewport;
 		Rectangle m_ScissorRect;
+		AutoRef<IBuffer> m_PositionBuffer;
 		//Model m_SphereMesh;
 		//Material
 		//Material m_Material;

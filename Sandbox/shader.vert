@@ -21,16 +21,19 @@ layout(set = 0, binding = 0) uniform CameraBuffer
     mat4 Projection;
     vec3 Position;
 } u_Camera;
-//Model transformbuffer
-layout(set = 0, binding = 1) uniform TransformBuffer
-{
-    mat4 Model;
-} u_Transform;
 */
+
+//Model transformbuffer
+layout(set = 0, binding = 0) uniform TransformBuffer
+{
+	vec3 Offset;
+    //mat4 Model;
+} u_Transform;
 
 void main()
 {
-    vec3 position = a_Position;
+    vec3 position = a_Position * u_Transform.Offset.z;
+	position = position + vec3(u_Transform.Offset.xy, 0.0f);
 	gl_Position   = vec4(position, 1.0f);
 	
 	/*

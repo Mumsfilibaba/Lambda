@@ -63,7 +63,13 @@ namespace Lambda
 	IShaderVariable* VKNShaderVariableTable::GetVariableByName(ShaderStage shader, const char* pName)
 	{
 		auto var = m_NameTable.find(std::string(pName));
-		return var != m_NameTable.end() ? var->second : nullptr;
+		if (var == m_NameTable.end())
+		{
+			LOG_DEBUG_ERROR("Vulkan: Invalid name on ShaderVariable\n");
+			return nullptr;
+		}
+
+		return var->second;
 	}
 
 

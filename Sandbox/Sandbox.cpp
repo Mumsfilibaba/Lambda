@@ -160,20 +160,20 @@ namespace Lambda
 				graphicsPipeline.BlendState				= blendState;
 				graphicsPipeline.DepthStencilState		= depthStencilState;
 
-				/*ShaderVariableDesc shaderVariables[] =
+				ShaderVariableDesc shaderVariables[] =
 				{
-					{ "u_CameraBuffer",		nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_VERTEX,	RESOURCE_USAGE_DEFAULT, 0 },
-					{ "u_TransformBuffer",	nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_VERTEX,	RESOURCE_USAGE_DYNAMIC, 1 },
-					{ "u_MaterialBuffer",	nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DYNAMIC, 2 },
+					//{ "u_CameraBuffer",		nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_VERTEX,	RESOURCE_USAGE_DEFAULT, 0 },
+					{ "u_TransformBuffer",	nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_VERTEX,	RESOURCE_USAGE_DYNAMIC, 0 },
+					/*{ "u_MaterialBuffer",	nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DYNAMIC, 2 },
 					{ "u_LightBuffer",		nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DEFAULT, 3 },
 					{ "u_Albedo",			nullptr, RESOURCE_TYPE_TEXTURE,			SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DEFAULT, 4 },
 					{ "u_Normal",			nullptr, RESOURCE_TYPE_TEXTURE,			SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DEFAULT, 5 },
-					{ "u_Sampler",			nullptr, RESOURCE_TYPE_SAMPLER_STATE,	SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DEFAULT, 6 },
-				};*/
+					{ "u_Sampler",			nullptr, RESOURCE_TYPE_SAMPLER_STATE,	SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DEFAULT, 6 },*/
+				};
 
 				ShaderVariableTableDesc variableTableDesc = {};
-				variableTableDesc.NumVariables	= 0;
-				variableTableDesc.pVariables	= nullptr;// shaderVariables;
+				variableTableDesc.NumVariables	= sizeof(shaderVariables) / sizeof(ShaderVariableDesc);
+				variableTableDesc.pVariables	= shaderVariables;
 				variableTableDesc.NumConstantBlocks	= 0;
 				variableTableDesc.pConstantBlocks	= nullptr;
 
@@ -182,6 +182,7 @@ namespace Lambda
 				pipelineDesc.Type	= PIPELINE_TYPE_GRAPHICS;
 				pipelineDesc.ShaderVariableTable	= variableTableDesc;
 				pipelineDesc.GraphicsPipeline		= graphicsPipeline;
+
                 pDevice->CreatePipelineState(&m_PipelineState, pipelineDesc);
 				m_PipelineState->CreateShaderVariableTable(&m_VariableTable);
             }
@@ -192,7 +193,7 @@ namespace Lambda
 			{
                 BufferDesc desc     = {};
                 desc.pName          = "Mesh VertexBuffer";
-                desc.Usage          = RESOURCE_USAGE_DYNAMIC;
+                desc.Usage          = RESOURCE_USAGE_DEFAULT;
                 desc.Flags          = BUFFER_FLAGS_VERTEX_BUFFER;
                 desc.SizeInBytes    = sizeof(Vertex) * uint32(mesh.Vertices.size());
                 desc.StrideInBytes  = sizeof(Vertex);
@@ -219,6 +220,24 @@ namespace Lambda
                 
                 pDevice->CreateBuffer(&m_Mesh.pIndexBuffer, &data, desc);
             }
+
+			//Create position buffer
+			{
+				BufferDesc desc = {};
+				desc.pName			= "PositionBuffer";
+				desc.Usage			= RESOURCE_USAGE_DYNAMIC;
+				desc.Flags			= BUFFER_FLAGS_INDEX_BUFFER;
+				desc.SizeInBytes	= sizeof(glm::vec3);
+				desc.StrideInBytes	= sizeof(glm::vec3);
+
+				glm::vec3 position = glm::vec3(0.0f, 0.0f, 1.0f);
+
+				ResourceData data = {};
+				data.pData			= &position;
+				data.SizeInBytes	= desc.SizeInBytes;
+
+				pDevice->CreateBuffer(&m_PositionBuffer, &data, desc);
+			}
 
 			IWindow* pWindow = app.GetWindow();
 			CreateCamera(pWindow->GetWidth(), pWindow->GetHeight());
@@ -274,8 +293,8 @@ namespace Lambda
             pDevice->CreateSamplerState(&m_SamplerState, desc);*/
 
 			//Setup materials
-			/*m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Albedo")->SetTexture(m_AlbedoMap.Get());
-			m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Normal")->SetTexture(m_NormalMap.Get());
+			m_VariableTable->GetVariableByName(SHADER_STAGE_VERTEX, "u_TransformBuffer")->SetConstantBuffer(m_PositionBuffer.Get());
+			/*m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Normal")->SetTexture(m_NormalMap.Get());
 			m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Sampler")->SetSamplerState(m_SamplerState.Get());
 
 			m_Material.pPipelineState	= m_PipelineState.Get();
@@ -399,37 +418,27 @@ namespace Lambda
 		m_Context->SetVertexBuffers(&m_Mesh.pVertexBuffer, 1, 0);
 		m_Context->SetIndexBuffer(m_Mesh.pIndexBuffer, FORMAT_R32_UINT);
 		//Set pipelinestate
-		//m_Context->SetShaderVariableTable(material.pVariableTable);
+		m_Context->SetShaderVariableTable(m_VariableTable.Get());
 		m_Context->SetPipelineState(m_PipelineState.Get());
 
-		float xpos = 0.0f;
+		//Draw squares
 		for (uint32 y = 0; y < 27; y++)
 		{
-			xpos = 0.0f;
 			for (uint32 x = 0; x < 27; x++)
 			{	
-				//Update buffer
+				//Update position
 				void* pMappedData = nullptr;
-				m_Context->MapBuffer(m_Mesh.pVertexBuffer, MAP_FLAG_WRITE | MAP_FLAG_WRITE_DISCARD, &pMappedData);
-				memcpy(pMappedData, meshData.Vertices.data(), sizeof(Vertex) * meshData.Vertices.size());
-				m_Context->UnmapBuffer(m_Mesh.pVertexBuffer);
+				m_Context->MapBuffer(m_PositionBuffer.Get(), MAP_FLAG_WRITE | MAP_FLAG_WRITE_DISCARD, &pMappedData);
 
-				/*data.pData			= meshData.Vertices.data();
-				data.SizeInBytes	= sizeof(Vertex) * meshData.Vertices.size();
-				m_Context->UpdateBuffer(m_Mesh.pVertexBuffer, &data);*/
+				//xy (.xy) and scale (.z)
+				glm::vec3 position = glm::vec3(-0.975f + (0.075f * float(x)), 0.975f - (0.075f * float(y)), 0.05f);
+				memcpy(pMappedData, &position, sizeof(glm::vec3));
+
+				m_Context->UnmapBuffer(m_PositionBuffer.Get());
 
 				//Draw
 				m_Context->DrawIndexedInstanced(m_Mesh.IndexCount, 1, 0, 0, 0);
-				xpos += 0.075f;
-				for (auto& vertex : meshData.Vertices)
-					vertex.Position.x += 0.075f;
 			}
-
-			for (auto& vertex : meshData.Vertices)
-				vertex.Position.x -= xpos;
-
-			for (auto& vertex : meshData.Vertices)
-				vertex.Position.y -= 0.075f;
 		}
 
 		//Present
