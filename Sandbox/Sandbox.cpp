@@ -203,6 +203,7 @@ namespace Lambda
 
                 pDevice->CreateBuffer(&m_Mesh.pVertexBuffer, &data, desc);
             }
+
             //Create indexbuffer
             {
                 BufferDesc desc     = {};

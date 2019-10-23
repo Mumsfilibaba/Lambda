@@ -11,7 +11,7 @@
 #include "VKNUploadAllocator.h"
 #include "VKNConversions.inl"
 
-#define LAMBDA_VK_MAX_COMMANDS 256
+#define LAMBDA_VK_MAX_COMMANDS 768
 
 namespace Lambda
 {
@@ -49,8 +49,8 @@ namespace Lambda
 		for (uint32 i = 0; i < m_NumFrameResources; i++)
 		{
 			//Delete uploadbuffers
-			SafeDelete(m_pFrameResources[i].BufferUpload);
-			SafeDelete(m_pFrameResources[i].TextureUpload);
+			SafeDelete(m_pFrameResources[i].pBufferUpload);
+			SafeDelete(m_pFrameResources[i].pTextureUpload);
 
 			//Free commandbuffer
 			vkFreeCommandBuffers(m_pDevice->GetVkDevice(), m_CommandPool, 1, &m_pFrameResources[i].CommandBuffer);
@@ -145,8 +145,8 @@ namespace Lambda
         //Init uploadbuffers
 		for (uint32 i = 0; i < m_NumFrameResources; i++)
 		{
-			m_pFrameResources[i].BufferUpload  = DBG_NEW VKNUploadAllocator(m_pDevice, MB(1));
-			m_pFrameResources[i].TextureUpload = DBG_NEW VKNUploadAllocator(m_pDevice, MB(16));
+			m_pFrameResources[i].pBufferUpload  = DBG_NEW VKNUploadAllocator(m_pDevice, MB(1));
+			m_pFrameResources[i].pTextureUpload = DBG_NEW VKNUploadAllocator(m_pDevice, MB(16));
 		}
 
 		//Create imagelayout-tracker
@@ -179,9 +179,6 @@ namespace Lambda
 		if (m_Pipeline == VK_NULL_HANDLE)
 		{
 			LAMBDA_ASSERT_PRINT(m_PipelineState, "Vulkan: No PipelineState bound\n");
-
-			//Make sure that we have a commandbuffer
-			QueryCommandBuffer();
 
 			//Get pipeline
 			m_Pipeline = m_PipelineState->GetVkPipeline();
@@ -227,9 +224,6 @@ namespace Lambda
 			//Do not commit at next drawcall
 			m_CommitVertexBuffers = false;
 
-			//Make sure that we have a commandbuffer
-			QueryCommandBuffer();
-
 			VkBuffer	 buffers[LAMBDA_MAX_VERTEXBUFFER_COUNT];
 			VkDeviceSize offsets[LAMBDA_MAX_VERTEXBUFFER_COUNT];
 			for (uint32 i = 0; i < m_NumVertexBuffers; i++)
@@ -265,9 +259,6 @@ namespace Lambda
 			//Check of we have a indexbuffer
 			if (m_IndexBuffer)
 			{
-				//Make sure that we have a commandbuffer
-				QueryCommandBuffer();
-
 				//Dynamic buffers needs to be commited every drawcall
 				const BufferDesc& desc = m_IndexBuffer->GetDesc();
 				if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
@@ -346,9 +337,6 @@ namespace Lambda
 			//Commit not needed anymore
 			m_CommitViewports = false;
 
-			//Make sure that we have a commandbuffer
-			QueryCommandBuffer();
-
 			//Set viewports
 			VkViewport views[LAMBDA_MAX_VIEWPORT_COUNT] = {};
 			for (uint32 i = 0; i < m_NumViewports; i++)
@@ -371,9 +359,6 @@ namespace Lambda
 		{
 			//We do not need commits anymore
 			m_CommitScissorRects = false;
-
-			//Make sure that we have a commandbuffer
-			QueryCommandBuffer();
 
 			//Set scissorrects
 			VkRect2D rects[LAMBDA_MAX_SCISSOR_RECT_COUNT] = {};
@@ -713,13 +698,13 @@ namespace Lambda
 		{
             //Allocate memory in the uploadbuffer
 			VkDeviceSize alignment	= pVkBuffer->GetAlignment();
-            VKNUploadAllocation mem = m_pCurrentFrameResource->BufferUpload->Allocate(pData->SizeInBytes, alignment);
+            VKNUploadAllocation mem = m_pCurrentFrameResource->pBufferUpload->Allocate(pData->SizeInBytes, alignment);
 
-			LAMBDA_ASSERT_PRINT(pData->SizeInBytes <= mem.SizeInBytes, "Vulkan: ResourceData::SizeInBytes is bigger than the allocated space\n");
-			memcpy(mem.pHostMemory, pData->pData, pData->SizeInBytes);
+			uint8* pHostMemory = mem.pPage->GetHostMemory() + mem.Offset;
+			memcpy(pHostMemory, pData->pData, pData->SizeInBytes);
 
 			//Update buffer
-			CopyBuffer(pVkBuffer->GetVkBuffer(), 0, mem.Buffer, mem.DeviceOffset, pData->SizeInBytes);
+			CopyBuffer(pVkBuffer->GetVkBuffer(), 0, mem.pPage->GetVkBuffer(), mem.Offset, pData->SizeInBytes);
 		}
 		else if (bufferDesc.Usage == RESOURCE_USAGE_DYNAMIC)
 		{
@@ -749,13 +734,15 @@ namespace Lambda
 		uint64 alignment = std::max(VkDeviceSize(4), properties.limits.optimalBufferCopyOffsetAlignment);
 
         //Allocate memory in the uploadbuffer
-		VKNUploadAllocation mem = m_pCurrentFrameResource->TextureUpload->Allocate(pData->SizeInBytes, alignment);
-        memcpy(mem.pHostMemory, pData->pData, pData->SizeInBytes);
+		VKNUploadAllocation mem = m_pCurrentFrameResource->pTextureUpload->Allocate(pData->SizeInBytes, alignment);
+		
+		uint8* pHostMemory = mem.pPage->GetHostMemory() + mem.Offset;
+		memcpy(pHostMemory, pData->pData, pData->SizeInBytes);
     
         //Perform copy
         const TextureDesc& textureDesc = pVkResource->GetDesc();
         VkBufferImageCopy region = {};
-        region.bufferOffset                     = mem.DeviceOffset;
+        region.bufferOffset                     = mem.Offset;
         region.bufferRowLength                  = 0;
         region.bufferImageHeight                = 0;
         region.imageSubresource.aspectMask      = pVkResource->GetVkAspectFlags();
@@ -766,7 +753,7 @@ namespace Lambda
         region.imageExtent                      = { textureDesc.Width, textureDesc.Height, textureDesc.Depth };
     
         VkImage	 image	= pVkResource->GetVkImage();
-        vkCmdCopyBufferToImage(m_pCurrentFrameResource->CommandBuffer, mem.Buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+        vkCmdCopyBufferToImage(m_pCurrentFrameResource->CommandBuffer, mem.pPage->GetVkBuffer(), image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
 		//Count command
 		m_NumCommands++;
@@ -992,8 +979,8 @@ namespace Lambda
 			}
         
 			//Reset dependencies, when mapping a UploadBuffer, reset is called aswell
-			m_pCurrentFrameResource->BufferUpload->Reset();
-			m_pCurrentFrameResource->TextureUpload->Reset();
+			m_pCurrentFrameResource->pBufferUpload->Reset();
+			m_pCurrentFrameResource->pTextureUpload->Reset();
 
 			//Set context state
 			m_ContextState = DEVICE_CONTEXT_STATE_RECORDING;
@@ -1112,10 +1099,11 @@ namespace Lambda
 			this->Flush();
 		}
 
+		//Make sure that we have a commandbuffer
+		QueryCommandBuffer();
+
 		//Commit
 		CommitAndTransitionResources();
-
-
 		CommitPipelineState();
 		CommitVertexBuffers();
 		CommitIndexBuffer();

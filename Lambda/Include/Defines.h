@@ -90,7 +90,7 @@
 
 
 //Sizes
-#define MB(num) num * 1024 * 1024
+#define MB(num) num * (1024 * 1024)
 
 
 //Shaderstages

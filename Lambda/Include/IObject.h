@@ -64,27 +64,27 @@ namespace Lambda
 	class AutoRef
 	{
 	public:
-		inline AutoRef(TObject* pObject = nullptr)
+		__forceinline AutoRef(TObject* pObject = nullptr)
 			: m_pObject(pObject)
 		{
 		}
 
 
-		inline AutoRef(const AutoRef& other)
+		__forceinline AutoRef(const AutoRef& other)
 			: m_pObject(nullptr)
 		{
 			*this = other;
 		}
 
 
-		inline AutoRef(AutoRef&& other)
+		__forceinline AutoRef(AutoRef&& other)
 			: m_pObject(nullptr)
 		{
 			*this = other;
 		}
 
 
-		inline ~AutoRef()
+		__forceinline ~AutoRef()
 		{
 			if (m_pObject)
 			{
@@ -94,32 +94,32 @@ namespace Lambda
 		}
 
 
-		inline TObject* Get() const
+		__forceinline TObject* Get() const
 		{
 			return m_pObject;
 		}
         
         
         template<typename T>
-        inline T* GetAs() const
+		__forceinline T* GetAs() const
         {
             return reinterpret_cast<T*>(m_pObject);
         }
 
 
-		inline TObject** GetAdressOf()
+		__forceinline TObject** GetAdressOf()
 		{
 			return &m_pObject;
 		}
 
 
-		inline TObject* const * GetAdressOf() const
+		__forceinline TObject* const * GetAdressOf() const
 		{
 			return &m_pObject;
 		}
 
 
-		inline RefCountValue Release()
+		__forceinline RefCountValue Release()
 		{
 			RefCountValue counter = 0;
 			if (m_pObject)
@@ -131,46 +131,46 @@ namespace Lambda
 		}
 
 
-		inline TObject* operator->() const
+		__forceinline TObject* operator->() const
 		{
 			return m_pObject;
 		}
 
 
-		inline TObject& operator*()
+		__forceinline TObject& operator*()
 		{
 			LAMBDA_ASSERT(m_pObject != nullptr);
 			return *m_pObject;
 		}
 
 
-		inline const TObject& operator*() const
+		__forceinline const TObject& operator*() const
 		{
 			LAMBDA_ASSERT(m_pObject != nullptr);
 			return *m_pObject;
 		}
 
 
-		inline TObject** operator&()
+		__forceinline TObject** operator&()
 		{
 			return &m_pObject;
 		}
 
 
-		inline TObject* const * operator&() const
+		__forceinline TObject* const * operator&() const
 		{
 			return &m_pObject;
 		}
 
 
-		inline AutoRef& operator=(TObject* pObject)
+		__forceinline AutoRef& operator=(TObject* pObject)
 		{
 			AutoRef other(pObject);
 			return *this = other;
 		}
 
 
-		inline AutoRef& operator=(const AutoRef& other)
+		__forceinline AutoRef& operator=(const AutoRef& other)
 		{
 			if (m_pObject)
 				m_pObject->Release();
@@ -182,7 +182,7 @@ namespace Lambda
 		}
 
 
-		inline AutoRef& operator=(AutoRef&& other)
+		__forceinline AutoRef& operator=(AutoRef&& other)
 		{
 			if (m_pObject)
 				m_pObject->Release();
@@ -194,7 +194,7 @@ namespace Lambda
 		}
 
 
-		inline operator bool()
+		__forceinline operator bool()
 		{
 			return m_pObject != nullptr;
 		}

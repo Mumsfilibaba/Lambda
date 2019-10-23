@@ -5,143 +5,145 @@
 
 namespace Lambda
 {
-	//---------------
-	//VKNUploadAllocator
-	//---------------
+	//-------------
+	//VKNUploadPage
+	//-------------
 
-	VKNUploadAllocator::VKNUploadAllocator(VKNDevice* pDevice, uint64 sizeInBytes)
-		: m_pDevice(pDevice),
-		m_Offset(0),
+	VKNUploadPage::VKNUploadPage(VKNDevice* pDevice, VkDeviceSize sizeInBytes)
+		: m_VkBuffer(VK_NULL_HANDLE),
 		m_Memory(),
-		m_Buffer(VK_NULL_HANDLE)
+		m_SizeInBytes(sizeInBytes),
+		m_Offset(0)
 	{
-		Init(sizeInBytes);
+		Init(pDevice);
+	}
+
+
+	void VKNUploadPage::Init(VKNDevice* pDevice)
+	{
+		//Create buffer
+		VkBufferCreateInfo info = {};
+		info.sType					= VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		info.pNext					= nullptr;
+		info.flags					= 0;
+		info.size					= m_SizeInBytes;
+		info.queueFamilyIndexCount	= 0;
+		info.pQueueFamilyIndices	= nullptr;
+		info.sharingMode			= VK_SHARING_MODE_EXCLUSIVE;
+		info.usage					= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+		if (vkCreateBuffer(pDevice->GetVkDevice(), &info, nullptr, &m_VkBuffer) != VK_SUCCESS)
+		{
+			LOG_DEBUG_ERROR("Vulkan: Failed to create UploadPage\n");
+			return;
+		}
+		else
+		{
+			LOG_DEBUG_WARNING("Vulkan: Created UploadPage\n");
+		}
+
+		//Allocate memory
+		if (!pDevice->AllocateBuffer(m_Memory, m_VkBuffer, RESOURCE_USAGE_DYNAMIC))
+		{
+			LOG_DEBUG_ERROR("Vulkan: Failed to allocate UploadPage '%p'\n", m_VkBuffer);
+		}
+		else
+		{
+			LOG_DEBUG_WARNING("Vulkan: Allocated '%d' bytes for UploadPage\n", m_SizeInBytes);
+		}
+	}
+
+
+	VKNUploadAllocation VKNUploadPage::Allocate(VkDeviceSize sizeInBytes, VkDeviceSize alignment)
+	{
+		VKNUploadAllocation allocation = {};
+	
+		//Align
+		VkDeviceSize alignedOffset = Math::AlignUp<VkDeviceSize>(m_Offset, alignment);
+
+		//Do we have enough space? If no reallocate
+		VkDeviceSize alignedSize = sizeInBytes + (alignedOffset - m_Offset);
+		if ((alignedOffset + alignedSize) > m_SizeInBytes)
+		{
+			return allocation;
+		}
+
+		//Move offset
+		m_Offset += alignedSize;
+
+		//Setup allocation
+		allocation.pPage  = this;
+		allocation.Offset = alignedOffset;
+		return allocation;
+	}
+
+	
+	void VKNUploadPage::Reset()
+	{
+		m_Offset = 0;
+	}
+
+
+	void VKNUploadPage::Destroy(VKNDevice* pDevice)
+	{
+		LAMBDA_ASSERT(pDevice != nullptr);
+
+		//Deallocate memory from global memory manager
+		pDevice->Deallocate(m_Memory);
+
+		//Delete buffer
+		if (m_VkBuffer != VK_NULL_HANDLE)
+			pDevice->SafeReleaseVulkanResource<VkBuffer>(m_VkBuffer);
+
+		LOG_SYSTEM(LOG_SEVERITY_WARNING, "Vulkan: Deallocated VKNUploadPage\n");
+		delete this;
+	}
+
+
+	//------------------
+	//VKNUploadAllocator
+	//------------------
+
+	VKNUploadAllocator::VKNUploadAllocator(VKNDevice* pDevice, VkDeviceSize sizeInBytes)
+		: m_pDevice(pDevice),
+		m_pCurrentPage(nullptr),
+		m_DiscardedPages()
+	{
+		//Create the first page
+		m_pCurrentPage = DBG_NEW VKNUploadPage(pDevice, sizeInBytes);
 	}
 
 
 	VKNUploadAllocator::~VKNUploadAllocator()
 	{
 		Reset();
+		m_pCurrentPage->Destroy(m_pDevice);
 
-		if (m_Buffer != VK_NULL_HANDLE)
-		{
-			m_pDevice->Deallocate(m_Memory);
-			m_pDevice->SafeReleaseVulkanResource<VkBuffer>(m_Buffer);
-		}
-
-		LOG_DEBUG_INFO("Vulkan: Destroyed UploadBuffer '%p'\n", m_Buffer);
+		LOG_DEBUG_INFO("Vulkan: Destroyed VKNUploadAllocator\n");
 	}
 
 
-	bool VKNUploadAllocator::Init(uint64 sizeInBytes)
+	VKNUploadAllocation VKNUploadAllocator::Allocate(VkDeviceSize sizeInBytes, VkDeviceSize alignment)
 	{
-		//Create buffer
-		VkBufferCreateInfo info = {};
-		info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		info.pNext = nullptr;
-		info.flags = 0;
-		info.queueFamilyIndexCount = 0;
-		info.pQueueFamilyIndices = nullptr;
-		info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		info.size = sizeInBytes;
-		info.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-		if (vkCreateBuffer(m_pDevice->GetVkDevice(), &info, nullptr, &m_Buffer) != VK_SUCCESS)
-		{
-			LOG_DEBUG_ERROR("Vulkan: Failed to create UploadBuffer\n");
-			return false;
-		}
-		else
-		{
-			LOG_DEBUG_INFO("Vulkan: Created UploadBuffer '%p'\n", m_Buffer);
-		}
+		using namespace Math;
 
-		//Allocate memory
-		if (m_pDevice->AllocateBuffer(m_Memory, m_Buffer, RESOURCE_USAGE_DYNAMIC))
-		{
-			Reset();
-			return true;
-		}
-		else
-		{
-			LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for UploadBuffer '%p'\n", m_Buffer);
-			return false;
-		}
-	}
+		if (AlignUp<VkDeviceSize>(m_pCurrentPage->GetSizeLeft(), alignment) > AlignUp<VkDeviceSize>(sizeInBytes, alignment))
+			return m_pCurrentPage->Allocate(sizeInBytes, alignment);
 
+		//If allocation cannot be made with old page, allocate new with enough size 
+		m_DiscardedPages.emplace_back(m_pCurrentPage);
+		m_pCurrentPage = DBG_NEW VKNUploadPage(m_pDevice, sizeInBytes + MB(1));
 
-	void VKNUploadAllocator::Reallocate(uint64 sizeInBytes)
-	{
-		VkBuffer  newBuffer = VK_NULL_HANDLE;
-		VKNAllocation newMemory = {};
-
-		//Create buffer
-		VkBufferCreateInfo info = {};
-		info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		info.pNext = nullptr;
-		info.flags = 0;
-		info.queueFamilyIndexCount = 0;
-		info.pQueueFamilyIndices = nullptr;
-		info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		info.size = sizeInBytes;
-		info.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-		if (vkCreateBuffer(m_pDevice->GetVkDevice(), &info, nullptr, &newBuffer) != VK_SUCCESS)
-		{
-			LOG_DEBUG_ERROR("Vulkan: Failed to recreate UploadBuffer\n");
-		}
-		else
-		{
-			LOG_DEBUG_WARNING("Vulkan: Recreated UploadBuffer '%p'\n", newBuffer);
-		}
-
-		//Allocate memory
-		if (m_pDevice->AllocateBuffer(newMemory, newBuffer, RESOURCE_USAGE_DYNAMIC))
-		{
-			m_pDevice->Deallocate(m_Memory);
-			m_pDevice->SafeReleaseVulkanResource<VkBuffer>(m_Buffer);
-
-			//Set new buffer and memory
-			m_Buffer = newBuffer;
-			m_Memory = newMemory;
-
-			Reset();
-		}
-		else
-		{
-			LOG_DEBUG_ERROR("Vulkan: Failed to reallocate memory for UploadBuffer '%p'\n", m_Buffer);
-		}
-	}
-
-
-	VKNUploadAllocation VKNUploadAllocator::Allocate(uint64 bytesToAllocate, uint64 alignment)
-	{
-		VKNUploadAllocation allocation = {};
-
-		//Align
-		uint64 alignedOffset = Math::AlignUp<uint64>(m_Offset, alignment);
-		uint64 padding = alignedOffset - m_Offset;
-
-		//Do we have enough space? If no reallocate
-		uint64 alignedSize = bytesToAllocate + padding;
-		if ((alignedOffset + alignedSize) >= m_Memory.SizeInBytes)
-			Reallocate(m_Memory.SizeInBytes + alignedSize + MB(1));
-
-		//Move pointer
-		allocation.pHostMemory = reinterpret_cast<void*>(m_Memory.pHostMemory + alignedOffset);
-		m_Offset += alignedSize;
-
-		//Set offset
-		allocation.SizeInBytes = alignedSize;
-		allocation.DeviceOffset = alignedOffset;
-
-		//Set buffer
-		allocation.Buffer = m_Buffer;
-		return allocation;
+		return m_pCurrentPage->Allocate(sizeInBytes, alignment);
 	}
 
 
 	void VKNUploadAllocator::Reset()
 	{
-		//Reset buffer by resetting current to the start
-		m_Offset = 0;
+		m_pCurrentPage->Reset();
+
+		for (auto page : m_DiscardedPages)
+			page->Destroy(m_pDevice);
+
+		m_DiscardedPages.clear();
 	}
 }

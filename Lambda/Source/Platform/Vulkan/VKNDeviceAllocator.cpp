@@ -51,11 +51,11 @@ namespace Lambda
         m_pHead = DBG_NEW VKNMemoryBlock();
         m_pHead->pNext					= nullptr;
         m_pHead->pPrevious				= nullptr;
-        m_pHead->IsFree				= true;
-        m_pHead->ID					= m_BlockCount++;
+        m_pHead->IsFree					= true;
+        m_pHead->ID						= m_BlockCount++;
 		m_pHead->SizeInBytes			= m_SizeInBytes;
 		m_pHead->PaddedSizeInBytes		= m_SizeInBytes;
-		m_pHead->DeviceMemoryOffset    = 0;
+		m_pHead->DeviceMemoryOffset		= 0;
 		
 		//If this is CPU visible -> Map
 		if (m_Usage == RESOURCE_USAGE_DYNAMIC)

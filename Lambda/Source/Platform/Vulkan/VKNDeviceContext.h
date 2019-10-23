@@ -43,8 +43,8 @@ namespace Lambda
 		{
 			VkFence				Fence		  = VK_NULL_HANDLE;
 			VkCommandBuffer		CommandBuffer = VK_NULL_HANDLE;
-			VKNUploadAllocator*	BufferUpload  = nullptr;
-			VKNUploadAllocator*	TextureUpload = nullptr;
+			VKNUploadAllocator*	pBufferUpload  = nullptr;
+			VKNUploadAllocator*	pTextureUpload = nullptr;
 		};
 
     public:
