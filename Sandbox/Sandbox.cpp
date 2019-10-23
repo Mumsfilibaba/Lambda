@@ -375,7 +375,7 @@ namespace Lambda
 		renderer.Submit(m_Mesh, m_Material, m_TransformBuffer);
 		
 		//draw spheres
-		/*for (auto& transform : sphereTransforms)
+		for (auto& transform : sphereTransforms)
 		{
 			translation = glm::translate(glm::mat4(1.0f), transform.Position);
 			rotation	= glm::eulerAngleYXZ(glm::radians(transform.Rotation.y), glm::radians(transform.Rotation.x), glm::radians(transform.Rotation.z));
@@ -402,17 +402,6 @@ namespace Lambda
 		//Set viewport
 		m_Context->SetViewports(&m_Viewport, 1);
 		m_Context->SetScissorRects(&m_ScissorRect, 1);
-
-		ResourceData data;
-		MeshData meshData = MeshFactory::CreatePlane();
-		for (auto& vertex : meshData.Vertices)
-		{
-			vertex.Position.x += 0.5f;
-			vertex.Position.y += 0.5f;
-			vertex.Position *= 0.05f;
-			vertex.Position.x -= 1.0f;
-			vertex.Position.y += 1.0f;
-		}
 		
 		//Set mesh
 		m_Context->SetVertexBuffers(&m_Mesh.pVertexBuffer, 1, 0);
@@ -422,9 +411,9 @@ namespace Lambda
 		m_Context->SetPipelineState(m_PipelineState.Get());
 
 		//Draw squares
-		for (uint32 y = 0; y < 27; y++)
+		for (uint32 y = 0; y < 5; y++)
 		{
-			for (uint32 x = 0; x < 27; x++)
+			for (uint32 x = 0; x < 5; x++)
 			{	
 				//Update position
 				void* pMappedData = nullptr;

@@ -517,7 +517,6 @@ namespace Lambda
 		VkDescriptorPool pool = VK_NULL_HANDLE;
 
 		//Setup descriptorcounts
-		constexpr uint32 poolCount = 5;
 		std::vector<VkDescriptorPoolSize> poolSizes;
 		if (m_UniformBufferCount > 0)
 		{

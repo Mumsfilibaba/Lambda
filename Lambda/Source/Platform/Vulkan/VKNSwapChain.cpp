@@ -26,7 +26,6 @@ namespace Lambda
         m_DepthStencilBuffer(nullptr),
 		m_CurrentBufferIndex(0),
 		m_FrameIndex(0),
-		m_LastFrameIndex(0xffffffff),
 		m_Buffers()
 	{
 		//Add ref to context

@@ -3,7 +3,7 @@
 #include "VKNRenderPassCache.h"
 #include "VKNDevice.h"
 #include "VKNTexture.h"
-#include "VKnFrameBufferCache.h"
+#include "VKNFramebufferCache.h"
 #include "VKNConversions.inl"
 
 namespace Lambda

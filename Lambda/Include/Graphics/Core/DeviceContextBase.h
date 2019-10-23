@@ -1,6 +1,7 @@
 #pragma once
 #include "DeviceObjectBase.h"
 #include "IDeviceContext.h"
+#include "ITexture.h"
 #include <algorithm>
 
 namespace Lambda
@@ -22,67 +23,68 @@ namespace Lambda
 		}
 		~DeviceContextBase() = default;
 
-		virtual void ClearRenderTarget(ITexture* pRenderTarget, float color[4]) = 0;
-		virtual void ClearDepthStencil(ITexture* pDepthStencil, float depth, uint8 stencil) = 0;
+		virtual void ClearRenderTarget(ITexture* pRenderTarget, float color[4]) override = 0;
+		virtual void ClearDepthStencil(ITexture* pDepthStencil, float depth, uint8 stencil) override = 0;
 
-		virtual void SetConstantBlocks(ShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData) = 0;
+		virtual void SetConstantBlocks(ShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData) override = 0;
 
-		virtual void UpdateBuffer(IBuffer* pResource, const ResourceData* pData) = 0;
-		virtual void UpdateTexture(ITexture* pResource, const ResourceData* pData, uint32 mipLevel) = 0;
+		virtual void UpdateBuffer(IBuffer* pResource, const ResourceData* pData) override = 0;
+		virtual void UpdateTexture(ITexture* pResource, const ResourceData* pData, uint32 mipLevel) override = 0;
 
-		virtual void CopyBuffer(IBuffer* pDst, IBuffer* pSrc) = 0;
+		virtual void CopyBuffer(IBuffer* pDst, IBuffer* pSrc) override = 0;
 
-		virtual void MapBuffer(IBuffer* pBuffer, uint32 mapFlags, void** ppData) = 0;
-		virtual void UnmapBuffer(IBuffer* pBuffer) = 0;
+		virtual void MapBuffer(IBuffer* pBuffer, uint32 mapFlags, void** ppData) override = 0;
+		virtual void UnmapBuffer(IBuffer* pBuffer) override = 0;
 
-		virtual void ResolveTexture(ITexture* pDst, uint32 dstMipLevel, ITexture* pSrc, uint32 srcMipLevel) = 0;
+		virtual void ResolveTexture(ITexture* pDst, uint32 dstMipLevel, ITexture* pSrc, uint32 srcMipLevel) override = 0;
 
-		virtual void Draw(uint32 vertexCount, uint32 startVertex) = 0;
-		virtual void DrawIndexed(uint32 indexCount, uint32 startIndexLocation, uint32 baseVertexLocation) = 0;
-		virtual void DrawInstanced(uint32 vertexCountPerInstance, uint32 instanceCount, uint32 startVertexLocation, uint32 startInstanceLocation) = 0;
-		virtual void DrawIndexedInstanced(uint32 indexCountPerInstance, uint32 instanceCount, uint32 startIndexLocation, uint32 baseVertexLocation, uint32 startInstanceLocation) = 0;
+		virtual void Draw(uint32 vertexCount, uint32 startVertex) override = 0;
+		virtual void DrawIndexed(uint32 indexCount, uint32 startIndexLocation, uint32 baseVertexLocation) override = 0;
+		virtual void DrawInstanced(uint32 vertexCountPerInstance, uint32 instanceCount, uint32 startVertexLocation, uint32 startInstanceLocation) override = 0;
+		virtual void DrawIndexedInstanced(uint32 indexCountPerInstance, uint32 instanceCount, uint32 startIndexLocation, uint32 baseVertexLocation, uint32 startInstanceLocation) override = 0;
 
-		virtual void ExecuteDefferedContext(IDeviceContext* pContext) = 0;
+		virtual void ExecuteDefferedContext(IDeviceContext* pContext) override = 0;
 
-		virtual void ResetQuery(IQuery* pQuery) = 0;
-		virtual void WriteTimeStamp(IQuery* pQuery, PipelineStage stage) = 0;
+		virtual void ResetQuery(IQuery* pQuery) override = 0;
+		virtual void WriteTimeStamp(IQuery* pQuery, PipelineStage stage) override = 0;
 
-		virtual void Flush() = 0;
-		virtual void* GetNativeHandle() const = 0;
+		virtual void Flush() override = 0;
+		virtual void* GetNativeHandle() const override = 0;
 
 		virtual void SetRendertargets(ITexture* const* ppRenderTargets, uint32 numRenderTargets, ITexture* pDepthStencil) override
 		{
 			LAMBDA_ASSERT_PRINT(numRenderTargets <= LAMBDA_MAX_RENDERTARGET_COUNT, "Lambda Engine: 'numRendertargets' must be less that the maximum of '%d'\n", LAMBDA_MAX_RENDERTARGET_COUNT);
 
+            //Set rendertarget state
+            m_NumRenderTargets = numRenderTargets;
+            for (uint32 i = 0; i < numRenderTargets; i++)
+            {
+                m_RenderTargets[i] = reinterpret_cast<TTextureImpl*>(ppRenderTargets[i]);
+                m_RenderTargets[i]->AddRef();
+            }
+            
+            
 			//Get size of framebuffer
 			if (pDepthStencil)
 			{
-				const TextureDesc& desc = pDepthStencil->GetDesc();
-				m_FrameBufferHeight			= desc.Height;
-				m_FrameBufferWidth			= desc.Width;
-				m_FrameBufferSampleCount	= desc.SampleCount;
-
-				//Set depthstencil
-				m_DepthStencil = reinterpret_cast<TTextureImpl*>(pDepthStencil);
-				m_DepthStencil->AddRef();
+                //Set depthstencil
+                m_DepthStencil = reinterpret_cast<TTextureImpl*>(pDepthStencil);
+                m_DepthStencil->AddRef();
+                
+                const TextureDesc& desc = m_DepthStencil->GetDesc();
+                m_FrameBufferHeight         = desc.Height;
+                m_FrameBufferWidth          = desc.Width;
+                m_FrameBufferSampleCount    = desc.SampleCount;
 			}
 			else
 			{
-				const TextureDesc& desc = ppRenderTargets[0]->GetDesc();
+				const TextureDesc& desc = m_RenderTargets[0]->GetDesc();
 				m_FrameBufferHeight			= desc.Height;
 				m_FrameBufferWidth			= desc.Width;
 				m_FrameBufferSampleCount	= desc.SampleCount;
 
 				//Set depthstencil to nullptr
 				m_DepthStencil = nullptr;
-			}
-
-			//Set rendertarget state
-			m_NumRenderTargets = numRenderTargets;
-			for (uint32 i = 0; i < numRenderTargets; i++)
-			{
-				m_RenderTargets[i] = reinterpret_cast<TTextureImpl*>(ppRenderTargets[i]);
-				m_RenderTargets[i]->AddRef();
 			}
 		}
 

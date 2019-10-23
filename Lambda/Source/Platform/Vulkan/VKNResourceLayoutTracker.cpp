@@ -39,7 +39,7 @@ namespace Lambda
 		barrier.DestinationStage	= VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 
 		//Setup barrier based on subresources
-		auto& currentLayout = m_ResourceLayouts.find(image);
+		const auto& currentLayout = m_ResourceLayouts.find(image);
 		if (currentLayout != m_ResourceLayouts.end())
 		{
 			if (mipLevel == VK_REMAINING_MIP_LEVELS)
@@ -84,7 +84,7 @@ namespace Lambda
 			else
 			{
 				//If we are trying to change layout into one we already are in
-				auto& sublayout = currentLayout->second.SubLayouts.find(mipLevel);
+				const auto& sublayout = currentLayout->second.SubLayouts.find(mipLevel);
 				if (!(sublayout == currentLayout->second.SubLayouts.end() && currentLayout->second.Layout == toLayout))
 				{
 					//Make sure we are not setting a state we are already in
@@ -192,7 +192,7 @@ namespace Lambda
 				else
 				{
 					//Are we are trying to change layout into one we already are in
-					auto& sublayout = globalState->second.SubLayouts.find(barrier.Barrier.subresourceRange.baseMipLevel);
+					const auto& sublayout = globalState->second.SubLayouts.find(barrier.Barrier.subresourceRange.baseMipLevel);
 					if (sublayout != globalState->second.SubLayouts.end())
 					{
 						//Make sure the oldstate matches the actual oldstate
@@ -372,7 +372,7 @@ namespace Lambda
 		std::lock_guard<std::mutex> lock(s_GlobalMutex);
 
 		//Add a new globalstate
-		auto& resourceLayout = s_GlobalResourceLayouts.find(image);
+		const auto& resourceLayout = s_GlobalResourceLayouts.find(image);
 		if (resourceLayout == s_GlobalResourceLayouts.end())
 			resourceLayout->second = layout;
 	}

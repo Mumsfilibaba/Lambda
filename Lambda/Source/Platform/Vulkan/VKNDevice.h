@@ -56,19 +56,19 @@ namespace Lambda
 		VKNDeviceContext* GetVKNImmediateContext() const;
 
 
-		inline void VKNDevice::Deallocate(VKNAllocation& allocation)
+		inline void Deallocate(VKNAllocation& allocation)
 		{
 			m_pDeviceAllocator->Deallocate(allocation);
 		}
 
 
-		inline bool VKNDevice::AllocateDynamicMemory(VKNDynamicAllocation& allocation, uint64 sizeInBytes, uint64 alignment)
+		inline bool AllocateDynamicMemory(VKNDynamicAllocation& allocation, uint64 sizeInBytes, uint64 alignment)
 		{
 			return m_pDynamicMemoryAllocator->Allocate(allocation, sizeInBytes, alignment);
 		}
 
 
-		inline void VKNDevice::DeallocateDynamicMemory(VKNDynamicAllocation& allocation)
+		inline void DeallocateDynamicMemory(VKNDynamicAllocation& allocation)
 		{
 			m_pDynamicMemoryAllocator->Deallocate(allocation);
 		}

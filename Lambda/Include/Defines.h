@@ -14,9 +14,9 @@
 
 //Define forceinline
 #if defined(LAMBDA_PLAT_WINDOWS)
-	#define forceinline __forceinline
+	#define _forceinline __forceinline
 #elif defined(LAMBDA_PLAT_MACOS)
-	#define forceinline inline
+	#define _forceinline inline __attribute__((always_inline))
 #endif
 
 

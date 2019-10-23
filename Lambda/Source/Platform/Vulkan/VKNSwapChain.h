@@ -48,7 +48,6 @@ namespace Lambda
         AutoRef<VKNTexture> m_SampleBuffer;
         AutoRef<VKNTexture> m_DepthStencilBuffer;
 		mutable uint32		m_CurrentBufferIndex;
-        mutable uint32      m_LastFrameIndex;
         mutable uint32      m_FrameIndex;
         std::vector<VkSemaphore> m_RenderSemaphores;
         std::vector<VkSemaphore> m_ImageSemaphores;
