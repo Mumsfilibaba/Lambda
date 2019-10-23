@@ -13,9 +13,7 @@
 #include "VKNFramebufferCache.h"
 #include "VKNConversions.inl"
 #if defined(LAMBDA_PLAT_MACOS)
-    
     #include <GLFW/glfw3.h>
-    #include <dlfcn.h>
 #endif
 
 namespace Lambda
@@ -98,33 +96,11 @@ namespace Lambda
 		applicationInfo.sType               = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 		applicationInfo.pNext               = nullptr;
 		applicationInfo.pApplicationName    = "Lambda Engine";
-		applicationInfo.applicationVersion  =  VK_MAKE_VERSION(1, 0, 0);
+		applicationInfo.applicationVersion  = VK_MAKE_VERSION(1, 0, 0);
         applicationInfo.pEngineName         = "Lambda Engine";
 		applicationInfo.engineVersion       = VK_MAKE_VERSION(1, 0, 0);
 		applicationInfo.apiVersion          = VK_API_VERSION_1_1;
         
-		//Get all the available extensions
-		uint32 availableExtensionsCount = 0;
-		vkEnumerateInstanceExtensionProperties(nullptr, &availableExtensionsCount, nullptr);
-
-		std::vector<VkExtensionProperties> availableExtensions(availableExtensionsCount);
-		vkEnumerateInstanceExtensionProperties(nullptr, &availableExtensionsCount, availableExtensions.data());
-
-		if (availableExtensions.size() > 0)
-		{
-			LOG_DEBUG_INFO("[Vulkan] Available Instance-Extensions:\n");
-			for (const auto& extension : availableExtensions)
-			{
-				const char* name = extension.extensionName;
-				LOG_DEBUG_INFO("   Instance-Extension '%s'\n", name);
-			}
-		}
-		else
-		{
-			LOG_DEBUG_ERROR("Vulkan: No available Instance-Extensions\n");
-		}
-
-
 		//Get all available layers
 		uint32_t layerCount = 0;
 		vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
@@ -145,8 +121,37 @@ namespace Lambda
 		{
 			LOG_DEBUG_ERROR("Vulkan: No available Instance-Layers\n");
 		}
+        
+        //Get layers
+        std::vector<const char*> requiredLayers = GetRequiredValidationLayers(desc.Flags & DEVICE_FLAG_DEBUG);
+        if (requiredLayers.size() > 0)
+        {
+            LOG_DEBUG_INFO("[Vulkan] Required Instance-Layers:\n");
+            for (const auto& layer : requiredLayers)
+                LOG_DEBUG_INFO("   Instance-Layer '%s'\n", layer);
+        }
 
+        //Get all the available extensions
+        uint32 availableExtensionsCount = 0;
+        vkEnumerateInstanceExtensionProperties(nullptr, &availableExtensionsCount, nullptr);
 
+        std::vector<VkExtensionProperties> availableExtensions(availableExtensionsCount);
+        vkEnumerateInstanceExtensionProperties(nullptr, &availableExtensionsCount, availableExtensions.data());
+
+        if (availableExtensions.size() > 0)
+        {
+            LOG_DEBUG_INFO("[Vulkan] Available Instance-Extensions:\n");
+            for (const auto& extension : availableExtensions)
+            {
+                const char* name = extension.extensionName;
+                LOG_DEBUG_INFO("   Instance-Extension '%s'\n", name);
+            }
+        }
+        else
+        {
+            LOG_DEBUG_ERROR("Vulkan: No available Instance-Extensions\n");
+        }
+        
 		//Get extensions
 		std::vector<const char*> requiredExtensions = GetRequiredInstanceExtensions(desc.Flags & DEVICE_FLAG_DEBUG);
 		if (requiredExtensions.size() > 0)
@@ -154,16 +159,6 @@ namespace Lambda
 			LOG_DEBUG_INFO("[Vulkan] Required Instance-Extensions:\n");
 			for (const auto& extension : requiredExtensions)
 				LOG_DEBUG_INFO("   Instance-Extension '%s'\n", extension);
-		}
-
-
-		//Get layers
-		std::vector<const char*> requiredLayers = GetRequiredValidationLayers(desc.Flags & DEVICE_FLAG_DEBUG);
-		if (requiredLayers.size() > 0)
-		{
-			LOG_DEBUG_INFO("[Vulkan] Required Instance-Layers:\n");
-			for (const auto& layer : requiredLayers)
-				LOG_DEBUG_INFO("   Instance-Layer '%s'\n", layer);
 		}
 
 
@@ -222,7 +217,6 @@ namespace Lambda
 		instanceInfo.ppEnabledExtensionNames	= requiredExtensions.data();
         instanceInfo.enabledLayerCount			= uint32(requiredLayers.size());
         instanceInfo.ppEnabledLayerNames		= requiredLayers.data();
-
 		VkResult res = vkCreateInstance(&instanceInfo, nullptr, &m_Instance);
 		if (res != VK_SUCCESS)
 		{
@@ -252,6 +246,30 @@ namespace Lambda
 				LOG_DEBUG_ERROR("Vulkan: Failed to retrive 'vkDestroyDebugUtilsMessengerEXT'\n");
 			}
 		}
+        
+#if defined(LAMBDA_PLAT_MACOS)
+        {
+            PFN_vkGetMoltenVKConfigurationMVK GetMoltenVKConfigurationMVK = (PFN_vkGetMoltenVKConfigurationMVK)vkGetInstanceProcAddr(m_Instance, "vkGetMoltenVKConfigurationMVK");
+            PFN_vkSetMoltenVKConfigurationMVK SetMoltenVKConfigurationMVK = (PFN_vkSetMoltenVKConfigurationMVK)vkGetInstanceProcAddr(m_Instance, "vkSetMoltenVKConfigurationMVK");
+            if (GetMoltenVKConfigurationMVK == nullptr || SetMoltenVKConfigurationMVK == nullptr )
+            {
+                //LOG_DEBUG_ERROR("Vulkan: Failed to load vkGetMoltenVKConfigurationMVK\n");
+                return;
+            }
+            else
+            {
+                MVKConfiguration mvkConfig = {};
+                size_t configSize = sizeof(MVKConfiguration);
+                if (GetMoltenVKConfigurationMVK(m_Instance, &mvkConfig, &configSize) != VK_SUCCESS)
+                {
+                    //LOG_DEBUG_ERROR("Vulkan: Failed to load retrive MVKConfiguration\n");
+                    return;
+                }
+                
+                //if (SetMoltenVKConfigurationMVK())
+            }
+        }
+#endif
         
 
 		//If not the debugflag is set we do not want to create the messenger
