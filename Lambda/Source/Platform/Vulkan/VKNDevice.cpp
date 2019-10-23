@@ -13,7 +13,9 @@
 #include "VKNFramebufferCache.h"
 #include "VKNConversions.inl"
 #if defined(LAMBDA_PLAT_MACOS)
+    
     #include <GLFW/glfw3.h>
+    #include <dlfcn.h>
 #endif
 
 namespace Lambda
@@ -99,7 +101,7 @@ namespace Lambda
 		applicationInfo.applicationVersion  =  VK_MAKE_VERSION(1, 0, 0);
         applicationInfo.pEngineName         = "Lambda Engine";
 		applicationInfo.engineVersion       = VK_MAKE_VERSION(1, 0, 0);
-		applicationInfo.apiVersion          = VK_API_VERSION_1_0;
+		applicationInfo.apiVersion          = VK_API_VERSION_1_1;
         
 		//Get all the available extensions
 		uint32 availableExtensionsCount = 0;
@@ -209,7 +211,7 @@ namespace Lambda
 
 		VkDebugUtilsMessengerCreateInfoEXT dInfo;
 		InitDebugMessengerCreateInfo(&dInfo);
-
+        
 		//Create instance
 		VkInstanceCreateInfo instanceInfo = {};
 		instanceInfo.sType						= VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -218,8 +220,8 @@ namespace Lambda
 		instanceInfo.pApplicationInfo			= &applicationInfo;
 		instanceInfo.enabledExtensionCount		= uint32(requiredExtensions.size());
 		instanceInfo.ppEnabledExtensionNames	= requiredExtensions.data();
-		instanceInfo.enabledLayerCount			= uint32(requiredLayers.size());
-		instanceInfo.ppEnabledLayerNames		= requiredLayers.data();
+        instanceInfo.enabledLayerCount			= uint32(requiredLayers.size());
+        instanceInfo.ppEnabledLayerNames		= requiredLayers.data();
 
 		VkResult res = vkCreateInstance(&instanceInfo, nullptr, &m_Instance);
 		if (res != VK_SUCCESS)
@@ -250,7 +252,7 @@ namespace Lambda
 				LOG_DEBUG_ERROR("Vulkan: Failed to retrive 'vkDestroyDebugUtilsMessengerEXT'\n");
 			}
 		}
-
+        
 
 		//If not the debugflag is set we do not want to create the messenger
 		if (desc.Flags & DEVICE_FLAG_DEBUG)
@@ -352,7 +354,6 @@ namespace Lambda
 		{
 			LOG_DEBUG_INFO("   Device-Extension '%s'\n", extension.extensionName);
 		}
-
 
 		//Create device
 		VkDeviceCreateInfo info = {};
@@ -528,9 +529,9 @@ namespace Lambda
     }
 
 	
-	void VKNDevice::Present(VkPresentInfoKHR* pInfo)
+	VkResult VKNDevice::Present(VkPresentInfoKHR* pInfo)
 	{
-		vkQueuePresentKHR(m_PresentationQueue, pInfo);
+		return vkQueuePresentKHR(m_PresentationQueue, pInfo);
 	}
 
 

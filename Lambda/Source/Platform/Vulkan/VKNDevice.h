@@ -1,5 +1,8 @@
 #pragma once
 #include "Graphics/Core/IDevice.h"
+#if defined(LAMBDA_PLAT_MACOS)
+    #include <MoltenVK/vk_mvk_moltenvk.h>
+#endif
 #include "VKNDeviceAllocator.h"
 #include "VKNDynamicMemoryAllocator.h"
 #include "VKNSafeReleaseManager.h"
@@ -42,8 +45,8 @@ namespace Lambda
 		virtual const DeviceProperties& GetProperties() const override final;
         virtual const DeviceDesc& GetDesc() const override final;
 
-		void ExecuteCommandBuffer(VkSubmitInfo* pInfo, uint32 numBuffers, VkFence fence) const;
-		void Present(VkPresentInfoKHR* pInfo);
+        VkResult Present(VkPresentInfoKHR* pInfo);
+        void ExecuteCommandBuffer(VkSubmitInfo* pInfo, uint32 numBuffers, VkFence fence) const;
 		void FinishFrame() const;
 		void WaitUntilIdle() const;
 		

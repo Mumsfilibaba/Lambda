@@ -2,6 +2,9 @@
 #include "System/IWindow.h"
 #if defined(LAMBDA_PLAT_MACOS)
     #include "IObject.h"
+    #if defined(GLFW_INCLUDE_VULKAN)
+        #undef GLFW_INCLUDE_VULKAN
+    #endif
     #include <GLFW/glfw3.h>
 
 namespace Lambda
