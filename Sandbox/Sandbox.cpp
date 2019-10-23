@@ -410,23 +410,23 @@ namespace Lambda
 		m_Context->SetShaderVariableTable(m_VariableTable.Get());
 		m_Context->SetPipelineState(m_PipelineState.Get());
 
-		//Draw squares
-		for (uint32 y = 0; y < 5; y++)
+        //Draw squares
+		for (uint32 y = 0; y < 33; y++)
 		{
-			for (uint32 x = 0; x < 5; x++)
+			for (uint32 x = 0; x < 33; x++)
 			{	
 				//Update position
 				void* pMappedData = nullptr;
 				m_Context->MapBuffer(m_PositionBuffer.Get(), MAP_FLAG_WRITE | MAP_FLAG_WRITE_DISCARD, &pMappedData);
 
 				//xy (.xy) and scale (.z)
-				glm::vec3 position = glm::vec3(-0.975f + (0.075f * float(x)), 0.975f - (0.075f * float(y)), 0.05f);
+				glm::vec3 position = glm::vec3(-0.96f + (0.06f * float(x)), 0.96f - (0.06f * float(y)), 0.05f);
 				memcpy(pMappedData, &position, sizeof(glm::vec3));
 
 				m_Context->UnmapBuffer(m_PositionBuffer.Get());
 
-				//Draw
-				m_Context->DrawIndexedInstanced(m_Mesh.IndexCount, 1, 0, 0, 0);
+                //Draw
+                m_Context->DrawIndexedInstanced(m_Mesh.IndexCount, 1, 0, 0, 0);
 			}
 		}
 

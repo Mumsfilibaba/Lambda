@@ -254,7 +254,7 @@ namespace Lambda
             if (GetMoltenVKConfigurationMVK == nullptr || SetMoltenVKConfigurationMVK == nullptr )
             {
                 //LOG_DEBUG_ERROR("Vulkan: Failed to load vkGetMoltenVKConfigurationMVK\n");
-                return;
+                //return;
             }
             else
             {
@@ -263,7 +263,7 @@ namespace Lambda
                 if (GetMoltenVKConfigurationMVK(m_Instance, &mvkConfig, &configSize) != VK_SUCCESS)
                 {
                     //LOG_DEBUG_ERROR("Vulkan: Failed to load retrive MVKConfiguration\n");
-                    return;
+                    //return;
                 }
                 
                 //if (SetMoltenVKConfigurationMVK())
