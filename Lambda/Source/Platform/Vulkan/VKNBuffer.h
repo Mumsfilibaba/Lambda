@@ -26,9 +26,25 @@ namespace Lambda
         virtual void* GetNativeHandle() const override final;
 		virtual void SetName(const char* pName) override final;
 
-		VkBuffer GetVkBuffer() const;
-		inline VkDeviceSize GetDynamicOffset() const	{ return m_DynamicState.BufferOffset; }
-		inline VkDeviceSize GetAlignment() const		{ return m_DynamicOffsetAlignment; }
+		_forceinline VkBuffer GetVkBuffer() const
+		{
+			if (m_Desc.Usage == RESOURCE_USAGE_DYNAMIC)
+				return m_DynamicState.Buffer;
+
+			return m_VkBuffer;
+		}
+
+
+		_forceinline VkDeviceSize GetDynamicOffset() const
+		{ 
+			return m_DynamicState.BufferOffset; 
+		}
+		
+
+		_forceinline  VkDeviceSize GetAlignment() const
+		{ 
+			return m_DynamicOffsetAlignment; 
+		}
     private:
         void Init(const ResourceData* pInitalData, const BufferDesc& desc);
     private:

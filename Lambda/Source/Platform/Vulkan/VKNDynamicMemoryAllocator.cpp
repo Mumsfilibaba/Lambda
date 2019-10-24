@@ -69,10 +69,11 @@ namespace Lambda
 		m_pHead->pNext = nullptr;
 		m_pHead->pPrevious = nullptr;
 		m_pHead->IsFree = true;
-		m_pHead->ID = m_BlockCount++;
 		m_pHead->SizeInBytes = m_SizeInBytes;
 		m_pHead->BufferOffset = 0;
-
+#if defined(LAMBDA_DEBUG)
+		m_pHead->ID = m_BlockCount++;
+#endif
 		//Set next free to the first block
 		m_pNextFree = m_pHead;
 	}
@@ -81,7 +82,7 @@ namespace Lambda
 	bool VKNDynamicMemoryPage::Allocate(VKNDynamicAllocation& allocation, VkDeviceSize sizeInBytes, VkDeviceSize alignment)
 	{
 		VkDeviceSize paddedBufferOffset = 0;
-		VkDeviceSize paddedSizeInBytes = 0;
+		VkDeviceSize paddedSizeInBytes	= 0;
 		VKNDynamicMemoryBlock* pBestFit = nullptr;
 
 		//Find enough free space, and find the block that best fits
@@ -151,15 +152,17 @@ namespace Lambda
 		{
 			//Create a new block after allocation
 			VKNDynamicMemoryBlock* pBlock = m_BlockPool.Get();
-			pBlock->ID = m_BlockCount++;
-			pBlock->pPage = this;
-			pBlock->SizeInBytes = pBestFit->SizeInBytes - paddedSizeInBytes;
-			pBlock->BufferOffset = pBestFit->BufferOffset + paddedSizeInBytes;
-			pBlock->IsFree = true;
+			pBlock->pPage			= this;
+			pBlock->SizeInBytes		= pBestFit->SizeInBytes - paddedSizeInBytes;
+			pBlock->BufferOffset	= paddedBufferOffset + sizeInBytes;
+			pBlock->IsFree			= true;
+#if defined(LAMBDA_DEBUG)
+			pBlock->ID				= m_BlockCount++;
+#endif
 
 			//Set pointers
-			pBlock->pNext = pBestFit->pNext;
-			pBlock->pPrevious = pBestFit;
+			pBlock->pNext		= pBestFit->pNext;
+			pBlock->pPrevious	= pBestFit;
 			if (pBestFit->pNext)
 				pBestFit->pNext->pPrevious = pBlock;
 			pBestFit->pNext = pBlock;
@@ -454,7 +457,9 @@ namespace Lambda
 		pFirst->pPage		 = nullptr;
 		pFirst->pNext		 = nullptr;
 		pFirst->pPrevious	 = nullptr;
+#if defined(LAMBDA_DEBUG)
 		pFirst->ID			 = 0;
+#endif
 		pFirst->SizeInBytes	 = 0;
 		pFirst->BufferOffset = 0;
 		pFirst->IsFree		 = true;
@@ -481,7 +486,7 @@ namespace Lambda
 		//LOG_DEBUG_INFO("ALLOC\n");
 
 		//Allocate array of blocks
-		VKNDynamicMemoryBlock* pBlocks = DBG_NEW VKNDynamicMemoryBlock[256];
+		VKNDynamicMemoryBlock* pBlocks = DBG_NEW VKNDynamicMemoryBlock[2048];
 		m_Chains.emplace_back(pBlocks);
 		
 		//Build a chain of them

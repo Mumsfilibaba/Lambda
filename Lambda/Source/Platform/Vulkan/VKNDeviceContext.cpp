@@ -11,7 +11,7 @@
 #include "VKNUploadAllocator.h"
 #include "VKNConversions.inl"
 
-#define LAMBDA_VK_MAX_COMMANDS 768
+#define LAMBDA_VK_MAX_COMMANDS 2048
 
 namespace Lambda
 {
@@ -770,12 +770,6 @@ namespace Lambda
 
 	void VKNDeviceContext::MapBuffer(IBuffer* pBuffer, uint32 mapFlags, void** ppData)
 	{
-		//Check if we should flush the context
-		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
-		{
-			this->Flush();
-		}
-
 		const BufferDesc& desc = pBuffer->GetDesc();
 		if (desc.Usage != RESOURCE_USAGE_DYNAMIC)
 		{
@@ -811,24 +805,12 @@ namespace Lambda
 			//Then return the memory
 			(*ppData) = mem.pHostMemory;
 		}
-
-		//Count command
-		m_NumCommands++;
 	}
 
 
 	void VKNDeviceContext::UnmapBuffer(IBuffer* pBuffer)
 	{
-		//Check if we should flush the context
-		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
-		{
-			this->Flush();
-		}
-
 		//TODO: ??
-
-		//Count command
-		m_NumCommands++;
 	}
 
 

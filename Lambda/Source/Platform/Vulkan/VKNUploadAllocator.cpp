@@ -76,12 +76,6 @@ namespace Lambda
 		return allocation;
 	}
 
-	
-	void VKNUploadPage::Reset()
-	{
-		m_Offset = 0;
-	}
-
 
 	void VKNUploadPage::Destroy(VKNDevice* pDevice)
 	{
@@ -134,16 +128,5 @@ namespace Lambda
 		m_pCurrentPage = DBG_NEW VKNUploadPage(m_pDevice, sizeInBytes + MB(1));
 
 		return m_pCurrentPage->Allocate(sizeInBytes, alignment);
-	}
-
-
-	void VKNUploadAllocator::Reset()
-	{
-		m_pCurrentPage->Reset();
-
-		for (auto page : m_DiscardedPages)
-			page->Destroy(m_pDevice);
-
-		m_DiscardedPages.clear();
 	}
 }

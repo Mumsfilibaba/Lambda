@@ -180,13 +180,4 @@ namespace Lambda
 		if (m_VkBuffer != VK_NULL_HANDLE)
 			m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_BUFFER, (uint64)m_VkBuffer, m_Name);
 	}
-
-	
-	VkBuffer VKNBuffer::GetVkBuffer() const
-	{
-		if (m_Desc.Usage == RESOURCE_USAGE_DYNAMIC)
-			return m_DynamicState.Buffer;
-		
-		return m_VkBuffer;
-	}
 }

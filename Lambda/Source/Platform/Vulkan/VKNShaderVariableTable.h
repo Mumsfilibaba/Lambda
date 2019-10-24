@@ -36,8 +36,8 @@ namespace Lambda
 		AutoRef<VKNPipelineState>   m_PipelineState;
 		VkDescriptorSet	            m_DescriptorSet;
 		uint32* m_pDynamicOffsets;
-        std::vector<VKNShaderVariable*>         m_DynamicVars;
-        std::vector<VkWriteDescriptorSet>       m_DescriptorWrites;
+        std::vector<VKNShaderVariable*> m_DynamicVars;
+        std::vector<VkWriteDescriptorSet> m_DescriptorWrites;
         std::vector<AutoRef<VKNShaderVariable>> m_ShaderVariables;
 		std::unordered_map<std::string, VKNShaderVariable*> m_NameTable;
 	};

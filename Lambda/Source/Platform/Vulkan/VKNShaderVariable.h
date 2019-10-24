@@ -1,6 +1,6 @@
 #pragma once
 #include "Graphics/Core/ShaderVariableBase.h"
-#include <vulkan/vulkan.h>
+#include "VKNBuffer.h"
 
 namespace Lambda
 {
@@ -24,11 +24,23 @@ namespace Lambda
 		virtual void SetConstantBuffer(IBuffer* pBuffer) override final;
 		virtual void SetSamplerState(ISamplerState* pSamplerState) override final;
 		virtual IShaderVariableTable* GetShaderVariableTable() const override final;
-		void Transition(VKNDeviceContext* pContext);
 		bool Validate();
+		void Transition(VKNDeviceContext* pContext);
 
-		uint32 GetDynamicOffset() const;
-		inline const VkWriteDescriptorSet& GetVkWriteDescriptorSet() { return m_DescriptorWrite; };
+
+		_forceinline uint32 GetDynamicOffset() const
+		{
+			if (m_Desc.Type == RESOURCE_TYPE_CONSTANT_BUFFER && m_Desc.Usage == RESOURCE_USAGE_DYNAMIC)
+				return uint32(reinterpret_cast<VKNBuffer*>(m_Resource.Get())->GetDynamicOffset());
+
+			return 0;
+		}
+
+
+		inline const VkWriteDescriptorSet& GetVkWriteDescriptorSet() 
+		{ 
+			return m_DescriptorWrite; 
+		};
 	private:
 		VKNShaderVariableTable* m_pVariableTable;
 		AutoRef<IDeviceObject>	m_Resource;

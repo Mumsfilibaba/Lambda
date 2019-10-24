@@ -27,10 +27,12 @@ namespace Lambda
 		VKNDynamicMemoryPage* pPage = nullptr;
 		VKNDynamicMemoryBlock* pNext = nullptr;
 		VKNDynamicMemoryBlock* pPrevious = nullptr;
-		uint32       ID = 0;
 		VkDeviceSize SizeInBytes = 0;
 		VkDeviceSize BufferOffset = 0;
 		bool         IsFree = true;
+#if defined(LAMBDA_DEBUG)
+		uint32       ID = 0;
+#endif
 	};
 
 	//---------------------

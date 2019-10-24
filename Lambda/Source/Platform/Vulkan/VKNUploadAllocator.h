@@ -28,8 +28,13 @@ namespace Lambda
 		~VKNUploadPage() = default;
 
 		VKNUploadAllocation Allocate(VkDeviceSize sizeInBytes, VkDeviceSize alignment);
-		void Reset();
 		void Destroy(VKNDevice* pDevice);
+
+		inline void Reset()
+		{
+			m_Offset = 0;
+		}
+
 
 		inline VkDeviceSize GetSizeLeft() const 
 		{ 
@@ -68,7 +73,17 @@ namespace Lambda
 		~VKNUploadAllocator();
 
 		VKNUploadAllocation Allocate(VkDeviceSize sizeInBytes, VkDeviceSize alignment);
-		void Reset();
+		
+		
+		_forceinline void Reset()
+		{
+			m_pCurrentPage->Reset();
+
+			for (auto page : m_DiscardedPages)
+				page->Destroy(m_pDevice);
+
+			m_DiscardedPages.clear();
+		}
 	private:
 		VKNDevice* m_pDevice;
 		VKNUploadPage* m_pCurrentPage;

@@ -59,56 +59,56 @@ namespace Lambda
 		VKNDeviceContext* GetVKNImmediateContext() const;
 
 
-		inline void Deallocate(VKNAllocation& allocation)
+		_forceinline void Deallocate(VKNAllocation& allocation)
 		{
 			m_pDeviceAllocator->Deallocate(allocation);
 		}
 
 
-		inline bool AllocateDynamicMemory(VKNDynamicAllocation& allocation, uint64 sizeInBytes, uint64 alignment)
+		_forceinline bool AllocateDynamicMemory(VKNDynamicAllocation& allocation, uint64 sizeInBytes, uint64 alignment)
 		{
 			return m_pDynamicMemoryAllocator->Allocate(allocation, sizeInBytes, alignment);
 		}
 
 
-		inline void DeallocateDynamicMemory(VKNDynamicAllocation& allocation)
+		_forceinline void DeallocateDynamicMemory(VKNDynamicAllocation& allocation)
 		{
 			m_pDynamicMemoryAllocator->Deallocate(allocation);
 		}
 
 
-		inline VkInstance GetVkInstance() const				
+		_forceinline VkInstance GetVkInstance() const
 		{ 
 			return m_Instance; 
 		}
 		
 
-		inline VkDevice GetVkDevice() const					
+		_forceinline VkDevice GetVkDevice() const
 		{ 
 			return m_Device; 
 		}
 		
 		
-		inline VkPhysicalDevice GetVkPhysicalDevice() const	
+		_forceinline VkPhysicalDevice GetVkPhysicalDevice() const
 		{ 
 			return m_PhysicalDevice; 
 		}
 		
 		
-		inline const QueueFamilyIndices& GetQueueFamilyIndices() const				 
+		_forceinline const QueueFamilyIndices& GetQueueFamilyIndices() const
 		{ 
 			return m_FamiliyIndices; 
 		}
 		
 
-		inline const VkPhysicalDeviceProperties& GetPhysicalDeviceProperties() const 
+		_forceinline const VkPhysicalDeviceProperties& GetPhysicalDeviceProperties() const
 		{ 
 			return m_PhysicalDeviceProperties; 
 		}
 
 
 		template<typename VkResourceType>
-		inline void SafeReleaseVulkanResource(const VkResourceType& resource)
+		_forceinline void SafeReleaseVulkanResource(const VkResourceType& resource)
 		{
 			m_pSafeReleaseManager->ReleaseResource<VkResourceType>(resource);
 		}

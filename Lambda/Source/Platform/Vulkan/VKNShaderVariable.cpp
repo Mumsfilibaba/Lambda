@@ -1,7 +1,6 @@
 #include "LambdaPch.h"
 #include "VKNShaderVariable.h"
 #include "VKNShaderVariableTable.h"
-#include "VKNBuffer.h"
 #include "VKNTexture.h"
 #include "VKNSamplerState.h"
 #include "VKNDeviceContext.h"
@@ -121,23 +120,13 @@ namespace Lambda
 	}
 
 	
-	void VKNShaderVariable::Transition(VKNDeviceContext* pContext)
-	{
-		if (m_Desc.Type == RESOURCE_TYPE_TEXTURE)
-		{
-			VKNTexture* pVkTexture = m_Resource.GetAs<VKNTexture>();
-			pContext->TransitionTexture(pVkTexture, RESOURCE_STATE_PIXEL_SHADER_RESOURCE, VK_REMAINING_MIP_LEVELS);
-		}
-	}
-
-	
 	bool VKNShaderVariable::Validate()
 	{
         //Here we get the handle to the resource that is bound,
         uint64 currentHandle = VK_NULL_HANDLE;
         if (m_Desc.Type == RESOURCE_TYPE_TEXTURE)
         {
-            VKNTexture* pVkTexture = m_Resource.GetAs<VKNTexture>();
+            VKNTexture* pVkTexture	= m_Resource.GetAs<VKNTexture>();
             m_ImageInfo.imageView   = pVkTexture->GetVkImageView();
             m_ImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
@@ -170,13 +159,14 @@ namespace Lambda
         m_ResourceHandle = currentHandle;
         return oldHandle == currentHandle;
 	}
-	
-	
-	uint32 VKNShaderVariable::GetDynamicOffset() const
-	{
-		if (m_Desc.Type == RESOURCE_TYPE_CONSTANT_BUFFER && m_Desc.Usage == RESOURCE_USAGE_DYNAMIC)
-			return uint32(reinterpret_cast<VKNBuffer*>(m_Resource.Get())->GetDynamicOffset());
 
-		return 0;
+
+	void VKNShaderVariable::Transition(VKNDeviceContext* pContext)
+	{
+		if (m_Desc.Type == RESOURCE_TYPE_TEXTURE)
+		{
+			VKNTexture* pVkTexture = m_Resource.GetAs<VKNTexture>();
+			pContext->TransitionTexture(pVkTexture, RESOURCE_STATE_PIXEL_SHADER_RESOURCE, VK_REMAINING_MIP_LEVELS);
+		}
 	}
 }

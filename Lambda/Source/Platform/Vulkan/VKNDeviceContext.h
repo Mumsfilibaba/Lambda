@@ -41,10 +41,10 @@ namespace Lambda
 
 		struct FrameResource
 		{
-			VkFence				Fence		  = VK_NULL_HANDLE;
-			VkCommandBuffer		CommandBuffer = VK_NULL_HANDLE;
-			VKNUploadAllocator*	pBufferUpload  = nullptr;
-			VKNUploadAllocator*	pTextureUpload = nullptr;
+			VkFence				Fence			= VK_NULL_HANDLE;
+			VkCommandBuffer		CommandBuffer	= VK_NULL_HANDLE;
+			VKNUploadAllocator*	pBufferUpload	= nullptr;
+			VKNUploadAllocator*	pTextureUpload	= nullptr;
 		};
 
     public:
