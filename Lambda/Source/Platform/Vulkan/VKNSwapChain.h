@@ -30,11 +30,19 @@ namespace Lambda
         virtual ITexture* GetDepthBuffer() override final;
         virtual void Present() override final;
         virtual void* GetNativeHandle() const override final;
-        
-		void AquireNextImage(VkSemaphore signalSemaphore);
+		void AquireNextImage();
 
-        inline uint32 GetBackBufferIndex() const { return m_CurrentBufferIndex; }
-        inline VkFormat	GetVkFormat() const { return m_VkFormat.format; }
+        
+        _forceinline uint32 GetBackBufferIndex() const
+        {
+            return m_CurrentBufferIndex;
+        }
+        
+        
+        _forceinline VkFormat GetVkFormat() const
+        {
+            return m_VkFormat.format;
+        }
 	private:
 		void Init(const SwapChainDesc& desc);
         void InitSwapChain(VkExtent2D extent);
@@ -48,7 +56,7 @@ namespace Lambda
         AutoRef<VKNTexture> m_SampleBuffer;
         AutoRef<VKNTexture> m_DepthStencilBuffer;
 		mutable uint32		m_CurrentBufferIndex;
-        mutable uint32      m_FrameIndex;
+        mutable uint32      m_SemaphoreIndex;
         std::vector<VkSemaphore> m_RenderSemaphores;
         std::vector<VkSemaphore> m_ImageSemaphores;
 		mutable std::vector<AutoRef<VKNTexture>> m_Buffers;

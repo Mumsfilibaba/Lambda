@@ -25,7 +25,7 @@ namespace Lambda
         m_SampleBuffer(nullptr),
         m_DepthStencilBuffer(nullptr),
 		m_CurrentBufferIndex(0),
-		m_FrameIndex(0),
+		m_SemaphoreIndex(0),
 		m_Buffers()
 	{
 		//Add ref to context
@@ -332,12 +332,23 @@ namespace Lambda
             msaaBufferDesc.Depth       = 1;
             m_pDevice->CreateTexture((ITexture**)m_SampleBuffer.GetAdressOf(), nullptr, msaaBufferDesc);
         }
+        
+        //Aquire next image
+        AquireNextImage();
     }
 
 
-	void VKNSwapChain::AquireNextImage(VkSemaphore signalSemaphore)
+	void VKNSwapChain::AquireNextImage()
 	{
-		vkAcquireNextImageKHR(m_pDevice->GetVkDevice(), m_VkSwapChain, 0xffffffffffffffff, signalSemaphore, VK_NULL_HANDLE, &m_CurrentBufferIndex);
+        //Increase frameindex and get next image
+        m_SemaphoreIndex = (m_SemaphoreIndex+1) % m_Desc.BufferCount;
+        
+        VkSemaphore signalSemaphore = m_ImageSemaphores[m_SemaphoreIndex];
+		if (vkAcquireNextImageKHR(m_pDevice->GetVkDevice(), m_VkSwapChain, 0xffffffffffffffff, signalSemaphore, VK_NULL_HANDLE, &m_CurrentBufferIndex) == VK_SUCCESS)
+        {
+            //Add semaphores so the syncronization gets correct
+            m_Context->AddWaitSemaphore(signalSemaphore, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+        }
 	}
 
 
@@ -381,19 +392,15 @@ namespace Lambda
 		//Transition resource
 		m_Context->TransitionTexture(m_Buffers[m_CurrentBufferIndex].Get(), VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_REMAINING_MIP_LEVELS);
 
-		//Aquire next image
-		AquireNextImage(m_ImageSemaphores[m_FrameIndex]);
-
 		//Add semaphores so the syncronization gets correct
-		m_Context->AddWaitSemaphore(m_ImageSemaphores[m_FrameIndex], VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-		m_Context->AddSignalSemaphore(m_RenderSemaphores[m_FrameIndex]);
+		m_Context->AddSignalSemaphore(m_RenderSemaphores[m_SemaphoreIndex]);
 		//LOG_DEBUG_INFO("Signal Semaphore %p\n", m_RenderSemaphores[m_FrameIndex]);
 
 		//Flush context
 		m_Context->Flush();
 
 		//Present
-		VkSemaphore waitSemaphores[] = { m_RenderSemaphores[m_FrameIndex] };
+		VkSemaphore waitSemaphores[] = { m_RenderSemaphores[m_SemaphoreIndex] };
 		VkPresentInfoKHR info = {};
 		info.sType				= VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 		info.pNext				= nullptr;
@@ -408,14 +415,20 @@ namespace Lambda
 		{
 			LOG_DEBUG_WARNING("Vulkan: Suboptimal SwapChain result='%s'\n", result == VK_SUBOPTIMAL_KHR ? "VK_SUBOPTIMAL_KHR" : "VK_ERROR_OUT_OF_DATE_KHR");
 		}
+        else if (result == VK_SUCCESS)
+        {
+            //Aquire next image
+            AquireNextImage();
+        }
+        else
+        {
+            LOG_DEBUG_ERROR("Vulkan: Present Failed\n");
+        }
 
 		//LOG_DEBUG_INFO("Waiting Semaphore %p\n", m_RenderSemaphores[m_FrameIndex]);
 
 		//Finish device frame
 		m_pDevice->FinishFrame();
-
-		//Increase frameindex and get next image
-        m_FrameIndex = (m_FrameIndex+1) % m_Desc.BufferCount;
 	}
 
 	
