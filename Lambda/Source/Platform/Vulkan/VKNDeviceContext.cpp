@@ -291,7 +291,7 @@ namespace Lambda
 		for (uint32 i = 0; i < m_NumRenderTargets; i++)
 		{
 			//Get rendertarget and transition
-			TransitionTexture(m_RenderTargets[i].Get(), RESOURCE_STATE_RENDERTARGET, VK_REMAINING_MIP_LEVELS);
+			TransitionTexture(m_RenderTargets[i].Get(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_REMAINING_MIP_LEVELS);
 
 			//Get view
 			framebufferKey.AttachmentViews[i] = m_RenderTargets[i]->GetVkImageView();
@@ -305,7 +305,7 @@ namespace Lambda
 		if (m_DepthStencil)
 		{
 			//Set and transition depthstencil
-			TransitionTexture(m_DepthStencil.Get(), RESOURCE_STATE_DEPTH_STENCIL, VK_REMAINING_MIP_LEVELS);
+			TransitionTexture(m_DepthStencil.Get(), VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_REMAINING_MIP_LEVELS);
 			framebufferKey.AttachmentViews[framebufferKey.NumAttachmentViews++] = m_DepthStencil->GetVkImageView();
 
 			//Get format
@@ -475,8 +475,9 @@ namespace Lambda
 		}
 
 		//Transition texture before clearing
-		TransitionTexture(pRenderTarget, RESOURCE_STATE_RENDERTARGET_CLEAR, VK_REMAINING_MIP_LEVELS);
-		FlushResourceBarriers();
+        VKNTexture* pVkRenderTarget = reinterpret_cast<VKNTexture*>(pRenderTarget);
+        TransitionTexture(pVkRenderTarget, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_REMAINING_MIP_LEVELS);
+        FlushResourceBarriers();
 
         VkClearColorValue col = {};
         memcpy(col.float32, color, sizeof(float)*4);
@@ -488,9 +489,7 @@ namespace Lambda
         imageSubresourceRange.levelCount     = 1;
         imageSubresourceRange.baseArrayLayer = 0;
         imageSubresourceRange.layerCount     = 1;
-
-        VkImage vkRenderTarget = reinterpret_cast<VkImage>(pRenderTarget->GetNativeHandle());
-        vkCmdClearColorImage(m_pCurrentFrameResource->CommandBuffer, vkRenderTarget, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &col, 1, &imageSubresourceRange);
+        vkCmdClearColorImage(m_pCurrentFrameResource->CommandBuffer, pVkRenderTarget->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &col, 1, &imageSubresourceRange);
 
 		//Count command
 		m_NumCommands++;
@@ -506,7 +505,8 @@ namespace Lambda
 		}
 
 		//Transition texture before clearing
-		TransitionTexture(pDepthStencil, RESORUCE_STATE_DEPTH_STENCIL_CLEAR, VK_REMAINING_MIP_LEVELS);
+        VKNTexture* pVkDepthStencil = reinterpret_cast<VKNTexture*>(pDepthStencil);
+		TransitionTexture(pVkDepthStencil, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_REMAINING_MIP_LEVELS);
 		FlushResourceBarriers();
 
         VkClearDepthStencilValue value = {};
@@ -520,9 +520,7 @@ namespace Lambda
         imageSubresourceRange.levelCount     = 1;
         imageSubresourceRange.baseArrayLayer = 0;
         imageSubresourceRange.layerCount     = 1;
-    
-        VkImage vkDepthStencil = reinterpret_cast<VkImage>(pDepthStencil->GetNativeHandle());
-        vkCmdClearDepthStencilImage(m_pCurrentFrameResource->CommandBuffer, vkDepthStencil, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &value, 1, &imageSubresourceRange);
+        vkCmdClearDepthStencilImage(m_pCurrentFrameResource->CommandBuffer, pVkDepthStencil->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &value, 1, &imageSubresourceRange);
 
 		//Count command
 		m_NumCommands++;
@@ -690,11 +688,9 @@ namespace Lambda
     }
     
     
-    void VKNDeviceContext::TransitionTexture(const ITexture* pTexture, ResourceState state, uint32 mipLevel)
+    void VKNDeviceContext::TransitionTexture(const VKNTexture* pVkTexture, VkImageLayout layout, uint32 mipLevel)
     {
-		const VKNTexture* pVkTexture = reinterpret_cast<const VKNTexture*>(pTexture);
-		VkImageLayout newLayout = ConvertResourceStateToImageLayout(state);
-		m_pResourceTracker->TransitionImage(pVkTexture->GetVkImage(), pVkTexture->GetVkAspectFlags(), mipLevel, newLayout);
+		m_pResourceTracker->TransitionImage(pVkTexture->GetVkImage(), pVkTexture->GetVkAspectFlags(), mipLevel, layout);
     }
 
 
@@ -749,7 +745,7 @@ namespace Lambda
 
 		//Transition resource state
         VKNTexture* pVkTexture = reinterpret_cast<VKNTexture*>(pResource);
-        TransitionTexture(pResource, RESOURCE_STATE_COPY_DEST, VK_REMAINING_MIP_LEVELS);
+        TransitionTexture(pVkTexture, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_REMAINING_MIP_LEVELS);
 
 		//Get device properties
 		VkPhysicalDeviceProperties properties = m_pDevice->GetPhysicalDeviceProperties();
@@ -832,32 +828,32 @@ namespace Lambda
 		}
 
 		//Transition texture before clearing
-		TransitionTexture(pDst, RESOURCE_STATE_COPY_DEST,	VK_REMAINING_MIP_LEVELS);
-		TransitionTexture(pSrc, RESOURCE_STATE_COPY_SRC,	VK_REMAINING_MIP_LEVELS);
-		FlushResourceBarriers();
+        VKNTexture* pVkDst = reinterpret_cast<VKNTexture*>(pDst);
+        VKNTexture* pVkSrc = reinterpret_cast<VKNTexture*>(pSrc);
+        TransitionTexture(pVkSrc, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_REMAINING_MIP_LEVELS);
+        TransitionTexture(pVkDst, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_REMAINING_MIP_LEVELS);
+        FlushResourceBarriers();
 
-		//Transitions can only happen outside a renderpass
-		if (IsInsideRenderPass())
-			EndRenderPass();
+        //Transitions can only happen outside a renderpass
+        if (IsInsideRenderPass())
+            EndRenderPass();
 
-		VKNTexture* pVkDst = reinterpret_cast<VKNTexture*>(pDst);
-		VKNTexture* pVKSrc = reinterpret_cast<VKNTexture*>(pSrc);
 		
 		VkImageResolve resolve = {};
-		resolve.dstOffset = { 0, 0, 0 };
-		resolve.srcOffset = { 0, 0, 0 };
-		resolve.extent.width  = pVkDst->GetDesc().Width;
-		resolve.extent.height = pVkDst->GetDesc().Height;
-		resolve.extent.depth  = 1;
+		resolve.dstOffset                     = { 0, 0, 0 };
+		resolve.srcOffset                     = { 0, 0, 0 };
+		resolve.extent.width                  = pVkDst->GetDesc().Width;
+		resolve.extent.height                 = pVkDst->GetDesc().Height;
+		resolve.extent.depth                  = 1;
 		resolve.dstSubresource.aspectMask	  = pVkDst->GetVkAspectFlags();
 		resolve.dstSubresource.baseArrayLayer = 0;
 		resolve.dstSubresource.layerCount	  = 1;
 		resolve.dstSubresource.mipLevel		  = 0;
-		resolve.srcSubresource.aspectMask	  = pVKSrc->GetVkAspectFlags();
+		resolve.srcSubresource.aspectMask	  = pVkSrc->GetVkAspectFlags();
 		resolve.srcSubresource.baseArrayLayer = 0;
 		resolve.srcSubresource.layerCount	  = 1;
 		resolve.srcSubresource.mipLevel		  = 0;
-		vkCmdResolveImage(m_pCurrentFrameResource->CommandBuffer, pVKSrc->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, pVkDst->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &resolve);
+		vkCmdResolveImage(m_pCurrentFrameResource->CommandBuffer, pVkSrc->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, pVkDst->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &resolve);
 
 		//Count command
 		m_NumCommands++;
@@ -884,12 +880,12 @@ namespace Lambda
 					int32 mipHeight	 = textureDesc.Height;
 					uint32 mipLevels = textureDesc.MipLevels;
 
-					TransitionTexture(pVkTexture, RESOURCE_STATE_COPY_DEST, VK_REMAINING_MIP_LEVELS);
+					TransitionTexture(pVkTexture, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_REMAINING_MIP_LEVELS);
 					for (uint32 i = 1; i < mipLevels; i++)
 					{
-						TransitionTexture(pVkTexture, RESOURCE_STATE_COPY_SRC, i - 1);
+						TransitionTexture(pVkTexture, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, i - 1);
 						BlitTexture(pVkTexture, mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, i, pVkTexture, mipWidth, mipHeight, i - 1);
-						TransitionTexture(pVkTexture, RESOURCE_STATE_COPY_DEST, i - 1);
+						TransitionTexture(pVkTexture, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, i - 1);
 
 						if (mipWidth > 1)
 							mipWidth /= 2;

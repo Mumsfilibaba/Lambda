@@ -379,7 +379,7 @@ namespace Lambda
 			m_Context->ResolveTexture(m_Buffers[m_CurrentBufferIndex].Get(), 0, m_SampleBuffer.Get(), 0);
 
 		//Transition resource
-		m_Context->TransitionTexture(m_Buffers[m_CurrentBufferIndex].Get(), RESOURCE_STATE_RENDERTARGET_PRESENT, VK_REMAINING_MIP_LEVELS);
+		m_Context->TransitionTexture(m_Buffers[m_CurrentBufferIndex].Get(), VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_REMAINING_MIP_LEVELS);
 
 		//Aquire next image
 		AquireNextImage(m_ImageSemaphores[m_FrameIndex]);

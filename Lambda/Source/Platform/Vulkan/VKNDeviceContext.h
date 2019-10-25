@@ -95,7 +95,7 @@ namespace Lambda
         void EndCommandBuffer();
 		
 		void TransitionBuffer(const IBuffer* pBuffer, ResourceState state);
-		void TransitionTexture(const ITexture* pTexture, ResourceState state, uint32 mipLevel);
+		void TransitionTexture(const VKNTexture* pVkTexture, VkImageLayout layout, uint32 mipLevel);
         
 		void CopyBuffer(VkBuffer dstBuffer, VkDeviceSize dstOffset, VkBuffer srcBuffer, VkDeviceSize srcOffset, VkDeviceSize sizeInBytes);
 		void CopyBufferToImage(VkImage image, VkDeviceSize mipLevel, VkImageAspectFlags aspectFlags, uint32 width, uint32 height, uint32 depth, VkBuffer buffer, VkDeviceSize offset, VkDeviceSize sizeInBytes);

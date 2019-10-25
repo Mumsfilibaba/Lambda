@@ -246,7 +246,7 @@ namespace Lambda
 			}
 			
 			//Copy buffer to image
-			pContext->TransitionTexture(this, RESOURCE_STATE_COPY_DEST, VK_REMAINING_MIP_LEVELS);
+			pContext->TransitionTexture(this, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_REMAINING_MIP_LEVELS);
 			pContext->CopyBufferToImage(m_VkImage, 0, m_VkAspectFlags, m_Desc.Width, m_Desc.Height, m_Desc.Depth, stagingBuffer, 0, pInitalData->SizeInBytes);
 
 			//Delete the stagingbuffer
@@ -256,7 +256,7 @@ namespace Lambda
 		else
 		{
 			//A texture needs to be in a general layout
-			pContext->TransitionTexture(this, RESOURCE_STATE_GENERAL, VK_REMAINING_MIP_LEVELS);
+			pContext->TransitionTexture(this, VK_IMAGE_LAYOUT_GENERAL, VK_REMAINING_MIP_LEVELS);
 		}
 
 		//Release context

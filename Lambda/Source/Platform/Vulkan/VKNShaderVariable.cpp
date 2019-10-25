@@ -166,7 +166,7 @@ namespace Lambda
 		if (m_Desc.Type == RESOURCE_TYPE_TEXTURE)
 		{
 			VKNTexture* pVkTexture = m_Resource.GetAs<VKNTexture>();
-			pContext->TransitionTexture(pVkTexture, RESOURCE_STATE_PIXEL_SHADER_RESOURCE, VK_REMAINING_MIP_LEVELS);
+			pContext->TransitionTexture(pVkTexture, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_REMAINING_MIP_LEVELS);
 		}
 	}
 }
