@@ -434,7 +434,7 @@ namespace Lambda
         
         //Clean memory
 		auto& memoryBlocks = m_MemoryToDeallocate[m_FrameIndex];
-		if (memoryBlocks.size() > 0)
+		if (!memoryBlocks.empty())
 		{
             //Deallocate all the blocks
 			for (auto& memory : memoryBlocks)
