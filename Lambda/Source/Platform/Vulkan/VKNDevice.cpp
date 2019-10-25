@@ -108,9 +108,9 @@ namespace Lambda
 		std::vector<VkLayerProperties> availableLayers(layerCount);
 		vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
 
-		if (availableLayers.size() > 0)
+		if (!availableLayers.empty())
 		{
-			LOG_DEBUG_INFO("[Vulkan] Available Instance-Layers:\n");
+			LOG_DEBUG_INFO("[Vulkan] Available Instance-Layers (count=%d):\n", availableLayers.size());
 			for (const auto& layer : availableLayers)
 			{
 				const char* name = layer.layerName;
@@ -122,14 +122,37 @@ namespace Lambda
 			LOG_DEBUG_ERROR("Vulkan: No available Instance-Layers\n");
 		}
         
-        //Get layers
+        //Get required layers
         std::vector<const char*> requiredLayers = GetRequiredValidationLayers(desc.Flags & DEVICE_FLAG_DEBUG);
-        if (requiredLayers.size() > 0)
+        if (!requiredLayers.empty())
         {
             LOG_DEBUG_INFO("[Vulkan] Required Instance-Layers:\n");
             for (const auto& layer : requiredLayers)
                 LOG_DEBUG_INFO("   Instance-Layer '%s'\n", layer);
         }
+
+		//Get optional layers
+		std::vector<const char*> optionalLayers = GetOptionalValidationLayers(desc.Flags & DEVICE_FLAG_DEBUG);
+		if (!optionalLayers.empty())
+		{
+			LOG_DEBUG_INFO("[Vulkan] Optional Instance-Layers:\n");
+			for (const auto& layer : optionalLayers)
+				LOG_DEBUG_INFO("   Instance-Layer '%s'\n", layer);
+		}
+
+		//Add optional layers. if we found a optional layer among the available ones we add it
+		for (const char* layerName : optionalLayers)
+		{
+			for (const auto& layer : availableLayers)
+			{
+				if (strcmp(layerName, layer.layerName) == 0)
+				{
+					requiredLayers.push_back(layerName);
+					break;
+				}
+			}
+		}
+
 
         //Get all the available extensions
         uint32 availableExtensionsCount = 0;
@@ -138,9 +161,9 @@ namespace Lambda
         std::vector<VkExtensionProperties> availableExtensions(availableExtensionsCount);
         vkEnumerateInstanceExtensionProperties(nullptr, &availableExtensionsCount, availableExtensions.data());
 
-        if (availableExtensions.size() > 0)
+        if (!availableExtensions.empty())
         {
-            LOG_DEBUG_INFO("[Vulkan] Available Instance-Extensions:\n");
+            LOG_DEBUG_INFO("[Vulkan] Available Instance-Extensions (count=%d):\n", availableExtensions.size());
             for (const auto& extension : availableExtensions)
             {
                 const char* name = extension.extensionName;
@@ -154,53 +177,11 @@ namespace Lambda
         
 		//Get extensions
 		std::vector<const char*> requiredExtensions = GetRequiredInstanceExtensions(desc.Flags & DEVICE_FLAG_DEBUG);
-		if (requiredExtensions.size() > 0)
+		if (!requiredExtensions.empty())
 		{
 			LOG_DEBUG_INFO("[Vulkan] Required Instance-Extensions:\n");
 			for (const auto& extension : requiredExtensions)
 				LOG_DEBUG_INFO("   Instance-Extension '%s'\n", extension);
-		}
-
-
-		//Check if all the required layers are available
-		for (const char* layerName : requiredLayers)
-		{
-			bool layerFound = false;
-			for (const auto& layer : availableLayers)
-			{
-				if (strcmp(layerName, layer.layerName) == 0)
-				{
-					layerFound = true;
-					break;
-				}
-			}
-
-			if (!layerFound)
-			{
-				LOG_DEBUG_ERROR("Vulkan: Required Instance-Validationlayer '%s' was not found on the system\n", layerName);
-				return;
-			}
-		}
-
-
-		//Check if all the required extensions are available
-		for (const char* extensionName : requiredExtensions)
-		{
-			bool extensionFound = false;
-			for (const auto& extension : availableExtensions)
-			{
-				if (strcmp(extensionName, extension.extensionName) == 0)
-				{
-					extensionFound = true;
-					break;
-				}
-			}
-
-			if (!extensionFound)
-			{
-				LOG_DEBUG_ERROR("Vulkan: Required Instance-Extension '%s' was not found on the system\n", extensionName);
-				return;
-			}
 		}
 
 
@@ -213,10 +194,10 @@ namespace Lambda
 		instanceInfo.pNext						= (desc.Flags & DEVICE_FLAG_DEBUG) ? (VkDebugUtilsMessengerCreateInfoEXT*)& dInfo : nullptr;
 		instanceInfo.flags						= 0;
 		instanceInfo.pApplicationInfo			= &applicationInfo;
-		instanceInfo.enabledExtensionCount		= uint32(requiredExtensions.size());
-		instanceInfo.ppEnabledExtensionNames	= requiredExtensions.data();
         instanceInfo.enabledLayerCount			= uint32(requiredLayers.size());
         instanceInfo.ppEnabledLayerNames		= requiredLayers.data();
+		instanceInfo.enabledExtensionCount		= uint32(requiredExtensions.size());
+		instanceInfo.ppEnabledExtensionNames	= requiredExtensions.data();
 		VkResult res = vkCreateInstance(&instanceInfo, nullptr, &m_Instance);
 		if (res != VK_SUCCESS)
 		{
@@ -246,31 +227,7 @@ namespace Lambda
 				LOG_DEBUG_ERROR("Vulkan: Failed to retrive 'vkDestroyDebugUtilsMessengerEXT'\n");
 			}
 		}
-        
-#if defined(LAMBDA_PLAT_MACOS)
-        {
-            PFN_vkGetMoltenVKConfigurationMVK GetMoltenVKConfigurationMVK = (PFN_vkGetMoltenVKConfigurationMVK)vkGetInstanceProcAddr(m_Instance, "vkGetMoltenVKConfigurationMVK");
-            PFN_vkSetMoltenVKConfigurationMVK SetMoltenVKConfigurationMVK = (PFN_vkSetMoltenVKConfigurationMVK)vkGetInstanceProcAddr(m_Instance, "vkSetMoltenVKConfigurationMVK");
-            if (GetMoltenVKConfigurationMVK == nullptr || SetMoltenVKConfigurationMVK == nullptr )
-            {
-                //LOG_DEBUG_ERROR("Vulkan: Failed to load vkGetMoltenVKConfigurationMVK\n");
-                //return;
-            }
-            else
-            {
-                MVKConfiguration mvkConfig = {};
-                size_t configSize = sizeof(MVKConfiguration);
-                if (GetMoltenVKConfigurationMVK(m_Instance, &mvkConfig, &configSize) != VK_SUCCESS)
-                {
-                    //LOG_DEBUG_ERROR("Vulkan: Failed to load retrive MVKConfiguration\n");
-                    //return;
-                }
-                
-                //if (SetMoltenVKConfigurationMVK())
-            }
-        }
-#endif
-        
+
 
 		//If not the debugflag is set we do not want to create the messenger
 		if (desc.Flags & DEVICE_FLAG_DEBUG)
@@ -309,15 +266,22 @@ namespace Lambda
 			VkPhysicalDeviceMemoryProperties memoryProperties = {};
 			vkGetPhysicalDeviceMemoryProperties(m_PhysicalDevice, &memoryProperties);
 
-			uint64 vram = 0;
+			uint64 hostVRAM		= 0;
+			uint64 deviceVRAM	= 0;
 			for (uint32 i = 0; i < memoryProperties.memoryHeapCount; i++)
 			{
 				if (memoryProperties.memoryHeaps[i].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)
-					vram += memoryProperties.memoryHeaps[i].size;
+					deviceVRAM	+= memoryProperties.memoryHeaps[i].size;
+				else
+					hostVRAM	+= memoryProperties.memoryHeaps[i].size;
 			}
 
-			vram = vram / (1024 * 1024);
-			LOG_SYSTEM_PRINT("Vulkan: Selected GPU '%s'\n        VRAM: %llu MB\n", m_PhysicalDeviceProperties.deviceName, vram);
+			hostVRAM = hostVRAM / (1024 * 1024);
+			deviceVRAM = deviceVRAM / (1024 * 1024);
+			LOG_SYSTEM_PRINT("Vulkan: Selected GPU '%s'\n", m_PhysicalDeviceProperties.deviceName);
+			LOG_SYSTEM_PRINT("        Host VRAM:    %llu MB\n", hostVRAM);
+			LOG_SYSTEM_PRINT("        Device VRAM:  %llu MB\n", deviceVRAM);
+			LOG_SYSTEM_PRINT("        Total VRAM:   %llu MB\n", hostVRAM + deviceVRAM);
 		}
 
 		//Find the queuefamily indices for the adapter that we have chosen
@@ -348,9 +312,26 @@ namespace Lambda
 		VkPhysicalDeviceFeatures deviceFeatures = {};
 		deviceFeatures.samplerAnisotropy = VK_TRUE;
 
+		//Get all the available extensions
+		uint32 extensionCount;
+		vkEnumerateDeviceExtensionProperties(m_PhysicalDevice, nullptr, &extensionCount, nullptr);
+
+		std::vector<VkExtensionProperties> availableDeviceExtensions(extensionCount);
+		vkEnumerateDeviceExtensionProperties(m_PhysicalDevice, nullptr, &extensionCount, availableDeviceExtensions.data());
+		
+		if (!availableDeviceExtensions.empty())
+		{
+			LOG_DEBUG_INFO("[Vulkan] Available Device-Extensions (count=%d):\n", availableDeviceExtensions.size());
+			for (const auto& extension : availableDeviceExtensions)
+			{
+				LOG_DEBUG_INFO("   Device-Extension '%s'\n", extension.extensionName);
+			}
+		}
+
+
 		//Get the required extension for device
 		std::vector<const char*> deviceExtensions = GetRequiredDeviceExtensions();
-		if (deviceExtensions.size() > 1)
+		if (!deviceExtensions.empty())
 		{
 			LOG_DEBUG_INFO("[Vulkan] Required Device-Extensions:\n");
 			for (const auto& extension : deviceExtensions)
@@ -360,31 +341,44 @@ namespace Lambda
 		}
 
 
-		//Get all the available extensions
-		uint32 extensionCount;
-		vkEnumerateDeviceExtensionProperties(m_PhysicalDevice, nullptr, &extensionCount, nullptr);
-
-		std::vector<VkExtensionProperties> availableDeviceExtensions(extensionCount);
-		vkEnumerateDeviceExtensionProperties(m_PhysicalDevice, nullptr, &extensionCount, availableDeviceExtensions.data());
-
-		LOG_DEBUG_INFO("[Vulkan] Available Device-Extensions:\n");
-		for (const auto& extension : availableDeviceExtensions)
+		//Get the optional extensions for the device
+		std::vector<const char*> optionalDeviceExtensions = GetOptionalDeviceExtensions();
+		if (!optionalDeviceExtensions.empty())
 		{
-			LOG_DEBUG_INFO("   Device-Extension '%s'\n", extension.extensionName);
+			LOG_DEBUG_INFO("[Vulkan] Optional Device-Extensions:\n");
+			for (const auto& extension : optionalDeviceExtensions)
+			{
+				LOG_DEBUG_INFO("   Device-Extension '%s'\n", extension);
+			}
 		}
+
+
+		//Add optional layers. if we found a optional layer among the available ones we add it
+		for (const char* extensionName : optionalDeviceExtensions)
+		{
+			for (const auto& extension : availableDeviceExtensions)
+			{
+				if (strcmp(extensionName, extension.extensionName) == 0)
+				{
+					deviceExtensions.push_back(extensionName);
+					break;
+				}
+			}
+		}
+
 
 		//Create device
 		VkDeviceCreateInfo info = {};
-		info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-		info.pNext = nullptr;
-		info.flags = 0;
-		info.enabledExtensionCount = uint32(deviceExtensions.size());
-		info.ppEnabledExtensionNames = deviceExtensions.data();
-		info.enabledLayerCount = uint32(requiredLayers.size());
-		info.ppEnabledLayerNames = requiredLayers.data(); //Same as for the instance
-		info.pEnabledFeatures = &deviceFeatures;
-		info.queueCreateInfoCount = uint32(queueCreateInfos.size());
-		info.pQueueCreateInfos = queueCreateInfos.data();
+		info.sType						= VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+		info.pNext						= nullptr;
+		info.flags						= 0;
+		info.enabledLayerCount			= uint32(requiredLayers.size());
+		info.ppEnabledLayerNames		= requiredLayers.data(); //Same as for the instance
+		info.enabledExtensionCount		= uint32(deviceExtensions.size());
+		info.ppEnabledExtensionNames	= deviceExtensions.data();
+		info.pEnabledFeatures			= &deviceFeatures;
+		info.queueCreateInfoCount		= uint32(queueCreateInfos.size());
+		info.pQueueCreateInfos			= queueCreateInfos.data();
 
 		if (vkCreateDevice(m_PhysicalDevice, &info, nullptr, &m_Device) != VK_SUCCESS)
 		{
@@ -771,6 +765,18 @@ namespace Lambda
 		return requiredLayers;
 	}
 
+	
+	std::vector<const char*> VKNDevice::GetOptionalValidationLayers(bool debug)
+	{
+		std::vector<const char*> optionalLayers;
+		if (debug)
+		{
+			//optionalLayers.push_back("VK_LAYER_RENDERDOC_Capture");
+		}
+
+		return optionalLayers;
+	}
+
 
 	std::vector<const char*> VKNDevice::GetRequiredDeviceExtensions()
 	{
@@ -779,6 +785,16 @@ namespace Lambda
 		requiredExtensions.push_back(VK_KHR_MAINTENANCE1_EXTENSION_NAME);
 
 		return requiredExtensions;
+	}
+
+
+	std::vector<const char*> VKNDevice::GetOptionalDeviceExtensions()
+	{
+		std::vector<const char*> optionalExtensions;
+		optionalExtensions.push_back(VK_NV_RAY_TRACING_EXTENSION_NAME);
+		optionalExtensions.push_back(VK_NV_MESH_SHADER_EXTENSION_NAME);
+		optionalExtensions.push_back(VK_NV_SHADING_RATE_IMAGE_EXTENSION_NAME);
+		return optionalExtensions;
 	}
 
 
@@ -800,6 +816,7 @@ namespace Lambda
 		if (debug)
 		{
 			requiredExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+			requiredExtensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
 		}
 
 		return requiredExtensions;

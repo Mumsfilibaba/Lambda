@@ -1,11 +1,8 @@
 #pragma once
 #include "Graphics/Core/IDevice.h"
-#if defined(LAMBDA_PLAT_MACOS)
-    #include <MoltenVK/vk_mvk_moltenvk.h>
-#endif
 #include "VKNDeviceAllocator.h"
-#include "VKNDynamicMemoryAllocator.h"
 #include "VKNSafeReleaseManager.h"
+#include "VKNDynamicMemoryAllocator.h"
 #include "VKNUtilities.h"
 
 #define FRAMES_AHEAD 3
@@ -118,7 +115,9 @@ namespace Lambda
 		VkPhysicalDevice QueryPhyscialDevice();
 		bool PhysicalDeviceIsSuitable(VkPhysicalDevice physcialDevice);        
 		std::vector<const char*> GetRequiredValidationLayers(bool debug);
+		std::vector<const char*> GetOptionalValidationLayers(bool debug);
 		std::vector<const char*> GetRequiredDeviceExtensions();
+		std::vector<const char*> GetOptionalDeviceExtensions();
 		std::vector<const char*> GetRequiredInstanceExtensions(bool debug);
     private:
 		VKNDeviceAllocator*			m_pDeviceAllocator;
