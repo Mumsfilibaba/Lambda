@@ -25,6 +25,16 @@ namespace Lambda
 
 	VKNBuffer::~VKNBuffer()
 	{
+		//Debug
+		if (m_VkBuffer == VK_NULL_HANDLE)
+		{
+			LOG_DEBUG_INFO("Vulkan: Destroyed Buffer '%s'\n", m_Name.c_str());
+		}
+		else
+		{
+			LOG_DEBUG_INFO("Vulkan: Destroyed Buffer '%p' '%s'\n", m_VkBuffer, m_Name.c_str());
+		}
+
 		//Deallocate the dynamic resource
 		if (m_Desc.Usage == RESOURCE_USAGE_DYNAMIC)
 		{
@@ -37,8 +47,6 @@ namespace Lambda
 			if (m_VkBuffer != VK_NULL_HANDLE)
 				m_pDevice->SafeReleaseVulkanResource<VkBuffer>(m_VkBuffer);
 		}
-
-		LOG_DEBUG_INFO("Vulkan: Destroyed buffer '%p'\n", m_VkBuffer);
 	}
     
     
