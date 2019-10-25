@@ -279,8 +279,12 @@ namespace Lambda
             //m_TransformBuffer.Model = glm::mat4(1.0f);
 
             //Create texture
-            //m_AlbedoMap = ITexture::CreateTextureFromFile(pDevice, "revolver_albedo.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
-            //m_NormalMap = ITexture::CreateTextureFromFile(pDevice, "revolver_normal.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
+            m_AlbedoMap = ITexture::CreateTextureFromFile(pDevice, "revolver_albedo.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
+			m_AlbedoMap->SetName("AlbedoMap");
+			m_Context->GenerateMipLevels(m_AlbedoMap.Get());
+			//m_NormalMap = ITexture::CreateTextureFromFile(pDevice, "revolver_normal.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
+			//m_NormalMap->SetName("NormalMap");
+			//m_Context->GenerateMipLevels(m_NormalMap.Get());
 
             //Create samplerstate
             /*TextureDesc textureDesc = m_AlbedoMap->GetDesc();

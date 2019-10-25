@@ -129,6 +129,8 @@ namespace Lambda
 			else
 			{
 				//Otherwise we create a staging buffer
+				info.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+
 				VkBuffer stagingBuffer = VK_NULL_HANDLE;
 				if (vkCreateBuffer(m_pDevice->GetVkDevice(), &info, nullptr, &stagingBuffer) != VK_SUCCESS)
 				{
@@ -137,7 +139,7 @@ namespace Lambda
 				}
 				else
 				{
-					LOG_DEBUG_INFO("Vulkan: Created Staging-Buffer '%p'\n", m_VkBuffer);
+					LOG_DEBUG_INFO("Vulkan: Created Staging-Buffer '%p'\n", stagingBuffer);
 				}
 
 				//Allocate memory
@@ -177,7 +179,10 @@ namespace Lambda
 	void VKNBuffer::SetName(const char* pName)
 	{
 		TBuffer::SetName(pName);
-		if (m_VkBuffer != VK_NULL_HANDLE)
+		if (pName && m_VkBuffer != VK_NULL_HANDLE)
+		{
 			m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_BUFFER, (uint64)m_VkBuffer, m_Name);
+			m_Desc.pName = m_Name.c_str();
+		}
 	}
 }

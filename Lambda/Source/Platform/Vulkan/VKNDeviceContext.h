@@ -75,6 +75,8 @@ namespace Lambda
 
 		virtual void ResolveTexture(ITexture* pDst, uint32 dstMipLevel, ITexture* pSrc, uint32 srcMipLevel) override final;
 
+		virtual void GenerateMipLevels(ITexture* pTexture) override final;
+
 		virtual void Draw(uint32 vertexCount, uint32 startVertex) override final;
 		virtual void DrawIndexed(uint32 indexCount, uint32 startIndexLocation, uint32 baseVertexLocation) override final;
         virtual void DrawInstanced(uint32 vertexCountPerInstance, uint32 instanceCount, uint32 startVertexLocation, uint32 startInstanceLocation) override final;
@@ -96,6 +98,7 @@ namespace Lambda
 		void TransitionTexture(const ITexture* pTexture, ResourceState state, uint32 mipLevel);
         
 		void CopyBuffer(VkBuffer dstBuffer, VkDeviceSize dstOffset, VkBuffer srcBuffer, VkDeviceSize srcOffset, VkDeviceSize sizeInBytes);
+		void CopyBufferToImage(VkImage image, VkDeviceSize mipLevel, VkImageAspectFlags aspectFlags, uint32 width, uint32 height, uint32 depth, VkBuffer buffer, VkDeviceSize offset, VkDeviceSize sizeInBytes);
 		void BlitTexture(VKNTexture* pDst, uint32 dstWidth, uint32 dstHeight, uint32 dstMipLevel, VKNTexture* pSrc, uint32 srcWidth, uint32 srcHeight, uint32 srcMipLevel);
         
 		void AddWaitSemaphore(VkSemaphore waitSemaphore, VkPipelineStageFlags waitDstStageMask);

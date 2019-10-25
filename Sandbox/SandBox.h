@@ -58,8 +58,8 @@ namespace Lambda
 		//Material m_Material;
 		//Material m_RedMaterial;
         //Textures
-		//AutoRef<ITexture> m_AlbedoMap;
-		//AutoRef<ITexture> m_NormalMap;
+		AutoRef<ITexture> m_AlbedoMap;
+		AutoRef<ITexture> m_NormalMap;
         //Samplers
 		//AutoRef<ISamplerState> m_SamplerState;
         //Camera m_Camera;

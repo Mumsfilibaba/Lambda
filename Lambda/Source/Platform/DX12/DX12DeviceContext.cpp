@@ -455,6 +455,11 @@ namespace Lambda
 	{
 	}
 
+	
+	void DX12DeviceContext::GenerateMipLevels(ITexture* pTexture)
+	{
+	}
+
 
 	void DX12DeviceContext::Draw(uint32 vertexCount, uint32 startVertex)
 	{

@@ -445,55 +445,7 @@ namespace Lambda
     void VKNDevice::CreateTexture(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc)
     {
 		LAMBDA_ASSERT(ppTexture != nullptr);
-        
-        //Create texture object
-        VKNTexture* pVkTexture = DBG_NEW VKNTexture(this, desc);
-        
-		//A texture needs to be in a general layout
-		m_pImmediateContext->TransitionTexture(pVkTexture, RESOURCE_STATE_GENERAL, VK_REMAINING_MIP_LEVELS);
-
-        //Handle inital data
-        if (pInitalData)
-        {
-            LAMBDA_ASSERT(pInitalData->pData != nullptr && pInitalData->SizeInBytes != 0);
-            
-            //Upload data
-            m_pImmediateContext->UpdateTexture(pVkTexture, pInitalData, 0);
-
-            //Generate mipmaps
-            if (desc.Flags & TEXTURE_FLAGS_GENEATE_MIPS)
-            {
-                VkFormatProperties formatProperties = {};
-                vkGetPhysicalDeviceFormatProperties(m_PhysicalDevice, pVkTexture->GetVkFormat(), &formatProperties);
-                
-                if (formatProperties.linearTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)
-                {
-                    const TextureDesc& textureDesc = pVkTexture->GetDesc();
-                    int32 mipWidth	 = textureDesc.Width;
-                    int32 mipHeight	 = textureDesc.Height;
-                    uint32 mipLevels = textureDesc.MipLevels;
-                    for (uint32 i = 1; i < mipLevels; i++)
-                    {
-                        m_pImmediateContext->TransitionTexture(pVkTexture, RESOURCE_STATE_COPY_SRC, i-1);
-                        m_pImmediateContext->BlitTexture(pVkTexture, mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, i, pVkTexture, mipWidth, mipHeight, i-1);
-                        m_pImmediateContext->TransitionTexture(pVkTexture, RESOURCE_STATE_COPY_DEST, i-1);
-                        
-                        if (mipWidth > 1)
-                            mipWidth /= 2;
-
-                        if (mipHeight > 1)
-                            mipHeight /= 2;
-                    }
-                }
-                else
-                {
-                    LOG_DEBUG_ERROR("Vulkan: PhysicalDevice does not support mipmap generation for this format\n");
-                }
-            }
-        }
-
-        //Return texture
-        (*ppTexture) = pVkTexture;
+		(*ppTexture) = DBG_NEW VKNTexture(this, pInitalData, desc);
     }
     
     

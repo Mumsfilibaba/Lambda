@@ -55,7 +55,7 @@ namespace Lambda
 	private:
 		ImageMap m_ResourceLayouts;
 		std::vector<ImageBarrier> m_DefferedBarriers;
-	private:
+	public:
 		static VKNImageLayout& GetGlobalLayout(VkImage image);
 		static bool HasGlobalLayout(VkImage image);
 		static void AddGlobalLayout(VkImage image, const VKNImageLayout& layout);

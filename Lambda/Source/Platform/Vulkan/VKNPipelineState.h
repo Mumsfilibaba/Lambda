@@ -21,6 +21,8 @@ namespace Lambda
 
     class VKNPipelineState final : public PipelineStateBase<VKNDevice>
     {
+		using TPipelineState = PipelineStateBase<VKNDevice>;
+
     public:
         LAMBDA_NO_COPY(VKNPipelineState);
         

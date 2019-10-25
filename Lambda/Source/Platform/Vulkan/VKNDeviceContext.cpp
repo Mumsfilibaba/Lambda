@@ -400,6 +400,35 @@ namespace Lambda
 		m_NumCommands++;
 	}
 
+	
+	void VKNDeviceContext::CopyBufferToImage(VkImage image, VkDeviceSize mipLevel, VkImageAspectFlags aspectFlags, uint32 width, uint32 height, uint32 depth, VkBuffer buffer, VkDeviceSize offset, VkDeviceSize sizeInBytes)
+	{
+		//Check if we should flush the context
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
+		{
+			this->Flush();
+		}
+
+		//Flush barriers before copying
+		FlushResourceBarriers();
+
+		//Perform copy
+		VkBufferImageCopy region = {};
+		region.bufferOffset						= offset;
+		region.bufferRowLength					= 0;
+		region.bufferImageHeight				= 0;
+		region.imageSubresource.aspectMask		= aspectFlags;
+		region.imageSubresource.mipLevel		= mipLevel;
+		region.imageSubresource.baseArrayLayer	= 0;
+		region.imageSubresource.layerCount		= 1;
+		region.imageOffset						= { 0, 0, 0 };
+		region.imageExtent						= { width, height, depth };
+		vkCmdCopyBufferToImage(m_pCurrentFrameResource->CommandBuffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+		//Count command
+		m_NumCommands++;
+	}
+
 
 	void VKNDeviceContext::BlitTexture(VKNTexture* pDst, uint32 dstWidth, uint32 dstHeight, uint32 dstMipLevel, VKNTexture* pSrc, uint32 srcWidth, uint32 srcHeight, uint32 srcMipLevel)
     {
@@ -415,21 +444,21 @@ namespace Lambda
         LAMBDA_ASSERT_PRINT(m_RenderPass == VK_NULL_HANDLE, "Vulkan: EndRenderPass must be called before BlitTexture\n");
         
         VkImageBlit blitInfo = {};
-        blitInfo.srcOffsets[0] = { 0, 0, 0 };
-        blitInfo.srcOffsets[1] = { int32(srcWidth), int32(srcHeight), 1 };
-        blitInfo.srcSubresource.aspectMask = pSrc->GetVkAspectFlags();
-        blitInfo.srcSubresource.mipLevel = srcMipLevel;
-        blitInfo.srcSubresource.baseArrayLayer = 0;
-        blitInfo.srcSubresource.layerCount = 1;
-        blitInfo.dstOffsets[0] = { 0, 0, 0 };
-        blitInfo.dstOffsets[1] = { int32(dstWidth), int32(dstHeight), 1 };
-        blitInfo.dstSubresource.aspectMask = pDst->GetVkAspectFlags();
-        blitInfo.dstSubresource.mipLevel = dstMipLevel;
-        blitInfo.dstSubresource.baseArrayLayer = 0;
-        blitInfo.dstSubresource.layerCount = 1;
+        blitInfo.srcOffsets[0]					= { 0, 0, 0 };
+        blitInfo.srcOffsets[1]					= { int32(srcWidth), int32(srcHeight), 1 };
+        blitInfo.srcSubresource.aspectMask		= pSrc->GetVkAspectFlags();
+        blitInfo.srcSubresource.mipLevel		= srcMipLevel;
+        blitInfo.srcSubresource.baseArrayLayer	= 0;
+        blitInfo.srcSubresource.layerCount		= 1;
+        blitInfo.dstOffsets[0]					= { 0, 0, 0 };
+        blitInfo.dstOffsets[1]					= { int32(dstWidth), int32(dstHeight), 1 };
+        blitInfo.dstSubresource.aspectMask		= pDst->GetVkAspectFlags();
+        blitInfo.dstSubresource.mipLevel		= dstMipLevel;
+        blitInfo.dstSubresource.baseArrayLayer	= 0;
+        blitInfo.dstSubresource.layerCount		= 1;
     
-        VkImage srcImage = reinterpret_cast<VkImage>(pSrc->GetNativeHandle());
-        VkImage dstImage = reinterpret_cast<VkImage>(pDst->GetNativeHandle());
+        VkImage srcImage = pSrc->GetVkImage();
+        VkImage dstImage = pDst->GetVkImage();
         vkCmdBlitImage(m_pCurrentFrameResource->CommandBuffer, srcImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blitInfo, VK_FILTER_LINEAR);
 
 		//Count command
@@ -718,16 +747,9 @@ namespace Lambda
 		LAMBDA_ASSERT_PRINT(pData != nullptr, "Vulkan: pData cannot be nullptr\n");
 		LAMBDA_ASSERT_PRINT(pData->pData != nullptr && pData->SizeInBytes != 0, "Vulkan: ResourceData::pData or ResourceData::SizeInBytes cannot be null\n");
 
-		//Check if we should flush the context
-		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
-		{
-			this->Flush();
-		}
-
 		//Transition resource state
-        VKNTexture* pVkResource = reinterpret_cast<VKNTexture*>(pResource);
+        VKNTexture* pVkTexture = reinterpret_cast<VKNTexture*>(pResource);
         TransitionTexture(pResource, RESOURCE_STATE_COPY_DEST, VK_REMAINING_MIP_LEVELS);
-		FlushResourceBarriers();
 
 		//Get device properties
 		VkPhysicalDeviceProperties properties = m_pDevice->GetPhysicalDeviceProperties();
@@ -738,25 +760,10 @@ namespace Lambda
 		
 		uint8* pHostMemory = mem.pPage->GetHostMemory() + mem.Offset;
 		memcpy(pHostMemory, pData->pData, pData->SizeInBytes);
-    
-        //Perform copy
-        const TextureDesc& textureDesc = pVkResource->GetDesc();
-        VkBufferImageCopy region = {};
-        region.bufferOffset                     = mem.Offset;
-        region.bufferRowLength                  = 0;
-        region.bufferImageHeight                = 0;
-        region.imageSubresource.aspectMask      = pVkResource->GetVkAspectFlags();
-        region.imageSubresource.mipLevel        = mipLevel;
-        region.imageSubresource.baseArrayLayer  = 0;
-        region.imageSubresource.layerCount      = 1;
-        region.imageOffset                      = { 0, 0, 0 };
-        region.imageExtent                      = { textureDesc.Width, textureDesc.Height, textureDesc.Depth };
-    
-        VkImage	 image	= pVkResource->GetVkImage();
-        vkCmdCopyBufferToImage(m_pCurrentFrameResource->CommandBuffer, mem.pPage->GetVkBuffer(), image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
-		//Count command
-		m_NumCommands++;
+		//Copy
+		const TextureDesc& textureDesc = pVkTexture->GetDesc();
+		CopyBufferToImage(pVkTexture->GetVkImage(), mipLevel, pVkTexture->GetVkAspectFlags(), textureDesc.Width, textureDesc.Height, textureDesc.Depth, mem.pPage->GetVkBuffer(), mem.Offset, pData->SizeInBytes);
     }
     
     
@@ -854,6 +861,57 @@ namespace Lambda
 
 		//Count command
 		m_NumCommands++;
+	}
+
+	
+	void VKNDeviceContext::GenerateMipLevels(ITexture* pTexture)
+	{
+		LAMBDA_ASSERT(pTexture != nullptr);
+
+		VKNTexture* pVkTexture = reinterpret_cast<VKNTexture*>(pTexture);
+		const TextureDesc& desc = pVkTexture->GetDesc();
+		if (desc.Type == TEXTURE_TYPE_2D)
+		{
+			if (desc.Flags & TEXTURE_FLAGS_GENEATE_MIPS)
+			{
+				VkFormatProperties formatProperties = {};
+				vkGetPhysicalDeviceFormatProperties(m_pDevice->GetVkPhysicalDevice(), pVkTexture->GetVkFormat(), &formatProperties);
+
+				if (formatProperties.linearTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)
+				{
+					const TextureDesc& textureDesc = pVkTexture->GetDesc();
+					int32 mipWidth	 = textureDesc.Width;
+					int32 mipHeight	 = textureDesc.Height;
+					uint32 mipLevels = textureDesc.MipLevels;
+
+					TransitionTexture(pVkTexture, RESOURCE_STATE_COPY_DEST, VK_REMAINING_MIP_LEVELS);
+					for (uint32 i = 1; i < mipLevels; i++)
+					{
+						TransitionTexture(pVkTexture, RESOURCE_STATE_COPY_SRC, i - 1);
+						BlitTexture(pVkTexture, mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, i, pVkTexture, mipWidth, mipHeight, i - 1);
+						TransitionTexture(pVkTexture, RESOURCE_STATE_COPY_DEST, i - 1);
+
+						if (mipWidth > 1)
+							mipWidth /= 2;
+
+						if (mipHeight > 1)
+							mipHeight /= 2;
+					}
+				}
+				else
+				{
+					LOG_DEBUG_ERROR("Vulkan: PhysicalDevice does not support mipmap generation for this format\n");
+				}
+			}
+			else
+			{
+				LOG_DEBUG_ERROR("Vulkan: Only textures with TextureDesc::Flags TEXTURE_FLAGS_GENEATE_MIPS can use GenerateMipLevels()\n");
+			}
+		}
+		else
+		{
+			LOG_DEBUG_ERROR("Vulkan: Only textures with TextureDesc::Type=TEXTURE_TYPE_2D can use GenerateMipLevels()\n");
+		}
 	}
 
 

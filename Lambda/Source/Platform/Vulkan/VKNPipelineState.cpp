@@ -428,10 +428,11 @@ namespace Lambda
 
 	void VKNPipelineState::SetName(const char* pName)
     {
-		if (pName != nullptr)
+		TPipelineState::SetName(pName);
+		if (pName)
 		{
-			std::string name(pName);
-			m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_PIPELINE, (uint64)m_Pipeline, name);
+			m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_PIPELINE, (uint64)m_Pipeline, m_Name);
+			m_Desc.pName = m_Name.c_str();
 		}
     }
 }

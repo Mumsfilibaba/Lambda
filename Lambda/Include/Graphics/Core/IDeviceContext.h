@@ -43,6 +43,8 @@ namespace Lambda
         
         virtual void ResolveTexture(ITexture* pDst, uint32 dstMipLevel, ITexture* pSrc, uint32 srcMipLevel) = 0;
         
+		virtual void GenerateMipLevels(ITexture* pTexture) = 0;
+
         virtual void Draw(uint32 vertexCount, uint32 startVertex) = 0;
         virtual void DrawIndexed(uint32 indexCount, uint32 startIndexLocation, uint32 baseVertexLocation) = 0;
         virtual void DrawInstanced(uint32 vertexCountPerInstance, uint32 instanceCount, uint32 startVertexLocation, uint32 startInstanceLocation) = 0;
