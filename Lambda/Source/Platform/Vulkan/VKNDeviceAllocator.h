@@ -49,12 +49,27 @@ namespace Lambda
 		~VKNMemoryPage() = default;
 
 		bool Allocate(VKNAllocation& allocation, VkDeviceSize sizeInBytes, VkDeviceSize alignment, VkDeviceSize granularity);
-        bool IsOnSamePage(VkDeviceSize aOffset, VkDeviceSize aSize, VkDeviceSize bOffset, VkDeviceSize pageSize);
-        void Deallocate(VKNAllocation& allocation);
+		void Deallocate(VKNAllocation& allocation);
 		void Destroy(VKNDevice* pDevice);
 
-		inline uint32 GetMemoryType() const { return m_MemoryType; }
+		_forceinline bool IsEmpty() const
+		{
+			return m_pHead->pPrevious == nullptr && m_pHead->pNext == nullptr && m_pHead->IsFree;
+		}
+
+
+		_forceinline uint64 GetSize() const
+		{
+			return m_SizeInBytes;
+		}
+
+
+		_forceinline uint32 GetMemoryType() const 
+		{ 
+			return m_MemoryType; 
+		}
 	private:
+        bool IsOnSamePage(VkDeviceSize aOffset, VkDeviceSize aSize, VkDeviceSize bOffset, VkDeviceSize pageSize);
 		void Init(VKNDevice* pDevice);
 		void Map(VKNDevice* pDevice);
 		void Unmap(VKNDevice* pDevice);

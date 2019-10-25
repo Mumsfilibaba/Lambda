@@ -403,7 +403,12 @@ namespace Lambda
 		info.pSwapchains		= &m_VkSwapChain;
 		info.pImageIndices		= &m_CurrentBufferIndex;
 		info.pResults			= nullptr;
-		m_pDevice->Present(&info);
+		VkResult result = m_pDevice->Present(&info);
+		if (result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_OUT_OF_DATE_KHR)
+		{
+			LOG_DEBUG_WARNING("Vulkan: Suboptimal SwapChain result='%s'\n", result == VK_SUBOPTIMAL_KHR ? "VK_SUBOPTIMAL_KHR" : "VK_ERROR_OUT_OF_DATE_KHR");
+		}
+
 		//LOG_DEBUG_INFO("Waiting Semaphore %p\n", m_RenderSemaphores[m_FrameIndex]);
 
 		//Finish device frame
