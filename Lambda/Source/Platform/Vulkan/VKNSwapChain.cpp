@@ -229,21 +229,21 @@ namespace Lambda
     
         //Setup swapchain
         VkSwapchainCreateInfoKHR info = {};
-        info.sType                = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-        info.pNext                = nullptr;
-        info.surface              = m_Surface;
-        info.minImageCount        = m_Desc.BufferCount;
-        info.imageFormat          = m_VkFormat.format;
-        info.imageColorSpace      = m_VkFormat.colorSpace;
-        info.imageExtent          = newExtent;
-        info.imageArrayLayers     = 1;
-        info.imageUsage           = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT; //Use as color attachment and clear
-        info.preTransform         = cap.Capabilities.currentTransform;
-        info.compositeAlpha       = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-        info.presentMode          = m_PresentationMode;
-        info.clipped              = VK_TRUE;
-        info.oldSwapchain         = VK_NULL_HANDLE;
-        
+        info.sType            = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+        info.pNext            = nullptr;
+        info.surface          = m_Surface;
+        info.minImageCount    = m_Desc.BufferCount;
+        info.imageFormat      = m_VkFormat.format;
+        info.imageColorSpace  = m_VkFormat.colorSpace;
+        info.imageExtent      = newExtent;
+        info.imageArrayLayers = 1;
+        info.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT; //Use as color attachment and clear
+        info.preTransform     = cap.Capabilities.currentTransform;
+        info.compositeAlpha   = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+        info.presentMode      = m_PresentationMode;
+        info.clipped          = VK_TRUE;
+        info.oldSwapchain     = VK_NULL_HANDLE;
+    
         //Is the swapchain going to be used by more than one queue
 		QueueFamilyIndices familyIndices = m_pDevice->GetQueueFamilyIndices();
         if (familyIndices.GraphicsFamily != familyIndices.PresentFamily)
