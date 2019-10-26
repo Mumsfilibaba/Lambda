@@ -54,6 +54,16 @@ namespace Lambda
 		char AdapterString[256]	= { 0 };
 	};
 
+	//------------------
+	//DeviceCapabilities
+	//------------------
+
+	struct DeviceFeatures
+	{
+		bool SupportRTX				= false;
+		bool SupportFullscreenState = false;
+	};
+
     //-------
     //IDevice
     //-------
@@ -74,6 +84,7 @@ namespace Lambda
         virtual IDeviceContext* GetImmediateContext() const = 0;
         
         virtual const DeviceDesc& GetDesc() const = 0;
+		virtual const DeviceFeatures& GetFeatures() const = 0;
         virtual const DeviceProperties& GetProperties() const = 0;
         virtual void* GetNativeHandle() const = 0;
 	};

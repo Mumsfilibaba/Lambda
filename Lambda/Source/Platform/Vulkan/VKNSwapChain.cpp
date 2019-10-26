@@ -17,7 +17,7 @@ namespace Lambda
 	//------------
 
 	VKNSwapChain::VKNSwapChain(VKNDevice* pDevice, const SwapChainDesc& desc)
-		: SwapChainBase<VKNDevice>(pDevice),
+		: SwapChainBase<VKNDevice>(pDevice, desc),
 		m_Context(nullptr),
 		m_VkSwapChain(VK_NULL_HANDLE),
         m_VkFormat(),
@@ -380,6 +380,18 @@ namespace Lambda
         InitSwapChain(extent);
 		
 		LOG_DEBUG_INFO("VKNSwapChain: RESIZED w: %d h: %d\n", width, height);
+	}
+
+
+	bool VKNSwapChain::SetFullscreenState(bool fullscreenState)
+	{
+		return false;
+	}
+
+	
+	bool VKNSwapChain::GetFullscreenState() const
+	{
+		return false;
 	}
 
 

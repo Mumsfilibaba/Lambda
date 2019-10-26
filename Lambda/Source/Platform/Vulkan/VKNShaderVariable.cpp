@@ -11,21 +11,14 @@ namespace Lambda
 	//VKNShaderVariable
 	//-----------------
 
-	VKNShaderVariable::VKNShaderVariable(VKNDevice* pDevice, VKNShaderVariableTable* pVariableTable, const ShaderVariableDesc& desc)
-		: ShaderVariableBase<VKNDevice>(pDevice),
-		m_pVariableTable(nullptr),
+	VKNShaderVariable::VKNShaderVariable(VKNDevice* pDevice, VKNShaderVariableTable* pShaderVariableTable, const ShaderVariableDesc& desc)
+		: TShaderVariable(pDevice, pShaderVariableTable, desc),
 		m_Resource(nullptr),
         m_ResourceHandle(VK_NULL_HANDLE)
 	{
+		//Increas inital ref
 		this->AddRef();
-
-		LAMBDA_ASSERT(pVariableTable != nullptr);
-
-		//Since the ShaderVariableTable owns the memory to the 
-		//shadervariable we only need a weak pointer to shadervariable
-		m_pVariableTable = pVariableTable;
-		m_Desc = desc;
-        
+		        
         //Setup descriptor write
         m_DescriptorWrite.sType             = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         m_DescriptorWrite.pNext             = nullptr;
@@ -110,13 +103,6 @@ namespace Lambda
 			pSamplerState->AddRef();
 			m_Resource = pSamplerState;
 		}
-	}
-
-
-	IShaderVariableTable* VKNShaderVariable::GetShaderVariableTable() const
-	{
-		m_pVariableTable->AddRef();
-		return m_pVariableTable;
 	}
 
 	

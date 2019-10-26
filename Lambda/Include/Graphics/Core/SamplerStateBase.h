@@ -14,12 +14,14 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(SamplerStateBase);
 
-		SamplerStateBase(TDeviceImpl* pDevice)
+		SamplerStateBase(TDeviceImpl* pDevice, const SamplerStateDesc& desc)
 			: DeviceObjectBase<TDeviceImpl, ISamplerState>(pDevice),
-			m_Desc()
+			m_Desc(desc)
 		{
 		}
 		~SamplerStateBase() = default;
+
+		virtual void* GetNativeHandle() const override = 0;
 
 
 		virtual const SamplerStateDesc& GetDesc() const override

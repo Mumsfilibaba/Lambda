@@ -31,9 +31,11 @@ namespace Lambda
         LAMBDA_IOBJECT_INTERFACE(ISwapChain);
         
         virtual void ResizeBuffers(uint32 width, uint32 height) = 0;
-        virtual ITexture* GetBuffer() = 0;
-        virtual ITexture* GetDepthBuffer() = 0;
         virtual void Present() = 0;
+		virtual bool SetFullscreenState(bool fullscreenState) = 0;
+		virtual bool GetFullscreenState() const = 0;
+		virtual ITexture* GetBuffer() = 0;
+        virtual ITexture* GetDepthBuffer() = 0;
         virtual void* GetNativeHandle() const = 0;
         virtual const SwapChainDesc& GetDesc() const = 0;
     };

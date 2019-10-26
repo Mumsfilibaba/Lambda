@@ -5,7 +5,7 @@
 namespace Lambda
 {
 	VKNQuery::VKNQuery(VKNDevice* pDevice, const QueryDesc& desc)
-		: QueryBase<VKNDevice>(pDevice),
+		: QueryBase<VKNDevice>(pDevice, desc),
 		m_QueryPool(VK_NULL_HANDLE),
         m_CurrentQuery(0),
         m_TimeStampPeriod(0)
@@ -50,7 +50,6 @@ namespace Lambda
         else
         {
             LOG_DEBUG_INFO("Vulkan: Created querypool\n");
-            m_Desc = desc;
         }
     }
     

@@ -26,10 +26,13 @@ namespace Lambda
 		~VKNSwapChain();
 
 		virtual void ResizeBuffers(uint32 width, uint32 height) override final;
-        virtual ITexture* GetBuffer() override final;
+		virtual bool SetFullscreenState(bool fullscreenState) override final;
+		virtual bool GetFullscreenState() const override final;
+		virtual ITexture* GetBuffer() override final;
         virtual ITexture* GetDepthBuffer() override final;
         virtual void Present() override final;
         virtual void* GetNativeHandle() const override final;
+		
 		void AquireNextImage();
 
         

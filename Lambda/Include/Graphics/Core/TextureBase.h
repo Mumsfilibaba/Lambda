@@ -14,12 +14,14 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(TextureBase);
 
-		TextureBase(TDeviceImpl* pDevice)
+		TextureBase(TDeviceImpl* pDevice, const TextureDesc& desc)
 			: DeviceObjectBase<TDeviceImpl, ITexture>(pDevice),
-			m_Desc()
+			m_Desc(desc)
 		{
 		}
 		~TextureBase() = default;
+
+		virtual void* GetNativeHandle() const override = 0;
 
 
 		virtual const TextureDesc& GetDesc() const override

@@ -21,6 +21,7 @@ namespace Lambda
 		}
 		~BufferBase() = default;
 
+		virtual void* GetNativeHandle() const override = 0;
 
 		virtual const BufferDesc& GetDesc() const override
 		{

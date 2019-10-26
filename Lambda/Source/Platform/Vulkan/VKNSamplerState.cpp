@@ -10,7 +10,7 @@ namespace Lambda
 	//---------------
 
 	VKNSamplerState::VKNSamplerState(VKNDevice* pDevice, const SamplerStateDesc& desc)
-		: SamplerStateBase<VKNDevice>(pDevice),
+		: SamplerStateBase<VKNDevice>(pDevice, desc),
 		m_Sampler(VK_NULL_HANDLE)
 	{
 		//Add a ref to the refcounter

@@ -14,12 +14,14 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(ShaderBase);
 
-		ShaderBase(TDeviceImpl* pDevice)
+		ShaderBase(TDeviceImpl* pDevice, const ShaderDesc& desc)
 			: DeviceObjectBase<TDeviceImpl, IShader>(pDevice),
-			m_Desc()
+			m_Desc(desc)
 		{
 		}
 		~ShaderBase() = default;
+
+		virtual void* GetNativeHandle() const override = 0;
 
 
 		virtual const ShaderDesc& GetDesc() const override

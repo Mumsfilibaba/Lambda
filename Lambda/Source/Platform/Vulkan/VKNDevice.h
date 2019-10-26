@@ -1,5 +1,5 @@
 #pragma once
-#include "Graphics/Core/IDevice.h"
+#include "Graphics/Core/DeviceBase.h"
 #include "VKNDeviceAllocator.h"
 #include "VKNSafeReleaseManager.h"
 #include "VKNDynamicMemoryAllocator.h"
@@ -21,7 +21,7 @@ namespace Lambda
 	//VKNDevice
 	//---------
 
-    class VKNDevice final : public RefCountedObject<IDevice>
+    class VKNDevice final : public DeviceBase
     {
     public:
         LAMBDA_NO_COPY(VKNDevice);
@@ -39,8 +39,6 @@ namespace Lambda
         virtual IDeviceContext* GetImmediateContext() const override final;
         
         virtual void* GetNativeHandle() const override final;
-		virtual const DeviceProperties& GetProperties() const override final;
-        virtual const DeviceDesc& GetDesc() const override final;
 
         VkResult Present(VkPresentInfoKHR* pInfo);
         void ExecuteCommandBuffer(VkSubmitInfo* pInfo, uint32 numBuffers, VkFence fence) const;
@@ -130,12 +128,10 @@ namespace Lambda
 		VkDevice   m_Device;
         VkQueue	   m_GraphicsQueue;
         VkQueue	   m_PresentationQueue;
-		DeviceProperties		   m_Properties;
 		VkDebugUtilsMessengerEXT   m_DebugMessenger;
 		QueueFamilyIndices		   m_FamiliyIndices;
 		VkPhysicalDevice		   m_PhysicalDevice;
 		VkPhysicalDeviceProperties m_PhysicalDeviceProperties;
-		DeviceDesc				   m_Desc;
 	private:
 		static PFN_vkSetDebugUtilsObjectNameEXT		SetDebugUtilsObjectNameEXT;
 		static PFN_vkCreateDebugUtilsMessengerEXT	CreateDebugUtilsMessengerEXT;

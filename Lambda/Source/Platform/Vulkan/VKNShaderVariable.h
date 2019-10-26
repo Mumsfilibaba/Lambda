@@ -12,8 +12,10 @@ namespace Lambda
 	//VKNShaderVariableTable
 	//----------------------
 
-	class VKNShaderVariable : public ShaderVariableBase<VKNDevice>
+	class VKNShaderVariable : public ShaderVariableBase<VKNDevice, VKNShaderVariableTable>
 	{
+		using TShaderVariable = ShaderVariableBase<VKNDevice, VKNShaderVariableTable>;
+
 	public:
 		LAMBDA_NO_COPY(VKNShaderVariable);
 
@@ -23,7 +25,7 @@ namespace Lambda
 		virtual void SetTexture(ITexture* pTexture) override final;
 		virtual void SetConstantBuffer(IBuffer* pBuffer) override final;
 		virtual void SetSamplerState(ISamplerState* pSamplerState) override final;
-		virtual IShaderVariableTable* GetShaderVariableTable() const override final;
+
 		bool Validate();
 		void Transition(VKNDeviceContext* pContext);
 
@@ -37,12 +39,11 @@ namespace Lambda
 		}
 
 
-		inline const VkWriteDescriptorSet& GetVkWriteDescriptorSet() 
+		_forceinline const VkWriteDescriptorSet& GetVkWriteDescriptorSet()
 		{ 
 			return m_DescriptorWrite; 
 		};
 	private:
-		VKNShaderVariableTable* m_pVariableTable;
 		AutoRef<IDeviceObject>	m_Resource;
         VkWriteDescriptorSet    m_DescriptorWrite;
         uint64                  m_ResourceHandle;

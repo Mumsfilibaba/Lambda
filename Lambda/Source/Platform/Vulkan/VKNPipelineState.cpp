@@ -18,7 +18,7 @@ namespace Lambda
 	//----------------
 
     VKNPipelineState::VKNPipelineState(VKNDevice* pDevice, const PipelineStateDesc& desc)
-        : PipelineStateBase<VKNDevice>(pDevice),
+        : PipelineStateBase<VKNDevice>(pDevice, desc),
 		m_pAllocator(nullptr),
         m_Pipeline(VK_NULL_HANDLE),
         m_PipelineLayout(VK_NULL_HANDLE),

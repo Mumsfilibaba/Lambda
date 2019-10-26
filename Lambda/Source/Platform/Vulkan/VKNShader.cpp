@@ -9,7 +9,7 @@ namespace Lambda
 	//---------
 
 	VKNShader::VKNShader(VKNDevice* pDevice, const ShaderDesc& desc)
-		: ShaderBase<VKNDevice>(pDevice),
+		: ShaderBase<VKNDevice>(pDevice, desc),
 		m_Shader(VK_NULL_HANDLE),
 		m_ByteCode(),
 		m_EntryPoint()
@@ -58,7 +58,6 @@ namespace Lambda
             LOG_DEBUG_INFO("Vulkan: Created shader\n");
 
             m_EntryPoint = std::string(desc.pEntryPoint);
-			m_Desc = desc;
 			m_Desc.pSource = nullptr;
 			m_Desc.pEntryPoint = m_EntryPoint.c_str();
         }

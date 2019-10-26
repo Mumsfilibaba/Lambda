@@ -12,17 +12,10 @@ namespace Lambda
 	//----------------------
 
 	VKNShaderVariableTable::VKNShaderVariableTable(VKNDevice* pDevice, VKNPipelineState* pPipelineState, const ShaderVariableTableDesc& desc)
-		: DeviceObjectBase<VKNDevice, IShaderVariableTable>(pDevice),
-		m_PipelineState(nullptr),
+		: TShaderVariableTable(pDevice, pPipelineState),
 		m_DescriptorSet(VK_NULL_HANDLE)
 	{
-		this->AddRef();
-
-		LAMBDA_ASSERT(pPipelineState != nullptr);
-		
-		pPipelineState->AddRef();
-		m_PipelineState = pPipelineState;
-
+		this->AddRef();	
 		Init(desc);
 	}
 	
@@ -77,13 +70,6 @@ namespace Lambda
 	{
 		LAMBDA_ASSERT(index < m_ShaderVariables.size());
 		return m_ShaderVariables[index].Get();
-	}
-
-
-	IPipelineState* VKNShaderVariableTable::GetPipelineState() const
-	{
-		m_PipelineState->AddRef();
-		return m_PipelineState.Get();
 	}
 
 

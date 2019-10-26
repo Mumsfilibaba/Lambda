@@ -13,7 +13,7 @@ namespace Lambda
 	//----------
 
     VKNTexture::VKNTexture(VKNDevice* pDevice, const ResourceData* pInitalData, const TextureDesc& desc)
-        : TextureBase<VKNDevice>(pDevice),
+        : TextureBase<VKNDevice>(pDevice, desc),
 		m_Memory(),
         m_IsOwner(false),
 		m_VkImage(VK_NULL_HANDLE),
@@ -27,7 +27,7 @@ namespace Lambda
     
     
     VKNTexture::VKNTexture(VKNDevice* pDevice, VkImage image, const TextureDesc& desc)
-		: TextureBase<VKNDevice>(pDevice),
+		: TextureBase<VKNDevice>(pDevice, desc),
 		m_Memory(),
 		m_IsOwner(false),
 		m_VkImage(VK_NULL_HANDLE),
@@ -77,8 +77,7 @@ namespace Lambda
     void VKNTexture::InitFromResource(VkImage image, const TextureDesc& desc)
     {
         //Init data
-        m_Desc		= desc;
-        m_VkImage		= image;
+        m_VkImage	= image;
         m_IsOwner	= false;
         
         //Set aspectflags
@@ -181,7 +180,6 @@ namespace Lambda
         }
         else
         {
-            m_Desc = desc;
             m_Desc.MipLevels = mipLevels;
             //Set that we have created the texture and not external memory
             m_IsOwner = true;

@@ -27,7 +27,8 @@ namespace Lambda
 	PFN_vkDestroyDebugUtilsMessengerEXT	VKNDevice::DestroyDebugUtilsMessengerEXT    = nullptr;
 
     VKNDevice::VKNDevice(const DeviceDesc& desc)
-        : m_GraphicsQueue(VK_NULL_HANDLE),
+        : DeviceBase(desc),
+		m_GraphicsQueue(VK_NULL_HANDLE),
         m_PresentationQueue(VK_NULL_HANDLE),
 		m_pDeviceAllocator(nullptr),
 		m_pDynamicMemoryAllocator(nullptr),
@@ -191,7 +192,7 @@ namespace Lambda
 		//Create instance
 		VkInstanceCreateInfo instanceInfo = {};
 		instanceInfo.sType						= VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-		instanceInfo.pNext						= (desc.Flags & DEVICE_FLAG_DEBUG) ? (VkDebugUtilsMessengerCreateInfoEXT*)& dInfo : nullptr;
+		instanceInfo.pNext						= (desc.Flags & DEVICE_FLAG_DEBUG) ? (VkDebugUtilsMessengerCreateInfoEXT*)&dInfo : nullptr;
 		instanceInfo.flags						= 0;
 		instanceInfo.pApplicationInfo			= &applicationInfo;
         instanceInfo.enabledLayerCount			= uint32(requiredLayers.size());
@@ -390,7 +391,6 @@ namespace Lambda
 		else
 		{
 			LOG_SYSTEM_PRINT("Vulkan: Created device and retrived queues\n");
-			m_Desc = desc;
 		}
 
 		strcpy(m_Properties.AdapterString, m_PhysicalDeviceProperties.deviceName);
@@ -782,9 +782,9 @@ namespace Lambda
 		LogSeverity severity = LOG_SEVERITY_UNKNOWN;
 		switch (messageSeverity)
 		{
-		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:      severity = LOG_SEVERITY_INFO;       break;
-		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:   severity = LOG_SEVERITY_WARNING;    break;
-		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:     severity = LOG_SEVERITY_ERROR;      break;
+		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:    severity = LOG_SEVERITY_INFO;    break;
+		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT: severity = LOG_SEVERITY_WARNING; break;
+		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:   severity = LOG_SEVERITY_ERROR;   break;
 		default: return VK_FALSE;
 		}
 
@@ -810,17 +810,5 @@ namespace Lambda
     void* VKNDevice::GetNativeHandle() const
     {
         return reinterpret_cast<void*>(m_Device);
-    }
-
-	
-	const DeviceProperties& VKNDevice::GetProperties() const
-	{
-		return m_Properties;
-	}
-    
-    
-    const DeviceDesc& VKNDevice::GetDesc() const
-    {
-        return m_Desc;
     }
 }

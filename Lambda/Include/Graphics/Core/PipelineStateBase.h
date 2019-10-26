@@ -14,12 +14,15 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(PipelineStateBase);
 
-		PipelineStateBase(TDeviceImpl* pDevice)
+		PipelineStateBase(TDeviceImpl* pDevice, const PipelineStateDesc& desc)
 			: DeviceObjectBase<TDeviceImpl, IPipelineState>(pDevice),
-			m_Desc()
+			m_Desc(desc)
 		{
 		}
 		~PipelineStateBase() = default;
+
+		virtual void CreateShaderVariableTable(IShaderVariableTable** ppVariableTable) override = 0;
+		virtual void* GetNativeHandle() const override = 0;
 
 
 		virtual const PipelineStateDesc& GetDesc() const override
