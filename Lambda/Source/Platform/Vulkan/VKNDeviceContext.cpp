@@ -134,13 +134,14 @@ namespace Lambda
             else
             {
 				//Set fence name
-                m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_FENCE, (uint64)m_pFrameResources[i].Fence, "Fence[" +  std::to_string(i) + "]");
+                m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_FENCE, (uint64)m_pFrameResources[i].Fence, m_Name + "Fence[" +  std::to_string(i) + "]");
 				//Initial fence signal
 				m_pDevice->ExecuteCommandBuffer(nullptr, 0, m_pFrameResources[i].Fence);
+
+				LOG_DEBUG_INFO("Vulkan: Created fence '%p'\n", m_pFrameResources[i].Fence);
             }
         }
 		
-		LOG_DEBUG_INFO("Vulkan: Created fences\n");
 
         //Init uploadbuffers
 		for (uint32 i = 0; i < m_NumFrameResources; i++)
@@ -997,7 +998,7 @@ namespace Lambda
 			//Get next buffer
 			m_pCurrentFrameResource = &m_pFrameResources[m_FrameIndex];
 			//Wait for last frame
-			vkWaitForFences(m_pDevice->GetVkDevice(), 1, &m_pCurrentFrameResource->Fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
+			vkWaitForFences(m_pDevice->GetVkDevice(), 1, &m_pCurrentFrameResource->Fence, VK_TRUE, UINT64_MAX);
 			vkResetFences(m_pDevice->GetVkDevice(), 1, &m_pCurrentFrameResource->Fence);
         
 			//Move to next frame

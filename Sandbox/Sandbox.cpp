@@ -312,9 +312,6 @@ namespace Lambda
 			m_RedMaterial.HasNormalMap		= 0;
 			m_RedMaterial.HasAlbedoMap		= 0;
 			m_RedMaterial.Color				= glm::vec4(RGB_F(255, 0, 0), 1.0f);*/
-
-			app.GetWindow()->SetFullscreen(true);
-			m_SwapChain->SetFullscreenState(true);
         }
 	}
 
