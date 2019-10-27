@@ -1,6 +1,6 @@
 #pragma once
 #include "Graphics/Core/TextureBase.h"
-#include "VKNDeviceAllocator.h"
+#include "Memory/VKNDeviceAllocator.h"
 #include "VKNConversions.inl"
 
 namespace Lambda

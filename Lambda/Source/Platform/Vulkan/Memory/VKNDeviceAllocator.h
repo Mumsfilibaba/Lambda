@@ -1,11 +1,13 @@
 #pragma once
 #include "Graphics/Core/DeviceObjectBase.h"
 #include <vector>
-#include "Vulkan.h"
+#include "../Vulkan.h"
 
 namespace Lambda
 {
 	class VKNDevice;
+	class VKNMemoryPage;
+	struct VKNMemoryBlock;
 
 	//-------------
 	//VKNAllocation
@@ -13,8 +15,7 @@ namespace Lambda
 
 	struct VKNAllocation
 	{
-        int32			PageID			   = -1;
-        int32           BlockID            = -1;
+		VKNMemoryBlock* pBlock			   = nullptr;
         uint8*          pHostMemory        = nullptr;
         VkDeviceSize    SizeInBytes        = 0;
         VkDeviceSize    DeviceMemoryOffset = 0;
@@ -27,13 +28,14 @@ namespace Lambda
     
     struct VKNMemoryBlock
     {
+		VKNMemoryPage*	pPage				= nullptr;
         VKNMemoryBlock* pNext               = nullptr;
         VKNMemoryBlock* pPrevious           = nullptr;
-        uint32          ID                  = 0;
         VkDeviceSize    SizeInBytes			= 0;
 		VkDeviceSize    PaddedSizeInBytes	= 0;
         VkDeviceSize    DeviceMemoryOffset  = 0;
         bool            IsFree              = true;
+		uint32          ID                  = 0;
     };
     
 	//--------------
@@ -51,6 +53,7 @@ namespace Lambda
 		bool Allocate(VKNAllocation& allocation, VkDeviceSize sizeInBytes, VkDeviceSize alignment, VkDeviceSize granularity);
 		void Deallocate(VKNAllocation& allocation);
 		void Destroy(VKNDevice* pDevice);
+
 
 		_forceinline bool IsEmpty() const
 		{
@@ -101,8 +104,17 @@ namespace Lambda
 		void Deallocate(VKNAllocation& allocation);
 		void EmptyGarbageMemory();
 		
-		inline uint64 GetTotalReserved() const { return m_TotalReserved; }
-		inline uint64 GetTotalAllocated() const { return m_TotalAllocated; }
+
+		_forceinline uint64 GetTotalReserved() const 
+		{ 
+			return m_TotalReserved; 
+		}
+		
+		
+		_forceinline uint64 GetTotalAllocated() const 
+		{ 
+			return m_TotalAllocated; 
+		}
 	private:
 		VKNDevice* m_pDevice;
         uint64 m_FrameIndex;

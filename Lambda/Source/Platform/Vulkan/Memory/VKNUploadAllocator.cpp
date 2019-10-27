@@ -1,7 +1,7 @@
 #include "LambdaPch.h"
 #include "Utilities/MathHelper.h"
 #include "VKNUploadAllocator.h"
-#include "VKNDevice.h"
+#include "../VKNDevice.h"
 
 namespace Lambda
 {
@@ -13,7 +13,7 @@ namespace Lambda
 		: m_VkBuffer(VK_NULL_HANDLE),
 		m_Memory(),
 		m_SizeInBytes(sizeInBytes),
-		m_Offset(0)
+		m_OffsetInBytes(0)
 	{
 		Init(pDevice);
 	}
@@ -58,17 +58,17 @@ namespace Lambda
 		VKNUploadAllocation allocation = {};
 	
 		//Align
-		VkDeviceSize alignedOffset = Math::AlignUp<VkDeviceSize>(m_Offset, alignment);
+		VkDeviceSize alignedOffset = Math::AlignUp<VkDeviceSize>(m_OffsetInBytes, alignment);
 
 		//Do we have enough space? If no reallocate
-		VkDeviceSize alignedSize = sizeInBytes + (alignedOffset - m_Offset);
+		VkDeviceSize alignedSize = sizeInBytes + (alignedOffset - m_OffsetInBytes);
 		if ((alignedOffset + alignedSize) > m_SizeInBytes)
 		{
 			return allocation;
 		}
 
 		//Move offset
-		m_Offset += alignedSize;
+		m_OffsetInBytes += alignedSize;
 
 		//Setup allocation
 		allocation.pPage  = this;

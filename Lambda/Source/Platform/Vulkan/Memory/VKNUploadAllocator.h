@@ -30,23 +30,26 @@ namespace Lambda
 		VKNUploadAllocation Allocate(VkDeviceSize sizeInBytes, VkDeviceSize alignment);
 		void Destroy(VKNDevice* pDevice);
 
-		inline void Reset()
+
+		_forceinline void Reset()
 		{
-			m_Offset = 0;
+			m_OffsetInBytes = 0;
 		}
 
 
-		inline VkDeviceSize GetSizeLeft() const 
+		_forceinline VkDeviceSize GetSizeLeft() const
 		{ 
-			return m_SizeInBytes - m_Offset;
+			return m_SizeInBytes - m_OffsetInBytes;
 		}
 
-		inline uint8* GetHostMemory() const
+
+		_forceinline uint8* GetHostMemory() const
 		{
 			return m_Memory.pHostMemory;
 		}
 
-		inline VkBuffer GetVkBuffer() const
+
+		_forceinline VkBuffer GetVkBuffer() const
 		{
 			return m_VkBuffer;
 		}
@@ -56,7 +59,7 @@ namespace Lambda
 		VkBuffer m_VkBuffer;
 		VKNAllocation m_Memory;
 		VkDeviceSize m_SizeInBytes;
-		VkDeviceSize m_Offset;
+		VkDeviceSize m_OffsetInBytes;
 	};
 
 

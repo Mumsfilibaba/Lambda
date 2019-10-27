@@ -24,14 +24,14 @@ namespace Lambda
 
 	struct VKNDynamicMemoryBlock
 	{
-		VKNDynamicMemoryPage* pPage = nullptr;
-		VKNDynamicMemoryBlock* pNext = nullptr;
-		VKNDynamicMemoryBlock* pPrevious = nullptr;
-		VkDeviceSize SizeInBytes = 0;
-		VkDeviceSize BufferOffset = 0;
-		bool         IsFree = true;
+		VKNDynamicMemoryPage*	pPage		= nullptr;
+		VKNDynamicMemoryBlock*	pNext		= nullptr;
+		VKNDynamicMemoryBlock*  pPrevious	= nullptr;
+		VkDeviceSize SizeInBytes			= 0;
+		VkDeviceSize BufferOffset			= 0;
+		bool         IsFree					= true;
 #if defined(LAMBDA_DEBUG)
-		uint32       ID = 0;
+		uint32       ID						= 0;
 #endif
 	};
 
@@ -42,17 +42,23 @@ namespace Lambda
 	class VKNDynamicMemoryPage
 	{
 	private:
-		class BlockPool
+
+		//------------
+		//VKNBlockPool
+		//------------
+
+		class VKNBlockPool
 		{
 		public:
-			BlockPool();
-			~BlockPool();
+			VKNBlockPool();
+			~VKNBlockPool();
 
 			VKNDynamicMemoryBlock* Get();
 			void Return(VKNDynamicMemoryBlock* pBlock);
 		private:
-			VKNDynamicMemoryBlock* AllocateChain();
+			VKNDynamicMemoryBlock* AllocateBlocks();
 		private:
+			uint32 m_NumBlocks = 0;
 			VKNDynamicMemoryBlock* m_pHead;
 			std::vector<VKNDynamicMemoryBlock*> m_Chains;
 		};
@@ -66,10 +72,22 @@ namespace Lambda
 		bool Allocate(VKNDynamicAllocation& allocation, VkDeviceSize sizeInBytes, VkDeviceSize alignment);
 		void Deallocate(VKNDynamicAllocation& allocation);
 		void Destroy(VKNDevice* pDevice);
+
+
+		_forceinline bool IsEmpty() const
+		{
+			return m_pHead->pPrevious == nullptr && m_pHead->pNext == nullptr && m_pHead->IsFree;
+		}
+
+
+		_forceinline uint64 GetSize() const
+		{
+			return m_SizeInBytes;
+		}
 	private:
 		void Init(VKNDevice* pDevice);
 	private:
-		BlockPool m_BlockPool;
+		VKNBlockPool m_BlockPool;
 		VKNDynamicMemoryBlock* m_pHead;
 		VKNDynamicMemoryBlock* m_pNextFree;
 		VkBuffer m_Buffer;
@@ -95,8 +113,17 @@ namespace Lambda
 		void Deallocate(VKNDynamicAllocation& allocation);
 		void EmptyGarbageMemory();
 
-		inline uint64 GetTotalReserved() const	{ return m_TotalReserved; }
-		inline uint64 GetTotalAllocated() const { return m_TotalAllocated; }
+
+		_forceinline uint64 GetTotalReserved() const	
+		{ 
+			return m_TotalReserved; 
+		}
+		
+		
+		_forceinline uint64 GetTotalAllocated() const 
+		{ 
+			return m_TotalAllocated; 
+		}
 	private:
 		VKNDevice* m_pDevice;
 		uint64 m_FrameIndex;

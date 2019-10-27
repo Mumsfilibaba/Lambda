@@ -8,7 +8,7 @@
 #include "VKNSamplerState.h"
 #include "VKNRenderPassCache.h"
 #include "VKNFramebufferCache.h"
-#include "VKNUploadAllocator.h"
+#include "Memory/VKNUploadAllocator.h"
 #include "VKNConversions.inl"
 
 #define LAMBDA_VK_MAX_COMMANDS 2048
@@ -38,7 +38,7 @@ namespace Lambda
 		m_CommitIndexBuffer(true)
     {
 		//Add a ref to the refcounter
-		this->AddRef();
+		AddRef();
         Init(type);
     }
 
@@ -380,7 +380,7 @@ namespace Lambda
 		//Check if we should flush the context
 		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
 		{
-			this->Flush();
+			Flush();
 		}
 
 		//Make sure that we have a commandbuffer
@@ -407,7 +407,7 @@ namespace Lambda
 		//Check if we should flush the context
 		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
 		{
-			this->Flush();
+			Flush();
 		}
 
 		//Flush barriers before copying
@@ -436,7 +436,7 @@ namespace Lambda
 		//Check if we should flush the context
 		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
 		{																					
-			this->Flush();																	
+			Flush();																	
 		}																					
 
 		//Make sure that we transition resources and that we have a commandbuffer
@@ -472,7 +472,7 @@ namespace Lambda
 		//Check if we should flush the context
 		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
 		{
-			this->Flush();
+			Flush();
 		}
 
 		//Transition texture before clearing
@@ -502,7 +502,7 @@ namespace Lambda
 		//Check if we should flush the context
 		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
 		{
-			this->Flush();
+			Flush();
 		}
 
 		//Transition texture before clearing
@@ -533,7 +533,7 @@ namespace Lambda
 		//Check if we should flush the context
 		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
 		{
-			this->Flush();
+			Flush();
 		}
 
 		//Call base
@@ -553,7 +553,7 @@ namespace Lambda
 		//Check if we should flush the context
 		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
 		{
-			this->Flush();
+			Flush();
 		}
 
 		//Call base
@@ -572,7 +572,7 @@ namespace Lambda
 		//Check if we should flush the context
 		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
 		{
-			this->Flush();
+			Flush();
 		}
 
 		//Call base
@@ -591,7 +591,7 @@ namespace Lambda
 		//Check if we should flush the context
 		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
 		{
-			this->Flush();
+			Flush();
 		}
 
 		//Call base
@@ -610,7 +610,7 @@ namespace Lambda
 		//Check if we should flush the context
 		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
 		{
-			this->Flush();
+			Flush();
 		}
 
 		//Call base
@@ -626,7 +626,7 @@ namespace Lambda
 		//Check if we should flush the context
 		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
 		{
-			this->Flush();
+			Flush();
 		}
 
 		//Call base
@@ -645,7 +645,7 @@ namespace Lambda
 		//Check if we should flush the context
 		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
 		{
-			this->Flush();
+			Flush();
 		}
 
 		//Call base
@@ -661,7 +661,7 @@ namespace Lambda
 		//Check if we should flush the context
 		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
 		{
-			this->Flush();
+			Flush();
 		}
 
 		//Make sure that we have a commandbuffer
@@ -774,8 +774,8 @@ namespace Lambda
 
 	void VKNDeviceContext::MapBuffer(IBuffer* pBuffer, uint32 mapFlags, void** ppData)
 	{
-		const BufferDesc& desc = pBuffer->GetDesc();
-		if (desc.Usage != RESOURCE_USAGE_DYNAMIC)
+		VKNBuffer* pVkBuffer = reinterpret_cast<VKNBuffer*>(pBuffer);
+		if (pVkBuffer->m_Desc.Usage != RESOURCE_USAGE_DYNAMIC)
 		{
 			LOG_DEBUG_ERROR("Vulkan: Cannot map a buffer without usage RESOURCE_USAGE_DYNAMIC\n");
 		}
@@ -784,17 +784,15 @@ namespace Lambda
 		if (mapFlags & MAP_FLAG_WRITE)
 		{
 			//Get the dynamic memory
-			VKNBuffer* pVkBuffer		= reinterpret_cast<VKNBuffer*>(pBuffer);
-			VKNDynamicAllocation& mem	= pVkBuffer->m_DynamicState;
+			VKNDynamicAllocation& mem	= pVkBuffer->m_DynamicMemory;
 
 			//If we have the discard-flag we allocate new memory and use that
 			if (mapFlags & MAP_FLAG_WRITE_DISCARD)
 			{
 				if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE)
 				{
-					//Discard the old memory
+					//Deallocate old memory
 					m_pDevice->DeallocateDynamicMemory(mem);
-
 					//Allocate new memory
 					m_pDevice->AllocateDynamicMemory(mem, pVkBuffer->m_Desc.SizeInBytes, pVkBuffer->GetAlignment());
 				}
@@ -804,7 +802,7 @@ namespace Lambda
 				}
 			}
 
-			//TODO: Some syncronization should probably be done here
+			//TODO: Some syncronization should probably be done here in an else
 
 			//Then return the memory
 			(*ppData) = mem.pHostMemory;
@@ -814,7 +812,7 @@ namespace Lambda
 
 	void VKNDeviceContext::UnmapBuffer(IBuffer* pBuffer)
 	{
-		//TODO: ??
+		//TODO: More for resources with default usage?
 	}
 
 
@@ -825,7 +823,7 @@ namespace Lambda
 		//Check if we should flush the context
 		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
 		{
-			this->Flush();
+			Flush();
 		}
 
 		//Transition texture before clearing
@@ -964,7 +962,7 @@ namespace Lambda
 		//Check if we should flush the context
 		/*if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
 		{
-			this->Flush();
+			Flush();
 		}
 
 		//TODO:
@@ -1133,7 +1131,7 @@ namespace Lambda
 		//Check if we should flush the context
 		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
 		{
-			this->Flush();
+			Flush();
 		}
 
 		//Make sure that we have a commandbuffer
@@ -1161,7 +1159,7 @@ namespace Lambda
 		//Check if we should flush the context
 		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
 		{
-			this->Flush();
+			Flush();
 		}
 
 		//Make sure that we have a commandbuffer
@@ -1187,7 +1185,7 @@ namespace Lambda
 		//Check if we should flush the context
 		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
 		{
-			this->Flush();
+			Flush();
 		}
 
 		//Make sure that we have a commandbuffer

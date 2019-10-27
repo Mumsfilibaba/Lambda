@@ -15,7 +15,7 @@ namespace Lambda
 		: TBuffer(pDevice, desc),
 		m_VkBuffer(VK_NULL_HANDLE),
         m_Memory(),
-		m_DynamicState()
+		m_DynamicMemory()
     {
 		//Add a ref to the refcounter
 		this->AddRef();
@@ -38,7 +38,7 @@ namespace Lambda
 		//Deallocate the dynamic resource
 		if (m_Desc.Usage == RESOURCE_USAGE_DYNAMIC)
 		{
-			m_pDevice->DeallocateDynamicMemory(m_DynamicState);
+			m_pDevice->DeallocateDynamicMemory(m_DynamicMemory);
 		}
 		else
 		{
@@ -77,7 +77,7 @@ namespace Lambda
 		if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
 		{
 			//If dynamic we allocate dynamic memory
-			if (!m_pDevice->AllocateDynamicMemory(m_DynamicState, m_Desc.SizeInBytes, m_DynamicOffsetAlignment))
+			if (!m_pDevice->AllocateDynamicMemory(m_DynamicMemory, m_Desc.SizeInBytes, m_DynamicOffsetAlignment))
 			{
 				LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for Buffer\n");
 				return;
@@ -132,7 +132,7 @@ namespace Lambda
 			if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
 			{
 				//If the resource is dynamic we can simply write to the dynamic memory with memcpy
-				memcpy(m_DynamicState.pHostMemory, pInitalData->pData, pInitalData->SizeInBytes);
+				memcpy(m_DynamicMemory.pHostMemory, pInitalData->pData, pInitalData->SizeInBytes);
 			}
 			else
 			{

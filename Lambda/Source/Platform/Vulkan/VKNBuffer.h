@@ -1,8 +1,8 @@
 #pragma once
 #include "Graphics/Core/BufferBase.h"
 #include <string>
-#include "VKNDeviceAllocator.h"
-#include "VKNDynamicMemoryAllocator.h"
+#include "Memory/VKNDeviceAllocator.h"
+#include "Memory/VKNDynamicMemoryAllocator.h"
 
 namespace Lambda
 {
@@ -29,7 +29,7 @@ namespace Lambda
 		_forceinline VkBuffer GetVkBuffer() const
 		{
 			if (m_Desc.Usage == RESOURCE_USAGE_DYNAMIC)
-				return m_DynamicState.Buffer;
+				return m_DynamicMemory.Buffer;
 
 			return m_VkBuffer;
 		}
@@ -37,7 +37,7 @@ namespace Lambda
 
 		_forceinline VkDeviceSize GetDynamicOffset() const
 		{ 
-			return m_DynamicState.BufferOffset; 
+			return m_DynamicMemory.BufferOffset; 
 		}
 		
 
@@ -50,7 +50,7 @@ namespace Lambda
     private:
         VkBuffer m_VkBuffer;
         VKNAllocation m_Memory;
-		VKNDynamicAllocation m_DynamicState;
+		VKNDynamicAllocation m_DynamicMemory;
 		VkDeviceSize m_DynamicOffsetAlignment;
     };
 }

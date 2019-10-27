@@ -1,7 +1,7 @@
 #include "LambdaPch.h"
 #include "Utilities/MathHelper.h"
 #include "VKNDynamicMemoryAllocator.h"
-#include "VKNDevice.h"
+#include "../VKNDevice.h"
 
 #if defined(LAMBDA_DYNAMIC_ALLOCATOR_DEBUG)
 	#define LAMBDA_DYNAMIC_ALLOCATOR_DEBUG_ALLOC
@@ -92,15 +92,11 @@ namespace Lambda
 			if (!pCurrent->IsFree)
 				continue;
 
-			//Does it fit into the block
-			if (sizeInBytes > pCurrent->SizeInBytes)
-				continue;
-
 			//Align the offset and padding
 			paddedBufferOffset = Math::AlignUp<uint64>(pCurrent->BufferOffset, alignment);
 			paddedSizeInBytes = sizeInBytes + (paddedBufferOffset - pCurrent->BufferOffset);
 
-			//Does it still fit
+			//Does it fit into the block
 			if (paddedSizeInBytes > pCurrent->SizeInBytes)
 				continue;
 
@@ -119,15 +115,11 @@ namespace Lambda
 				if (!pCurrent->IsFree)
 					continue;
 
-				//Does it fit into the block
-				if (sizeInBytes > pCurrent->SizeInBytes)
-					continue;
-
 				//Align the offset and padding
 				paddedBufferOffset = Math::AlignUp<uint64>(pCurrent->BufferOffset, alignment);
 				paddedSizeInBytes = sizeInBytes + (paddedBufferOffset - pCurrent->BufferOffset);
 
-				//Does it still fit
+				//Does it fit into the block
 				if (paddedSizeInBytes > pCurrent->SizeInBytes)
 					continue;
 
@@ -148,7 +140,7 @@ namespace Lambda
 		//|--------------------------|
 		//padding Allocation Remaining
 		//|------|----------|--------|
-		if (pBestFit->SizeInBytes > sizeInBytes)
+		if (pBestFit->SizeInBytes > paddedSizeInBytes)
 		{
 			//Create a new block after allocation
 			VKNDynamicMemoryBlock* pBlock = m_BlockPool.Get();
@@ -314,7 +306,7 @@ namespace Lambda
 		if (m_Buffer != VK_NULL_HANDLE)
 			pDevice->SafeReleaseVulkanResource<VkBuffer>(m_Buffer);
 
-		LOG_SYSTEM(LOG_SEVERITY_WARNING, "Vulkan: Deallocated DynamicMemoryPage\n");
+		LOG_DEBUG_WARNING("Vulkan: Deallocated DynamicMemoryPage\n");
 		delete this;
 	}
 
@@ -323,7 +315,7 @@ namespace Lambda
 	//VKNDynamicMemoryAllocator
 	//-------------------------
 
-	constexpr size_t numFrames = 5;
+	constexpr size_t numFrames = 3;
 
 	VKNDynamicMemoryAllocator::VKNDynamicMemoryAllocator(VKNDevice* pDevice)
 		: m_pDevice(pDevice),
@@ -337,7 +329,7 @@ namespace Lambda
 		//Resize the number of garbage memory vectors
 		m_MemoryToDeallocate.resize(numFrames);
 		for (auto& mem : m_MemoryToDeallocate)
-			mem.reserve(256);
+			mem.reserve(1024);
 	}
 
 
@@ -418,28 +410,45 @@ namespace Lambda
 
 			memoryBlocks.clear();
 		}
+
+		//Remove empty pages
+		for (auto it = m_Pages.begin(); it != m_Pages.end();)
+		{
+			if ((*it)->IsEmpty())
+			{
+				//Erase from vector
+				m_TotalReserved -= (*it)->GetSize();
+
+				(*it)->Destroy(m_pDevice);
+				it = m_Pages.erase(it);
+			}
+			else
+			{
+				it++;
+			}
+		}
 	}
 	
 	//-------------------------------
 	//VKNDynamicMemoryPage::BlockPool
 	//-------------------------------
 
-	VKNDynamicMemoryPage::BlockPool::BlockPool()
+	VKNDynamicMemoryPage::VKNBlockPool::VKNBlockPool()
 		: m_pHead(nullptr),
 		m_Chains()
 	{
-		m_pHead = AllocateChain();
+		m_pHead = AllocateBlocks();
 	}
 
 
-	VKNDynamicMemoryPage::BlockPool::~BlockPool()
+	VKNDynamicMemoryPage::VKNBlockPool::~VKNBlockPool()
 	{
 		for (auto chain : m_Chains)
 			SafeDeleteArr(chain);
 	}
 	
 	
-	VKNDynamicMemoryBlock* VKNDynamicMemoryPage::BlockPool::Get()
+	VKNDynamicMemoryBlock* VKNDynamicMemoryPage::VKNBlockPool::Get()
 	{
 		VKNDynamicMemoryBlock* pFirst = m_pHead;
 		m_pHead = m_pHead->pNext;
@@ -451,7 +460,7 @@ namespace Lambda
 		else
 		{
 			//If we have taken the last block, allocate new ones
-			m_pHead = AllocateChain();
+			m_pHead = AllocateBlocks();
 		}
 
 		pFirst->pPage		 = nullptr;
@@ -464,36 +473,31 @@ namespace Lambda
 		pFirst->BufferOffset = 0;
 		pFirst->IsFree		 = true;
 
-		//LOG_DEBUG_INFO("GET\n");
-
 		return pFirst;
 	}
 	
 	
-	void VKNDynamicMemoryPage::BlockPool::Return(VKNDynamicMemoryBlock* pBlock)
+	void VKNDynamicMemoryPage::VKNBlockPool::Return(VKNDynamicMemoryBlock* pBlock)
 	{
 		pBlock->pNext		= m_pHead;
 		pBlock->pPrevious	= nullptr;
 		m_pHead->pPrevious	= pBlock;
 		m_pHead				= pBlock;
-
-		//LOG_DEBUG_INFO("RETURN\n");
 	}
 	
 	
-	VKNDynamicMemoryBlock* VKNDynamicMemoryPage::BlockPool::AllocateChain()
+	VKNDynamicMemoryBlock* VKNDynamicMemoryPage::VKNBlockPool::AllocateBlocks()
 	{
-		//LOG_DEBUG_INFO("ALLOC\n");
-
 		//Allocate array of blocks
-		VKNDynamicMemoryBlock* pBlocks = DBG_NEW VKNDynamicMemoryBlock[2048];
+		constexpr uint32 numBlocks = 4096;
+		VKNDynamicMemoryBlock* pBlocks = DBG_NEW VKNDynamicMemoryBlock[numBlocks];
 		m_Chains.emplace_back(pBlocks);
 		
 		//Build a chain of them
 		VKNDynamicMemoryBlock* pCurrent	 = pBlocks;
 		VKNDynamicMemoryBlock* pFirst	 = pCurrent;
 		VKNDynamicMemoryBlock* pPrevious = nullptr;
-		for (uint32 i = 1; i < 256; i++)
+		for (uint32 i = 1; i < numBlocks; i++)
 		{
 			pCurrent->pNext = &pBlocks[i];
 			if (pPrevious)

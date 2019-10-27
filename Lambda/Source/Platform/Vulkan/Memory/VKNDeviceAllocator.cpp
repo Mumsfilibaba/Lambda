@@ -1,8 +1,8 @@
 #include "LambdaPch.h"
 #include "Utilities/MathHelper.h"
-#include "VKNDevice.h"
 #include "VKNDeviceAllocator.h"
-#include "VKNUtilities.h"
+#include "../VKNDevice.h"
+#include "../VKNUtilities.h"
 
 //#define LAMBDA_ALLOCATOR_DEBUG
 #define LAMBDA_ALLOCATOR_MAX MB(16)
@@ -49,6 +49,7 @@ namespace Lambda
 
 		//Setup first block
         m_pHead = DBG_NEW VKNMemoryBlock();
+		m_pHead->pPage					= this;
         m_pHead->pNext					= nullptr;
         m_pHead->pPrevious				= nullptr;
         m_pHead->IsFree					= true;
@@ -131,7 +132,8 @@ namespace Lambda
         {
             //Create a new block after allocation
             VKNMemoryBlock* pBlock = DBG_NEW VKNMemoryBlock();
-            pBlock->ID                  = m_BlockCount++;
+			pBlock->pPage				= this;
+			pBlock->ID                  = m_BlockCount++;
             pBlock->SizeInBytes			= pBestFit->SizeInBytes - paddedSizeInBytes;
 			pBlock->PaddedSizeInBytes	= pBlock->SizeInBytes;
             pBlock->DeviceMemoryOffset  = pBestFit->DeviceMemoryOffset + paddedSizeInBytes;
@@ -148,11 +150,10 @@ namespace Lambda
         //Update bestfit
         pBestFit->SizeInBytes		= paddedSizeInBytes;
 		pBestFit->PaddedSizeInBytes = paddedSizeInBytes;
-        pBestFit->IsFree = false;
+        pBestFit->IsFree			= false;
         
         //Setup allocation
-        allocation.BlockID            = pBestFit->ID;
-        allocation.PageID			  = m_ID;
+		allocation.pBlock			  = pBestFit;
         allocation.DeviceMemory       = m_DeviceMemory;
         allocation.DeviceMemoryOffset = paddedDeviceOffset;
         allocation.SizeInBytes		  = sizeInBytes;
@@ -227,17 +228,10 @@ namespace Lambda
 
 	void VKNMemoryPage::Deallocate(VKNAllocation& allocation)
 	{
-        LOG_DEBUG_INFO("Vulkan: Deallocated Block ID=%u\n", allocation.BlockID);
+        LOG_DEBUG_INFO("Vulkan: Deallocating Block ID=%u\n", allocation.BlockID);
         
         //Try to find the correct block
-        VKNMemoryBlock* pCurrent = m_pHead;
-		for (pCurrent = m_pHead; pCurrent != nullptr; pCurrent = pCurrent->pNext)
-		{
-			//Did we find the correct block
-			if (pCurrent->ID == uint32(allocation.BlockID))
-				break;
-		}
-
+        VKNMemoryBlock* pCurrent = allocation.pBlock;
 		if (!pCurrent)
         {
             LOG_DEBUG_ERROR("Vulkan: Block owning allocation was not found\n");
@@ -327,7 +321,7 @@ namespace Lambda
 	//VKNDeviceAllocator
 	//------------------
 
-    constexpr size_t numFrames = 5;
+    constexpr size_t numFrames = 3;
 
 	VKNDeviceAllocator::VKNDeviceAllocator(VKNDevice* pDevice)
 		: m_pDevice(pDevice),
@@ -387,7 +381,7 @@ namespace Lambda
 			{
 				if (page->Allocate(allocation, memoryRequirements.size, memoryRequirements.alignment, m_BufferImageGranularity))
 				{
-					LOG_SYSTEM(LOG_SEVERITY_WARNING, "[VULKAN DEVICE ALLOCATOR] Allocated '%d' bytes. Memory-Type: %d. Total Allocated: %.2fMB. Total Reserved %.2fMB\n", memoryRequirements.size, memoryType, float(m_TotalAllocated) / mb, float(m_TotalReserved) / mb);
+					LOG_DEBUG_WARNING("[VULKAN DEVICE ALLOCATOR] Allocated '%d' bytes. Memory-Type: %d. Total Allocated: %.2fMB. Total Reserved %.2fMB\n", memoryRequirements.size, memoryType, float(m_TotalAllocated) / mb, float(m_TotalReserved) / mb);
 					return true;
 				}
 			}
@@ -416,12 +410,11 @@ namespace Lambda
 	void VKNDeviceAllocator::Deallocate(VKNAllocation& allocation)
 	{
         //Set it to be removed
-        if (size_t(allocation.PageID) < m_Pages.size() && allocation.DeviceMemory != VK_NULL_HANDLE)
+        if (allocation.pBlock && allocation.DeviceMemory != VK_NULL_HANDLE)
             m_MemoryToDeallocate[m_FrameIndex].emplace_back(allocation);
 
         //Invalidate memory
-        allocation.BlockID            = -1;
-        allocation.PageID			  = -1;
+		allocation.pBlock			  = nullptr;
         allocation.DeviceMemoryOffset = 0;
         allocation.SizeInBytes		  = 0;
         allocation.DeviceMemory       = VK_NULL_HANDLE;
@@ -441,19 +434,20 @@ namespace Lambda
             //Deallocate all the blocks
 			for (auto& memory : memoryBlocks)
             {
-                if (size_t(memory.PageID) < m_Pages.size() && memory.DeviceMemory != VK_NULL_HANDLE)
+                if (memory.pBlock && memory.DeviceMemory != VK_NULL_HANDLE)
                 {
-                    VKNMemoryPage* pPage = m_Pages[memory.PageID];
+                    VKNMemoryPage* pPage = memory.pBlock->pPage;
                     pPage->Deallocate(memory);
                     
                     m_TotalAllocated -= memory.SizeInBytes;
 
-					LOG_SYSTEM(LOG_SEVERITY_WARNING, "[VULKAN DEVICE ALLOCATOR] Deallocated '%d' bytes. Total Allocated: %.2fMB. Total Reserved %.2fMB\n", memory.SizeInBytes, float(m_TotalAllocated) / mb, float(m_TotalReserved) / mb);
+					LOG_DEBUG_WARNING("[VULKAN DEVICE ALLOCATOR] Deallocated '%d' bytes. Total Allocated: %.2fMB. Total Reserved %.2fMB\n", memory.SizeInBytes, float(m_TotalAllocated) / mb, float(m_TotalReserved) / mb);
                 }
             }
             
 			memoryBlocks.clear();
 		}
+
 
 		//Remove empty pages
 		for (auto it = m_Pages.begin(); it != m_Pages.end();)

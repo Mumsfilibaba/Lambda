@@ -1,8 +1,8 @@
 #pragma once
 #include "Graphics/Core/DeviceBase.h"
-#include "VKNDeviceAllocator.h"
+#include "Memory/VKNDeviceAllocator.h"
 #include "VKNSafeReleaseManager.h"
-#include "VKNDynamicMemoryAllocator.h"
+#include "Memory/VKNDynamicMemoryAllocator.h"
 #include "VKNUtilities.h"
 
 #define FRAMES_AHEAD 3

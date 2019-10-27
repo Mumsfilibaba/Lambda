@@ -2,7 +2,6 @@
 #include "VKNShaderVariableTable.h"
 #include "VKNDevice.h"
 #include "VKNDeviceContext.h"
-#include "VKNDeviceAllocator.h"
 #include "VKNConversions.inl"
 
 namespace Lambda
@@ -50,6 +49,9 @@ namespace Lambda
 
 		//Dynamic offsets for dynamic constantbuffers
 		m_pDynamicOffsets = DBG_NEW uint32[m_DynamicVars.size()];
+
+		//Set size of descriptorwrites
+		m_DescriptorWrites.resize(desc.NumVariables);
 	}
 
 
@@ -87,31 +89,29 @@ namespace Lambda
 			return;
 		}
 
+
 		//Varify all variables (Have the resources changed)
-		m_DescriptorWrites.clear();
         bool writeDescriptors = false;
+		size_t index = 0;
+		uint32 dynamicOffsetIndex = 0;
         for (auto& pVar : m_ShaderVariables)
         {
             //If validation failes we need to write the descriptors
-            if (!pVar->Validate())
+			if (!pVar->Validate())
+			{
+				//Setup write info
+				m_DescriptorWrites[index] = pVar->GetVkWriteDescriptorSet();
                 writeDescriptors = true;
+			}
             
+			//Update dynamic offsets
+			if (pVar->GetDesc().Type == RESOURCE_TYPE_CONSTANT_BUFFER && pVar->GetDesc().Usage == RESOURCE_USAGE_DYNAMIC)
+				m_pDynamicOffsets[dynamicOffsetIndex++] = pVar->GetDynamicOffset();
+
 			//Transition variable
 			pVar->Transition(pContext);
-
-			//Setup write info
-            const VkWriteDescriptorSet& writeInfo = pVar->GetVkWriteDescriptorSet();
-            m_DescriptorWrites.emplace_back(writeInfo);
-        }
-        
-        
-        //Get dynamic offsets
-        uint32 dynamicOffsetIndex = 0;
-        for (auto pDynamicVar : m_DynamicVars)
-        {
-            //Get dynamic offset
-			LAMBDA_ASSERT(pDynamicVar->GetDesc().Type == RESOURCE_TYPE_CONSTANT_BUFFER);
-            m_pDynamicOffsets[dynamicOffsetIndex++] = pDynamicVar->GetDynamicOffset();
+			
+			index++;
         }
         
         
