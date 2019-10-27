@@ -43,11 +43,9 @@ namespace Lambda
         //Release resources
         ReleaseResources();
         
-        //Destroy semaphores and fences
+        //Destroy semaphores
         for (uint32 i = 0; i < m_Desc.BufferCount; i++)
         {
-			if (m_ImageFences[i] != VK_NULL_HANDLE)
-				m_pDevice->SafeReleaseVulkanResource<VkFence>(m_ImageFences[i]);
 			if (m_ImageSemaphores[i] != VK_NULL_HANDLE)
 				m_pDevice->SafeReleaseVulkanResource<VkSemaphore>(m_ImageSemaphores[i]);
             if (m_RenderSemaphores[i] != VK_NULL_HANDLE)
@@ -111,16 +109,8 @@ namespace Lambda
         semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
         semaphoreInfo.pNext = nullptr;
         semaphoreInfo.flags = 0;
-        
-		//Setup fences
-		VkFenceCreateInfo fenceInfo = {};
-		fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-		fenceInfo.pNext = nullptr;
-		fenceInfo.flags = 0;
 
-        //Create semaphores and fences
-		m_ImageFences.resize(desc.BufferCount);
-		m_SubmittedImageFences.resize(desc.BufferCount);
+        //Create semaphores
 		m_ImageSemaphores.resize(desc.BufferCount);
         m_RenderSemaphores.resize(desc.BufferCount);
         for (uint32 i = 0; i < desc.BufferCount; i++)
@@ -139,21 +129,6 @@ namespace Lambda
                 m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_SEMAPHORE, (uint64)m_RenderSemaphores[i], m_Name + "RenderSemaphore[" + std::to_string(i) + "]");
 				LOG_DEBUG_INFO("Vulkan: Created Semaphore %p\n", m_RenderSemaphores[i]);
             }
-
-			//Create fence
-			if (vkCreateFence(m_pDevice->GetVkDevice(), &fenceInfo, nullptr, &m_ImageFences[i]) != VK_SUCCESS)
-			{
-				LOG_DEBUG_ERROR("Vulkan: Failed to create fence\n");
-				return;
-			}
-			else
-			{
-				//Set fence name
-				m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_FENCE, (uint64)m_ImageFences[i], m_Name + "Fence[" + std::to_string(i) + "]");
-				m_SubmittedImageFences[i] = false;
-
-				LOG_DEBUG_INFO("Vulkan: Created fence '%p'\n", m_ImageFences[i]);
-			}
         }
 
 
@@ -384,38 +359,13 @@ namespace Lambda
 
 	void VKNSwapChain::AquireNextImage()
 	{       
-		//Check if next image has been aquired, in case of high framerates we may exceed the number of created buffers
-		/*uint32 nextImageIndex = (m_SemaphoreIndex + 1) % m_Desc.BufferCount;
-		if (m_SubmittedImageFences[nextImageIndex])
-		{
-			//Wait for next image to be aquired
-			VkFence nextImageFence = m_ImageFences[nextImageIndex];
-			if (vkGetFenceStatus(m_pDevice->GetVkDevice(), nextImageFence) == VK_NOT_READY)
-			{
-				VkResult result = vkWaitForFences(m_pDevice->GetVkDevice(), 1, &nextImageFence, VK_TRUE, UINT64_MAX);
-				LAMBDA_ASSERT(result == VK_SUCCESS);
-			}
-			//Reset this fence
-			vkResetFences(m_pDevice->GetVkDevice(), 1, &nextImageFence);
-
-			//This fence is not submitted anymore
-			m_SubmittedImageFences[nextImageIndex] = false;
-		}*/
-
 		//Aquire next image
-		VkFence signalFence			= m_ImageFences[m_SemaphoreIndex];
         VkSemaphore signalSemaphore = m_ImageSemaphores[m_SemaphoreIndex];
 		if (vkAcquireNextImageKHR(m_pDevice->GetVkDevice(), m_VkSwapChain, UINT64_MAX, signalSemaphore, VK_NULL_HANDLE, &m_CurrentBufferIndex) == VK_SUCCESS)
         {
             //Add semaphores so the syncronization gets correct
             m_Context->AddWaitSemaphore(signalSemaphore, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-			//this fence is now submited
-			//m_SubmittedImageFences[m_SemaphoreIndex] = true;
         }
-		else
-		{
-			//m_SubmittedImageFences[m_SemaphoreIndex] = false;
-		}
 	}
 
 
