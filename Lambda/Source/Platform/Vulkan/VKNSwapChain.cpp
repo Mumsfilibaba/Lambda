@@ -313,6 +313,9 @@ namespace Lambda
             LOG_DEBUG_INFO("Vulkan: Created SwapChain\n");
             m_Desc.BufferWidth  = newExtent.width;
             m_Desc.BufferHeight = newExtent.height;
+			
+			//Reset semaphore index
+			m_SemaphoreIndex = 0;
         }
         
 
@@ -380,24 +383,24 @@ namespace Lambda
 
 
 	void VKNSwapChain::AquireNextImage()
-	{
-        //Increase frameindex and get next image
-        m_SemaphoreIndex = (m_SemaphoreIndex+1) % m_Desc.BufferCount;
-        
+	{       
 		//Check if next image has been aquired, in case of high framerates we may exceed the number of created buffers
-		uint32 nextImageIndex = (m_SemaphoreIndex + 1) % m_Desc.BufferCount;
+		/*uint32 nextImageIndex = (m_SemaphoreIndex + 1) % m_Desc.BufferCount;
 		if (m_SubmittedImageFences[nextImageIndex])
 		{
 			//Wait for next image to be aquired
 			VkFence nextImageFence = m_ImageFences[nextImageIndex];
 			if (vkGetFenceStatus(m_pDevice->GetVkDevice(), nextImageFence) == VK_NOT_READY)
-				vkWaitForFences(m_pDevice->GetVkDevice(), 1, &nextImageFence, VK_TRUE, UINT64_MAX);
+			{
+				VkResult result = vkWaitForFences(m_pDevice->GetVkDevice(), 1, &nextImageFence, VK_TRUE, UINT64_MAX);
+				LAMBDA_ASSERT(result == VK_SUCCESS);
+			}
 			//Reset this fence
 			vkResetFences(m_pDevice->GetVkDevice(), 1, &nextImageFence);
 
 			//This fence is not submitted anymore
 			m_SubmittedImageFences[nextImageIndex] = false;
-		}
+		}*/
 
 		//Aquire next image
 		VkFence signalFence			= m_ImageFences[m_SemaphoreIndex];
@@ -411,7 +414,7 @@ namespace Lambda
         }
 		else
 		{
-			m_SubmittedImageFences[m_SemaphoreIndex] = false;
+			//m_SubmittedImageFences[m_SemaphoreIndex] = false;
 		}
 	}
 
@@ -494,6 +497,8 @@ namespace Lambda
 		}
         else if (result == VK_SUCCESS)
         {
+			//Increase frameindex and get next image
+			m_SemaphoreIndex = (m_SemaphoreIndex + 1) % m_Desc.BufferCount;
             //Aquire next image
             AquireNextImage();
         }
