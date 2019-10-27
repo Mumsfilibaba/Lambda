@@ -2,7 +2,7 @@
 #include "Graphics/Core/ShaderBase.h"
 #include <vector>
 #include <string>
-#include <vulkan/vulkan.h>
+#include "Vulkan.h"
 
 namespace Lambda
 {

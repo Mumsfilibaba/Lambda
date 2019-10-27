@@ -5,7 +5,7 @@
 #include <mutex>
 #include <map>
 #include <unordered_map>
-#include <vulkan/vulkan.h>
+#include "Vulkan.h"
 
 namespace Lambda
 {

@@ -60,8 +60,10 @@ namespace Lambda
 
 	struct DeviceFeatures
 	{
-		bool SupportRTX				= false;
-		bool SupportFullscreenState = false;
+		bool MeshShaders				= false;
+		bool HardwareRayTracing			= false;
+		bool VariableRateShading		= false;
+		bool SwapChainFullscreenState	= false;
 	};
 
     //-------

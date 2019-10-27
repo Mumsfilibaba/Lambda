@@ -117,6 +117,7 @@ namespace Lambda
 		std::vector<const char*> GetRequiredDeviceExtensions();
 		std::vector<const char*> GetOptionalDeviceExtensions();
 		std::vector<const char*> GetRequiredInstanceExtensions(bool debug);
+		std::vector<const char*> GetOptionalInstanceExtensions(bool debug);
     private:
 		VKNDeviceAllocator*			m_pDeviceAllocator;
 		VKNDynamicMemoryAllocator* m_pDynamicMemoryAllocator;
@@ -133,9 +134,9 @@ namespace Lambda
 		VkPhysicalDevice		   m_PhysicalDevice;
 		VkPhysicalDeviceProperties m_PhysicalDeviceProperties;
 	private:
-		static PFN_vkSetDebugUtilsObjectNameEXT		SetDebugUtilsObjectNameEXT;
-		static PFN_vkCreateDebugUtilsMessengerEXT	CreateDebugUtilsMessengerEXT;
-		static PFN_vkDestroyDebugUtilsMessengerEXT	DestroyDebugUtilsMessengerEXT;
+		static PFN_vkSetDebugUtilsObjectNameEXT					vkSetDebugUtilsObjectNameEXT;
+		static PFN_vkCreateDebugUtilsMessengerEXT				vkCreateDebugUtilsMessengerEXT;
+		static PFN_vkDestroyDebugUtilsMessengerEXT				vkDestroyDebugUtilsMessengerEXT;
 	private:
 		static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 			VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);

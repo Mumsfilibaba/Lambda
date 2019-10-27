@@ -1,9 +1,6 @@
 #pragma once
 #include "Graphics/Core/SwapChainBase.h"
 #include <vector>
-#if defined(LAMBDA_PLAT_WINDOWS)
-    #define VK_USE_PLATFORM_WIN32_KHR
-#endif
 #include "VKNDeviceContext.h"
 #include "VKNUtilities.h"
 
@@ -63,5 +60,6 @@ namespace Lambda
         std::vector<VkSemaphore> m_RenderSemaphores;
         std::vector<VkSemaphore> m_ImageSemaphores;
 		mutable std::vector<AutoRef<VKNTexture>> m_Buffers;
+		bool m_FullscreenState;
 	};
 }

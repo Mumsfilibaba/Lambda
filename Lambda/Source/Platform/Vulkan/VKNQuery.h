@@ -1,6 +1,6 @@
 #pragma once
 #include "Graphics/Core/QueryBase.h"
-#include <vulkan/vulkan.h>
+#include "Vulkan.h"
 
 namespace Lambda
 {

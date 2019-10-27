@@ -1,7 +1,7 @@
 #pragma once
 #include "Graphics/Core/DeviceObjectBase.h"
 #include <vector>
-#include <vulkan/vulkan.h>
+#include "Vulkan.h"
 
 namespace Lambda
 {

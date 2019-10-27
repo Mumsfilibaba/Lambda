@@ -26,10 +26,12 @@ namespace Lambda
         m_DepthStencilBuffer(nullptr),
 		m_CurrentBufferIndex(0),
 		m_SemaphoreIndex(0),
-		m_Buffers()
+		m_Buffers(),
+		m_FullscreenState(false)
 	{
 		//Add ref to context
 		m_Context = m_pDevice->GetVKNImmediateContext();
+
 		//Init
 		this->AddRef();
 		Init(desc);
@@ -67,16 +69,18 @@ namespace Lambda
         GLFWwindow* pGLFWWindow = reinterpret_cast<GLFWwindow*>(desc.pWindowHandle);
         if (glfwCreateWindowSurface(m_pDevice->GetVkInstance(), pGLFWWindow, nullptr, &m_Surface) != VK_SUCCESS)
             m_Surface = VK_NULL_HANDLE;
-#elif defined(LAMBDA_PLAT_WINDOWS)
-        //Create a surface for windows
+#elif defined(LAMBDA_PLAT_WINDOWS)	
+		//Create a surface for windows
         VkWin32SurfaceCreateInfoKHR info = {};
         info.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
         info.pNext = nullptr;
         info.flags = 0;
         info.hwnd = reinterpret_cast<HWND>(desc.pWindowHandle);
         info.hinstance = GetModuleHandle(nullptr);
-        if (vkCreateWin32SurfaceKHR(m_pDevice->GetVkInstance(), &info, nullptr, &m_Surface) != VK_SUCCESS)
+		if (vkCreateWin32SurfaceKHR(m_pDevice->GetVkInstance(), &info, nullptr, &m_Surface) != VK_SUCCESS)
+		{
             m_Surface = VK_NULL_HANDLE;
+		}
 #endif
 
 		//Did we successfully create a surface?
@@ -89,7 +93,7 @@ namespace Lambda
         {
             LOG_DEBUG_INFO("Vulkan: Created Surface\n");
         }
-        
+
         //Check for presentationsupport
         VkBool32 presentSupport = false;
         QueueFamilyIndices familyIndices = m_pDevice->GetQueueFamilyIndices();
@@ -227,10 +231,20 @@ namespace Lambda
 
         LOG_DEBUG_INFO("Vulkan: Chosen SwapChain size w: %u h: %u\n", newExtent.width, newExtent.height);
     
+		VkSurfaceFullScreenExclusiveWin32InfoEXT fullscreenWIN32Info = {};
+		fullscreenWIN32Info.sType = VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_WIN32_INFO_EXT;
+		fullscreenWIN32Info.pNext = nullptr;
+		fullscreenWIN32Info.hmonitor = MonitorFromWindow(reinterpret_cast<HWND>(m_Desc.pWindowHandle), 0);
+
+		VkSurfaceFullScreenExclusiveInfoEXT fullscreenInfo = {};
+		fullscreenInfo.sType = VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT;
+		fullscreenInfo.pNext = &fullscreenWIN32Info;
+		fullscreenInfo.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT;
+
         //Setup swapchain
         VkSwapchainCreateInfoKHR info = {};
         info.sType            = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-        info.pNext            = nullptr;
+        info.pNext            = &fullscreenInfo;
         info.surface          = m_Surface;
         info.minImageCount    = m_Desc.BufferCount;
         info.imageFormat      = m_VkFormat.format;
@@ -275,6 +289,7 @@ namespace Lambda
             m_Desc.BufferHeight = newExtent.height;
         }
         
+
         //Get SwapChain images
         uint32 imageCount = 0;
         vkGetSwapchainImagesKHR(m_pDevice->GetVkDevice(), m_VkSwapChain, &imageCount, nullptr);

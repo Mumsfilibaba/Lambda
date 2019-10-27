@@ -3,7 +3,7 @@
 #include "Types.h"
 #include "Utilities/TextureHelper.h"
 #include <vector>
-#include <vulkan/vulkan.h>
+#include "Vulkan.h"
 
 namespace Lambda
 {

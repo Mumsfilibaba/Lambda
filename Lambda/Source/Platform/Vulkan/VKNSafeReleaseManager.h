@@ -2,7 +2,7 @@
 #include "Defines.h"
 #include "Types.h"
 #include <vector>
-#include <vulkan/vulkan.h>
+#include "Vulkan.h"
 
 namespace Lambda
 {

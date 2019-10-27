@@ -2,7 +2,7 @@
 #include "Graphics/Core/PipelineStateBase.h"
 #include <map>
 #include <vector>
-#include <vulkan/vulkan.h>
+#include "Vulkan.h"
 
 namespace Lambda
 {

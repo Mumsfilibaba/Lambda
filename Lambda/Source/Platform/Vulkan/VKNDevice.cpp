@@ -22,9 +22,9 @@ namespace Lambda
 	//VKNDevice
 	//---------
 
-	PFN_vkSetDebugUtilsObjectNameEXT	VKNDevice::SetDebugUtilsObjectNameEXT       = nullptr;
-	PFN_vkCreateDebugUtilsMessengerEXT	VKNDevice::CreateDebugUtilsMessengerEXT     = nullptr;
-	PFN_vkDestroyDebugUtilsMessengerEXT	VKNDevice::DestroyDebugUtilsMessengerEXT    = nullptr;
+	PFN_vkSetDebugUtilsObjectNameEXT	VKNDevice::vkSetDebugUtilsObjectNameEXT								= nullptr;
+	PFN_vkCreateDebugUtilsMessengerEXT	VKNDevice::vkCreateDebugUtilsMessengerEXT							= nullptr;
+	PFN_vkDestroyDebugUtilsMessengerEXT	VKNDevice::vkDestroyDebugUtilsMessengerEXT							= nullptr;
 
     VKNDevice::VKNDevice(const DeviceDesc& desc)
         : DeviceBase(desc),
@@ -45,9 +45,6 @@ namespace Lambda
         //Add a ref to the refcounter
         this->AddRef();
         Init(desc);
-
-		//Set api to properties
-		m_Properties.Api = GRAPHICS_API_VULKAN;
     }
     
     
@@ -80,7 +77,7 @@ namespace Lambda
 		}
 		if (m_DebugMessenger != VK_NULL_HANDLE)
 		{
-			DestroyDebugUtilsMessengerEXT(m_Instance, m_DebugMessenger, nullptr);
+			vkDestroyDebugUtilsMessengerEXT(m_Instance, m_DebugMessenger, nullptr);
 			m_DebugMessenger = VK_NULL_HANDLE;
 		}
 		if (m_Instance != VK_NULL_HANDLE)
@@ -159,13 +156,13 @@ namespace Lambda
         uint32 availableExtensionsCount = 0;
         vkEnumerateInstanceExtensionProperties(nullptr, &availableExtensionsCount, nullptr);
 
-        std::vector<VkExtensionProperties> availableExtensions(availableExtensionsCount);
-        vkEnumerateInstanceExtensionProperties(nullptr, &availableExtensionsCount, availableExtensions.data());
+        std::vector<VkExtensionProperties> availableInstanceExtensions(availableExtensionsCount);
+        vkEnumerateInstanceExtensionProperties(nullptr, &availableExtensionsCount, availableInstanceExtensions.data());
 
-        if (!availableExtensions.empty())
+        if (!availableInstanceExtensions.empty())
         {
-            LOG_DEBUG_INFO("[Vulkan] Available Instance-Extensions (count=%d):\n", availableExtensions.size());
-            for (const auto& extension : availableExtensions)
+            LOG_DEBUG_INFO("[Vulkan] Available Instance-Extensions (count=%d):\n", availableInstanceExtensions.size());
+            for (const auto& extension : availableInstanceExtensions)
             {
                 const char* name = extension.extensionName;
                 LOG_DEBUG_INFO("   Instance-Extension '%s'\n", name);
@@ -176,13 +173,36 @@ namespace Lambda
             LOG_DEBUG_ERROR("Vulkan: No available Instance-Extensions\n");
         }
         
+
 		//Get extensions
-		std::vector<const char*> requiredExtensions = GetRequiredInstanceExtensions(desc.Flags & DEVICE_FLAG_DEBUG);
-		if (!requiredExtensions.empty())
+		std::vector<const char*> instanceExtensions = GetRequiredInstanceExtensions(desc.Flags & DEVICE_FLAG_DEBUG);
+		if (!instanceExtensions.empty())
 		{
 			LOG_DEBUG_INFO("[Vulkan] Required Instance-Extensions:\n");
-			for (const auto& extension : requiredExtensions)
+			for (const auto& extension : instanceExtensions)
 				LOG_DEBUG_INFO("   Instance-Extension '%s'\n", extension);
+		}
+
+		//Get extensions
+		std::vector<const char*> optionalInstanceExtensions = GetOptionalInstanceExtensions(desc.Flags & DEVICE_FLAG_DEBUG);
+		if (!optionalInstanceExtensions.empty())
+		{
+			LOG_DEBUG_INFO("[Vulkan] Optional Instance-Extensions:\n");
+			for (const auto& extension : optionalInstanceExtensions)
+				LOG_DEBUG_INFO("   Instance-Extension '%s'\n", extension);
+		}
+
+		//Add optional extensions. if we found a optional extension among the available ones we add it
+		for (const char* extensionName : optionalInstanceExtensions)
+		{
+			for (const auto& extension : availableInstanceExtensions)
+			{
+				if (strcmp(extensionName, extension.extensionName) == 0)
+				{
+					instanceExtensions.push_back(extensionName);
+					break;
+				}
+			}
 		}
 
 
@@ -197,8 +217,8 @@ namespace Lambda
 		instanceInfo.pApplicationInfo			= &applicationInfo;
         instanceInfo.enabledLayerCount			= uint32(requiredLayers.size());
         instanceInfo.ppEnabledLayerNames		= requiredLayers.data();
-		instanceInfo.enabledExtensionCount		= uint32(requiredExtensions.size());
-		instanceInfo.ppEnabledExtensionNames	= requiredExtensions.data();
+		instanceInfo.enabledExtensionCount		= uint32(instanceExtensions.size());
+		instanceInfo.ppEnabledExtensionNames	= instanceExtensions.data();
 		VkResult res = vkCreateInstance(&instanceInfo, nullptr, &m_Instance);
 		if (res != VK_SUCCESS)
 		{
@@ -210,23 +230,24 @@ namespace Lambda
 		else
 		{
 			LOG_SYSTEM_PRINT("Vulkan: Created Vulkan instance\n");
+		}
 
-			//Get instance functions
-			SetDebugUtilsObjectNameEXT = (PFN_vkSetDebugUtilsObjectNameEXT)vkGetInstanceProcAddr(m_Instance, "vkSetDebugUtilsObjectNameEXT");
-			if (!SetDebugUtilsObjectNameEXT)
-			{
-				LOG_DEBUG_ERROR("Vulkan: Failed to retrive 'vkSetDebugUtilsObjectNameEXT'\n");
-			}
-			CreateDebugUtilsMessengerEXT = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(m_Instance, "vkCreateDebugUtilsMessengerEXT");
-			if (!CreateDebugUtilsMessengerEXT)
-			{
-				LOG_DEBUG_ERROR("Vulkan: Failed to retrive 'vkCreateDebugUtilsMessengerEXT'\n");
-			}
-			DestroyDebugUtilsMessengerEXT = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(m_Instance, "vkDestroyDebugUtilsMessengerEXT");
-			if (!DestroyDebugUtilsMessengerEXT)
-			{
-				LOG_DEBUG_ERROR("Vulkan: Failed to retrive 'vkDestroyDebugUtilsMessengerEXT'\n");
-			}
+
+		//Get instance functions
+		vkSetDebugUtilsObjectNameEXT = (PFN_vkSetDebugUtilsObjectNameEXT)vkGetInstanceProcAddr(m_Instance, "vkSetDebugUtilsObjectNameEXT");
+		if (!vkSetDebugUtilsObjectNameEXT)
+		{
+			LOG_DEBUG_ERROR("Vulkan: Failed to retrive 'vkSetDebugUtilsObjectNameEXT'\n");
+		}
+		vkCreateDebugUtilsMessengerEXT = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(m_Instance, "vkCreateDebugUtilsMessengerEXT");
+		if (!vkCreateDebugUtilsMessengerEXT)
+		{
+			LOG_DEBUG_ERROR("Vulkan: Failed to retrive 'vkCreateDebugUtilsMessengerEXT'\n");
+		}
+		vkDestroyDebugUtilsMessengerEXT = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(m_Instance, "vkDestroyDebugUtilsMessengerEXT");
+		if (!vkDestroyDebugUtilsMessengerEXT)
+		{
+			LOG_DEBUG_ERROR("Vulkan: Failed to retrive 'vkDestroyDebugUtilsMessengerEXT'\n");
 		}
 
 
@@ -237,7 +258,7 @@ namespace Lambda
 			VkDebugUtilsMessengerCreateInfoEXT info;
 			InitDebugMessengerCreateInfo(&info);
 
-			if (CreateDebugUtilsMessengerEXT(m_Instance, &info, nullptr, &m_DebugMessenger) != VK_SUCCESS)
+			if (vkCreateDebugUtilsMessengerEXT(m_Instance, &info, nullptr, &m_DebugMessenger) != VK_SUCCESS)
 			{
 				LOG_DEBUG_ERROR("Vulkan: Failed to create debugmessenger, maybe the extension is not present?\n");
 
@@ -354,7 +375,7 @@ namespace Lambda
 		}
 
 
-		//Add optional layers. if we found a optional layer among the available ones we add it
+		//Add optional extensions. if we found a optional extension among the available ones we add it
 		for (const char* extensionName : optionalDeviceExtensions)
 		{
 			for (const auto& extension : availableDeviceExtensions)
@@ -393,6 +414,9 @@ namespace Lambda
 			LOG_SYSTEM_PRINT("Vulkan: Created device and retrived queues\n");
 		}
 
+
+		//Setup properties structure
+		m_Properties.Api = GRAPHICS_API_VULKAN;
 		strcpy(m_Properties.AdapterString, m_PhysicalDeviceProperties.deviceName);
 		if (m_PhysicalDeviceProperties.vendorID == VENDOR_ID_NVIDIA)
 			strcpy(m_Properties.VendorString, "NVIDIA");
@@ -406,6 +430,19 @@ namespace Lambda
 			strcpy(m_Properties.VendorString, "Qualcomm");
 		else if (m_PhysicalDeviceProperties.vendorID == VENDOR_ID_IMGTEC)
 			strcpy(m_Properties.VendorString, "ImgTec");
+
+
+
+		//Setup features structure and get device functions
+		if (std::find(deviceExtensions.begin(), deviceExtensions.end(), VK_NV_RAY_TRACING_EXTENSION_NAME) != deviceExtensions.end())
+			m_Features.HardwareRayTracing = true;
+		
+		if (std::find(deviceExtensions.begin(), deviceExtensions.end(), VK_NV_MESH_SHADER_EXTENSION_NAME) != deviceExtensions.end())
+			m_Features.MeshShaders = true;
+		
+		if (std::find(deviceExtensions.begin(), deviceExtensions.end(), VK_NV_SHADING_RATE_IMAGE_EXTENSION_NAME) != deviceExtensions.end())
+			m_Features.VariableRateShading = true;
+	
 
 		//Get queues
 		vkGetDeviceQueue(m_Device, m_FamiliyIndices.GraphicsFamily, 0, &m_GraphicsQueue);
@@ -576,7 +613,7 @@ namespace Lambda
 
 	void VKNDevice::SetVulkanObjectName(VkObjectType type, uint64 objectHandle, const std::string& name)
 	{
-		if (SetDebugUtilsObjectNameEXT)
+		if (vkSetDebugUtilsObjectNameEXT)
 		{
 			//Set name on object
 			VkDebugUtilsObjectNameInfoEXT info = {};
@@ -586,7 +623,7 @@ namespace Lambda
 			info.pObjectName    = name.c_str();
 			info.objectHandle   = objectHandle;
 
-			if (SetDebugUtilsObjectNameEXT(m_Device, &info) != VK_SUCCESS)
+			if (vkSetDebugUtilsObjectNameEXT(m_Device, &info) != VK_SUCCESS)
 			{
 				LOG_DEBUG_ERROR("Vulkan: Failed to set name '%s'\n", info.pObjectName);
 			}
@@ -746,6 +783,7 @@ namespace Lambda
 		optionalExtensions.push_back(VK_NV_RAY_TRACING_EXTENSION_NAME);
 		optionalExtensions.push_back(VK_NV_MESH_SHADER_EXTENSION_NAME);
 		optionalExtensions.push_back(VK_NV_SHADING_RATE_IMAGE_EXTENSION_NAME);
+		optionalExtensions.push_back(VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME);
 		return optionalExtensions;
 	}
 
@@ -757,7 +795,7 @@ namespace Lambda
 		//Get extensions on macOS
 		uint32 extensionCount = 0;
 		const char** ppExtensions = glfwGetRequiredInstanceExtensions(&extensionCount);
-		requiredExtensions = std::vector<const char*>(ppExtensions, ppExtensions + extensionCount);
+		optionalExtensions = std::vector<const char*>(ppExtensions, ppExtensions + extensionCount);
 #elif defined(LAMBDA_PLAT_WINDOWS)
 		//Get extensions on Windows
 		requiredExtensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
@@ -772,6 +810,14 @@ namespace Lambda
 		}
 
 		return requiredExtensions;
+	}
+
+	
+	std::vector<const char*> VKNDevice::GetOptionalInstanceExtensions(bool debug)
+	{
+		std::vector<const char*> optionalExtensions;
+		optionalExtensions.push_back(VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME);
+		return optionalExtensions;
 	}
 
 
