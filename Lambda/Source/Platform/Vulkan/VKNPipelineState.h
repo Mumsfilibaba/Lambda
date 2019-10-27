@@ -2,6 +2,7 @@
 #include "Graphics/Core/PipelineStateBase.h"
 #include <map>
 #include <vector>
+#include "Memory/VKNDescriptorAllocator.h"
 #include "Vulkan.h"
 
 namespace Lambda
@@ -13,7 +14,6 @@ namespace Lambda
 	class VKNTexture;
 	class ISamplerState;
 	class VKNSamplerState;
-	class VKNDescriptorSetAllocator;
 
 	//----------------
 	//VKNPipelineState
@@ -33,10 +33,29 @@ namespace Lambda
         virtual void SetName(const char* pName) override final;
         virtual void* GetNativeHandle() const override final;
 
-		inline VkPipeline GetVkPipeline() const							{ return m_Pipeline; }
-		inline VkPipelineLayout GetVkPipelineLayout() const				{ return m_PipelineLayout; }
-		inline VkDescriptorSetLayout GetVkDescriptorSetLayout() const	{ return m_DescriptorSetLayout; }
-		inline VKNDescriptorSetAllocator* GetAllocator() const			{ return m_pAllocator; };
+		
+		_forceinline VkDescriptorSet AllocateDescriptorSet() const			
+		{ 
+			return m_pAllocator->Allocate(m_DescriptorSetLayout); 
+		};
+
+
+		_forceinline VkPipeline GetVkPipeline() const							
+		{ 
+			return m_Pipeline; 
+		}
+		
+		
+		_forceinline VkPipelineLayout GetVkPipelineLayout() const				
+		{ 
+			return m_PipelineLayout; 
+		}
+		
+		
+		_forceinline VkDescriptorSetLayout GetVkDescriptorSetLayout() const	
+		{ 
+			return m_DescriptorSetLayout; 
+		}
     private:
         void Init(const PipelineStateDesc& desc);
     private:

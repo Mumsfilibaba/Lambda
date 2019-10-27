@@ -61,7 +61,7 @@ namespace Lambda
 		AutoRef<ITexture> m_AlbedoMap;
 		AutoRef<ITexture> m_NormalMap;
         //Samplers
-		//AutoRef<ISamplerState> m_SamplerState;
+		AutoRef<ISamplerState> m_SamplerState;
         //Camera m_Camera;
         //TransformBuffer m_TransformBuffer;
     };

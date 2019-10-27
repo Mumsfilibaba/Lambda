@@ -124,9 +124,9 @@ namespace Lambda
 				InputElementDesc elements[]
                 {
                     { "POSITION",   FORMAT_R32G32B32_FLOAT, 0, 0, sizeof(Vertex), 0,                     false },
-                    //{ "NORMAL",     FORMAT_R32G32B32_FLOAT, 0, 1, sizeof(Vertex), sizeof(glm::vec3),     false },
-                    //{ "TANGENT",    FORMAT_R32G32B32_FLOAT, 0, 2, sizeof(Vertex), sizeof(glm::vec3) * 2, false },
-                    //{ "TEXCOORD",   FORMAT_R32G32_FLOAT,    0, 3, sizeof(Vertex), sizeof(glm::vec3) * 3, false },
+                    { "NORMAL",     FORMAT_R32G32B32_FLOAT, 0, 1, sizeof(Vertex), sizeof(glm::vec3),     false },
+                    { "TANGENT",    FORMAT_R32G32B32_FLOAT, 0, 2, sizeof(Vertex), sizeof(glm::vec3) * 2, false },
+                    { "TEXCOORD",   FORMAT_R32G32_FLOAT,    0, 3, sizeof(Vertex), sizeof(glm::vec3) * 3, false },
                 };
                 
 				InputLayoutDesc vertexInput = {};
@@ -164,11 +164,11 @@ namespace Lambda
 				{
 					//{ "u_CameraBuffer",		nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_VERTEX,	RESOURCE_USAGE_DEFAULT, 0 },
 					{ "u_TransformBuffer",	nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_VERTEX,	RESOURCE_USAGE_DYNAMIC, 0 },
-					/*{ "u_MaterialBuffer",	nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DYNAMIC, 2 },
-					{ "u_LightBuffer",		nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DEFAULT, 3 },
-					{ "u_Albedo",			nullptr, RESOURCE_TYPE_TEXTURE,			SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DEFAULT, 4 },
-					{ "u_Normal",			nullptr, RESOURCE_TYPE_TEXTURE,			SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DEFAULT, 5 },
-					{ "u_Sampler",			nullptr, RESOURCE_TYPE_SAMPLER_STATE,	SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DEFAULT, 6 },*/
+					//{ "u_MaterialBuffer",	nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DYNAMIC, 2 },
+					//{ "u_LightBuffer",		nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DEFAULT, 3 },
+					{ "u_Albedo",			nullptr, RESOURCE_TYPE_TEXTURE,			SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DEFAULT, 2 },
+					//{ "u_Normal",			nullptr, RESOURCE_TYPE_TEXTURE,			SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DEFAULT, 5 },
+					{ "u_Sampler",			nullptr, RESOURCE_TYPE_SAMPLER_STATE,	SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DEFAULT, 3 },
 				};
 
 				ShaderVariableTableDesc variableTableDesc = {};
@@ -287,21 +287,22 @@ namespace Lambda
 			//m_Context->GenerateMipLevels(m_NormalMap.Get());
 
             //Create samplerstate
-            /*TextureDesc textureDesc = m_AlbedoMap->GetDesc();
+            TextureDesc textureDesc = m_AlbedoMap->GetDesc();
             SamplerStateDesc desc = {};
             desc.AdressMode = SAMPLER_ADDRESS_MODE_REPEAT;
 			desc.MinMipLOD	= 0.0f;
 			desc.MaxMipLOD	= float(textureDesc.MipLevels);
 			desc.MipLODBias	= 0.0f;
 			desc.Anisotropy = 16.0f;
-            pDevice->CreateSamplerState(&m_SamplerState, desc);*/
+            pDevice->CreateSamplerState(&m_SamplerState, desc);
 
 			//Setup materials
 			m_VariableTable->GetVariableByName(SHADER_STAGE_VERTEX, "u_TransformBuffer")->SetConstantBuffer(m_PositionBuffer.Get());
-			/*m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Normal")->SetTexture(m_NormalMap.Get());
+			//m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Normal")->SetTexture(m_NormalMap.Get());
+			m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Albedo")->SetTexture(m_AlbedoMap.Get());
 			m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Sampler")->SetSamplerState(m_SamplerState.Get());
 
-			m_Material.pPipelineState	= m_PipelineState.Get();
+			/*m_Material.pPipelineState	= m_PipelineState.Get();
 			m_Material.pVariableTable	= m_VariableTable.Get();
 			m_Material.HasNormalMap		= 1;
 			m_Material.HasAlbedoMap		= 1;
@@ -415,16 +416,16 @@ namespace Lambda
 		m_Context->SetPipelineState(m_PipelineState.Get());
 
         //Draw squares
-		for (uint32 y = 0; y < 300; y++)
+		for (uint32 y = 0; y < 10; y++)
 		{
-			for (uint32 x = 0; x < 300; x++)
+			for (uint32 x = 0; x < 10; x++)
 			{	
 				//Update position
 				void* pMappedData = nullptr;
 				m_Context->MapBuffer(m_PositionBuffer.Get(), MAP_FLAG_WRITE | MAP_FLAG_WRITE_DISCARD, &pMappedData);
 
 				//xy (.xy) and scale (.z)
-				glm::vec3 position = glm::vec3(-0.99f + (0.02f * float(x)), 0.99f - (0.02f * float(y)), 0.015f);
+				glm::vec3 position = glm::vec3(-0.9f + (0.2f * float(x)), 0.9f - (0.2f * float(y)), 0.15f);
 				memcpy(pMappedData, &position, sizeof(glm::vec3));
 
 				m_Context->UnmapBuffer(m_PositionBuffer.Get());

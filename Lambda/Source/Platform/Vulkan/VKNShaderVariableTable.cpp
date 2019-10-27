@@ -44,8 +44,7 @@ namespace Lambda
 		}
 
 		//Allocate descriptorset
-		VkDescriptorSetLayout descriptorSetLayout = m_PipelineState->GetVkDescriptorSetLayout();
-		m_DescriptorSet = m_PipelineState->GetAllocator()->Allocate(descriptorSetLayout);
+		m_DescriptorSet = m_PipelineState->AllocateDescriptorSet();;
 
 		//Dynamic offsets for dynamic constantbuffers
 		m_pDynamicOffsets = DBG_NEW uint32[m_DynamicVars.size()];
@@ -119,8 +118,7 @@ namespace Lambda
 		if (writeDescriptors)
 		{
             //Allocate descriptorset
-            VkDescriptorSetLayout descriptorSetLayout = m_PipelineState->GetVkDescriptorSetLayout();
-            m_DescriptorSet = m_PipelineState->GetAllocator()->Allocate(descriptorSetLayout);
+            m_DescriptorSet = m_PipelineState->AllocateDescriptorSet();
             
 			//Setup the current set for writing
 			for (auto& writeInfo : m_DescriptorWrites)

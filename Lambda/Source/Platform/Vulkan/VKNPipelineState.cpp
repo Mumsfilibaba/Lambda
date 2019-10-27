@@ -157,7 +157,7 @@ namespace Lambda
 			LOG_DEBUG_INFO("Vulkan: Created PipelineLayout\n");
 
 			//Create allocator
-			m_pAllocator = DBG_NEW VKNDescriptorSetAllocator(m_pDevice, 8, 8, 8, 8, 8, 8);
+			m_pAllocator = DBG_NEW VKNDescriptorSetAllocator(m_pDevice, 64, 64, 64, 64, 64, 64);
 		}
 
 

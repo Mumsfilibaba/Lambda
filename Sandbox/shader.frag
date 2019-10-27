@@ -3,12 +3,12 @@
 
 layout(location = 0) out vec4 g_OutColor;
 
-//layout(location = 0) in    vec2 g_TexCoord;
-//layout(location = 1) in    vec3 g_Normal;
-//layout(location = 2) in    vec3 g_Tangent;
-//layout(location = 3) in    vec3 g_BiTangent;
-//layout(location = 4) in    vec3 g_WorldPosition;
-//layout(location = 5) in    vec3 g_ViewPosition;
+layout(location = 0) in    vec2 g_TexCoord;
+layout(location = 1) in    vec3 g_Normal;
+layout(location = 2) in    vec3 g_Tangent;
+layout(location = 3) in    vec3 g_BiTangent;
+layout(location = 4) in    vec3 g_WorldPosition;
+layout(location = 5) in    vec3 g_ViewPosition;
 
 /*
 //Materialbuffer
@@ -24,15 +24,17 @@ layout(set = 0, binding = 3) uniform LightBuffer
     vec4 Color;
     vec3 Position;
 } u_PointLight;
-//Diffuse texture
-layout(set = 0, binding = 4) uniform texture2D  u_Albedo;
-layout(set = 0, binding = 5) uniform texture2D  u_Normal;
-layout(set = 0, binding = 6) uniform sampler    u_Sampler;
 */
+
+//Diffuse texture
+layout(set = 0, binding = 2) uniform texture2D  u_Albedo;
+//layout(set = 0, binding = 5) uniform texture2D  u_Normal;
+layout(set = 0, binding = 3) uniform sampler    u_Sampler;
+
 
 void main()
 {
-	g_OutColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+	g_OutColor = vec4(texture(sampler2D(u_Albedo, u_Sampler), g_TexCoord).rgb, 1.0f);
 	
 	/*
     //Get albedo
