@@ -795,7 +795,7 @@ namespace Lambda
 		//Get extensions on macOS
 		uint32 extensionCount = 0;
 		const char** ppExtensions = glfwGetRequiredInstanceExtensions(&extensionCount);
-		optionalExtensions = std::vector<const char*>(ppExtensions, ppExtensions + extensionCount);
+		requiredExtensions = std::vector<const char*>(ppExtensions, ppExtensions + extensionCount);
 #elif defined(LAMBDA_PLAT_WINDOWS)
 		//Get extensions on Windows
 		requiredExtensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);

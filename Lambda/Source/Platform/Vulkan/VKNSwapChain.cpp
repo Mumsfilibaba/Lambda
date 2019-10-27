@@ -232,20 +232,10 @@ namespace Lambda
 
         LOG_DEBUG_INFO("Vulkan: Chosen SwapChain size w: %u h: %u\n", newExtent.width, newExtent.height);
     
-		VkSurfaceFullScreenExclusiveWin32InfoEXT fullscreenWIN32Info = {};
-		fullscreenWIN32Info.sType = VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_WIN32_INFO_EXT;
-		fullscreenWIN32Info.pNext = nullptr;
-		fullscreenWIN32Info.hmonitor = MonitorFromWindow(reinterpret_cast<HWND>(m_Desc.pWindowHandle), 0);
-
-		VkSurfaceFullScreenExclusiveInfoEXT fullscreenInfo = {};
-		fullscreenInfo.sType = VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT;
-		fullscreenInfo.pNext = &fullscreenWIN32Info;
-		fullscreenInfo.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT;
-
         //Setup swapchain
         VkSwapchainCreateInfoKHR info = {};
         info.sType            = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-        info.pNext            = &fullscreenInfo;
+        info.pNext            = nullptr;
         info.surface          = m_Surface;
         info.minImageCount    = m_Desc.BufferCount;
         info.imageFormat      = m_VkFormat.format;
