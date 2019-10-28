@@ -416,9 +416,9 @@ namespace Lambda
 		m_Context->SetPipelineState(m_PipelineState.Get());
 
         //Draw squares
-		for (uint32 y = 0; y < 10; y++)
+		for (uint32 y = 0; y < 300; y++)
 		{
-			for (uint32 x = 0; x < 10; x++)
+			for (uint32 x = 0; x < 300; x++)
 			{	
 				//Update position
 				void* pMappedData = nullptr;

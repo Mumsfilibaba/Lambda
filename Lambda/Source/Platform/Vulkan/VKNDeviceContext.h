@@ -112,8 +112,17 @@ namespace Lambda
 		void CommitViewports();
 		void CommitScissorRects();
         
-        inline VkFence GetVkFence() const					{ return m_pCurrentFrameResource->Fence; }
-		inline VkCommandBuffer GetVkCommandBuffer() const	{ return m_pCurrentFrameResource->CommandBuffer; }
+
+        _forceinline VkFence GetVkFence() const					
+		{ 
+			return m_pCurrentFrameResource->Fence; 
+		}
+
+
+		_forceinline VkCommandBuffer GetVkCommandBuffer() const	
+		{ 
+			return m_pCurrentFrameResource->CommandBuffer; 
+		}
     private:
         void Init(DeviceContextType type);
         void BeginRenderPass();
@@ -125,6 +134,7 @@ namespace Lambda
         VkCommandPool m_CommandPool;
 		FrameResource* m_pFrameResources;
 		FrameResource* m_pCurrentFrameResource;
+		uint32 m_MaxNumCommands;
 		uint32 m_NumCommands;
         uint32 m_NumFrameResources;
         uint32 m_FrameIndex;

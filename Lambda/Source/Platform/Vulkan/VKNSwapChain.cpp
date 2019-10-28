@@ -404,6 +404,8 @@ namespace Lambda
 
 	void VKNSwapChain::Present()
 	{
+		//LOG_SYSTEM(LOG_SEVERITY_INFO, "VKNSwapChain::Present()\n");
+
 		//If we are using MSAA we need to resolve the resource
 		if (m_Desc.BufferSampleCount > 1)
 			m_Context->ResolveTexture(m_Buffers[m_CurrentBufferIndex].Get(), 0, m_SampleBuffer.Get(), 0);

@@ -11,7 +11,7 @@
 #include "Memory/VKNUploadAllocator.h"
 #include "VKNConversions.inl"
 
-#define LAMBDA_VK_MAX_COMMANDS 2048
+#define LAMBDA_VK_MAX_COMMANDS 1024
 
 namespace Lambda
 {
@@ -29,6 +29,7 @@ namespace Lambda
 		m_Framebuffer(VK_NULL_HANDLE),
 		m_Pipeline(VK_NULL_HANDLE),
 		m_NumFrameResources(0),
+		m_MaxNumCommands(LAMBDA_VK_MAX_COMMANDS),
 		m_NumCommands(0),
 		m_FrameIndex(0),
 		m_ContextState(DEVICE_CONTEXT_STATE_WAITING),
@@ -180,6 +181,8 @@ namespace Lambda
 		if (m_Pipeline == VK_NULL_HANDLE)
 		{
 			LAMBDA_ASSERT_PRINT(m_PipelineState, "Vulkan: No PipelineState bound\n");
+
+			//LOG_SYSTEM(LOG_SEVERITY_INFO, "CommitPipelineState\n");
 
 			//Get pipeline
 			m_Pipeline = m_PipelineState->GetVkPipeline();
@@ -378,8 +381,9 @@ namespace Lambda
 	void VKNDeviceContext::CopyBuffer(VkBuffer dstBuffer, VkDeviceSize dstOffset, VkBuffer srcBuffer, VkDeviceSize srcOffset, VkDeviceSize sizeInBytes)
 	{
 		//Check if we should flush the context
-		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > m_MaxNumCommands)
 		{
+			m_MaxNumCommands += 1024;
 			Flush();
 		}
 
@@ -405,10 +409,12 @@ namespace Lambda
 	void VKNDeviceContext::CopyBufferToImage(VkImage image, VkDeviceSize mipLevel, VkImageAspectFlags aspectFlags, uint32 width, uint32 height, uint32 depth, VkBuffer buffer, VkDeviceSize offset, VkDeviceSize sizeInBytes)
 	{
 		//Check if we should flush the context
-		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > m_MaxNumCommands)
 		{
+			m_MaxNumCommands += 1024;
 			Flush();
 		}
+
 
 		//Flush barriers before copying
 		FlushResourceBarriers();
@@ -434,10 +440,12 @@ namespace Lambda
 	void VKNDeviceContext::BlitTexture(VKNTexture* pDst, uint32 dstWidth, uint32 dstHeight, uint32 dstMipLevel, VKNTexture* pSrc, uint32 srcWidth, uint32 srcHeight, uint32 srcMipLevel)
     {
 		//Check if we should flush the context
-		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
-		{																					
-			Flush();																	
-		}																					
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > m_MaxNumCommands)
+		{
+			m_MaxNumCommands += 1024;
+			Flush();
+		}
+
 
 		//Make sure that we transition resources and that we have a commandbuffer
 		FlushResourceBarriers();
@@ -470,10 +478,12 @@ namespace Lambda
 	void VKNDeviceContext::ClearRenderTarget(ITexture* pRenderTarget, float color[4])
     {
 		//Check if we should flush the context
-		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > m_MaxNumCommands)
 		{
+			m_MaxNumCommands += 1024;
 			Flush();
 		}
+
 
 		//Transition texture before clearing
         VKNTexture* pVkRenderTarget = reinterpret_cast<VKNTexture*>(pRenderTarget);
@@ -500,10 +510,12 @@ namespace Lambda
     void VKNDeviceContext::ClearDepthStencil(ITexture* pDepthStencil, float depth, uint8 stencil)
     {
 		//Check if we should flush the context
-		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > m_MaxNumCommands)
 		{
+			m_MaxNumCommands += 1024;
 			Flush();
 		}
+
 
 		//Transition texture before clearing
         VKNTexture* pVkDepthStencil = reinterpret_cast<VKNTexture*>(pDepthStencil);
@@ -531,10 +543,12 @@ namespace Lambda
 	void VKNDeviceContext::SetRendertargets(ITexture* const* ppRenderTargets, uint32 numRenderTargets, ITexture* pDepthStencil)
 	{
 		//Check if we should flush the context
-		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > m_MaxNumCommands)
 		{
+			m_MaxNumCommands += 1024;
 			Flush();
 		}
+
 
 		//Call base
 		TDeviceContext::SetRendertargets(ppRenderTargets, numRenderTargets, pDepthStencil);
@@ -551,10 +565,12 @@ namespace Lambda
 	void VKNDeviceContext::SetViewports(const Viewport* pViewports, uint32 numViewports)
     {
 		//Check if we should flush the context
-		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > m_MaxNumCommands)
 		{
+			m_MaxNumCommands += 1024;
 			Flush();
 		}
+
 
 		//Call base
 		TDeviceContext::SetViewports(pViewports, numViewports);
@@ -570,10 +586,12 @@ namespace Lambda
     void VKNDeviceContext::SetScissorRects(const Rectangle* pScissorRects, uint32 numRects)
     {
 		//Check if we should flush the context
-		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > m_MaxNumCommands)
 		{
+			m_MaxNumCommands += 1024;
 			Flush();
 		}
+
 
 		//Call base
 		TDeviceContext::SetScissorRects(pScissorRects, numRects);
@@ -589,10 +607,12 @@ namespace Lambda
     void VKNDeviceContext::SetPipelineState(IPipelineState* pPipelineState)
     {
 		//Check if we should flush the context
-		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > m_MaxNumCommands)
 		{
+			m_MaxNumCommands += 1024;
 			Flush();
 		}
+
 
 		//Call base
 		TDeviceContext::SetPipelineState(pPipelineState);
@@ -608,10 +628,12 @@ namespace Lambda
 	void VKNDeviceContext::SetShaderVariableTable(IShaderVariableTable* pVariableTable)
 	{
 		//Check if we should flush the context
-		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > m_MaxNumCommands)
 		{
+			m_MaxNumCommands += 1024;
 			Flush();
 		}
+
 
 		//Call base
 		TDeviceContext::SetShaderVariableTable(pVariableTable);
@@ -624,10 +646,12 @@ namespace Lambda
     void VKNDeviceContext::SetVertexBuffers(IBuffer* const* pBuffers, uint32 numBuffers, uint32 slot)
     {
 		//Check if we should flush the context
-		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > m_MaxNumCommands)
 		{
+			m_MaxNumCommands += 1024;
 			Flush();
 		}
+
 
 		//Call base
 		TDeviceContext::SetVertexBuffers(pBuffers, numBuffers, slot);
@@ -643,10 +667,12 @@ namespace Lambda
     void VKNDeviceContext::SetIndexBuffer(IBuffer* pBuffer, Format format)
     {
 		//Check if we should flush the context
-		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > m_MaxNumCommands)
 		{
+			m_MaxNumCommands += 1024;
 			Flush();
 		}
+
 
 		//Call base
 		TDeviceContext::SetIndexBuffer(pBuffer, format);
@@ -659,10 +685,12 @@ namespace Lambda
 	void VKNDeviceContext::SetConstantBlocks(ShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData)
 	{
 		//Check if we should flush the context
-		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > m_MaxNumCommands)
 		{
+			m_MaxNumCommands += 1024;
 			Flush();
 		}
+
 
 		//Make sure that we have a commandbuffer
 		QueryCommandBuffer();
@@ -821,10 +849,12 @@ namespace Lambda
 		//LOG_DEBUG_INFO("ResolveTexture()\n");
 
 		//Check if we should flush the context
-		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > m_MaxNumCommands)
 		{
+			m_MaxNumCommands += 1024;
 			Flush();
 		}
+
 
 		//Transition texture before clearing
         VKNTexture* pVkDst = reinterpret_cast<VKNTexture*>(pDst);
@@ -959,16 +989,20 @@ namespace Lambda
 	
 	void VKNDeviceContext::ExecuteDefferedContext(IDeviceContext* pContext)
 	{
+		/*		
 		//Check if we should flush the context
-		/*if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > m_MaxNumCommands)
 		{
+			m_MaxNumCommands += 1024;
 			Flush();
 		}
+
 
 		//TODO:
 
 		//Count command
-		m_NumCommands++;*/
+		m_NumCommands++;
+		*/
 	}
     
     
@@ -1044,7 +1078,7 @@ namespace Lambda
 
     void VKNDeviceContext::Flush()
     {
-		//LOG_DEBUG_INFO("VKNDeviceContext::Flush()\n");
+		//LOG_SYSTEM(LOG_SEVERITY_INFO, "VKNDeviceContext::Flush()\n");
 
 		//Before flushing we need to flush the deffered barriers since the application is expecting all the resources to be in correct layout
 		FlushResourceBarriers();
@@ -1129,10 +1163,12 @@ namespace Lambda
 	void VKNDeviceContext::PrepareForDraw()
 	{
 		//Check if we should flush the context
-		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > m_MaxNumCommands)
 		{
+			m_MaxNumCommands += 1024;
 			Flush();
 		}
+
 
 		//Make sure that we have a commandbuffer
 		QueryCommandBuffer();
@@ -1157,10 +1193,12 @@ namespace Lambda
         LAMBDA_ASSERT(pQuery != nullptr);
      
 		//Check if we should flush the context
-		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > m_MaxNumCommands)
 		{
+			m_MaxNumCommands += 1024;
 			Flush();
 		}
+
 
 		//Make sure that we have a commandbuffer
 		QueryCommandBuffer();
@@ -1183,8 +1221,9 @@ namespace Lambda
         LAMBDA_ASSERT(pQuery != nullptr);
         
 		//Check if we should flush the context
-		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > LAMBDA_VK_MAX_COMMANDS)
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > m_MaxNumCommands)
 		{
+			m_MaxNumCommands += 1024;
 			Flush();
 		}
 
