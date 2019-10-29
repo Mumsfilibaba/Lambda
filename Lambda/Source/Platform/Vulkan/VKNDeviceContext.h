@@ -142,9 +142,10 @@ namespace Lambda
 		std::vector<VkSemaphore> m_SignalSemaphores;
         std::vector<VkSemaphore> m_WaitSemaphores;
         std::vector<VkPipelineStageFlags> m_WaitDstStageMasks;
-        VkRenderPass  m_RenderPass;
-        VkFramebuffer m_Framebuffer;
-		VkPipeline	  m_Pipeline;
+        VkRenderPass	 m_RenderPass;
+        VkFramebuffer	 m_Framebuffer;
+		VkPipeline		 m_Pipeline;
+		VkPipelineLayout m_PipelineLayout;
 		DeviceContextState m_ContextState;
 		bool m_CommitScissorRects;
 		bool m_CommitViewports;

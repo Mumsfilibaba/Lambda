@@ -527,6 +527,11 @@ namespace Lambda
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to submit CommandBuffers\n");
         }
+		else
+		{
+			//Finish device frame
+			FinishFrame();
+		}
     }
 
 	

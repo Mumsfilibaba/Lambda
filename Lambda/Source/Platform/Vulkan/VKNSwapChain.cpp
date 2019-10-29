@@ -450,9 +450,6 @@ namespace Lambda
         }
 
 		//LOG_DEBUG_INFO("Waiting Semaphore %p\n", m_RenderSemaphores[m_FrameIndex]);
-
-		//Finish device frame
-		m_pDevice->FinishFrame();
 	}
 
 	

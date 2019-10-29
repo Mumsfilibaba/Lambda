@@ -20,7 +20,8 @@ namespace Lambda
 		m_SizeInBytes(sizeInBytes),
 		m_BlockCount(0),
 		m_pHead(nullptr),
-		m_pNextFree(nullptr)
+		m_pNextFree(nullptr),
+		m_BlockPool(sizeInBytes / 64) 
 	{
 		Init(pDevice);
 	}
@@ -316,6 +317,7 @@ namespace Lambda
 	//-------------------------
 
 	constexpr size_t numFrames = 3;
+	constexpr uint64 pageSize = MB(32);
 
 	VKNDynamicMemoryAllocator::VKNDynamicMemoryAllocator(VKNDevice* pDevice)
 		: m_pDevice(pDevice),
@@ -329,7 +331,7 @@ namespace Lambda
 		//Resize the number of garbage memory vectors
 		m_MemoryToDeallocate.resize(numFrames);
 		for (auto& mem : m_MemoryToDeallocate)
-			mem.reserve(1024);
+			mem.reserve(pageSize / 64);
 	}
 
 
@@ -366,7 +368,7 @@ namespace Lambda
 		}
 
 		//Add to total
-		uint64 bytesToReserve = MB(16);
+		uint64 bytesToReserve = pageSize;
 		m_TotalReserved += bytesToReserve;
 
 		//Allocate new page
@@ -396,6 +398,7 @@ namespace Lambda
 		//Move on a frame
 		m_FrameIndex = (m_FrameIndex + 1) % numFrames;
 
+
 		//Clean memory
 		auto& memoryBlocks = m_MemoryToDeallocate[m_FrameIndex];
 		if (!memoryBlocks.empty())
@@ -411,20 +414,25 @@ namespace Lambda
 			memoryBlocks.clear();
 		}
 
-		//Remove empty pages
-		for (auto it = m_Pages.begin(); it != m_Pages.end();)
-		{
-			if ((*it)->IsEmpty())
-			{
-				//Erase from vector
-				m_TotalReserved -= (*it)->GetSize();
 
-				(*it)->Destroy(m_pDevice);
-				it = m_Pages.erase(it);
-			}
-			else
+		//If we have more than 4 pages we check for empty ones we can remove
+		if (m_Pages.size() > 4)
+		{
+			//Remove empty pages
+			for (auto it = m_Pages.begin(); it != m_Pages.end();)
 			{
-				it++;
+				if ((*it)->IsEmpty())
+				{
+					//Erase from vector
+					m_TotalReserved -= (*it)->GetSize();
+
+					(*it)->Destroy(m_pDevice);
+					it = m_Pages.erase(it);
+				}
+				else
+				{
+					it++;
+				}
 			}
 		}
 	}
@@ -433,11 +441,11 @@ namespace Lambda
 	//VKNDynamicMemoryPage::BlockPool
 	//-------------------------------
 
-	VKNDynamicMemoryPage::VKNBlockPool::VKNBlockPool()
+	VKNDynamicMemoryPage::VKNBlockPool::VKNBlockPool(uint32 numBlocks)
 		: m_pHead(nullptr),
 		m_Chains()
 	{
-		m_pHead = AllocateBlocks();
+		m_pHead = AllocateBlocks(numBlocks);
 	}
 
 
@@ -460,7 +468,7 @@ namespace Lambda
 		else
 		{
 			//If we have taken the last block, allocate new ones
-			m_pHead = AllocateBlocks();
+			m_pHead = AllocateBlocks(4096);
 		}
 
 		pFirst->pPage		 = nullptr;
@@ -486,10 +494,9 @@ namespace Lambda
 	}
 	
 	
-	VKNDynamicMemoryBlock* VKNDynamicMemoryPage::VKNBlockPool::AllocateBlocks()
+	VKNDynamicMemoryBlock* VKNDynamicMemoryPage::VKNBlockPool::AllocateBlocks(uint32 numBlocks)
 	{
 		//Allocate array of blocks
-		constexpr uint32 numBlocks = 4096;
 		VKNDynamicMemoryBlock* pBlocks = DBG_NEW VKNDynamicMemoryBlock[numBlocks];
 		m_Chains.emplace_back(pBlocks);
 		

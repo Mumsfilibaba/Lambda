@@ -28,6 +28,7 @@ namespace Lambda
 		m_RenderPass(VK_NULL_HANDLE),
 		m_Framebuffer(VK_NULL_HANDLE),
 		m_Pipeline(VK_NULL_HANDLE),
+		m_PipelineLayout(VK_NULL_HANDLE),
 		m_NumFrameResources(0),
 		m_MaxNumCommands(LAMBDA_VK_MAX_COMMANDS),
 		m_NumCommands(0),
@@ -204,19 +205,25 @@ namespace Lambda
 			m_ShaderVariableTable->CommitAndTransitionResources(this);
 			FlushResourceBarriers();
 
-			//Get dynamic offset info
-			const uint32* pOffsets	= m_ShaderVariableTable->GetDynamicOffsets();
-			uint32 offsetCount		= m_ShaderVariableTable->GetDynamicOffsetCount();
+			//Get dynamic offset count
+			uint32 offsetCount = m_ShaderVariableTable->GetDynamicOffsetCount();
 
-			//Bind descriptorset
-			VkDescriptorSet descriptorSet	= m_ShaderVariableTable->GetVkDescriptorSet();
-			VkPipelineLayout pipelineLayout = m_PipelineState->GetVkPipelineLayout();
+			//If we have no dynamic variables and we already have bound the pipelinelayout and descriptorset
+			if (offsetCount > 0 || m_PipelineLayout == VK_NULL_HANDLE)
+			{
+				//Get dynamic offsets
+				const uint32* pOffsets = m_ShaderVariableTable->GetDynamicOffsets();
 
-			const PipelineStateDesc& desc = m_PipelineState->GetDesc();
-			if (desc.Type == PIPELINE_TYPE_GRAPHICS)
-				vkCmdBindDescriptorSets(m_pCurrentFrameResource->CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, offsetCount, pOffsets);
-			else if (desc.Type == PIPELINE_TYPE_COMPUTE)
-				vkCmdBindDescriptorSets(m_pCurrentFrameResource->CommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipelineLayout, 0, 1, &descriptorSet, offsetCount, pOffsets);
+				//Bind descriptorset
+				VkDescriptorSet descriptorSet	= m_ShaderVariableTable->GetVkDescriptorSet();
+				m_PipelineLayout = m_PipelineState->GetVkPipelineLayout();
+
+				const PipelineStateDesc& desc = m_PipelineState->GetDesc();
+				if (desc.Type == PIPELINE_TYPE_GRAPHICS)
+					vkCmdBindDescriptorSets(m_pCurrentFrameResource->CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &descriptorSet, offsetCount, pOffsets);
+				else if (desc.Type == PIPELINE_TYPE_COMPUTE)
+					vkCmdBindDescriptorSets(m_pCurrentFrameResource->CommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, m_PipelineLayout, 0, 1, &descriptorSet, offsetCount, pOffsets);
+			}
 		}
 	}
 
@@ -637,6 +644,9 @@ namespace Lambda
 
 		//Call base
 		TDeviceContext::SetShaderVariableTable(pVariableTable);
+
+		//PipelineLayout needs to be commited
+		m_PipelineLayout = VK_NULL_HANDLE;
 
 		//Count command
 		m_NumCommands++;
@@ -1112,8 +1122,9 @@ namespace Lambda
 		m_NumCommands = 0;
 
 		//Reset commits
-		m_Pipeline	  = VK_NULL_HANDLE;
-		m_Framebuffer = VK_NULL_HANDLE;
+		m_Pipeline		 = VK_NULL_HANDLE;
+		m_Framebuffer	 = VK_NULL_HANDLE;
+		m_PipelineLayout = VK_NULL_HANDLE;
 		m_CommitVertexBuffers = true;
 		m_CommitViewports	  = true;
 		m_CommitScissorRects  = true;
