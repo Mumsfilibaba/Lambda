@@ -12,7 +12,9 @@ namespace Lambda
 
 	VKNShaderVariableTable::VKNShaderVariableTable(VKNDevice* pDevice, VKNPipelineState* pPipelineState, const ShaderVariableTableDesc& desc)
 		: TShaderVariableTable(pDevice, pPipelineState),
-		m_DescriptorSet(VK_NULL_HANDLE)
+		m_DescriptorSet(VK_NULL_HANDLE),
+		m_pDescriptors(nullptr),
+		m_NumDescriptors(0)
 	{
 		this->AddRef();	
 		Init(desc);
@@ -22,6 +24,8 @@ namespace Lambda
 	VKNShaderVariableTable::~VKNShaderVariableTable()
 	{
 		SafeDeleteArr(m_pDynamicOffsets);
+		SafeDeleteArr(m_pDescriptors);
+
 		LOG_DEBUG_INFO("Vulkan: Destroyed ShaderVariableTable\n");
 	}
 
@@ -50,7 +54,8 @@ namespace Lambda
 		m_pDynamicOffsets = DBG_NEW uint32[m_DynamicVars.size()];
 
 		//Set size of descriptorwrites
-		m_DescriptorWrites.resize(desc.NumVariables);
+		m_pDescriptors = DBG_NEW VkWriteDescriptorSet[desc.NumVariables];
+		m_NumDescriptors = desc.NumVariables;
 	}
 
 
@@ -99,7 +104,7 @@ namespace Lambda
 			if (!pVar->Validate())
 			{
 				//Setup write info
-				m_DescriptorWrites[index] = pVar->GetVkWriteDescriptorSet();
+				m_pDescriptors[index] = pVar->GetVkWriteDescriptorSet();
                 writeDescriptors = true;
 			}
             
@@ -121,11 +126,11 @@ namespace Lambda
             m_DescriptorSet = m_PipelineState->AllocateDescriptorSet();
             
 			//Setup the current set for writing
-			for (auto& writeInfo : m_DescriptorWrites)
-				writeInfo.dstSet = m_DescriptorSet;
+			for (uint32 i = 0; i < m_NumDescriptors; i++)
+				m_pDescriptors[i].dstSet = m_DescriptorSet;
 
 			//Write all descriptors
-			vkUpdateDescriptorSets(m_pDevice->GetVkDevice(), uint32(m_DescriptorWrites.size()), m_DescriptorWrites.data(), 0, nullptr);
+			vkUpdateDescriptorSets(m_pDevice->GetVkDevice(), m_NumDescriptors, m_pDescriptors, 0, nullptr);
 		}
 	}
 }

@@ -48,10 +48,11 @@ namespace Lambda
 	private:
 		void Init(const ShaderVariableTableDesc& desc);
 	private:
-		VkDescriptorSet	            m_DescriptorSet;
+		VkDescriptorSet	m_DescriptorSet;
 		uint32* m_pDynamicOffsets;
+		VkWriteDescriptorSet* m_pDescriptors;
+		uint32 m_NumDescriptors;
         std::vector<VKNShaderVariable*> m_DynamicVars;
-        std::vector<VkWriteDescriptorSet> m_DescriptorWrites;
         std::vector<AutoRef<VKNShaderVariable>> m_ShaderVariables;
 		std::unordered_map<std::string, VKNShaderVariable*> m_NameTable;
 	};
