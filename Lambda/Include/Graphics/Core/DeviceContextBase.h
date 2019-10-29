@@ -28,8 +28,8 @@ namespace Lambda
 
 		virtual void SetConstantBlocks(ShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData) override = 0;
 
-		virtual void UpdateBuffer(IBuffer* pResource, const ResourceData* pData) override = 0;
-		virtual void UpdateTexture(ITexture* pResource, const ResourceData* pData, uint32 mipLevel) override = 0;
+		virtual void UpdateBuffer(IBuffer* pResource, const ResourceData& data) override = 0;
+		virtual void UpdateTexture(ITexture* pResource, const ResourceData& data, uint32 mipLevel) override = 0;
 
 		virtual void CopyBuffer(IBuffer* pDst, IBuffer* pSrc) override = 0;
 

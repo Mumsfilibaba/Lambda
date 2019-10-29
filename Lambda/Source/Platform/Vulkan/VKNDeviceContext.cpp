@@ -197,13 +197,12 @@ namespace Lambda
 	}
 
 
-	void VKNDeviceContext::CommitAndTransitionResources()
+	void VKNDeviceContext::CommitResources()
 	{
 		//Commit resources
 		if (m_ShaderVariableTable)
 		{
-			m_ShaderVariableTable->CommitAndTransitionResources(this);
-			FlushResourceBarriers();
+			m_ShaderVariableTable->CommitResources();
 
 			//Get dynamic offset count
 			uint32 offsetCount = m_ShaderVariableTable->GetDynamicOffsetCount();
@@ -301,9 +300,6 @@ namespace Lambda
 		framebufferKey.NumAttachmentViews = m_NumRenderTargets;
 		for (uint32 i = 0; i < m_NumRenderTargets; i++)
 		{
-			//Get rendertarget and transition
-			TransitionTexture(m_RenderTargets[i].Get(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_REMAINING_MIP_LEVELS);
-
 			//Get view
 			framebufferKey.AttachmentViews[i] = m_RenderTargets[i]->GetVkImageView();
 
@@ -316,7 +312,6 @@ namespace Lambda
 		if (m_DepthStencil)
 		{
 			//Set and transition depthstencil
-			TransitionTexture(m_DepthStencil.Get(), VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_REMAINING_MIP_LEVELS);
 			framebufferKey.AttachmentViews[framebufferKey.NumAttachmentViews++] = m_DepthStencil->GetVkImageView();
 
 			//Get format
@@ -422,10 +417,6 @@ namespace Lambda
 			Flush();
 		}
 
-
-		//Flush barriers before copying
-		FlushResourceBarriers();
-
 		//Perform copy
 		VkBufferImageCopy region = {};
 		region.bufferOffset						= offset;
@@ -452,10 +443,6 @@ namespace Lambda
 			m_MaxNumCommands += 1024;
 			Flush();
 		}
-
-
-		//Make sure that we transition resources and that we have a commandbuffer
-		FlushResourceBarriers();
 
         LAMBDA_ASSERT_PRINT(m_RenderPass == VK_NULL_HANDLE, "Vulkan: EndRenderPass must be called before BlitTexture\n");
         
@@ -491,12 +478,6 @@ namespace Lambda
 			Flush();
 		}
 
-
-		//Transition texture before clearing
-        VKNTexture* pVkRenderTarget = reinterpret_cast<VKNTexture*>(pRenderTarget);
-        TransitionTexture(pVkRenderTarget, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_REMAINING_MIP_LEVELS);
-        FlushResourceBarriers();
-
         VkClearColorValue col = {};
         memcpy(col.float32, color, sizeof(float)*4);
     
@@ -507,6 +488,8 @@ namespace Lambda
         imageSubresourceRange.levelCount     = 1;
         imageSubresourceRange.baseArrayLayer = 0;
         imageSubresourceRange.layerCount     = 1;
+        
+		VKNTexture* pVkRenderTarget = reinterpret_cast<VKNTexture*>(pRenderTarget);
         vkCmdClearColorImage(m_pCurrentFrameResource->CommandBuffer, pVkRenderTarget->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &col, 1, &imageSubresourceRange);
 
 		//Count command
@@ -523,12 +506,6 @@ namespace Lambda
 			Flush();
 		}
 
-
-		//Transition texture before clearing
-        VKNTexture* pVkDepthStencil = reinterpret_cast<VKNTexture*>(pDepthStencil);
-		TransitionTexture(pVkDepthStencil, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_REMAINING_MIP_LEVELS);
-		FlushResourceBarriers();
-
         VkClearDepthStencilValue value = {};
         value.depth     = depth;
         value.stencil   = stencil;
@@ -540,6 +517,8 @@ namespace Lambda
         imageSubresourceRange.levelCount     = 1;
         imageSubresourceRange.baseArrayLayer = 0;
         imageSubresourceRange.layerCount     = 1;
+        
+		VKNTexture* pVkDepthStencil = reinterpret_cast<VKNTexture*>(pDepthStencil);
         vkCmdClearDepthStencilImage(m_pCurrentFrameResource->CommandBuffer, pVkDepthStencil->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &value, 1, &imageSubresourceRange);
 
 		//Count command
@@ -725,13 +704,13 @@ namespace Lambda
     {
 		LAMBDA_ASSERT(pBuffer && state);
     }
-    
-    
-    void VKNDeviceContext::TransitionTexture(const VKNTexture* pVkTexture, VkImageLayout layout, uint32 mipLevel)
-    {
-		m_pResourceTracker->TransitionImage(pVkTexture->GetVkImage(), pVkTexture->GetVkAspectFlags(), mipLevel, layout);
-    }
 
+	
+	void VKNDeviceContext::TransitionTexture(const VKNTexture* pVkTexture, VkImageLayout layout, uint32 mipLevel)
+	{
+		m_pResourceTracker->TransitionImage(pVkTexture->GetVkImage(), pVkTexture->GetVkAspectFlags(), mipLevel, layout);
+	}
+    
 
 	void VKNDeviceContext::FlushResourceBarriers()
 	{
@@ -749,10 +728,9 @@ namespace Lambda
 	}
     
     
-    void VKNDeviceContext::UpdateBuffer(IBuffer* pResource, const ResourceData* pData)
+    void VKNDeviceContext::UpdateBuffer(IBuffer* pResource, const ResourceData& data)
     {        
-        LAMBDA_ASSERT_PRINT(pData != nullptr, "Vulkan: pData cannot be nullptr\n");
-        LAMBDA_ASSERT_PRINT(pData->pData != nullptr && pData->SizeInBytes != 0, "Vulkan: ResourceData::pData or ResourceData::SizeInBytes cannot be null\n");
+        LAMBDA_ASSERT_PRINT(data.pData != nullptr && data.SizeInBytes != 0, "Vulkan: ResourceData::pData or ResourceData::SizeInBytes cannot be null\n");
 
 		VKNBuffer* pVkBuffer = reinterpret_cast<VKNBuffer*>(pResource);
 		
@@ -762,13 +740,13 @@ namespace Lambda
 		{
             //Allocate memory in the uploadbuffer
 			VkDeviceSize alignment	= pVkBuffer->GetAlignment();
-            VKNUploadAllocation mem = m_pCurrentFrameResource->pBufferUpload->Allocate(pData->SizeInBytes, alignment);
+            VKNUploadAllocation mem = m_pCurrentFrameResource->pBufferUpload->Allocate(data.SizeInBytes, alignment);
 
 			uint8* pHostMemory = mem.pPage->GetHostMemory() + mem.Offset;
-			memcpy(pHostMemory, pData->pData, pData->SizeInBytes);
+			memcpy(pHostMemory, data.pData, data.SizeInBytes);
 
 			//Update buffer
-			CopyBuffer(pVkBuffer->GetVkBuffer(), 0, mem.pPage->GetVkBuffer(), mem.Offset, pData->SizeInBytes);
+			CopyBuffer(pVkBuffer->GetVkBuffer(), 0, mem.pPage->GetVkBuffer(), mem.Offset, data.SizeInBytes);
 		}
 		else if (bufferDesc.Usage == RESOURCE_USAGE_DYNAMIC)
 		{
@@ -777,28 +755,24 @@ namespace Lambda
     }
     
     
-    void VKNDeviceContext::UpdateTexture(ITexture* pResource, const ResourceData* pData, uint32 mipLevel)
+    void VKNDeviceContext::UpdateTexture(ITexture* pResource, const ResourceData& data, uint32 mipLevel)
     {
-		LAMBDA_ASSERT_PRINT(pData != nullptr, "Vulkan: pData cannot be nullptr\n");
-		LAMBDA_ASSERT_PRINT(pData->pData != nullptr && pData->SizeInBytes != 0, "Vulkan: ResourceData::pData or ResourceData::SizeInBytes cannot be null\n");
-
-		//Transition resource state
-        VKNTexture* pVkTexture = reinterpret_cast<VKNTexture*>(pResource);
-        TransitionTexture(pVkTexture, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_REMAINING_MIP_LEVELS);
+		LAMBDA_ASSERT_PRINT(data.pData != nullptr && data.SizeInBytes != 0, "Vulkan: ResourceData::pData or ResourceData::SizeInBytes cannot be null\n");
 
 		//Get device properties
 		VkPhysicalDeviceProperties properties = m_pDevice->GetPhysicalDeviceProperties();
 		uint64 alignment = std::max(VkDeviceSize(4), properties.limits.optimalBufferCopyOffsetAlignment);
 
         //Allocate memory in the uploadbuffer
-		VKNUploadAllocation mem = m_pCurrentFrameResource->pTextureUpload->Allocate(pData->SizeInBytes, alignment);
+		VKNUploadAllocation mem = m_pCurrentFrameResource->pTextureUpload->Allocate(data.SizeInBytes, alignment);
 		
 		uint8* pHostMemory = mem.pPage->GetHostMemory() + mem.Offset;
-		memcpy(pHostMemory, pData->pData, pData->SizeInBytes);
+		memcpy(pHostMemory, data.pData, data.SizeInBytes);
 
 		//Copy
-		const TextureDesc& textureDesc = pVkTexture->GetDesc();
-		CopyBufferToImage(pVkTexture->GetVkImage(), mipLevel, pVkTexture->GetVkAspectFlags(), textureDesc.Width, textureDesc.Height, textureDesc.Depth, mem.pPage->GetVkBuffer(), mem.Offset, pData->SizeInBytes);
+        VKNTexture* pVkTexture			= reinterpret_cast<VKNTexture*>(pResource);
+		const TextureDesc& textureDesc	= pVkTexture->GetDesc();
+		CopyBufferToImage(pVkTexture->GetVkImage(), mipLevel, pVkTexture->GetVkAspectFlags(), textureDesc.Width, textureDesc.Height, textureDesc.Depth, mem.pPage->GetVkBuffer(), mem.Offset, data.SizeInBytes);
     }
     
     
@@ -865,18 +839,12 @@ namespace Lambda
 			Flush();
 		}
 
-
-		//Transition texture before clearing
-        VKNTexture* pVkDst = reinterpret_cast<VKNTexture*>(pDst);
-        VKNTexture* pVkSrc = reinterpret_cast<VKNTexture*>(pSrc);
-        TransitionTexture(pVkSrc, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_REMAINING_MIP_LEVELS);
-        TransitionTexture(pVkDst, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_REMAINING_MIP_LEVELS);
-        FlushResourceBarriers();
-
         //Transitions can only happen outside a renderpass
         if (IsInsideRenderPass())
             EndRenderPass();
 
+        VKNTexture* pVkDst = reinterpret_cast<VKNTexture*>(pDst);
+        VKNTexture* pVkSrc = reinterpret_cast<VKNTexture*>(pSrc);
 		
 		VkImageResolve resolve = {};
 		resolve.dstOffset                     = { 0, 0, 0 };
@@ -919,7 +887,6 @@ namespace Lambda
 					int32 mipHeight	 = textureDesc.Height;
 					uint32 mipLevels = textureDesc.MipLevels;
 
-					TransitionTexture(pVkTexture, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_REMAINING_MIP_LEVELS);
 					for (uint32 i = 1; i < mipLevels; i++)
 					{
 						TransitionTexture(pVkTexture, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, i - 1);
@@ -950,6 +917,23 @@ namespace Lambda
 	}
 
 
+	void VKNDeviceContext::TransitionTextureStates(const TextureTransitionBarrier* pBarriers, uint32 numBarriers)
+	{
+		//Go through barriers
+		VKNTexture* pVkTexture = nullptr;
+		VkImageLayout vkLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		for (uint32 i = 0; i < numBarriers; i++)
+		{
+			pVkTexture	= reinterpret_cast<VKNTexture*>(pBarriers[i].pTexture);
+			vkLayout	= ConvertResourceStateToImageLayout(pBarriers[i].AfterState);
+			TransitionTexture(pVkTexture, vkLayout, pBarriers[i].MipLevel);
+		}
+
+		//Flush barriers
+		FlushResourceBarriers();
+	}
+
+
 	void VKNDeviceContext::Draw(uint32 vertexCount, uint32 startVertex)
 	{
 		LAMBDA_ASSERT_PRINT(m_PipelineState, "Vulkan: Draw must have a valid PipelineState bound when called\n");
@@ -960,6 +944,7 @@ namespace Lambda
 		//Count command
 		m_NumCommands++;
 	}
+
 
 	void VKNDeviceContext::DrawIndexed(uint32 indexCount, uint32 startIndexLocation, uint32 baseVertexLocation)
 	{
@@ -1090,8 +1075,6 @@ namespace Lambda
     {
 		//LOG_SYSTEM(LOG_SEVERITY_INFO, "VKNDeviceContext::Flush()\n");
 
-		//Before flushing we need to flush the deffered barriers since the application is expecting all the resources to be in correct layout
-		FlushResourceBarriers();
 		//End the recording
 		EndCommandBuffer();
 
@@ -1139,9 +1122,6 @@ namespace Lambda
 
 		//LOG_DEBUG_INFO("BeginRenderPass()\n");
 
-		//Before starting a renderpass we need to transition all texture resources
-		FlushResourceBarriers();
-
         VkRenderPassBeginInfo info = {};
         info.sType				= VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
         info.pNext				= nullptr;
@@ -1180,12 +1160,11 @@ namespace Lambda
 			Flush();
 		}
 
-
 		//Make sure that we have a commandbuffer
 		QueryCommandBuffer();
 
 		//Commit
-		CommitAndTransitionResources();
+		CommitResources();
 		CommitPipelineState();
 		CommitVertexBuffers();
 		CommitIndexBuffer();

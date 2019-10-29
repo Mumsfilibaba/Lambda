@@ -147,13 +147,13 @@ namespace Lambda
 		ResourceData cameraData = {};
 		cameraData.pData		= &cameraBuffer;
 		cameraData.SizeInBytes	= sizeof(CameraBuffer);
-		m_Context->UpdateBuffer(m_CameraBuffer.Get(), &cameraData);
+		m_Context->UpdateBuffer(m_CameraBuffer.Get(), cameraData);
 
 		//Update lightbuffer
 		ResourceData lightData = {};
 		lightData.pData			= &light;
 		lightData.SizeInBytes	= sizeof(LightBuffer);
-		m_Context->UpdateBuffer(m_LightBuffer.Get(), &lightData);
+		m_Context->UpdateBuffer(m_LightBuffer.Get(), lightData);
 
         //Clear rendertarget
         float color[] = { 0.392f, 0.584f, 0.929f, 1.0f };
@@ -181,7 +181,7 @@ namespace Lambda
 		ResourceData transformData = {};
 		transformData.pData			= &transform;
 		transformData.SizeInBytes	= sizeof(TransformBuffer);
-		m_Context->UpdateBuffer(m_TransformBuffer.Get(), &transformData);
+		m_Context->UpdateBuffer(m_TransformBuffer.Get(), transformData);
 		
         //Update material
 		MaterialBuffer materialBuffer = {};
@@ -192,7 +192,7 @@ namespace Lambda
 		ResourceData materialData = {};
 		materialData.pData			= &materialBuffer;
 		materialData.SizeInBytes	= sizeof(MaterialBuffer);
-		m_Context->UpdateBuffer(m_MaterialBuffer.Get(), &materialData);
+		m_Context->UpdateBuffer(m_MaterialBuffer.Get(), materialData);
 	
 		//Set variables
 		material.pVariableTable->GetVariableByName(SHADER_STAGE_VERTEX, "u_CameraBuffer")->SetConstantBuffer(m_CameraBuffer.Get());

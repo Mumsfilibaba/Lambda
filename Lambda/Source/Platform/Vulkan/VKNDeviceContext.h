@@ -65,8 +65,8 @@ namespace Lambda
         virtual void SetShaderVariableTable(IShaderVariableTable* pVariableTable) override final;
         virtual void SetConstantBlocks(ShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData) override final;
 
-        virtual void UpdateBuffer(IBuffer* pResource, const ResourceData* pData) override final;
-        virtual void UpdateTexture(ITexture* pResource, const ResourceData* pData, uint32 mipLevel) override final;
+        virtual void UpdateBuffer(IBuffer* pResource, const ResourceData& data) override final;
+        virtual void UpdateTexture(ITexture* pResource, const ResourceData& data, uint32 mipLevel) override final;
         
         virtual void CopyBuffer(IBuffer* pDst, IBuffer* pSrc) override final;
 
@@ -76,6 +76,8 @@ namespace Lambda
 		virtual void ResolveTexture(ITexture* pDst, uint32 dstMipLevel, ITexture* pSrc, uint32 srcMipLevel) override final;
 
 		virtual void GenerateMipLevels(ITexture* pTexture) override final;
+
+		virtual void TransitionTextureStates(const TextureTransitionBarrier* pBarriers, uint32 numBarriers) override final;
 
 		virtual void Draw(uint32 vertexCount, uint32 startVertex) override final;
 		virtual void DrawIndexed(uint32 indexCount, uint32 startIndexLocation, uint32 baseVertexLocation) override final;
@@ -105,7 +107,7 @@ namespace Lambda
 		void AddSignalSemaphore(VkSemaphore signalSemaphore);
 		
 		void CommitPipelineState();
-		void CommitAndTransitionResources();
+		void CommitResources();
 		void CommitVertexBuffers();
 		void CommitIndexBuffer();
 		void CommitRenderTargetsAndDepthStencil();

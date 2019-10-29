@@ -85,7 +85,7 @@ namespace Lambda
 	}
 	
 
-	void VKNShaderVariableTable::CommitAndTransitionResources(VKNDeviceContext* pContext)
+	void VKNShaderVariableTable::CommitResources()
 	{
 		//If table is empty we return
 		if (m_ShaderVariables.empty())
@@ -97,7 +97,6 @@ namespace Lambda
 		//Varify all variables (Have the resources changed)
         bool writeDescriptors = false;
 		size_t index = 0;
-		uint32 dynamicOffsetIndex = 0;
         for (auto& pVar : m_ShaderVariables)
         {
             //If validation failes we need to write the descriptors
@@ -107,17 +106,20 @@ namespace Lambda
 				m_pDescriptors[index] = pVar->GetVkWriteDescriptorSet();
                 writeDescriptors = true;
 			}
-            
-			//Update dynamic offsets
-			if (pVar->GetDesc().Type == RESOURCE_TYPE_CONSTANT_BUFFER && pVar->GetDesc().Usage == RESOURCE_USAGE_DYNAMIC)
-				m_pDynamicOffsets[dynamicOffsetIndex++] = pVar->GetDynamicOffset();
-
-			//Transition variable
-			pVar->Transition(pContext);
-			
+            	
 			index++;
         }
-        
+
+
+        //Get dynamic resources offsets
+		uint32 dynamicOffsetIndex = 0;
+		for (auto& pDynamicVar : m_DynamicVars)
+		{
+			//Update dynamic offsets
+			if (pDynamicVar->GetDesc().Type == RESOURCE_TYPE_CONSTANT_BUFFER)
+				m_pDynamicOffsets[dynamicOffsetIndex++] = pDynamicVar->GetDynamicOffset();
+		}
+
         
 		//Write descriptor set
 		if (writeDescriptors)

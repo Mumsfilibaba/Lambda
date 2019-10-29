@@ -26,7 +26,7 @@ namespace Lambda
 		virtual IShaderVariable* GetVariableByIndex(ShaderStage shader, uint32 index) override final;
 		virtual uint32 GetVariableCount() const override final;
 
-		void CommitAndTransitionResources(VKNDeviceContext* pContext);
+		void CommitResources();
         
 
         _forceinline uint32* GetDynamicOffsets() const            

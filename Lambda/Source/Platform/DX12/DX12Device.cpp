@@ -347,7 +347,7 @@ namespace Lambda
 			{
 				//Copy data
 				m_pImmediateContext->TransitionBuffer(pBuffer, RESOURCE_STATE_COPY_DEST);
-				m_pImmediateContext->UpdateBuffer(pBuffer, pInitalData);
+				m_pImmediateContext->UpdateBuffer(pBuffer, *pInitalData);
 
 				//Execute and wait for GPU before creating
 				m_pImmediateContext->End();
@@ -394,8 +394,8 @@ namespace Lambda
 		{
 			//Copy data
 			m_pImmediateContext->TransitionTexture(pTexture, RESOURCE_STATE_COPY_DEST, 0, LAMBDA_TRANSITION_ALL_MIPS);
-			m_pImmediateContext->UpdateTexture(pTexture, pInitalData, 0);
-			m_pImmediateContext->TransitionTexture(pTexture, RESOURCE_STATE_RENDERTARGET_PRESENT, 0, LAMBDA_TRANSITION_ALL_MIPS);
+			m_pImmediateContext->UpdateTexture(pTexture, *pInitalData, 0);
+			m_pImmediateContext->TransitionTexture(pTexture, RESOURCE_STATE_PRESENT, 0, LAMBDA_TRANSITION_ALL_MIPS);
 
 			//Execute and wait for GPU before creating
 			m_pImmediateContext->End();

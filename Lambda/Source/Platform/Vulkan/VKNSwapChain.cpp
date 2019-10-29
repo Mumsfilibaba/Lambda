@@ -410,9 +410,6 @@ namespace Lambda
 		if (m_Desc.BufferSampleCount > 1)
 			m_Context->ResolveTexture(m_Buffers[m_CurrentBufferIndex].Get(), 0, m_SampleBuffer.Get(), 0);
 
-		//Transition resource
-		m_Context->TransitionTexture(m_Buffers[m_CurrentBufferIndex].Get(), VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_REMAINING_MIP_LEVELS);
-
 		//Add semaphores so the syncronization gets correct
 		m_Context->AddSignalSemaphore(m_RenderSemaphores[m_SemaphoreIndex]);
 		//LOG_DEBUG_INFO("Signal Semaphore %p\n", m_RenderSemaphores[m_FrameIndex]);

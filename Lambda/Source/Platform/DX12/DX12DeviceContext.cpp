@@ -382,26 +382,26 @@ namespace Lambda
 	}*/
 
 
-	void DX12DeviceContext::UpdateBuffer(IBuffer* pResource, const ResourceData* pData)
+	void DX12DeviceContext::UpdateBuffer(IBuffer* pResource, const ResourceData& data)
 	{
 		m_ResourceTracker.FlushBarriers(m_List.Get());
 
 		//Upload bufferdata to GPU
-		DX12Allocation allocation = m_BufferAllocator.Allocate(pData->SizeInBytes, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
-		memcpy(allocation.pCPU, pData->pData, pData->SizeInBytes);
+		DX12Allocation allocation = m_BufferAllocator.Allocate(data.SizeInBytes, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
+		memcpy(allocation.pCPU, data.pData, data.SizeInBytes);
 		
 		//Perform GPU copy
-		m_List->CopyBufferRegion(reinterpret_cast<DX12Buffer*>(pResource)->GetResource(), 0, allocation.pPageResource, allocation.Offset, pData->SizeInBytes);
+		m_List->CopyBufferRegion(reinterpret_cast<DX12Buffer*>(pResource)->GetResource(), 0, allocation.pPageResource, allocation.Offset, data.SizeInBytes);
 	}
 
 
-	void DX12DeviceContext::UpdateTexture(ITexture* pResource, const ResourceData* pData, uint32 subresource)
+	void DX12DeviceContext::UpdateTexture(ITexture* pResource, const ResourceData& data, uint32 subresource)
 	{
 		m_ResourceTracker.FlushBarriers(m_List.Get());
 
 		//Upload texturedata to GPU
-		DX12Allocation allocation = m_TextureAllocator.Allocate(pData->SizeInBytes, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
-		memcpy(allocation.pCPU, pData->pData, pData->SizeInBytes);
+		DX12Allocation allocation = m_TextureAllocator.Allocate(data.SizeInBytes, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
+		memcpy(allocation.pCPU, data.pData, data.SizeInBytes);
 		
 		//Setup texture copy info
 		DX12Texture* pDXTexture	= reinterpret_cast<DX12Texture*>(pResource);
@@ -457,6 +457,11 @@ namespace Lambda
 
 	
 	void DX12DeviceContext::GenerateMipLevels(ITexture* pTexture)
+	{
+	}
+
+	
+	void DX12DeviceContext::TransitionTextureStates(const TextureTransitionBarrier* pBarriers, uint32 numBarriers)
 	{
 	}
 

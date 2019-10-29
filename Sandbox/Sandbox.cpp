@@ -281,7 +281,19 @@ namespace Lambda
             //Create texture
             m_AlbedoMap = ITexture::CreateTextureFromFile(pDevice, "revolver_albedo.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
 			m_AlbedoMap->SetName("AlbedoMap");
+
+			//Transition before generating miplevels
+			TextureTransitionBarrier barrier = {};
+			barrier.pTexture	= m_AlbedoMap.Get();
+			barrier.AfterState	= RESOURCE_STATE_COPY_DEST;
+			barrier.MipLevel	= LAMBDA_ALL_MIP_LEVELS;
+			m_Context->TransitionTextureStates(&barrier, 1);
 			m_Context->GenerateMipLevels(m_AlbedoMap.Get());
+
+			//Transition into shader resource
+			barrier.AfterState = RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+			m_Context->TransitionTextureStates(&barrier, 1);
+
 			//m_NormalMap = ITexture::CreateTextureFromFile(pDevice, "revolver_normal.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
 			//m_NormalMap->SetName("NormalMap");
 			//m_Context->GenerateMipLevels(m_NormalMap.Get());
@@ -392,14 +404,30 @@ namespace Lambda
 
 		//renderer.EndScene();
 
+		//Transition before clearing
+		ITexture* pRenderTarget = m_SwapChain->GetBuffer();
+		ITexture* pDepthBuffer	= m_SwapChain->GetDepthBuffer();
+
+		TextureTransitionBarrier barriers[2];
+		barriers[0].pTexture	= pRenderTarget;
+		barriers[0].AfterState	= RESOURCE_STATE_RENDERTARGET_CLEAR;
+		barriers[0].MipLevel	= LAMBDA_ALL_MIP_LEVELS;
+		barriers[1].pTexture	= pDepthBuffer;
+		barriers[1].AfterState	= RESOURCE_STATE_DEPTH_STENCIL_CLEAR;
+		barriers[1].MipLevel	= LAMBDA_ALL_MIP_LEVELS;
+		m_Context->TransitionTextureStates(barriers, 2);
+
 		//Clear rendertarget
 		float color[] = { 0.392f, 0.584f, 0.929f, 1.0f };
-		ITexture* pRenderTarget = m_SwapChain->GetBuffer();
 		m_Context->ClearRenderTarget(pRenderTarget, color);
 
 		//Clear depthbuffer
-		ITexture* pDepthBuffer = m_SwapChain->GetDepthBuffer();
 		m_Context->ClearDepthStencil(pDepthBuffer, 1.0f, 0);
+
+		//Transition into rendertarget and depthstencil
+		barriers[0].AfterState = RESOURCE_STATE_RENDERTARGET;
+		barriers[1].AfterState = RESOURCE_STATE_DEPTH_STENCIL;
+		m_Context->TransitionTextureStates(barriers, 2);
 
 		//Set rendertargets
 		m_Context->SetRendertargets(&pRenderTarget, 1, pDepthBuffer);
@@ -434,6 +462,10 @@ namespace Lambda
                 m_Context->DrawIndexedInstanced(m_Mesh.IndexCount, 1, 0, 0, 0);
 			}
 		}
+
+		//Transition into presenting
+		barriers[0].AfterState = RESOURCE_STATE_PRESENT;
+		m_Context->TransitionTextureStates(barriers, 1);
 
 		//Present
 		m_SwapChain->Present();

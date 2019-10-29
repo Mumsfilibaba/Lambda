@@ -309,10 +309,10 @@ namespace Lambda
 		RESOURCE_STATE_UNKNOWN                      = 0,
 		RESOURCE_STATE_RENDERTARGET                 = 1,
         RESOURCE_STATE_RENDERTARGET_CLEAR           = 2,
-        RESORUCE_STATE_DEPTH_STENCIL_CLEAR          = 3,
+        RESOURCE_STATE_DEPTH_STENCIL_CLEAR          = 3,
 		RESOURCE_STATE_DEPTH_STENCIL                = 4,
 		RESOURCE_STATE_DEPTH_READ                   = 5,
-        RESOURCE_STATE_RENDERTARGET_PRESENT         = 6,
+        RESOURCE_STATE_PRESENT         = 6,
 		RESOURCE_STATE_COPY_DEST                    = 7,
 		RESOURCE_STATE_COPY_SRC                     = 8,
 		RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER   = 9,
@@ -402,6 +402,16 @@ namespace Lambda
 	{
 		const void* pData = nullptr;
 		uint64 SizeInBytes = 0;
+	};
+
+
+	//Struct for Transition a texture
+	class ITexture;
+	struct TextureTransitionBarrier
+	{
+		ITexture*		pTexture	= nullptr;
+		ResourceState	AfterState	= RESOURCE_STATE_UNKNOWN;
+		uint32			MipLevel	= 0;
 	};
     
     
