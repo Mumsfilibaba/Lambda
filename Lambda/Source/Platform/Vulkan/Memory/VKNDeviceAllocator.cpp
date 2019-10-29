@@ -451,21 +451,24 @@ namespace Lambda
 
 
 		//Remove empty pages
-		for (auto it = m_Pages.begin(); it != m_Pages.end();)
+		if (m_Pages.size() > 4)
 		{
-			if ((*it)->IsEmpty())
+			for (auto it = m_Pages.begin(); it != m_Pages.end();)
 			{
-				//Erase from vector
-				m_TotalReserved -= (*it)->GetSize();
+				if ((*it)->IsEmpty())
+				{
+					//Erase from vector
+					m_TotalReserved -= (*it)->GetSize();
 
-				(*it)->Destroy(m_pDevice);
-				it = m_Pages.erase(it);
+					(*it)->Destroy(m_pDevice);
+					it = m_Pages.erase(it);
 
-				LOG_SYSTEM(LOG_SEVERITY_WARNING, "[VULKAN DEVICE ALLOCATOR] Destroyed Memory-Page. Allocationcount: '%llu/%llu'. Total Allocated: %.2fMB. Total Reserved %.2fMB\n", m_Pages.size(), m_MaxAllocations, float(m_TotalAllocated) / mb, float(m_TotalReserved) / mb);
-			}
-			else
-			{
-				it++;
+					LOG_SYSTEM(LOG_SEVERITY_WARNING, "[VULKAN DEVICE ALLOCATOR] Destroyed Memory-Page. Allocationcount: '%llu/%llu'. Total Allocated: %.2fMB. Total Reserved %.2fMB\n", m_Pages.size(), m_MaxAllocations, float(m_TotalAllocated) / mb, float(m_TotalReserved) / mb);
+				}
+				else
+				{
+					it++;
+				}
 			}
 		}
 	}

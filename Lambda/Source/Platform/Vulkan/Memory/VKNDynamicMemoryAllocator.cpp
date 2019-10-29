@@ -369,6 +369,17 @@ namespace Lambda
 		{
 			return true;
 		}
+		else
+		{
+			for (auto page : m_Pages)
+			{
+				if (page->Allocate(allocation, sizeInBytes, alignment))
+				{
+					m_pCurrentPage = page;
+					return true;
+				}
+			}
+		}
 
 		//Add to total
 		uint64 bytesToReserve = pageSize;
