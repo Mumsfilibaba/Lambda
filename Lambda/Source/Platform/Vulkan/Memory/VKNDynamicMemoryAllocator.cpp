@@ -169,8 +169,8 @@ namespace Lambda
 		}
 
 		//Update bestfit
-		pBestFit->SizeInBytes = paddedSizeInBytes;
-		pBestFit->IsFree = false;
+		pBestFit->SizeInBytes	= paddedSizeInBytes;
+		pBestFit->IsFree		= false;
 
 		//Setup allocation
 		allocation.pBlock		= pBestFit;
@@ -330,6 +330,7 @@ namespace Lambda
 	{
 		//Create first page
 		m_pCurrentPage = DBG_NEW VKNDynamicMemoryPage(m_pDevice, uint32(m_Pages.size()), pageSize);
+		m_Pages.emplace_back(m_pCurrentPage);
 
 		//Resize the number of garbage memory vectors
 		m_MemoryToDeallocate.resize(numFrames);
@@ -468,16 +469,7 @@ namespace Lambda
 			m_pHead = AllocateBlocks(4096);
 		}
 
-		pFirst->pPage		 = nullptr;
-		pFirst->pNext		 = nullptr;
-		pFirst->pPrevious	 = nullptr;
-#if defined(LAMBDA_DEBUG)
-		pFirst->ID			 = 0;
-#endif
-		pFirst->SizeInBytes	 = 0;
-		pFirst->BufferOffset = 0;
-		pFirst->IsFree		 = true;
-
+		memset(pFirst, 0, sizeof(VKNDynamicMemoryBlock));
 		return pFirst;
 	}
 	

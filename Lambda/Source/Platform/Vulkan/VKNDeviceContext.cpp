@@ -911,8 +911,12 @@ namespace Lambda
 					for (uint32 i = 1; i < mipLevels; i++)
 					{
 						TransitionTexture(pVkTexture, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, i - 1);
+						FlushResourceBarriers();
+						
 						BlitTexture(pVkTexture, mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, i, pVkTexture, mipWidth, mipHeight, i - 1);
+						
 						TransitionTexture(pVkTexture, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, i - 1);
+						FlushResourceBarriers();
 
 						if (mipWidth > 1)
 							mipWidth /= 2;

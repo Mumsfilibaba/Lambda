@@ -66,7 +66,6 @@ namespace Lambda
 		private:
 			VKNDynamicMemoryBlock* AllocateBlocks(uint32 numBlocks);
 		private:
-			uint32 m_NumBlocks = 0;
 			VKNDynamicMemoryBlock* m_pHead;
 			std::vector<VKNDynamicMemoryBlock*> m_Chains;
 		};
