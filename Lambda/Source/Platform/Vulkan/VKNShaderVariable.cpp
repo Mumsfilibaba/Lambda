@@ -14,7 +14,8 @@ namespace Lambda
 	VKNShaderVariable::VKNShaderVariable(VKNDevice* pDevice, VKNShaderVariableTable* pShaderVariableTable, const ShaderVariableDesc& desc)
 		: TShaderVariable(pDevice, pShaderVariableTable, desc),
 		m_Resource(nullptr),
-        m_ResourceHandle(VK_NULL_HANDLE)
+        m_ResourceHandle(VK_NULL_HANDLE),
+		m_IsValid(false)
 	{
 		//Increas inital ref
 		this->AddRef();
@@ -74,6 +75,9 @@ namespace Lambda
 			//Make sure we have a reference to the resource
 			pTexture->AddRef();
 			m_Resource = pTexture;
+
+			//Invalidate variable
+			m_IsValid = false;
 		}
 	}
 
@@ -88,6 +92,9 @@ namespace Lambda
 			//Make sure we have a reference to the resource
 			pBuffer->AddRef();
 			m_Resource = pBuffer;
+
+			//Invalidate variable
+			m_IsValid = false;
 		}
 	}
 
@@ -102,12 +109,21 @@ namespace Lambda
 			//Make sure we have a reference to the resource
 			pSamplerState->AddRef();
 			m_Resource = pSamplerState;
+
+			//Invalidate variable
+			m_IsValid = false;
 		}
 	}
 
 	
 	bool VKNShaderVariable::Validate()
 	{
+		//If this is not a dynamic variable we just return if we have bound a new resource
+		if (m_Desc.Type != RESOURCE_USAGE_DYNAMIC && m_IsValid)
+		{
+			return true;
+		}
+
         //Here we get the handle to the resource that is bound,
         uint64 currentHandle = VK_NULL_HANDLE;
         if (m_Desc.Type == RESOURCE_TYPE_TEXTURE)
@@ -143,6 +159,8 @@ namespace Lambda
         //In that case the validation passes and we do not need to write this descriptor again
         uint64 oldHandle = m_ResourceHandle;
         m_ResourceHandle = currentHandle;
+
+		m_IsValid = true;
         return oldHandle == currentHandle;
 	}
 

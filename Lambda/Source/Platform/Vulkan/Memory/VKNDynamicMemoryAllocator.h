@@ -12,6 +12,14 @@ namespace Lambda
 
 	struct VKNDynamicAllocation
 	{
+	public:
+		VKNDynamicAllocation& operator=(const VKNDynamicAllocation& other)
+		{
+			memcpy(this, &other, sizeof(VKNDynamicAllocation));
+			return *this;
+		}
+
+	public:
 		VKNDynamicMemoryBlock* pBlock	= nullptr;
 		VkDeviceSize    BufferOffset	= 0;
 		uint8*			pHostMemory		= nullptr;

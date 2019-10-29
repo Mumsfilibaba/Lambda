@@ -328,6 +328,9 @@ namespace Lambda
 		m_Pages(),
 		m_MemoryToDeallocate()
 	{
+		//Create first page
+		m_pCurrentPage = DBG_NEW VKNDynamicMemoryPage(m_pDevice, uint32(m_Pages.size()), pageSize);
+
 		//Resize the number of garbage memory vectors
 		m_MemoryToDeallocate.resize(numFrames);
 		for (auto& mem : m_MemoryToDeallocate)
@@ -359,12 +362,11 @@ namespace Lambda
 		m_TotalAllocated += sizeInBytes;
 
 		//Try allocating from existing page
-		if (m_pCurrentPage)
+		LAMBDA_ASSERT(m_pCurrentPage != nullptr);
+
+		if (m_pCurrentPage->Allocate(allocation, sizeInBytes, alignment))
 		{
-			if (m_pCurrentPage->Allocate(allocation, sizeInBytes, alignment))
-			{
-				return true;
-			}
+			return true;
 		}
 
 		//Add to total
@@ -386,10 +388,7 @@ namespace Lambda
 			m_MemoryToDeallocate[m_FrameIndex].emplace_back(allocation);
 
 		//Invalidate memory
-		allocation.pBlock		= nullptr;
-		allocation.BufferOffset = 0;
-		allocation.Buffer		= VK_NULL_HANDLE;
-		allocation.pHostMemory	= nullptr;
+		memset(&allocation, 0, sizeof(VKNDynamicAllocation));
 	}
 
 
@@ -397,7 +396,6 @@ namespace Lambda
 	{
 		//Move on a frame
 		m_FrameIndex = (m_FrameIndex + 1) % numFrames;
-
 
 		//Clean memory
 		auto& memoryBlocks = m_MemoryToDeallocate[m_FrameIndex];
@@ -413,7 +411,6 @@ namespace Lambda
 
 			memoryBlocks.clear();
 		}
-
 
 		//If we have more than 4 pages we check for empty ones we can remove
 		if (m_Pages.size() > 4)

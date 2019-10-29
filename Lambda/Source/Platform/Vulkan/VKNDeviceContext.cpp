@@ -202,6 +202,8 @@ namespace Lambda
 		//Commit resources
 		if (m_ShaderVariableTable)
 		{
+			LAMBDA_ASSERT(m_ShaderVariableTable);
+
 			m_ShaderVariableTable->CommitResources();
 
 			//Get dynamic offset count
@@ -535,7 +537,6 @@ namespace Lambda
 			Flush();
 		}
 
-
 		//Call base
 		TDeviceContext::SetRendertargets(ppRenderTargets, numRenderTargets, pDepthStencil);
 
@@ -557,7 +558,6 @@ namespace Lambda
 			Flush();
 		}
 
-
 		//Call base
 		TDeviceContext::SetViewports(pViewports, numViewports);
 
@@ -577,7 +577,6 @@ namespace Lambda
 			m_MaxNumCommands += 1024;
 			Flush();
 		}
-
 
 		//Call base
 		TDeviceContext::SetScissorRects(pScissorRects, numRects);
@@ -599,7 +598,6 @@ namespace Lambda
 			Flush();
 		}
 
-
 		//Call base
 		TDeviceContext::SetPipelineState(pPipelineState);
 
@@ -619,7 +617,6 @@ namespace Lambda
 			m_MaxNumCommands += 1024;
 			Flush();
 		}
-
 
 		//Call base
 		TDeviceContext::SetShaderVariableTable(pVariableTable);
@@ -641,7 +638,6 @@ namespace Lambda
 			Flush();
 		}
 
-
 		//Call base
 		TDeviceContext::SetVertexBuffers(pBuffers, numBuffers, slot);
 
@@ -662,7 +658,6 @@ namespace Lambda
 			Flush();
 		}
 
-
 		//Call base
 		TDeviceContext::SetIndexBuffer(pBuffer, format);
 
@@ -679,7 +674,6 @@ namespace Lambda
 			m_MaxNumCommands += 1024;
 			Flush();
 		}
-
 
 		//Make sure that we have a commandbuffer
 		QueryCommandBuffer();
@@ -725,6 +719,33 @@ namespace Lambda
 
 			m_pResourceTracker->FlushBarriers(m_pCurrentFrameResource->CommandBuffer);
 		}
+	}
+
+
+	void VKNDeviceContext::PrepareForDraw()
+	{
+		//Check if we should flush the context
+		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > m_MaxNumCommands)
+		{
+			m_MaxNumCommands += 1024;
+			Flush();
+		}
+
+		//Make sure that we have a commandbuffer
+		QueryCommandBuffer();
+
+		//Commit
+		CommitResources();
+		CommitPipelineState();
+		CommitVertexBuffers();
+		CommitIndexBuffer();
+		CommitRenderTargetsAndDepthStencil();
+		CommitViewports();
+		CommitScissorRects();
+
+		//Draw-calls can only issued inside a renderpass
+		if (!IsInsideRenderPass())
+			BeginRenderPass();
 	}
     
     
@@ -796,7 +817,7 @@ namespace Lambda
 		if (mapFlags & MAP_FLAG_WRITE)
 		{
 			//Get the dynamic memory
-			VKNDynamicAllocation& mem	= pVkBuffer->m_DynamicMemory;
+			VKNDynamicAllocation& mem = pVkBuffer->m_DynamicMemory;
 
 			//If we have the discard-flag we allocate new memory and use that
 			if (mapFlags & MAP_FLAG_WRITE_DISCARD)
@@ -1150,33 +1171,6 @@ namespace Lambda
 		m_ContextState = DEVICE_CONTEXT_STATE_RECORDING;
 	}
 
-
-	void VKNDeviceContext::PrepareForDraw()
-	{
-		//Check if we should flush the context
-		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > m_MaxNumCommands)
-		{
-			m_MaxNumCommands += 1024;
-			Flush();
-		}
-
-		//Make sure that we have a commandbuffer
-		QueryCommandBuffer();
-
-		//Commit
-		CommitResources();
-		CommitPipelineState();
-		CommitVertexBuffers();
-		CommitIndexBuffer();
-		CommitRenderTargetsAndDepthStencil();
-		CommitViewports();
-		CommitScissorRects();
-
-		//Draw-calls can only issued inside a renderpass
-		if (!IsInsideRenderPass())
-			BeginRenderPass();
-	}
-
     
     void VKNDeviceContext::ResetQuery(IQuery* pQuery)
     {
@@ -1188,7 +1182,6 @@ namespace Lambda
 			m_MaxNumCommands += 1024;
 			Flush();
 		}
-
 
 		//Make sure that we have a commandbuffer
 		QueryCommandBuffer();

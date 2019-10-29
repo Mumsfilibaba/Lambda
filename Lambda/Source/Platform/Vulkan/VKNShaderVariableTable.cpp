@@ -87,16 +87,9 @@ namespace Lambda
 
 	void VKNShaderVariableTable::CommitResources()
 	{
-		//If table is empty we return
-		if (m_ShaderVariables.empty())
-		{
-			return;
-		}
-
-
 		//Varify all variables (Have the resources changed)
-        bool writeDescriptors = false;
 		size_t index = 0;
+        bool writeDescriptors = false;
         for (auto& pVar : m_ShaderVariables)
         {
             //If validation failes we need to write the descriptors
@@ -116,8 +109,7 @@ namespace Lambda
 		for (auto& pDynamicVar : m_DynamicVars)
 		{
 			//Update dynamic offsets
-			if (pDynamicVar->GetDesc().Type == RESOURCE_TYPE_CONSTANT_BUFFER)
-				m_pDynamicOffsets[dynamicOffsetIndex++] = pDynamicVar->GetDynamicOffset();
+			m_pDynamicOffsets[dynamicOffsetIndex++] = pDynamicVar->GetDynamicOffset();
 		}
 
         

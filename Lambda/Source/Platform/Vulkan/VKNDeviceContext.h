@@ -129,9 +129,14 @@ namespace Lambda
         void Init(DeviceContextType type);
         void BeginRenderPass();
         void EndRenderPass();
-		void PrepareForDraw();
 		void FlushResourceBarriers();
-		inline bool IsInsideRenderPass() { return m_ContextState == DEVICE_CONTEXT_STATE_RENDERPASS; }
+		void PrepareForDraw();
+
+
+		_forceinline bool IsInsideRenderPass() 
+		{ 
+			return m_ContextState == DEVICE_CONTEXT_STATE_RENDERPASS; 
+		}
     private:
         VkCommandPool m_CommandPool;
 		FrameResource* m_pFrameResources;

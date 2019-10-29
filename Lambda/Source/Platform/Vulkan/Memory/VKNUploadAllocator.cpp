@@ -129,4 +129,15 @@ namespace Lambda
 
 		return m_pCurrentPage->Allocate(sizeInBytes, alignment);
 	}
+
+	
+	void VKNUploadAllocator::Reset()
+	{
+		m_pCurrentPage->Reset();
+
+		for (auto page : m_DiscardedPages)
+			page->Destroy(m_pDevice);
+
+		m_DiscardedPages.clear();
+	}
 }

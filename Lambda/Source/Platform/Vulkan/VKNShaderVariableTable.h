@@ -25,7 +25,6 @@ namespace Lambda
 		virtual IShaderVariable* GetVariableByName(ShaderStage shader, const char* pName) override final;
 		virtual IShaderVariable* GetVariableByIndex(ShaderStage shader, uint32 index) override final;
 		virtual uint32 GetVariableCount() const override final;
-
 		void CommitResources();
         
 
@@ -48,12 +47,12 @@ namespace Lambda
 	private:
 		void Init(const ShaderVariableTableDesc& desc);
 	private:
-		VkDescriptorSet	m_DescriptorSet;
-		uint32* m_pDynamicOffsets;
+        std::vector<AutoRef<VKNShaderVariable>> m_ShaderVariables;
+        std::vector<VKNShaderVariable*> m_DynamicVars;
 		VkWriteDescriptorSet* m_pDescriptors;
 		uint32 m_NumDescriptors;
-        std::vector<VKNShaderVariable*> m_DynamicVars;
-        std::vector<AutoRef<VKNShaderVariable>> m_ShaderVariables;
+		VkDescriptorSet	m_DescriptorSet;
+		uint32* m_pDynamicOffsets;
 		std::unordered_map<std::string, VKNShaderVariable*> m_NameTable;
 	};
 }

@@ -76,17 +76,7 @@ namespace Lambda
 		~VKNUploadAllocator();
 
 		VKNUploadAllocation Allocate(VkDeviceSize sizeInBytes, VkDeviceSize alignment);
-		
-		
-		_forceinline void Reset()
-		{
-			m_pCurrentPage->Reset();
-
-			for (auto page : m_DiscardedPages)
-				page->Destroy(m_pDevice);
-
-			m_DiscardedPages.clear();
-		}
+		void Reset();
 	private:
 		VKNDevice* m_pDevice;
 		VKNUploadPage* m_pCurrentPage;

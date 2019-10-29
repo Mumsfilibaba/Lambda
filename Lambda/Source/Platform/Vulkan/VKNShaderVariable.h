@@ -52,5 +52,6 @@ namespace Lambda
 			VkDescriptorBufferInfo	m_BufferInfo;
 			VkDescriptorImageInfo	m_ImageInfo;
 		};
+		bool m_IsValid;
 	};
 }
