@@ -63,6 +63,8 @@ namespace Lambda
             {
                 m_RenderTargets[i] = reinterpret_cast<TTextureImpl*>(ppRenderTargets[i]);
                 m_RenderTargets[i]->AddRef();
+				
+				LAMBDA_ASSERT_PRINT(m_RenderTargets[i]->GetDesc().Flags & TEXTURE_FLAGS_RENDER_TARGET, "Lambda Engine: ppRenderTargets[%d] was not created with flag TEXTURE_FLAGS_RENDER_TARGET\n", i);
             }
             
             
@@ -72,6 +74,8 @@ namespace Lambda
                 //Set depthstencil
                 m_DepthStencil = reinterpret_cast<TTextureImpl*>(pDepthStencil);
                 m_DepthStencil->AddRef();
+
+				LAMBDA_ASSERT_PRINT(m_DepthStencil->GetDesc().Flags & TEXTURE_FLAGS_DEPTH_STENCIL, "Lambda Engine: pDepthStencil was not created with flag TEXTURE_FLAGS_DEPTH_STENCIL\n");
                 
                 const TextureDesc& desc = m_DepthStencil->GetDesc();
                 m_FrameBufferHeight         = desc.Height;
@@ -127,7 +131,11 @@ namespace Lambda
 			{
 				m_VertexBuffers[slot + i] = reinterpret_cast<TBufferImpl*>(ppBuffers[i]);
 				if (m_VertexBuffers[slot + i])
+				{
 					m_VertexBuffers[slot + i]->AddRef();
+
+					LAMBDA_ASSERT_PRINT(m_VertexBuffers[slot + i]->GetDesc().Flags & BUFFER_FLAGS_VERTEX_BUFFER, "Lambda Engine: ppBuffers[%d] was not created with flag BUFFER_FLAGS_VERTEX_BUFFER\n", slot + i);
+				}
 			}
 		}
 
@@ -141,6 +149,8 @@ namespace Lambda
 			{
 				m_IndexBuffer = reinterpret_cast<TBufferImpl*>(pBuffer);
 				m_IndexBuffer->AddRef();
+
+				LAMBDA_ASSERT_PRINT(m_IndexBuffer->GetDesc().Flags & BUFFER_FLAGS_INDEX_BUFFER, "Lambda Engine: pBuffer was not created with flag BUFFER_FLAGS_INDEX_BUFFER\n");
 
 				m_IndexBufferFormat = format;
 			}

@@ -19,7 +19,7 @@ namespace Lambda
 		ISamplerState* pSamplerState = nullptr;
 		ResourceType Type	= RESOURCE_TYPE_UNKNOWN;
 		ShaderStage	Stage	= SHADER_STAGE_UNKNOWN;
-		ResourceUsage Usage = RESOURCE_USAGE_UNKNOWN;
+		Usage Usage = USAGE_UNKNOWN;
 		uint32 Slot			= 0;
 	};
 

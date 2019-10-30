@@ -45,8 +45,8 @@ namespace Lambda
 		void FinishFrame() const;
 		void WaitUntilIdle() const;
 		
-		bool AllocateImage(VKNAllocation& allocation, VkImage image, ResourceUsage usage);
-		bool AllocateBuffer(VKNAllocation& allocation, VkBuffer buffer, ResourceUsage usage);
+		bool AllocateImage(VKNAllocation& allocation, VkImage image, Usage usage);
+		bool AllocateBuffer(VKNAllocation& allocation, VkBuffer buffer, Usage usage);
 
 		void SetVulkanObjectName(VkObjectType type, uint64 objectHandle, const std::string& name);
 
@@ -102,6 +102,36 @@ namespace Lambda
 		}
 
 
+		_forceinline VKNBuffer* GetDefaultVertexBuffer() const
+		{
+			return m_pDefaultVertexBuffer;
+		}
+
+
+		_forceinline VKNBuffer* GetDefaultIndexBuffer() const
+		{
+			return m_pDefaultIndexBuffer;
+		}
+
+
+		_forceinline VKNBuffer* GetDefaultConstantBuffer() const
+		{
+			return m_pDefaultConstantBuffer;
+		}
+
+
+		_forceinline VKNSamplerState* GetDefaultSamplerState() const
+		{
+			return m_pDefaultSamplerState;
+		}
+
+
+		_forceinline VKNTexture* GetDefaultTexture() const
+		{
+			return m_pDefaultTexture;
+		}
+
+
 		template<typename VkResourceType>
 		_forceinline void SafeReleaseVulkanResource(const VkResourceType& resource)
 		{
@@ -133,6 +163,11 @@ namespace Lambda
 		QueueFamilyIndices		   m_FamiliyIndices;
 		VkPhysicalDevice		   m_PhysicalDevice;
 		VkPhysicalDeviceProperties m_PhysicalDeviceProperties;
+		VKNBuffer* m_pDefaultIndexBuffer;
+		VKNBuffer* m_pDefaultVertexBuffer;
+		VKNBuffer* m_pDefaultConstantBuffer;
+		VKNTexture* m_pDefaultTexture;
+		VKNSamplerState* m_pDefaultSamplerState;
 	private:
 		static PFN_vkSetDebugUtilsObjectNameEXT		vkSetDebugUtilsObjectNameEXT;
 		static PFN_vkCreateDebugUtilsMessengerEXT	vkCreateDebugUtilsMessengerEXT;

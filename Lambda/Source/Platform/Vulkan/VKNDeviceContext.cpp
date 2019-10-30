@@ -244,7 +244,7 @@ namespace Lambda
 				{
 					//Dynamic buffers always needs to be commited since they can change from drawcall to drawcall without need to be rebound
 					const BufferDesc& desc = m_VertexBuffers[i]->GetDesc();
-					if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
+					if (desc.Usage == USAGE_DYNAMIC)
 						m_CommitVertexBuffers = true;
 
 					buffers[i] = m_VertexBuffers[i]->GetVkBuffer();
@@ -252,7 +252,8 @@ namespace Lambda
 				}
 				else
 				{
-					buffers[i] = VK_NULL_HANDLE;
+					VKNBuffer* pVkDefaultBuffer = m_pDevice->GetDefaultVertexBuffer();
+					buffers[i] = pVkDefaultBuffer->GetVkBuffer();
 					offsets[i] = 0;
 				}
 			}
@@ -273,13 +274,19 @@ namespace Lambda
 			{
 				//Dynamic buffers needs to be commited every drawcall
 				const BufferDesc& desc = m_IndexBuffer->GetDesc();
-				if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
+				if (desc.Usage == USAGE_DYNAMIC)
 					m_CommitIndexBuffer = true;
 
 				//Bind indexbuffer
 				VkBuffer	buffer		= m_IndexBuffer->GetVkBuffer();
 				VkIndexType indexType	= (m_IndexBufferFormat == FORMAT_R32_UINT) ? VK_INDEX_TYPE_UINT32 : VK_INDEX_TYPE_UINT16;
 				vkCmdBindIndexBuffer(m_pCurrentFrameResource->CommandBuffer, buffer, m_IndexBuffer->GetDynamicOffset(), indexType);
+			}
+			else
+			{
+				//Bind indexbuffer
+				VKNBuffer* pVkDefaultBuffer = m_pDevice->GetDefaultIndexBuffer();
+				vkCmdBindIndexBuffer(m_pCurrentFrameResource->CommandBuffer, pVkDefaultBuffer->GetVkBuffer(), 0, VK_INDEX_TYPE_UINT32);
 			}
 		}
 	}
@@ -738,7 +745,6 @@ namespace Lambda
 		CommitResources();
 		CommitPipelineState();
 		CommitVertexBuffers();
-		CommitIndexBuffer();
 		CommitRenderTargetsAndDepthStencil();
 		CommitViewports();
 		CommitScissorRects();
@@ -757,7 +763,7 @@ namespace Lambda
 		
 		//Update a not dynamic buffer
 		const BufferDesc& bufferDesc = pVkBuffer->GetDesc();
-		if (bufferDesc.Usage == RESOURCE_USAGE_DEFAULT)
+		if (bufferDesc.Usage == USAGE_DEFAULT)
 		{
             //Allocate memory in the uploadbuffer
 			VkDeviceSize alignment	= pVkBuffer->GetAlignment();
@@ -769,9 +775,9 @@ namespace Lambda
 			//Update buffer
 			CopyBuffer(pVkBuffer->GetVkBuffer(), 0, mem.pPage->GetVkBuffer(), mem.Offset, data.SizeInBytes);
 		}
-		else if (bufferDesc.Usage == RESOURCE_USAGE_DYNAMIC)
+		else if (bufferDesc.Usage == USAGE_DYNAMIC)
 		{
-			LOG_DEBUG_ERROR("Vulkan: RESOURCE_USAGE_DYNAMIC can only be updated with MapBuffer\n");
+			LOG_DEBUG_ERROR("Vulkan: USAGE_DYNAMIC can only be updated with MapBuffer\n");
 		}
     }
     
@@ -808,9 +814,9 @@ namespace Lambda
 	void VKNDeviceContext::MapBuffer(IBuffer* pBuffer, uint32 mapFlags, void** ppData)
 	{
 		VKNBuffer* pVkBuffer = reinterpret_cast<VKNBuffer*>(pBuffer);
-		if (pVkBuffer->m_Desc.Usage != RESOURCE_USAGE_DYNAMIC)
+		if (pVkBuffer->m_Desc.Usage != USAGE_DYNAMIC)
 		{
-			LOG_DEBUG_ERROR("Vulkan: Cannot map a buffer without usage RESOURCE_USAGE_DYNAMIC\n");
+			LOG_DEBUG_ERROR("Vulkan: Cannot map a buffer without usage USAGE_DYNAMIC\n");
 		}
 
 		//Only writing supported for now
@@ -976,6 +982,7 @@ namespace Lambda
 		LAMBDA_ASSERT_PRINT(m_PipelineState, "Vulkan: DrawIndexed must have a valid PipelineState bound when called\n");
 
 		PrepareForDraw();
+		CommitIndexBuffer();
 		vkCmdDrawIndexed(m_pCurrentFrameResource->CommandBuffer, indexCount, 1, startIndexLocation, baseVertexLocation, 0);
 
 		//Count command
@@ -1000,6 +1007,7 @@ namespace Lambda
         LAMBDA_ASSERT_PRINT(m_PipelineState, "Vulkan: DrawIndexedInstanced must have a valid PipelineState bound when called\n");
 
 		PrepareForDraw();
+		CommitIndexBuffer();
         vkCmdDrawIndexed(m_pCurrentFrameResource->CommandBuffer, indexCountPerInstance, instanceCount, startIndexLocation, baseVertexLocation, startInstanceLocation);
 
 		//Count command

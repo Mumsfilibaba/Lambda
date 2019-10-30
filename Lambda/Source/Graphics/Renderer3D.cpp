@@ -64,7 +64,7 @@ namespace Lambda
 		//Create camerabuffer
 		BufferDesc cameraBufferdesc = {};
 		cameraBufferdesc.pName			= "CameraBuffer";
-		cameraBufferdesc.Usage			= RESOURCE_USAGE_DEFAULT;
+		cameraBufferdesc.Usage			= USAGE_DEFAULT;
 		cameraBufferdesc.Flags			= BUFFER_FLAGS_CONSTANT_BUFFER;
 		cameraBufferdesc.SizeInBytes	= sizeof(CameraBuffer);
 		cameraBufferdesc.StrideInBytes	= sizeof(CameraBuffer);
@@ -73,7 +73,7 @@ namespace Lambda
 		//Create lightbuffer
 		BufferDesc lightBufferDesc = {};
 		lightBufferDesc.pName			= "LightBuffer";
-		lightBufferDesc.Usage			= RESOURCE_USAGE_DEFAULT;
+		lightBufferDesc.Usage			= USAGE_DEFAULT;
 		lightBufferDesc.Flags			= BUFFER_FLAGS_CONSTANT_BUFFER;
 		lightBufferDesc.SizeInBytes		= sizeof(LightBuffer);
 		lightBufferDesc.StrideInBytes	= sizeof(LightBuffer);
@@ -82,7 +82,7 @@ namespace Lambda
 		//Create TransformBuffer
 		BufferDesc transformBufferdesc = {};
 		transformBufferdesc.pName			= "TransformBuffer";
-		transformBufferdesc.Usage			= RESOURCE_USAGE_DYNAMIC;
+		transformBufferdesc.Usage			= USAGE_DYNAMIC;
 		transformBufferdesc.Flags			= BUFFER_FLAGS_CONSTANT_BUFFER;
 		transformBufferdesc.SizeInBytes		= sizeof(TransformBuffer);
 		transformBufferdesc.StrideInBytes	= sizeof(TransformBuffer);
@@ -96,7 +96,7 @@ namespace Lambda
 		//Create materialbuffer
 		BufferDesc materialBufferDesc = {};
 		materialBufferDesc.pName			= "MaterialBuffer";
-		materialBufferDesc.Usage			= RESOURCE_USAGE_DYNAMIC;
+		materialBufferDesc.Usage			= USAGE_DYNAMIC;
 		materialBufferDesc.Flags			= BUFFER_FLAGS_CONSTANT_BUFFER;
 		materialBufferDesc.SizeInBytes		= sizeof(MaterialBuffer);
 		materialBufferDesc.StrideInBytes	= sizeof(MaterialBuffer);

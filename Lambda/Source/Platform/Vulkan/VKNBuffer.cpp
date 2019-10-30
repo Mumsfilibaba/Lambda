@@ -36,7 +36,7 @@ namespace Lambda
 		}
 
 		//Deallocate the dynamic resource
-		if (m_Desc.Usage == RESOURCE_USAGE_DYNAMIC)
+		if (m_Desc.Usage == USAGE_DYNAMIC)
 		{
 			m_pDevice->DeallocateDynamicMemory(m_DynamicMemory);
 		}
@@ -74,7 +74,7 @@ namespace Lambda
 
 
 		//Create buffer
-		if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
+		if (desc.Usage == USAGE_DYNAMIC)
 		{
 			//If dynamic we allocate dynamic memory
 			if (!m_pDevice->AllocateDynamicMemory(m_DynamicMemory, m_Desc.SizeInBytes, m_DynamicOffsetAlignment))
@@ -129,7 +129,7 @@ namespace Lambda
 			LAMBDA_ASSERT_PRINT(pInitalData->pData != nullptr && pInitalData->SizeInBytes != 0, "Vulkan: pInitalData->pData cannot be null\n");
 			LAMBDA_ASSERT_PRINT(pInitalData->SizeInBytes <= m_Desc.SizeInBytes, "Vulkan: pInitalData->SizeInBytes cannot be larger than the buffer. pInitalData->SizeInBytes=%d and BufferDesc::SizeInBytes=%d\n", pInitalData->SizeInBytes, m_Desc.SizeInBytes);
 
-			if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
+			if (desc.Usage == USAGE_DYNAMIC)
 			{
 				//If the resource is dynamic we can simply write to the dynamic memory with memcpy
 				memcpy(m_DynamicMemory.pHostMemory, pInitalData->pData, pInitalData->SizeInBytes);
@@ -152,7 +152,7 @@ namespace Lambda
 
 				//Allocate memory
 				VKNAllocation stagingMemory = {};
-				if (!m_pDevice->AllocateBuffer(stagingMemory, stagingBuffer, RESOURCE_USAGE_DYNAMIC))
+				if (!m_pDevice->AllocateBuffer(stagingMemory, stagingBuffer, USAGE_DYNAMIC))
 				{
 					LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for Staging-Buffer '%p'\n", stagingBuffer);
 					return;
@@ -187,7 +187,7 @@ namespace Lambda
 	void VKNBuffer::SetName(const char* pName)
 	{
 		TBuffer::SetName(pName);
-		if (pName && m_VkBuffer != VK_NULL_HANDLE)
+		if (m_VkBuffer != VK_NULL_HANDLE)
 		{
 			m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_BUFFER, (uint64)m_VkBuffer, m_Name);
 			m_Desc.pName = m_Name.c_str();

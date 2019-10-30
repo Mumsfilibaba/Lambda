@@ -304,7 +304,7 @@ namespace Lambda
             desc.ArraySize	 = 1;
             desc.MipLevels	 = 1;
             desc.SampleCount = 1;
-            desc.Usage		 = RESOURCE_USAGE_DEFAULT;
+            desc.Usage		 = USAGE_DEFAULT;
 
             m_Buffers.push_back(AutoRef(DBG_NEW VKNTexture(m_pDevice, textures[i], desc)));
         }
@@ -315,7 +315,7 @@ namespace Lambda
         TextureDesc depthBufferDesc = {};
         depthBufferDesc.Flags       = TEXTURE_FLAGS_DEPTH_STENCIL;
         depthBufferDesc.Type        = TEXTURE_TYPE_2D;
-        depthBufferDesc.Usage       = RESOURCE_USAGE_DEFAULT;
+        depthBufferDesc.Usage       = USAGE_DEFAULT;
         depthBufferDesc.ArraySize   = 1;
         depthBufferDesc.Width       = m_Desc.BufferWidth;
         depthBufferDesc.Height      = m_Desc.BufferHeight;
@@ -330,7 +330,7 @@ namespace Lambda
         {
             TextureDesc msaaBufferDesc = {};
             msaaBufferDesc.Type        = TEXTURE_TYPE_2D;
-            msaaBufferDesc.Usage       = RESOURCE_USAGE_DEFAULT;
+            msaaBufferDesc.Usage       = USAGE_DEFAULT;
             msaaBufferDesc.Flags       = TEXTURE_FLAGS_RENDER_TARGET;
             msaaBufferDesc.ArraySize   = 1;
             msaaBufferDesc.Width       = m_Desc.BufferWidth;

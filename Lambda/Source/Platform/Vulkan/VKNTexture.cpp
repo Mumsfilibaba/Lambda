@@ -44,7 +44,7 @@ namespace Lambda
 
 	VKNTexture::~VKNTexture()
 	{
-		LOG_DEBUG_INFO("Vulkan: Destroying Texture2D '%p'\n", this);
+		LOG_DEBUG_INFO("Vulkan: Destroying Texture2D '%p' '%s'\n", this, m_Name.c_str());
 
 		//Remove the image from the global layout
 		if (VKNResourceLayoutTracker::HasGlobalLayout(m_VkImage))
@@ -183,16 +183,9 @@ namespace Lambda
             m_Desc.MipLevels = mipLevels;
             //Set that we have created the texture and not external memory
             m_IsOwner = true;
-
-			if (m_Desc.pName)
-			{
-				LOG_DEBUG_INFO("Vulkan: Created Image '%p'. w=%u, h=%u, format=%s, name='%s'\n", m_VkImage, desc.Width, desc.Height, VkFormatToString(info.format), m_Desc.pName);
-				m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_IMAGE, (uint64)m_VkImage, std::string(m_Desc.pName));
-			}
-			else
-			{
-				LOG_DEBUG_INFO("Vulkan: Created Image '%p'. w=%u, h=%u, format=%s\n", m_VkImage, desc.Width, desc.Height, VkFormatToString(info.format));
-			}
+			
+			SetName(m_Desc.pName);
+			LOG_DEBUG_INFO("Vulkan: Created Image '%p'. w=%u, h=%u, format=%s, name='%s'\n", m_VkImage, desc.Width, desc.Height, VkFormatToString(info.format), m_Desc.pName);
         }
         
 		//Allocate memory
@@ -232,7 +225,7 @@ namespace Lambda
 
 			//Allocate memory
 			VKNAllocation stagingMemory = {};
-			if (!m_pDevice->AllocateBuffer(stagingMemory, stagingBuffer, RESOURCE_USAGE_DYNAMIC))
+			if (!m_pDevice->AllocateBuffer(stagingMemory, stagingBuffer, USAGE_DYNAMIC))
 			{
 				LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for Staging-Buffer '%p'\n", stagingBuffer);
 				return;
@@ -243,8 +236,13 @@ namespace Lambda
 				memcpy(stagingMemory.pHostMemory, pInitalData->pData, pInitalData->SizeInBytes);
 			}
 			
+			TextureTransitionBarrier barrier = {};
+			barrier.pTexture = this;
+			barrier.AfterState = RESOURCE_STATE_COPY_DEST;
+			barrier.MipLevel = LAMBDA_ALL_MIP_LEVELS;
+
 			//Copy buffer to image
-			pContext->TransitionTexture(this, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_REMAINING_MIP_LEVELS);
+			pContext->TransitionTextureStates(&barrier, 1);
 			pContext->CopyBufferToImage(m_VkImage, 0, m_VkAspectFlags, m_Desc.Width, m_Desc.Height, m_Desc.Depth, stagingBuffer, 0, pInitalData->SizeInBytes);
 
 			//Delete the stagingbuffer
@@ -253,8 +251,13 @@ namespace Lambda
 		}
 		else
 		{
+			TextureTransitionBarrier barrier = {};
+			barrier.pTexture	= this;
+			barrier.AfterState	= RESOURCE_STATE_GENERAL;
+			barrier.MipLevel	= LAMBDA_ALL_MIP_LEVELS;
+
 			//A texture needs to be in a general layout
-			pContext->TransitionTexture(this, VK_IMAGE_LAYOUT_GENERAL, VK_REMAINING_MIP_LEVELS);
+			pContext->TransitionTextureStates(&barrier, 1);
 		}
 
 		//Release context
@@ -308,10 +311,7 @@ namespace Lambda
 	void VKNTexture::SetName(const char* pName)
 	{
 		TTexture::SetName(pName);
-		if (pName)
-		{
-			m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_IMAGE, (uint64)m_VkImage, m_Name);
-			m_Desc.pName = m_Name.c_str();
-		}
+		m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_IMAGE, (uint64)m_VkImage, m_Name);
+		m_Desc.pName = m_Name.c_str();
 	}
 }

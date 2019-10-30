@@ -10,7 +10,7 @@ namespace Lambda
 	//---------------
 
 	VKNSamplerState::VKNSamplerState(VKNDevice* pDevice, const SamplerStateDesc& desc)
-		: SamplerStateBase<VKNDevice>(pDevice, desc),
+		: TSamplerState(pDevice, desc),
 		m_Sampler(VK_NULL_HANDLE)
 	{
 		//Add a ref to the refcounter
@@ -60,6 +60,7 @@ namespace Lambda
 		else
 		{
 			LOG_DEBUG_INFO("Vulkan: Created samplerstate\n");
+			SetName(desc.pName);
 		}
 	}
 
@@ -67,5 +68,13 @@ namespace Lambda
 	void* VKNSamplerState::GetNativeHandle() const
 	{
 		return reinterpret_cast<VkSampler>(m_Sampler);
+	}
+	
+	
+	void VKNSamplerState::SetName(const char* pName)
+	{
+		TSamplerState::SetName(pName);
+		m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_SAMPLER, (uint64)m_Sampler, m_Name);
+		m_Desc.pName = m_Name.c_str();
 	}
 }

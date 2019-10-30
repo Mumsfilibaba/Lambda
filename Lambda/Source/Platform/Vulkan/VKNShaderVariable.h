@@ -27,12 +27,11 @@ namespace Lambda
 		virtual void SetSamplerState(ISamplerState* pSamplerState) override final;
 
 		bool Validate();
-		void Transition(VKNDeviceContext* pContext);
 
 
 		_forceinline uint32 GetDynamicOffset() const
 		{
-			if (m_Desc.Type == RESOURCE_TYPE_CONSTANT_BUFFER && m_Desc.Usage == RESOURCE_USAGE_DYNAMIC)
+			if (m_Desc.Type == RESOURCE_TYPE_CONSTANT_BUFFER && m_Desc.Usage == USAGE_DYNAMIC)
 				return uint32(reinterpret_cast<VKNBuffer*>(m_Resource.Get())->GetDynamicOffset());
 
 			return 0;

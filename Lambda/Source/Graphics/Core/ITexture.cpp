@@ -11,7 +11,7 @@ namespace Lambda
 	//ITexture
 	//--------
 
-	ITexture* ITexture::CreateTextureFromFile(IDevice* pDevice, const char* pFileName, uint32 flags, ResourceUsage usage, Format format)
+	ITexture* ITexture::CreateTextureFromFile(IDevice* pDevice, const char* pFileName, uint32 flags, Usage usage, Format format)
 	{
 		int32 width = 0;
 		int32 height = 0;

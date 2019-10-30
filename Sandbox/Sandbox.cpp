@@ -162,13 +162,13 @@ namespace Lambda
 
 				ShaderVariableDesc shaderVariables[] =
 				{
-					//{ "u_CameraBuffer",		nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_VERTEX,	RESOURCE_USAGE_DEFAULT, 0 },
-					{ "u_TransformBuffer",	nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_VERTEX,	RESOURCE_USAGE_DYNAMIC, 0 },
-					//{ "u_MaterialBuffer",	nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DYNAMIC, 2 },
-					//{ "u_LightBuffer",		nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DEFAULT, 3 },
-					{ "u_Albedo",			nullptr, RESOURCE_TYPE_TEXTURE,			SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DEFAULT, 2 },
-					//{ "u_Normal",			nullptr, RESOURCE_TYPE_TEXTURE,			SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DEFAULT, 5 },
-					{ "u_Sampler",			nullptr, RESOURCE_TYPE_SAMPLER_STATE,	SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DEFAULT, 3 },
+					//{ "u_CameraBuffer",		nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_VERTEX,	USAGE_DEFAULT, 0 },
+					{ "u_TransformBuffer",	nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_VERTEX,	USAGE_DYNAMIC, 0 },
+					//{ "u_MaterialBuffer",	nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_PIXEL,		USAGE_DYNAMIC, 2 },
+					//{ "u_LightBuffer",		nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_PIXEL,		USAGE_DEFAULT, 3 },
+					{ "u_Albedo",			nullptr, RESOURCE_TYPE_TEXTURE,			SHADER_STAGE_PIXEL,		USAGE_DEFAULT, 2 },
+					//{ "u_Normal",			nullptr, RESOURCE_TYPE_TEXTURE,			SHADER_STAGE_PIXEL,		USAGE_DEFAULT, 5 },
+					{ "u_Sampler",			nullptr, RESOURCE_TYPE_SAMPLER_STATE,	SHADER_STAGE_PIXEL,		USAGE_DEFAULT, 3 },
 				};
 
 				ShaderVariableTableDesc variableTableDesc = {};
@@ -193,7 +193,7 @@ namespace Lambda
 			{
                 BufferDesc desc     = {};
                 desc.pName          = "Mesh VertexBuffer";
-                desc.Usage          = RESOURCE_USAGE_DEFAULT;
+                desc.Usage          = USAGE_DEFAULT;
                 desc.Flags          = BUFFER_FLAGS_VERTEX_BUFFER;
                 desc.SizeInBytes    = sizeof(Vertex) * uint32(mesh.Vertices.size());
                 desc.StrideInBytes  = sizeof(Vertex);
@@ -209,7 +209,7 @@ namespace Lambda
             {
                 BufferDesc desc     = {};
                 desc.pName          = "Mesh IndexBuffer";
-                desc.Usage          = RESOURCE_USAGE_DEFAULT;
+                desc.Usage          = USAGE_DEFAULT;
                 desc.Flags          = BUFFER_FLAGS_INDEX_BUFFER;
                 desc.SizeInBytes    = sizeof(uint32) * uint32(mesh.Indices.size());
                 desc.StrideInBytes  = sizeof(uint32);
@@ -225,8 +225,8 @@ namespace Lambda
 			{
 				BufferDesc desc = {};
 				desc.pName			= "PositionBuffer";
-				desc.Usage			= RESOURCE_USAGE_DYNAMIC;
-				desc.Flags			= BUFFER_FLAGS_INDEX_BUFFER;
+				desc.Usage			= USAGE_DYNAMIC;
+				desc.Flags			= BUFFER_FLAGS_CONSTANT_BUFFER;
 				desc.SizeInBytes	= sizeof(glm::vec3);
 				desc.StrideInBytes	= sizeof(glm::vec3);
 
@@ -248,7 +248,7 @@ namespace Lambda
 			{
 				BufferDesc desc = {};
 				desc.pName			= "Sphere VertexBuffer";
-				desc.Usage			= RESOURCE_USAGE_DEFAULT;
+				desc.Usage			= USAGE_DEFAULT;
 				desc.Flags			= BUFFER_FLAGS_VERTEX_BUFFER;
 				desc.SizeInBytes	= sizeof(Vertex) * uint32(mesh2.Vertices.size());
 				desc.StrideInBytes	= sizeof(Vertex);
@@ -263,7 +263,7 @@ namespace Lambda
 			{
 				BufferDesc desc = {};
 				desc.pName			= "Sphere IndexBuffer";
-				desc.Usage			= RESOURCE_USAGE_DEFAULT;
+				desc.Usage			= USAGE_DEFAULT;
 				desc.Flags			= BUFFER_FLAGS_INDEX_BUFFER;
 				desc.SizeInBytes	= sizeof(uint32) * uint32(mesh2.Indices.size());
 				desc.StrideInBytes	= sizeof(uint32);
@@ -279,7 +279,7 @@ namespace Lambda
             //m_TransformBuffer.Model = glm::mat4(1.0f);
 
             //Create texture
-            m_AlbedoMap = ITexture::CreateTextureFromFile(pDevice, "revolver_albedo.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
+            m_AlbedoMap = ITexture::CreateTextureFromFile(pDevice, "revolver_albedo.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
 			m_AlbedoMap->SetName("AlbedoMap");
 
 			//Transition before generating miplevels
@@ -294,7 +294,7 @@ namespace Lambda
 			barrier.AfterState = RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 			m_Context->TransitionTextureStates(&barrier, 1);
 
-			//m_NormalMap = ITexture::CreateTextureFromFile(pDevice, "revolver_normal.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
+			//m_NormalMap = ITexture::CreateTextureFromFile(pDevice, "revolver_normal.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
 			//m_NormalMap->SetName("NormalMap");
 			//m_Context->GenerateMipLevels(m_NormalMap.Get());
 
@@ -311,7 +311,7 @@ namespace Lambda
 			//Setup materials
 			m_VariableTable->GetVariableByName(SHADER_STAGE_VERTEX, "u_TransformBuffer")->SetConstantBuffer(m_PositionBuffer.Get());
 			//m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Normal")->SetTexture(m_NormalMap.Get());
-			m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Albedo")->SetTexture(m_AlbedoMap.Get());
+			//m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Albedo")->SetTexture(m_AlbedoMap.Get());
 			m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Sampler")->SetSamplerState(m_SamplerState.Get());
 
 			/*m_Material.pPipelineState	= m_PipelineState.Get();
@@ -444,7 +444,7 @@ namespace Lambda
 		m_Context->SetPipelineState(m_PipelineState.Get());
 
         //Draw squares
-		constexpr uint32 numSquares = 200;
+		constexpr uint32 numSquares = 20;
 		for (uint32 y = 0; y < numSquares; y++)
 		{
 			for (uint32 x = 0; x < numSquares; x++)

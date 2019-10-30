@@ -29,7 +29,7 @@ namespace Lambda
         
 		_forceinline VkBuffer GetVkBuffer() const
 		{
-			if (m_Desc.Usage == RESOURCE_USAGE_DYNAMIC)
+			if (m_Desc.Usage == USAGE_DYNAMIC)
 				return m_DynamicMemory.Buffer;
 
 			return m_VkBuffer;

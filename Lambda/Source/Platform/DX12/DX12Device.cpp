@@ -332,7 +332,7 @@ namespace Lambda
 		//Set initaldata if there are any
 		if (pInitalData != nullptr)
 		{
-			if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
+			if (desc.Usage == USAGE_DYNAMIC)
 			{
 				//Set initial data
 				if (pInitalData != nullptr)
@@ -343,7 +343,7 @@ namespace Lambda
 					pBuffer->Unmap();
 				}
 			}
-			else if(desc.Usage == RESOURCE_USAGE_DEFAULT)
+			else if(desc.Usage == USAGE_DEFAULT)
 			{
 				//Copy data
 				m_pImmediateContext->TransitionBuffer(pBuffer, RESOURCE_STATE_COPY_DEST);
@@ -379,7 +379,7 @@ namespace Lambda
 	void DX12Device::CreateTexture(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc)
 	{
 		//Return early if errors
-		if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
+		if (desc.Usage == USAGE_DYNAMIC)
 		{
 			LOG_DEBUG_ERROR("Lambda Engine: Texture2D cannot have resource usage dynamic\n");
 			(*ppTexture) = nullptr;

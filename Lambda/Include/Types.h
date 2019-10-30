@@ -187,11 +187,11 @@ namespace Lambda
 
 
     //Usage of a resource
-	enum ResourceUsage : uint32
+	enum Usage : uint32
 	{
-		RESOURCE_USAGE_UNKNOWN = 0,
-		RESOURCE_USAGE_DEFAULT = 1,
-		RESOURCE_USAGE_DYNAMIC = 2,
+		USAGE_UNKNOWN = 0,
+		USAGE_DEFAULT = 1,
+		USAGE_DYNAMIC = 2,
 	};
 
 

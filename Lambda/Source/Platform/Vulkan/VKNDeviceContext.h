@@ -95,10 +95,7 @@ namespace Lambda
 
 		void QueryCommandBuffer();
         void EndCommandBuffer();
-		
-		void TransitionBuffer(const IBuffer* pBuffer, ResourceState state);
-		void TransitionTexture(const VKNTexture* pVkTexture, VkImageLayout layout, uint32 mipLevel);
-        
+		       
 		void CopyBuffer(VkBuffer dstBuffer, VkDeviceSize dstOffset, VkBuffer srcBuffer, VkDeviceSize srcOffset, VkDeviceSize sizeInBytes);
 		void CopyBufferToImage(VkImage image, VkDeviceSize mipLevel, VkImageAspectFlags aspectFlags, uint32 width, uint32 height, uint32 depth, VkBuffer buffer, VkDeviceSize offset, VkDeviceSize sizeInBytes);
 		void BlitTexture(VKNTexture* pDst, uint32 dstWidth, uint32 dstHeight, uint32 dstMipLevel, VKNTexture* pSrc, uint32 srcWidth, uint32 srcHeight, uint32 srcMipLevel);
@@ -127,10 +124,12 @@ namespace Lambda
 		}
     private:
         void Init(DeviceContextType type);
-        void BeginRenderPass();
+		void BeginRenderPass();
         void EndRenderPass();
 		void FlushResourceBarriers();
 		void PrepareForDraw();
+		void TransitionBuffer(const IBuffer* pBuffer, ResourceState state);
+		void TransitionTexture(const VKNTexture* pVkTexture, VkImageLayout layout, uint32 mipLevel);
 
 
 		_forceinline bool IsInsideRenderPass() 

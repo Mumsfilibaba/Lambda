@@ -42,7 +42,7 @@ namespace Lambda
 		}
 
 		//Allocate memory
-		if (!pDevice->AllocateBuffer(m_Memory, m_VkBuffer, RESOURCE_USAGE_DYNAMIC))
+		if (!pDevice->AllocateBuffer(m_Memory, m_VkBuffer, USAGE_DYNAMIC))
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to allocate UploadPage '%p'\n", m_VkBuffer);
 		}

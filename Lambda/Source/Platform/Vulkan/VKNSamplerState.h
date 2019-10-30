@@ -12,6 +12,8 @@ namespace Lambda
 
     class VKNSamplerState : public SamplerStateBase<VKNDevice>
     {
+		using TSamplerState = SamplerStateBase<VKNDevice>;
+
     public:
         LAMBDA_NO_COPY(VKNSamplerState);
         
@@ -19,8 +21,12 @@ namespace Lambda
         ~VKNSamplerState();
         
         virtual void* GetNativeHandle() const override final;
+		virtual void SetName(const char* pName) override final;
 
-		inline VkSampler GetVkSampler() const { return m_Sampler; }
+		_forceinline VkSampler GetVkSampler() const 
+		{ 
+			return m_Sampler; 
+		}
     private:
         void Init(const SamplerStateDesc& desc);     
     private:

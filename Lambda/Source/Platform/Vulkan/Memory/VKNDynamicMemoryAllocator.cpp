@@ -58,7 +58,7 @@ namespace Lambda
 		}
 
 		//Allocate memory
-		if (!pDevice->AllocateBuffer(m_Memory, m_Buffer, RESOURCE_USAGE_DYNAMIC))
+		if (!pDevice->AllocateBuffer(m_Memory, m_Buffer, USAGE_DYNAMIC))
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to allocate Dynamic Memory-Page '%p'\n", m_Buffer);
 			return;

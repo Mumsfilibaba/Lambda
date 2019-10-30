@@ -3,7 +3,7 @@
 #include "VKNShaderVariableTable.h"
 #include "VKNTexture.h"
 #include "VKNSamplerState.h"
-#include "VKNDeviceContext.h"
+#include "VKNDevice.h"
 
 namespace Lambda
 {
@@ -17,7 +17,7 @@ namespace Lambda
         m_ResourceHandle(VK_NULL_HANDLE),
 		m_IsValid(false)
 	{
-		//Increas inital ref
+		//Increase inital ref
 		this->AddRef();
 		        
         //Setup descriptor write
@@ -31,9 +31,14 @@ namespace Lambda
         if (m_DescriptorWrite.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE)
         {
             //Init imageinfo
+			VKNTexture* pVkDefaultTexture = m_pDevice->GetDefaultTexture();
+			pVkDefaultTexture->AddRef();
+			m_Resource = pVkDefaultTexture;
+
             m_ImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            m_ImageInfo.imageView   = VK_NULL_HANDLE;
-            //Get static sampler
+            m_ImageInfo.imageView   = pVkDefaultTexture->GetVkImageView();
+            
+			//Get static sampler
             if (m_Desc.pSamplerState != nullptr)
             {
                 m_DescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -49,17 +54,25 @@ namespace Lambda
         else if (m_DescriptorWrite.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER || m_DescriptorWrite.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC)
         {
             //Init bufferinfo
-            m_BufferInfo.buffer = VK_NULL_HANDLE;
+			VKNBuffer* pVkDefaultConstantBuffer = m_pDevice->GetDefaultConstantBuffer();
+			pVkDefaultConstantBuffer->AddRef();
+			m_Resource = pVkDefaultConstantBuffer;
+
+			m_BufferInfo.buffer = pVkDefaultConstantBuffer->GetVkBuffer();
             m_BufferInfo.offset = 0;
-            m_BufferInfo.range  = 0;
+            m_BufferInfo.range  = pVkDefaultConstantBuffer->GetDesc().SizeInBytes;
             m_DescriptorWrite.pBufferInfo = &m_BufferInfo;
         }
         else if (m_DescriptorWrite.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLER)
         {
             //Init imageinfo
+			VKNSamplerState* pVkDefaultSamplerState = m_pDevice->GetDefaultSamplerState();
+			pVkDefaultSamplerState->AddRef();
+			m_Resource = pVkDefaultSamplerState;
+
             m_ImageInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
             m_ImageInfo.imageView   = VK_NULL_HANDLE;
-            m_ImageInfo.sampler     = VK_NULL_HANDLE;
+            m_ImageInfo.sampler     = pVkDefaultSamplerState->GetVkSampler();
             m_DescriptorWrite.pImageInfo = &m_ImageInfo;
         }
     }
@@ -68,13 +81,25 @@ namespace Lambda
 	void VKNShaderVariable::SetTexture(ITexture* pTexture)
 	{
 		LAMBDA_ASSERT_PRINT(m_Desc.Type == RESOURCE_TYPE_TEXTURE, "Vulkan: Variable is not a Texture\n");
-		LAMBDA_ASSERT_PRINT(pTexture != nullptr, "Vulkan: pTexture cannot be nullptr\n");
 		
-		if (m_Resource.Get() != pTexture)
+		//If texture is nullptr we get the default texture
+		VKNTexture* pVkTexture = reinterpret_cast<VKNTexture*>(pTexture);
+		if (pVkTexture == nullptr)
+		{
+			pVkTexture = m_pDevice->GetDefaultTexture();
+		}
+		else
+		{
+			LAMBDA_ASSERT_PRINT(pVkTexture->GetDesc().Flags & TEXTURE_FLAGS_SHADER_RESOURCE, "Vulkan: pTexture does not have the flag TEXTURE_FLAGS_SHADER_RESOURCE\n");
+		}
+
+
+		//Make sure that this resource is not already the one bound to the table
+		if (m_Resource.Get() != pVkTexture)
 		{
 			//Make sure we have a reference to the resource
-			pTexture->AddRef();
-			m_Resource = pTexture;
+			pVkTexture->AddRef();
+			m_Resource = pVkTexture;
 
 			//Invalidate variable
 			m_IsValid = false;
@@ -85,13 +110,25 @@ namespace Lambda
 	void VKNShaderVariable::SetConstantBuffer(IBuffer* pBuffer)
 	{
 		LAMBDA_ASSERT_PRINT(m_Desc.Type == RESOURCE_TYPE_CONSTANT_BUFFER, "Vulkan: Variable is not a ConstantBuffer\n");
-		LAMBDA_ASSERT_PRINT(pBuffer != nullptr, "Vulkan: pBuffer cannot be nullptr\n");
+		
+		//If buffer is nullptr we get the default constantbuffer
+		VKNBuffer* pVkBuffer = reinterpret_cast<VKNBuffer*>(pBuffer);
+		if (pVkBuffer == nullptr)
+		{
+			pVkBuffer = m_pDevice->GetDefaultConstantBuffer();
+		}
+		else
+		{
+			LAMBDA_ASSERT_PRINT(pVkBuffer->GetDesc().Flags & BUFFER_FLAGS_CONSTANT_BUFFER, "Vulkan: pBuffer does not have the flag BUFFER_FLAGS_CONSTANT_BUFFER\n");
+		}
 
-		if (m_Resource.Get() != pBuffer)
+		
+		//Make sure we are not binding the constantbuffer already used
+		if (m_Resource.Get() != pVkBuffer)
 		{
 			//Make sure we have a reference to the resource
-			pBuffer->AddRef();
-			m_Resource = pBuffer;
+			pVkBuffer->AddRef();
+			m_Resource = pVkBuffer;
 
 			//Invalidate variable
 			m_IsValid = false;
@@ -102,13 +139,19 @@ namespace Lambda
 	void VKNShaderVariable::SetSamplerState(ISamplerState* pSamplerState)
 	{
 		LAMBDA_ASSERT_PRINT(m_Desc.Type == RESOURCE_TYPE_SAMPLER_STATE, "Vulkan: Variable is not a SamplerState\n");
-		LAMBDA_ASSERT_PRINT(pSamplerState != nullptr, "Vulkan: pSamplerState cannot be nullptr\n");
 
-		if (m_Resource.Get() != pSamplerState)
+		//If samplerstate is nullptr we get the default samplerstate
+		VKNSamplerState* pVkSamplerState = reinterpret_cast<VKNSamplerState*>(pSamplerState);
+		if (pVkSamplerState == nullptr)
+			pVkSamplerState = m_pDevice->GetDefaultSamplerState();
+
+
+		//Make sure that we are not binding the samplerstate we already have bound
+		if (m_Resource.Get() != pVkSamplerState)
 		{
 			//Make sure we have a reference to the resource
-			pSamplerState->AddRef();
-			m_Resource = pSamplerState;
+			pVkSamplerState->AddRef();
+			m_Resource = pVkSamplerState;
 
 			//Invalidate variable
 			m_IsValid = false;
@@ -119,7 +162,7 @@ namespace Lambda
 	bool VKNShaderVariable::Validate()
 	{
 		//If this is not a dynamic variable we just return if we have bound a new resource
-		if (m_Desc.Usage != RESOURCE_USAGE_DYNAMIC && m_IsValid)
+		if (m_Desc.Usage != USAGE_DYNAMIC && m_IsValid)
 		{
 			return true;
 		}
@@ -162,15 +205,5 @@ namespace Lambda
 
 		m_IsValid = true;
         return oldHandle == currentHandle;
-	}
-
-
-	void VKNShaderVariable::Transition(VKNDeviceContext* pContext)
-	{
-		if (m_Desc.Type == RESOURCE_TYPE_TEXTURE)
-		{
-			VKNTexture* pVkTexture = m_Resource.GetAs<VKNTexture>();
-			pContext->TransitionTexture(pVkTexture, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_REMAINING_MIP_LEVELS);
-		}
 	}
 }

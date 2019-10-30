@@ -15,7 +15,7 @@ namespace Lambda
 
 	constexpr float mb = 1024.0f * 1024.0f;
 
-	VKNMemoryPage::VKNMemoryPage(VKNDevice* pDevice, uint32 id, VkDeviceSize sizeInBytes, uint32 memoryType, ResourceUsage usage)
+	VKNMemoryPage::VKNMemoryPage(VKNDevice* pDevice, uint32 id, VkDeviceSize sizeInBytes, uint32 memoryType, Usage usage)
 		: m_Usage(usage),
 		m_ID(id),
 		m_MemoryType(memoryType),
@@ -59,7 +59,7 @@ namespace Lambda
 		m_pHead->DeviceMemoryOffset		= 0;
 		
 		//If this is CPU visible -> Map
-		if (m_Usage == RESOURCE_USAGE_DYNAMIC)
+		if (m_Usage == USAGE_DYNAMIC)
 		{
 			Map(pDevice);
 		}
@@ -157,7 +157,7 @@ namespace Lambda
         allocation.DeviceMemory       = m_DeviceMemory;
         allocation.DeviceMemoryOffset = paddedDeviceOffset;
         allocation.SizeInBytes		  = sizeInBytes;
-        if (m_Usage == RESOURCE_USAGE_DYNAMIC)
+        if (m_Usage == USAGE_DYNAMIC)
             allocation.pHostMemory = m_pHostMemory + allocation.DeviceMemoryOffset;
         else
             allocation.pHostMemory = nullptr;
@@ -361,11 +361,11 @@ namespace Lambda
 	}
 
 
-	bool VKNDeviceAllocator::Allocate(VKNAllocation& allocation, const VkMemoryRequirements& memoryRequirements, ResourceUsage usage)
+	bool VKNDeviceAllocator::Allocate(VKNAllocation& allocation, const VkMemoryRequirements& memoryRequirements, Usage usage)
 	{
 		//Set memoryproperty based on resource usage
 		VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-		if (usage == RESOURCE_USAGE_DYNAMIC)
+		if (usage == USAGE_DYNAMIC)
 			properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 
 		//Add to total

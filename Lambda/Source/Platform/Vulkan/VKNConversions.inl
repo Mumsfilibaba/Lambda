@@ -142,8 +142,8 @@ namespace Lambda
     {
         switch (toplogy)
         {
-            case VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST: return PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-            case VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP: return PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
+            case VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST:	return PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+            case VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP:	return PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
             default: return PRIMITIVE_TOPOLOGY_UNKNOWN;
         }
     }
@@ -157,7 +157,7 @@ namespace Lambda
             case RESOURCE_STATE_RENDERTARGET:           return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
             case RESOURCE_STATE_DEPTH_STENCIL:			return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
             case RESOURCE_STATE_RENDERTARGET_CLEAR:     return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-            case RESOURCE_STATE_PRESENT:   return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+            case RESOURCE_STATE_PRESENT:				return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
             case RESOURCE_STATE_DEPTH_STENCIL_CLEAR:    return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
             case RESOURCE_STATE_COPY_DEST:              return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
             case RESOURCE_STATE_COPY_SRC:               return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
@@ -214,12 +214,12 @@ namespace Lambda
     }
 
 
-	inline VkDescriptorType ConvertResourceToDescriptorType(ResourceType type, ResourceUsage usage)
+	inline VkDescriptorType ConvertResourceToDescriptorType(ResourceType type, Usage usage)
 	{
 		switch (type)
 		{
 			case RESOURCE_TYPE_TEXTURE:			return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-            case RESOURCE_TYPE_CONSTANT_BUFFER: return usage == RESOURCE_USAGE_DYNAMIC ? VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC : VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            case RESOURCE_TYPE_CONSTANT_BUFFER: return usage == USAGE_DYNAMIC ? VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC : VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			case RESOURCE_TYPE_SAMPLER_STATE:	return VK_DESCRIPTOR_TYPE_SAMPLER;
             default:                            return VK_DESCRIPTOR_TYPE_MAX_ENUM;
 		}

@@ -22,9 +22,9 @@ namespace Lambda
 	//VKNDevice
 	//---------
 
-	PFN_vkSetDebugUtilsObjectNameEXT	VKNDevice::vkSetDebugUtilsObjectNameEXT								= nullptr;
-	PFN_vkCreateDebugUtilsMessengerEXT	VKNDevice::vkCreateDebugUtilsMessengerEXT							= nullptr;
-	PFN_vkDestroyDebugUtilsMessengerEXT	VKNDevice::vkDestroyDebugUtilsMessengerEXT							= nullptr;
+	PFN_vkSetDebugUtilsObjectNameEXT	VKNDevice::vkSetDebugUtilsObjectNameEXT		= nullptr;
+	PFN_vkCreateDebugUtilsMessengerEXT	VKNDevice::vkCreateDebugUtilsMessengerEXT	= nullptr;
+	PFN_vkDestroyDebugUtilsMessengerEXT	VKNDevice::vkDestroyDebugUtilsMessengerEXT	= nullptr;
 
     VKNDevice::VKNDevice(const DeviceDesc& desc)
         : DeviceBase(desc),
@@ -53,8 +53,15 @@ namespace Lambda
 		//Idle device before destroying
 		WaitUntilIdle();
 
-        m_pImmediateContext->Release();
-		m_pImmediateContext = nullptr;
+		//Release default resources
+		SafeRelease(m_pDefaultVertexBuffer);
+		SafeRelease(m_pDefaultIndexBuffer);
+		SafeRelease(m_pDefaultConstantBuffer);
+		SafeRelease(m_pDefaultTexture);
+		SafeRelease(m_pDefaultSamplerState);
+
+		//Release context
+		SafeRelease(m_pImmediateContext);
         
 		//Release all renderpasses
 		if (m_pRenderPassCache)
@@ -462,6 +469,110 @@ namespace Lambda
         //Init internal commandlist, used for copying from staging buffers to final resource etc.
         m_pImmediateContext = DBG_NEW VKNDeviceContext(this, DEVICE_CONTEXT_TYPE_IMMEDIATE);
         m_pImmediateContext->SetName("Graphics Device ImmediateContext");
+
+		//Create default resources
+		{
+			BufferDesc vertexBufferDesc = {};
+			vertexBufferDesc.pName			= "Default VertexBuffer";
+			vertexBufferDesc.Flags			= BUFFER_FLAGS_VERTEX_BUFFER;
+			vertexBufferDesc.Usage			= USAGE_DEFAULT;
+			vertexBufferDesc.SizeInBytes	= sizeof(float) * 9;
+			vertexBufferDesc.StrideInBytes	= sizeof(float) * 3;
+
+			float vertices[9] =
+			{
+				0.0f, 0.5f, 0.0f,
+				0.5f, -0.5f, 0.0f,
+				-0.5f, -0.5f, 0.0f,
+			};
+
+			ResourceData vertexData = {};
+			vertexData.pData		= vertices;
+			vertexData.SizeInBytes	= sizeof(vertices);
+			m_pDefaultVertexBuffer = DBG_NEW VKNBuffer(this, &vertexData, vertexBufferDesc);
+		}
+
+
+		{
+			BufferDesc indexBufferDesc = {};
+			indexBufferDesc.pName			= "Default IndexBuffer";
+			indexBufferDesc.Flags			= BUFFER_FLAGS_INDEX_BUFFER;
+			indexBufferDesc.Usage			= USAGE_DEFAULT;
+			indexBufferDesc.SizeInBytes		= sizeof(uint32) * 3;
+			indexBufferDesc.StrideInBytes	= sizeof(uint32);
+
+			uint32 indices[3] =
+			{
+				0, 1, 2,
+			};
+
+			ResourceData indexData = {};
+			indexData.pData			= indices;
+			indexData.SizeInBytes	= sizeof(indices);
+			m_pDefaultIndexBuffer = DBG_NEW VKNBuffer(this, &indexData, indexBufferDesc);
+		}
+
+
+		{
+			BufferDesc constantBufferDesc = {};
+			constantBufferDesc.pName			= "Default ConstantBuffer";
+			constantBufferDesc.Flags			= BUFFER_FLAGS_CONSTANT_BUFFER;
+			constantBufferDesc.Usage			= USAGE_DEFAULT;
+			constantBufferDesc.SizeInBytes		= sizeof(float) * 4;
+			constantBufferDesc.StrideInBytes	= sizeof(float);
+
+			float data[4] =
+			{
+				1.0f, 1.0f, 1.0f, 1.0f
+			};
+
+			ResourceData constantData = {};
+			constantData.pData			= data;
+			constantData.SizeInBytes	= sizeof(data);
+			m_pDefaultConstantBuffer = DBG_NEW VKNBuffer(this, &constantData, constantBufferDesc);
+		}
+
+
+		{
+			SamplerStateDesc samplerStateDesc = {};
+			samplerStateDesc.pName		= "Default SamplerState";
+			samplerStateDesc.AdressMode	= SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+			samplerStateDesc.Anisotropy	= 1.0f;
+			samplerStateDesc.MinMipLOD	= 0.0f;
+			samplerStateDesc.MaxMipLOD	= FLT_MAX;
+			samplerStateDesc.MipLODBias	= 0.0f;
+			m_pDefaultSamplerState = DBG_NEW VKNSamplerState(this, samplerStateDesc);
+		}
+
+
+		{
+			TextureDesc textureDesc = {};
+			textureDesc.pName		= "Default Texture";
+			textureDesc.Type		= TEXTURE_TYPE_2D;
+			textureDesc.Flags		= TEXTURE_FLAGS_SHADER_RESOURCE;
+			textureDesc.Width		= 4;
+			textureDesc.Height		= 4;
+			textureDesc.Depth		= 1;
+			textureDesc.ArraySize	= 1;
+			textureDesc.MipLevels	= 1;
+			textureDesc.SampleCount = 1;
+			textureDesc.Usage		= USAGE_DEFAULT;
+			textureDesc.Format		= FORMAT_R8G8B8A8_UNORM;
+
+			uint8 pixels[4 * 4 * 4];
+			memset(pixels, 255, sizeof(pixels));
+
+			ResourceData textureData = {};
+			textureData.pData		= pixels;
+			textureData.SizeInBytes = sizeof(pixels);
+			m_pDefaultTexture = DBG_NEW VKNTexture(this, &textureData, textureDesc);
+
+			TextureTransitionBarrier barrier = {};
+			barrier.pTexture	= m_pDefaultTexture;
+			barrier.AfterState	= RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+			barrier.MipLevel	= LAMBDA_ALL_MIP_LEVELS;
+			m_pImmediateContext->TransitionTextureStates(&barrier, 1);
+		}
     }
     
     
@@ -564,7 +675,7 @@ namespace Lambda
     }
 
 
-	bool VKNDevice::AllocateImage(VKNAllocation& allocation, VkImage image, ResourceUsage usage)
+	bool VKNDevice::AllocateImage(VKNAllocation& allocation, VkImage image, Usage usage)
 	{
 		VkMemoryRequirements memoryRequirements = {};
 		vkGetImageMemoryRequirements(m_Device, image, &memoryRequirements);
@@ -581,7 +692,7 @@ namespace Lambda
 	}
 
 
-	bool VKNDevice::AllocateBuffer(VKNAllocation& allocation, VkBuffer buffer, ResourceUsage usage)
+	bool VKNDevice::AllocateBuffer(VKNAllocation& allocation, VkBuffer buffer, Usage usage)
 	{
 		VkMemoryRequirements memoryRequirements = {};
 		vkGetBufferMemoryRequirements(m_Device, buffer, &memoryRequirements);

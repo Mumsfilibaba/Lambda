@@ -32,7 +32,11 @@ namespace Lambda
 
 	void VKNShaderVariableTable::Init(const ShaderVariableTableDesc& desc)
 	{
-		//Create variabless
+		//Set size of descriptorwrites
+		m_pDescriptors		= DBG_NEW VkWriteDescriptorSet[desc.NumVariables];
+		m_NumDescriptors	= desc.NumVariables;
+
+		//Create variables
 		for (uint32 i = 0; i < desc.NumVariables; i++)
 		{
 			//Create new variable
@@ -43,7 +47,7 @@ namespace Lambda
 			m_NameTable[std::string(desc.pVariables[i].pName)] = pVariable;
 
 			//Get dynamic buffers
-			if (desc.pVariables[i].Usage == RESOURCE_USAGE_DYNAMIC && desc.pVariables[i].Type == RESOURCE_TYPE_CONSTANT_BUFFER)
+			if (desc.pVariables[i].Usage == USAGE_DYNAMIC && desc.pVariables[i].Type == RESOURCE_TYPE_CONSTANT_BUFFER)
                 m_DynamicVars.emplace_back(pVariable);
 		}
 
@@ -52,10 +56,6 @@ namespace Lambda
 
 		//Dynamic offsets for dynamic constantbuffers
 		m_pDynamicOffsets = DBG_NEW uint32[m_DynamicVars.size()];
-
-		//Set size of descriptorwrites
-		m_pDescriptors = DBG_NEW VkWriteDescriptorSet[desc.NumVariables];
-		m_NumDescriptors = desc.NumVariables;
 	}
 
 

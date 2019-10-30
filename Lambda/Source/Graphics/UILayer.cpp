@@ -238,7 +238,7 @@ namespace Lambda
 		shaderVariables[0].pSamplerState	= m_SamplerState.Get();
 		shaderVariables[0].Slot				= 0;
 		shaderVariables[0].Type				= RESOURCE_TYPE_TEXTURE;
-		shaderVariables[0].Usage			= RESOURCE_USAGE_DEFAULT;
+		shaderVariables[0].Usage			= USAGE_DEFAULT;
 		shaderVariables[0].Stage			= SHADER_STAGE_PIXEL;
 
         ConstantBlockDesc constantBlocks[1];
@@ -315,7 +315,7 @@ namespace Lambda
 		fontTextureDesc.MipLevels	= 1;
 		fontTextureDesc.ArraySize	= 1;
 		fontTextureDesc.SampleCount	= 1;
-		fontTextureDesc.Usage		= RESOURCE_USAGE_DEFAULT;
+		fontTextureDesc.Usage		= USAGE_DEFAULT;
 
 		ResourceData initalData = {};
 		initalData.pData		= pPixels;
@@ -330,14 +330,14 @@ namespace Lambda
 		bufferDesc.Flags			= BUFFER_FLAGS_VERTEX_BUFFER;
 		bufferDesc.SizeInBytes		= MB(2);
 		bufferDesc.StrideInBytes	= sizeof(ImDrawVert);
-		bufferDesc.Usage			= RESOURCE_USAGE_DYNAMIC;
+		bufferDesc.Usage			= USAGE_DYNAMIC;
 		pDevice->CreateBuffer(&m_VertexBuffer, nullptr, bufferDesc);
 
 		bufferDesc.pName			= "ImGui IndexBuffer";
 		bufferDesc.Flags			= BUFFER_FLAGS_INDEX_BUFFER;
 		bufferDesc.SizeInBytes		= MB(2);
 		bufferDesc.StrideInBytes	= sizeof(ImDrawIdx);
-		bufferDesc.Usage			= RESOURCE_USAGE_DYNAMIC;
+		bufferDesc.Usage			= USAGE_DYNAMIC;
 		pDevice->CreateBuffer(&m_IndexBuffer, nullptr, bufferDesc);
 	}
 
