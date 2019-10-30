@@ -133,8 +133,15 @@ namespace Lambda
 
 
         //Get the swapchain capabilities from the adapter
-        SwapChainCapabilities cap = QuerySwapChainSupport(m_pDevice->GetVkPhysicalDevice(), m_Surface);
-        
+		SwapChainCapabilities cap = {};
+		VkResult result = QuerySwapChainSupport(cap, m_pDevice->GetVkPhysicalDevice(), m_Surface);
+		if (result != VK_SUCCESS)
+		{
+			LOG_DEBUG_ERROR("Vulkan: QuerySwapChainSupport failed. Error: %s\n", VkResultToString(result));
+			return;
+		}
+
+
 		//Find the swapchain format we want
         VkFormat lookingFor = ConvertFormat(desc.BufferFormat);
 		m_VkFormat = { VK_FORMAT_UNDEFINED, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR };
@@ -208,12 +215,19 @@ namespace Lambda
 	}
     
     
-    void VKNSwapChain::InitSwapChain(VkExtent2D extent)
+	void VKNSwapChain::InitSwapChain(VkExtent2D extent)
     {
-		SwapChainCapabilities cap = QuerySwapChainSupport(m_pDevice->GetVkPhysicalDevice(), m_Surface);
+		SwapChainCapabilities cap = {};
+		VkResult result = QuerySwapChainSupport(cap, m_pDevice->GetVkPhysicalDevice(), m_Surface);
+		if (result != VK_SUCCESS)
+		{
+			LOG_DEBUG_WARNING("Vulkan: QuerySwapChainSupport returned '%s'\n", VkResultToString(result));
+			return;
+		}
         
+
         //Choose swapchain extent (Size)
-        VkExtent2D newExtent;
+		VkExtent2D newExtent = {};
         if (cap.Capabilities.currentExtent.width  != std::numeric_limits<uint32_t>::max() ||
 			cap.Capabilities.currentExtent.height != std::numeric_limits<uint32_t>::max() ||
 			extent.width == 0 || extent.height == 0)
@@ -266,8 +280,11 @@ namespace Lambda
             info.queueFamilyIndexCount   = 0;
             info.pQueueFamilyIndices     = nullptr;
         }
+
+
         //Create swapchain
-        if (vkCreateSwapchainKHR(m_pDevice->GetVkDevice(), &info, nullptr, &m_VkSwapChain) != VK_SUCCESS)
+		result = vkCreateSwapchainKHR(m_pDevice->GetVkDevice(), &info, nullptr, &m_VkSwapChain);
+        if (result != VK_SUCCESS)
         {
             LOG_DEBUG_ERROR("Vulkan: Failed to create SwapChain\n");
             m_VkSwapChain = VK_NULL_HANDLE;
@@ -287,12 +304,11 @@ namespace Lambda
         //Get SwapChain images
         uint32 imageCount = 0;
         vkGetSwapchainImagesKHR(m_pDevice->GetVkDevice(), m_VkSwapChain, &imageCount, nullptr);
-        m_Desc.BufferCount = imageCount;
+		m_Desc.BufferCount = imageCount;
         
-        //Init buffers
         std::vector<VkImage> textures(imageCount);
-        vkGetSwapchainImagesKHR(m_pDevice->GetVkDevice(), m_VkSwapChain, &imageCount, textures.data());
-        for (uint32 i = 0; i < imageCount; i++)
+		result = vkGetSwapchainImagesKHR(m_pDevice->GetVkDevice(), m_VkSwapChain, &imageCount, textures.data());	
+		for (uint32 i = 0; i < imageCount; i++)
         {
             TextureDesc desc = {};
             desc.Type		 = TEXTURE_TYPE_2D;
@@ -343,32 +359,27 @@ namespace Lambda
         }
         
         //Aquire next image
-        AquireNextImage();
+        result = AquireNextImage();
+		if (result != VK_SUCCESS)
+		{
+			LOG_DEBUG_ERROR("Vulkan: AquireNextImage Failed\n");
+		}
     }
 
 
-	void VKNSwapChain::AquireNextImage()
+	VkResult VKNSwapChain::AquireNextImage()
 	{       
 		//Aquire next image
-        VkSemaphore signalSemaphore = m_ImageSemaphores[m_SemaphoreIndex];
-		if (vkAcquireNextImageKHR(m_pDevice->GetVkDevice(), m_VkSwapChain, UINT64_MAX, signalSemaphore, VK_NULL_HANDLE, &m_CurrentBufferIndex) == VK_SUCCESS)
-        {
-            //Add semaphores so the syncronization gets correct
-            m_Context->AddWaitSemaphore(signalSemaphore, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-        }
+		VkSemaphore signalSemaphore = m_ImageSemaphores[m_SemaphoreIndex];
+		VkResult result = vkAcquireNextImageKHR(m_pDevice->GetVkDevice(), m_VkSwapChain, UINT64_MAX, signalSemaphore, VK_NULL_HANDLE, &m_CurrentBufferIndex);
+		if (result == VK_SUCCESS)
+		{
+			//Add semaphores so the syncronization gets correct
+			m_Context->AddWaitSemaphore(signalSemaphore, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+		}
+
+		return result;
 	}
-
-
-	ITexture* VKNSwapChain::GetBuffer()
-	{       
-		return (m_Desc.BufferSampleCount > 1) ? m_SampleBuffer.Get() : m_Buffers[m_CurrentBufferIndex].Get();
-	}
-
-
-    ITexture* VKNSwapChain::GetDepthBuffer()
-    {
-        return m_DepthStencilBuffer.Get();
-    }
 
 
 	void VKNSwapChain::ResizeBuffers(uint32 width, uint32 height)
@@ -393,25 +404,31 @@ namespace Lambda
 	}
 
 
-	bool VKNSwapChain::SetFullscreenState(bool fullscreenState)
-	{
-		return false;
-	}
-
-	
-	bool VKNSwapChain::GetFullscreenState() const
-	{
-		return false;
-	}
-
-
 	void VKNSwapChain::Present()
 	{
 		//LOG_SYSTEM(LOG_SEVERITY_INFO, "VKNSwapChain::Present()\n");
 
-		//If we are using MSAA we need to resolve the resource
+		//Transition into resolving
 		if (m_Desc.BufferSampleCount > 1)
-			m_Context->ResolveTexture(m_Buffers[m_CurrentBufferIndex].Get(), 0, m_SampleBuffer.Get(), 0);
+		{
+			TextureTransitionBarrier barriers[2];
+			barriers[0].pTexture	= m_Buffers[m_CurrentBufferIndex].Get();
+			barriers[0].AfterState	= RESOURCE_STATE_COPY_DEST;
+			barriers[0].MipLevel	= LAMBDA_ALL_MIP_LEVELS;
+			barriers[1].pTexture	= m_SampleBuffer.Get();
+			barriers[1].AfterState	= RESOURCE_STATE_COPY_SRC;
+			barriers[1].MipLevel	= LAMBDA_ALL_MIP_LEVELS;
+
+			m_Context->TransitionTextureStates(barriers, 2);
+			m_Context->ResolveTexture(barriers[0].pTexture, 0, barriers[1].pTexture, 0);
+		}
+
+		//Transition into presenting
+		TextureTransitionBarrier barrier = {};
+		barrier.pTexture	= m_Buffers[m_CurrentBufferIndex].Get();
+		barrier.AfterState	= RESOURCE_STATE_PRESENT;
+		barrier.MipLevel	= LAMBDA_ALL_MIP_LEVELS;
+		m_Context->TransitionTextureStates(&barrier, 1);
 
 		//Add semaphores so the syncronization gets correct
 		m_Context->AddSignalSemaphore(m_RenderSemaphores[m_SemaphoreIndex]);
@@ -420,8 +437,10 @@ namespace Lambda
 		//Flush context
 		m_Context->Flush();
 
-		//Present
+		//LOG_DEBUG_INFO("Waiting Semaphore %p\n", m_RenderSemaphores[m_FrameIndex]);
 		VkSemaphore waitSemaphores[] = { m_RenderSemaphores[m_SemaphoreIndex] };
+
+		//Present
 		VkPresentInfoKHR info = {};
 		info.sType				= VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 		info.pNext				= nullptr;
@@ -432,30 +451,28 @@ namespace Lambda
 		info.pImageIndices		= &m_CurrentBufferIndex;
 		info.pResults			= nullptr;
 		VkResult result = m_pDevice->Present(&info);
-		if (result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_OUT_OF_DATE_KHR)
+		if (result == VK_SUCCESS)
 		{
-			LOG_DEBUG_WARNING("Vulkan: Suboptimal SwapChain result='%s'\n", result == VK_SUBOPTIMAL_KHR ? "VK_SUBOPTIMAL_KHR" : "VK_ERROR_OUT_OF_DATE_KHR");
-			//InitSwapChain({ 0, 0 });
-		}
-        else if (result == VK_SUCCESS)
-        {
-			//Increase frameindex and get next image
+			//Aquire next image
 			m_SemaphoreIndex = (m_SemaphoreIndex + 1) % m_Desc.BufferCount;
-            //Aquire next image
-            AquireNextImage();
-        }
-        else
-        {
-            LOG_DEBUG_ERROR("Vulkan: Present Failed\n");
-        }
+			result = AquireNextImage();
+		}
+		
 
-		//LOG_DEBUG_INFO("Waiting Semaphore %p\n", m_RenderSemaphores[m_FrameIndex]);
-	}
-
-	
-	void* VKNSwapChain::GetNativeHandle() const
-	{
-		return reinterpret_cast<void*>(m_VkSwapChain);
+		//if presentation and aquire image failed
+		if (result != VK_SUCCESS)
+		{
+			if (result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_OUT_OF_DATE_KHR)
+			{
+				RecreateSwapChain();
+				LOG_DEBUG_WARNING("Vulkan: Suboptimal SwapChain result='%s'\n", VkResultToString(result));
+			}
+    		else
+			{
+				LOG_DEBUG_ERROR("Vulkan: Present Failed. Error: %s\n", VkResultToString(result));
+				return;
+			}
+		}
 	}
 
 
@@ -474,5 +491,46 @@ namespace Lambda
 			vkDestroySwapchainKHR(m_pDevice->GetVkDevice(), m_VkSwapChain, nullptr);
 			m_VkSwapChain = VK_NULL_HANDLE;
 		}
+	}
+	
+	
+	void VKNSwapChain::RecreateSwapChain()
+	{
+		m_pDevice->WaitUntilIdle();
+
+		ReleaseResources();
+		InitSwapChain({ 0, 0 });
+
+		m_SemaphoreIndex = 0;
+	}
+
+
+	bool VKNSwapChain::SetFullscreenState(bool fullscreenState)
+	{
+		return false;
+	}
+
+
+	ITexture* VKNSwapChain::GetBuffer()
+	{
+		return (m_Desc.BufferSampleCount > 1) ? m_SampleBuffer.Get() : m_Buffers[m_CurrentBufferIndex].Get();
+	}
+
+
+	ITexture* VKNSwapChain::GetDepthBuffer()
+	{
+		return m_DepthStencilBuffer.Get();
+	}
+
+
+	bool VKNSwapChain::GetFullscreenState() const
+	{
+		return false;
+	}
+
+
+	void* VKNSwapChain::GetNativeHandle() const
+	{
+		return reinterpret_cast<void*>(m_VkSwapChain);
 	}
 }

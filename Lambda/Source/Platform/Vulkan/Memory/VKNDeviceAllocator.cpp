@@ -15,8 +15,8 @@ namespace Lambda
 
 	constexpr float mb = 1024.0f * 1024.0f;
 
-	VKNMemoryPage::VKNMemoryPage(VKNDevice* pDevice, uint32 id, VkDeviceSize sizeInBytes, uint32 memoryType, Usage usage)
-		: m_Usage(usage),
+	VKNMemoryPage::VKNMemoryPage(VKNDevice* pDevice, uint32 id, VkDeviceSize sizeInBytes, uint32 memoryType, VkMemoryPropertyFlags properties)
+		: m_Properties(properties),
 		m_ID(id),
 		m_MemoryType(memoryType),
 		m_SizeInBytes(sizeInBytes),
@@ -59,7 +59,7 @@ namespace Lambda
 		m_pHead->DeviceMemoryOffset		= 0;
 		
 		//If this is CPU visible -> Map
-		if (m_Usage == USAGE_DYNAMIC)
+		if (m_Properties & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
 		{
 			Map(pDevice);
 		}
@@ -157,7 +157,7 @@ namespace Lambda
         allocation.DeviceMemory       = m_DeviceMemory;
         allocation.DeviceMemoryOffset = paddedDeviceOffset;
         allocation.SizeInBytes		  = sizeInBytes;
-        if (m_Usage == USAGE_DYNAMIC)
+        if (m_Properties & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
             allocation.pHostMemory = m_pHostMemory + allocation.DeviceMemoryOffset;
         else
             allocation.pHostMemory = nullptr;
@@ -361,13 +361,8 @@ namespace Lambda
 	}
 
 
-	bool VKNDeviceAllocator::Allocate(VKNAllocation& allocation, const VkMemoryRequirements& memoryRequirements, Usage usage)
+	bool VKNDeviceAllocator::Allocate(VKNAllocation& allocation, const VkMemoryRequirements& memoryRequirements, VkMemoryPropertyFlags properties)
 	{
-		//Set memoryproperty based on resource usage
-		VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-		if (usage == USAGE_DYNAMIC)
-			properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-
 		//Add to total
 		m_TotalAllocated += memoryRequirements.size;
 
@@ -399,7 +394,7 @@ namespace Lambda
 		m_TotalReserved += bytesToReserve;
 		
 		//Allocate new page
-		VKNMemoryPage* pPage = DBG_NEW VKNMemoryPage(m_pDevice, uint32(m_Pages.size()), bytesToReserve, memoryType, usage);
+		VKNMemoryPage* pPage = DBG_NEW VKNMemoryPage(m_pDevice, uint32(m_Pages.size()), bytesToReserve, memoryType, properties);
 		m_Pages.emplace_back(pPage);
 
 		LOG_SYSTEM(LOG_SEVERITY_WARNING, "[VULKAN DEVICE ALLOCATOR] Allocated Memory-Page. Allocationcount: '%llu/%llu'. Memory-Type: %d. Total Allocated: %.2fMB. Total Reserved %.2fMB\n", m_Pages.size(), m_MaxAllocations, memoryType, float(m_TotalAllocated) / mb, float(m_TotalReserved) / mb);

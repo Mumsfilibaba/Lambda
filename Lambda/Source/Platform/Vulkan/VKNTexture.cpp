@@ -188,12 +188,31 @@ namespace Lambda
 			LOG_DEBUG_INFO("Vulkan: Created Image '%p'. w=%u, h=%u, format=%s, name='%s'\n", m_VkImage, desc.Width, desc.Height, VkFormatToString(info.format), m_Desc.pName);
         }
         
-		//Allocate memory
-		if (!m_pDevice->AllocateImage(m_Memory, m_VkImage, m_Desc.Usage))
+
 		{
-			LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for Image '%p'\n", m_VkImage);
-			return;
+			//Memory properties
+			VkMemoryPropertyFlags memoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+			if (m_Desc.Usage == USAGE_DYNAMIC)
+				memoryProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+
+			//Allocate memory
+			VkMemoryRequirements memoryRequirements = {};
+			vkGetImageMemoryRequirements(m_pDevice->GetVkDevice(), m_VkImage, &memoryRequirements);
+			if (!m_pDevice->Allocate(m_Memory, memoryRequirements, memoryProperties))
+			{
+				LOG_DEBUG_ERROR("Vulkan: Failed to allocate Image '%p'\n", m_VkImage);
+				return;
+			}
+			else
+			{
+				LOG_DEBUG_WARNING("Vulkan: Allocated '%d' bytes for Image\n", memoryRequirements.size);
+				if (vkBindImageMemory(m_pDevice->GetVkDevice(), m_VkImage, m_Memory.DeviceMemory, m_Memory.DeviceMemoryOffset) != VK_SUCCESS)
+				{
+					LOG_DEBUG_WARNING("Vulkan: Failed to bind memory for Image\n");
+				}
+			}
 		}
+
         
 		//Handle inital data
 		VKNDeviceContext* pContext = m_pDevice->GetVKNImmediateContext();
@@ -223,23 +242,40 @@ namespace Lambda
 				LOG_DEBUG_INFO("Vulkan: Created Staging-Buffer '%p'\n", stagingBuffer);
 			}
 
-			//Allocate memory
+
+			//Memory for the staging buffer
 			VKNAllocation stagingMemory = {};
-			if (!m_pDevice->AllocateBuffer(stagingMemory, stagingBuffer, USAGE_DYNAMIC))
+
+			//Memory properties
+			VkMemoryPropertyFlags memoryProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+
+			//Allocate memory
+			VkMemoryRequirements memoryRequirements = {};
+			vkGetBufferMemoryRequirements(m_pDevice->GetVkDevice(), stagingBuffer, &memoryRequirements);
+			if (!m_pDevice->Allocate(stagingMemory, memoryRequirements, memoryProperties))
 			{
-				LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for Staging-Buffer '%p'\n", stagingBuffer);
+				LOG_DEBUG_ERROR("Vulkan: Failed to allocate StagingBuffer '%p'\n", stagingBuffer);
 				return;
 			}
 			else
 			{
-				//Copy over data
-				memcpy(stagingMemory.pHostMemory, pInitalData->pData, pInitalData->SizeInBytes);
+				LOG_DEBUG_WARNING("Vulkan: Allocated '%d' bytes for StagingBuffer\n", pInitalData->SizeInBytes);
+				if (vkBindBufferMemory(m_pDevice->GetVkDevice(), stagingBuffer, stagingMemory.DeviceMemory, stagingMemory.DeviceMemoryOffset) != VK_SUCCESS)
+				{
+					LOG_DEBUG_WARNING("Vulkan: Failed to bind memory for StagingBuffer\n");
+				}
+				else
+				{
+					//Copy over data
+					memcpy(stagingMemory.pHostMemory, pInitalData->pData, pInitalData->SizeInBytes);
+				}
 			}
+
 			
 			TextureTransitionBarrier barrier = {};
-			barrier.pTexture = this;
-			barrier.AfterState = RESOURCE_STATE_COPY_DEST;
-			barrier.MipLevel = LAMBDA_ALL_MIP_LEVELS;
+			barrier.pTexture	= this;
+			barrier.AfterState	= RESOURCE_STATE_COPY_DEST;
+			barrier.MipLevel	= LAMBDA_ALL_MIP_LEVELS;
 
 			//Copy buffer to image
 			pContext->TransitionTextureStates(&barrier, 1);

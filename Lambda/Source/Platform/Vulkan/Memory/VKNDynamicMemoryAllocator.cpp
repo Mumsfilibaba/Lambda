@@ -57,8 +57,13 @@ namespace Lambda
 			LOG_DEBUG_WARNING("Vulkan: Created Dynamic Memory-Page\n");
 		}
 
+		//Memory properties
+		VkMemoryPropertyFlags memoryProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+
 		//Allocate memory
-		if (!pDevice->AllocateBuffer(m_Memory, m_Buffer, USAGE_DYNAMIC))
+		VkMemoryRequirements memoryRequirements = {};
+		vkGetBufferMemoryRequirements(pDevice->GetVkDevice(), m_Buffer, &memoryRequirements);
+		if (!pDevice->Allocate(m_Memory, memoryRequirements, memoryProperties))
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to allocate Dynamic Memory-Page '%p'\n", m_Buffer);
 			return;
@@ -66,6 +71,10 @@ namespace Lambda
 		else
 		{
 			LOG_DEBUG_WARNING("Vulkan: Allocated '%d' bytes for Dynamic Memory-Page\n", m_SizeInBytes);
+			if (vkBindBufferMemory(pDevice->GetVkDevice(), m_Buffer, m_Memory.DeviceMemory, m_Memory.DeviceMemoryOffset) != VK_SUCCESS)
+			{
+				LOG_DEBUG_WARNING("Vulkan: Failed to bind Buffer-Memory for Dynamic Memory-Page\n", m_SizeInBytes);
+			}
 		}
 
 		//Set name

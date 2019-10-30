@@ -312,7 +312,7 @@ namespace Lambda
         RESOURCE_STATE_DEPTH_STENCIL_CLEAR          = 3,
 		RESOURCE_STATE_DEPTH_STENCIL                = 4,
 		RESOURCE_STATE_DEPTH_READ                   = 5,
-        RESOURCE_STATE_PRESENT         = 6,
+        RESOURCE_STATE_PRESENT						= 6,
 		RESOURCE_STATE_COPY_DEST                    = 7,
 		RESOURCE_STATE_COPY_SRC                     = 8,
 		RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER   = 9,

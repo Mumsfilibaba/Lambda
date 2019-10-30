@@ -312,7 +312,7 @@ namespace Lambda
 			m_VariableTable->GetVariableByName(SHADER_STAGE_VERTEX, "u_TransformBuffer")->SetConstantBuffer(m_PositionBuffer.Get());
 			//m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Normal")->SetTexture(m_NormalMap.Get());
 			m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Albedo")->SetTexture(m_AlbedoMap.Get());
-			//m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Sampler")->SetSamplerState(m_SamplerState.Get());
+			m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Sampler")->SetSamplerState(m_SamplerState.Get());
 
 			/*m_Material.pPipelineState	= m_PipelineState.Get();
 			m_Material.pVariableTable	= m_VariableTable.Get();
@@ -464,10 +464,6 @@ namespace Lambda
                 m_Context->DrawIndexedInstanced(m_Mesh.IndexCount, 1, 0, 0, 0);
 			}
 		}
-
-		//Transition into presenting
-		barriers[0].AfterState = RESOURCE_STATE_PRESENT;
-		m_Context->TransitionTextureStates(barriers, 1);
 
 		//Present
 		m_SwapChain->Present();

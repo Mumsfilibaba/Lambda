@@ -48,7 +48,7 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(VKNMemoryPage);
 
-		VKNMemoryPage(VKNDevice* pDevice, uint32 id, VkDeviceSize sizeInBytes, uint32 memoryType, Usage usage);
+		VKNMemoryPage(VKNDevice* pDevice, uint32 id, VkDeviceSize sizeInBytes, uint32 memoryType, VkMemoryPropertyFlags properties);
 		~VKNMemoryPage() = default;
 
 		bool Allocate(VKNAllocation& allocation, VkDeviceSize sizeInBytes, VkDeviceSize alignment, VkDeviceSize granularity);
@@ -81,7 +81,7 @@ namespace Lambda
 		VkDeviceMemory	m_DeviceMemory;
 		VKNMemoryBlock*	m_pHead;
 		uint8* m_pHostMemory;
-		const Usage	m_Usage;
+		VkMemoryPropertyFlags m_Properties;
 		const uint32 m_ID;
 		const uint32 m_MemoryType;
 		const uint64 m_SizeInBytes;
@@ -101,7 +101,7 @@ namespace Lambda
 		VKNDeviceAllocator(VKNDevice* pDevice);
 		~VKNDeviceAllocator();
 
-		bool Allocate(VKNAllocation& allocation, const VkMemoryRequirements& memoryRequirements, Usage usage);
+		bool Allocate(VKNAllocation& allocation, const VkMemoryRequirements& memoryRequirements, VkMemoryPropertyFlags properties);
 		void Deallocate(VKNAllocation& allocation);
 		void EmptyGarbageMemory();
 		

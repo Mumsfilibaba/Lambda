@@ -30,7 +30,7 @@ namespace Lambda
         virtual void Present() override final;
         virtual void* GetNativeHandle() const override final;
 		
-		void AquireNextImage();
+		VkResult AquireNextImage();
 
         
         _forceinline uint32 GetBackBufferIndex() const
@@ -47,6 +47,7 @@ namespace Lambda
 		void Init(const SwapChainDesc& desc);
         void InitSwapChain(VkExtent2D extent);
         void ReleaseResources();
+		void RecreateSwapChain();
 	private:
 		AutoRef<VKNDeviceContext> m_Context;
         VkSurfaceKHR        m_Surface;

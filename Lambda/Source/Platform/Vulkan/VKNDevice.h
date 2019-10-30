@@ -36,22 +36,25 @@ namespace Lambda
         virtual void CreateSamplerState(ISamplerState** ppSamplerState, const SamplerStateDesc& desc) override final;
         virtual void CreatePipelineState(IPipelineState** ppPipelineState, const PipelineStateDesc& desc) override final;
 		virtual void CreateQuery(IQuery** ppQuery, const QueryDesc& desc) override final;
-        virtual IDeviceContext* GetImmediateContext() const override final;
         
+		virtual IDeviceContext* GetImmediateContext() const override final;     
         virtual void* GetNativeHandle() const override final;
 
         VkResult Present(VkPresentInfoKHR* pInfo);
         void ExecuteCommandBuffer(VkSubmitInfo* pInfo, uint32 numBuffers, VkFence fence) const;
 		void FinishFrame() const;
 		void WaitUntilIdle() const;
-		
-		bool AllocateImage(VKNAllocation& allocation, VkImage image, Usage usage);
-		bool AllocateBuffer(VKNAllocation& allocation, VkBuffer buffer, Usage usage);
 
 		void SetVulkanObjectName(VkObjectType type, uint64 objectHandle, const std::string& name);
 
 		VkSampleCountFlagBits GetHighestSampleCount() const;
 		VKNDeviceContext* GetVKNImmediateContext() const;
+
+
+		_forceinline bool Allocate(VKNAllocation& allocation, const VkMemoryRequirements& memoryRequirements, VkMemoryPropertyFlags properties)
+		{
+			return m_pDeviceAllocator->Allocate(allocation, memoryRequirements, properties);
+		}
 
 
 		_forceinline void Deallocate(VKNAllocation& allocation)

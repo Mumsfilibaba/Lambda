@@ -38,6 +38,7 @@ namespace Lambda
         bool OnKeyPressed(const KeyPressedEvent& event);
         void CreateCamera(uint32 width, uint32 height);
     private:
+		AutoRef<ITexture> m_SampleBuffer;
 		//Context
 		AutoRef<ISwapChain> m_SwapChain;
 		AutoRef<IDeviceContext> m_Context;

@@ -116,12 +116,28 @@ namespace Lambda
 				}
 			}
 
+
+			//Memory properties
+			VkMemoryPropertyFlags memoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+
 			//Allocate memory
-			if (!m_pDevice->AllocateBuffer(m_Memory, m_VkBuffer, m_Desc.Usage))
+			VkMemoryRequirements memoryRequirements = {};
+			vkGetBufferMemoryRequirements(m_pDevice->GetVkDevice(), m_VkBuffer, &memoryRequirements);
+			if (!m_pDevice->Allocate(m_Memory, memoryRequirements, memoryProperties))
 			{
-				LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for buffer '%p'\n", m_VkBuffer);
+				LOG_DEBUG_ERROR("Vulkan: Failed to allocate Dynamic Memory-Page '%p'\n", m_VkBuffer);
+				return;
+			}
+			else
+			{
+				LOG_DEBUG_WARNING("Vulkan: Allocated '%d' bytes for Dynamic Memory-Page\n", m_Desc.SizeInBytes);
+				if (vkBindBufferMemory(m_pDevice->GetVkDevice(), m_VkBuffer, m_Memory.DeviceMemory, m_Memory.DeviceMemoryOffset) != VK_SUCCESS)
+				{
+					LOG_DEBUG_WARNING("Vulkan: Failed to bind memory for Dynamic Memory-Page\n");
+				}
 			}
 		}
+
 
 		//Write to the memory if we have any inital data
 		if (pInitalData)
@@ -150,18 +166,35 @@ namespace Lambda
 					LOG_DEBUG_INFO("Vulkan: Created Staging-Buffer '%p'\n", stagingBuffer);
 				}
 
-				//Allocate memory
+
+				//Memory for the staging buffer
 				VKNAllocation stagingMemory = {};
-				if (!m_pDevice->AllocateBuffer(stagingMemory, stagingBuffer, USAGE_DYNAMIC))
+
+				//Memory properties
+				VkMemoryPropertyFlags memoryProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+
+				//Allocate memory
+				VkMemoryRequirements memoryRequirements = {};
+				vkGetBufferMemoryRequirements(m_pDevice->GetVkDevice(), stagingBuffer, &memoryRequirements);
+				if (!m_pDevice->Allocate(stagingMemory, memoryRequirements, memoryProperties))
 				{
-					LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for Staging-Buffer '%p'\n", stagingBuffer);
+					LOG_DEBUG_ERROR("Vulkan: Failed to allocate StagingBuffer '%p'\n", stagingBuffer);
 					return;
 				}
 				else
 				{
-					//Copy over data
-					memcpy(stagingMemory.pHostMemory, pInitalData->pData, pInitalData->SizeInBytes);
+					LOG_DEBUG_WARNING("Vulkan: Allocated '%d' bytes for StagingBuffer\n", m_Desc.SizeInBytes);
+					if (vkBindBufferMemory(m_pDevice->GetVkDevice(), stagingBuffer, stagingMemory.DeviceMemory, stagingMemory.DeviceMemoryOffset) != VK_SUCCESS)
+					{
+						LOG_DEBUG_WARNING("Vulkan: Failed to bind memory StagingBuffer\n");
+					}
+					else
+					{
+						//Copy over data
+						memcpy(stagingMemory.pHostMemory, pInitalData->pData, pInitalData->SizeInBytes);
+					}
 				}
+
 
 				//Get devicecontext and copy over the stagingbuffers context to the buffer
 				VKNDeviceContext* pContext = m_pDevice->GetVKNImmediateContext();

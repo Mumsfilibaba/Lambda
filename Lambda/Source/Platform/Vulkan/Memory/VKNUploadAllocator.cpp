@@ -41,14 +41,25 @@ namespace Lambda
 			LOG_DEBUG_WARNING("Vulkan: Created UploadPage\n");
 		}
 
+
+		//Memory properties
+		VkMemoryPropertyFlags memoryProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+
 		//Allocate memory
-		if (!pDevice->AllocateBuffer(m_Memory, m_VkBuffer, USAGE_DYNAMIC))
+		VkMemoryRequirements memoryRequirements = {};
+		vkGetBufferMemoryRequirements(pDevice->GetVkDevice(), m_VkBuffer, &memoryRequirements);
+		if (!pDevice->Allocate(m_Memory, memoryRequirements, memoryProperties))
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to allocate UploadPage '%p'\n", m_VkBuffer);
+			return;
 		}
 		else
 		{
 			LOG_DEBUG_WARNING("Vulkan: Allocated '%d' bytes for UploadPage\n", m_SizeInBytes);
+			if (vkBindBufferMemory(pDevice->GetVkDevice(), m_VkBuffer, m_Memory.DeviceMemory, m_Memory.DeviceMemoryOffset) != VK_SUCCESS)
+			{
+				LOG_DEBUG_WARNING("Vulkan: Failed to bind memory UploadPage\n");
+			}
 		}
 	}
 
