@@ -1093,14 +1093,17 @@ namespace Lambda
 		if (IsInsideRenderPass())
 			EndRenderPass();
 
-		//End commandbuffer
-		if (vkEndCommandBuffer(m_pCurrentFrameResource->CommandBuffer) != VK_SUCCESS)
+		if (m_ContextState == DEVICE_CONTEXT_STATE_RECORDING)
 		{
-			LOG_DEBUG_ERROR("Vulkan: Failed to End CommandBuffer\n");
-		}
+			//End commandbuffer
+			if (vkEndCommandBuffer(m_pCurrentFrameResource->CommandBuffer) != VK_SUCCESS)
+			{
+				LOG_DEBUG_ERROR("Vulkan: Failed to End CommandBuffer\n");
+			}
 
-		//Set context state
-		m_ContextState = DEVICE_CONTEXT_STATE_WAITING;
+			//Set context state
+			m_ContextState = DEVICE_CONTEXT_STATE_WAITING;
+		}
 	}
     
 
@@ -1108,31 +1111,44 @@ namespace Lambda
     {
 		//LOG_SYSTEM(LOG_SEVERITY_INFO, "VKNDeviceContext::Flush()\n");
 
-		//End the recording
-		EndCommandBuffer();
+		//Submit commandbuffers
+		VkSubmitInfo submitInfo = {};
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submitInfo.pNext = nullptr;
+		
+		VkFence signalFence			= VK_NULL_HANDLE;
+		VkCommandBuffer buffers[]	= { VK_NULL_HANDLE };
+		if (m_ContextState != DEVICE_CONTEXT_STATE_WAITING)
+		{
+			//End the recording
+			EndCommandBuffer();
+
+			//Get fence and commandbuffer
+			signalFence = m_pCurrentFrameResource->Fence;
+			buffers[0]	= m_pCurrentFrameResource->CommandBuffer;
+			submitInfo.commandBufferCount	= 1;
+			submitInfo.pCommandBuffers		= buffers;
+		}
+		else
+		{
+			submitInfo.commandBufferCount	= 0;
+			submitInfo.pCommandBuffers		= nullptr;
+		}
 
 		LAMBDA_ASSERT_PRINT(m_WaitSemaphores.size() == m_WaitDstStageMasks.size(), "Vulkan: Number of WaitSemaphores and WaitDstStageMasks must be the same\n");
-
-		//Wait for fence and execute
-		VkCommandBuffer buffers[] = { m_pCurrentFrameResource->CommandBuffer };
-
-		//submit commandbuffers
-		VkSubmitInfo submitInfo = {};
-		submitInfo.sType				= VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submitInfo.pNext				= nullptr;
+		
+		//Setup semaphores and execute commandbuffer
 		submitInfo.waitSemaphoreCount	= uint32(m_WaitSemaphores.size());
 		submitInfo.pWaitSemaphores		= m_WaitSemaphores.data();
 		submitInfo.pWaitDstStageMask	= m_WaitDstStageMasks.data();
-		submitInfo.commandBufferCount	= 1;
-		submitInfo.pCommandBuffers		= buffers;
 		submitInfo.signalSemaphoreCount = uint32(m_SignalSemaphores.size());
 		submitInfo.pSignalSemaphores	= m_SignalSemaphores.data();
-		m_pDevice->ExecuteCommandBuffer(&submitInfo, 1, m_pCurrentFrameResource->Fence);
-
+		m_pDevice->ExecuteCommandBuffer(&submitInfo, 1, signalFence);
+			
 		//Clear semaphores
 		m_WaitSemaphores.clear();
-		m_SignalSemaphores.clear();
 		m_WaitDstStageMasks.clear();
+		m_SignalSemaphores.clear();
 
 		//Set commandcount
 		m_NumCommands = 0;

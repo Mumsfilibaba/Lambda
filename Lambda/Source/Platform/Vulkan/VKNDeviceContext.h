@@ -92,9 +92,6 @@ namespace Lambda
         virtual void Flush() override final;
         virtual void* GetNativeHandle() const override final;
 		virtual void SetName(const char* pName) override final;
-
-		void QueryCommandBuffer();
-        void EndCommandBuffer();
 		       
 		void CopyBuffer(VkBuffer dstBuffer, VkDeviceSize dstOffset, VkBuffer srcBuffer, VkDeviceSize srcOffset, VkDeviceSize sizeInBytes);
 		void CopyBufferToImage(VkImage image, VkDeviceSize mipLevel, VkImageAspectFlags aspectFlags, uint32 width, uint32 height, uint32 depth, VkBuffer buffer, VkDeviceSize offset, VkDeviceSize sizeInBytes);
@@ -124,6 +121,8 @@ namespace Lambda
 		}
     private:
         void Init(DeviceContextType type);
+		void QueryCommandBuffer();
+		void EndCommandBuffer();
 		void BeginRenderPass();
         void EndRenderPass();
 		void FlushResourceBarriers();

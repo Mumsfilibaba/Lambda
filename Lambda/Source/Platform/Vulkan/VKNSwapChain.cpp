@@ -254,7 +254,7 @@ namespace Lambda
         if (familyIndices.GraphicsFamily != familyIndices.PresentFamily)
         {
             //If the graphics- and presentqueue is not the same then we have to specify the different queues
-            uint32 queueFamilyIndices[] = { uint32(familyIndices.GraphicsFamily), uint32(familyIndices.PresentFamily) };
+            uint32 queueFamilyIndices[]  = { uint32(familyIndices.GraphicsFamily), uint32(familyIndices.PresentFamily) };
             info.imageSharingMode        = VK_SHARING_MODE_CONCURRENT;
             info.queueFamilyIndexCount   = 2;
             info.pQueueFamilyIndices     = queueFamilyIndices;
@@ -375,6 +375,9 @@ namespace Lambda
     {
 		if (width == m_Desc.BufferWidth && height == m_Desc.BufferHeight)
 			return;
+
+		//Flush context
+		m_Context->Flush();
 
 		//Syncronize the GPU so no operations are in flight when recreating swapchain
 		m_pDevice->WaitUntilIdle();

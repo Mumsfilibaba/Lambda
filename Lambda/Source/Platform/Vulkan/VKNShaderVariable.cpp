@@ -35,9 +35,6 @@ namespace Lambda
 			pVkDefaultTexture->AddRef();
 			m_Resource = pVkDefaultTexture;
 
-            m_ImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            m_ImageInfo.imageView   = pVkDefaultTexture->GetVkImageView();
-            
 			//Get static sampler
             if (m_Desc.pStaticSamplerName != nullptr)
             {
@@ -47,8 +44,9 @@ namespace Lambda
             else
             {
                 m_ImageInfo.sampler = VK_NULL_HANDLE;
-            }
-            
+            }      
+            m_ImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            m_ImageInfo.imageView   = pVkDefaultTexture->GetVkImageView();         
             m_DescriptorWrite.pImageInfo = &m_ImageInfo;
         }
         else if (m_DescriptorWrite.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER || m_DescriptorWrite.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC)
