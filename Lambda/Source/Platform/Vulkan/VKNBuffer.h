@@ -26,6 +26,7 @@ namespace Lambda
         virtual void* GetNativeHandle() const override final;
 		virtual void SetName(const char* pName) override final;
 
+        
 		_forceinline VkBuffer GetVkBuffer() const
 		{
 			if (m_Desc.Usage == RESOURCE_USAGE_DYNAMIC)

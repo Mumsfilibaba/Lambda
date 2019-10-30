@@ -444,7 +444,7 @@ namespace Lambda
 		m_Context->SetPipelineState(m_PipelineState.Get());
 
         //Draw squares
-		constexpr uint32 numSquares = 10;
+		constexpr uint32 numSquares = 200;
 		for (uint32 y = 0; y < numSquares; y++)
 		{
 			for (uint32 x = 0; x < numSquares; x++)

@@ -20,7 +20,7 @@ namespace Lambda
 	Application::Application(const EngineParams& params)
 		: m_pWindow(nullptr),
 		m_pUILayer(nullptr),
-        m_GraphicsDeivce(nullptr),
+        m_GraphicsDevice(nullptr),
         m_Context(nullptr),
         m_SwapChain(nullptr),
 		m_Params(params),
@@ -133,7 +133,7 @@ namespace Lambda
         swapChainDesc.BufferWidth       = 0;
         swapChainDesc.BufferSampleCount = m_Params.SampleCount;
         swapChainDesc.VerticalSync      = m_Params.VerticalSync;
-        factory->CreateDeviceAndSwapChain(&m_GraphicsDeivce, deviceDesc, &m_Context, &m_SwapChain, swapChainDesc);
+        factory->CreateDeviceAndSwapChain(&m_GraphicsDevice, deviceDesc, &m_Context, &m_SwapChain, swapChainDesc);
     
 		//Create UI-Layer
 		//m_pUILayer = DBG_NEW UILayer();
@@ -201,7 +201,7 @@ namespace Lambda
 	{
 		//Release renderer
 		//m_Renderer.Release();
-		
+        
 		//Remove callback
 		m_pWindow->SetEventCallback(nullptr);
 		
@@ -218,6 +218,11 @@ namespace Lambda
 		//Release Eventdispatcher
         m_Dispatcher.Release();
 
+        //Destroy graphics objects
+        m_SwapChain.Release();
+        m_Context.Release();
+        m_GraphicsDevice.Release();
+        
 		//Destroy window
 		SafeDelete(m_pWindow);
 	}
@@ -300,7 +305,7 @@ namespace Lambda
 
     IDevice* Application::GetGraphicsDevice() const
     {
-        return m_GraphicsDeivce.Get();
+        return m_GraphicsDevice.Get();
     }
 
 

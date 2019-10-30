@@ -347,6 +347,7 @@ namespace Lambda
                 
                 m_EventBackLog.clear();
             }*/
+            
             m_pCallback->Callback(event);
         }
         else

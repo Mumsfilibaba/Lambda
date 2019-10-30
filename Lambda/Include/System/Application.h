@@ -74,7 +74,7 @@ namespace Lambda
 		void Quit(int32 exitCode = 0);
 	private:
 		IWindow* 			m_pWindow;
-        AutoRef<IDevice>    m_GraphicsDeivce;
+        AutoRef<IDevice>    m_GraphicsDevice;
         AutoRef<IDeviceContext> m_Context;
         AutoRef<ISwapChain> m_SwapChain;
 		UILayer*	 		m_pUILayer;

@@ -136,6 +136,7 @@ namespace Lambda
 		uint64 m_FrameIndex;
 		VKNDynamicMemoryPage* m_pCurrentPage;
 		std::vector<VKNDynamicMemoryPage*> m_Pages;
+        std::vector<VKNDynamicMemoryPage*> m_EmptyPages;
 		std::vector<std::vector<VKNDynamicAllocation>> m_MemoryToDeallocate;
 		uint64 m_TotalReserved;
 		uint64 m_TotalAllocated;

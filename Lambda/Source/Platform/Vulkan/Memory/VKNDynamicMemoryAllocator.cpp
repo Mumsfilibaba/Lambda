@@ -333,6 +333,7 @@ namespace Lambda
 		m_TotalAllocated(0),
 		m_FrameIndex(0),
 		m_Pages(),
+        m_EmptyPages(),
 		m_MemoryToDeallocate()
 	{
 		//Create first page
@@ -387,12 +388,13 @@ namespace Lambda
 				}
 			}
 		}
+        
 
-		//Add to total
-		uint64 bytesToReserve = pageSize;
-		m_TotalReserved += bytesToReserve;
+        //Add to total
+        uint64 bytesToReserve = pageSize;
+        m_TotalReserved += bytesToReserve;
 
-		//Allocate new page
+        //Only allocate a new page if necessary, by now we should have found a page with enough space in case there are any empty pages
 		m_pCurrentPage = DBG_NEW VKNDynamicMemoryPage(m_pDevice, uint32(m_Pages.size()), bytesToReserve);
 		m_Pages.emplace_back(m_pCurrentPage);
 
@@ -416,11 +418,10 @@ namespace Lambda
 		//Move on a frame
 		m_FrameIndex = (m_FrameIndex + 1) % numFrames;
 
-		//Clean memory
+		//Deallocate memory
 		auto& memoryBlocks = m_MemoryToDeallocate[m_FrameIndex];
 		if (!memoryBlocks.empty())
 		{
-			//Deallocate all the blocks
 			for (auto& memory : memoryBlocks)
 			{
 				m_TotalAllocated -= memory.pBlock->SizeInBytes;
@@ -432,29 +433,29 @@ namespace Lambda
 			memoryBlocks.clear();
 		}
 
-		//If we have more than 8 pages we check for empty ones we can remove
-		constexpr size_t limit = 8;
-		if (m_Pages.size() > limit)
+        
+        //Go through all the pages and find the empty ones (Prepare for next frame)
+        m_EmptyPages.clear();
+        for (auto page : m_Pages)
+        {
+            if (page->IsEmpty())
+                m_EmptyPages.emplace_back(page);
+        }
+        
+        
+		//If we have more than "limit"-number or pages, we check for empty ones we can remove
+		constexpr size_t limit = 4;
+		if (m_EmptyPages.size() > limit)
 		{
-			//Remove empty pages
-			for (auto it = m_Pages.begin(); it != m_Pages.end();)
+            //Calculate pages to remove
+            uint32 numToRemove = m_EmptyPages.size() - limit;
+			
+            //Remove empty pages
+            for (uint32 i = 0; i < numToRemove; i++)
 			{
-				if ((*it)->IsEmpty())
-				{
-					//Erase from vector
-					m_TotalReserved -= (*it)->GetSize();
-
-					(*it)->Destroy(m_pDevice);
-					it = m_Pages.erase(it);
-
-					//If we are under the limit again we can stop removing pages, since they will probably be needed soon again
-					if (m_Pages.size() < limit)
-						break;
-				}
-				else
-				{
-					it++;
-				}
+                //Destroy the last page and then pop it. We repeat this numToRemove number of times
+                m_EmptyPages.back()->Destroy(m_pDevice);
+                m_EmptyPages.pop_back();
 			}
 		}
 	}
