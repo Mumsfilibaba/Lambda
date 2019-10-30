@@ -451,7 +451,7 @@ namespace Lambda
 
 
 		//Remove empty pages
-		if (m_Pages.size() > 4)
+		if (m_Pages.size() > 6)
 		{
 			for (auto it = m_Pages.begin(); it != m_Pages.end();)
 			{

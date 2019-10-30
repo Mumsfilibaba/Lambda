@@ -3,6 +3,7 @@
 #include "VKNDynamicMemoryAllocator.h"
 #include "../VKNDevice.h"
 
+//#define LAMBDA_DYNAMIC_ALLOCATOR_DEBUG
 #if defined(LAMBDA_DYNAMIC_ALLOCATOR_DEBUG)
 	#define LAMBDA_DYNAMIC_ALLOCATOR_DEBUG_ALLOC
 	#define LAMBDA_DYNAMIC_ALLOCATOR_DEBUG_DEALLOC
@@ -24,6 +25,8 @@ namespace Lambda
 		m_BlockPool(sizeInBytes / 64) 
 	{
 		Init(pDevice);
+
+		LOG_SYSTEM(LOG_SEVERITY_WARNING, "[VULKAN DYNAMIC MEMORY ALLOCATOR] Allocated Dynamic Memory-Page\n");
 	}
 
 
@@ -58,11 +61,15 @@ namespace Lambda
 		if (!pDevice->AllocateBuffer(m_Memory, m_Buffer, RESOURCE_USAGE_DYNAMIC))
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to allocate Dynamic Memory-Page '%p'\n", m_Buffer);
+			return;
 		}
 		else
 		{
 			LOG_DEBUG_WARNING("Vulkan: Allocated '%d' bytes for Dynamic Memory-Page\n", m_SizeInBytes);
 		}
+
+		//Set name
+		pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_BUFFER, (uint64)m_Buffer, "Dynamic Memory Page [" + std::to_string(m_ID) + "]");
 
 		//Setup first block
 		m_pHead = m_BlockPool.Get();
@@ -307,7 +314,7 @@ namespace Lambda
 		if (m_Buffer != VK_NULL_HANDLE)
 			pDevice->SafeReleaseVulkanResource<VkBuffer>(m_Buffer);
 
-		LOG_DEBUG_WARNING("Vulkan: Deallocated DynamicMemoryPage\n");
+		LOG_SYSTEM(LOG_SEVERITY_WARNING, "[VULKAN DYNAMIC MEMORY ALLOCATOR] Deallocated Dynamic Memory-Page\n");
 		delete this;
 	}
 
@@ -416,16 +423,18 @@ namespace Lambda
 			//Deallocate all the blocks
 			for (auto& memory : memoryBlocks)
 			{
+				m_TotalAllocated -= memory.pBlock->SizeInBytes;
+				
 				VKNDynamicMemoryPage* pPage = memory.pBlock->pPage;
 				pPage->Deallocate(memory);
-				m_TotalAllocated -= memory.pBlock->SizeInBytes;
 			}
 
 			memoryBlocks.clear();
 		}
 
-		//If we have more than 4 pages we check for empty ones we can remove
-		if (m_Pages.size() > 4)
+		//If we have more than 8 pages we check for empty ones we can remove
+		constexpr size_t limit = 8;
+		if (m_Pages.size() > limit)
 		{
 			//Remove empty pages
 			for (auto it = m_Pages.begin(); it != m_Pages.end();)
@@ -437,6 +446,10 @@ namespace Lambda
 
 					(*it)->Destroy(m_pDevice);
 					it = m_Pages.erase(it);
+
+					//If we are under the limit again we can stop removing pages, since they will probably be needed soon again
+					if (m_Pages.size() < limit)
+						break;
 				}
 				else
 				{

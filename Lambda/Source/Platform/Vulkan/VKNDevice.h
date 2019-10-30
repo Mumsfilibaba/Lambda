@@ -134,9 +134,9 @@ namespace Lambda
 		VkPhysicalDevice		   m_PhysicalDevice;
 		VkPhysicalDeviceProperties m_PhysicalDeviceProperties;
 	private:
-		static PFN_vkSetDebugUtilsObjectNameEXT					vkSetDebugUtilsObjectNameEXT;
-		static PFN_vkCreateDebugUtilsMessengerEXT				vkCreateDebugUtilsMessengerEXT;
-		static PFN_vkDestroyDebugUtilsMessengerEXT				vkDestroyDebugUtilsMessengerEXT;
+		static PFN_vkSetDebugUtilsObjectNameEXT		vkSetDebugUtilsObjectNameEXT;
+		static PFN_vkCreateDebugUtilsMessengerEXT	vkCreateDebugUtilsMessengerEXT;
+		static PFN_vkDestroyDebugUtilsMessengerEXT	vkDestroyDebugUtilsMessengerEXT;
 	private:
 		static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 			VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);

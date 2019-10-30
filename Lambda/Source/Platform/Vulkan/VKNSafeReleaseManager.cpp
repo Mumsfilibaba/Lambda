@@ -3,8 +3,6 @@
 #include "VKNFramebufferCache.h"
 #include "VKNSafeReleaseManager.h"
 
-//#define LAMBDA_SAFE_RESOURCE_DEBUG
-
 namespace Lambda
 {
 	//-----------
@@ -16,11 +14,12 @@ namespace Lambda
 	{
 		//Release resource
 		vkDestroyImageView(m_pDevice->GetVkDevice(), m_Resource, nullptr);
-		m_Resource = VK_NULL_HANDLE;
 
 #if defined(LAMBDA_SAFE_RESOURCE_DEBUG)
-		LOG_DEBUG_INFO("Releasing VkImageView\n");
+		LOG_DEBUG_INFO("Releasing VkImageView '%p'\n", m_Resource);
 #endif
+
+		m_Resource = VK_NULL_HANDLE;
 	}
 
 
@@ -29,11 +28,12 @@ namespace Lambda
 	{
 		//Release resource
 		vkDestroyRenderPass(m_pDevice->GetVkDevice(), m_Resource, nullptr);
-		m_Resource = VK_NULL_HANDLE;
 
 #if defined(LAMBDA_SAFE_RESOURCE_DEBUG)
-		LOG_DEBUG_INFO("Releasing VkRenderPass\n");
+		LOG_DEBUG_INFO("Releasing VkRenderPass '%p'\n", m_Resource);
 #endif
+
+		m_Resource = VK_NULL_HANDLE;
 	}
 
 
@@ -41,11 +41,12 @@ namespace Lambda
 	void VKNResource<VkDescriptorPool>::DestroyResource()
 	{
 		vkDestroyDescriptorPool(m_pDevice->GetVkDevice(), m_Resource, nullptr);
-		m_Resource = VK_NULL_HANDLE;
 
 #if defined(LAMBDA_SAFE_RESOURCE_DEBUG)
-		LOG_DEBUG_INFO("Releasing VkDescriptorPool\n");
+		LOG_DEBUG_INFO("Releasing VkDescriptorPool '%p'\n", m_Resource);
 #endif
+
+		m_Resource = VK_NULL_HANDLE;
 	}
 
 
@@ -53,11 +54,12 @@ namespace Lambda
 	void VKNResource<VkPipelineLayout>::DestroyResource()
 	{
 		vkDestroyPipelineLayout(m_pDevice->GetVkDevice(), m_Resource, nullptr);
-		m_Resource = VK_NULL_HANDLE;
 
 #if defined(LAMBDA_SAFE_RESOURCE_DEBUG)
-		LOG_DEBUG_INFO("Releasing VkPipelineLayout\n");
+		LOG_DEBUG_INFO("Releasing VkPipelineLayout '%p'\n", m_Resource);
 #endif
+
+		m_Resource = VK_NULL_HANDLE;
 	}
 
 
@@ -65,11 +67,12 @@ namespace Lambda
 	void VKNResource<VkPipeline>::DestroyResource()
 	{
 		vkDestroyPipeline(m_pDevice->GetVkDevice(), m_Resource, nullptr);
-		m_Resource = VK_NULL_HANDLE;
 
 #if defined(LAMBDA_SAFE_RESOURCE_DEBUG)
-		LOG_DEBUG_INFO("Releasing VkPipeline\n");
+		LOG_DEBUG_INFO("Releasing VkPipeline '%p'\n", m_Resource);
 #endif
+
+		m_Resource = VK_NULL_HANDLE;
 	}
 
 
@@ -77,11 +80,12 @@ namespace Lambda
 	void VKNResource<VkDescriptorSetLayout>::DestroyResource()
 	{
 		vkDestroyDescriptorSetLayout(m_pDevice->GetVkDevice(), m_Resource, nullptr);
-		m_Resource = VK_NULL_HANDLE;
 
 #if defined(LAMBDA_SAFE_RESOURCE_DEBUG)
-		LOG_DEBUG_INFO("Releasing VkDescriptorSetLayout\n");
+		LOG_DEBUG_INFO("Releasing VkDescriptorSetLayout '%p'\n", m_Resource);
 #endif
+
+		m_Resource = VK_NULL_HANDLE;
 	}
 
 
@@ -89,11 +93,12 @@ namespace Lambda
 	void VKNResource<VkQueryPool>::DestroyResource()
 	{
 		vkDestroyQueryPool(m_pDevice->GetVkDevice(), m_Resource, nullptr);
-		m_Resource = VK_NULL_HANDLE;
 
 #if defined(LAMBDA_SAFE_RESOURCE_DEBUG)
-		LOG_DEBUG_INFO("Releasing VkQueryPool\n");
+		LOG_DEBUG_INFO("Releasing VkQueryPool '%p'\n", m_Resource);
 #endif
+
+		m_Resource = VK_NULL_HANDLE;
 	}
 
 
@@ -101,11 +106,12 @@ namespace Lambda
 	void VKNResource<VkSampler>::DestroyResource()
 	{
 		vkDestroySampler(m_pDevice->GetVkDevice(), m_Resource, nullptr);
-		m_Resource = VK_NULL_HANDLE;
 
 #if defined(LAMBDA_SAFE_RESOURCE_DEBUG)
-		LOG_DEBUG_INFO("Releasing VkSampler\n");
+		LOG_DEBUG_INFO("Releasing VkSampler '%p'\n", m_Resource);
 #endif
+
+		m_Resource = VK_NULL_HANDLE;
 	}
 	
 
@@ -113,11 +119,12 @@ namespace Lambda
 	void VKNResource<VkShaderModule>::DestroyResource()
 	{
 		vkDestroyShaderModule(m_pDevice->GetVkDevice(), m_Resource, nullptr);
-		m_Resource = VK_NULL_HANDLE;
 
 #if defined(LAMBDA_SAFE_RESOURCE_DEBUG)
-		LOG_DEBUG_INFO("Releasing VkShaderModule\n");
+		LOG_DEBUG_INFO("Releasing VkShaderModule '%p'\n", m_Resource);
 #endif
+
+		m_Resource = VK_NULL_HANDLE;
 	}
 
 
@@ -125,11 +132,12 @@ namespace Lambda
 	void VKNResource<VkImage>::DestroyResource()
 	{
 		vkDestroyImage(m_pDevice->GetVkDevice(), m_Resource, nullptr);
-		m_Resource = VK_NULL_HANDLE;
 
 #if defined(LAMBDA_SAFE_RESOURCE_DEBUG)
-		LOG_DEBUG_INFO("Releasing VkImage\n");
+		LOG_DEBUG_INFO("Releasing VkImage '%p'\n", m_Resource);
 #endif
+
+		m_Resource = VK_NULL_HANDLE;
 	}
 
 
@@ -137,11 +145,12 @@ namespace Lambda
 	void VKNResource<VkSemaphore>::DestroyResource()
 	{
 		vkDestroySemaphore(m_pDevice->GetVkDevice(), m_Resource, nullptr);
-		m_Resource = VK_NULL_HANDLE;
 
 #if defined(LAMBDA_SAFE_RESOURCE_DEBUG)
-		LOG_DEBUG_INFO("Releasing VkSemaphore\n");
+		LOG_DEBUG_INFO("Releasing VkSemaphore '%p'\n", m_Resource);
 #endif
+
+		m_Resource = VK_NULL_HANDLE;
 	}
 
 
@@ -149,11 +158,12 @@ namespace Lambda
 	void VKNResource<VkBuffer>::DestroyResource()
 	{
 		vkDestroyBuffer(m_pDevice->GetVkDevice(), m_Resource, nullptr);
-		m_Resource = VK_NULL_HANDLE;
 
 #if defined(LAMBDA_SAFE_RESOURCE_DEBUG)
-		LOG_DEBUG_INFO("Releasing VkBuffer\n");
+		LOG_DEBUG_INFO("Releasing VkBuffer '%p'\n", m_Resource);
 #endif
+
+		m_Resource = VK_NULL_HANDLE;
 	}
 
 
@@ -161,11 +171,12 @@ namespace Lambda
 	void VKNResource<VkFramebuffer>::DestroyResource()
 	{
 		vkDestroyFramebuffer(m_pDevice->GetVkDevice(), m_Resource, nullptr);
-		m_Resource = VK_NULL_HANDLE;
 
 #if defined(LAMBDA_SAFE_RESOURCE_DEBUG)
-		LOG_DEBUG_INFO("Releasing VkFramebuffer\n");
+		LOG_DEBUG_INFO("Releasing VkFramebuffer '%p'\n", m_Resource);
 #endif
+
+		m_Resource = VK_NULL_HANDLE;
 	}
 
 
@@ -173,11 +184,12 @@ namespace Lambda
 	void VKNResource<VkFence>::DestroyResource()
 	{
 		vkDestroyFence(m_pDevice->GetVkDevice(), m_Resource, nullptr);
-		m_Resource = VK_NULL_HANDLE;
 
 #if defined(LAMBDA_SAFE_RESOURCE_DEBUG)
-		LOG_DEBUG_INFO("Releasing VkFence\n");
+		LOG_DEBUG_INFO("Releasing VkFence '%p'\n", m_Resource);
 #endif
+
+		m_Resource = VK_NULL_HANDLE;
 	}
 
 
@@ -185,7 +197,7 @@ namespace Lambda
 	//VKNSafeReleaseManager
 	//---------------------
 	
-	constexpr size_t numFrames = 5;
+	constexpr size_t numFrames = 4;
 
 	VKNSafeReleaseManager::VKNSafeReleaseManager(VKNDevice* pDevice)
 		: m_pDevice(pDevice),
@@ -214,7 +226,13 @@ namespace Lambda
 			{
 				//Release
 				if (it->second)
+				{
+#if defined(LAMBDA_SAFE_RESOURCE_DEBUG)
+				LOG_DEBUG_WARNING("Deleting VkResource '%p' Frame Added=%llu, Frame Now=%llu\n", it->second->GetResourceHandle(), frame, m_FrameIndex);
+#endif
+
 					it->second->Release();
+				}
 
 				//Erase from vector
 				it = m_Resources.erase(it);

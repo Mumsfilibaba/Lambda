@@ -119,7 +119,7 @@ namespace Lambda
 	bool VKNShaderVariable::Validate()
 	{
 		//If this is not a dynamic variable we just return if we have bound a new resource
-		if (m_Desc.Type != RESOURCE_USAGE_DYNAMIC && m_IsValid)
+		if (m_Desc.Usage != RESOURCE_USAGE_DYNAMIC && m_IsValid)
 		{
 			return true;
 		}

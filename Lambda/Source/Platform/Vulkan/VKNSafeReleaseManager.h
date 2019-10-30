@@ -4,6 +4,8 @@
 #include <vector>
 #include "Vulkan.h"
 
+//#define LAMBDA_SAFE_RESOURCE_DEBUG
+
 namespace Lambda
 {
 	class VKNDevice;
@@ -17,6 +19,7 @@ namespace Lambda
 	public:
 		LAMBDA_INTERFACE(VKNResourceBase);
 		virtual void Release() = 0;
+		virtual uint64 GetResourceHandle() const = 0;
 	};
 
 	//-----------
@@ -33,6 +36,14 @@ namespace Lambda
 		~VKNResource() { }
 
 		void DestroyResource();
+
+
+		virtual uint64 GetResourceHandle() const override final
+		{
+			return (uint64)m_Resource;
+		}
+
+
 		virtual void Release() override final
 		{
 			DestroyResource();
@@ -58,6 +69,9 @@ namespace Lambda
 		template<typename VkResourceType>
 		void ReleaseResource(const VkResourceType& resource)
 		{
+#if defined(LAMBDA_SAFE_RESOURCE_DEBUG)
+			LOG_DEBUG_WARNING("Releasing VkResource '%p' Frame=%llu\n", resource, m_FrameIndex);
+#endif
 			m_Resources.emplace_back(std::pair<uint64, VKNResourceBase*>(m_FrameIndex, DBG_NEW VKNResource<VkResourceType>(m_pDevice, resource)));
 		}
 

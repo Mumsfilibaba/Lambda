@@ -444,16 +444,18 @@ namespace Lambda
 		m_Context->SetPipelineState(m_PipelineState.Get());
 
         //Draw squares
-		for (uint32 y = 0; y < 350; y++)
+		constexpr uint32 numSquares = 500;
+		for (uint32 y = 0; y < numSquares; y++)
 		{
-			for (uint32 x = 0; x < 350; x++)
+			for (uint32 x = 0; x < numSquares; x++)
 			{	
 				//Update position
 				void* pMappedData = nullptr;
 				m_Context->MapBuffer(m_PositionBuffer.Get(), MAP_FLAG_WRITE | MAP_FLAG_WRITE_DISCARD, &pMappedData);
 
 				//xy (.xy) and scale (.z)
-				glm::vec3 position = glm::vec3(-0.9f + (0.2f * float(x)), 0.9f - (0.2f * float(y)), 0.15f);
+				constexpr float size = 2.0f / numSquares;
+				glm::vec3 position = glm::vec3(-1.0f + (size / 2.0f) + ((size) * float(x)), 1.0f - (size / 2.0f) - ((size) * float(y)), size);
 				memcpy(pMappedData, &position, sizeof(glm::vec3));
 
 				m_Context->UnmapBuffer(m_PositionBuffer.Get());
