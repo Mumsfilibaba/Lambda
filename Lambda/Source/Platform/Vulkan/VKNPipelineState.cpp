@@ -34,11 +34,21 @@ namespace Lambda
 
 	VKNPipelineState::~VKNPipelineState()
 	{
+		//Delete static samplers
+		for (auto sampler : m_StaticSamplerStates)
+		{
+			if (sampler.second != VK_NULL_HANDLE)
+				m_pDevice->SafeReleaseVulkanResource<VkSampler>(sampler.second);
+		}
+
+		//Delete DesctiptorAllocator
 		if (m_pAllocator)
 		{
 			m_pAllocator->Destroy(m_pDevice->GetVkDevice());
 			m_pAllocator = nullptr;
 		}
+
+		//Delete pipelineresources
 		if (m_Pipeline != VK_NULL_HANDLE)
 			m_pDevice->SafeReleaseVulkanResource<VkPipeline>(m_Pipeline);
 		if (m_DescriptorSetLayout != VK_NULL_HANDLE)
@@ -79,6 +89,66 @@ namespace Lambda
 
 		//Copy the resourceslots
 		const ShaderVariableTableDesc& varibleLayout = desc.ShaderVariableTable;
+		for (uint32 i = 0; i < varibleLayout.NumStaticSamplerStates; i++)
+		{
+			//Get desc
+			const StaticSamplerStateDesc& staticSamplerStateDesc = varibleLayout.pStaticSamplerStates[i];
+
+			//Static samplers must have a name
+			if (staticSamplerStateDesc.pName == nullptr)
+			{
+				LOG_DEBUG_ERROR("Vulkan: Static SamplerStates must have a name\n");
+			}
+
+			//Get adress mode
+			VkSamplerAddressMode adressMode = ConvertSamplerAdressMode(staticSamplerStateDesc.AdressMode);
+
+			//Create sampler
+			VkSamplerCreateInfo info = {};
+			info.sType					 = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+			info.pNext					 = nullptr;
+			info.flags					 = 0;
+			info.magFilter				 = VK_FILTER_LINEAR;
+			info.minFilter				 = VK_FILTER_LINEAR;
+			info.addressModeU			 = adressMode;
+			info.addressModeV			 = adressMode;
+			info.addressModeW			 = adressMode;
+			info.anisotropyEnable		 = VK_TRUE;
+			info.maxAnisotropy			 = staticSamplerStateDesc.Anisotropy;
+			info.borderColor			 = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+			info.unnormalizedCoordinates = VK_FALSE;
+			info.compareEnable			 = VK_FALSE;
+			info.compareOp				 = VK_COMPARE_OP_ALWAYS;
+			info.mipmapMode				 = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+			info.minLod					 = staticSamplerStateDesc.MinMipLOD;
+			info.maxLod					 = staticSamplerStateDesc.MaxMipLOD;
+			info.mipLodBias				 = staticSamplerStateDesc.MipLODBias;
+
+			VkSampler staticSampler = VK_NULL_HANDLE;
+			if (vkCreateSampler(m_pDevice->GetVkDevice(), &info, nullptr, &staticSampler) != VK_SUCCESS)
+			{
+				LOG_DEBUG_ERROR("Vulkan: Failed to create create Static SamplerState\n");
+			}
+			else
+			{
+				LOG_DEBUG_INFO("Vulkan: Created Static SamplerState\n");
+
+				auto sampler = m_StaticSamplerStates.find(staticSamplerStateDesc.pName);
+				if (sampler != m_StaticSamplerStates.end())
+				{
+					LOG_DEBUG_WARNING("Vulkan: Multiple Static SamplerState with the same name '%s'. Only the first one is created\n", staticSamplerStateDesc.pName);
+					m_pDevice->SafeReleaseVulkanResource<VkSampler>(staticSampler);
+				}
+				else
+				{
+					m_StaticSamplerStates.insert(std::pair<std::string, VkSampler>(staticSamplerStateDesc.pName, staticSampler));
+					
+					if (desc.pName)
+						m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_SAMPLER, (uint64)staticSampler, std::string(desc.pName) + " - Static Sampler [" + std::string(staticSamplerStateDesc.pName) + "]");
+				}
+			}
+		}
+
 
 		//Create descriptor bindings for each shadervariable
 		std::vector<VkDescriptorSetLayoutBinding> layoutBindings;
@@ -93,14 +163,22 @@ namespace Lambda
 			layoutBinding.pImmutableSamplers	= nullptr;
 			layoutBinding.stageFlags			= ConvertShaderStages(variable.Stage);
 			layoutBinding.descriptorType		= ConvertResourceToDescriptorType(variable.Type, variable.Usage);
-            if (layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE && variable.pSamplerState != nullptr)
+            if (layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE && variable.pStaticSamplerName != nullptr)
 			{
+				//With static samplers we use the combined image sampler
 				layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 
 				//Bind sampler to slot permanently
-				VKNSamplerState* pSampler = reinterpret_cast<VKNSamplerState*>(variable.pSamplerState);
-                VkSampler sampler = pSampler->GetVkSampler();
-				layoutBinding.pImmutableSamplers = &sampler;
+				auto sampler = m_StaticSamplerStates.find(variable.pStaticSamplerName);
+				if (sampler != m_StaticSamplerStates.end())
+				{
+					VkSampler vkSampler = sampler->second;
+					layoutBinding.pImmutableSamplers = &vkSampler;
+				}
+				else
+				{
+					LOG_DEBUG_ERROR("Vulkan: No Static SamplerState with the name '%s'\n", variable.pStaticSamplerName);
+				}
 			}
 
 			layoutBindings.emplace_back(layoutBinding);

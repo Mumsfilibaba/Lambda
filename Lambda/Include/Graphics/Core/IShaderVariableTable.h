@@ -15,12 +15,12 @@ namespace Lambda
 
 	struct ShaderVariableDesc
 	{
-		const char* pName = "";
-		ISamplerState* pSamplerState = nullptr;
-		ResourceType Type	= RESOURCE_TYPE_UNKNOWN;
-		ShaderStage	Stage	= SHADER_STAGE_UNKNOWN;
-		Usage Usage = USAGE_UNKNOWN;
-		uint32 Slot			= 0;
+		const char* pName				= "";
+		const char* pStaticSamplerName	= "";
+		ResourceType Type				= RESOURCE_TYPE_UNKNOWN;
+		ShaderStage	Stage				= SHADER_STAGE_UNKNOWN;
+		Usage Usage						= USAGE_UNKNOWN;
+		uint32 Slot						= 0;
 	};
 
 	//-----------------
@@ -33,16 +33,32 @@ namespace Lambda
 		uint32 SizeInBytes	= 0;
 	};
 
+	//----------------------
+	//StaticSamplerStateDesc
+	//----------------------
+
+	struct StaticSamplerStateDesc
+	{
+		const char* pName				= "";
+		SamplerAddressMode AdressMode	= SAMPLER_ADDRESS_MODE_REPEAT;
+		float MinMipLOD					= 0.0f;
+		float MaxMipLOD					= 0.0f;
+		float MipLODBias				= 0.0f;
+		float Anisotropy				= 1.0f;
+	};
+
 	//-----------------------
 	//ShaderVariableTableDesc
 	//-----------------------
 
 	struct ShaderVariableTableDesc
 	{
-		uint32 NumVariables						= 0;
-		const ShaderVariableDesc* pVariables	= nullptr;
-		uint32 NumConstantBlocks					= 0;
-		const ConstantBlockDesc* pConstantBlocks	= nullptr;
+		uint32 NumVariables									= 0;
+		const ShaderVariableDesc* pVariables				= nullptr;
+		uint32 NumConstantBlocks							= 0;
+		const ConstantBlockDesc* pConstantBlocks			= nullptr;
+		uint32 NumStaticSamplerStates						= 0;
+		const StaticSamplerStateDesc* pStaticSamplerStates	= nullptr;
 	};
 
 	//--------------

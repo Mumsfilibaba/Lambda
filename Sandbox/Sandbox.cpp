@@ -172,8 +172,8 @@ namespace Lambda
 				};
 
 				ShaderVariableTableDesc variableTableDesc = {};
-				variableTableDesc.NumVariables	= sizeof(shaderVariables) / sizeof(ShaderVariableDesc);
-				variableTableDesc.pVariables	= shaderVariables;
+				variableTableDesc.NumVariables		= sizeof(shaderVariables) / sizeof(ShaderVariableDesc);
+				variableTableDesc.pVariables		= shaderVariables;
 				variableTableDesc.NumConstantBlocks	= 0;
 				variableTableDesc.pConstantBlocks	= nullptr;
 
@@ -311,8 +311,8 @@ namespace Lambda
 			//Setup materials
 			m_VariableTable->GetVariableByName(SHADER_STAGE_VERTEX, "u_TransformBuffer")->SetConstantBuffer(m_PositionBuffer.Get());
 			//m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Normal")->SetTexture(m_NormalMap.Get());
-			//m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Albedo")->SetTexture(m_AlbedoMap.Get());
-			m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Sampler")->SetSamplerState(m_SamplerState.Get());
+			m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Albedo")->SetTexture(m_AlbedoMap.Get());
+			//m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Sampler")->SetSamplerState(m_SamplerState.Get());
 
 			/*m_Material.pPipelineState	= m_PipelineState.Get();
 			m_Material.pVariableTable	= m_VariableTable.Get();
@@ -444,7 +444,7 @@ namespace Lambda
 		m_Context->SetPipelineState(m_PipelineState.Get());
 
         //Draw squares
-		constexpr uint32 numSquares = 20;
+		constexpr uint32 numSquares = 5;
 		for (uint32 y = 0; y < numSquares; y++)
 		{
 			for (uint32 x = 0; x < numSquares; x++)

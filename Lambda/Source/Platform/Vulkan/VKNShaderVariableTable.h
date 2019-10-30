@@ -44,6 +44,12 @@ namespace Lambda
 		{ 
 			return m_DescriptorSet; 
 		}
+
+
+		_forceinline VkSampler GetStaticVkSampler(const std::string& key) const
+		{
+			return m_PipelineState->GetStaticVkSampler(key);
+		}
 	private:
 		void Init(const ShaderVariableTableDesc& desc);
 	private:

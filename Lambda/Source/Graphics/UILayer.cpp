@@ -224,32 +224,34 @@ namespace Lambda
 
 
 		//Create sampler
-		SamplerStateDesc samplerDesc = {};
+		StaticSamplerStateDesc samplerDesc = {};
+		samplerDesc.pName		= "sFontSampler";
 		samplerDesc.AdressMode	= SAMPLER_ADDRESS_MODE_REPEAT;
 		samplerDesc.Anisotropy	= 1.0f;
 		samplerDesc.MaxMipLOD	= 1000.0f;
 		samplerDesc.MinMipLOD	= -1000.0f;
 		samplerDesc.MipLODBias	= 0.0f;
-		pDevice->CreateSamplerState(&m_SamplerState, samplerDesc);
         
 		//Create pipelineresourcestate
 		ShaderVariableDesc shaderVariables[1];
-		shaderVariables[0].pName			= "sTexture";
-		shaderVariables[0].pSamplerState	= m_SamplerState.Get();
-		shaderVariables[0].Slot				= 0;
-		shaderVariables[0].Type				= RESOURCE_TYPE_TEXTURE;
-		shaderVariables[0].Usage			= USAGE_DEFAULT;
-		shaderVariables[0].Stage			= SHADER_STAGE_PIXEL;
+		shaderVariables[0].pName				= "sTexture";
+		shaderVariables[0].pStaticSamplerName	= "sFontSampler";
+		shaderVariables[0].Slot					= 0;
+		shaderVariables[0].Type					= RESOURCE_TYPE_TEXTURE;
+		shaderVariables[0].Usage				= USAGE_DEFAULT;
+		shaderVariables[0].Stage				= SHADER_STAGE_PIXEL;
 
         ConstantBlockDesc constantBlocks[1];
 		constantBlocks[0].Stage			= SHADER_STAGE_VERTEX;
 		constantBlocks[0].SizeInBytes	= sizeof(float) * 4;
 
 		ShaderVariableTableDesc variableTableDesc = {};
-		variableTableDesc.NumVariables	= 1;
-		variableTableDesc.pVariables	= shaderVariables;
-		variableTableDesc.NumConstantBlocks	= 1;
-		variableTableDesc.pConstantBlocks	= constantBlocks;
+		variableTableDesc.NumVariables				= 1;
+		variableTableDesc.pVariables				= shaderVariables;
+		variableTableDesc.NumConstantBlocks			= 1;
+		variableTableDesc.pConstantBlocks			= constantBlocks;
+		variableTableDesc.NumStaticSamplerStates	= 1;
+		variableTableDesc.pStaticSamplerStates		= &samplerDesc;
 
 		//Create pipelinestate
 		InputElementDesc inputElements[3] =

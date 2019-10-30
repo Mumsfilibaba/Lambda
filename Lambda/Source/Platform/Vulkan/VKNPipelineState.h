@@ -2,6 +2,7 @@
 #include "Graphics/Core/PipelineStateBase.h"
 #include <map>
 #include <vector>
+#include <unordered_map>
 #include "Memory/VKNDescriptorAllocator.h"
 #include "Vulkan.h"
 
@@ -56,6 +57,16 @@ namespace Lambda
 		{ 
 			return m_DescriptorSetLayout; 
 		}
+
+
+		_forceinline VkSampler GetStaticVkSampler(const std::string& key) const
+		{
+			auto samplerState = m_StaticSamplerStates.find(key);
+			if (samplerState != m_StaticSamplerStates.end())
+				return samplerState->second;
+
+			return VK_NULL_HANDLE;
+		}
     private:
         void Init(const PipelineStateDesc& desc);
     private:
@@ -65,5 +76,6 @@ namespace Lambda
         VkDescriptorSetLayout m_DescriptorSetLayout;
         std::vector<ShaderVariableDesc> m_ShaderVariableDescs;
         std::vector<ConstantBlockDesc>  m_ConstantBlockDescs;
+		std::unordered_map<std::string, VkSampler> m_StaticSamplerStates;
     };
 }

@@ -41,7 +41,7 @@ namespace Lambda
 		_forceinline const VkWriteDescriptorSet& GetVkWriteDescriptorSet()
 		{ 
 			return m_DescriptorWrite; 
-		};
+		}
 	private:
 		AutoRef<IDeviceObject>	m_Resource;
         VkWriteDescriptorSet    m_DescriptorWrite;

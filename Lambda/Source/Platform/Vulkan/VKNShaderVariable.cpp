@@ -39,10 +39,10 @@ namespace Lambda
             m_ImageInfo.imageView   = pVkDefaultTexture->GetVkImageView();
             
 			//Get static sampler
-            if (m_Desc.pSamplerState != nullptr)
+            if (m_Desc.pStaticSamplerName != nullptr)
             {
                 m_DescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                m_ImageInfo.sampler = reinterpret_cast<VKNSamplerState*>(m_Desc.pSamplerState)->GetVkSampler();
+                m_ImageInfo.sampler = m_pShaderVariableTable->GetStaticVkSampler(m_Desc.pStaticSamplerName);
             }
             else
             {
