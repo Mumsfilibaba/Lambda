@@ -76,7 +76,7 @@ namespace Lambda
         transformLight.Position.y = 0.5f;
         transformLight.Position.z = -1.0f;
 
-		constexpr uint32 sphereWidth = 2;
+		constexpr uint32 sphereWidth = 10;
 		for (uint32 y = 0; y < sphereWidth; y++)
 		{
 			for (uint32 x = 0; x < sphereWidth; x++)
