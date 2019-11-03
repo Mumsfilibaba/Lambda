@@ -3,7 +3,7 @@
 
 namespace Lambda
 {
-    inline VkFormat ConvertResourceFormat(Format format)
+    inline VkFormat ConvertFormat(Format format)
     {
         switch (format)
         {
@@ -35,7 +35,7 @@ namespace Lambda
             case FORMAT_R32_FLOAT:              return VK_FORMAT_R32_SFLOAT;
             case FORMAT_R32_UINT:               return VK_FORMAT_R32_UINT;
             case FORMAT_R32_SINT:               return VK_FORMAT_R32_SINT;
-            case FORMAT_D32_FLOAT_S8X24_UINT:    return VK_FORMAT_D32_SFLOAT_S8_UINT;
+            case FORMAT_D32_FLOAT_S8X24_UINT:   return VK_FORMAT_D32_SFLOAT_S8_UINT;
             case FORMAT_D24_UNORM_S8_UINT:      return VK_FORMAT_D24_UNORM_S8_UINT;
             case FORMAT_R8G8_UNORM:             return VK_FORMAT_R8G8_UNORM;
             case FORMAT_R8G8_UINT:              return VK_FORMAT_R8G8_UINT;
@@ -142,8 +142,8 @@ namespace Lambda
     {
         switch (toplogy)
         {
-            case VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST: return PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-            case VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP: return PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
+            case VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST:	return PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+            case VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP:	return PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
             default: return PRIMITIVE_TOPOLOGY_UNKNOWN;
         }
     }
@@ -157,10 +157,11 @@ namespace Lambda
             case RESOURCE_STATE_RENDERTARGET:           return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
             case RESOURCE_STATE_DEPTH_STENCIL:			return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
             case RESOURCE_STATE_RENDERTARGET_CLEAR:     return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-            case RESOURCE_STATE_RENDERTARGET_PRESENT:   return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-            case RESORUCE_STATE_DEPTH_STENCIL_CLEAR:    return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            case RESOURCE_STATE_PRESENT:				return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+            case RESOURCE_STATE_DEPTH_STENCIL_CLEAR:    return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
             case RESOURCE_STATE_COPY_DEST:              return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
             case RESOURCE_STATE_COPY_SRC:               return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+			case RESOURCE_STATE_GENERAL:				return VK_IMAGE_LAYOUT_GENERAL;
             case RESOURCE_STATE_UNKNOWN:
             default: return VK_IMAGE_LAYOUT_UNDEFINED;
         }
@@ -196,29 +197,6 @@ namespace Lambda
 		default: return VK_SAMPLE_COUNT_FLAG_BITS_MAX_ENUM;
 		}
 	}
-
-
-	inline VkAttachmentLoadOp ConvertLoadOp(LoadOp loadOp)
-	{
-		switch (loadOp)
-		{
-		case LOAD_OP_CLEAR:   return VK_ATTACHMENT_LOAD_OP_CLEAR;
-		case LOAD_OP_LOAD:   return VK_ATTACHMENT_LOAD_OP_LOAD;
-		case LOAD_OP_UNKNOWN:
-		default: return VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		}
-	}
-
-
-	inline VkAttachmentStoreOp ConvertStoreOp(StoreOp storeOp)
-	{
-		switch (storeOp)
-		{
-		case STORE_OP_STORE:   return VK_ATTACHMENT_STORE_OP_STORE;
-		case STORE_OP_UNKNOWN:
-		default: return VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		}
-	}
     
     
     inline VkPipelineStageFlagBits ConvertPipelineStage(PipelineStage stage)
@@ -236,12 +214,12 @@ namespace Lambda
     }
 
 
-	inline VkDescriptorType ConvertResourceToDescriptorType(ResourceType type, ResourceUsage usage)
+	inline VkDescriptorType ConvertResourceToDescriptorType(ResourceType type, Usage usage)
 	{
 		switch (type)
 		{
 			case RESOURCE_TYPE_TEXTURE:			return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-            case RESOURCE_TYPE_CONSTANT_BUFFER: return usage == RESOURCE_USAGE_DYNAMIC ? VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC : VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            case RESOURCE_TYPE_CONSTANT_BUFFER: return usage == USAGE_DYNAMIC ? VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC : VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			case RESOURCE_TYPE_SAMPLER_STATE:	return VK_DESCRIPTOR_TYPE_SAMPLER;
             default:                            return VK_DESCRIPTOR_TYPE_MAX_ENUM;
 		}

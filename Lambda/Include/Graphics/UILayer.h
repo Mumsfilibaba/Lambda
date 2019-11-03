@@ -34,10 +34,9 @@ namespace Lambda
 		UILayer();
 		~UILayer() = default;
 
-		void Init(IRenderPass* pRenderPass, IDeviceContext* pList);
         void Begin(Timestep time);
         void End();
-        void Draw(IDeviceContext* pList);
+        void Draw(IDeviceContext* pContext);
 
         virtual void OnLoad() override final;
         virtual void OnRenderUI(Timestep dt) override final;
@@ -45,6 +44,7 @@ namespace Lambda
         virtual bool OnEvent(const Event& event) override final;
         virtual uint32 GetRecivableCategories() const override final;
     private:
+        void Init();
 		bool OnKeyTyped(const KeyTypedEvent& event);
 		bool OnKeyPressed(const KeyPressedEvent& event);
 		bool OnKeyReleased(const KeyReleasedEvent& event);
@@ -53,7 +53,6 @@ namespace Lambda
 		bool OnMouseReleased(const MouseButtonReleasedEvent& event);
 		bool OnMouseMove(const MouseMovedEvent& event);
 		bool OnWindowResize(const WindowResizeEvent& event);
-        void Create();
 	private:
 		AutoRef<IShader>		m_VS;
 		AutoRef<IShader>		m_PS;

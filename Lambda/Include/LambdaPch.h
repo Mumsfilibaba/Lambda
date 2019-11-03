@@ -23,6 +23,8 @@
 #include "System/Log.h"
 
 #include <cassert>
+#include <cfloat>
+#include <cmath>
 
 #include <chrono>
 #include <locale>
@@ -30,7 +32,6 @@
 #include <iostream>
 #include <fstream>
 #include <algorithm>
-#include <cmath>
 #include <utility>
 
 #include <vector>

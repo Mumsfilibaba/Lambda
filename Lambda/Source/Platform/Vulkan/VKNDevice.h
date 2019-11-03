@@ -1,9 +1,8 @@
 #pragma once
-#include "Graphics/Core/IDevice.h"
-#if defined(LAMBDA_PLAT_WINDOWS)
-	#define VK_USE_PLATFORM_WIN32_KHR
-#endif
-#include "VKNAllocator.h"
+#include "Graphics/Core/DeviceBase.h"
+#include "Memory/VKNDeviceAllocator.h"
+#include "VKNSafeReleaseManager.h"
+#include "Memory/VKNDynamicMemoryAllocator.h"
 #include "VKNUtilities.h"
 
 #define FRAMES_AHEAD 3
@@ -13,18 +12,16 @@ namespace Lambda
     class VKNBuffer;
     class VKNTexture;
     class VKNSwapChain;
-    class VKNAllocator;
-    class VKNDeviceContext;
     class VKNSamplerState;
-    class VKNUploadBuffer;
-    class VKNBufferManager;
+    class VKNDeviceContext;
+	class VKNRenderPassCache;
     class VKNFramebufferCache;
     
 	//---------
 	//VKNDevice
 	//---------
 
-    class VKNDevice final : public RefCountedObject<IDevice>
+    class VKNDevice final : public DeviceBase
     {
     public:
         LAMBDA_NO_COPY(VKNDevice);
@@ -32,93 +29,154 @@ namespace Lambda
         VKNDevice(const DeviceDesc& desc);
         ~VKNDevice();
         
-        virtual void CreateCommandList(IDeviceContext** ppList, CommandListType type) override final;
+        virtual void CreateDefferedContext(IDeviceContext** ppDefferedContext) override final;
         virtual void CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) override final;
         virtual void CreateTexture(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc) override final;
         virtual void CreateShader(IShader** ppShader, const ShaderDesc& desc) override final;
         virtual void CreateSamplerState(ISamplerState** ppSamplerState, const SamplerStateDesc& desc) override final;
         virtual void CreatePipelineState(IPipelineState** ppPipelineState, const PipelineStateDesc& desc) override final;
-		virtual void CreateRenderPass(IRenderPass** ppRenderPass, const RenderPassDesc& desc) override final;
 		virtual void CreateQuery(IQuery** ppQuery, const QueryDesc& desc) override final;
         
-        virtual void ExecuteCommandList(IDeviceContext* const * ppLists, uint32 numLists) const override final;
-		
-		virtual void PresentBegin() const override final;
-		virtual void PresentEnd(IDeviceContext* const* ppLists, uint32 numLists) const override final;
-
-        virtual void GPUWaitForFrame() const override final;
-        virtual void WaitForGPU() const override final;
-        
+		virtual IDeviceContext* GetImmediateContext() const override final;     
         virtual void* GetNativeHandle() const override final;
-		virtual DeviceProperties GetProperties() const override final;
-        virtual const DeviceDesc& GetDesc() const override final;
-        virtual ITexture* GetDepthStencil() const override final;
-        virtual ITexture* GetRenderTarget() const override final;
-        virtual Format GetBackBufferFormat() const override final;
-        virtual uint32 GetBackBufferIndex() const override final;
-        virtual uint32 GetSwapChainWidth() const override final;
-        virtual uint32 GetSwapChainHeight() const override final;
+
+        VkResult Present(VkPresentInfoKHR* pInfo);
+        void ExecuteCommandBuffer(VkSubmitInfo* pInfo, uint32 numBuffers, VkFence fence) const;
+		void FinishFrame() const;
+		void WaitUntilIdle() const;
 
 		void SetVulkanObjectName(VkObjectType type, uint64 objectHandle, const std::string& name);
-		VkSampleCountFlagBits GetHighestSampleCount() const;
 
-		inline VkInstance GetVkInstance() const { return m_Instance; }
-		inline VkPhysicalDevice GetVkPhysicalDevice() const { return m_PhysicalDevice; }
-		inline VkDevice GetVkDevice() const { return m_Device; }
-		inline VkSurfaceKHR GetVkSurface() const { return m_Surface; }
-		inline QueueFamilyIndices GetQueueFamilyIndices() const { return m_FamiliyIndices; }
-		inline VkPhysicalDeviceProperties GetPhysicalDeviceProperties() const { return m_PhysicalDeviceProperties; }
+		VkSampleCountFlagBits GetHighestSampleCount() const;
+		VKNDeviceContext* GetVKNImmediateContext() const;
+
+
+		_forceinline bool Allocate(VKNAllocation& allocation, const VkMemoryRequirements& memoryRequirements, VkMemoryPropertyFlags properties)
+		{
+			return m_pDeviceAllocator->Allocate(allocation, memoryRequirements, properties);
+		}
+
+
+		_forceinline void Deallocate(VKNAllocation& allocation)
+		{
+			m_pDeviceAllocator->Deallocate(allocation);
+		}
+
+
+		_forceinline bool AllocateDynamicMemory(VKNDynamicAllocation& allocation, uint64 sizeInBytes, uint64 alignment)
+		{
+			return m_pDynamicMemoryAllocator->Allocate(allocation, sizeInBytes, alignment);
+		}
+
+
+		_forceinline void DeallocateDynamicMemory(VKNDynamicAllocation& allocation)
+		{
+			m_pDynamicMemoryAllocator->Deallocate(allocation);
+		}
+
+
+		_forceinline VkInstance GetVkInstance() const
+		{ 
+			return m_Instance; 
+		}
+		
+
+		_forceinline VkDevice GetVkDevice() const
+		{ 
+			return m_Device; 
+		}
+		
+		
+		_forceinline VkPhysicalDevice GetVkPhysicalDevice() const
+		{ 
+			return m_PhysicalDevice; 
+		}
+		
+		
+		_forceinline const QueueFamilyIndices& GetQueueFamilyIndices() const
+		{ 
+			return m_FamiliyIndices; 
+		}
+		
+
+		_forceinline const VkPhysicalDeviceProperties& GetPhysicalDeviceProperties() const
+		{ 
+			return m_PhysicalDeviceProperties; 
+		}
+
+
+		_forceinline VKNBuffer* GetDefaultVertexBuffer() const
+		{
+			return m_pDefaultVertexBuffer;
+		}
+
+
+		_forceinline VKNBuffer* GetDefaultIndexBuffer() const
+		{
+			return m_pDefaultIndexBuffer;
+		}
+
+
+		_forceinline VKNBuffer* GetDefaultConstantBuffer() const
+		{
+			return m_pDefaultConstantBuffer;
+		}
+
+
+		_forceinline VKNSamplerState* GetDefaultSamplerState() const
+		{
+			return m_pDefaultSamplerState;
+		}
+
+
+		_forceinline VKNTexture* GetDefaultTexture() const
+		{
+			return m_pDefaultTexture;
+		}
+
+
+		template<typename VkResourceType>
+		_forceinline void SafeReleaseVulkanResource(const VkResourceType& resource)
+		{
+			m_pSafeReleaseManager->ReleaseResource<VkResourceType>(resource);
+		}
 	private:
 		void Init(const DeviceDesc& desc);
-		void InitDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo);
-		
+		void InitDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo);		
 		VkPhysicalDevice QueryPhyscialDevice();
-		VkSurfaceKHR CreateSurface(IWindow* pWindow);
-		bool CreateDepthStencil();
-		bool CreateMSAABuffer();
-		bool PhysicalDeviceIsSuitable(VkPhysicalDevice physcialDevice);
-        void ReleaseDepthStencil();
-		void ReleaseMSAABuffer();
-        
+		bool PhysicalDeviceIsSuitable(VkPhysicalDevice physcialDevice);        
 		std::vector<const char*> GetRequiredValidationLayers(bool debug);
+		std::vector<const char*> GetOptionalValidationLayers(bool debug);
 		std::vector<const char*> GetRequiredDeviceExtensions();
+		std::vector<const char*> GetOptionalDeviceExtensions();
 		std::vector<const char*> GetRequiredInstanceExtensions(bool debug);
-
-        virtual bool OnResize(const WindowResizeEvent& event) override final;
+		std::vector<const char*> GetOptionalInstanceExtensions(bool debug);
     private:
-		VKNBufferManager*			  m_pBufferManager;
-		VKNDescriptorPoolManager*	  m_pDescriptorPoolManager;
-		VKNFramebufferCache*		  m_pFramebufferCache;
-		VKNTexture*					  m_pDepthStencil;
-		VKNTexture*					  m_pMSAABuffer;
-		VKNSwapChain*				  m_pSwapChain;
-		VKNDeviceContext*				  m_pCommandList;
-		mutable AutoRef<VKNAllocator> m_DeviceAllocator;
-        VkQueue						  m_GraphicsQueue;
-        VkQueue						  m_PresentationQueue;
-		std::vector<VkFence>		  m_Fences;
-		std::vector<VkSemaphore>	  m_RenderSemaphores;
-		std::vector<VkSemaphore>	  m_ImageSemaphores;
-        mutable uint64				  m_CurrentFrame;
-		DeviceProperties			  m_Properties;
-		VkInstance					  m_Instance;
-		VkDebugUtilsMessengerEXT	  m_DebugMessenger;
-		VkDevice					  m_Device;
-		QueueFamilyIndices			  m_FamiliyIndices;
-		VkPhysicalDevice			  m_PhysicalDevice;
-		VkPhysicalDeviceProperties	  m_PhysicalDeviceProperties;
-		VkSurfaceKHR				  m_Surface;
-		DeviceDesc					  m_Desc;
+		VKNDeviceAllocator*			m_pDeviceAllocator;
+		VKNDynamicMemoryAllocator* m_pDynamicMemoryAllocator;
+		VKNDeviceContext*		   m_pImmediateContext;
+		VKNRenderPassCache*		   m_pRenderPassCache;
+		VKNFramebufferCache*	   m_pFramebufferCache;
+		VKNSafeReleaseManager*	   m_pSafeReleaseManager;
+		VkInstance m_Instance;
+		VkDevice   m_Device;
+        VkQueue	   m_GraphicsQueue;
+        VkQueue	   m_PresentationQueue;
+		VkDebugUtilsMessengerEXT   m_DebugMessenger;
+		QueueFamilyIndices		   m_FamiliyIndices;
+		VkPhysicalDevice		   m_PhysicalDevice;
+		VkPhysicalDeviceProperties m_PhysicalDeviceProperties;
+		VKNBuffer* m_pDefaultIndexBuffer;
+		VKNBuffer* m_pDefaultVertexBuffer;
+		VKNBuffer* m_pDefaultConstantBuffer;
+		VKNTexture* m_pDefaultTexture;
+		VKNSamplerState* m_pDefaultSamplerState;
 	private:
-		static PFN_vkSetDebugUtilsObjectNameEXT		SetDebugUtilsObjectNameEXT;
-		static PFN_vkCreateDebugUtilsMessengerEXT	CreateDebugUtilsMessengerEXT;
-		static PFN_vkDestroyDebugUtilsMessengerEXT	DestroyDebugUtilsMessengerEXT;
+		static PFN_vkSetDebugUtilsObjectNameEXT		vkSetDebugUtilsObjectNameEXT;
+		static PFN_vkCreateDebugUtilsMessengerEXT	vkCreateDebugUtilsMessengerEXT;
+		static PFN_vkDestroyDebugUtilsMessengerEXT	vkDestroyDebugUtilsMessengerEXT;
 	private:
 		static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-			VkDebugUtilsMessageTypeFlagsEXT messageType,
-			const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-			void* pUserData);
-    public:
-		static VKNDevice& Get();
+			VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
     };
 }

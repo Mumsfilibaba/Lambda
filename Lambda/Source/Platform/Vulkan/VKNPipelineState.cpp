@@ -1,14 +1,14 @@
 #include "LambdaPch.h"
 #include "VKNPipelineState.h"
 #include "VKNShader.h"
-#include "VKNTexture.h"
 #include "VKNBuffer.h"
-#include "VKNSamplerState.h"
-#include "VKNRenderPass.h"
-#include "VKNSamplerState.h"
-#include "VKNShaderVariableTable.h"
 #include "VKNDevice.h"
+#include "VKNTexture.h"
 #include "VKNUtilities.h"
+#include "VKNSamplerState.h"
+#include "VKNSamplerState.h"
+#include "VKNRenderPassCache.h"
+#include "VKNShaderVariableTable.h"
 #include "VKNConversions.inl"
 
 namespace Lambda
@@ -18,14 +18,13 @@ namespace Lambda
 	//----------------
 
     VKNPipelineState::VKNPipelineState(VKNDevice* pDevice, const PipelineStateDesc& desc)
-        : DeviceObjectBase<VKNDevice, IPipelineState>(pDevice),
+        : PipelineStateBase<VKNDevice>(pDevice, desc),
 		m_pAllocator(nullptr),
         m_Pipeline(VK_NULL_HANDLE),
         m_PipelineLayout(VK_NULL_HANDLE),
         m_DescriptorSetLayout(VK_NULL_HANDLE),
         m_ShaderVariableDescs(),
-        m_ConstantBlockDescs(),
-        m_Desc()
+        m_ConstantBlockDescs()
     {
 		//Add a ref to the refcounter
 		this->AddRef();
@@ -35,26 +34,27 @@ namespace Lambda
 
 	VKNPipelineState::~VKNPipelineState()
 	{
+		//Delete static samplers
+		for (auto sampler : m_StaticSamplerStates)
+		{
+			if (sampler.second != VK_NULL_HANDLE)
+				m_pDevice->SafeReleaseVulkanResource<VkSampler>(sampler.second);
+		}
+
+		//Delete DesctiptorAllocator
 		if (m_pAllocator)
 		{
 			m_pAllocator->Destroy(m_pDevice->GetVkDevice());
 			m_pAllocator = nullptr;
 		}
+
+		//Delete pipelineresources
 		if (m_Pipeline != VK_NULL_HANDLE)
-		{
-			vkDestroyPipeline(m_pDevice->GetVkDevice(), m_Pipeline, nullptr);
-			m_Pipeline = VK_NULL_HANDLE;
-		}
+			m_pDevice->SafeReleaseVulkanResource<VkPipeline>(m_Pipeline);
 		if (m_DescriptorSetLayout != VK_NULL_HANDLE)
-		{
-			vkDestroyDescriptorSetLayout(m_pDevice->GetVkDevice(), m_DescriptorSetLayout, nullptr);
-			m_DescriptorSetLayout = VK_NULL_HANDLE;
-		}
+			m_pDevice->SafeReleaseVulkanResource<VkDescriptorSetLayout>(m_DescriptorSetLayout);
 		if (m_PipelineLayout != VK_NULL_HANDLE)
-		{
-			vkDestroyPipelineLayout(m_pDevice->GetVkDevice(), m_PipelineLayout, nullptr);
-			m_PipelineLayout = VK_NULL_HANDLE;
-		}
+			m_pDevice->SafeReleaseVulkanResource<VkPipelineLayout>(m_PipelineLayout);
 
 		LOG_DEBUG_INFO("Vulkan: Destroyed PipelineState\n");
 	}
@@ -76,8 +76,79 @@ namespace Lambda
     
     void VKNPipelineState::Init(const PipelineStateDesc& desc)
     {
+		//Get renderpass        
+		VKNRenderPassCache& cache = VKNRenderPassCache::Get();
+		VKNRenderPassCacheKey key = {};
+		key.SampleCount			= desc.GraphicsPipeline.SampleCount;
+		key.DepthStencilFormat	= desc.GraphicsPipeline.DepthStencilFormat;
+		key.NumRenderTargets	= desc.GraphicsPipeline.NumRenderTargets;
+		for (uint32 i = 0; i < key.NumRenderTargets; i++)
+			key.RenderTargetFormats[i] = desc.GraphicsPipeline.RenderTargetFormats[i];
+
+		VkRenderPass renderPass = cache.GetRenderPass(key);
+
 		//Copy the resourceslots
 		const ShaderVariableTableDesc& varibleLayout = desc.ShaderVariableTable;
+		for (uint32 i = 0; i < varibleLayout.NumStaticSamplerStates; i++)
+		{
+			//Get desc
+			const StaticSamplerStateDesc& staticSamplerStateDesc = varibleLayout.pStaticSamplerStates[i];
+
+			//Static samplers must have a name
+			if (staticSamplerStateDesc.pName == nullptr)
+			{
+				LOG_DEBUG_ERROR("Vulkan: Static SamplerStates must have a name\n");
+			}
+
+			//Get adress mode
+			VkSamplerAddressMode adressMode = ConvertSamplerAdressMode(staticSamplerStateDesc.AdressMode);
+
+			//Create sampler
+			VkSamplerCreateInfo info = {};
+			info.sType					 = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+			info.pNext					 = nullptr;
+			info.flags					 = 0;
+			info.magFilter				 = VK_FILTER_LINEAR;
+			info.minFilter				 = VK_FILTER_LINEAR;
+			info.addressModeU			 = adressMode;
+			info.addressModeV			 = adressMode;
+			info.addressModeW			 = adressMode;
+			info.anisotropyEnable		 = VK_TRUE;
+			info.maxAnisotropy			 = staticSamplerStateDesc.Anisotropy;
+			info.borderColor			 = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+			info.unnormalizedCoordinates = VK_FALSE;
+			info.compareEnable			 = VK_FALSE;
+			info.compareOp				 = VK_COMPARE_OP_ALWAYS;
+			info.mipmapMode				 = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+			info.minLod					 = staticSamplerStateDesc.MinMipLOD;
+			info.maxLod					 = staticSamplerStateDesc.MaxMipLOD;
+			info.mipLodBias				 = staticSamplerStateDesc.MipLODBias;
+
+			VkSampler staticSampler = VK_NULL_HANDLE;
+			if (vkCreateSampler(m_pDevice->GetVkDevice(), &info, nullptr, &staticSampler) != VK_SUCCESS)
+			{
+				LOG_DEBUG_ERROR("Vulkan: Failed to create create Static SamplerState\n");
+			}
+			else
+			{
+				LOG_DEBUG_INFO("Vulkan: Created Static SamplerState\n");
+
+				auto sampler = m_StaticSamplerStates.find(staticSamplerStateDesc.pName);
+				if (sampler != m_StaticSamplerStates.end())
+				{
+					LOG_DEBUG_WARNING("Vulkan: Multiple Static SamplerState with the same name '%s'. Only the first one is created\n", staticSamplerStateDesc.pName);
+					m_pDevice->SafeReleaseVulkanResource<VkSampler>(staticSampler);
+				}
+				else
+				{
+					m_StaticSamplerStates.insert(std::pair<std::string, VkSampler>(staticSamplerStateDesc.pName, staticSampler));
+					
+					if (desc.pName)
+						m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_SAMPLER, (uint64)staticSampler, std::string(desc.pName) + " - Static Sampler [" + std::string(staticSamplerStateDesc.pName) + "]");
+				}
+			}
+		}
+
 
 		//Create descriptor bindings for each shadervariable
 		std::vector<VkDescriptorSetLayoutBinding> layoutBindings;
@@ -92,14 +163,22 @@ namespace Lambda
 			layoutBinding.pImmutableSamplers	= nullptr;
 			layoutBinding.stageFlags			= ConvertShaderStages(variable.Stage);
 			layoutBinding.descriptorType		= ConvertResourceToDescriptorType(variable.Type, variable.Usage);
-            if (layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE && variable.pSamplerState != nullptr)
+            if (layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE && variable.pStaticSamplerName != nullptr)
 			{
+				//With static samplers we use the combined image sampler
 				layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 
 				//Bind sampler to slot permanently
-				VKNSamplerState* pSampler = reinterpret_cast<VKNSamplerState*>(variable.pSamplerState);
-                VkSampler sampler = pSampler->GetVkSampler();
-				layoutBinding.pImmutableSamplers = &sampler;
+				auto& sampler = m_StaticSamplerStates.find(variable.pStaticSamplerName);
+				if (sampler != m_StaticSamplerStates.end())
+				{
+					VkSampler& vkSampler = sampler->second;
+					layoutBinding.pImmutableSamplers = &vkSampler;
+				}
+				else
+				{
+					LOG_DEBUG_ERROR("Vulkan: No Static SamplerState with the name '%s'\n", variable.pStaticSamplerName);
+				}
 			}
 
 			layoutBindings.emplace_back(layoutBinding);
@@ -142,8 +221,8 @@ namespace Lambda
 		layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		layoutInfo.flags = 0;
 		layoutInfo.pNext = nullptr;
-		layoutInfo.setLayoutCount	= 1;
-		layoutInfo.pSetLayouts		= &m_DescriptorSetLayout;
+		layoutInfo.setLayoutCount			= 1;
+		layoutInfo.pSetLayouts				= &m_DescriptorSetLayout;
 		layoutInfo.pushConstantRangeCount	= uint32(constantRanges.size());
 		layoutInfo.pPushConstantRanges		= constantRanges.data();
 		if (vkCreatePipelineLayout(m_pDevice->GetVkDevice(), &layoutInfo, nullptr, &m_PipelineLayout) != VK_SUCCESS)
@@ -156,7 +235,7 @@ namespace Lambda
 			LOG_DEBUG_INFO("Vulkan: Created PipelineLayout\n");
 
 			//Create allocator
-			m_pAllocator = DBG_NEW VKNDescriptorSetAllocator(8, 8, 8, 8, 8, 8);
+			m_pAllocator = DBG_NEW VKNDescriptorSetAllocator(m_pDevice, 64, 64, 64, 64, 64, 64);
 		}
 
 
@@ -231,7 +310,7 @@ namespace Lambda
 				attributeDescription.binding    = vertexInputDesc.pElements[i].BindingSlot;
 				attributeDescription.location   = vertexInputDesc.pElements[i].InputSlot;
 				attributeDescription.offset     = vertexInputDesc.pElements[i].StructureOffset;
-				attributeDescription.format     = ConvertResourceFormat(vertexInputDesc.pElements[i].Format);
+				attributeDescription.format     = ConvertFormat(vertexInputDesc.pElements[i].Format);
 				attributeDescriptions.push_back(attributeDescription);
             
 				//Check if binding is unique
@@ -329,7 +408,7 @@ namespace Lambda
 			VkPipelineMultisampleStateCreateInfo multisampling = {};
 			multisampling.sType                 = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 			multisampling.sampleShadingEnable   = VK_FALSE;
-			multisampling.rasterizationSamples  = reinterpret_cast<VKNRenderPass*>(desc.GraphicsPipeline.pRenderPass)->GetSampleCount();
+			multisampling.rasterizationSamples  = ConvertSampleCount(desc.GraphicsPipeline.SampleCount);
 			multisampling.minSampleShading      = 1.0f;
 			multisampling.pSampleMask           = nullptr;
 			multisampling.alphaToCoverageEnable = VK_FALSE;
@@ -393,7 +472,7 @@ namespace Lambda
 			pipelineInfo.pColorBlendState       = &colorBlending;
 			pipelineInfo.pDynamicState          = &dynamicState;
 			pipelineInfo.layout                 = m_PipelineLayout;
-			pipelineInfo.renderPass             = reinterpret_cast<VkRenderPass>(desc.GraphicsPipeline.pRenderPass->GetNativeHandle());
+			pipelineInfo.renderPass             = renderPass;
 			pipelineInfo.subpass                = 0;
 			pipelineInfo.basePipelineHandle     = VK_NULL_HANDLE;
 			pipelineInfo.basePipelineIndex      = -1;
@@ -424,19 +503,14 @@ namespace Lambda
         return reinterpret_cast<void*>(m_Pipeline);
     }
 
-	
-	const PipelineStateDesc& VKNPipelineState::GetDesc() const
-	{
-		return m_Desc;
-	}
-
 
 	void VKNPipelineState::SetName(const char* pName)
     {
-		if (pName != nullptr)
+		TPipelineState::SetName(pName);
+		if (pName)
 		{
-			std::string name(pName);
-			m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_PIPELINE, (uint64)m_Pipeline, name);
+			m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_PIPELINE, (uint64)m_Pipeline, m_Name);
+			m_Desc.pName = m_Name.c_str();
 		}
     }
 }

@@ -1,7 +1,6 @@
 #pragma once
-#include "Graphics/Core/ISamplerState.h"
-#include "Graphics/Core/DeviceObjectBase.h"
-#include <vulkan/vulkan.h>
+#include "Graphics/Core/SamplerStateBase.h"
+#include "Vulkan.h"
 
 namespace Lambda
 {
@@ -11,8 +10,10 @@ namespace Lambda
 	//VKNSamplerState
 	//---------------
 
-    class VKNSamplerState : public DeviceObjectBase<VKNDevice, ISamplerState>
+    class VKNSamplerState : public SamplerStateBase<VKNDevice>
     {
+		using TSamplerState = SamplerStateBase<VKNDevice>;
+
     public:
         LAMBDA_NO_COPY(VKNSamplerState);
         
@@ -20,13 +21,15 @@ namespace Lambda
         ~VKNSamplerState();
         
         virtual void* GetNativeHandle() const override final;
-        virtual const SamplerStateDesc& GetDesc() const override final;
+		virtual void SetName(const char* pName) override final;
 
-		inline VkSampler GetVkSampler() const { return m_Sampler; }
+		_forceinline VkSampler GetVkSampler() const 
+		{ 
+			return m_Sampler; 
+		}
     private:
         void Init(const SamplerStateDesc& desc);     
     private:
-        VkSampler			m_Sampler;
-		SamplerStateDesc	m_Desc;
+        VkSampler m_Sampler;
     };
 }

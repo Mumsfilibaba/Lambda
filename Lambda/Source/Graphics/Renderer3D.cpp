@@ -14,11 +14,11 @@ namespace Lambda
 	//----------
 
 	Renderer3D::Renderer3D()
-		: m_pCurrentList(nullptr),
-		m_Lists(),
-		m_Queries(),
+		: m_Device(nullptr),
+        m_Context(nullptr),
+        m_SwapChain(nullptr),
+        m_Queries(),
 		m_pCurrentQuery(nullptr),
-		m_RenderPass(nullptr),
 		m_LightBuffer(nullptr),
 		m_CameraBuffer(nullptr),
 		m_TransformBuffer(nullptr),
@@ -27,85 +27,62 @@ namespace Lambda
 		m_ScissorRect(),
 		m_FrameInfo(),
 		m_FrameClock(),
-		m_CurrentFPS(0)
+		m_CurrentFPS(0),
+        m_QueryIndex(0)
 	{
 	}
 
 
 	void Renderer3D::Init()
 	{
-		IDevice* pDevice = IDevice::Get();
-		const DeviceDesc& deviceDesc = pDevice->GetDesc();
+        //Get reference to the device
+        m_Device = Application::Get().GetGraphicsDevice();
+        m_Device->AddRef();
+        
+        //Get reference to the swapchain
+        m_SwapChain = Application::Get().GetSwapChain();
+        m_SwapChain->AddRef();
+		const SwapChainDesc& desc = m_SwapChain->GetDesc();
 
-		for (uint32 i = 0; i < deviceDesc.BackBufferCount; i++)
+		for (uint32 i = 0; i < desc.BufferCount; i++)
 		{
-			//Create commandlists
-			IDeviceContext* pList = nullptr;
-			pDevice->CreateCommandList(&pList, COMMAND_LIST_TYPE_GRAPHICS);
-			if (pList)
-			{
-				std::string name = "CommandList [" + std::to_string(i) + "]";
-				pList->SetName(name.c_str());
-
-				m_Lists.emplace_back(pList);
-			}
-
 			//Create queries for timesteps
 			IQuery* pQuery			= nullptr;
 			QueryDesc queryDesc		= {};
 			queryDesc.Type			= QUERY_TYPE_TIMESTAMP;
 			queryDesc.QueryCount	= 2;
-			pDevice->CreateQuery(&pQuery, queryDesc);
+			m_Device->CreateQuery(&pQuery, queryDesc);
 			m_Queries.emplace_back(pQuery);
 		}
 
-		//Reset current list
-		m_pCurrentList = m_Lists[0].Get();
-		m_pCurrentList->Reset();
+		//Get context
+        m_Context = m_Device->GetImmediateContext();
 
 		//Current query
-		m_pCurrentQuery = m_Queries[0].Get();
-
-		Application& app = Application::Get();
-		//Create backbuffer renderpass
-		RenderPassDesc renderPassDesc = {};
-		renderPassDesc.SampleCount						= app.GetEngineParams().SampleCount;
-		renderPassDesc.NumRenderTargets					= 1;
-		renderPassDesc.RenderTargets[0].Format			= pDevice->GetBackBufferFormat();
-		renderPassDesc.RenderTargets[0].Flags			= RENDER_PASS_ATTACHMENT_FLAG_RESOLVE;
-		renderPassDesc.RenderTargets[0].LoadOperation	= LOAD_OP_CLEAR;
-		renderPassDesc.RenderTargets[0].StoreOperation	= STORE_OP_STORE;
-		renderPassDesc.RenderTargets[0].FinalState		= RESOURCE_STATE_RENDERTARGET_PRESENT;
-		renderPassDesc.DepthStencil.Format				= FORMAT_D24_UNORM_S8_UINT;
-		renderPassDesc.DepthStencil.Flags				= 0;
-		renderPassDesc.DepthStencil.LoadOperation		= LOAD_OP_CLEAR;
-		renderPassDesc.DepthStencil.StoreOperation		= STORE_OP_UNKNOWN;
-		renderPassDesc.DepthStencil.FinalState			= RESOURCE_STATE_DEPTH_STENCIL;
-		pDevice->CreateRenderPass(&m_RenderPass, renderPassDesc);
-		app.GetUILayer()->Init(m_RenderPass.Get(), m_pCurrentList);
-
+        m_pCurrentQuery = m_Queries[0].Get();
+        
 		//Create camerabuffer
 		BufferDesc cameraBufferdesc = {};
 		cameraBufferdesc.pName			= "CameraBuffer";
-		cameraBufferdesc.Usage			= RESOURCE_USAGE_DEFAULT;
+		cameraBufferdesc.Usage			= USAGE_DEFAULT;
 		cameraBufferdesc.Flags			= BUFFER_FLAGS_CONSTANT_BUFFER;
 		cameraBufferdesc.SizeInBytes	= sizeof(CameraBuffer);
 		cameraBufferdesc.StrideInBytes	= sizeof(CameraBuffer);
-		pDevice->CreateBuffer(&m_CameraBuffer, nullptr, cameraBufferdesc);
+		m_Device->CreateBuffer(&m_CameraBuffer, nullptr, cameraBufferdesc);
 
 		//Create lightbuffer
 		BufferDesc lightBufferDesc = {};
 		lightBufferDesc.pName			= "LightBuffer";
-		lightBufferDesc.Usage			= RESOURCE_USAGE_DEFAULT;
+		lightBufferDesc.Usage			= USAGE_DEFAULT;
 		lightBufferDesc.Flags			= BUFFER_FLAGS_CONSTANT_BUFFER;
 		lightBufferDesc.SizeInBytes		= sizeof(LightBuffer);
 		lightBufferDesc.StrideInBytes	= sizeof(LightBuffer);
-		pDevice->CreateBuffer(&m_LightBuffer, nullptr, lightBufferDesc);
+		m_Device->CreateBuffer(&m_LightBuffer, nullptr, lightBufferDesc);
 
 		//Create TransformBuffer
 		BufferDesc transformBufferdesc = {};
 		transformBufferdesc.pName			= "TransformBuffer";
-		transformBufferdesc.Usage			= RESOURCE_USAGE_DYNAMIC;
+		transformBufferdesc.Usage			= USAGE_DYNAMIC;
 		transformBufferdesc.Flags			= BUFFER_FLAGS_CONSTANT_BUFFER;
 		transformBufferdesc.SizeInBytes		= sizeof(TransformBuffer);
 		transformBufferdesc.StrideInBytes	= sizeof(TransformBuffer);
@@ -114,21 +91,16 @@ namespace Lambda
 		data.pData			= glm::value_ptr(glm::mat4(1.0f));
 		data.SizeInBytes	= transformBufferdesc.SizeInBytes;
 
-		pDevice->CreateBuffer(&m_TransformBuffer, &data, transformBufferdesc);
+		m_Device->CreateBuffer(&m_TransformBuffer, &data, transformBufferdesc);
 
 		//Create materialbuffer
 		BufferDesc materialBufferDesc = {};
 		materialBufferDesc.pName			= "MaterialBuffer";
-		materialBufferDesc.Usage			= RESOURCE_USAGE_DYNAMIC;
+		materialBufferDesc.Usage			= USAGE_DYNAMIC;
 		materialBufferDesc.Flags			= BUFFER_FLAGS_CONSTANT_BUFFER;
 		materialBufferDesc.SizeInBytes		= sizeof(MaterialBuffer);
 		materialBufferDesc.StrideInBytes	= sizeof(MaterialBuffer);
-		pDevice->CreateBuffer(&m_MaterialBuffer, &data, materialBufferDesc);
-
-		//Execute commandlist
-		m_pCurrentList->Close();
-		pDevice->ExecuteCommandList(&m_pCurrentList, 1);
-		pDevice->WaitForGPU();
+		m_Device->CreateBuffer(&m_MaterialBuffer, nullptr, materialBufferDesc);
 
 		//Setup viewport
 		IWindow* pWindow = Application::Get().GetWindow();
@@ -149,33 +121,14 @@ namespace Lambda
 			m_CurrentFPS = 0;
 		}
 		m_CurrentFPS++;
-
-		//Get current device
-		IDevice* pDevice = IDevice::Get();
-		//Set commandlist for frame
-		uint32 backBufferIndex = pDevice->GetBackBufferIndex();
-		m_pCurrentList = m_Lists[backBufferIndex].Get();
-		m_pCurrentList->Reset();
-		
+	
 		//Get last frame's values from query
 		uint64 values[2] = { 0, 0 };
 		m_pCurrentQuery->GetResults(values, 2, 0);
 		m_FrameInfo.GPUTime = Timestep(values[1] - values[0]);
 		//Reset new query
-		m_pCurrentQuery = m_Queries[backBufferIndex].Get();
-		m_pCurrentList->ResetQuery(m_pCurrentQuery);
-
-		//Begin present
-		pDevice->PresentBegin();
-
-		//Get rendertarget
-		float color[] = { 0.392f, 0.584f, 0.929f, 1.0f };
-		ITexture* pRenderTarget = pDevice->GetRenderTarget();
-		ITexture* pDepthBuffer = pDevice->GetDepthStencil();
-
-		//Set rendertargets and clearcolors
-		m_RenderPass->SetRenderTargets(&pRenderTarget, 1, pDepthBuffer);
-		m_RenderPass->SetClearValues(color, 1.0f, 0);
+		m_pCurrentQuery = m_Queries[m_QueryIndex].Get();
+		m_Context->ResetQuery(m_pCurrentQuery);
 	}
 
 	
@@ -190,105 +143,129 @@ namespace Lambda
 		ResourceData cameraData = {};
 		cameraData.pData		= &cameraBuffer;
 		cameraData.SizeInBytes	= sizeof(CameraBuffer);
-		m_pCurrentList->UpdateBuffer(m_CameraBuffer.Get(), &cameraData);
+		m_Context->UpdateBuffer(m_CameraBuffer.Get(), cameraData);
 
 		//Update lightbuffer
 		ResourceData lightData = {};
 		lightData.pData			= &light;
 		lightData.SizeInBytes	= sizeof(LightBuffer);
-		m_pCurrentList->UpdateBuffer(m_LightBuffer.Get(), &lightData);
+		m_Context->UpdateBuffer(m_LightBuffer.Get(), lightData);
 
-		//Begin renderpass
-		m_pCurrentList->BeginRenderPass(m_RenderPass.Get());
+		//Transition framebuffer
+        ITexture* pRenderTarget = m_SwapChain->GetBuffer();
+        ITexture* pDepthBuffer = m_SwapChain->GetDepthBuffer();
+		
+		TextureTransitionBarrier barriers[2];
+		barriers[0].pTexture = pRenderTarget;
+		barriers[0].AfterState = RESOURCE_STATE_RENDERTARGET_CLEAR;
+		barriers[0].MipLevel = LAMBDA_ALL_MIP_LEVELS;
+		barriers[1].pTexture = pDepthBuffer;
+		barriers[1].AfterState = RESOURCE_STATE_DEPTH_STENCIL_CLEAR;
+		barriers[1].MipLevel = LAMBDA_ALL_MIP_LEVELS;
+		m_Context->TransitionTextureStates(barriers, 2);
+
+        //Clear framebuffer
+        float color[] = { 0.392f, 0.584f, 0.929f, 1.0f };
+        m_Context->ClearRenderTarget(pRenderTarget, color);
+        m_Context->ClearDepthStencil(pDepthBuffer, 1.0f, 0);
+        
+		//Transition into rendertarget and depthstencil
+		barriers[0].AfterState = RESOURCE_STATE_RENDERTARGET;
+		barriers[1].AfterState = RESOURCE_STATE_DEPTH_STENCIL;
+		m_Context->TransitionTextureStates(barriers, 2);
+
+		//Set rendertargets
+		m_Context->SetRendertargets(&pRenderTarget, 1, pDepthBuffer);
+
 		//Write query
-		m_pCurrentList->WriteTimeStamp(m_pCurrentQuery, PIPELINE_STAGE_VERTEX);
+		m_Context->WriteTimeStamp(m_pCurrentQuery, PIPELINE_STAGE_VERTEX);
 		//Set viewport
-		m_pCurrentList->SetViewport(m_Viewport);
-		m_pCurrentList->SetScissorRect(m_ScissorRect);
+		m_Context->SetViewports(&m_Viewport, 1);
+		m_Context->SetScissorRects(&m_ScissorRect, 1);
 	}
 
 
 	void Renderer3D::Submit(const Model& model, const Material& material, const TransformBuffer& transform)
 	{
 		//Update transform
-		ResourceData transformData = {};
-		transformData.pData			= &transform;
-		transformData.SizeInBytes	= sizeof(TransformBuffer);
-		m_pCurrentList->UpdateBuffer(m_TransformBuffer.Get(), &transformData);
-		
-        //Update material
+		void* pTransformData = nullptr;
+		m_Context->MapBuffer(m_TransformBuffer.Get(), MAP_FLAG_WRITE | MAP_FLAG_WRITE_DISCARD, &pTransformData);
+		memcpy(pTransformData, &transform, sizeof(TransformBuffer));
+		m_Context->UnmapBuffer(m_TransformBuffer.Get());
+
+		//Update material
 		MaterialBuffer materialBuffer = {};
 		materialBuffer.Color		= material.Color;
 		materialBuffer.HasAlbedoMap = material.HasAlbedoMap;
 		materialBuffer.HasNormalMap = material.HasNormalMap;
-
-		ResourceData materialData = {};
-		materialData.pData			= &materialBuffer;
-		materialData.SizeInBytes	= sizeof(MaterialBuffer);
-		m_pCurrentList->UpdateBuffer(m_MaterialBuffer.Get(), &materialData);
+        
+		void* pMaterialData = nullptr;
+		m_Context->MapBuffer(m_MaterialBuffer.Get(), MAP_FLAG_WRITE | MAP_FLAG_WRITE_DISCARD, &pMaterialData);
+		memcpy(pMaterialData, &materialBuffer, sizeof(MaterialBuffer));
+		m_Context->UnmapBuffer(m_MaterialBuffer.Get());
 	
 		//Set variables
 		material.pVariableTable->GetVariableByName(SHADER_STAGE_VERTEX, "u_CameraBuffer")->SetConstantBuffer(m_CameraBuffer.Get());
 		material.pVariableTable->GetVariableByName(SHADER_STAGE_VERTEX, "u_TransformBuffer")->SetConstantBuffer(m_TransformBuffer.Get());
-		material.pVariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_MaterialBuffer")->SetConstantBuffer(m_MaterialBuffer.Get());
-		material.pVariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_LightBuffer")->SetConstantBuffer(m_LightBuffer.Get());
+		material.pVariableTable->GetVariableByName(SHADER_STAGE_PIXEL,	"u_MaterialBuffer")->SetConstantBuffer(m_MaterialBuffer.Get());
+		material.pVariableTable->GetVariableByName(SHADER_STAGE_PIXEL,	"u_LightBuffer")->SetConstantBuffer(m_LightBuffer.Get());
 
 		//Set mesh
-        m_pCurrentList->SetVertexBuffer(model.pVertexBuffer, 0);
-        m_pCurrentList->SetIndexBuffer(model.pIndexBuffer, FORMAT_R32_UINT);
+        m_Context->SetVertexBuffers(&model.pVertexBuffer, 1, 0);
+        m_Context->SetIndexBuffer(model.pIndexBuffer, FORMAT_R32_UINT);
         //Set pipelinestate
-		m_pCurrentList->SetShaderVariableTable(material.pVariableTable);
-		m_pCurrentList->SetPipelineState(material.pPipelineState);
+		m_Context->SetShaderVariableTable(material.pVariableTable);
+		m_Context->SetPipelineState(material.pPipelineState);
         //Draw
-        m_pCurrentList->DrawIndexedInstanced(model.IndexCount, 1, 0, 0, 0);
+        m_Context->DrawIndexedInstanced(model.IndexCount, 1, 0, 0, 0);
 	}
 
 
 	void Renderer3D::EndScene() const
 	{
-		//Draw UI before ending renderpass
-		Application::Get().GetUILayer()->Draw(m_pCurrentList);
-		//End renderpass
-		m_pCurrentList->EndRenderPass();
+		//Draw UI before ending
+		Application::Get().GetUILayer()->Draw(m_Context.Get());
 		//End by writing a timestamp
-		m_pCurrentList->WriteTimeStamp(m_pCurrentQuery, PIPELINE_STAGE_PIXEL);
+		m_Context->WriteTimeStamp(m_pCurrentQuery, PIPELINE_STAGE_PIXEL);
 	}
 
 
 	void Renderer3D::End()
 	{
-		m_pCurrentList->Close();
 	}
 
 
 	void Renderer3D::Swapbuffers()
 	{
-		//Get current device
-		IDevice* pDevice = IDevice::Get();
-		pDevice->PresentEnd(&m_pCurrentList, 1);
+		//Present
+		m_SwapChain->Present();
+        m_QueryIndex = (m_QueryIndex+1) % m_SwapChain->GetDesc().BufferCount;
 	}
 
 
 	void Renderer3D::Release()
 	{
-		//Release commandlists
-		for (auto& list : m_Lists)
-			list.Release();
-		m_Lists.clear();
-		//Release queries
-		for (auto& query : m_Queries)
-			query.Get();
-		m_Queries.clear();
-		//Release renderpass
-		m_RenderPass.Release();
+        //Release queries
+        for (auto& query : m_Queries)
+            query.Release();
+        m_Queries.clear();
+        
 		//Destroy camerabuffer
-		m_CameraBuffer.Release();
+        m_CameraBuffer.Release();
+        
 		//Destroy lightbuffer
-		m_LightBuffer.Release();
+        m_LightBuffer.Release();
+        
 		//Destroy transformbuffer
-		m_TransformBuffer.Release();
+        m_TransformBuffer.Release();
+        
 		//Destroy materialbuffer
-		m_MaterialBuffer.Release();
+        m_MaterialBuffer.Release();
+
+        //Release context, device and swapchain
+        m_SwapChain.Release();
+        m_Context.Release();
+        m_Device.Release();
 	}
 
 	
@@ -307,6 +284,9 @@ namespace Lambda
 		m_ScissorRect.Height = float(height);
 		m_ScissorRect.X		 = 0.0f;
 		m_ScissorRect.Y		 = 0.0f;
+
+		//Resize
+		m_SwapChain->ResizeBuffers(width, height);
 	}
 
 	
@@ -325,12 +305,6 @@ namespace Lambda
 	IBuffer* Renderer3D::GetTransformCB()
 	{
 		return m_TransformBuffer.Get();
-	}
-	
-	
-	IRenderPass* Renderer3D::GetRenderPass()
-	{
-		return m_RenderPass.Get();
 	}
 	
 

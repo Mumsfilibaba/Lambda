@@ -1,15 +1,16 @@
 #pragma once
-#include "Graphics/Core/IQuery.h"
-#include "Graphics/Core/DeviceObjectBase.h"
-#include "VKNAllocator.h"
+#include "Graphics/Core/QueryBase.h"
+#include "Vulkan.h"
 
 namespace Lambda
 {
+	class VKNDevice;
+
     //--------
     //VKNQuery
     //--------
     
-    class VKNQuery final : public DeviceObjectBase<VKNDevice, IQuery>
+    class VKNQuery final : public QueryBase<VKNDevice>
     {
     public:
         LAMBDA_NO_COPY(VKNQuery);
@@ -19,7 +20,6 @@ namespace Lambda
         
         virtual void GetResults(uint64* pResults, uint32 numResults, uint32 startQuery) override final;
         virtual void* GetNativeHandle() const override final;
-        virtual const QueryDesc& GetDesc() const override final;
         
         uint32 GetQueryIndex() const;
         void NextQuery();
@@ -28,8 +28,7 @@ namespace Lambda
         void Init(const QueryDesc& desc);
     private:
         VkQueryPool m_QueryPool;
-        uint32      m_CurrentQuery;
-        float       m_TimeStampPeriod;
-        QueryDesc   m_Desc;
+        uint32 m_CurrentQuery;
+        float  m_TimeStampPeriod;
     };
 }

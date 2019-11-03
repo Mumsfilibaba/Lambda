@@ -1,9 +1,10 @@
 #pragma once
-#include "Graphics/Core/IPipelineState.h"
-#include "Graphics/Core/DeviceObjectBase.h"
+#include "Graphics/Core/PipelineStateBase.h"
 #include <map>
 #include <vector>
-#include <vulkan/vulkan.h>
+#include <unordered_map>
+#include "Memory/VKNDescriptorAllocator.h"
+#include "Vulkan.h"
 
 namespace Lambda
 {
@@ -14,34 +15,15 @@ namespace Lambda
 	class VKNTexture;
 	class ISamplerState;
 	class VKNSamplerState;
-	class VKNDescriptorSetAllocator;
-
-	//-------
-	//VKNSlot
-	//-------
-
-	struct VKNSlot
-	{
-		ShaderVariableDesc Slot;
-		union
-		{
-			VKNBuffer* pBuffer;
-			VKNTexture* pTexture;
-			VKNSamplerState* pSamplerState;
-		};
-		union
-		{
-			VkDescriptorBufferInfo	BufferInfo;
-			VkDescriptorImageInfo	ImageInfo;
-		};
-	};
 
 	//----------------
 	//VKNPipelineState
 	//----------------
 
-    class VKNPipelineState final : public DeviceObjectBase<VKNDevice, IPipelineState>
+    class VKNPipelineState final : public PipelineStateBase<VKNDevice>
     {
+		using TPipelineState = PipelineStateBase<VKNDevice>;
+
     public:
         LAMBDA_NO_COPY(VKNPipelineState);
         
@@ -51,21 +33,49 @@ namespace Lambda
 		virtual void CreateShaderVariableTable(IShaderVariableTable** ppVariableTable) override final;
         virtual void SetName(const char* pName) override final;
         virtual void* GetNativeHandle() const override final;
-		virtual const PipelineStateDesc& GetDesc() const override final;
 
-		inline VkPipeline GetVkPipeline() const							{ return m_Pipeline; }
-		inline VkPipelineLayout GetVkPipelineLayout() const				{ return m_PipelineLayout; }
-		inline VkDescriptorSetLayout GetVkDescriptorSetLayout() const	{ return m_DescriptorSetLayout; }
-		inline VKNDescriptorSetAllocator* GetAllocator() const			{ return m_pAllocator; };
+		
+		_forceinline VkDescriptorSet AllocateDescriptorSet() const			
+		{ 
+			return m_pAllocator->Allocate(m_DescriptorSetLayout); 
+		};
+
+
+		_forceinline VkPipeline GetVkPipeline() const							
+		{ 
+			return m_Pipeline; 
+		}
+		
+		
+		_forceinline VkPipelineLayout GetVkPipelineLayout() const				
+		{ 
+			return m_PipelineLayout; 
+		}
+		
+		
+		_forceinline VkDescriptorSetLayout GetVkDescriptorSetLayout() const	
+		{ 
+			return m_DescriptorSetLayout; 
+		}
+
+
+		_forceinline VkSampler GetStaticVkSampler(const std::string& key) const
+		{
+			auto samplerState = m_StaticSamplerStates.find(key);
+			if (samplerState != m_StaticSamplerStates.end())
+				return samplerState->second;
+
+			return VK_NULL_HANDLE;
+		}
     private:
         void Init(const PipelineStateDesc& desc);
     private:
-        VKNDescriptorSetAllocator*      m_pAllocator;
-        VkPipeline                      m_Pipeline;
-        VkPipelineLayout                m_PipelineLayout;
-        VkDescriptorSetLayout           m_DescriptorSetLayout;
+        VKNDescriptorSetAllocator* m_pAllocator;
+        VkPipeline            m_Pipeline;
+        VkPipelineLayout      m_PipelineLayout;
+        VkDescriptorSetLayout m_DescriptorSetLayout;
         std::vector<ShaderVariableDesc> m_ShaderVariableDescs;
         std::vector<ConstantBlockDesc>  m_ConstantBlockDescs;
-		PipelineStateDesc			    m_Desc;
+		std::unordered_map<std::string, VkSampler> m_StaticSamplerStates;
     };
 }

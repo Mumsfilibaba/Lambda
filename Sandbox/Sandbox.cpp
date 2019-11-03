@@ -14,7 +14,7 @@
 
 namespace Lambda
 {
-    struct Transform
+	struct Transform
     {
         glm::vec3 Position = glm::vec3(0.0f, 0.0f, 0.0f);
         glm::vec3 Rotation = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -37,13 +37,14 @@ namespace Lambda
         PushLayer(DBG_NEW SandBoxLayer());
     }
 
-
     //------------
     //SandBoxLayer
     //------------
 
 	SandBoxLayer::SandBoxLayer()
          : Layer("SandBoxLayer"),
+		m_SwapChain(nullptr),
+		m_Context(nullptr),
 		m_VS(nullptr),
 		m_PS(nullptr),
 		m_Mesh(),
@@ -94,31 +95,30 @@ namespace Lambda
 		m_Camera.CreateView();
 
 		//Init size
-        Application& app = Application::Get();
-		IDevice* pDevice = IDevice::Get();
+		Application& app = Application::Get();
+		IDevice* pDevice = app.GetGraphicsDevice();
         if (pDevice)
         {
-			AutoRef<IDeviceContext> tempList = nullptr;
-			pDevice->CreateCommandList(&tempList, COMMAND_LIST_TYPE_GRAPHICS);
-			tempList->Reset();
+			//Get context
+			m_Context = pDevice->GetImmediateContext();
+
+			//Get swapchain
+			m_SwapChain = app.GetSwapChain();
+			m_SwapChain->AddRef();
 
             //Create shaders
-			DeviceDesc deviceDesc = pDevice->GetDesc();
-			if (deviceDesc.Api == GRAPHICS_API_VULKAN)
+			const DeviceProperties& deviceProps = pDevice->GetProperties();
+			if (deviceProps.Api == GRAPHICS_API_VULKAN)
 			{
 				m_VS = IShader::CreateShaderFromFile(pDevice, "vert.spv", "main", SHADER_STAGE_VERTEX, SHADER_LANG_SPIRV);
-				m_PS = IShader::CreateShaderFromFile(pDevice, "frag.spv", "main", SHADER_STAGE_PIXEL,	SHADER_LANG_SPIRV);
+				m_PS = IShader::CreateShaderFromFile(pDevice, "frag.spv", "main", SHADER_STAGE_PIXEL,  SHADER_LANG_SPIRV);
 			}
-			else if (deviceDesc.Api == GRAPHICS_API_D3D12)
+			else if (deviceProps.Api == GRAPHICS_API_D3D12)
 			{
 				m_VS = IShader::CreateShaderFromFile(pDevice, "Triangle.hlsl", "VSMain", SHADER_STAGE_VERTEX,	SHADER_LANG_HLSL);
 				m_PS = IShader::CreateShaderFromFile(pDevice, "Triangle.hlsl", "PSMain", SHADER_STAGE_PIXEL,	SHADER_LANG_HLSL);
 			}
             
-
-            //Define depthformat
-            Format depthFormat = FORMAT_D24_UNORM_S8_UINT;
-
             //Create pipelinestate
             {
 				InputElementDesc elements[]
@@ -143,31 +143,37 @@ namespace Lambda
 
 				DepthStencilStateDesc depthStencilState = {};
 				depthStencilState.DepthTest = true;
+              
+				ISwapChain* pSwapChain = app.GetSwapChain();
+				const SwapChainDesc& swapChainDesc = pSwapChain->GetDesc();
 
                 GraphicsPipelineStateDesc graphicsPipeline = {};
-                graphicsPipeline.pVertexShader = m_VS.Get();
-                graphicsPipeline.pPixelShader  = m_PS.Get();
-				graphicsPipeline.Topology = PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-				graphicsPipeline.VertexInput		= vertexInput;
-				graphicsPipeline.RasterizerState	= rasterizerState;
-				graphicsPipeline.pRenderPass		= app.GetRenderer().GetRenderPass();
-				graphicsPipeline.BlendState			= blendState;
-				graphicsPipeline.DepthStencilState	= depthStencilState;
+                graphicsPipeline.pVertexShader			= m_VS.Get();
+                graphicsPipeline.pPixelShader			= m_PS.Get();
+				graphicsPipeline.Topology				= PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+				graphicsPipeline.VertexInput			= vertexInput;
+				graphicsPipeline.RasterizerState		= rasterizerState;
+				graphicsPipeline.SampleCount			= swapChainDesc.BufferSampleCount;
+				graphicsPipeline.NumRenderTargets		= 1;
+				graphicsPipeline.RenderTargetFormats[0] = FORMAT_B8G8R8A8_UNORM;
+				graphicsPipeline.DepthStencilFormat		= FORMAT_D24_UNORM_S8_UINT;
+				graphicsPipeline.BlendState				= blendState;
+				graphicsPipeline.DepthStencilState		= depthStencilState;
 
 				ShaderVariableDesc shaderVariables[] =
 				{
-					{ "u_CameraBuffer",		nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_VERTEX,	RESOURCE_USAGE_DEFAULT, 0 },
-					{ "u_TransformBuffer",	nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_VERTEX,	RESOURCE_USAGE_DYNAMIC, 1 },
-					{ "u_MaterialBuffer",	nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DYNAMIC, 2 },
-					{ "u_LightBuffer",		nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DEFAULT, 3 },
-					{ "u_Albedo",			nullptr, RESOURCE_TYPE_TEXTURE,			SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DEFAULT, 4 },
-					{ "u_Normal",			nullptr, RESOURCE_TYPE_TEXTURE,			SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DEFAULT, 5 },
-					{ "u_Sampler",			nullptr, RESOURCE_TYPE_SAMPLER_STATE,	SHADER_STAGE_PIXEL,		RESOURCE_USAGE_DEFAULT, 6 },
+					{ "u_CameraBuffer",		nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_VERTEX,	USAGE_DEFAULT, 0 },
+					{ "u_TransformBuffer",	nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_VERTEX,	USAGE_DYNAMIC, 1 },
+					{ "u_MaterialBuffer",	nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_PIXEL,		USAGE_DYNAMIC, 2 },
+					{ "u_LightBuffer",		nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_PIXEL,		USAGE_DEFAULT, 3 },
+					{ "u_Albedo",			nullptr, RESOURCE_TYPE_TEXTURE,			SHADER_STAGE_PIXEL,		USAGE_DEFAULT, 4 },
+					{ "u_Normal",			nullptr, RESOURCE_TYPE_TEXTURE,			SHADER_STAGE_PIXEL,		USAGE_DEFAULT, 5 },
+					{ "u_Sampler",			nullptr, RESOURCE_TYPE_SAMPLER_STATE,	SHADER_STAGE_PIXEL,		USAGE_DEFAULT, 6 },
 				};
 
 				ShaderVariableTableDesc variableTableDesc = {};
-				variableTableDesc.NumVariables	= 7;
-				variableTableDesc.pVariables	= shaderVariables;
+				variableTableDesc.NumVariables		= sizeof(shaderVariables) / sizeof(ShaderVariableDesc);
+				variableTableDesc.pVariables		= shaderVariables;
 				variableTableDesc.NumConstantBlocks	= 0;
 				variableTableDesc.pConstantBlocks	= nullptr;
 
@@ -176,6 +182,7 @@ namespace Lambda
 				pipelineDesc.Type	= PIPELINE_TYPE_GRAPHICS;
 				pipelineDesc.ShaderVariableTable	= variableTableDesc;
 				pipelineDesc.GraphicsPipeline		= graphicsPipeline;
+
                 pDevice->CreatePipelineState(&m_PipelineState, pipelineDesc);
 				m_PipelineState->CreateShaderVariableTable(&m_VariableTable);
             }
@@ -186,7 +193,7 @@ namespace Lambda
 			{
                 BufferDesc desc     = {};
                 desc.pName          = "Mesh VertexBuffer";
-                desc.Usage          = RESOURCE_USAGE_DEFAULT;
+                desc.Usage          = USAGE_DEFAULT;
                 desc.Flags          = BUFFER_FLAGS_VERTEX_BUFFER;
                 desc.SizeInBytes    = sizeof(Vertex) * uint32(mesh.Vertices.size());
                 desc.StrideInBytes  = sizeof(Vertex);
@@ -197,11 +204,12 @@ namespace Lambda
 
                 pDevice->CreateBuffer(&m_Mesh.pVertexBuffer, &data, desc);
             }
+
             //Create indexbuffer
             {
                 BufferDesc desc     = {};
                 desc.pName          = "Mesh IndexBuffer";
-                desc.Usage          = RESOURCE_USAGE_DEFAULT;
+                desc.Usage          = USAGE_DEFAULT;
                 desc.Flags          = BUFFER_FLAGS_INDEX_BUFFER;
                 desc.SizeInBytes    = sizeof(uint32) * uint32(mesh.Indices.size());
                 desc.StrideInBytes  = sizeof(uint32);
@@ -213,13 +221,34 @@ namespace Lambda
                 pDevice->CreateBuffer(&m_Mesh.pIndexBuffer, &data, desc);
             }
 
+			//Create position buffer
+			{
+				BufferDesc desc = {};
+				desc.pName			= "PositionBuffer";
+				desc.Usage			= USAGE_DYNAMIC;
+				desc.Flags			= BUFFER_FLAGS_CONSTANT_BUFFER;
+				desc.SizeInBytes	= sizeof(glm::vec3);
+				desc.StrideInBytes	= sizeof(glm::vec3);
+
+				glm::vec3 position = glm::vec3(0.0f, 0.0f, 1.0f);
+
+				ResourceData data = {};
+				data.pData			= &position;
+				data.SizeInBytes	= desc.SizeInBytes;
+
+				pDevice->CreateBuffer(&m_PositionBuffer, &data, desc);
+			}
+
+			IWindow* pWindow = app.GetWindow();
+			CreateCamera(pWindow->GetWidth(), pWindow->GetHeight());
+
 			//Create vertexbuffer
 			MeshData mesh2 = MeshFactory::CreateSphere(4, 0.45);
 			m_SphereMesh.IndexCount = uint32(mesh2.Indices.size());
 			{
 				BufferDesc desc = {};
 				desc.pName			= "Sphere VertexBuffer";
-				desc.Usage			= RESOURCE_USAGE_DEFAULT;
+				desc.Usage			= USAGE_DEFAULT;
 				desc.Flags			= BUFFER_FLAGS_VERTEX_BUFFER;
 				desc.SizeInBytes	= sizeof(Vertex) * uint32(mesh2.Vertices.size());
 				desc.StrideInBytes	= sizeof(Vertex);
@@ -234,7 +263,7 @@ namespace Lambda
 			{
 				BufferDesc desc = {};
 				desc.pName			= "Sphere IndexBuffer";
-				desc.Usage			= RESOURCE_USAGE_DEFAULT;
+				desc.Usage			= USAGE_DEFAULT;
 				desc.Flags			= BUFFER_FLAGS_INDEX_BUFFER;
 				desc.SizeInBytes	= sizeof(uint32) * uint32(mesh2.Indices.size());
 				desc.StrideInBytes	= sizeof(uint32);
@@ -246,14 +275,32 @@ namespace Lambda
 				pDevice->CreateBuffer(&m_SphereMesh.pIndexBuffer, &data, desc);
 			}
 
-            //Init transforms
+            //Init transformbuffer
             m_TransformBuffer.Model = glm::mat4(1.0f);
 
             //Create texture
-            m_AlbedoMap = ITexture::CreateTextureFromFile(pDevice, "revolver_albedo.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
-            m_NormalMap = ITexture::CreateTextureFromFile(pDevice, "revolver_normal.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, RESOURCE_USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
-			tempList->TransitionTexture(m_AlbedoMap.Get(), RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0, LAMBDA_TRANSITION_ALL_MIPS);
-			tempList->TransitionTexture(m_NormalMap.Get(), RESOURCE_STATE_PIXEL_SHADER_RESOURCE, 0, LAMBDA_TRANSITION_ALL_MIPS);
+            m_AlbedoMap = ITexture::CreateTextureFromFile(pDevice, "revolver_albedo.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
+			m_AlbedoMap->SetName("AlbedoMap");
+			m_NormalMap = ITexture::CreateTextureFromFile(pDevice, "revolver_normal.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
+			m_NormalMap->SetName("NormalMap");
+
+			//Transition before generating miplevels
+			TextureTransitionBarrier barriers[2];
+			barriers[0].pTexture	= m_AlbedoMap.Get();
+			barriers[0].AfterState	= RESOURCE_STATE_COPY_DEST;
+			barriers[0].MipLevel	= LAMBDA_ALL_MIP_LEVELS;
+			barriers[1].pTexture	= m_NormalMap.Get();
+			barriers[1].AfterState	= RESOURCE_STATE_COPY_DEST;
+			barriers[1].MipLevel	= LAMBDA_ALL_MIP_LEVELS;
+			m_Context->TransitionTextureStates(barriers, 2);
+			m_Context->GenerateMipLevels(m_AlbedoMap.Get());
+			m_Context->GenerateMipLevels(m_NormalMap.Get());
+
+			//Transition into shader resource
+			barriers[0].AfterState = RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+			barriers[1].AfterState = RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+			m_Context->TransitionTextureStates(barriers, 2);
+
 
             //Create samplerstate
             TextureDesc textureDesc = m_AlbedoMap->GetDesc();
@@ -265,15 +312,10 @@ namespace Lambda
 			desc.Anisotropy = 16.0f;
             pDevice->CreateSamplerState(&m_SamplerState, desc);
 
-            //Close and execute commandlist
-			tempList->Close();
-            pDevice->ExecuteCommandList(&tempList, 1);
-            //Wait for GPU
-            pDevice->WaitForGPU();
-
 			//Setup materials
-			m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Albedo")->SetTexture(m_AlbedoMap.Get());
+			m_VariableTable->GetVariableByName(SHADER_STAGE_VERTEX, "u_TransformBuffer")->SetConstantBuffer(m_PositionBuffer.Get());
 			m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Normal")->SetTexture(m_NormalMap.Get());
+			m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Albedo")->SetTexture(m_AlbedoMap.Get());
 			m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Sampler")->SetSamplerState(m_SamplerState.Get());
 
 			m_Material.pPipelineState	= m_PipelineState.Get();
@@ -364,28 +406,84 @@ namespace Lambda
 		}
 
 		renderer.EndScene();
+
+		/*
+		//Transition before clearing
+		ITexture* pRenderTarget = m_SwapChain->GetBuffer();
+		ITexture* pDepthBuffer	= m_SwapChain->GetDepthBuffer();
+
+		TextureTransitionBarrier barriers[2];
+		barriers[0].pTexture	= pRenderTarget;
+		barriers[0].AfterState	= RESOURCE_STATE_RENDERTARGET_CLEAR;
+		barriers[0].MipLevel	= LAMBDA_ALL_MIP_LEVELS;
+		barriers[1].pTexture	= pDepthBuffer;
+		barriers[1].AfterState	= RESOURCE_STATE_DEPTH_STENCIL_CLEAR;
+		barriers[1].MipLevel	= LAMBDA_ALL_MIP_LEVELS;
+		m_Context->TransitionTextureStates(barriers, 2);
+
+		//Clear rendertarget
+		float color[] = { 0.392f, 0.584f, 0.929f, 1.0f };
+		m_Context->ClearRenderTarget(pRenderTarget, color);
+
+		//Clear depthbuffer
+		m_Context->ClearDepthStencil(pDepthBuffer, 1.0f, 0);
+
+		//Transition into rendertarget and depthstencil
+		barriers[0].AfterState = RESOURCE_STATE_RENDERTARGET;
+		barriers[1].AfterState = RESOURCE_STATE_DEPTH_STENCIL;
+		m_Context->TransitionTextureStates(barriers, 2);
+
+		//Set rendertargets
+		m_Context->SetRendertargets(&pRenderTarget, 1, pDepthBuffer);
+
+		//Set viewport
+		m_Context->SetViewports(&m_Viewport, 1);
+		m_Context->SetScissorRects(&m_ScissorRect, 1);
+		
+		//Set mesh
+		m_Context->SetVertexBuffers(&m_Mesh.pVertexBuffer, 1, 0);
+		m_Context->SetIndexBuffer(m_Mesh.pIndexBuffer, FORMAT_R32_UINT);
+		//Set pipelinestate
+		m_Context->SetShaderVariableTable(m_VariableTable.Get());
+		m_Context->SetPipelineState(m_PipelineState.Get());
+
+        //Draw squares
+		constexpr uint32 numSquares = 5;
+		for (uint32 y = 0; y < numSquares; y++)
+		{
+			for (uint32 x = 0; x < numSquares; x++)
+			{	
+				//Update position
+				void* pMappedData = nullptr;
+				m_Context->MapBuffer(m_PositionBuffer.Get(), MAP_FLAG_WRITE | MAP_FLAG_WRITE_DISCARD, &pMappedData);
+
+				//xy (.xy) and scale (.z)
+				constexpr float size = 2.0f / numSquares;
+				glm::vec3 position = glm::vec3(-1.0f + (size / 2.0f) + ((size) * float(x)), 1.0f - (size / 2.0f) - ((size) * float(y)), size);
+				memcpy(pMappedData, &position, sizeof(glm::vec3));
+
+				m_Context->UnmapBuffer(m_PositionBuffer.Get());
+
+                //Draw
+                m_Context->DrawIndexedInstanced(m_Mesh.IndexCount, 1, 0, 0, 0);
+			}
+		}
+
+		//Draw UI before ending
+		Application::Get().GetUILayer()->Draw(m_Context.Get());
+
+		//Present
+		m_SwapChain->Present();
+		*/
 	}
 
 
 	void SandBoxLayer::OnRelease()
 	{
-		IDevice* pDevice = IDevice::Get();
-        if (pDevice)
-        {
-            pDevice->WaitForGPU();
-
-			m_VS.Release();
-			m_PS.Release();
-			m_PipelineState.Release();
-			m_VariableTable.Release();
-			m_Mesh.pVertexBuffer->Release();
-			m_Mesh.pIndexBuffer->Release();
-			m_SphereMesh.pVertexBuffer->Release();
-			m_SphereMesh.pIndexBuffer->Release();
-			m_AlbedoMap.Release();
-			m_NormalMap.Release();
-			m_SamplerState.Release();
-        }
+		m_Mesh.pVertexBuffer->Release();
+		m_Mesh.pIndexBuffer->Release();
+		m_SphereMesh.pVertexBuffer->Release();
+		m_SphereMesh.pIndexBuffer->Release();
 	}
 
 
@@ -479,7 +577,7 @@ namespace Lambda
 
 			static void ShowObject(const char* prefix, int uid)
 			{
-				ImGui::PushID(uid);                      // Use object uid as identifier. Most commonly you could also use the object pointer as a base ID.
+				ImGui::PushID(uid);                // Use object uid as identifier. Most commonly you could also use the object pointer as a base ID.
 				ImGui::AlignTextToFramePadding();  // Text and Tree nodes are less high than regular widgets, here we add vertical spacing to make the tree lines equal high.
 				bool nodeOpen = ImGui::TreeNode("Object", "%s_%u", prefix, uid);
 				ImGui::NextColumn();
@@ -517,9 +615,7 @@ namespace Lambda
 		//draw spheres
 		uint32 index = 3;
 		for (auto& transform : sphereTransforms)
-		{
 			funcs::ShowObject("Entity", index++);
-		}
 
 		ImGui::Columns(1);
 		ImGui::Separator();
@@ -546,9 +642,8 @@ namespace Lambda
 	bool SandBoxLayer::OnWindowResize(const WindowResizeEvent& event)
 	{
 		if (event.GetWidth() > 0 && event.GetHeight() > 0)
-		{
 			CreateCamera(event.GetWidth(), event.GetHeight());
-		}
+
 		return false;
 	}
 
@@ -568,5 +663,22 @@ namespace Lambda
     {
         m_Camera.SetAspect(float(width), float(height));
         m_Camera.CreateProjection();
+
+		//Viewport
+		m_Viewport.Width	= float(width);
+		m_Viewport.Height	= float(height);
+		m_Viewport.MaxDepth = 1.0f;
+		m_Viewport.MinDepth = 0.0f;
+		m_Viewport.TopX		= 0.0f;
+		m_Viewport.TopY		= 0.0f;
+
+		//Scissorrect
+		m_ScissorRect.Width		= float(width);
+		m_ScissorRect.Height	= float(height);
+		m_ScissorRect.X			= 0.0f;
+		m_ScissorRect.Y			= 0.0f;
+
+		//Resize
+		m_SwapChain->ResizeBuffers(width, height);
 	}
 }

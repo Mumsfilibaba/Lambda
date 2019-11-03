@@ -1,6 +1,7 @@
 #pragma once
-#include "IObject.h"
+#include "Graphics/Core/SwapChainBase.h"
 #include <vector>
+#include "VKNDeviceContext.h"
 #include "VKNUtilities.h"
 
 namespace Lambda
@@ -9,54 +10,57 @@ namespace Lambda
     class VKNDevice;
 	class VKNTexture;
 
-	//----------------
-	//VKNSwapChainDesc
-	//----------------
-
-	struct VKNSwapChainDesc
-	{
-        VkExtent2D			Extent          = { 0, 0 };
-		uint32				ImageCount      = 0;
-        VkSurfaceFormatKHR	Format;
-        bool                VerticalSync    = true;
-	};
-
 	//------------
 	//VKNSwapChain
 	//------------
 
-	class VKNSwapChain
+	class VKNSwapChain final : public SwapChainBase<VKNDevice>
 	{
 	public:
 		LAMBDA_NO_COPY(VKNSwapChain);
 
-		VKNSwapChain(VKNDevice* pDevice, const VKNSwapChainDesc& desc);
-		~VKNSwapChain() = default;
+		VKNSwapChain(VKNDevice* pDevice, const SwapChainDesc& desc);
+		~VKNSwapChain();
 
-		void ResizeBuffers(uint32 width, uint32 height);
-		void AquireNextImage(VkSemaphore signalSemaphore);
-		void Present(VkQueue presentQueue, VkSemaphore waitSemaphore);
+		virtual void ResizeBuffers(uint32 width, uint32 height) override final;
+		virtual bool SetFullscreenState(bool fullscreenState) override final;
+		virtual bool GetFullscreenState() const override final;
+		virtual ITexture* GetBuffer() override final;
+        virtual ITexture* GetDepthBuffer() override final;
+        virtual void Present() override final;
+        virtual void* GetNativeHandle() const override final;
+		
+		VkResult AquireNextImage();
 
-		void Release(VkDevice device);
-		void Destroy(VkDevice device);
-
-		uint32		GetWidth() const;
-		uint32		GetHeight() const;
-        uint32		GetBufferCount() const;
-        uint32		GetBackBufferIndex() const;
-		VkFormat	GetFormat() const;
-		ITexture*	GetCurrentBuffer() const;
+        
+        _forceinline uint32 GetBackBufferIndex() const
+        {
+            return m_CurrentBufferIndex;
+        }
+        
+        
+        _forceinline VkFormat GetVkFormat() const
+        {
+            return m_VkFormat.format;
+        }
 	private:
-		void Init(const VKNSwapChainDesc& desc);
+		void Init(const SwapChainDesc& desc);
         void InitSwapChain(VkExtent2D extent);
+        void ReleaseResources();
+		void RecreateSwapChain();
 	private:
-		VKNDevice*					m_pDevice;
-		VkSwapchainKHR				m_SwapChain;
-		VkSurfaceFormatKHR			m_Format;
-		VkExtent2D					m_Extent;
-        VkPresentModeKHR			m_PresentationMode;
-		uint32						m_ImageCount;
-		mutable uint32				m_CurrentBufferIndex;
+		AutoRef<VKNDeviceContext> m_Context;
+        VkSurfaceKHR        m_Surface;
+		VkSwapchainKHR		m_VkSwapChain;
+		VkSurfaceFormatKHR	m_VkFormat;
+        VkPresentModeKHR	m_PresentationMode;
+        AutoRef<VKNTexture> m_SampleBuffer;
+        AutoRef<VKNTexture> m_DepthStencilBuffer;
+		mutable uint32		m_CurrentBufferIndex;
+        mutable uint32      m_SemaphoreIndex;
+        std::vector<VkSemaphore> m_RenderSemaphores;
+        std::vector<VkSemaphore> m_ImageSemaphores;
 		mutable std::vector<AutoRef<VKNTexture>> m_Buffers;
+		bool m_FullscreenState;
 	};
 }

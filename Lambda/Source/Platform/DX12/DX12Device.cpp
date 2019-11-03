@@ -19,6 +19,8 @@ namespace Lambda
 	//DX12Device
 	//------------------
 
+	DX12Device* DX12Device::s_pInstance = nullptr;
+
 	DX12Device::DX12Device(const DeviceDesc& desc)
 		: m_Device(nullptr),
 		m_DXRDevice(nullptr),
@@ -26,7 +28,7 @@ namespace Lambda
 		m_Adapter(nullptr),
 		m_SwapChain(nullptr),
 		m_Factory(nullptr),
-		m_pCommandList(nullptr),
+		m_pImmediateContext(nullptr),
 		m_DirectQueue(),
 		m_ComputeQueue(),
 		m_CopyQueue(),
@@ -49,7 +51,6 @@ namespace Lambda
 		//TODO: Allow tearing?
 		m_BackBufferFlags	= DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 		m_BackBufferFormat	= DXGI_FORMAT_R8G8B8A8_UNORM;
-		m_NumBackbuffers	= desc.BackBufferCount;
 
 		Init(desc);
 	}
@@ -64,8 +65,8 @@ namespace Lambda
 			m_SwapChain->SetFullscreenState(false, nullptr);
 		}
 
-		IDeviceContext* pList = m_pCommandList;
-		m_pCommandList->Release();
+		IDeviceContext* pList = m_pImmediateContext;
+		m_pImmediateContext->Release();
 
 		for (uint32 i = 0; i < m_NumBackbuffers; i++)
 		{
@@ -85,8 +86,6 @@ namespace Lambda
 	void DX12Device::Init(const DeviceDesc& desc)
 	{
 		using namespace Microsoft::WRL;
-
-		LAMBDA_ASSERT(desc.pWindow != nullptr);
 
 		//Should we enable debuglayer
 		uint32 factoryFlags = 0;
@@ -210,15 +209,15 @@ namespace Lambda
 		memset(&scDesc, 0, sizeof(scDesc));
 		scDesc.BufferCount			= m_NumBackbuffers;
 		scDesc.Format				= m_BackBufferFormat;
-		scDesc.Width				= desc.pWindow->GetWidth();
-		scDesc.Height				= desc.pWindow->GetHeight();
+		//scDesc.Width				= desc.pWindow->GetWidth();
+		//scDesc.Height				= desc.pWindow->GetHeight();
 		scDesc.BufferUsage			= DXGI_USAGE_RENDER_TARGET_OUTPUT;
 		scDesc.SwapEffect			= DXGI_SWAP_EFFECT_FLIP_DISCARD;
 		scDesc.SampleDesc.Count		= 1;
 		scDesc.SampleDesc.Quality	= 0;
 		scDesc.Flags				= 0;
 
-		HWND hWnd = reinterpret_cast<HWND>(desc.pWindow->GetNativeHandle());
+		HWND hWnd = 0;// reinterpret_cast<HWND>(desc.pWindow->GetNativeHandle());
 		
 		ComPtr<IDXGISwapChain1> swapChain = nullptr;
 		hr = m_Factory->CreateSwapChainForHwnd(m_DirectQueue.GetQueue(), hWnd, &scDesc, nullptr, nullptr, &swapChain);
@@ -263,13 +262,9 @@ namespace Lambda
 		}
 
 
-		//Create internal commandlist
-		IDeviceContext* pCommandList = nullptr;
-		CreateCommandList(&pCommandList, COMMAND_LIST_TYPE_GRAPHICS);
-		
-		m_pCommandList = reinterpret_cast<DX12DeviceContext*>(pCommandList);
-		m_pCommandList->SetName("Device GraphicsCommandList");
-		m_pCommandList->Reset();
+		//Create internal commandlist	
+		m_pImmediateContext = DBG_NEW DX12DeviceContext(this, DEVICE_CONTEXT_TYPE_IMMEDIATE, m_NullSampler, m_NullSRV, m_NullUAV, m_NullCBV);
+		m_pImmediateContext->SetName("Device GraphicsCommandList");
 
 		
 		//Create descriptor-allocator
@@ -323,9 +318,9 @@ namespace Lambda
 	}
 
 
-	void DX12Device::CreateCommandList(IDeviceContext** ppList, CommandListType type)
+	void DX12Device::CreateDefferedContext(IDeviceContext** ppDefferedContext)
 	{
-		*ppList = DBG_NEW DX12DeviceContext(this, type, m_NullSampler, m_NullSRV, m_NullUAV, m_NullCBV);
+		(*ppDefferedContext) = DBG_NEW DX12DeviceContext(this, DEVICE_CONTEXT_TYPE_DEFFERED, m_NullSampler, m_NullSRV, m_NullUAV, m_NullCBV);
 	}
 
 
@@ -337,7 +332,7 @@ namespace Lambda
 		//Set initaldata if there are any
 		if (pInitalData != nullptr)
 		{
-			if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
+			if (desc.Usage == USAGE_DYNAMIC)
 			{
 				//Set initial data
 				if (pInitalData != nullptr)
@@ -348,18 +343,18 @@ namespace Lambda
 					pBuffer->Unmap();
 				}
 			}
-			else if(desc.Usage == RESOURCE_USAGE_DEFAULT)
+			else if(desc.Usage == USAGE_DEFAULT)
 			{
 				//Copy data
-				m_pCommandList->TransitionBuffer(pBuffer, RESOURCE_STATE_COPY_DEST);
-				m_pCommandList->UpdateBuffer(pBuffer, pInitalData);
+				m_pImmediateContext->TransitionBuffer(pBuffer, RESOURCE_STATE_COPY_DEST);
+				m_pImmediateContext->UpdateBuffer(pBuffer, *pInitalData);
 
 				//Execute and wait for GPU before creating
-				m_pCommandList->Close();
-				m_DirectQueue.ExecuteCommandLists(&m_pCommandList, 1);
+				m_pImmediateContext->End();
+				m_DirectQueue.ExecuteCommandLists(&m_pImmediateContext, 1);
 
 				WaitForGPU();
-				m_pCommandList->Reset();
+				m_pImmediateContext->Begin();
 			}
 		}
 
@@ -384,7 +379,7 @@ namespace Lambda
 	void DX12Device::CreateTexture(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc)
 	{
 		//Return early if errors
-		if (desc.Usage == RESOURCE_USAGE_DYNAMIC)
+		if (desc.Usage == USAGE_DYNAMIC)
 		{
 			LOG_DEBUG_ERROR("Lambda Engine: Texture2D cannot have resource usage dynamic\n");
 			(*ppTexture) = nullptr;
@@ -398,18 +393,18 @@ namespace Lambda
 		if (pInitalData != nullptr)
 		{
 			//Copy data
-			m_pCommandList->TransitionTexture(pTexture, RESOURCE_STATE_COPY_DEST, 0, LAMBDA_TRANSITION_ALL_MIPS);
-			m_pCommandList->UpdateTexture(pTexture, pInitalData, 0);
-			m_pCommandList->TransitionTexture(pTexture, RESOURCE_STATE_RENDERTARGET_PRESENT, 0, LAMBDA_TRANSITION_ALL_MIPS);
+			m_pImmediateContext->TransitionTexture(pTexture, RESOURCE_STATE_COPY_DEST, 0, LAMBDA_TRANSITION_ALL_MIPS);
+			m_pImmediateContext->UpdateTexture(pTexture, *pInitalData, 0);
+			m_pImmediateContext->TransitionTexture(pTexture, RESOURCE_STATE_PRESENT, 0, LAMBDA_TRANSITION_ALL_MIPS);
 
 			//Execute and wait for GPU before creating
-			m_pCommandList->Close();
+			m_pImmediateContext->End();
 
-			IDeviceContext* pList = m_pCommandList;
+			IDeviceContext* pList = m_pImmediateContext;
 			ExecuteCommandList(&pList, 1);
 
 			WaitForGPU();
-			m_pCommandList->Reset();
+			m_pImmediateContext->Begin();
 		}
 		
 		//DepthStencil
@@ -472,12 +467,6 @@ namespace Lambda
 	void DX12Device::CreatePipelineState(IPipelineState** ppPSO, const PipelineStateDesc& desc)
 	{
 		//(*ppPSO) = DBG_NEW DX12PipelineState(m_Device.Get(), desc);
-	}
-
-
-	void DX12Device::CreateRenderPass(IRenderPass** ppRenderPass, const RenderPassDesc& desc)
-	{
-		LAMBDA_ASSERT(ppRenderPass && &desc);
 	}
 
 
@@ -610,16 +599,11 @@ namespace Lambda
 	}
 
 
-	void DX12Device::PresentBegin() const
-	{
-	}
-
-
-	void DX12Device::PresentEnd(IDeviceContext* const* ppLists, uint32 numLists) const
+	/*void DX12Device::PresentEnd(IDeviceContext* const* ppLists, uint32 numLists) const
 	{
 		m_DirectQueue.ExecuteCommandLists(reinterpret_cast<DX12DeviceContext * const*>(ppLists), numLists);
 		m_SwapChain->Present(1, 0);
-	}
+	}*/
 
 
 	void DX12Device::GPUWaitForFrame() const
@@ -656,7 +640,7 @@ namespace Lambda
 	}
 
 
-	ITexture* DX12Device::GetRenderTarget() const
+	/*ITexture* DX12Device::GetRenderTarget() const
 	{
 		return m_BackBuffers[m_SwapChain->GetCurrentBackBufferIndex()];
 	}
@@ -689,10 +673,10 @@ namespace Lambda
 	uint32 DX12Device::GetSwapChainHeight() const
 	{
 		return m_BackBufferHeight;
-	}
+	}*/
 
 
-	DeviceProperties DX12Device::GetProperties() const
+	const DeviceProperties& DX12Device::GetProperties() const
 	{
 		return DeviceProperties();
 	}
@@ -854,7 +838,7 @@ namespace Lambda
 	}
 
 
-	bool DX12Device::OnResize(const WindowResizeEvent& event)
+	/*bool DX12Device::OnResize(const WindowResizeEvent& event)
 	{
 		//if size is zero then do not resize
 		if (event.GetWidth() > 0 && event.GetHeight() > 0)
@@ -883,7 +867,7 @@ namespace Lambda
 		}
 
 		return false;
-	}
+	}*/
 	
 	
 	DX12Device& DX12Device::Get()

@@ -15,5 +15,6 @@ namespace Lambda
         LAMBDA_IOBJECT_INTERFACE(IDeviceObject);
         
         virtual IDevice* GetDevice() const = 0;
+		virtual void SetName(const char* pName) = 0;
     };
 }

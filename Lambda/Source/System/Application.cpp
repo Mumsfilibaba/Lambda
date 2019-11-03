@@ -1,6 +1,7 @@
 #include "LambdaPch.h"
 #include "System/Application.h"
 #include "Graphics/UILayer.h"
+#include "Graphics/Core/IFactory.h"
 #include "Time/Clock.h"
 #include "System/Log.h"
 #include "System/Input.h"
@@ -19,6 +20,9 @@ namespace Lambda
 	Application::Application(const EngineParams& params)
 		: m_pWindow(nullptr),
 		m_pUILayer(nullptr),
+        m_GraphicsDevice(nullptr),
+        m_Context(nullptr),
+        m_SwapChain(nullptr),
 		m_Params(params),
 		m_ExitCode(0),
 		m_Running(true)
@@ -103,18 +107,34 @@ namespace Lambda
 		
 		//Create window
 		WindowDesc desc = {};
-		desc.pTitle				= m_Params.pTitle;
-		desc.Width				= m_Params.WindowWidth;
-		desc.Height				= m_Params.WindowHeight;
-		desc.GraphicsDeviceAPI	= m_Params.GraphicsDeviceApi;
-		desc.SampleCount		= m_Params.SampleCount;
-		desc.Fullscreen			= m_Params.Fullscreen;
-        desc.VerticalSync       = m_Params.VerticalSync;
+		desc.pTitle	= m_Params.pTitle;
+		desc.Width	= m_Params.WindowWidth;
+		desc.Height	= m_Params.WindowHeight;
 		m_pWindow = IWindow::Create(desc);
 		m_pWindow->SetEventCallback(DBG_NEW ObjectEventCallback(this, &Application::OnEvent));
-		//Push Resize callback
-		PushCallback(IDevice::Get(), &IDevice::OnResize);
-
+		
+        //Create device and swapchain
+        AutoRef<IFactory> factory = nullptr;
+        IFactory::CreateFactory(&factory, m_Params.GraphicsDeviceApi);
+        
+        DeviceDesc deviceDesc = {};
+#if defined(LAMBDA_DEBUG)
+        deviceDesc.Flags = DEVICE_FLAG_DEBUG;
+#else
+        deviceDesc.Flags = DEVICE_FLAG_NONE;
+#endif
+        
+        SwapChainDesc swapChainDesc = {};
+        swapChainDesc.pWindowHandle     = m_pWindow->GetNativeHandle();
+        swapChainDesc.BufferCount       = 3;
+        swapChainDesc.BufferFormat      = FORMAT_B8G8R8A8_UNORM;
+        swapChainDesc.DepthBufferFormat = FORMAT_D24_UNORM_S8_UINT;
+        swapChainDesc.BufferHeight      = 0;
+        swapChainDesc.BufferWidth       = 0;
+        swapChainDesc.BufferSampleCount = m_Params.SampleCount;
+        swapChainDesc.VerticalSync      = m_Params.VerticalSync;
+        factory->CreateDeviceAndSwapChain(&m_GraphicsDevice, deviceDesc, &m_Context, &m_SwapChain, swapChainDesc);
+    
 		//Create UI-Layer
 		m_pUILayer = DBG_NEW UILayer();
 		//Push ImGui-Layer
@@ -153,13 +173,11 @@ namespace Lambda
 	void Application::OnRender(Timestep dt)
 	{
 		m_Renderer.Begin();
-
 		for (auto it = m_LayerStack.Begin(); it != m_LayerStack.End(); it++)
 		{
 			Layer* pLayer = (*it);
             pLayer->OnRender(m_Renderer, dt);
 		}
-
 		m_Renderer.End();
 		m_Renderer.Swapbuffers();
 	}
@@ -181,18 +199,28 @@ namespace Lambda
 	{
 		//Release renderer
 		m_Renderer.Release();
+        
 		//Remove callback
 		m_pWindow->SetEventCallback(nullptr);
+		
 		//Release all layers
 		for (auto it = m_LayerStack.Begin(); it != m_LayerStack.End(); it++)
 		{
 			Layer* pLayer = (*it);
 			pLayer->OnRelease();
 		}
-        //Release LayerStack
+        
+		//Release LayerStack
         m_LayerStack.Release();
-        //Release Eventdispatcher
+        
+		//Release Eventdispatcher
         m_Dispatcher.Release();
+
+        //Destroy graphics objects
+        m_SwapChain.Release();
+        m_Context.Release();
+        m_GraphicsDevice.Release();
+        
 		//Destroy window
 		SafeDelete(m_pWindow);
 	}
@@ -270,6 +298,18 @@ namespace Lambda
     UILayer* Application::GetUILayer() const
     {
         return m_pUILayer;
+    }
+
+
+    IDevice* Application::GetGraphicsDevice() const
+    {
+        return m_GraphicsDevice.Get();
+    }
+
+
+    ISwapChain* Application::GetSwapChain() const
+    {
+        return m_SwapChain.Get();
     }
 
 

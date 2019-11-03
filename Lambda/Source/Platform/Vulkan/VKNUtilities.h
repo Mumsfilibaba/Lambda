@@ -3,19 +3,20 @@
 #include "Types.h"
 #include "Utilities/TextureHelper.h"
 #include <vector>
-#include <vulkan/vulkan.h>
+#include "Vulkan.h"
 
 namespace Lambda
 {
     //Helperstruct for when finding queuefamilies
     struct QueueFamilyIndices
     {
-        int32 GraphicsFamily = -1;
-        int32 PresentFamily = -1;
+        int32 GraphicsFamily    = -1;
+        int32 PresentFamily     = -1;
+        int32 ComputeFamily     = -1;
         
-        inline bool Valid()
+		_forceinline bool Valid()
         {
-            return (GraphicsFamily >= 0) && (PresentFamily >= 0);
+            return (GraphicsFamily >= 0) && (PresentFamily >= 0) && (ComputeFamily >= 0);
         }
     };
     
@@ -27,7 +28,7 @@ namespace Lambda
         std::vector<VkSurfaceFormatKHR> Formats;
         std::vector<VkPresentModeKHR> PresentModes;
         
-        inline bool Valid()
+        _forceinline bool Valid()
         {
             return !Formats.empty() && !PresentModes.empty() && (Capabilities.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_DST_BIT);
         }
@@ -35,39 +36,44 @@ namespace Lambda
     
     
     //Helper function to retrive information about the device's swapchain capabilities
-    inline SwapChainCapabilities QuerySwapChainSupport(VkPhysicalDevice adapter, VkSurfaceKHR surface)
-    {
-        SwapChainCapabilities info;
-        
+    inline VkResult QuerySwapChainSupport(SwapChainCapabilities& swapchainCapabilities, VkPhysicalDevice adapter, VkSurfaceKHR surface)
+    {        
         //Get capabilities from the surface
-        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(adapter, surface, &info.Capabilities);
+		VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(adapter, surface, &swapchainCapabilities.Capabilities);
+		if (result != VK_SUCCESS)
+			return result;
         
         //Get supported surface formats
         uint32 formatCount = 0;
-        vkGetPhysicalDeviceSurfaceFormatsKHR(adapter, surface, &formatCount, nullptr);
-        
+		result = vkGetPhysicalDeviceSurfaceFormatsKHR(adapter, surface, &formatCount, nullptr);
+       
         if (formatCount != 0)
         {
-            info.Formats.resize(formatCount);
-            vkGetPhysicalDeviceSurfaceFormatsKHR(adapter, surface, &formatCount, info.Formats.data());
+			swapchainCapabilities.Formats.resize(formatCount);
+			result = vkGetPhysicalDeviceSurfaceFormatsKHR(adapter, surface, &formatCount, swapchainCapabilities.Formats.data());
         }
+
+
+		if (result != VK_SUCCESS)
+			return result;
         
+
         //Get presentation modes
         uint32 presentModeCount = 0;
-        vkGetPhysicalDeviceSurfacePresentModesKHR(adapter, surface, &presentModeCount, nullptr);
+		result = vkGetPhysicalDeviceSurfacePresentModesKHR(adapter, surface, &presentModeCount, nullptr);
         
         if (presentModeCount != 0)
         {
-            info.PresentModes.resize(presentModeCount);
-            vkGetPhysicalDeviceSurfacePresentModesKHR(adapter, surface, &presentModeCount, info.PresentModes.data());
+			swapchainCapabilities.PresentModes.resize(presentModeCount);
+			result = vkGetPhysicalDeviceSurfacePresentModesKHR(adapter, surface, &presentModeCount, swapchainCapabilities.PresentModes.data());
         }
         
-        return info;
+        return result;
     }
     
     
     //Function to retrive queuefamilies from physicaldevice
-    inline QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice adapter, VkSurfaceKHR surface)
+    inline QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice adapter)
     {
         //Get all queuefamilies for this adapter
         uint32 queueFamilyCount = 0;
@@ -81,25 +87,20 @@ namespace Lambda
         QueueFamilyIndices indices;
         for (const auto& queueFamiliy : queueFamilies)
         {
-            //Check for graphics support
+            //Check for graphics support (Assume presenation support)
             if (queueFamiliy.queueCount > 0 && queueFamiliy.queueFlags & VK_QUEUE_GRAPHICS_BIT)
             {
-                indices.GraphicsFamily = i;
+                indices.GraphicsFamily  = i;
+                indices.PresentFamily   = i;
             }
             
-            //Check for presentationsupport
-            VkBool32 presentSupport = false;
-            vkGetPhysicalDeviceSurfaceSupportKHR(adapter, i, surface, &presentSupport);
-            if (queueFamiliy.queueCount > 0 && presentSupport)
-            {
-                indices.PresentFamily = i;
-            }
+            //Check for compute support
+            if (queueFamiliy.queueCount > 0 && queueFamiliy.queueFlags & VK_QUEUE_COMPUTE_BIT)
+                indices.ComputeFamily  = i;
             
-            //If we have found a queuefamiliy for both presentation and graphics we break
+            //If we have found a queuefamiliy for presentation, graphics and compute -> we break
             if (indices.Valid())
-            {
                 break;
-            }
             
             i++;
         }
@@ -143,6 +144,47 @@ namespace Lambda
             default: return "Unknown VkPresentModeKHR";
         }
     }
+
+
+	inline const char* VkResultToString(VkResult result)
+	{
+		switch (result)
+		{
+		case VK_SUCCESS:											return "VK_SUCCESS";
+		case VK_NOT_READY:											return "VK_NOT_READY";
+		case VK_TIMEOUT:											return "VK_TIMEOUT";
+		case VK_EVENT_SET:											return "VK_EVENT_SET";
+		case VK_EVENT_RESET:										return "VK_EVENT_RESET";
+		case VK_INCOMPLETE:											return "VK_INCOMPLETE";
+		case VK_ERROR_OUT_OF_HOST_MEMORY:							return "VK_ERROR_OUT_OF_HOST_MEMORY";
+		case VK_ERROR_OUT_OF_DEVICE_MEMORY:							return "VK_ERROR_OUT_OF_DEVICE_MEMORY";
+		case VK_ERROR_INITIALIZATION_FAILED:						return "VK_ERROR_INITIALIZATION_FAILED";
+		case VK_ERROR_DEVICE_LOST:									return "VK_ERROR_DEVICE_LOST";
+		case VK_ERROR_MEMORY_MAP_FAILED:							return "VK_ERROR_MEMORY_MAP_FAILED";
+		case VK_ERROR_LAYER_NOT_PRESENT:							return "VK_ERROR_LAYER_NOT_PRESENT";
+		case VK_ERROR_EXTENSION_NOT_PRESENT:						return "VK_ERROR_EXTENSION_NOT_PRESENT";
+		case VK_ERROR_FEATURE_NOT_PRESENT:							return "VK_ERROR_FEATURE_NOT_PRESENT";
+		case VK_ERROR_INCOMPATIBLE_DRIVER:							return "VK_ERROR_INCOMPATIBLE_DRIVER";
+		case VK_ERROR_TOO_MANY_OBJECTS:								return "VK_ERROR_TOO_MANY_OBJECTS";
+		case VK_ERROR_FORMAT_NOT_SUPPORTED:							return "VK_ERROR_FORMAT_NOT_SUPPORTED";
+		case VK_ERROR_FRAGMENTED_POOL:								return "VK_ERROR_OUT_OF_POOL_MEMORY";
+		case VK_ERROR_OUT_OF_POOL_MEMORY:							return "VK_ERROR_OUT_OF_POOL_MEMORY";
+		case VK_ERROR_INVALID_EXTERNAL_HANDLE:						return "VK_ERROR_INVALID_EXTERNAL_HANDLE";
+		case VK_ERROR_SURFACE_LOST_KHR:								return "VK_ERROR_SURFACE_LOST_KHR";
+		case VK_ERROR_NATIVE_WINDOW_IN_USE_KHR:						return "VK_ERROR_NATIVE_WINDOW_IN_USE_KHR";
+		case VK_SUBOPTIMAL_KHR:										return "VK_SUBOPTIMAL_KHR";
+		case VK_ERROR_OUT_OF_DATE_KHR:								return "VK_ERROR_OUT_OF_DATE_KHR";
+		case VK_ERROR_INCOMPATIBLE_DISPLAY_KHR:						return "VK_ERROR_INCOMPATIBLE_DISPLAY_KHR";
+		case VK_ERROR_VALIDATION_FAILED_EXT:						return "VK_ERROR_VALIDATION_FAILED_EXT";
+		case VK_ERROR_INVALID_SHADER_NV:							return "VK_ERROR_INVALID_SHADER_NV";
+		case VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT: return "VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT";
+		case VK_ERROR_FRAGMENTATION_EXT:							return "VK_ERROR_FRAGMENTATION_EXT";
+		case VK_ERROR_NOT_PERMITTED_EXT:							return "VK_ERROR_NOT_PERMITTED_EXT";
+		case VK_ERROR_INVALID_DEVICE_ADDRESS_EXT:					return "VK_ERROR_INVALID_DEVICE_ADDRESS_EXT";
+		case VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT:			return "VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT";
+		default: return "Unknown VkResult";
+		}
+	}
     
     
     inline const char* VkFormatToString(VkFormat format)

@@ -36,10 +36,9 @@ namespace Lambda
     
     MacOSWindow::MacOSWindow(const WindowDesc& desc)
         : m_pWindow(nullptr),
-        m_Device(nullptr),
+        m_pCallback(nullptr),
         m_Width(0.0f),
         m_Height(0.0f),
-        m_pCallback(nullptr),
         m_Fullscreen(false),
         m_HasFocus(false)
     {
@@ -113,48 +112,13 @@ namespace Lambda
 
             //Set fullscreen
             SetFullscreen(desc.Fullscreen);
-            
-            //Create graphics context
-            {
-                DeviceDesc gdDesc = {};
-                gdDesc.pWindow          = this;
-                gdDesc.VerticalSync     = desc.VerticalSync;
-                gdDesc.BackBufferCount  = 3;
-                gdDesc.Api              = desc.GraphicsDeviceAPI;
-                gdDesc.SampleCount      = desc.SampleCount;
-#if LAMBDA_DEBUG
-                gdDesc.Flags = DEVICE_FLAG_DEBUG;
-#else
-                gdDesc.Flags = DEVICE_FLAG_NONE;
-#endif
-                if (desc.GraphicsDeviceAPI == GRAPHICS_API_D3D12)
-                {
-                    LOG_DEBUG_ERROR("Lambda Engine: D3D12 is only supported on the Windows-Platform\n");
-                    m_Device = nullptr;
-                }
-                else if (desc.GraphicsDeviceAPI == GRAPHICS_API_VULKAN)
-                {
-                    m_Device = AutoRef<IDevice>(DBG_NEW VKNDevice(gdDesc));
-                }
-                else
-                {
-                    LOG_DEBUG_ERROR("Lambda Engine: Unsupported graphics API specified\n");
-                }
-            }
-        }
-        else
-        {
-            LOG_DEBUG_ERROR("macOS: Failed to create window");
         }
     }
     
     
     void MacOSWindow::SetEventCallback(IEventCallback* pCallback)
     {
-        if (m_pCallback != nullptr)
-        {
-            SafeDelete(m_pCallback);
-        }
+        SafeDelete(m_pCallback);
         m_pCallback = pCallback;
     }
     
@@ -338,12 +302,6 @@ namespace Lambda
     }
     
     
-    const IDevice* MacOSWindow::GetGraphicsDevice() const
-    {
-        return m_Device.Get();
-    }
-    
-    
     bool MacOSWindow::SetFullscreen(bool fullscreen)
     {
         //glfwMaximizeWindow(m_pWindow);
@@ -389,6 +347,7 @@ namespace Lambda
                 
                 m_EventBackLog.clear();
             }*/
+            
             m_pCallback->Callback(event);
         }
         else

@@ -6,11 +6,9 @@
 namespace Lambda
 {
 	class IQuery;
-	class IWindow;
 	class IBuffer;
 	class IShader;
 	class ITexture;
-	class IRenderPass;
 	class ISamplerState;
 	class IPipelineState;
 
@@ -18,7 +16,6 @@ namespace Lambda
 	struct BufferDesc;
 	struct ShaderDesc;
 	struct TextureDesc;
-	struct RenderPassDesc;
 	struct SamplerStateDesc;
 	struct PipelineStateDesc;
 
@@ -43,12 +40,7 @@ namespace Lambda
     
     struct DeviceDesc
     {
-        IWindow* pWindow       = nullptr;
-        GraphicsApi Api        = GRAPHICS_API_VULKAN;
-        uint32 Flags           = DEVICE_FLAG_NONE;
-		uint32 SampleCount     = 1;
-        uint32 BackBufferCount = 3;
-        bool VerticalSync      = true;
+        uint32 Flags = DEVICE_FLAG_NONE;
     };
 
 	//----------------
@@ -57,8 +49,21 @@ namespace Lambda
 
 	struct DeviceProperties
 	{
+        GraphicsAPI Api         = GRAPHICS_API_UNKNOWN;
 		char VendorString[256]	= { 0 };
 		char AdapterString[256]	= { 0 };
+	};
+
+	//------------------
+	//DeviceCapabilities
+	//------------------
+
+	struct DeviceFeatures
+	{
+		bool MeshShaders				= false;
+		bool HardwareRayTracing			= false;
+		bool VariableRateShading		= false;
+		bool SwapChainFullscreenState	= false;
 	};
 
     //-------
@@ -67,41 +72,22 @@ namespace Lambda
     
 	class LAMBDA_API IDevice : public IObject
 	{
-        friend class Application;
 	public:
 		LAMBDA_IOBJECT_INTERFACE(IDevice);
 
-		virtual void CreateCommandList(IDeviceContext** ppList, CommandListType type) = 0;
+		virtual void CreateDefferedContext(IDeviceContext** ppList) = 0;
 		virtual void CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) = 0;
 		virtual void CreateTexture(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc) = 0;
 		virtual void CreateShader(IShader** ppShader, const ShaderDesc& desc) = 0;
 		virtual void CreateSamplerState(ISamplerState** ppSamplerState, const SamplerStateDesc& desc) = 0;
 		virtual void CreatePipelineState(IPipelineState** ppPipelineState, const PipelineStateDesc& desc) = 0;
-		virtual void CreateRenderPass(IRenderPass** ppRenderPass, const RenderPassDesc& desc) = 0;
         virtual void CreateQuery(IQuery** ppQuery, const QueryDesc& desc) = 0;
-
-		virtual void ExecuteCommandList(IDeviceContext* const * ppLists, uint32 numLists) const = 0;
-		
-		virtual void PresentBegin() const = 0;
-		virtual void PresentEnd(IDeviceContext* const* ppLists, uint32 numLists) const = 0;
-		
-		virtual void WaitForGPU() const = 0;
-		virtual void GPUWaitForFrame() const = 0;
-
-		virtual DeviceProperties GetProperties() const = 0;
+        
+        virtual IDeviceContext* GetImmediateContext() const = 0;
+        
         virtual const DeviceDesc& GetDesc() const = 0;
+		virtual const DeviceFeatures& GetFeatures() const = 0;
+        virtual const DeviceProperties& GetProperties() const = 0;
         virtual void* GetNativeHandle() const = 0;
-		virtual ITexture* GetDepthStencil() const = 0;
-		virtual ITexture* GetRenderTarget() const = 0;
-		virtual Format GetBackBufferFormat() const = 0;
-		virtual uint32 GetBackBufferIndex() const = 0;
-		virtual uint32 GetSwapChainWidth() const = 0;
-		virtual uint32 GetSwapChainHeight() const = 0;
-	private:
-		virtual bool OnResize(const WindowResizeEvent& event) = 0;
-	public:
-		static IDevice* Get();
-	protected:
-		static IDevice* s_pInstance;
 	};
 }

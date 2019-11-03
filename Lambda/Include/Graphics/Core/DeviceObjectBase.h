@@ -1,6 +1,7 @@
 #pragma once
 #include "IDevice.h"
 #include "IDeviceObject.h"
+#include <string>
 
 namespace Lambda
 {
@@ -8,14 +9,21 @@ namespace Lambda
 	//DeviceObjectBase
 	//----------------
 
-	template<typename DeviceImpl, typename BaseInterface>
+	template<typename TDeviceImpl, typename BaseInterface>
 	class DeviceObjectBase : public RefCountedObject<BaseInterface>
 	{
 	public:
 		LAMBDA_NO_COPY(DeviceObjectBase);
 
-		DeviceObjectBase(DeviceImpl* pDevice) : RefCountedObject<BaseInterface>(), m_pDevice(pDevice) { LAMBDA_ASSERT(pDevice != nullptr); }
+		DeviceObjectBase(TDeviceImpl* pDevice) 
+			: RefCountedObject<BaseInterface>(), 
+			m_pDevice(pDevice), 
+			m_Name("")
+		{ 
+			LAMBDA_ASSERT(pDevice != nullptr); 
+		}
 		~DeviceObjectBase() = default;
+
 
 		virtual IDevice* GetDevice() const override
 		{
@@ -24,7 +32,14 @@ namespace Lambda
 			return pDevice;
 		}
 
+
+		virtual void SetName(const char* pName) override
+		{
+			if (pName != nullptr)
+				m_Name = std::string(pName);
+		}
 	protected:
-		DeviceImpl* m_pDevice;
+		TDeviceImpl* m_pDevice;
+		std::string m_Name;
 	};
 }

@@ -48,7 +48,7 @@ namespace Lambda
 			D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COMMON;
 
 			//We want a default heap
-			if (desc.Usage == RESOURCE_USAGE_DEFAULT)
+			if (desc.Usage == USAGE_DEFAULT)
 			{
 				heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 			}
@@ -132,9 +132,9 @@ namespace Lambda
 			pResource->GetHeapProperties(&heapProp, &heapFlags);
 
 			if (heapProp.Type == D3D12_HEAP_TYPE_DEFAULT)
-				m_Desc.Usage = RESOURCE_USAGE_DEFAULT;
+				m_Desc.Usage = USAGE_DEFAULT;
 			else if (heapProp.Type == D3D12_HEAP_TYPE_UPLOAD)
-				m_Desc.Usage = RESOURCE_USAGE_DYNAMIC;
+				m_Desc.Usage = USAGE_DYNAMIC;
 		}
 	}
 

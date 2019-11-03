@@ -9,6 +9,7 @@ namespace Lambda
     
 	struct SamplerStateDesc
 	{
+		const char* pName				= "";
         SamplerAddressMode AdressMode	= SAMPLER_ADDRESS_MODE_REPEAT;
 		float MinMipLOD					= 0.0f;
 		float MaxMipLOD					= 0.0f;

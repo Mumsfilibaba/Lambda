@@ -101,21 +101,20 @@ workspace "Lambda"
 		filter "system:macosx"
 			links
 			{
-				"glfw.3.3",
+				"glfw.3.4",
 				"vulkan.1",
 				"vulkan.1.1.121",
 				"assimp",
-				"ImGui"
+				"ImGui",
 			}
 			libdirs
 			{
 				"/usr/local/lib",
-				"../vulkansdk-macos-1.1.121.1/macOS/lib"
 			}
 			sysincludedirs
 			{
 				"/usr/local/include",
-				"../vulkansdk-macos-1.1.121.1/macOS/include"
+				"../vulkansdk-macos-1.1.121.1/MoltenVK/include"
 			}
 		-- WINDOWS SPECIFIC
 		filter "system:windows"
@@ -131,11 +130,11 @@ workspace "Lambda"
 			}
 			libdirs
 			{
-				"C:/VulkanSDK/1.1.114.0/Lib"
+				"C:/VulkanSDK/1.1.121.2/Lib"
 			}
 			sysincludedirs
 			{
-				"C:/VulkanSDK/1.1.114.0/Include"
+				"C:/VulkanSDK/1.1.121.2/Include"
 			}
 			sysincludedirs
 			{

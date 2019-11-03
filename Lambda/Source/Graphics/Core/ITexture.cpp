@@ -11,7 +11,7 @@ namespace Lambda
 	//ITexture
 	//--------
 
-	ITexture* ITexture::CreateTextureFromFile(IDevice* pDevice, const char* pFileName, uint32 flags, ResourceUsage usage, Format format)
+	ITexture* ITexture::CreateTextureFromFile(IDevice* pDevice, const char* pFileName, uint32 flags, Usage usage, Format format)
 	{
 		int32 width = 0;
 		int32 height = 0;
@@ -25,15 +25,15 @@ namespace Lambda
 		{
 			//Setup desc
 			TextureDesc desc = {};
-			desc.Type = TEXTURE_TYPE_2D;
-			desc.ArraySize = 1;
-			desc.Flags = flags;
-			desc.Format = format;
-			desc.Height = height;
-			desc.Width = width;
-			desc.MipLevels = 1;
-			desc.SampleCount = 1;
-			desc.Usage = usage;
+			desc.Type			= TEXTURE_TYPE_2D;
+			desc.ArraySize		= 1;
+			desc.Flags			= flags;
+			desc.Format			= format;
+			desc.Height			= height;
+			desc.Width			= width;
+			desc.MipLevels		= 1;
+			desc.SampleCount	= 1;
+			desc.Usage			= usage;
 
 			//Create texture from loaded data
 			ResourceData data = {};

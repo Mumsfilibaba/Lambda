@@ -6,7 +6,6 @@
 #include "Graphics/Core/IBuffer.h"
 #include "Graphics/Core/ITexture.h"
 #include "Graphics/Core/ISamplerState.h"
-#include "Graphics/Core/IRenderPass.h"
 #include "Graphics/Core/IQuery.h"
 #include "Graphics/Camera.h"
 #include "Events/WindowEvent.h"
@@ -39,10 +38,21 @@ namespace Lambda
         bool OnKeyPressed(const KeyPressedEvent& event);
         void CreateCamera(uint32 width, uint32 height);
     private:
+		AutoRef<ITexture> m_SampleBuffer;
+		//Context
+		AutoRef<ISwapChain> m_SwapChain;
+		AutoRef<IDeviceContext> m_Context;
         //Shaders
         AutoRef<IShader> m_VS;
         AutoRef<IShader> m_PS;
+        //Pipelinestates
+		AutoRef<IPipelineState> m_PipelineState;
+		//Variable tables
+		AutoRef<IShaderVariableTable> m_VariableTable;
         //Meshes
+		Viewport  m_Viewport;
+		Rectangle m_ScissorRect;
+		AutoRef<IBuffer> m_PositionBuffer;
 		Model m_Mesh;
 		Model m_SphereMesh;
 		//Material
@@ -53,10 +63,6 @@ namespace Lambda
 		AutoRef<ITexture> m_NormalMap;
         //Samplers
 		AutoRef<ISamplerState> m_SamplerState;
-        //Pipelinestates
-		AutoRef<IPipelineState> m_PipelineState;
-		//Variable tables
-		AutoRef<IShaderVariableTable> m_VariableTable;
         Camera m_Camera;
         TransformBuffer m_TransformBuffer;
     };

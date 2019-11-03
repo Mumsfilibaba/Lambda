@@ -1,19 +1,21 @@
 #pragma once
-#include "Graphics/Core/IShaderVariableTable.h"
-#include "Graphics/Core/DeviceObjectBase.h"
-#include <vulkan/vulkan.h>
+#include "Graphics/Core/ShaderVariableBase.h"
+#include "VKNBuffer.h"
 
 namespace Lambda
 {
 	class VKNDevice;
+	class VKNDeviceContext;
 	class VKNShaderVariableTable;
 
 	//----------------------
 	//VKNShaderVariableTable
 	//----------------------
 
-	class VKNShaderVariable : public DeviceObjectBase<VKNDevice, IShaderVariable>
+	class VKNShaderVariable : public ShaderVariableBase<VKNDevice, VKNShaderVariableTable>
 	{
+		using TShaderVariable = ShaderVariableBase<VKNDevice, VKNShaderVariableTable>;
+
 	public:
 		LAMBDA_NO_COPY(VKNShaderVariable);
 
@@ -23,16 +25,25 @@ namespace Lambda
 		virtual void SetTexture(ITexture* pTexture) override final;
 		virtual void SetConstantBuffer(IBuffer* pBuffer) override final;
 		virtual void SetSamplerState(ISamplerState* pSamplerState) override final;
-		virtual IShaderVariableTable* GetShaderVariableTable() const override final;
-		virtual const ShaderVariableDesc& GetDesc() const override final;
+
 		bool Validate();
 
-		uint32 GetDynamicOffset() const;
-		inline const VkWriteDescriptorSet& GetVkWriteDescriptorSet() { return m_DescriptorWrite; };
+
+		_forceinline uint32 GetDynamicOffset() const
+		{
+			if (m_Desc.Type == RESOURCE_TYPE_CONSTANT_BUFFER && m_Desc.Usage == USAGE_DYNAMIC)
+				return uint32(reinterpret_cast<VKNBuffer*>(m_Resource.Get())->GetDynamicOffset());
+
+			return 0;
+		}
+
+
+		_forceinline const VkWriteDescriptorSet& GetVkWriteDescriptorSet()
+		{ 
+			return m_DescriptorWrite; 
+		}
 	private:
-		VKNShaderVariableTable* m_pVariableTable;
 		AutoRef<IDeviceObject>	m_Resource;
-		ShaderVariableDesc		m_Desc;
         VkWriteDescriptorSet    m_DescriptorWrite;
         uint64                  m_ResourceHandle;
 		union
@@ -40,5 +51,6 @@ namespace Lambda
 			VkDescriptorBufferInfo	m_BufferInfo;
 			VkDescriptorImageInfo	m_ImageInfo;
 		};
+		bool m_IsValid;
 	};
 }

@@ -9,11 +9,10 @@ namespace Lambda
 	//---------
 
 	VKNShader::VKNShader(VKNDevice* pDevice, const ShaderDesc& desc)
-		: DeviceObjectBase<VKNDevice, IShader>(pDevice),
+		: ShaderBase<VKNDevice>(pDevice, desc),
 		m_Shader(VK_NULL_HANDLE),
 		m_ByteCode(),
-		m_EntryPoint(),
-		m_Desc()
+		m_EntryPoint()
 	{
 		//Add a ref to the refcounter
 		this->AddRef();
@@ -24,10 +23,7 @@ namespace Lambda
 	VKNShader::~VKNShader()
 	{
 		if (m_Shader != VK_NULL_HANDLE)
-		{
-			vkDestroyShaderModule(m_pDevice->GetVkDevice(), m_Shader, nullptr);
-			m_Shader = VK_NULL_HANDLE;
-		}
+			m_pDevice->SafeReleaseVulkanResource<VkShaderModule>(m_Shader);
 
 		LOG_DEBUG_INFO("Vulkan: Destroyed Shader\n");
 	}
@@ -62,7 +58,6 @@ namespace Lambda
             LOG_DEBUG_INFO("Vulkan: Created shader\n");
 
             m_EntryPoint = std::string(desc.pEntryPoint);
-			m_Desc = desc;
 			m_Desc.pSource = nullptr;
 			m_Desc.pEntryPoint = m_EntryPoint.c_str();
         }
@@ -73,10 +68,4 @@ namespace Lambda
     {
         return reinterpret_cast<void*>(m_Shader);
     }
-	
-	
-	const ShaderDesc& VKNShader::GetDesc() const
-	{
-		return m_Desc;
-	}
 }

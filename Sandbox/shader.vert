@@ -20,22 +20,25 @@ layout(set = 0, binding = 0) uniform CameraBuffer
     mat4 Projection;
     vec3 Position;
 } u_Camera;
+
 //Model transformbuffer
 layout(set = 0, binding = 1) uniform TransformBuffer
 {
-    mat4 Model;
+	mat4 Model;
 } u_Transform;
 
 void main()
 {
     vec3 position = a_Position;
+	
     //Camera position
     g_ViewPosition = u_Camera.Position;
     //Vertexposition
     vec4 worldPosition  = u_Transform.Model * vec4(position, 1.0);
     g_WorldPosition     = worldPosition.xyz;
     gl_Position         = u_Camera.Projection * u_Camera.View * worldPosition;
-    //UV
+    
+	//UV
     g_TexCoord  = a_TexCoord;
     //Normal
     g_Normal    = normalize(u_Transform.Model * vec4(a_Normal, 0.0f)).xyz;

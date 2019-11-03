@@ -1,7 +1,6 @@
 #pragma once
-#include "Graphics/Core/ITexture.h"
-#include "Graphics/Core/DeviceObjectBase.h"
-#include "VKNAllocator.h"
+#include "Graphics/Core/TextureBase.h"
+#include "Memory/VKNDeviceAllocator.h"
 #include "VKNConversions.inl"
 
 namespace Lambda
@@ -12,39 +11,34 @@ namespace Lambda
     //VKNTexture
     //----------
     
-    class VKNTexture final : public DeviceObjectBase<VKNDevice, ITexture>
+    class VKNTexture final : public TextureBase<VKNDevice>
     {
-        friend class VKNDevice;  
+        friend class VKNDevice;
+		using TTexture = TextureBase<VKNDevice>;
+
     public:
         LAMBDA_NO_COPY(VKNTexture);
 
-        VKNTexture(VKNDevice* pDevice, IVKNAllocator* pAllocator, const TextureDesc& desc);
+        VKNTexture(VKNDevice* pDevice, const ResourceData* pInitalData, const TextureDesc& desc);
         VKNTexture(VKNDevice* pDevice, VkImage image, const TextureDesc& desc);
         ~VKNTexture();
         
         virtual void* GetNativeHandle() const override final;
-        virtual const TextureDesc& GetDesc() const override final;
+		virtual void SetName(const char* pName) override final;
 
-		inline void SetResolveResource(VKNTexture* pResolveResource) const	{ m_Desc.pResolveResource = pResolveResource; }
-		inline void SetVkImageLayout(VkImageLayout resourceState) const		{ m_ImageLayout = resourceState; }
-		inline VkFormat GetVkFormat() const									{ return ConvertResourceFormat(m_Desc.Format); }
-		inline VKNTexture* GetResolveResource() const						{ return reinterpret_cast<VKNTexture*>(m_Desc.pResolveResource); }
-		inline VkImageAspectFlags GetAspectFlags() const					{ return m_AspectFlags; }
-		inline VkImage GetVkImage() const									{ return m_Image; }
-		inline VkImageView GetVkImageView() const							{ return m_ImageView; }
-		inline VkImageLayout GetVkImageLayout() const						{ return m_ImageLayout; }
+		inline VkFormat GetVkFormat() const	{ return ConvertFormat(m_Desc.Format); }
+		inline VkImageAspectFlags GetVkAspectFlags() const { return m_VkAspectFlags; }
+		inline VkImage GetVkImage() const		  { return m_VkImage; }
+		inline VkImageView GetVkImageView() const { return m_ImageView; }
     private:
-        void Init(const TextureDesc& desc);
+        void Init(const ResourceData* pInitalData, const TextureDesc& desc);
         void InitFromResource(VkImage image, const TextureDesc& desc);
         void CreateImageView(); 
     private:
-		IVKNAllocator* const	m_pAllocator;
-		VKNMemory				m_Memory;
-        VkImage                 m_Image;
-        VkImageView             m_ImageView;
-        VkImageAspectFlags      m_AspectFlags;
-        mutable TextureDesc     m_Desc;
-        mutable VkImageLayout   m_ImageLayout;
-        bool                    m_IsOwner;
+		VKNAllocation m_Memory;
+        VkImage     m_VkImage;
+        VkImageView m_ImageView;
+        VkImageAspectFlags m_VkAspectFlags;
+        bool m_IsOwner;
     };
 }

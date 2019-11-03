@@ -23,10 +23,13 @@ layout(set = 0, binding = 3) uniform LightBuffer
     vec4 Color;
     vec3 Position;
 } u_PointLight;
+
+
 //Diffuse texture
 layout(set = 0, binding = 4) uniform texture2D  u_Albedo;
 layout(set = 0, binding = 5) uniform texture2D  u_Normal;
 layout(set = 0, binding = 6) uniform sampler    u_Sampler;
+
 
 void main()
 {

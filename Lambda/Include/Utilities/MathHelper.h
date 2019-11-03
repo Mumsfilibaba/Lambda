@@ -7,17 +7,17 @@ namespace Lambda
 	namespace Math
 	{
 		template<typename T>
-		forceinline T AlignUp(T value, uint64 alignment)
+		_forceinline T AlignUp(T value, size_t alignment)
 		{
-			uint64 mask = alignment - 1;
-			return (T)(((uint32)value + mask) & ~mask);
+			size_t mask = alignment - 1;
+			return (T)(((size_t)value + mask) & ~mask);
 		}
 
 		template<typename T>
-		forceinline T AlignDown(T value, uint64 alignment)
+		_forceinline T AlignDown(T value, size_t alignment)
 		{
-			uint64 mask = alignment - 1;
-			return (T)((uint32)value & ~mask);
+			size_t mask = alignment - 1;
+			return (T)((size_t)value & ~mask);
 		}
 	}
 }

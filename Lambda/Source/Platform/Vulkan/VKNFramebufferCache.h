@@ -1,9 +1,10 @@
 #pragma once
-#include <vulkan/vulkan.h>
 #include <unordered_map>
+#include "Vulkan.h"
 
 namespace Lambda
 {
+	class VKNDevice;
     class VKNTexture;
     
 	//----------------------
@@ -16,14 +17,15 @@ namespace Lambda
 		VKNFramebufferCacheKey();
 		~VKNFramebufferCacheKey() = default;
 
-		size_t	GetHash() const;
-		bool	ContainsTexture(const VKNTexture* pTexture) const;
-		bool	operator==(const VKNFramebufferCacheKey& other) const;
+		size_t GetHash() const;
+		bool ContainsImageView(VkImageView view) const;
+		bool ContainsRenderPass(VkRenderPass renderpass) const;
+		bool operator==(const VKNFramebufferCacheKey& other) const;
 	public:
 		mutable size_t	Hash;
         VkRenderPass	RenderPass;
         uint32			NumAttachmentViews;
-        VkImageView		AttachmentViews[(LAMBDA_MAX_RENDERTARGET_COUNT + 1) * 2];
+        VkImageView		AttachmentViews[LAMBDA_MAX_RENDERTARGET_COUNT + 1];
     };
     
 	//--------------------------
@@ -47,14 +49,16 @@ namespace Lambda
     public:
         LAMBDA_NO_COPY(VKNFramebufferCache);
         
-		VKNFramebufferCache();
+		VKNFramebufferCache(VKNDevice* pDevice);
 		~VKNFramebufferCache();
 
-        void			ReleaseAll(VkDevice device);
-        void			ReleaseAllContainingTexture(VkDevice device, const VKNTexture* pTexture);
-        VkFramebuffer	GetFramebuffer(const VKNFramebufferCacheKey& key, uint32 width, uint32 height);
+        void ReleaseAll();
+        void OnReleaseImageView(VkImageView view);
+		void OnReleaseRenderPass(VkRenderPass renderpass);
+        VkFramebuffer GetFramebuffer(const VKNFramebufferCacheKey& key, VkExtent2D extent);
         
     private:
+		VKNDevice* m_pDevice;
         std::unordered_map<VKNFramebufferCacheKey, VkFramebuffer, VKNFramebufferCacheKeyHash> m_Framebuffers;
 
 	public:

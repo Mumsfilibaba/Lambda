@@ -14,9 +14,9 @@
 
 //Define forceinline
 #if defined(LAMBDA_PLAT_WINDOWS)
-	#define forceinline __forceinline
+	#define _forceinline __forceinline
 #elif defined(LAMBDA_PLAT_MACOS)
-	#define forceinline inline
+	#define _forceinline inline __attribute__((always_inline))
 #endif
 
 
@@ -90,7 +90,7 @@
 
 
 //Sizes
-#define MB(num) num * 1024 * 1024
+#define MB(num) num * (1024 * 1024)
 
 
 //Shaderstages
@@ -109,4 +109,11 @@
 
 
 //Counts
-#define LAMBDA_MAX_RENDERTARGET_COUNT 8
+#define LAMBDA_MAX_VERTEXBUFFER_COUNT	32
+#define LAMBDA_MAX_RENDERTARGET_COUNT	8
+#define LAMBDA_MAX_VIEWPORT_COUNT		LAMBDA_MAX_RENDERTARGET_COUNT
+#define LAMBDA_MAX_SCISSOR_RECT_COUNT	LAMBDA_MAX_VIEWPORT_COUNT
+
+
+//Other
+#define LAMBDA_ALL_MIP_LEVELS 0xffffffff

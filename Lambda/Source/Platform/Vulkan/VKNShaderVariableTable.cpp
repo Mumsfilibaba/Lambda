@@ -1,7 +1,7 @@
 #include "LambdaPch.h"
 #include "VKNShaderVariableTable.h"
 #include "VKNDevice.h"
-#include "VKNAllocator.h"
+#include "VKNDeviceContext.h"
 #include "VKNConversions.inl"
 
 namespace Lambda
@@ -11,17 +11,12 @@ namespace Lambda
 	//----------------------
 
 	VKNShaderVariableTable::VKNShaderVariableTable(VKNDevice* pDevice, VKNPipelineState* pPipelineState, const ShaderVariableTableDesc& desc)
-		: DeviceObjectBase<VKNDevice, IShaderVariableTable>(pDevice),
-		m_PipelineState(nullptr),
-		m_DescriptorSet(VK_NULL_HANDLE)
+		: TShaderVariableTable(pDevice, pPipelineState),
+		m_DescriptorSet(VK_NULL_HANDLE),
+		m_pDescriptors(nullptr),
+		m_NumDescriptors(0)
 	{
-		this->AddRef();
-
-		LAMBDA_ASSERT(pPipelineState != nullptr);
-		
-		pPipelineState->AddRef();
-		m_PipelineState = pPipelineState;
-
+		this->AddRef();	
 		Init(desc);
 	}
 	
@@ -29,14 +24,19 @@ namespace Lambda
 	VKNShaderVariableTable::~VKNShaderVariableTable()
 	{
 		SafeDeleteArr(m_pDynamicOffsets);
+		SafeDeleteArr(m_pDescriptors);
 
-		LOG_DEBUG_INFO("Vulkan: Destroyed VKNShaderVariableTable\n");
+		LOG_DEBUG_INFO("Vulkan: Destroyed ShaderVariableTable\n");
 	}
 
 
 	void VKNShaderVariableTable::Init(const ShaderVariableTableDesc& desc)
 	{
-		//Create variabless
+		//Set size of descriptorwrites
+		m_pDescriptors		= DBG_NEW VkWriteDescriptorSet[desc.NumVariables];
+		m_NumDescriptors	= desc.NumVariables;
+
+		//Create variables
 		for (uint32 i = 0; i < desc.NumVariables; i++)
 		{
 			//Create new variable
@@ -47,13 +47,12 @@ namespace Lambda
 			m_NameTable[std::string(desc.pVariables[i].pName)] = pVariable;
 
 			//Get dynamic buffers
-			if (desc.pVariables[i].Usage == RESOURCE_USAGE_DYNAMIC && desc.pVariables[i].Type == RESOURCE_TYPE_CONSTANT_BUFFER)
+			if (desc.pVariables[i].Usage == USAGE_DYNAMIC && desc.pVariables[i].Type == RESOURCE_TYPE_CONSTANT_BUFFER)
                 m_DynamicVars.emplace_back(pVariable);
 		}
 
 		//Allocate descriptorset
-		VkDescriptorSetLayout descriptorSetLayout = m_PipelineState->GetVkDescriptorSetLayout();
-		m_DescriptorSet = m_PipelineState->GetAllocator()->Allocate(descriptorSetLayout);
+		m_DescriptorSet = m_PipelineState->AllocateDescriptorSet();;
 
 		//Dynamic offsets for dynamic constantbuffers
 		m_pDynamicOffsets = DBG_NEW uint32[m_DynamicVars.size()];
@@ -63,7 +62,13 @@ namespace Lambda
 	IShaderVariable* VKNShaderVariableTable::GetVariableByName(ShaderStage shader, const char* pName)
 	{
 		auto var = m_NameTable.find(std::string(pName));
-		return var != m_NameTable.end() ? var->second : nullptr;
+		if (var == m_NameTable.end())
+		{
+			LOG_DEBUG_ERROR("Vulkan: Invalid name on ShaderVariable\n");
+			return nullptr;
+		}
+
+		return var->second;
 	}
 
 
@@ -74,61 +79,52 @@ namespace Lambda
 	}
 
 
-	IPipelineState* VKNShaderVariableTable::GetPipelineState() const
-	{
-		m_PipelineState->AddRef();
-		return m_PipelineState.Get();
-	}
-
-
 	uint32 VKNShaderVariableTable::GetVariableCount() const
 	{
 		return uint32(m_ShaderVariables.size());
 	}
 	
 
-	void VKNShaderVariableTable::CommitAndTransitionResources()
+	void VKNShaderVariableTable::CommitResources()
 	{
 		//Varify all variables (Have the resources changed)
-        m_DescriptorWrites.clear();
+		size_t index = 0;
         bool writeDescriptors = false;
         for (auto& pVar : m_ShaderVariables)
         {
             //If validation failes we need to write the descriptors
-            if (!pVar->Validate())
+			if (!pVar->Validate())
+			{
+				//Setup write info
+				m_pDescriptors[index] = pVar->GetVkWriteDescriptorSet();
                 writeDescriptors = true;
-            
-            const VkWriteDescriptorSet& writeInfo = pVar->GetVkWriteDescriptorSet();
-            m_DescriptorWrites.emplace_back(writeInfo);
+			}
+            	
+			index++;
         }
-        
-        
-        //Get dynamic offsets
-        uint32 dynamicOffsetIndex = 0;
-        for (auto pDynamicVar : m_DynamicVars)
-        {
-            //Get dynamic offset
-            const ShaderVariableDesc& varDesc = pDynamicVar->GetDesc();
-            if (varDesc.Type == RESOURCE_TYPE_CONSTANT_BUFFER)
-            {
-                m_pDynamicOffsets[dynamicOffsetIndex++] = pDynamicVar->GetDynamicOffset();
-            }
-        }
-        
+
+
+        //Get dynamic resources offsets
+		uint32 dynamicOffsetIndex = 0;
+		for (auto& pDynamicVar : m_DynamicVars)
+		{
+			//Update dynamic offsets
+			m_pDynamicOffsets[dynamicOffsetIndex++] = pDynamicVar->GetDynamicOffset();
+		}
+
         
 		//Write descriptor set
 		if (writeDescriptors)
 		{
             //Allocate descriptorset
-            VkDescriptorSetLayout descriptorSetLayout = m_PipelineState->GetVkDescriptorSetLayout();
-            m_DescriptorSet = m_PipelineState->GetAllocator()->Allocate(descriptorSetLayout);
+            m_DescriptorSet = m_PipelineState->AllocateDescriptorSet();
             
 			//Setup the current set for writing
-			for (auto& writeInfo : m_DescriptorWrites)
-				writeInfo.dstSet = m_DescriptorSet;
+			for (uint32 i = 0; i < m_NumDescriptors; i++)
+				m_pDescriptors[i].dstSet = m_DescriptorSet;
 
 			//Write all descriptors
-			vkUpdateDescriptorSets(m_pDevice->GetVkDevice(), uint32(m_DescriptorWrites.size()), m_DescriptorWrites.data(), 0, nullptr);
+			vkUpdateDescriptorSets(m_pDevice->GetVkDevice(), m_NumDescriptors, m_pDescriptors, 0, nullptr);
 		}
 	}
 }

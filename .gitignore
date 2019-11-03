@@ -18,3 +18,4 @@ Dependencies/ImGui/bin-int/
 *.xcuserstate
 *.pbxproj
 *.ini
+*.diagsession

@@ -1,8 +1,8 @@
 #include "LambdaPch.h"
-#include "VKNFramebuffer.h"
+#include "Utilities/HashHelper.h"
+#include "VKNFramebufferCache.h"
 #include "VKNDevice.h"
 #include "VKNTexture.h"
-#include "Utilities/HashHelper.h"
 
 namespace Lambda
 {
@@ -16,25 +16,20 @@ namespace Lambda
 		NumAttachmentViews(0),
 		AttachmentViews()
 	{
-		for (uint32 i = 0; i < (LAMBDA_MAX_RENDERTARGET_COUNT + 1) * 2; i++)
+		for (uint32 i = 0; i < (LAMBDA_MAX_RENDERTARGET_COUNT + 1); i++)
 			AttachmentViews[i] = VK_NULL_HANDLE;
 	}
 
 
 	bool VKNFramebufferCacheKey::operator==(const VKNFramebufferCacheKey& other) const
 	{
-		if (RenderPass != other.RenderPass ||
-			NumAttachmentViews != other.NumAttachmentViews)
-		{
+		if (GetHash() != other.GetHash() || RenderPass != other.RenderPass || NumAttachmentViews != other.NumAttachmentViews)
 			return false;
-		}
 
 		for (uint32 i = 0; i < NumAttachmentViews; i++)
 		{
 			if (AttachmentViews[i] != other.AttachmentViews[i])
-			{
 				return false;
-			}
 		}
 
 		return true;
@@ -45,28 +40,30 @@ namespace Lambda
 	{
 		if (Hash == 0)
 		{
+			HashCombine<VkRenderPass>(Hash, RenderPass);
 			for (uint32 i = 0; i < NumAttachmentViews; i++)
-			{
 				HashCombine<VkImageView>(Hash, AttachmentViews[i]);
-			}
 		}
 
 		return Hash;
 	}
 
 
-	bool VKNFramebufferCacheKey::ContainsTexture(const VKNTexture* pTexture) const
+	bool VKNFramebufferCacheKey::ContainsImageView(VkImageView view) const
 	{
-		VkImageView view = pTexture->GetVkImageView();
 		for (uint32 i = 0; i < NumAttachmentViews; i++)
 		{
 			if (AttachmentViews[i] == view)
-			{
 				return true;
-			}
 		}
 
 		return false;
+	}
+
+
+	bool VKNFramebufferCacheKey::ContainsRenderPass(VkRenderPass renderpass) const
+	{
+		return renderpass == RenderPass;
 	}
 
 	//-------------------
@@ -75,8 +72,9 @@ namespace Lambda
 
 	VKNFramebufferCache* VKNFramebufferCache::s_pInstance = nullptr;
 
-	VKNFramebufferCache::VKNFramebufferCache()
-		: m_Framebuffers()
+	VKNFramebufferCache::VKNFramebufferCache(VKNDevice* pDevice)
+		: m_pDevice(pDevice),
+		m_Framebuffers()
 	{
 		LAMBDA_ASSERT(s_pInstance == nullptr);
 		s_pInstance = this;
@@ -90,7 +88,7 @@ namespace Lambda
 	}
 
 
-	VkFramebuffer VKNFramebufferCache::GetFramebuffer(const VKNFramebufferCacheKey& fbKey, uint32 width, uint32 height)
+	VkFramebuffer VKNFramebufferCache::GetFramebuffer(const VKNFramebufferCacheKey& fbKey, VkExtent2D extent)
 	{
 		//Check if a framebuffer exists
 		auto fb = m_Framebuffers.find(fbKey);
@@ -106,14 +104,12 @@ namespace Lambda
 		info.renderPass			= fbKey.RenderPass;
 		info.attachmentCount	= fbKey.NumAttachmentViews;
 		info.pAttachments		= fbKey.AttachmentViews;
-		info.width				= width;
-		info.height				= height;
+		info.width				= extent.width;
+		info.height				= extent.height;
 		info.layers				= 1;
 
 		VkFramebuffer framebuffer = VK_NULL_HANDLE;
-		
-		VKNDevice& device = VKNDevice::Get();
-		if (vkCreateFramebuffer(device.GetVkDevice(), &info, nullptr, &framebuffer) != VK_SUCCESS)
+		if (vkCreateFramebuffer(m_pDevice->GetVkDevice(), &info, nullptr, &framebuffer) != VK_SUCCESS)
 		{
 			LOG_DEBUG_ERROR("Vulkan: Failed to create Framebuffer\n");
 			return VK_NULL_HANDLE;
@@ -128,17 +124,21 @@ namespace Lambda
 	}
 
 
-	void VKNFramebufferCache::ReleaseAllContainingTexture(VkDevice device, const VKNTexture* pTexture)
+	void VKNFramebufferCache::OnReleaseImageView(VkImageView view)
 	{
 		//Find all framebuffers containing this texture
 		for (auto it = m_Framebuffers.begin(); it != m_Framebuffers.end();)
 		{
-			if (it->first.ContainsTexture(pTexture))
+			if (it->first.ContainsImageView(view))
 			{
 				//Destroy framebuffer
-				vkDestroyFramebuffer(device, it->second, nullptr);
-				it->second = VK_NULL_HANDLE;
+				if (it->second != VK_NULL_HANDLE)
+				{
+					m_pDevice->SafeReleaseVulkanResource<VkFramebuffer>(it->second);
+					it->second = VK_NULL_HANDLE;
+				}
 
+				//Erase from vector
 				it = m_Framebuffers.erase(it);
 			}
             else
@@ -149,14 +149,38 @@ namespace Lambda
 	}
 
 
-	void VKNFramebufferCache::ReleaseAll(VkDevice device)
+	void VKNFramebufferCache::OnReleaseRenderPass(VkRenderPass renderpass)
+	{
+		//Find all framebuffers containing this renderpass
+		for (auto it = m_Framebuffers.begin(); it != m_Framebuffers.end();)
+		{
+			if (it->first.ContainsRenderPass(renderpass))
+			{
+				//Destroy framebuffer
+				if (it->second != VK_NULL_HANDLE)
+				{
+					m_pDevice->SafeReleaseVulkanResource<VkFramebuffer>(it->second);
+					it->second = VK_NULL_HANDLE;
+				}
+
+				//Erase from vector
+				it = m_Framebuffers.erase(it);
+			}
+			else
+			{
+				it++;
+			}
+		}
+	}
+
+
+	void VKNFramebufferCache::ReleaseAll()
 	{
 		//Destroy all framebuffers
 		for (auto& buffer : m_Framebuffers)
 		{
-			VkFramebuffer fb = buffer.second;
-			vkDestroyFramebuffer(device, fb, nullptr);
-			fb = VK_NULL_HANDLE;
+			if (buffer.second != VK_NULL_HANDLE)
+				m_pDevice->SafeReleaseVulkanResource<VkFramebuffer>(buffer.second);
 		}
 
 		m_Framebuffers.clear();

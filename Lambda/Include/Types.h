@@ -187,11 +187,11 @@ namespace Lambda
 
 
     //Usage of a resource
-	enum ResourceUsage : uint32
+	enum Usage : uint32
 	{
-		RESOURCE_USAGE_UNKNOWN = 0,
-		RESOURCE_USAGE_DEFAULT = 1,
-		RESOURCE_USAGE_DYNAMIC = 2,
+		USAGE_UNKNOWN = 0,
+		USAGE_DEFAULT = 1,
+		USAGE_DYNAMIC = 2,
 	};
 
 
@@ -214,6 +214,15 @@ namespace Lambda
 		TEXTURE_FLAGS_SHADER_RESOURCE   = (1 << 3),
 		TEXTURE_FLAGS_TEXTURE_CUBE      = (1 << 4),
         TEXTURE_FLAGS_GENEATE_MIPS      = (1 << 5),
+	};
+
+
+	//How a resource should be mapped to a context
+	enum MapFlag : uint32
+	{
+		MAP_FLAG_UNKNOWN		= 0,
+		MAP_FLAG_WRITE			= (1 << 0),
+		MAP_FLAG_WRITE_DISCARD	= (1 << 1),
 	};
 
     
@@ -300,15 +309,16 @@ namespace Lambda
 		RESOURCE_STATE_UNKNOWN                      = 0,
 		RESOURCE_STATE_RENDERTARGET                 = 1,
         RESOURCE_STATE_RENDERTARGET_CLEAR           = 2,
-        RESORUCE_STATE_DEPTH_STENCIL_CLEAR          = 3,
+        RESOURCE_STATE_DEPTH_STENCIL_CLEAR          = 3,
 		RESOURCE_STATE_DEPTH_STENCIL                = 4,
 		RESOURCE_STATE_DEPTH_READ                   = 5,
-        RESOURCE_STATE_RENDERTARGET_PRESENT         = 6,
+        RESOURCE_STATE_PRESENT						= 6,
 		RESOURCE_STATE_COPY_DEST                    = 7,
 		RESOURCE_STATE_COPY_SRC                     = 8,
 		RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER   = 9,
 		RESOURCE_STATE_PIXEL_SHADER_RESOURCE        = 10,
 		RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE    = 11,
+		RESOURCE_STATE_GENERAL						= 12,
 	};
     
     
@@ -344,29 +354,12 @@ namespace Lambda
     
     
     //Graphics-APIs defines
-    enum GraphicsApi : uint32
+    enum GraphicsAPI : uint32
     {
         GRAPHICS_API_UNKNOWN    = 0,
         GRAPHICS_API_D3D12      = 1,
         GRAPHICS_API_VULKAN     = 2
     };
-
-
-	//Enum for loadoperations for a renderpass
-	enum LoadOp : uint32
-	{
-		LOAD_OP_UNKNOWN = 0,
-		LOAD_OP_CLEAR	= 1,
-		LOAD_OP_LOAD	= 2,
-	};
-
-
-	//Enum for storeoperations for a renderpass
-	enum StoreOp : uint32
-	{
-		STORE_OP_UNKNOWN	= 0,
-		STORE_OP_STORE		= 1,
-	};
     
     
     //Enum describing shaderstages
@@ -393,12 +386,14 @@ namespace Lambda
 
 
 	//Enum describing a commandlisttype
-	enum CommandListType : uint32
+	enum DeviceContextType : uint32
 	{
-		COMMAND_LIST_TYPE_UNKNOWN	= 0,
-		COMMAND_LIST_TYPE_GRAPHICS	= 1,
-		COMMAND_LIST_TYPE_COMPUTE	= 2,
-		COMMAND_LIST_TYPE_COPY		= 3,
+		DEVICE_CONTEXT_TYPE_UNKNOWN	    = 0,
+		DEVICE_CONTEXT_TYPE_GRAPHICS    = 1,
+		DEVICE_CONTEXT_TYPE_COMPUTE	    = 2,
+		DEVICE_CONTEXT_TYPE_COPY		= 3,
+        DEVICE_CONTEXT_TYPE_IMMEDIATE   = 4,
+        DEVICE_CONTEXT_TYPE_DEFFERED    = 5,
 	};
     
 
@@ -407,6 +402,16 @@ namespace Lambda
 	{
 		const void* pData = nullptr;
 		uint64 SizeInBytes = 0;
+	};
+
+
+	//Struct for Transition a texture
+	class ITexture;
+	struct TextureTransitionBarrier
+	{
+		ITexture*		pTexture	= nullptr;
+		ResourceState	AfterState	= RESOURCE_STATE_UNKNOWN;
+		uint32			MipLevel	= 0;
 	};
     
     

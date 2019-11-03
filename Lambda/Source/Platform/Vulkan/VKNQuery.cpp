@@ -5,32 +5,25 @@
 namespace Lambda
 {
 	VKNQuery::VKNQuery(VKNDevice* pDevice, const QueryDesc& desc)
-		: DeviceObjectBase<VKNDevice, IQuery>(pDevice),
+		: QueryBase<VKNDevice>(pDevice, desc),
 		m_QueryPool(VK_NULL_HANDLE),
         m_CurrentQuery(0),
-        m_TimeStampPeriod(0),
-        m_Desc()
+        m_TimeStampPeriod(0)
     {
 		//Add a ref to the refcounter
 		this->AddRef();
-
         Init(desc);
         
-		VKNDevice& device = VKNDevice::Get();
+		//Get period of a timestamp
         if (m_Desc.Type == QUERY_TYPE_TIMESTAMP)
-        {
-            m_TimeStampPeriod = device.GetPhysicalDeviceProperties().limits.timestampPeriod;
-        }
+            m_TimeStampPeriod = pDevice->GetPhysicalDeviceProperties().limits.timestampPeriod;
     }
 
 
 	VKNQuery::~VKNQuery()
 	{
 		if (m_QueryPool != VK_NULL_HANDLE)
-		{
-			vkDestroyQueryPool(m_pDevice->GetVkDevice(), m_QueryPool, nullptr);
-			m_QueryPool = VK_NULL_HANDLE;
-		}
+			m_pDevice->SafeReleaseVulkanResource<VkQueryPool>(m_QueryPool);
 
 		LOG_DEBUG_INFO("Vulkan: Destroyed Query\n");
 	}
@@ -57,7 +50,6 @@ namespace Lambda
         else
         {
             LOG_DEBUG_INFO("Vulkan: Created querypool\n");
-            m_Desc = desc;
         }
     }
     
@@ -71,9 +63,7 @@ namespace Lambda
 			if (m_Desc.Type == QUERY_TYPE_TIMESTAMP)
 			{
 				for (uint32 i = 0; i < numResults; i++)
-				{
 					pResults[i] *= uint64(m_TimeStampPeriod);
-				}
 			}
 		}
     }
@@ -82,12 +72,6 @@ namespace Lambda
     void* VKNQuery::GetNativeHandle() const
     {
         return reinterpret_cast<void*>(m_QueryPool);
-    }
-    
-    
-    const QueryDesc& VKNQuery::GetDesc() const
-    {
-        return m_Desc;
     }
     
     
