@@ -21,9 +21,11 @@ int main()
     params.WindowWidth  = 1920;
     params.WindowHeight = 1080;
 
-	Application* pApp = DBG_NEW SandBox(params);
-	int32 result = pApp->Run();
-	delete pApp;
+	Application* pApplication = DBG_NEW Application(params);
+	pApplication->PushLayer(DBG_NEW SandBoxLayer());
+
+	int32 result = pApplication->Run();
+	delete pApplication;
 
 	return result;
 }

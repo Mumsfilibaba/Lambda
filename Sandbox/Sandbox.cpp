@@ -27,15 +27,6 @@ namespace Lambda
 	static std::vector<Transform> sphereTransforms;
 	static glm::vec4 lightColor;
 
-    //-------
-    //SandBox
-    //-------
-
-    SandBox::SandBox(const EngineParams& params)
-        : Application(params)
-    {
-        PushLayer(DBG_NEW SandBoxLayer());
-    }
 
     //------------
     //SandBoxLayer

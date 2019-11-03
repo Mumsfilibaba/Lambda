@@ -55,7 +55,7 @@ namespace Lambda
         virtual void ExecuteDefferedContext(IDeviceContext* pContext) = 0;
         
 		virtual void ResetQuery(IQuery* pQuery) = 0;
-		virtual void WriteTimeStamp(IQuery* pQuery, PipelineStage stage) = 0;
+		virtual void WriteTimeStamp(IQuery* pQuery) = 0;
 
         virtual void Flush() = 0;
         virtual void ClearState() = 0;

@@ -66,15 +66,4 @@ namespace Lambda
         Camera m_Camera;
         TransformBuffer m_TransformBuffer;
     };
-
-    //-------
-    //SandBox
-    //-------
-
-	class SandBox final : public Application
-	{
-	public:
-		SandBox(const EngineParams& params = EngineParams());
-		~SandBox() = default;
-	};
 }

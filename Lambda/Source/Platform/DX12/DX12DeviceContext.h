@@ -58,7 +58,7 @@ namespace Lambda
 		virtual void ExecuteDefferedContext(IDeviceContext* pContext) override final;
 
 		virtual void ResetQuery(IQuery* pQuery) override final;
-		virtual void WriteTimeStamp(IQuery* pQuery, PipelineStage stage) override final;
+		virtual void WriteTimeStamp(IQuery* pQuery) override final;
 
 		virtual void Flush() override final;
 		virtual void ClearState() override final;

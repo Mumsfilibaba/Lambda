@@ -122,10 +122,6 @@ namespace Lambda
 		}
 		m_CurrentFPS++;
 	
-		//Get last frame's values from query
-		uint64 values[2] = { 0, 0 };
-		m_pCurrentQuery->GetResults(values, 2, 0);
-		m_FrameInfo.GPUTime = Timestep(values[1] - values[0]);
 		//Reset new query
 		m_pCurrentQuery = m_Queries[m_QueryIndex].Get();
 		m_Context->ResetQuery(m_pCurrentQuery);
@@ -156,12 +152,12 @@ namespace Lambda
         ITexture* pDepthBuffer = m_SwapChain->GetDepthBuffer();
 		
 		TextureTransitionBarrier barriers[2];
-		barriers[0].pTexture = pRenderTarget;
-		barriers[0].AfterState = RESOURCE_STATE_RENDERTARGET_CLEAR;
-		barriers[0].MipLevel = LAMBDA_ALL_MIP_LEVELS;
-		barriers[1].pTexture = pDepthBuffer;
-		barriers[1].AfterState = RESOURCE_STATE_DEPTH_STENCIL_CLEAR;
-		barriers[1].MipLevel = LAMBDA_ALL_MIP_LEVELS;
+		barriers[0].pTexture	= pRenderTarget;
+		barriers[0].AfterState	= RESOURCE_STATE_RENDERTARGET_CLEAR;
+		barriers[0].MipLevel	= LAMBDA_ALL_MIP_LEVELS;
+		barriers[1].pTexture	= pDepthBuffer;
+		barriers[1].AfterState	= RESOURCE_STATE_DEPTH_STENCIL_CLEAR;
+		barriers[1].MipLevel	= LAMBDA_ALL_MIP_LEVELS;
 		m_Context->TransitionTextureStates(barriers, 2);
 
         //Clear framebuffer
@@ -178,7 +174,7 @@ namespace Lambda
 		m_Context->SetRendertargets(&pRenderTarget, 1, pDepthBuffer);
 
 		//Write query
-		m_Context->WriteTimeStamp(m_pCurrentQuery, PIPELINE_STAGE_VERTEX);
+		m_Context->WriteTimeStamp(m_pCurrentQuery);
 		//Set viewport
 		m_Context->SetViewports(&m_Viewport, 1);
 		m_Context->SetScissorRects(&m_ScissorRect, 1);
@@ -226,12 +222,16 @@ namespace Lambda
 		//Draw UI before ending
 		Application::Get().GetUILayer()->Draw(m_Context.Get());
 		//End by writing a timestamp
-		m_Context->WriteTimeStamp(m_pCurrentQuery, PIPELINE_STAGE_PIXEL);
+		m_Context->WriteTimeStamp(m_pCurrentQuery);
 	}
 
 
 	void Renderer3D::End()
 	{
+		//Get last frame's values from query
+		uint64 values[2] = { 0, 0 };
+		m_pCurrentQuery->GetResults(values, 2, 0);
+		m_FrameInfo.GPUTime = Timestep(values[1] - values[0]);
 	}
 
 

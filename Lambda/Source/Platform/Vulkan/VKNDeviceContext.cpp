@@ -1230,7 +1230,7 @@ namespace Lambda
     }
     
     
-    void VKNDeviceContext::WriteTimeStamp(IQuery* pQuery, PipelineStage stage)
+    void VKNDeviceContext::WriteTimeStamp(IQuery* pQuery)
     {
         LAMBDA_ASSERT(pQuery != nullptr);
         
@@ -1247,7 +1247,7 @@ namespace Lambda
 		//Write timestamp
         VKNQuery* pVkQuery		= reinterpret_cast<VKNQuery*>(pQuery);
         VkQueryPool queryPool	= reinterpret_cast<VkQueryPool>(pVkQuery->GetNativeHandle());
-        vkCmdWriteTimestamp(m_pCurrentFrameResource->CommandBuffer, ConvertPipelineStage(stage), queryPool, pVkQuery->GetQueryIndex());
+        vkCmdWriteTimestamp(m_pCurrentFrameResource->CommandBuffer, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, queryPool, pVkQuery->GetQueryIndex());
         pVkQuery->NextQuery();
 
 		//Count command

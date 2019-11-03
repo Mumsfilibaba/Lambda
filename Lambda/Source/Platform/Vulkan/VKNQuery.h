@@ -28,6 +28,7 @@ namespace Lambda
         void Init(const QueryDesc& desc);
     private:
         VkQueryPool m_QueryPool;
+		uint64 m_ValidBitsMask;
         uint32 m_CurrentQuery;
         float  m_TimeStampPeriod;
     };

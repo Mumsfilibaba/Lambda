@@ -3,11 +3,10 @@
 #include "LayerStack.h"
 #include "Time/Clock.h"
 #include "Events/EventDispatcher.h"
+#include "Debug/DebugLayer.h"
 #include "Graphics/Core/IDevice.h"
 #include "Graphics/Core/ISwapChain.h"
-#include "Graphics/UILayer.h"
 #include "Graphics/Renderer3D.h"
-#include "Debug/DebugLayer.h"
 
 namespace Lambda
 {
@@ -36,6 +35,7 @@ namespace Lambda
 		Application(const EngineParams& params);
 		virtual ~Application() = default;
 
+		void Quit(int32 exitCode = 0);
         int32 Run();
 
         //Push a layer onto the layerstack
@@ -54,7 +54,7 @@ namespace Lambda
         }
         
         IWindow* GetWindow() const;
-        UILayer* GetUILayer() const;
+        DebugLayer* GetUILayer() const;
         IDevice* GetGraphicsDevice() const;
         ISwapChain* GetSwapChain() const;
 		Renderer3D& GetRenderer();
@@ -70,20 +70,18 @@ namespace Lambda
         bool OnWindowClose(const WindowClosedEvent& event);
         bool OnKeyPressed(const KeyPressedEvent& event);
 		bool OnWindowResize(const WindowResizeEvent& event);
-        
-		void Quit(int32 exitCode = 0);
 	private:
-		IWindow* 			m_pWindow;
-        AutoRef<IDevice>    m_GraphicsDevice;
+		IWindow* m_pWindow;
+		DebugLayer*	m_pUILayer;
+        AutoRef<IDevice> m_GraphicsDevice;
         AutoRef<IDeviceContext> m_Context;
         AutoRef<ISwapChain> m_SwapChain;
-		UILayer*	 		m_pUILayer;
-        EventDispatcher     m_Dispatcher;
-        LayerStack          m_LayerStack;
-		Renderer3D			m_Renderer;
-		EngineParams 		m_Params;
-		int32 				m_ExitCode;
-		bool 				m_Running;
+        EventDispatcher m_Dispatcher;
+        LayerStack m_LayerStack;
+		Renderer3D m_Renderer;
+		EngineParams m_Params;
+		int32 m_ExitCode;
+		bool m_Running;
 	public:
 		static Application& Get();
 	private:

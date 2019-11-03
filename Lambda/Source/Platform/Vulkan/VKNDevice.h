@@ -105,6 +105,12 @@ namespace Lambda
 		}
 
 
+		_forceinline const VkQueueFamilyProperties& GetGraphicsQueueProperties() const
+		{
+			return m_GraphicsQueueProperties;
+		}
+
+
 		_forceinline VKNBuffer* GetDefaultVertexBuffer() const
 		{
 			return m_pDefaultVertexBuffer;
@@ -166,6 +172,7 @@ namespace Lambda
 		QueueFamilyIndices		   m_FamiliyIndices;
 		VkPhysicalDevice		   m_PhysicalDevice;
 		VkPhysicalDeviceProperties m_PhysicalDeviceProperties;
+		VkQueueFamilyProperties	   m_GraphicsQueueProperties;
 		VKNBuffer* m_pDefaultIndexBuffer;
 		VKNBuffer* m_pDefaultVertexBuffer;
 		VKNBuffer* m_pDefaultConstantBuffer;

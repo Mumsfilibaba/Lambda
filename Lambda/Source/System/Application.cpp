@@ -1,6 +1,6 @@
 #include "LambdaPch.h"
 #include "System/Application.h"
-#include "Graphics/UILayer.h"
+#include "Debug/DebugLayer.h"
 #include "Graphics/Core/IFactory.h"
 #include "Time/Clock.h"
 #include "System/Log.h"
@@ -136,7 +136,7 @@ namespace Lambda
         factory->CreateDeviceAndSwapChain(&m_GraphicsDevice, deviceDesc, &m_Context, &m_SwapChain, swapChainDesc);
     
 		//Create UI-Layer
-		m_pUILayer = DBG_NEW UILayer();
+		m_pUILayer = DBG_NEW DebugLayer();
 		//Push ImGui-Layer
         PushLayer(m_pUILayer);
 		
@@ -295,7 +295,7 @@ namespace Lambda
     }
 
 
-    UILayer* Application::GetUILayer() const
+    DebugLayer* Application::GetUILayer() const
     {
         return m_pUILayer;
     }

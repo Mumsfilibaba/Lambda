@@ -454,6 +454,14 @@ namespace Lambda
 		//Get queues
 		vkGetDeviceQueue(m_Device, m_FamiliyIndices.GraphicsFamily, 0, &m_GraphicsQueue);
 		vkGetDeviceQueue(m_Device, m_FamiliyIndices.PresentFamily, 0, &m_PresentationQueue);
+
+		//Get queueproperties
+		uint32 propertyCount = 0;
+		vkGetPhysicalDeviceQueueFamilyProperties(m_PhysicalDevice, &propertyCount, nullptr);
+
+		std::vector<VkQueueFamilyProperties> properties(propertyCount);
+		vkGetPhysicalDeviceQueueFamilyProperties(m_PhysicalDevice, &propertyCount, properties.data());
+		m_GraphicsQueueProperties = properties[m_FamiliyIndices.GraphicsFamily];
         
 		//Create allocator
 		m_pDeviceAllocator = DBG_NEW VKNDeviceAllocator(this);
@@ -673,40 +681,6 @@ namespace Lambda
         LOG_DEBUG_INFO("VKNDevice::WaitUntilIdle\n");
         vkDeviceWaitIdle(m_Device);
     }
-
-
-	//bool VKNDevice::AllocateImage(VKNAllocation& allocation, VkImage image, Usage usage)
-	//{
-	//	VkMemoryRequirements memoryRequirements = {};
-	//	vkGetImageMemoryRequirements(m_Device, image, &memoryRequirements);
-	//	if (m_pDeviceAllocator->Allocate(allocation, memoryRequirements, usage))
-	//	{
-	//		vkBindImageMemory(m_Device, image, allocation.DeviceMemory, allocation.DeviceMemoryOffset);
-	//		return true;
-	//	}
-	//	else
-	//	{
-	//		LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for texture\n");
-	//		return false;
-	//	}
-	//}
-
-
-	//bool VKNDevice::AllocateBuffer(VKNAllocation& allocation, VkBuffer buffer, Usage usage)
-	//{
-	//	VkMemoryRequirements memoryRequirements = {};
-	//	vkGetBufferMemoryRequirements(m_Device, buffer, &memoryRequirements);
-	//	if (m_pDeviceAllocator->Allocate(allocation, memoryRequirements, usage))
-	//	{
-	//		vkBindBufferMemory(m_Device, buffer, allocation.DeviceMemory, allocation.DeviceMemoryOffset);
-	//		return true;
-	//	}
-	//	else
-	//	{
-	//		LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for buffer\n");
-	//		return false;
-	//	}
-	//}
 
 
 	VkSampleCountFlagBits VKNDevice::GetHighestSampleCount() const

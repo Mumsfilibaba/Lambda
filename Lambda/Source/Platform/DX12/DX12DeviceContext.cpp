@@ -135,7 +135,7 @@ namespace Lambda
 	}
 
 
-	void DX12DeviceContext::WriteTimeStamp(IQuery* pQuery, PipelineStage stage)
+	void DX12DeviceContext::WriteTimeStamp(IQuery* pQuery)
 	{
 	}
 

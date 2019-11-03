@@ -15,8 +15,15 @@ namespace Lambda
         Init(desc);
         
 		//Get period of a timestamp
-        if (m_Desc.Type == QUERY_TYPE_TIMESTAMP)
-            m_TimeStampPeriod = pDevice->GetPhysicalDeviceProperties().limits.timestampPeriod;
+		if (m_Desc.Type == QUERY_TYPE_TIMESTAMP)
+		{
+            m_TimeStampPeriod	= pDevice->GetPhysicalDeviceProperties().limits.timestampPeriod;
+			uint32 validBits = pDevice->GetGraphicsQueueProperties().timestampValidBits;
+			
+			m_ValidBitsMask = 0;
+			for (uint32 i = 0; i < validBits; i++)
+				m_ValidBitsMask |= (1 << i);
+		}
     }
 
 
@@ -39,9 +46,7 @@ namespace Lambda
         queryInfo.queryCount            = desc.QueryCount;
         queryInfo.pipelineStatistics    = 0;
         if (desc.Type == QUERY_TYPE_TIMESTAMP)
-        {
             queryInfo.queryType = VK_QUERY_TYPE_TIMESTAMP;
-        }
         
         if (vkCreateQueryPool(m_pDevice->GetVkDevice(), &queryInfo, nullptr, &m_QueryPool) != VK_SUCCESS)
         {
@@ -58,12 +63,12 @@ namespace Lambda
     {
         LAMBDA_ASSERT(pResults != nullptr);
         
-        if (vkGetQueryPoolResults(m_pDevice->GetVkDevice(), m_QueryPool, startQuery, numResults, numResults * sizeof(uint64), pResults, sizeof(uint64), VK_QUERY_RESULT_WITH_AVAILABILITY_BIT) == VK_SUCCESS)
+        if (vkGetQueryPoolResults(m_pDevice->GetVkDevice(), m_QueryPool, startQuery, numResults, numResults * sizeof(uint64), pResults, sizeof(uint64), VK_QUERY_RESULT_64_BIT) == VK_SUCCESS)
 		{
 			if (m_Desc.Type == QUERY_TYPE_TIMESTAMP)
 			{
 				for (uint32 i = 0; i < numResults; i++)
-					pResults[i] *= uint64(m_TimeStampPeriod);
+					pResults[i] = (pResults[i] & m_ValidBitsMask) * uint64(m_TimeStampPeriod);
 			}
 		}
     }
