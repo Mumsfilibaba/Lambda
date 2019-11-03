@@ -50,21 +50,21 @@ namespace Lambda
 		//Variable tables
 		AutoRef<IShaderVariableTable> m_VariableTable;
         //Meshes
-		Model m_Mesh;
 		Viewport  m_Viewport;
 		Rectangle m_ScissorRect;
 		AutoRef<IBuffer> m_PositionBuffer;
-		//Model m_SphereMesh;
+		Model m_Mesh;
+		Model m_SphereMesh;
 		//Material
-		//Material m_Material;
-		//Material m_RedMaterial;
+		Material m_Material;
+		Material m_RedMaterial;
         //Textures
 		AutoRef<ITexture> m_AlbedoMap;
 		AutoRef<ITexture> m_NormalMap;
         //Samplers
 		AutoRef<ISamplerState> m_SamplerState;
-        //Camera m_Camera;
-        //TransformBuffer m_TransformBuffer;
+        Camera m_Camera;
+        TransformBuffer m_TransformBuffer;
     };
 
     //-------

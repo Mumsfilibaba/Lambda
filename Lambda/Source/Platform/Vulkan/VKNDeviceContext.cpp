@@ -668,6 +668,9 @@ namespace Lambda
 		//Call base
 		TDeviceContext::SetIndexBuffer(pBuffer, format);
 
+		//We now need to commit
+		m_CommitIndexBuffer = true;
+
 		//Count command
 		m_NumCommands++;
     }

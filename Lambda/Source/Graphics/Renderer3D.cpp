@@ -100,11 +100,7 @@ namespace Lambda
 		materialBufferDesc.Flags			= BUFFER_FLAGS_CONSTANT_BUFFER;
 		materialBufferDesc.SizeInBytes		= sizeof(MaterialBuffer);
 		materialBufferDesc.StrideInBytes	= sizeof(MaterialBuffer);
-		m_Device->CreateBuffer(&m_MaterialBuffer, &data, materialBufferDesc);
-
-        //Init UILayer
-        Application& app = Application::Get();
-        app.GetUILayer()->Init();
+		m_Device->CreateBuffer(&m_MaterialBuffer, nullptr, materialBufferDesc);
 
 		//Setup viewport
 		IWindow* pWindow = Application::Get().GetWindow();
@@ -155,15 +151,29 @@ namespace Lambda
 		lightData.SizeInBytes	= sizeof(LightBuffer);
 		m_Context->UpdateBuffer(m_LightBuffer.Get(), lightData);
 
-        //Clear rendertarget
-        float color[] = { 0.392f, 0.584f, 0.929f, 1.0f };
+		//Transition framebuffer
         ITexture* pRenderTarget = m_SwapChain->GetBuffer();
-        m_Context->ClearRenderTarget(pRenderTarget, color);
-
-        //Clear depthbuffer
         ITexture* pDepthBuffer = m_SwapChain->GetDepthBuffer();
+		
+		TextureTransitionBarrier barriers[2];
+		barriers[0].pTexture = pRenderTarget;
+		barriers[0].AfterState = RESOURCE_STATE_RENDERTARGET_CLEAR;
+		barriers[0].MipLevel = LAMBDA_ALL_MIP_LEVELS;
+		barriers[1].pTexture = pDepthBuffer;
+		barriers[1].AfterState = RESOURCE_STATE_DEPTH_STENCIL_CLEAR;
+		barriers[1].MipLevel = LAMBDA_ALL_MIP_LEVELS;
+		m_Context->TransitionTextureStates(barriers, 2);
+
+        //Clear framebuffer
+        float color[] = { 0.392f, 0.584f, 0.929f, 1.0f };
+        m_Context->ClearRenderTarget(pRenderTarget, color);
         m_Context->ClearDepthStencil(pDepthBuffer, 1.0f, 0);
         
+		//Transition into rendertarget and depthstencil
+		barriers[0].AfterState = RESOURCE_STATE_RENDERTARGET;
+		barriers[1].AfterState = RESOURCE_STATE_DEPTH_STENCIL;
+		m_Context->TransitionTextureStates(barriers, 2);
+
 		//Set rendertargets
 		m_Context->SetRendertargets(&pRenderTarget, 1, pDepthBuffer);
 
@@ -178,21 +188,21 @@ namespace Lambda
 	void Renderer3D::Submit(const Model& model, const Material& material, const TransformBuffer& transform)
 	{
 		//Update transform
-		ResourceData transformData = {};
-		transformData.pData			= &transform;
-		transformData.SizeInBytes	= sizeof(TransformBuffer);
-		m_Context->UpdateBuffer(m_TransformBuffer.Get(), transformData);
-		
-        //Update material
+		void* pTransformData = nullptr;
+		m_Context->MapBuffer(m_TransformBuffer.Get(), MAP_FLAG_WRITE | MAP_FLAG_WRITE_DISCARD, &pTransformData);
+		memcpy(pTransformData, &transform, sizeof(TransformBuffer));
+		m_Context->UnmapBuffer(m_TransformBuffer.Get());
+
+		//Update material
 		MaterialBuffer materialBuffer = {};
 		materialBuffer.Color		= material.Color;
 		materialBuffer.HasAlbedoMap = material.HasAlbedoMap;
 		materialBuffer.HasNormalMap = material.HasNormalMap;
-
-		ResourceData materialData = {};
-		materialData.pData			= &materialBuffer;
-		materialData.SizeInBytes	= sizeof(MaterialBuffer);
-		m_Context->UpdateBuffer(m_MaterialBuffer.Get(), materialData);
+        
+		void* pMaterialData = nullptr;
+		m_Context->MapBuffer(m_MaterialBuffer.Get(), MAP_FLAG_WRITE | MAP_FLAG_WRITE_DISCARD, &pMaterialData);
+		memcpy(pMaterialData, &materialBuffer, sizeof(MaterialBuffer));
+		m_Context->UnmapBuffer(m_MaterialBuffer.Get());
 	
 		//Set variables
 		material.pVariableTable->GetVariableByName(SHADER_STAGE_VERTEX, "u_CameraBuffer")->SetConstantBuffer(m_CameraBuffer.Get());

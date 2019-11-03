@@ -169,10 +169,10 @@ namespace Lambda
 				layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 
 				//Bind sampler to slot permanently
-				auto sampler = m_StaticSamplerStates.find(variable.pStaticSamplerName);
+				auto& sampler = m_StaticSamplerStates.find(variable.pStaticSamplerName);
 				if (sampler != m_StaticSamplerStates.end())
 				{
-					VkSampler vkSampler = sampler->second;
+					VkSampler& vkSampler = sampler->second;
 					layoutBinding.pImmutableSamplers = &vkSampler;
 				}
 				else
@@ -221,8 +221,8 @@ namespace Lambda
 		layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		layoutInfo.flags = 0;
 		layoutInfo.pNext = nullptr;
-		layoutInfo.setLayoutCount	= 1;
-		layoutInfo.pSetLayouts		= &m_DescriptorSetLayout;
+		layoutInfo.setLayoutCount			= 1;
+		layoutInfo.pSetLayouts				= &m_DescriptorSetLayout;
 		layoutInfo.pushConstantRangeCount	= uint32(constantRanges.size());
 		layoutInfo.pPushConstantRanges		= constantRanges.data();
 		if (vkCreatePipelineLayout(m_pDevice->GetVkDevice(), &layoutInfo, nullptr, &m_PipelineLayout) != VK_SUCCESS)

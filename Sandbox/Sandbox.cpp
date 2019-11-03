@@ -14,7 +14,7 @@
 
 namespace Lambda
 {
-   /* struct Transform
+	struct Transform
     {
         glm::vec3 Position = glm::vec3(0.0f, 0.0f, 0.0f);
         glm::vec3 Rotation = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -25,7 +25,7 @@ namespace Lambda
     static Transform transformRevolver;
 	static Transform transformRevolver2;
 	static std::vector<Transform> sphereTransforms;
-	static glm::vec4 lightColor;*/
+	static glm::vec4 lightColor;
 
     //-------
     //SandBox
@@ -48,16 +48,16 @@ namespace Lambda
 		m_VS(nullptr),
 		m_PS(nullptr),
 		m_Mesh(),
-		//m_SphereMesh(),
-		//m_Material(),
-		//m_RedMaterial(),
-		//m_AlbedoMap(nullptr),
-		//m_NormalMap(nullptr),
-		//m_SamplerState(nullptr),
+		m_SphereMesh(),
+		m_Material(),
+		m_RedMaterial(),
+		m_AlbedoMap(nullptr),
+		m_NormalMap(nullptr),
+		m_SamplerState(nullptr),
 		m_PipelineState(nullptr),
-		m_VariableTable(nullptr)
-		//m_Camera(),
-		//m_TransformBuffer()
+		m_VariableTable(nullptr),
+		m_Camera(),
+		m_TransformBuffer()
 	{
 	}
 
@@ -65,7 +65,7 @@ namespace Lambda
 	void SandBoxLayer::OnLoad()
 	{
         //Init transforms
-        /*transformRevolver.Position.y = -1.0f;
+        transformRevolver.Position.y = -1.0f;
         transformRevolver.Rotation.y = 180.0f;
 
 		transformRevolver2.Position.x = 2.0f;
@@ -74,9 +74,9 @@ namespace Lambda
        
         transformLight.Position.x = -1.5f;
         transformLight.Position.y = 0.5f;
-        transformLight.Position.z = -1.0f;*/
+        transformLight.Position.z = -1.0f;
 
-		/*constexpr uint32 sphereWidth = 2;
+		constexpr uint32 sphereWidth = 10;
 		for (uint32 y = 0; y < sphereWidth; y++)
 		{
 			for (uint32 x = 0; x < sphereWidth; x++)
@@ -85,14 +85,14 @@ namespace Lambda
 				transform.Position = glm::vec3(-(float(sphereWidth) / 2.0f) + float(x), -(float(sphereWidth) / 2.0f) + float(y), 2.0f);
 				sphereTransforms.emplace_back(transform);
 			}
-		}*/
+		}
         
         //Init color
-        //lightColor = glm::vec4(255.0f / 255.0f, 241.0f / 255.0f, 224.0f / 255.0f, 1.0f);
+        lightColor = glm::vec4(255.0f / 255.0f, 241.0f / 255.0f, 224.0f / 255.0f, 1.0f);
 
 		//Setup camera
-		//m_Camera.SetPosition(glm::vec3(0.0f, 0.0f, -2.0f));
-		//m_Camera.CreateView();
+		m_Camera.SetPosition(glm::vec3(0.0f, 0.0f, -2.0f));
+		m_Camera.CreateView();
 
 		//Init size
 		Application& app = Application::Get();
@@ -162,13 +162,13 @@ namespace Lambda
 
 				ShaderVariableDesc shaderVariables[] =
 				{
-					//{ "u_CameraBuffer",		nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_VERTEX,	USAGE_DEFAULT, 0 },
-					{ "u_TransformBuffer",	nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_VERTEX,	USAGE_DYNAMIC, 0 },
-					//{ "u_MaterialBuffer",	nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_PIXEL,		USAGE_DYNAMIC, 2 },
-					//{ "u_LightBuffer",		nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_PIXEL,		USAGE_DEFAULT, 3 },
-					{ "u_Albedo",			nullptr, RESOURCE_TYPE_TEXTURE,			SHADER_STAGE_PIXEL,		USAGE_DEFAULT, 2 },
-					//{ "u_Normal",			nullptr, RESOURCE_TYPE_TEXTURE,			SHADER_STAGE_PIXEL,		USAGE_DEFAULT, 5 },
-					{ "u_Sampler",			nullptr, RESOURCE_TYPE_SAMPLER_STATE,	SHADER_STAGE_PIXEL,		USAGE_DEFAULT, 3 },
+					{ "u_CameraBuffer",		nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_VERTEX,	USAGE_DEFAULT, 0 },
+					{ "u_TransformBuffer",	nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_VERTEX,	USAGE_DYNAMIC, 1 },
+					{ "u_MaterialBuffer",	nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_PIXEL,		USAGE_DYNAMIC, 2 },
+					{ "u_LightBuffer",		nullptr, RESOURCE_TYPE_CONSTANT_BUFFER,	SHADER_STAGE_PIXEL,		USAGE_DEFAULT, 3 },
+					{ "u_Albedo",			nullptr, RESOURCE_TYPE_TEXTURE,			SHADER_STAGE_PIXEL,		USAGE_DEFAULT, 4 },
+					{ "u_Normal",			nullptr, RESOURCE_TYPE_TEXTURE,			SHADER_STAGE_PIXEL,		USAGE_DEFAULT, 5 },
+					{ "u_Sampler",			nullptr, RESOURCE_TYPE_SAMPLER_STATE,	SHADER_STAGE_PIXEL,		USAGE_DEFAULT, 6 },
 				};
 
 				ShaderVariableTableDesc variableTableDesc = {};
@@ -188,7 +188,7 @@ namespace Lambda
             }
 
             //Create vertexbuffer
-			MeshData mesh = MeshFactory::CreatePlane();//MeshFactory::CreateFromFile("revolver.obj");
+			MeshData mesh = MeshFactory::CreateFromFile("revolver.obj");
 			m_Mesh.IndexCount = uint32(mesh.Indices.size());
 			{
                 BufferDesc desc     = {};
@@ -243,7 +243,7 @@ namespace Lambda
 			CreateCamera(pWindow->GetWidth(), pWindow->GetHeight());
 
 			//Create vertexbuffer
-			/*MeshData mesh2 = MeshFactory::CreateSphere(4, 0.45);
+			MeshData mesh2 = MeshFactory::CreateSphere(4, 0.45);
 			m_SphereMesh.IndexCount = uint32(mesh2.Indices.size());
 			{
 				BufferDesc desc = {};
@@ -273,30 +273,34 @@ namespace Lambda
 				data.SizeInBytes	= desc.SizeInBytes;
 
 				pDevice->CreateBuffer(&m_SphereMesh.pIndexBuffer, &data, desc);
-			}*/
+			}
 
             //Init transformbuffer
-            //m_TransformBuffer.Model = glm::mat4(1.0f);
+            m_TransformBuffer.Model = glm::mat4(1.0f);
 
             //Create texture
             m_AlbedoMap = ITexture::CreateTextureFromFile(pDevice, "revolver_albedo.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
 			m_AlbedoMap->SetName("AlbedoMap");
+			m_NormalMap = ITexture::CreateTextureFromFile(pDevice, "revolver_normal.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
+			m_NormalMap->SetName("NormalMap");
 
 			//Transition before generating miplevels
-			TextureTransitionBarrier barrier = {};
-			barrier.pTexture	= m_AlbedoMap.Get();
-			barrier.AfterState	= RESOURCE_STATE_COPY_DEST;
-			barrier.MipLevel	= LAMBDA_ALL_MIP_LEVELS;
-			m_Context->TransitionTextureStates(&barrier, 1);
+			TextureTransitionBarrier barriers[2];
+			barriers[0].pTexture	= m_AlbedoMap.Get();
+			barriers[0].AfterState	= RESOURCE_STATE_COPY_DEST;
+			barriers[0].MipLevel	= LAMBDA_ALL_MIP_LEVELS;
+			barriers[1].pTexture	= m_NormalMap.Get();
+			barriers[1].AfterState	= RESOURCE_STATE_COPY_DEST;
+			barriers[1].MipLevel	= LAMBDA_ALL_MIP_LEVELS;
+			m_Context->TransitionTextureStates(barriers, 2);
 			m_Context->GenerateMipLevels(m_AlbedoMap.Get());
+			m_Context->GenerateMipLevels(m_NormalMap.Get());
 
 			//Transition into shader resource
-			barrier.AfterState = RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-			m_Context->TransitionTextureStates(&barrier, 1);
+			barriers[0].AfterState = RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+			barriers[1].AfterState = RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+			m_Context->TransitionTextureStates(barriers, 2);
 
-			//m_NormalMap = ITexture::CreateTextureFromFile(pDevice, "revolver_normal.png", TEXTURE_FLAGS_SHADER_RESOURCE | TEXTURE_FLAGS_GENEATE_MIPS, USAGE_DEFAULT, FORMAT_R8G8B8A8_UNORM);
-			//m_NormalMap->SetName("NormalMap");
-			//m_Context->GenerateMipLevels(m_NormalMap.Get());
 
             //Create samplerstate
             TextureDesc textureDesc = m_AlbedoMap->GetDesc();
@@ -310,11 +314,11 @@ namespace Lambda
 
 			//Setup materials
 			m_VariableTable->GetVariableByName(SHADER_STAGE_VERTEX, "u_TransformBuffer")->SetConstantBuffer(m_PositionBuffer.Get());
-			//m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Normal")->SetTexture(m_NormalMap.Get());
+			m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Normal")->SetTexture(m_NormalMap.Get());
 			m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Albedo")->SetTexture(m_AlbedoMap.Get());
 			m_VariableTable->GetVariableByName(SHADER_STAGE_PIXEL, "u_Sampler")->SetSamplerState(m_SamplerState.Get());
 
-			/*m_Material.pPipelineState	= m_PipelineState.Get();
+			m_Material.pPipelineState	= m_PipelineState.Get();
 			m_Material.pVariableTable	= m_VariableTable.Get();
 			m_Material.HasNormalMap		= 1;
 			m_Material.HasAlbedoMap		= 1;
@@ -324,14 +328,13 @@ namespace Lambda
 			m_RedMaterial.pPipelineState	= m_PipelineState.Get();
 			m_RedMaterial.HasNormalMap		= 0;
 			m_RedMaterial.HasAlbedoMap		= 0;
-			m_RedMaterial.Color				= glm::vec4(RGB_F(255, 0, 0), 1.0f);*/
+			m_RedMaterial.Color				= glm::vec4(RGB_F(255, 0, 0), 1.0f);
         }
 	}
 
 
 	void SandBoxLayer::OnUpdate(Timestep dt)
 	{
-		/*
         //Move camera
         constexpr float speed = 2.0f;
         if (Input::IsKeyDown(KEY_W))
@@ -366,14 +369,14 @@ namespace Lambda
         else if (Input::IsKeyDown(KEY_E))
             m_Camera.Rotate(glm::vec3(0.0f, 0.0f, -rotation) * dt.AsSeconds());
         
-        m_Camera.CreateView();*/
+        m_Camera.CreateView();
 	}
 
 
 	void SandBoxLayer::OnRender(Renderer3D& renderer, Timestep dt)
 	{
         //Update light
-        /*static LightBuffer lightBuffer  =
+        static LightBuffer lightBuffer  =
         {
             glm::vec4(lightColor[0], lightColor[1], lightColor[2], lightColor[3]),
             glm::vec3(transformLight.Position[0], transformLight.Position[1], transformLight.Position[2])
@@ -400,10 +403,11 @@ namespace Lambda
 			m_TransformBuffer.Model = translation * rotation * scale;
 
 			renderer.Submit(m_SphereMesh, m_RedMaterial, m_TransformBuffer);
-		}*/
+		}
 
-		//renderer.EndScene();
+		renderer.EndScene();
 
+		/*
 		//Transition before clearing
 		ITexture* pRenderTarget = m_SwapChain->GetBuffer();
 		ITexture* pDepthBuffer	= m_SwapChain->GetDepthBuffer();
@@ -465,8 +469,12 @@ namespace Lambda
 			}
 		}
 
+		//Draw UI before ending
+		Application::Get().GetUILayer()->Draw(m_Context.Get());
+
 		//Present
 		m_SwapChain->Present();
+		*/
 	}
 
 
@@ -474,12 +482,13 @@ namespace Lambda
 	{
 		m_Mesh.pVertexBuffer->Release();
 		m_Mesh.pIndexBuffer->Release();
+		m_SphereMesh.pVertexBuffer->Release();
+		m_SphereMesh.pIndexBuffer->Release();
 	}
 
 
     void SandBoxLayer::OnRenderUI(Timestep dt)
     {
-		/*
         //Update userinterface
 		ImGui::SetNextWindowSize(ImVec2(430, 450), ImGuiCond_FirstUseEver);
 		if (!ImGui::Begin("Entities", NULL))
@@ -568,7 +577,7 @@ namespace Lambda
 
 			static void ShowObject(const char* prefix, int uid)
 			{
-				ImGui::PushID(uid);                      // Use object uid as identifier. Most commonly you could also use the object pointer as a base ID.
+				ImGui::PushID(uid);                // Use object uid as identifier. Most commonly you could also use the object pointer as a base ID.
 				ImGui::AlignTextToFramePadding();  // Text and Tree nodes are less high than regular widgets, here we add vertical spacing to make the tree lines equal high.
 				bool nodeOpen = ImGui::TreeNode("Object", "%s_%u", prefix, uid);
 				ImGui::NextColumn();
@@ -606,14 +615,12 @@ namespace Lambda
 		//draw spheres
 		uint32 index = 3;
 		for (auto& transform : sphereTransforms)
-		{
 			funcs::ShowObject("Entity", index++);
-		}
 
 		ImGui::Columns(1);
 		ImGui::Separator();
 		ImGui::PopStyleVar();
-		ImGui::End();*/
+		ImGui::End();
     }
 
 
@@ -635,9 +642,8 @@ namespace Lambda
 	bool SandBoxLayer::OnWindowResize(const WindowResizeEvent& event)
 	{
 		if (event.GetWidth() > 0 && event.GetHeight() > 0)
-		{
 			CreateCamera(event.GetWidth(), event.GetHeight());
-		}
+
 		return false;
 	}
 
@@ -655,22 +661,22 @@ namespace Lambda
 
 	void SandBoxLayer::CreateCamera(uint32 width, uint32 height)
     {
-        //m_Camera.SetAspect(float(width), float(height));
-        //m_Camera.CreateProjection();
+        m_Camera.SetAspect(float(width), float(height));
+        m_Camera.CreateProjection();
 
 		//Viewport
-		m_Viewport.Width = float(width);
-		m_Viewport.Height = float(height);
+		m_Viewport.Width	= float(width);
+		m_Viewport.Height	= float(height);
 		m_Viewport.MaxDepth = 1.0f;
 		m_Viewport.MinDepth = 0.0f;
-		m_Viewport.TopX = 0.0f;
-		m_Viewport.TopY = 0.0f;
+		m_Viewport.TopX		= 0.0f;
+		m_Viewport.TopY		= 0.0f;
 
 		//Scissorrect
-		m_ScissorRect.Width = float(width);
-		m_ScissorRect.Height = float(height);
-		m_ScissorRect.X = 0.0f;
-		m_ScissorRect.Y = 0.0f;
+		m_ScissorRect.Width		= float(width);
+		m_ScissorRect.Height	= float(height);
+		m_ScissorRect.X			= 0.0f;
+		m_ScissorRect.Y			= 0.0f;
 
 		//Resize
 		m_SwapChain->ResizeBuffers(width, height);

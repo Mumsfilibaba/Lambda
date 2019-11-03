@@ -81,13 +81,13 @@ namespace Lambda
 		pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_BUFFER, (uint64)m_Buffer, "Dynamic Memory Page [" + std::to_string(m_ID) + "]");
 
 		//Setup first block
-		m_pHead = m_BlockPool.Get();
-		m_pHead->pPage = this;
-		m_pHead->pNext = nullptr;
-		m_pHead->pPrevious = nullptr;
-		m_pHead->IsFree = true;
-		m_pHead->SizeInBytes = m_SizeInBytes;
-		m_pHead->BufferOffset = 0;
+		m_pHead					= m_BlockPool.Get();
+		m_pHead->pPage			= this;
+		m_pHead->pNext			= nullptr;
+		m_pHead->pPrevious		= nullptr;
+		m_pHead->IsFree			= true;
+		m_pHead->SizeInBytes	= m_SizeInBytes;
+		m_pHead->BufferOffset	= 0;
 #if defined(LAMBDA_DEBUG)
 		m_pHead->ID = m_BlockCount++;
 #endif

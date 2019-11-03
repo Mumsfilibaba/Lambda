@@ -296,17 +296,27 @@ namespace Lambda
 
 			//Print memoryleaks
 #if defined(LAMBDA_DEBUG)
-			VKNMemoryBlock* pDebug = m_pHead;
-			LOG_DEBUG_WARNING("Allocated blocks left in MemoryPage %u:\n", m_ID);
-			while (pDebug)
 			{
-				LOG_DEBUG_WARNING("    VulkanBlock: ID=%u, Offset=%u, Size=%u, IsFree=%s\n", pDebug->ID, pDebug->DeviceMemoryOffset, pDebug->SizeInBytes, pDebug->IsFree ? "True" : "False");
-				pDebug = pDebug->pNext;
+				VKNMemoryBlock* pDebug = m_pHead;
+				LOG_DEBUG_WARNING("Allocated blocks left in MemoryPage %u:\n", m_ID);
+				while (pDebug)
+				{
+					LOG_DEBUG_WARNING("    VulkanBlock: ID=%u, Offset=%u, Size=%u, IsFree=%s\n", pDebug->ID, pDebug->DeviceMemoryOffset, pDebug->SizeInBytes, pDebug->IsFree ? "True" : "False");
+					pDebug = pDebug->pNext;
+				}
 			}
 #endif
 
-			//Delete first block
-			SafeDelete(m_pHead);
+			//Delete all blocks
+			VKNMemoryBlock* pCurrent = m_pHead;
+			while (pCurrent != nullptr)
+			{
+				VKNMemoryBlock* pOld = pCurrent;
+				pCurrent = pCurrent->pNext;
+
+				//Delete block
+				SafeDelete(pOld);
+			}		
 
 			//Free memory
 			vkFreeMemory(pDevice->GetVkDevice(), m_DeviceMemory, nullptr);
