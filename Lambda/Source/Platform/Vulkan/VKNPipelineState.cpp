@@ -169,7 +169,7 @@ namespace Lambda
 				layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 
 				//Bind sampler to slot permanently
-				auto& sampler = m_StaticSamplerStates.find(variable.pStaticSamplerName);
+				const auto& sampler = m_StaticSamplerStates.find(std::string(variable.pStaticSamplerName));
 				if (sampler != m_StaticSamplerStates.end())
 				{
 					VkSampler& vkSampler = sampler->second;
