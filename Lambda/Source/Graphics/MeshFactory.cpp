@@ -35,7 +35,7 @@ namespace Lambda
         {
             if(pScene->HasMeshes())
             {
-                LOG_DEBUG_INFO("Loading Scene with '%u' meshes\n", pScene->mNumMeshes);
+                LOG_DEBUG_INFO("[LAMBDA ENGINE] Loading Scene with '%u' meshes\n", pScene->mNumMeshes);
                 
 				size_t vertexOffset = 0;
 				size_t indexOffset = 0;
@@ -45,11 +45,11 @@ namespace Lambda
 					const aiMesh* pMesh = pScene->mMeshes[m];
 					if (!pMesh->HasNormals())
 					{
-						LOG_DEBUG_WARNING("Mesh does not have normals\n");
+						LOG_DEBUG_WARNING("[LAMBDA ENGINE] Mesh does not have normals\n");
 					}
 					if (!pMesh->HasTextureCoords(0))
 					{
-						LOG_DEBUG_WARNING("Mesh does not have texcoords\n");
+						LOG_DEBUG_WARNING("[LAMBDA ENGINE] Mesh does not have texcoords\n");
 					}
 
 					if (pMesh)
@@ -100,18 +100,18 @@ namespace Lambda
             }
             else
             {
-                LOG_DEBUG_ERROR("File '%s' does not have any meshes\n", filename.c_str());
+                LOG_DEBUG_ERROR("[LAMBDA ENGINE] File '%s' does not have any meshes\n", filename.c_str());
 				return data;
             }
         }
         else
         {
 			const char* pErrorMessage = importer.GetErrorString();
-            LOG_SYSTEM_PRINT("Failed to load file '%s'. Message: %s\n", filename.c_str(), pErrorMessage);
+            LOG_SYSTEM_PRINT("[LAMBDA ENGINE] Failed to load file '%s'. Message: %s\n", filename.c_str(), pErrorMessage);
 			return data;
         }
         
-		LOG_SYSTEM_PRINT("Loaded mesh with %d vertices and %d indices. Triangles: %d\n", data.Vertices.size(), data.Indices.size(), data.Indices.size() / 3);
+		LOG_SYSTEM_PRINT("[LAMBDA ENGINE] Loaded mesh with %d vertices and %d indices. Triangles: %d\n", data.Vertices.size(), data.Indices.size(), data.Indices.size() / 3);
 		return data;
 	}
 

@@ -4,9 +4,9 @@
 
 namespace Lambda
 {
-	VKNQuery::VKNQuery(VKNDevice* pDevice, const QueryDesc& desc)
-		: QueryBase<VKNDevice>(pDevice, desc),
-		m_QueryPool(VK_NULL_HANDLE),
+	VKNQuery::VKNQuery(VKNDevice* pVkDevice, const QueryDesc& desc)
+		: QueryBase<VKNDevice>(pVkDevice, desc),
+		m_VkQueryPool(VK_NULL_HANDLE),
         m_CurrentQuery(0),
         m_TimeStampPeriod(0)
     {
@@ -17,22 +17,22 @@ namespace Lambda
 		//Get period of a timestamp
 		if (m_Desc.Type == QUERY_TYPE_TIMESTAMP)
 		{
-            m_TimeStampPeriod	= pDevice->GetPhysicalDeviceProperties().limits.timestampPeriod;
-			uint32 validBits = pDevice->GetGraphicsQueueProperties().timestampValidBits;
+            m_TimeStampPeriod	= pVkDevice->GetVkPhysicalDeviceProperties().limits.timestampPeriod;
+			uint32 validBits = pVkDevice->GetVkGraphicsQueueProperties().timestampValidBits;
 			
 			m_ValidBitsMask = 0;
-			for (uint32 i = 0; i < validBits; i++)
-				m_ValidBitsMask |= (1 << i);
+			for (uint64 i = 0; i < validBits; i++)
+				m_ValidBitsMask |= (1LLU << i);
 		}
     }
 
 
 	VKNQuery::~VKNQuery()
 	{
-		if (m_QueryPool != VK_NULL_HANDLE)
-			m_pDevice->SafeReleaseVulkanResource<VkQueryPool>(m_QueryPool);
+		if (m_VkQueryPool != VK_NULL_HANDLE)
+			m_pDevice->SafeReleaseVkResource<VkQueryPool>(m_VkQueryPool);
 
-		LOG_DEBUG_INFO("Vulkan: Destroyed Query\n");
+		LOG_DEBUG_INFO("[Vulkan] Destroyed Query\n");
 	}
     
     
@@ -48,13 +48,13 @@ namespace Lambda
         if (desc.Type == QUERY_TYPE_TIMESTAMP)
             queryInfo.queryType = VK_QUERY_TYPE_TIMESTAMP;
         
-        if (vkCreateQueryPool(m_pDevice->GetVkDevice(), &queryInfo, nullptr, &m_QueryPool) != VK_SUCCESS)
+        if (vkCreateQueryPool(m_pDevice->GetVkDevice(), &queryInfo, nullptr, &m_VkQueryPool) != VK_SUCCESS)
         {
-            LOG_DEBUG_ERROR("Vulkan: Failed to create querypool\n");
+            LOG_DEBUG_ERROR("[Vulkan] Failed to create querypool\n");
         }
         else
         {
-            LOG_DEBUG_INFO("Vulkan: Created querypool\n");
+            LOG_DEBUG_INFO("[Vulkan] Created querypool\n");
         }
     }
     
@@ -63,7 +63,7 @@ namespace Lambda
     {
         LAMBDA_ASSERT(pResults != nullptr);
         
-        if (vkGetQueryPoolResults(m_pDevice->GetVkDevice(), m_QueryPool, startQuery, numResults, numResults * sizeof(uint64), pResults, sizeof(uint64), VK_QUERY_RESULT_64_BIT) == VK_SUCCESS)
+        if (vkGetQueryPoolResults(m_pDevice->GetVkDevice(), m_VkQueryPool, startQuery, numResults, numResults * sizeof(uint64), pResults, sizeof(uint64), VK_QUERY_RESULT_64_BIT) == VK_SUCCESS)
 		{
 			if (m_Desc.Type == QUERY_TYPE_TIMESTAMP)
 			{
@@ -76,7 +76,7 @@ namespace Lambda
     
     void* VKNQuery::GetNativeHandle() const
     {
-        return reinterpret_cast<void*>(m_QueryPool);
+        return reinterpret_cast<void*>(m_VkQueryPool);
     }
     
     

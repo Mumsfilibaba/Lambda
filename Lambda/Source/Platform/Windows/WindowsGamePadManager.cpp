@@ -1,26 +1,26 @@
 #include "LambdaPch.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include "Events/EventDispatcher.h"
-	#include "WindowsJoystickManager.h"
+	#include "WindowsGamePadManager.h"
 	
 	#pragma comment(lib, "Xinput.lib")
 
 namespace Lambda
 {
-	//---------------
-	//JoystickManager
-	//---------------
+	//--------------
+	//GamePadManager
+	//--------------
 
-	JoystickManager* JoystickManager::Create()
+	GamePadManager* GamePadManager::Create()
 	{
-		return DBG_NEW WindowsJoystickManager();
+		return DBG_NEW WindowsGamePadManager();
 	}
 	
 	//----------------------
 	//WindowsJoystickManager
 	//----------------------
 
-	WindowsJoystickManager::WindowsJoystickManager()
+	WindowsGamePadManager::WindowsGamePadManager()
 	{
 		memset(&m_ControllerState, 0, sizeof(XINPUT_STATE) * XUSER_MAX_COUNT);
 		m_PollRate = Timestep::Seconds(1.0f / 60.0f);
@@ -28,7 +28,7 @@ namespace Lambda
 	}
 
 
-	void WindowsJoystickManager::InternalOnUpdate()
+	void WindowsGamePadManager::InternalOnUpdate()
 	{
 		//Should we poll for input or return
 		m_PollingTimer.Tick();
@@ -96,13 +96,13 @@ namespace Lambda
 	}
 
 
-	void WindowsJoystickManager::InternalSetPollrate(const Timestep& time)
+	void WindowsGamePadManager::InternalSetPollrate(const Timestep& time)
 	{
 		m_PollRate = time;
 	}
 
 
-	Timestep WindowsJoystickManager::InternalGetPollrate() const
+	Timestep WindowsGamePadManager::InternalGetPollrate() const
 	{
 		return m_PollRate;
 	}

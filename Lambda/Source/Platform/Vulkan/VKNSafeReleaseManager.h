@@ -18,6 +18,7 @@ namespace Lambda
 	{
 	public:
 		LAMBDA_INTERFACE(VKNResourceBase);
+
 		virtual void Release() = 0;
 		virtual uint64 GetResourceHandle() const = 0;
 	};
@@ -32,7 +33,7 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(VKNResource);
 
-		VKNResource(VKNDevice* pDevice, const VkResourceType& resource) : m_pDevice(pDevice), m_Resource(resource) { }
+		VKNResource(VKNDevice* pVkDevice, const VkResourceType& resource) : m_pVkDevice(pVkDevice), m_VkResource(resource) { }
 		~VKNResource() { }
 
 		void DestroyResource();
@@ -40,7 +41,7 @@ namespace Lambda
 
 		virtual uint64 GetResourceHandle() const override final
 		{
-			return (uint64)m_Resource;
+			return (uint64)m_VkResource;
 		}
 
 
@@ -50,8 +51,8 @@ namespace Lambda
 			delete this;
 		}
 	private:
-		VKNDevice* m_pDevice;
-		VkResourceType m_Resource;
+		VKNDevice* m_pVkDevice;
+		VkResourceType m_VkResource;
 	};
 
 	//---------------------
@@ -63,22 +64,22 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(VKNSafeReleaseManager);
 
-		VKNSafeReleaseManager(VKNDevice* pDevice);
+		VKNSafeReleaseManager(VKNDevice* pVkDevice);
 		~VKNSafeReleaseManager();
 
 		template<typename VkResourceType>
 		void ReleaseResource(const VkResourceType& resource)
 		{
 #if defined(LAMBDA_SAFE_RESOURCE_DEBUG)
-			LOG_DEBUG_WARNING("Releasing VkResource '%p' Frame=%llu\n", resource, m_FrameIndex);
+			LOG_DEBUG_WARNING("[Vulkan] Releasing VkResource '%p' Frame=%llu\n", resource, m_FrameIndex);
 #endif
-			m_Resources.emplace_back(std::pair<uint64, VKNResourceBase*>(m_FrameIndex, DBG_NEW VKNResource<VkResourceType>(m_pDevice, resource)));
+			m_Resources.emplace_back(std::pair<uint64, VKNResourceBase*>(m_FrameIndex, DBG_NEW VKNResource<VkResourceType>(m_pVkDevice, resource)));
 		}
 
 		void EmptyResources();
 	private:
-		VKNDevice* m_pDevice;
-		uint64 m_FrameIndex;
 		std::vector<std::pair<uint64, VKNResourceBase*>> m_Resources;
+		VKNDevice* m_pVkDevice;
+		uint64 m_FrameIndex;
 	};
 }

@@ -9,17 +9,17 @@ namespace Lambda
 	//VKNUploadPage
 	//-------------
 
-	VKNUploadPage::VKNUploadPage(VKNDevice* pDevice, VkDeviceSize sizeInBytes)
+	VKNUploadPage::VKNUploadPage(VKNDevice* pVkDevice, VkDeviceSize sizeInBytes)
 		: m_VkBuffer(VK_NULL_HANDLE),
 		m_Memory(),
 		m_SizeInBytes(sizeInBytes),
 		m_OffsetInBytes(0)
 	{
-		Init(pDevice);
+		Init(pVkDevice);
 	}
 
 
-	void VKNUploadPage::Init(VKNDevice* pDevice)
+	void VKNUploadPage::Init(VKNDevice* pVkDevice)
 	{
 		//Create buffer
 		VkBufferCreateInfo info = {};
@@ -31,14 +31,14 @@ namespace Lambda
 		info.pQueueFamilyIndices	= nullptr;
 		info.sharingMode			= VK_SHARING_MODE_EXCLUSIVE;
 		info.usage					= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-		if (vkCreateBuffer(pDevice->GetVkDevice(), &info, nullptr, &m_VkBuffer) != VK_SUCCESS)
+		if (vkCreateBuffer(pVkDevice->GetVkDevice(), &info, nullptr, &m_VkBuffer) != VK_SUCCESS)
 		{
-			LOG_DEBUG_ERROR("Vulkan: Failed to create UploadPage\n");
+			LOG_DEBUG_ERROR("[Vulkan] [UPLOADBUFFER] Failed to create page\n");
 			return;
 		}
 		else
 		{
-			LOG_DEBUG_WARNING("Vulkan: Created UploadPage\n");
+			LOG_DEBUG_WARNING("[Vulkan] [UPLOADBUFFER] Created page\n");
 		}
 
 
@@ -47,18 +47,18 @@ namespace Lambda
 
 		//Allocate memory
 		VkMemoryRequirements memoryRequirements = {};
-		vkGetBufferMemoryRequirements(pDevice->GetVkDevice(), m_VkBuffer, &memoryRequirements);
-		if (!pDevice->Allocate(m_Memory, memoryRequirements, memoryProperties))
+		vkGetBufferMemoryRequirements(pVkDevice->GetVkDevice(), m_VkBuffer, &memoryRequirements);
+		if (!pVkDevice->Allocate(m_Memory, memoryRequirements, memoryProperties))
 		{
-			LOG_DEBUG_ERROR("Vulkan: Failed to allocate UploadPage '%p'\n", m_VkBuffer);
+			LOG_DEBUG_ERROR("[Vulkan] [UPLOADBUFFER] Failed to allocate page '%p'\n", m_VkBuffer);
 			return;
 		}
 		else
 		{
-			LOG_DEBUG_WARNING("Vulkan: Allocated '%d' bytes for UploadPage\n", m_SizeInBytes);
-			if (vkBindBufferMemory(pDevice->GetVkDevice(), m_VkBuffer, m_Memory.DeviceMemory, m_Memory.DeviceMemoryOffset) != VK_SUCCESS)
+			LOG_DEBUG_WARNING("[Vulkan] [UPLOADBUFFER] Allocated '%d' bytes for page\n", m_SizeInBytes);
+			if (vkBindBufferMemory(pVkDevice->GetVkDevice(), m_VkBuffer, m_Memory.DeviceMemory, m_Memory.DeviceMemoryOffset) != VK_SUCCESS)
 			{
-				LOG_DEBUG_WARNING("Vulkan: Failed to bind memory UploadPage\n");
+				LOG_DEBUG_WARNING("[Vulkan] [UPLOADBUFFER] Failed to bind memory page\n");
 			}
 		}
 	}
@@ -88,18 +88,18 @@ namespace Lambda
 	}
 
 
-	void VKNUploadPage::Destroy(VKNDevice* pDevice)
+	void VKNUploadPage::Destroy(VKNDevice* pVkDevice)
 	{
-		LAMBDA_ASSERT(pDevice != nullptr);
+		LAMBDA_ASSERT(pVkDevice != nullptr);
 
 		//Deallocate memory from global memory manager
-		pDevice->Deallocate(m_Memory);
+		pVkDevice->Deallocate(m_Memory);
 
 		//Delete buffer
 		if (m_VkBuffer != VK_NULL_HANDLE)
-			pDevice->SafeReleaseVulkanResource<VkBuffer>(m_VkBuffer);
+			pVkDevice->SafeReleaseVkResource<VkBuffer>(m_VkBuffer);
 
-		LOG_SYSTEM(LOG_SEVERITY_WARNING, "Vulkan: Deallocated VKNUploadPage\n");
+		LOG_SYSTEM(LOG_SEVERITY_WARNING, "[Vulkan] [UPLOADBUFFER] Deallocated page\n");
 		delete this;
 	}
 
@@ -108,22 +108,22 @@ namespace Lambda
 	//VKNUploadAllocator
 	//------------------
 
-	VKNUploadAllocator::VKNUploadAllocator(VKNDevice* pDevice, VkDeviceSize sizeInBytes)
-		: m_pDevice(pDevice),
+	VKNUploadAllocator::VKNUploadAllocator(VKNDevice* pVkDevice, VkDeviceSize sizeInBytes)
+		: m_pVkDevice(pVkDevice),
 		m_pCurrentPage(nullptr),
 		m_DiscardedPages()
 	{
 		//Create the first page
-		m_pCurrentPage = DBG_NEW VKNUploadPage(pDevice, sizeInBytes);
+		m_pCurrentPage = DBG_NEW VKNUploadPage(pVkDevice, sizeInBytes);
 	}
 
 
 	VKNUploadAllocator::~VKNUploadAllocator()
 	{
 		Reset();
-		m_pCurrentPage->Destroy(m_pDevice);
+		m_pCurrentPage->Destroy(m_pVkDevice);
 
-		LOG_DEBUG_INFO("Vulkan: Destroyed VKNUploadAllocator\n");
+		LOG_DEBUG_INFO("[Vulkan] [UPLOADBUFFER] Destroyed allocator\n");
 	}
 
 
@@ -136,7 +136,7 @@ namespace Lambda
 
 		//If allocation cannot be made with old page, allocate new with enough size 
 		m_DiscardedPages.emplace_back(m_pCurrentPage);
-		m_pCurrentPage = DBG_NEW VKNUploadPage(m_pDevice, sizeInBytes + MB(1));
+		m_pCurrentPage = DBG_NEW VKNUploadPage(m_pVkDevice, sizeInBytes + MB(1));
 
 		return m_pCurrentPage->Allocate(sizeInBytes, alignment);
 	}
@@ -146,8 +146,11 @@ namespace Lambda
 	{
 		m_pCurrentPage->Reset();
 
-		for (auto page : m_DiscardedPages)
-			page->Destroy(m_pDevice);
+		for (auto pPage : m_DiscardedPages)
+		{
+			if (pPage)
+				pPage->Destroy(m_pVkDevice);
+		} 
 
 		m_DiscardedPages.clear();
 	}

@@ -17,12 +17,12 @@ namespace Lambda
 	//VKNPipelineState
 	//----------------
 
-    VKNPipelineState::VKNPipelineState(VKNDevice* pDevice, const PipelineStateDesc& desc)
-        : PipelineStateBase<VKNDevice>(pDevice, desc),
+    VKNPipelineState::VKNPipelineState(VKNDevice* pVkDevice, const PipelineStateDesc& desc)
+        : PipelineStateBase<VKNDevice>(pVkDevice, desc),
 		m_pAllocator(nullptr),
-        m_Pipeline(VK_NULL_HANDLE),
-        m_PipelineLayout(VK_NULL_HANDLE),
-        m_DescriptorSetLayout(VK_NULL_HANDLE),
+        m_VkPipeline(VK_NULL_HANDLE),
+        m_VkPipelineLayout(VK_NULL_HANDLE),
+        m_VkDescriptorSetLayout(VK_NULL_HANDLE),
         m_ShaderVariableDescs(),
         m_ConstantBlockDescs()
     {
@@ -38,7 +38,7 @@ namespace Lambda
 		for (auto sampler : m_StaticSamplerStates)
 		{
 			if (sampler.second != VK_NULL_HANDLE)
-				m_pDevice->SafeReleaseVulkanResource<VkSampler>(sampler.second);
+				m_pDevice->SafeReleaseVkResource<VkSampler>(sampler.second);
 		}
 
 		//Delete DesctiptorAllocator
@@ -49,14 +49,14 @@ namespace Lambda
 		}
 
 		//Delete pipelineresources
-		if (m_Pipeline != VK_NULL_HANDLE)
-			m_pDevice->SafeReleaseVulkanResource<VkPipeline>(m_Pipeline);
-		if (m_DescriptorSetLayout != VK_NULL_HANDLE)
-			m_pDevice->SafeReleaseVulkanResource<VkDescriptorSetLayout>(m_DescriptorSetLayout);
-		if (m_PipelineLayout != VK_NULL_HANDLE)
-			m_pDevice->SafeReleaseVulkanResource<VkPipelineLayout>(m_PipelineLayout);
+		if (m_VkPipeline != VK_NULL_HANDLE)
+			m_pDevice->SafeReleaseVkResource<VkPipeline>(m_VkPipeline);
+		if (m_VkDescriptorSetLayout != VK_NULL_HANDLE)
+			m_pDevice->SafeReleaseVkResource<VkDescriptorSetLayout>(m_VkDescriptorSetLayout);
+		if (m_VkPipelineLayout != VK_NULL_HANDLE)
+			m_pDevice->SafeReleaseVkResource<VkPipelineLayout>(m_VkPipelineLayout);
 
-		LOG_DEBUG_INFO("Vulkan: Destroyed PipelineState\n");
+		LOG_DEBUG_INFO("[Vulkan] Destroyed PipelineState\n");
 	}
 
 	
@@ -97,7 +97,7 @@ namespace Lambda
 			//Static samplers must have a name
 			if (staticSamplerStateDesc.pName == nullptr)
 			{
-				LOG_DEBUG_ERROR("Vulkan: Static SamplerStates must have a name\n");
+				LOG_DEBUG_ERROR("[Vulkan] Static SamplerStates must have a name\n");
 			}
 
 			//Get adress mode
@@ -127,17 +127,17 @@ namespace Lambda
 			VkSampler staticSampler = VK_NULL_HANDLE;
 			if (vkCreateSampler(m_pDevice->GetVkDevice(), &info, nullptr, &staticSampler) != VK_SUCCESS)
 			{
-				LOG_DEBUG_ERROR("Vulkan: Failed to create create Static SamplerState\n");
+				LOG_DEBUG_ERROR("[Vulkan] Failed to create create Static SamplerState\n");
 			}
 			else
 			{
-				LOG_DEBUG_INFO("Vulkan: Created Static SamplerState\n");
+				LOG_DEBUG_INFO("[Vulkan] Created Static SamplerState\n");
 
 				auto sampler = m_StaticSamplerStates.find(staticSamplerStateDesc.pName);
 				if (sampler != m_StaticSamplerStates.end())
 				{
-					LOG_DEBUG_WARNING("Vulkan: Multiple Static SamplerState with the same name '%s'. Only the first one is created\n", staticSamplerStateDesc.pName);
-					m_pDevice->SafeReleaseVulkanResource<VkSampler>(staticSampler);
+					LOG_DEBUG_WARNING("[Vulkan] Multiple Static SamplerState with the same name '%s'. Only the first one is created\n", staticSamplerStateDesc.pName);
+					m_pDevice->SafeReleaseVkResource<VkSampler>(staticSampler);
 				}
 				else
 				{
@@ -177,7 +177,7 @@ namespace Lambda
 				}
 				else
 				{
-					LOG_DEBUG_ERROR("Vulkan: No Static SamplerState with the name '%s'\n", variable.pStaticSamplerName);
+					LOG_DEBUG_ERROR("[Vulkan] No Static SamplerState with the name '%s'\n", variable.pStaticSamplerName);
 				}
 			}
 
@@ -206,14 +206,14 @@ namespace Lambda
 		descriptorLayoutInfo.flags = 0;
 		descriptorLayoutInfo.bindingCount	= uint32(layoutBindings.size());
 		descriptorLayoutInfo.pBindings		= layoutBindings.data();
-		if (vkCreateDescriptorSetLayout(m_pDevice->GetVkDevice(), &descriptorLayoutInfo, nullptr, &m_DescriptorSetLayout) != VK_SUCCESS)
+		if (vkCreateDescriptorSetLayout(m_pDevice->GetVkDevice(), &descriptorLayoutInfo, nullptr, &m_VkDescriptorSetLayout) != VK_SUCCESS)
 		{
-			LOG_DEBUG_ERROR("Vulkan: Failed to create DescriptorSetLayout\n");
+			LOG_DEBUG_ERROR("[Vulkan] Failed to create DescriptorSetLayout\n");
 			return;
 		}
 		else
 		{
-			LOG_DEBUG_INFO("Vulkan: Created DescriptorSetLayout\n");
+			LOG_DEBUG_INFO("[Vulkan] Created DescriptorSetLayout\n");
 		}
 
 		//Create pipelinelayout
@@ -222,17 +222,17 @@ namespace Lambda
 		layoutInfo.flags = 0;
 		layoutInfo.pNext = nullptr;
 		layoutInfo.setLayoutCount			= 1;
-		layoutInfo.pSetLayouts				= &m_DescriptorSetLayout;
+		layoutInfo.pSetLayouts				= &m_VkDescriptorSetLayout;
 		layoutInfo.pushConstantRangeCount	= uint32(constantRanges.size());
 		layoutInfo.pPushConstantRanges		= constantRanges.data();
-		if (vkCreatePipelineLayout(m_pDevice->GetVkDevice(), &layoutInfo, nullptr, &m_PipelineLayout) != VK_SUCCESS)
+		if (vkCreatePipelineLayout(m_pDevice->GetVkDevice(), &layoutInfo, nullptr, &m_VkPipelineLayout) != VK_SUCCESS)
 		{
-			LOG_DEBUG_ERROR("Vulkan: Failed to create PipelineLayout\n");
+			LOG_DEBUG_ERROR("[Vulkan] Failed to create PipelineLayout\n");
 			return;
 		}
 		else
 		{
-			LOG_DEBUG_INFO("Vulkan: Created PipelineLayout\n");
+			LOG_DEBUG_INFO("[Vulkan] Created PipelineLayout\n");
 
 			//Create allocator
 			m_pAllocator = DBG_NEW VKNDescriptorSetAllocator(m_pDevice, 64, 64, 64, 64, 64, 64);
@@ -471,36 +471,36 @@ namespace Lambda
 			pipelineInfo.pDepthStencilState     = &depthStencilState;
 			pipelineInfo.pColorBlendState       = &colorBlending;
 			pipelineInfo.pDynamicState          = &dynamicState;
-			pipelineInfo.layout                 = m_PipelineLayout;
+			pipelineInfo.layout                 = m_VkPipelineLayout;
 			pipelineInfo.renderPass             = renderPass;
 			pipelineInfo.subpass                = 0;
 			pipelineInfo.basePipelineHandle     = VK_NULL_HANDLE;
 			pipelineInfo.basePipelineIndex      = -1;
-			if (vkCreateGraphicsPipelines(m_pDevice->GetVkDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_Pipeline) != VK_SUCCESS)
+			if (vkCreateGraphicsPipelines(m_pDevice->GetVkDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_VkPipeline) != VK_SUCCESS)
 			{
-				LOG_DEBUG_ERROR("Vulkan: Failed to create GraphicsPipelineState\n");
+				LOG_DEBUG_ERROR("[Vulkan] Failed to create GraphicsPipelineState\n");
 				return;
 			}
 			else
 			{
-				LOG_DEBUG_INFO("Vulkan: Created GraphicsPipelineState\n");
+				LOG_DEBUG_INFO("[Vulkan] Created GraphicsPipelineState\n");
 				SetName(desc.pName);
 			}
 		}
 		else if (desc.Type == PIPELINE_TYPE_COMPUTE)
 		{
-			LOG_DEBUG_ERROR("Vulkan: Compute pipeline not implemented\n");
+			LOG_DEBUG_ERROR("[Vulkan] Compute pipeline not implemented\n");
 		}
 		else
 		{
-			LOG_DEBUG_ERROR("Vulkan: Unknown PiplineType\n");
+			LOG_DEBUG_ERROR("[Vulkan] Unknown PiplineType\n");
 		}
     }
 
     
     void* VKNPipelineState::GetNativeHandle() const
     {
-        return reinterpret_cast<void*>(m_Pipeline);
+        return reinterpret_cast<void*>(m_VkPipeline);
     }
 
 
@@ -509,7 +509,7 @@ namespace Lambda
 		TPipelineState::SetName(pName);
 		if (pName)
 		{
-			m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_PIPELINE, (uint64)m_Pipeline, m_Name);
+			m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_PIPELINE, (uint64)m_VkPipeline, m_Name);
 			m_Desc.pName = m_Name.c_str();
 		}
     }

@@ -26,7 +26,7 @@ namespace Lambda
 	{
 		if (FAILED(m_Buffer->Map(0, nullptr, ppData)))
 		{
-			LOG_DEBUG_ERROR("DX12: Failed to map buffer.\n");
+			LOG_DEBUG_ERROR("[D3D12] Failed to map buffer.\n");
 			(*ppData) = nullptr;
 		}
 	}
@@ -73,12 +73,12 @@ namespace Lambda
 			HRESULT hr = m_pDevice->GetDevice()->CreateCommittedResource(&heapProp, D3D12_HEAP_FLAG_NONE, &rDesc, state, nullptr, IID_PPV_ARGS(&m_Buffer));
 			if (FAILED(hr))
 			{
-				LOG_DEBUG_ERROR("DX12: Failed to create Buffer.\n");
+				LOG_DEBUG_ERROR("[D3D12] Failed to create Buffer.\n");
 				return;
 			}
 			else
 			{
-				LOG_DEBUG_INFO("DX12: Created Buffer.\n");
+				LOG_DEBUG_INFO("[D3D12] Created Buffer.\n");
 				m_Desc = desc;
 			}
 		}

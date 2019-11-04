@@ -18,24 +18,21 @@ namespace Lambda
         glm::vec3 Tangent;
 		glm::vec2 TexCoord;
 
-		bool operator==(const Vertex& other) const;
-		bool operator!=(const Vertex& other) const;
+		
+		_forceinline bool operator==(const Vertex& other) const
+		{
+			return	Position == other.Position &&
+				Normal == other.Normal &&
+				Tangent == other.Tangent &&
+				TexCoord == other.TexCoord;
+		}
+
+
+		_forceinline bool operator!=(const Vertex& other) const
+		{
+			return !(*this == other);
+		}
 	};
-
-
-	inline bool Vertex::operator==(const Vertex& other) const
-	{
-		return	Position	== other.Position	&&
-				Normal		== other.Normal		&&
-                Tangent     == other.Tangent    &&
-				TexCoord	== other.TexCoord;
-	}
-
-
-	inline bool Vertex::operator!=(const Vertex& other) const
-	{
-		return !(*this == other);
-	}
 
     //--------
     //MeshData

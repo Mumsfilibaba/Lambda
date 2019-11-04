@@ -27,7 +27,7 @@ namespace Lambda
     public:
         LAMBDA_NO_COPY(VKNPipelineState);
         
-        VKNPipelineState(VKNDevice* pDevice, const PipelineStateDesc& desc);
+        VKNPipelineState(VKNDevice* pVkDevice, const PipelineStateDesc& desc);
         ~VKNPipelineState();
 
 		virtual void CreateShaderVariableTable(IShaderVariableTable** ppVariableTable) override final;
@@ -37,25 +37,25 @@ namespace Lambda
 		
 		_forceinline VkDescriptorSet AllocateDescriptorSet() const			
 		{ 
-			return m_pAllocator->Allocate(m_DescriptorSetLayout); 
+			return m_pAllocator->Allocate(m_VkDescriptorSetLayout); 
 		};
 
 
 		_forceinline VkPipeline GetVkPipeline() const							
 		{ 
-			return m_Pipeline; 
+			return m_VkPipeline; 
 		}
 		
 		
 		_forceinline VkPipelineLayout GetVkPipelineLayout() const				
 		{ 
-			return m_PipelineLayout; 
+			return m_VkPipelineLayout; 
 		}
 		
 		
 		_forceinline VkDescriptorSetLayout GetVkDescriptorSetLayout() const	
 		{ 
-			return m_DescriptorSetLayout; 
+			return m_VkDescriptorSetLayout; 
 		}
 
 
@@ -70,12 +70,12 @@ namespace Lambda
     private:
         void Init(const PipelineStateDesc& desc);
     private:
-        VKNDescriptorSetAllocator* m_pAllocator;
-        VkPipeline            m_Pipeline;
-        VkPipelineLayout      m_PipelineLayout;
-        VkDescriptorSetLayout m_DescriptorSetLayout;
         std::vector<ShaderVariableDesc> m_ShaderVariableDescs;
         std::vector<ConstantBlockDesc>  m_ConstantBlockDescs;
 		std::unordered_map<std::string, VkSampler> m_StaticSamplerStates;
+        VKNDescriptorSetAllocator* m_pAllocator;
+        VkPipeline m_VkPipeline;
+        VkPipelineLayout m_VkPipelineLayout;
+        VkDescriptorSetLayout m_VkDescriptorSetLayout;
     };
 }

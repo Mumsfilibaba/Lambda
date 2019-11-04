@@ -19,7 +19,7 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(VKNShaderVariableTable);
 
-		VKNShaderVariableTable(VKNDevice* pDevice, VKNPipelineState* pPipelineState, const ShaderVariableTableDesc& desc);
+		VKNShaderVariableTable(VKNDevice* pVkDevice, VKNPipelineState* pVkPipelineState, const ShaderVariableTableDesc& desc);
 		~VKNShaderVariableTable();
 
 		virtual IShaderVariable* GetVariableByName(ShaderStage shader, const char* pName) override final;
@@ -42,7 +42,7 @@ namespace Lambda
 		
 		_forceinline VkDescriptorSet GetVkDescriptorSet() const   
 		{ 
-			return m_DescriptorSet; 
+			return m_VkDescriptorSet; 
 		}
 
 
@@ -53,12 +53,12 @@ namespace Lambda
 	private:
 		void Init(const ShaderVariableTableDesc& desc);
 	private:
+		std::unordered_map<std::string, VKNShaderVariable*> m_NameTable;
         std::vector<AutoRef<VKNShaderVariable>> m_ShaderVariables;
         std::vector<VKNShaderVariable*> m_DynamicVars;
-		VkWriteDescriptorSet* m_pDescriptors;
-		uint32 m_NumDescriptors;
-		VkDescriptorSet	m_DescriptorSet;
+		VkWriteDescriptorSet* m_pVkDescriptors;
 		uint32* m_pDynamicOffsets;
-		std::unordered_map<std::string, VKNShaderVariable*> m_NameTable;
+		VkDescriptorSet	m_VkDescriptorSet;
+		uint32 m_NumDescriptors;
 	};
 }

@@ -1,20 +1,20 @@
 #pragma once
-#include "System/JoystickManager.h"
+#include "System/GamePadManager.h"
 #if defined(LAMBDA_PLAT_MACOS)
 
 namespace Lambda
 {
-    //--------------------
-    //MacOSJoystickManager
-    //--------------------
+    //-------------------
+    //macOSGamePadManager
+    //-------------------
     
-    class MacOSJoystickManager final : public JoystickManager
+    class macOSGamePadManager final : public GamePadManager
     {
     public:
-        LAMBDA_NO_COPY(MacOSJoystickManager);
+        LAMBDA_NO_COPY(macOSGamePadManager);
         
-        MacOSJoystickManager() = default;
-        ~MacOSJoystickManager() = default;
+        macOSGamePadManager() = default;
+        ~macOSGamePadManager() = default;
         
         virtual void InternalOnUpdate() override final;
         virtual void InternalSetPollrate(const Timestep& time) override final;

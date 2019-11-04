@@ -11,8 +11,8 @@ namespace Lambda
 	//VKNBuffer
 	//---------
 
-    VKNBuffer::VKNBuffer(VKNDevice* pDevice, const ResourceData* pInitalData, const BufferDesc& desc)
-		: TBuffer(pDevice, desc),
+    VKNBuffer::VKNBuffer(VKNDevice* pVkDevice, const ResourceData* pInitalData, const BufferDesc& desc)
+		: TBuffer(pVkDevice, desc),
 		m_VkBuffer(VK_NULL_HANDLE),
         m_Memory(),
 		m_DynamicMemory()
@@ -28,11 +28,11 @@ namespace Lambda
 		//Debug
 		if (m_VkBuffer == VK_NULL_HANDLE)
 		{
-			LOG_DEBUG_INFO("Vulkan: Destroyed Buffer '%s'\n", m_Name.c_str());
+			LOG_DEBUG_INFO("[Vulkan] Destroyed Buffer '%s'\n", m_Name.c_str());
 		}
 		else
 		{
-			LOG_DEBUG_INFO("Vulkan: Destroyed Buffer '%p' '%s'\n", m_VkBuffer, m_Name.c_str());
+			LOG_DEBUG_INFO("[Vulkan] Destroyed Buffer '%p' '%s'\n", m_VkBuffer, m_Name.c_str());
 		}
 
 		//Deallocate the dynamic resource
@@ -45,7 +45,7 @@ namespace Lambda
 			//Deallocate from global memory if this is not a global resource and then release the native buffer handle
 			m_pDevice->Deallocate(m_Memory);
 			if (m_VkBuffer != VK_NULL_HANDLE)
-				m_pDevice->SafeReleaseVulkanResource<VkBuffer>(m_VkBuffer);
+				m_pDevice->SafeReleaseVkResource<VkBuffer>(m_VkBuffer);
 		}
 	}
     
@@ -53,7 +53,7 @@ namespace Lambda
     void VKNBuffer::Init(const ResourceData* pInitalData, const BufferDesc& desc)
     {
 		//Set alignment for buffer
-		VkPhysicalDeviceProperties properties = m_pDevice->GetPhysicalDeviceProperties();
+		VkPhysicalDeviceProperties properties = m_pDevice->GetVkPhysicalDeviceProperties();
 		m_DynamicOffsetAlignment = std::max(VkDeviceSize(4), properties.limits.minUniformBufferOffsetAlignment);
 
 
@@ -79,12 +79,12 @@ namespace Lambda
 			//If dynamic we allocate dynamic memory
 			if (!m_pDevice->AllocateDynamicMemory(m_DynamicMemory, m_Desc.SizeInBytes, m_DynamicOffsetAlignment))
 			{
-				LOG_DEBUG_ERROR("Vulkan: Failed to allocate memory for Buffer\n");
+				LOG_DEBUG_ERROR("[Vulkan] Failed to allocate memory for Buffer\n");
 				return;
 			}
 			else
 			{
-				LOG_DEBUG_INFO("Vulkan: Allocated memory for Dynamic Buffer\n");
+				LOG_DEBUG_INFO("[Vulkan] Allocated memory for Dynamic Buffer\n");
 				SetName(m_Desc.pName);
 			}
 		}
@@ -100,7 +100,7 @@ namespace Lambda
 			info.sharingMode			= VK_SHARING_MODE_EXCLUSIVE;
 			if (vkCreateBuffer(m_pDevice->GetVkDevice(), &info, nullptr, &m_VkBuffer) != VK_SUCCESS)
 			{
-				LOG_DEBUG_ERROR("Vulkan: Failed to create Buffer\n");
+				LOG_DEBUG_ERROR("[Vulkan] Failed to create Buffer\n");
 				return;
 			}
 			else
@@ -108,11 +108,11 @@ namespace Lambda
 				SetName(m_Desc.pName);
 				if (m_Desc.pName)
 				{
-					LOG_DEBUG_INFO("Vulkan: Created Buffer. Name=\"%s\". '%p'\n", m_Desc.pName, m_VkBuffer);
+					LOG_DEBUG_INFO("[Vulkan] Created Buffer. Name=\"%s\". '%p'\n", m_Desc.pName, m_VkBuffer);
 				}
 				else
 				{
-					LOG_DEBUG_INFO("Vulkan: Created Buffer '%p'\n", m_VkBuffer);
+					LOG_DEBUG_INFO("[Vulkan] Created Buffer '%p'\n", m_VkBuffer);
 				}
 			}
 
@@ -125,15 +125,15 @@ namespace Lambda
 			vkGetBufferMemoryRequirements(m_pDevice->GetVkDevice(), m_VkBuffer, &memoryRequirements);
 			if (!m_pDevice->Allocate(m_Memory, memoryRequirements, memoryProperties))
 			{
-				LOG_DEBUG_ERROR("Vulkan: Failed to allocate Dynamic Memory-Page '%p'\n", m_VkBuffer);
+				LOG_DEBUG_ERROR("[Vulkan] Failed to allocate Dynamic Memory-Page '%p'\n", m_VkBuffer);
 				return;
 			}
 			else
 			{
-				LOG_DEBUG_WARNING("Vulkan: Allocated '%d' bytes for Dynamic Memory-Page\n", m_Desc.SizeInBytes);
+				LOG_DEBUG_WARNING("[Vulkan] Allocated '%d' bytes for Dynamic Memory-Page\n", m_Desc.SizeInBytes);
 				if (vkBindBufferMemory(m_pDevice->GetVkDevice(), m_VkBuffer, m_Memory.DeviceMemory, m_Memory.DeviceMemoryOffset) != VK_SUCCESS)
 				{
-					LOG_DEBUG_WARNING("Vulkan: Failed to bind memory for Dynamic Memory-Page\n");
+					LOG_DEBUG_WARNING("[Vulkan] Failed to bind memory for Dynamic Memory-Page\n");
 				}
 			}
 		}
@@ -142,8 +142,8 @@ namespace Lambda
 		//Write to the memory if we have any inital data
 		if (pInitalData)
 		{
-			LAMBDA_ASSERT_PRINT(pInitalData->pData != nullptr && pInitalData->SizeInBytes != 0, "Vulkan: pInitalData->pData cannot be null\n");
-			LAMBDA_ASSERT_PRINT(pInitalData->SizeInBytes <= m_Desc.SizeInBytes, "Vulkan: pInitalData->SizeInBytes cannot be larger than the buffer. pInitalData->SizeInBytes=%d and BufferDesc::SizeInBytes=%d\n", pInitalData->SizeInBytes, m_Desc.SizeInBytes);
+			LAMBDA_ASSERT_PRINT(pInitalData->pData != nullptr && pInitalData->SizeInBytes != 0, "[Vulkan] pInitalData->pData cannot be null\n");
+			LAMBDA_ASSERT_PRINT(pInitalData->SizeInBytes <= m_Desc.SizeInBytes, "[Vulkan] pInitalData->SizeInBytes cannot be larger than the buffer. pInitalData->SizeInBytes=%d and BufferDesc::SizeInBytes=%d\n", pInitalData->SizeInBytes, m_Desc.SizeInBytes);
 
 			if (desc.Usage == USAGE_DYNAMIC)
 			{
@@ -155,15 +155,15 @@ namespace Lambda
 				//Otherwise we create a staging buffer
 				info.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
-				VkBuffer stagingBuffer = VK_NULL_HANDLE;
-				if (vkCreateBuffer(m_pDevice->GetVkDevice(), &info, nullptr, &stagingBuffer) != VK_SUCCESS)
+				VkBuffer vkStagingBuffer = VK_NULL_HANDLE;
+				if (vkCreateBuffer(m_pDevice->GetVkDevice(), &info, nullptr, &vkStagingBuffer) != VK_SUCCESS)
 				{
-					LOG_DEBUG_ERROR("Vulkan: Failed to create Staging-Buffer\n");
+					LOG_DEBUG_ERROR("[Vulkan] Failed to create Staging-Buffer\n");
 					return;
 				}
 				else
 				{
-					LOG_DEBUG_INFO("Vulkan: Created Staging-Buffer '%p'\n", stagingBuffer);
+					LOG_DEBUG_INFO("[Vulkan] Created Staging-Buffer '%p'\n", vkStagingBuffer);
 				}
 
 
@@ -175,18 +175,18 @@ namespace Lambda
 
 				//Allocate memory
 				VkMemoryRequirements memoryRequirements = {};
-				vkGetBufferMemoryRequirements(m_pDevice->GetVkDevice(), stagingBuffer, &memoryRequirements);
+				vkGetBufferMemoryRequirements(m_pDevice->GetVkDevice(), vkStagingBuffer, &memoryRequirements);
 				if (!m_pDevice->Allocate(stagingMemory, memoryRequirements, memoryProperties))
 				{
-					LOG_DEBUG_ERROR("Vulkan: Failed to allocate StagingBuffer '%p'\n", stagingBuffer);
+					LOG_DEBUG_ERROR("[Vulkan] Failed to allocate StagingBuffer '%p'\n", vkStagingBuffer);
 					return;
 				}
 				else
 				{
-					LOG_DEBUG_WARNING("Vulkan: Allocated '%d' bytes for StagingBuffer\n", m_Desc.SizeInBytes);
-					if (vkBindBufferMemory(m_pDevice->GetVkDevice(), stagingBuffer, stagingMemory.DeviceMemory, stagingMemory.DeviceMemoryOffset) != VK_SUCCESS)
+					LOG_DEBUG_WARNING("[Vulkan] Allocated '%d' bytes for StagingBuffer\n", m_Desc.SizeInBytes);
+					if (vkBindBufferMemory(m_pDevice->GetVkDevice(), vkStagingBuffer, stagingMemory.DeviceMemory, stagingMemory.DeviceMemoryOffset) != VK_SUCCESS)
 					{
-						LOG_DEBUG_WARNING("Vulkan: Failed to bind memory StagingBuffer\n");
+						LOG_DEBUG_WARNING("[Vulkan] Failed to bind memory StagingBuffer\n");
 					}
 					else
 					{
@@ -197,15 +197,15 @@ namespace Lambda
 
 
 				//Get devicecontext and copy over the stagingbuffers context to the buffer
-				VKNDeviceContext* pContext = m_pDevice->GetVKNImmediateContext();
-				pContext->CopyBuffer(m_VkBuffer, 0, stagingBuffer, 0, pInitalData->SizeInBytes);
+				VKNDeviceContext* pVkContext = m_pDevice->GetVKNImmediateContext();
+				pVkContext->CopyBuffer(m_VkBuffer, 0, vkStagingBuffer, 0, pInitalData->SizeInBytes);
 				
 				//Release this reference to the context
-				pContext->Release();
+				pVkContext->Release();
 
 				//Delete the stagingbuffer
 				m_pDevice->Deallocate(stagingMemory);
-				m_pDevice->SafeReleaseVulkanResource<VkBuffer>(stagingBuffer);
+				m_pDevice->SafeReleaseVkResource<VkBuffer>(vkStagingBuffer);
 			}
 		}
     }

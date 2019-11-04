@@ -376,6 +376,7 @@ namespace Lambda
         lightBuffer.Color       = glm::vec4(lightColor[0], lightColor[1], lightColor[2], lightColor[3]);
         lightBuffer.Position    = glm::vec3(transformLight.Position[0], transformLight.Position[1], transformLight.Position[2]);
 
+		//Start drawing scene
 		renderer.BeginScene(m_Camera, lightBuffer);
        
 		//draw revolver
@@ -397,75 +398,6 @@ namespace Lambda
 		}
 
 		renderer.EndScene();
-
-		/*
-		//Transition before clearing
-		ITexture* pRenderTarget = m_SwapChain->GetBuffer();
-		ITexture* pDepthBuffer	= m_SwapChain->GetDepthBuffer();
-
-		TextureTransitionBarrier barriers[2];
-		barriers[0].pTexture	= pRenderTarget;
-		barriers[0].AfterState	= RESOURCE_STATE_RENDERTARGET_CLEAR;
-		barriers[0].MipLevel	= LAMBDA_ALL_MIP_LEVELS;
-		barriers[1].pTexture	= pDepthBuffer;
-		barriers[1].AfterState	= RESOURCE_STATE_DEPTH_STENCIL_CLEAR;
-		barriers[1].MipLevel	= LAMBDA_ALL_MIP_LEVELS;
-		m_Context->TransitionTextureStates(barriers, 2);
-
-		//Clear rendertarget
-		float color[] = { 0.392f, 0.584f, 0.929f, 1.0f };
-		m_Context->ClearRenderTarget(pRenderTarget, color);
-
-		//Clear depthbuffer
-		m_Context->ClearDepthStencil(pDepthBuffer, 1.0f, 0);
-
-		//Transition into rendertarget and depthstencil
-		barriers[0].AfterState = RESOURCE_STATE_RENDERTARGET;
-		barriers[1].AfterState = RESOURCE_STATE_DEPTH_STENCIL;
-		m_Context->TransitionTextureStates(barriers, 2);
-
-		//Set rendertargets
-		m_Context->SetRendertargets(&pRenderTarget, 1, pDepthBuffer);
-
-		//Set viewport
-		m_Context->SetViewports(&m_Viewport, 1);
-		m_Context->SetScissorRects(&m_ScissorRect, 1);
-		
-		//Set mesh
-		m_Context->SetVertexBuffers(&m_Mesh.pVertexBuffer, 1, 0);
-		m_Context->SetIndexBuffer(m_Mesh.pIndexBuffer, FORMAT_R32_UINT);
-		//Set pipelinestate
-		m_Context->SetShaderVariableTable(m_VariableTable.Get());
-		m_Context->SetPipelineState(m_PipelineState.Get());
-
-        //Draw squares
-		constexpr uint32 numSquares = 5;
-		for (uint32 y = 0; y < numSquares; y++)
-		{
-			for (uint32 x = 0; x < numSquares; x++)
-			{	
-				//Update position
-				void* pMappedData = nullptr;
-				m_Context->MapBuffer(m_PositionBuffer.Get(), MAP_FLAG_WRITE | MAP_FLAG_WRITE_DISCARD, &pMappedData);
-
-				//xy (.xy) and scale (.z)
-				constexpr float size = 2.0f / numSquares;
-				glm::vec3 position = glm::vec3(-1.0f + (size / 2.0f) + ((size) * float(x)), 1.0f - (size / 2.0f) - ((size) * float(y)), size);
-				memcpy(pMappedData, &position, sizeof(glm::vec3));
-
-				m_Context->UnmapBuffer(m_PositionBuffer.Get());
-
-                //Draw
-                m_Context->DrawIndexedInstanced(m_Mesh.IndexCount, 1, 0, 0, 0);
-			}
-		}
-
-		//Draw UI before ending
-		Application::Get().GetUILayer()->Draw(m_Context.Get());
-
-		//Present
-		m_SwapChain->Present();
-		*/
 	}
 
 

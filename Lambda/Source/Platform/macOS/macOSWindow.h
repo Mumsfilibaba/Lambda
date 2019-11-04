@@ -2,22 +2,19 @@
 #include "System/IWindow.h"
 #if defined(LAMBDA_PLAT_MACOS)
     #include "IObject.h"
-    #if defined(GLFW_INCLUDE_VULKAN)
-        #undef GLFW_INCLUDE_VULKAN
-    #endif
     #include <GLFW/glfw3.h>
 
 namespace Lambda
 {
     //-----------
-    //MacOSWindow
+    //macOSWindow
     //-----------
     
-    class MacOSWindow : public IWindow
+    class macOSWindow : public IWindow
     {
     public:
-        MacOSWindow(const WindowDesc& desc);
-        ~MacOSWindow();
+        macOSWindow(const WindowDesc& desc);
+        ~macOSWindow();
         
         virtual void OnUpdate() const override final;
         virtual bool HasFocus() const override final;

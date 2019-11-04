@@ -27,40 +27,32 @@ namespace Lambda
 		virtual void InternalGetMousePosition(float& x, float& y) const override final;
 		virtual void InternalSetMousePosition(IWindow* pRelativeTo, float x, float y) const override final;
 		virtual void InternalGetMousePosition(IWindow* pRelativeTo, float& x, float& y) const override final;
-
 	private:
 		Key m_WindowsToLambdaKeyTable[255];
 		uint32 m_LambdaToWindowsKeyTable[129];
-
 	public:
-		static Key ConvertWindowsKey(uint32 keycode);
-		static uint32 ConvertLambdaKey(Key keycode);
-		static MouseButton ConvertWindowsButton(uint32 keycode);
-		static uint32 ConvertLambdaButton(MouseButton keycode);
+		_forceinline static Key ConvertWindowsKey(uint32 keycode)
+		{
+			return ((WindowsInput&)Input::Get()).WindowsKeyToLambda(keycode);
+		}
+		
+		
+		_forceinline static uint32 ConvertLambdaKey(Key keycode)
+		{
+			return ((WindowsInput&)Input::Get()).LambdaKeyToWindows(keycode);
+		}
+		
+		
+		_forceinline static MouseButton ConvertWindowsButton(uint32 keycode)
+		{
+			return ((WindowsInput&)Input::Get()).WindowsButtonToLambda(keycode);
+		}
+		
+		
+		_forceinline static uint32 ConvertLambdaButton(MouseButton keycode)
+		{
+			return ((WindowsInput&)Input::Get()).LambdaButtonToWindows(keycode);
+		}
 	};
-
-    
-	inline Key WindowsInput::ConvertWindowsKey(uint32 keycode)
-	{
-		return ((WindowsInput&)Input::Get()).WindowsKeyToLambda(keycode);
-	}
-
-    
-	inline uint32 WindowsInput::ConvertLambdaKey(Key keycode)
-	{
-		return ((WindowsInput&)Input::Get()).LambdaKeyToWindows(keycode);
-	}
-
-    
-	inline MouseButton WindowsInput::ConvertWindowsButton(uint32 keycode)
-	{
-		return ((WindowsInput&)Input::Get()).WindowsButtonToLambda(keycode);
-	}
-
-    
-	inline uint32 WindowsInput::ConvertLambdaButton(MouseButton keycode)
-	{
-		return ((WindowsInput&)Input::Get()).LambdaButtonToWindows(keycode);
-	}
 }
 #endif

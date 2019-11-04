@@ -31,14 +31,13 @@ namespace Lambda
 	LRESULT CALLBACK WindowEventCallback(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 	WindowsWindow::WindowsWindow(const WindowDesc& desc)
-		: m_GraphicsDevice(nullptr),
-		m_pEventCallback(nullptr),
+		: m_pEventCallback(nullptr),
 		m_hWindow(0),
 		m_Fullscreen(false),
 		m_HasFocus(false)
 	{
 		Init(desc);
-		LOG_SYSTEM_INFO("Created window. w: %d, h: %d\n", desc.Width, desc.Height);
+		LOG_SYSTEM_INFO("[LAMBDA ENGINE] Created window. w: %d, h: %d\n", desc.Width, desc.Height);
 	}
 	
 
@@ -136,11 +135,11 @@ namespace Lambda
                 
                 m_Fullscreen = true;
 
-				LOG_DEBUG_WARNING("Switched into fullscreen\n");
+				LOG_DEBUG_WARNING("[LAMBDA ENGINE] Switched into fullscreen\n");
 			}
 			else 
 			{
-				LOG_DEBUG_ERROR("Failed to switch into fullscreen\n");
+				LOG_DEBUG_ERROR("[LAMBDA ENGINE] Failed to switch into fullscreen\n");
 				return false;
 			}
 		}
@@ -155,11 +154,11 @@ namespace Lambda
 
                 m_Fullscreen = false;
 
-				LOG_DEBUG_INFO("Switched into windowed mode\n");
+				LOG_DEBUG_INFO("[LAMBDA ENGINE] Switched into windowed mode\n");
 			}
             else
             {
-				LOG_DEBUG_ERROR("Failed to switch from fullscreen\n");
+				LOG_DEBUG_ERROR("[LAMBDA ENGINE] Failed to switch from fullscreen\n");
                 return false;
             }
 		}

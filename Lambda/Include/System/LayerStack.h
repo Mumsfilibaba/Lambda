@@ -23,8 +23,18 @@ namespace Lambda
         void Release();
         void PushLayer(Layer* pLayer);
         void PopLayer();
-        std::vector<Layer*>::iterator Begin();
-        std::vector<Layer*>::iterator End();
+
+		//Enables foreachloops
+		_forceinline std::vector<Layer*>::iterator LayerStack::Begin()
+		{
+			return m_Layers.begin();
+		}
+
+
+		_forceinline std::vector<Layer*>::iterator LayerStack::End()
+		{
+			return m_Layers.end();
+		}
     private:
         std::vector<Layer*> m_Layers;
     };

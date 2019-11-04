@@ -8,9 +8,9 @@ namespace Lambda
 	//VKNShader
 	//---------
 
-	VKNShader::VKNShader(VKNDevice* pDevice, const ShaderDesc& desc)
-		: ShaderBase<VKNDevice>(pDevice, desc),
-		m_Shader(VK_NULL_HANDLE),
+	VKNShader::VKNShader(VKNDevice* pVkDevice, const ShaderDesc& desc)
+		: ShaderBase<VKNDevice>(pVkDevice, desc),
+		m_VkShaderModule(VK_NULL_HANDLE),
 		m_ByteCode(),
 		m_EntryPoint()
 	{
@@ -22,10 +22,10 @@ namespace Lambda
 
 	VKNShader::~VKNShader()
 	{
-		if (m_Shader != VK_NULL_HANDLE)
-			m_pDevice->SafeReleaseVulkanResource<VkShaderModule>(m_Shader);
+		if (m_VkShaderModule != VK_NULL_HANDLE)
+			m_pDevice->SafeReleaseVkResource<VkShaderModule>(m_VkShaderModule);
 
-		LOG_DEBUG_INFO("Vulkan: Destroyed Shader\n");
+		LOG_DEBUG_INFO("[Vulkan] Destroyed Shader\n");
 	}
     
     
@@ -38,7 +38,7 @@ namespace Lambda
         }
         else
         {
-            LOG_DEBUG_ERROR("Vulkan: Language not supported\n");
+            LOG_DEBUG_ERROR("[Vulkan] Language not supported\n");
         }
         
 		//Create a vulkan shader
@@ -48,14 +48,14 @@ namespace Lambda
         info.flags = 0;
         info.codeSize = desc.SourceLength;
         info.pCode = reinterpret_cast<const uint32_t*>(m_ByteCode.data());
-        if (vkCreateShaderModule(m_pDevice->GetVkDevice(), &info, nullptr, &m_Shader) != VK_SUCCESS)
+        if (vkCreateShaderModule(m_pDevice->GetVkDevice(), &info, nullptr, &m_VkShaderModule) != VK_SUCCESS)
         {
-            LOG_DEBUG_ERROR("Vulkan: Failed to create shadermodule\n");
-            m_Shader = VK_NULL_HANDLE;
+            LOG_DEBUG_ERROR("[Vulkan] Failed to create shadermodule\n");
+            m_VkShaderModule = VK_NULL_HANDLE;
         }
         else
         {
-            LOG_DEBUG_INFO("Vulkan: Created shader\n");
+            LOG_DEBUG_INFO("[Vulkan] Created shader\n");
 
             m_EntryPoint = std::string(desc.pEntryPoint);
 			m_Desc.pSource = nullptr;
@@ -66,6 +66,6 @@ namespace Lambda
     
     void* VKNShader::GetNativeHandle() const
     {
-        return reinterpret_cast<void*>(m_Shader);
+        return reinterpret_cast<void*>(m_VkShaderModule);
     }
 }

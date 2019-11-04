@@ -12,14 +12,14 @@ namespace Lambda
     
     ILog* ILog::Create()
     {
-        return DBG_NEW MacOSLog();
+        return DBG_NEW macOSLog();
     }
     
     //--------
-    //MacOSLog
+    //macOSLog
     //--------
     
-    void MacOSLog::Print(LogSeverity severity, const char* pFormat, ...)
+    void macOSLog::Print(LogSeverity severity, const char* pFormat, ...)
     {
         std::string message;
         if (severity == LOG_SEVERITY_INFO)

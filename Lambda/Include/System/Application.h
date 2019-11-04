@@ -38,21 +38,6 @@ namespace Lambda
 		void Quit(int32 exitCode = 0);
         int32 Run();
 
-        //Push a layer onto the layerstack
-        void PushLayer(Layer* pLayer);
-        //Push a global callback function
-        template <typename EventT>
-        void PushCallback(bool(*callbackFunc)(const EventT&))
-        {
-            m_Dispatcher.PushCallback(EventT::GetStaticType(), DBG_NEW EventCallback<EventT>(callbackFunc));
-        }
-        //Push object callback function
-        template <typename ObjectType, typename EventT>
-        void PushCallback(ObjectType* pObjectRef, bool(ObjectType::* objectCallbackFunc)(const EventT&))
-        {
-            m_Dispatcher.PushCallback(EventT::GetStaticType(), DBG_NEW ObjectEventCallback<ObjectType, EventT>(pObjectRef, objectCallbackFunc));
-        }
-        
         IWindow* GetWindow() const;
         DebugLayer* GetUILayer() const;
         IDevice* GetGraphicsDevice() const;
@@ -60,6 +45,24 @@ namespace Lambda
 		Renderer3D& GetRenderer();
 		const Renderer3D& GetRenderer() const;
         const EngineParams& GetEngineParams() const;
+
+
+		//Push a layer onto the layerstack
+        void PushLayer(Layer* pLayer);
+        //Push a global callback function
+        template <typename EventT>
+		inline void PushCallback(bool(*callbackFunc)(const EventT&))
+        {
+            m_Dispatcher.PushCallback(EventT::GetStaticType(), DBG_NEW EventCallback<EventT>(callbackFunc));
+        }
+
+
+        //Push object callback function
+        template <typename ObjectType, typename EventT>
+        inline void PushCallback(ObjectType* pObjectRef, bool(ObjectType::* objectCallbackFunc)(const EventT&))
+        {
+            m_Dispatcher.PushCallback(EventT::GetStaticType(), DBG_NEW ObjectEventCallback<ObjectType, EventT>(pObjectRef, objectCallbackFunc));
+        }
     private:
         void OnLoad();
         void OnUpdate(Timestep dt);

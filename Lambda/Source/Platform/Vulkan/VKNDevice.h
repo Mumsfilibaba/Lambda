@@ -53,43 +53,43 @@ namespace Lambda
 
 		_forceinline bool Allocate(VKNAllocation& allocation, const VkMemoryRequirements& memoryRequirements, VkMemoryPropertyFlags properties)
 		{
-			return m_pDeviceAllocator->Allocate(allocation, memoryRequirements, properties);
+			return m_pVkDeviceAllocator->Allocate(allocation, memoryRequirements, properties);
 		}
 
 
 		_forceinline void Deallocate(VKNAllocation& allocation)
 		{
-			m_pDeviceAllocator->Deallocate(allocation);
+			m_pVkDeviceAllocator->Deallocate(allocation);
 		}
 
 
 		_forceinline bool AllocateDynamicMemory(VKNDynamicAllocation& allocation, uint64 sizeInBytes, uint64 alignment)
 		{
-			return m_pDynamicMemoryAllocator->Allocate(allocation, sizeInBytes, alignment);
+			return m_pVkDynamicMemoryAllocator->Allocate(allocation, sizeInBytes, alignment);
 		}
 
 
 		_forceinline void DeallocateDynamicMemory(VKNDynamicAllocation& allocation)
 		{
-			m_pDynamicMemoryAllocator->Deallocate(allocation);
+			m_pVkDynamicMemoryAllocator->Deallocate(allocation);
 		}
 
 
 		_forceinline VkInstance GetVkInstance() const
 		{ 
-			return m_Instance; 
+			return m_VkInstance; 
 		}
 		
 
 		_forceinline VkDevice GetVkDevice() const
 		{ 
-			return m_Device; 
+			return m_VkDevice; 
 		}
 		
 		
 		_forceinline VkPhysicalDevice GetVkPhysicalDevice() const
 		{ 
-			return m_PhysicalDevice; 
+			return m_VkPhysicalDevice; 
 		}
 		
 		
@@ -99,15 +99,15 @@ namespace Lambda
 		}
 		
 
-		_forceinline const VkPhysicalDeviceProperties& GetPhysicalDeviceProperties() const
+		_forceinline const VkPhysicalDeviceProperties& GetVkPhysicalDeviceProperties() const
 		{ 
-			return m_PhysicalDeviceProperties; 
+			return m_VkPhysicalDeviceProperties; 
 		}
 
 
-		_forceinline const VkQueueFamilyProperties& GetGraphicsQueueProperties() const
+		_forceinline const VkQueueFamilyProperties& GetVkGraphicsQueueProperties() const
 		{
-			return m_GraphicsQueueProperties;
+			return m_GraphicsVkQueueProperties;
 		}
 
 
@@ -142,9 +142,9 @@ namespace Lambda
 
 
 		template<typename VkResourceType>
-		_forceinline void SafeReleaseVulkanResource(const VkResourceType& resource)
+		_forceinline void SafeReleaseVkResource(const VkResourceType& resource)
 		{
-			m_pSafeReleaseManager->ReleaseResource<VkResourceType>(resource);
+			m_pVkSafeReleaseManager->ReleaseResource<VkResourceType>(resource);
 		}
 	private:
 		void Init(const DeviceDesc& desc);
@@ -158,32 +158,32 @@ namespace Lambda
 		std::vector<const char*> GetRequiredInstanceExtensions(bool debug);
 		std::vector<const char*> GetOptionalInstanceExtensions(bool debug);
     private:
-		VKNDeviceAllocator*			m_pDeviceAllocator;
-		VKNDynamicMemoryAllocator* m_pDynamicMemoryAllocator;
-		VKNDeviceContext*		   m_pImmediateContext;
-		VKNRenderPassCache*		   m_pRenderPassCache;
-		VKNFramebufferCache*	   m_pFramebufferCache;
-		VKNSafeReleaseManager*	   m_pSafeReleaseManager;
-		VkInstance m_Instance;
-		VkDevice   m_Device;
-        VkQueue	   m_GraphicsQueue;
-        VkQueue	   m_PresentationQueue;
-		VkDebugUtilsMessengerEXT   m_DebugMessenger;
-		QueueFamilyIndices		   m_FamiliyIndices;
-		VkPhysicalDevice		   m_PhysicalDevice;
-		VkPhysicalDeviceProperties m_PhysicalDeviceProperties;
-		VkQueueFamilyProperties	   m_GraphicsQueueProperties;
+		VKNDeviceAllocator*	m_pVkDeviceAllocator;
+		VKNDynamicMemoryAllocator* m_pVkDynamicMemoryAllocator;
+		VKNDeviceContext* m_pVkImmediateContext;
+		VKNRenderPassCache*	m_pVkRenderPassCache;
+		VKNFramebufferCache* m_pVkFramebufferCache;
+		VKNSafeReleaseManager* m_pVkSafeReleaseManager;
+		VkInstance m_VkInstance;
+		VkDevice m_VkDevice;
+        VkQueue	m_GraphicsVkQueue;
+        VkQueue	m_PresentationVkQueue;
+		VkDebugUtilsMessengerEXT m_VkDebugMessenger;
+		QueueFamilyIndices m_FamiliyIndices;
+		VkPhysicalDevice m_VkPhysicalDevice;
+		VkPhysicalDeviceProperties m_VkPhysicalDeviceProperties;
+		VkQueueFamilyProperties	m_GraphicsVkQueueProperties;
 		VKNBuffer* m_pDefaultIndexBuffer;
 		VKNBuffer* m_pDefaultVertexBuffer;
 		VKNBuffer* m_pDefaultConstantBuffer;
 		VKNTexture* m_pDefaultTexture;
 		VKNSamplerState* m_pDefaultSamplerState;
 	private:
-		static PFN_vkSetDebugUtilsObjectNameEXT		vkSetDebugUtilsObjectNameEXT;
-		static PFN_vkCreateDebugUtilsMessengerEXT	vkCreateDebugUtilsMessengerEXT;
-		static PFN_vkDestroyDebugUtilsMessengerEXT	vkDestroyDebugUtilsMessengerEXT;
+		static PFN_vkSetDebugUtilsObjectNameEXT	vkSetDebugUtilsObjectNameEXT;
+		static PFN_vkCreateDebugUtilsMessengerEXT vkCreateDebugUtilsMessengerEXT;
+		static PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT;
 	private:
-		static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+		static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 			VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
     };
 }

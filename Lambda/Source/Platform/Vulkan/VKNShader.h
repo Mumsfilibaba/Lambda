@@ -17,17 +17,20 @@ namespace Lambda
     public:
         LAMBDA_NO_COPY(VKNShader);
         
-        VKNShader(VKNDevice* pDevice, const ShaderDesc& desc);
+        VKNShader(VKNDevice* pVkDevice, const ShaderDesc& desc);
         ~VKNShader();
         
         virtual void* GetNativeHandle() const override final;
 
-		inline VkShaderModule GetVkShaderModule() const { return m_Shader; }
+		_forceinline VkShaderModule GetVkShaderModule() const 
+		{ 
+			return m_VkShaderModule; 
+		}
     private:
         void Init(const ShaderDesc& desc);
     private:
-        VkShaderModule	  m_Shader;
-        std::string		  m_EntryPoint;
         std::vector<char> m_ByteCode;
+        std::string m_EntryPoint;
+        VkShaderModule m_VkShaderModule;
     };
 }

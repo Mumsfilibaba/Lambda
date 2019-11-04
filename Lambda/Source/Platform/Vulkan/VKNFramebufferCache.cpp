@@ -111,12 +111,12 @@ namespace Lambda
 		VkFramebuffer framebuffer = VK_NULL_HANDLE;
 		if (vkCreateFramebuffer(m_pDevice->GetVkDevice(), &info, nullptr, &framebuffer) != VK_SUCCESS)
 		{
-			LOG_DEBUG_ERROR("Vulkan: Failed to create Framebuffer\n");
+			LOG_DEBUG_ERROR("[Vulkan] Failed to create Framebuffer\n");
 			return VK_NULL_HANDLE;
 		}
 		else
 		{
-			LOG_SYSTEM_PRINT("Vulkan: Created new Framebuffer\n");
+			LOG_SYSTEM_PRINT("[Vulkan] Created new Framebuffer\n");
 
 			m_Framebuffers.insert(std::pair<VKNFramebufferCacheKey, VkFramebuffer>(fbKey, framebuffer));
 			return framebuffer;
@@ -134,7 +134,7 @@ namespace Lambda
 				//Destroy framebuffer
 				if (it->second != VK_NULL_HANDLE)
 				{
-					m_pDevice->SafeReleaseVulkanResource<VkFramebuffer>(it->second);
+					m_pDevice->SafeReleaseVkResource<VkFramebuffer>(it->second);
 					it->second = VK_NULL_HANDLE;
 				}
 
@@ -159,7 +159,7 @@ namespace Lambda
 				//Destroy framebuffer
 				if (it->second != VK_NULL_HANDLE)
 				{
-					m_pDevice->SafeReleaseVulkanResource<VkFramebuffer>(it->second);
+					m_pDevice->SafeReleaseVkResource<VkFramebuffer>(it->second);
 					it->second = VK_NULL_HANDLE;
 				}
 
@@ -180,7 +180,7 @@ namespace Lambda
 		for (auto& buffer : m_Framebuffers)
 		{
 			if (buffer.second != VK_NULL_HANDLE)
-				m_pDevice->SafeReleaseVulkanResource<VkFramebuffer>(buffer.second);
+				m_pDevice->SafeReleaseVkResource<VkFramebuffer>(buffer.second);
 		}
 
 		m_Framebuffers.clear();

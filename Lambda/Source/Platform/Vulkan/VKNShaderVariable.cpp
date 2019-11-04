@@ -11,8 +11,8 @@ namespace Lambda
 	//VKNShaderVariable
 	//-----------------
 
-	VKNShaderVariable::VKNShaderVariable(VKNDevice* pDevice, VKNShaderVariableTable* pShaderVariableTable, const ShaderVariableDesc& desc)
-		: TShaderVariable(pDevice, pShaderVariableTable, desc),
+	VKNShaderVariable::VKNShaderVariable(VKNDevice* pVkDevice, VKNShaderVariableTable* pVkShaderVariableTable, const ShaderVariableDesc& desc)
+		: TShaderVariable(pVkDevice, pVkShaderVariableTable, desc),
 		m_Resource(nullptr),
         m_ResourceHandle(VK_NULL_HANDLE),
 		m_IsValid(false)
@@ -21,14 +21,14 @@ namespace Lambda
 		this->AddRef();
 		        
         //Setup descriptor write
-        m_DescriptorWrite.sType             = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        m_DescriptorWrite.pNext             = nullptr;
-        m_DescriptorWrite.descriptorCount   = 1;
-        m_DescriptorWrite.dstArrayElement   = 0;
-        m_DescriptorWrite.dstBinding        = m_Desc.Slot;
-        m_DescriptorWrite.pTexelBufferView  = nullptr;
-        m_DescriptorWrite.descriptorType    = ConvertResourceToDescriptorType(m_Desc.Type, m_Desc.Usage);
-        if (m_DescriptorWrite.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE)
+        m_VkDescriptorWrite.sType             = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        m_VkDescriptorWrite.pNext             = nullptr;
+        m_VkDescriptorWrite.descriptorCount   = 1;
+        m_VkDescriptorWrite.dstArrayElement   = 0;
+        m_VkDescriptorWrite.dstBinding        = m_Desc.Slot;
+        m_VkDescriptorWrite.pTexelBufferView  = nullptr;
+        m_VkDescriptorWrite.descriptorType    = ConvertResourceToDescriptorType(m_Desc.Type, m_Desc.Usage);
+        if (m_VkDescriptorWrite.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE)
         {
             //Init imageinfo
 			VKNTexture* pVkDefaultTexture = m_pDevice->GetDefaultTexture();
@@ -38,47 +38,47 @@ namespace Lambda
 			//Get static sampler
             if (m_Desc.pStaticSamplerName != nullptr)
             {
-                m_DescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                m_ImageInfo.sampler = m_pShaderVariableTable->GetStaticVkSampler(m_Desc.pStaticSamplerName);
+                m_VkDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                m_VkImageInfo.sampler = m_pShaderVariableTable->GetStaticVkSampler(m_Desc.pStaticSamplerName);
             }
             else
             {
-                m_ImageInfo.sampler = VK_NULL_HANDLE;
+                m_VkImageInfo.sampler = VK_NULL_HANDLE;
             }      
-            m_ImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            m_ImageInfo.imageView   = pVkDefaultTexture->GetVkImageView();         
-            m_DescriptorWrite.pImageInfo = &m_ImageInfo;
+            m_VkImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            m_VkImageInfo.imageView   = pVkDefaultTexture->GetVkImageView();         
+            m_VkDescriptorWrite.pImageInfo = &m_VkImageInfo;
         }
-        else if (m_DescriptorWrite.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER || m_DescriptorWrite.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC)
+        else if (m_VkDescriptorWrite.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER || m_VkDescriptorWrite.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC)
         {
             //Init bufferinfo
 			VKNBuffer* pVkDefaultConstantBuffer = m_pDevice->GetDefaultConstantBuffer();
 			pVkDefaultConstantBuffer->AddRef();
 			m_Resource = pVkDefaultConstantBuffer;
 
-			m_BufferInfo.buffer = pVkDefaultConstantBuffer->GetVkBuffer();
-            m_BufferInfo.offset = 0;
-            m_BufferInfo.range  = pVkDefaultConstantBuffer->GetDesc().SizeInBytes;
-            m_DescriptorWrite.pBufferInfo = &m_BufferInfo;
+			m_VkBufferInfo.buffer = pVkDefaultConstantBuffer->GetVkBuffer();
+            m_VkBufferInfo.offset = 0;
+            m_VkBufferInfo.range  = pVkDefaultConstantBuffer->GetDesc().SizeInBytes;
+            m_VkDescriptorWrite.pBufferInfo = &m_VkBufferInfo;
         }
-        else if (m_DescriptorWrite.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLER)
+        else if (m_VkDescriptorWrite.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLER)
         {
             //Init imageinfo
 			VKNSamplerState* pVkDefaultSamplerState = m_pDevice->GetDefaultSamplerState();
 			pVkDefaultSamplerState->AddRef();
 			m_Resource = pVkDefaultSamplerState;
 
-            m_ImageInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-            m_ImageInfo.imageView   = VK_NULL_HANDLE;
-            m_ImageInfo.sampler     = pVkDefaultSamplerState->GetVkSampler();
-            m_DescriptorWrite.pImageInfo = &m_ImageInfo;
+            m_VkImageInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+            m_VkImageInfo.imageView   = VK_NULL_HANDLE;
+            m_VkImageInfo.sampler     = pVkDefaultSamplerState->GetVkSampler();
+            m_VkDescriptorWrite.pImageInfo = &m_VkImageInfo;
         }
     }
 
 
 	void VKNShaderVariable::SetTexture(ITexture* pTexture)
 	{
-		LAMBDA_ASSERT_PRINT(m_Desc.Type == RESOURCE_TYPE_TEXTURE, "Vulkan: Variable is not a Texture\n");
+		LAMBDA_ASSERT_PRINT(m_Desc.Type == RESOURCE_TYPE_TEXTURE, "[Vulkan] Variable is not a Texture\n");
 		
 		//If texture is nullptr we get the default texture
 		VKNTexture* pVkTexture = reinterpret_cast<VKNTexture*>(pTexture);
@@ -88,7 +88,7 @@ namespace Lambda
 		}
 		else
 		{
-			LAMBDA_ASSERT_PRINT(pVkTexture->GetDesc().Flags & TEXTURE_FLAGS_SHADER_RESOURCE, "Vulkan: pTexture does not have the flag TEXTURE_FLAGS_SHADER_RESOURCE\n");
+			LAMBDA_ASSERT_PRINT(pVkTexture->GetDesc().Flags & TEXTURE_FLAGS_SHADER_RESOURCE, "[Vulkan] pTexture does not have the flag TEXTURE_FLAGS_SHADER_RESOURCE\n");
 		}
 
 
@@ -107,7 +107,7 @@ namespace Lambda
 
 	void VKNShaderVariable::SetConstantBuffer(IBuffer* pBuffer)
 	{
-		LAMBDA_ASSERT_PRINT(m_Desc.Type == RESOURCE_TYPE_CONSTANT_BUFFER, "Vulkan: Variable is not a ConstantBuffer\n");
+		LAMBDA_ASSERT_PRINT(m_Desc.Type == RESOURCE_TYPE_CONSTANT_BUFFER, "[Vulkan] Variable is not a ConstantBuffer\n");
 		
 		//If buffer is nullptr we get the default constantbuffer
 		VKNBuffer* pVkBuffer = reinterpret_cast<VKNBuffer*>(pBuffer);
@@ -117,7 +117,7 @@ namespace Lambda
 		}
 		else
 		{
-			LAMBDA_ASSERT_PRINT(pVkBuffer->GetDesc().Flags & BUFFER_FLAGS_CONSTANT_BUFFER, "Vulkan: pBuffer does not have the flag BUFFER_FLAGS_CONSTANT_BUFFER\n");
+			LAMBDA_ASSERT_PRINT(pVkBuffer->GetDesc().Flags & BUFFER_FLAGS_CONSTANT_BUFFER, "[Vulkan] pBuffer does not have the flag BUFFER_FLAGS_CONSTANT_BUFFER\n");
 		}
 
 		
@@ -136,7 +136,7 @@ namespace Lambda
 
 	void VKNShaderVariable::SetSamplerState(ISamplerState* pSamplerState)
 	{
-		LAMBDA_ASSERT_PRINT(m_Desc.Type == RESOURCE_TYPE_SAMPLER_STATE, "Vulkan: Variable is not a SamplerState\n");
+		LAMBDA_ASSERT_PRINT(m_Desc.Type == RESOURCE_TYPE_SAMPLER_STATE, "[Vulkan] Variable is not a SamplerState\n");
 
 		//If samplerstate is nullptr we get the default samplerstate
 		VKNSamplerState* pVkSamplerState = reinterpret_cast<VKNSamplerState*>(pSamplerState);
@@ -170,30 +170,30 @@ namespace Lambda
         if (m_Desc.Type == RESOURCE_TYPE_TEXTURE)
         {
             VKNTexture* pVkTexture	= m_Resource.GetAs<VKNTexture>();
-            m_ImageInfo.imageView   = pVkTexture->GetVkImageView();
-            m_ImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            m_VkImageInfo.imageView   = pVkTexture->GetVkImageView();
+            m_VkImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-            currentHandle = uint64(m_ImageInfo.imageView);
+            currentHandle = uint64(m_VkImageInfo.imageView);
         }
         else if (m_Desc.Type == RESOURCE_TYPE_CONSTANT_BUFFER)
         {
             VKNBuffer* pVkBuffer = m_Resource.GetAs<VKNBuffer>();
-            m_BufferInfo.buffer  = pVkBuffer->GetVkBuffer();
-            m_BufferInfo.offset  = 0;
+            m_VkBufferInfo.buffer  = pVkBuffer->GetVkBuffer();
+            m_VkBufferInfo.offset  = 0;
         
             const BufferDesc& desc = pVkBuffer->GetDesc();
-            m_BufferInfo.range = desc.SizeInBytes;
+            m_VkBufferInfo.range = desc.SizeInBytes;
             
-            currentHandle = uint64(m_BufferInfo.buffer);
+            currentHandle = uint64(m_VkBufferInfo.buffer);
         }
         else if (m_Desc.Type == RESOURCE_TYPE_SAMPLER_STATE)
         {
             VKNSamplerState* pVkSamplerState = m_Resource.GetAs<VKNSamplerState>();
-            m_ImageInfo.imageView   = VK_NULL_HANDLE;
-            m_ImageInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-            m_ImageInfo.sampler     = pVkSamplerState->GetVkSampler();
+            m_VkImageInfo.imageView   = VK_NULL_HANDLE;
+            m_VkImageInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+            m_VkImageInfo.sampler     = pVkSamplerState->GetVkSampler();
             
-            currentHandle = uint64(m_ImageInfo.sampler);
+            currentHandle = uint64(m_VkImageInfo.sampler);
         }
         
         //We check if the handle that is bound is the same as the one we have written to the descriptorset.

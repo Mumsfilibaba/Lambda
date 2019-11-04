@@ -17,7 +17,6 @@ namespace Lambda
 
 		static void Register(WNDCLASSEX& wc);
 		static void Unregister(LPCTSTR className);
-
 	private:
 		static std::unordered_map<std::wstring, uint32> s_ClassTable;
 	};

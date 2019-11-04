@@ -17,7 +17,7 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(VKNDescriptorSetAllocator);
 
-		VKNDescriptorSetAllocator(VKNDevice* m_pDevice, uint32 uniformBufferCount, uint32 dynamicUniformBufferCount, uint32 samplerCount, uint32 sampledImageCount, uint32 combinedImageSamplerCount, uint32 numSets);
+		VKNDescriptorSetAllocator(VKNDevice* pDevice, uint32 uniformBufferCount, uint32 dynamicUniformBufferCount, uint32 samplerCount, uint32 sampledImageCount, uint32 combinedImageSamplerCount, uint32 numSets);
 		~VKNDescriptorSetAllocator() = default;
 
 		VkDescriptorSet Allocate(VkDescriptorSetLayout descriptorSetLayout);
@@ -25,8 +25,8 @@ namespace Lambda
 	private:
 		void Init();
 	private:
-		VKNDevice* m_pDevice;
-		VkDescriptorPool m_Pool;
+		VKNDevice* m_pVkDevice;
+		VkDescriptorPool m_VkPool;
 		uint32 m_NumSets;
 		uint32 m_UniformBufferCount;
 		uint32 m_DynamicUniformBufferCount;

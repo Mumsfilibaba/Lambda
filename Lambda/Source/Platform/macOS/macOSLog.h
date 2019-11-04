@@ -5,16 +5,16 @@
 namespace Lambda
 {
     //--------
-    //MacOSLog
+    //macOSLog
     //--------
     
-    class MacOSLog final : public ILog
+    class macOSLog final : public ILog
     {
     public:
-        LAMBDA_NO_COPY(MacOSLog);
+        LAMBDA_NO_COPY(macOSLog);
         
-        MacOSLog() = default;
-        virtual ~MacOSLog() = default;
+        macOSLog() = default;
+        virtual ~macOSLog() = default;
         
         virtual void Print(LogSeverity severity, const char* pFormat, ...) override final;
     };

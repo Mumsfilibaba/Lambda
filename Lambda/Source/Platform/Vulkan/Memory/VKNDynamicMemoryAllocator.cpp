@@ -15,46 +15,43 @@ namespace Lambda
 	//VKNDynamicMemoryPage
 	//---------------------
 
-	VKNDynamicMemoryPage::VKNDynamicMemoryPage(VKNDevice* pDevice, uint32 id, VkDeviceSize sizeInBytes)
-		: m_Buffer(VK_NULL_HANDLE),
+	VKNDynamicMemoryPage::VKNDynamicMemoryPage(VKNDevice* pVkDevice, uint32 id, VkDeviceSize sizeInBytes)
+		: m_VkBuffer(VK_NULL_HANDLE),
 		m_ID(id),
 		m_SizeInBytes(sizeInBytes),
 		m_BlockCount(0),
 		m_pHead(nullptr),
 		m_pNextFree(nullptr),
-		m_BlockPool(sizeInBytes / 64) 
+		m_VkBlockPool(sizeInBytes / 64) 
 	{
-		Init(pDevice);
-
-		LOG_SYSTEM(LOG_SEVERITY_WARNING, "[VULKAN DYNAMIC MEMORY ALLOCATOR] Allocated Dynamic Memory-Page\n");
+		Init(pVkDevice);
 	}
 
 
-	void VKNDynamicMemoryPage::Init(VKNDevice* pDevice)
+	void VKNDynamicMemoryPage::Init(VKNDevice* pVkDevice)
 	{
-		VkBufferCreateInfo info = {};
-		info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		info.pNext = nullptr;
-		info.flags = 0;
-		info.size = m_SizeInBytes;
-		info.queueFamilyIndexCount = 0;
-		info.pQueueFamilyIndices = nullptr;
-		info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		info.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT	|
-			VK_BUFFER_USAGE_TRANSFER_SRC_BIT			|
-			VK_BUFFER_USAGE_VERTEX_BUFFER_BIT			|
-			VK_BUFFER_USAGE_INDEX_BUFFER_BIT			|
-			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-
 		//Create buffer
-		if (vkCreateBuffer(pDevice->GetVkDevice(), &info, nullptr, &m_Buffer) != VK_SUCCESS)
+		VkBufferCreateInfo info = {};
+		info.sType					= VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		info.pNext					= nullptr;
+		info.flags					= 0;
+		info.size					= m_SizeInBytes;
+		info.queueFamilyIndexCount	= 0;
+		info.pQueueFamilyIndices	= nullptr;
+		info.sharingMode			= VK_SHARING_MODE_EXCLUSIVE;
+		info.usage					=	VK_BUFFER_USAGE_TRANSFER_DST_BIT  |
+										VK_BUFFER_USAGE_TRANSFER_SRC_BIT  |
+										VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
+										VK_BUFFER_USAGE_INDEX_BUFFER_BIT  |
+										VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+		if (vkCreateBuffer(pVkDevice->GetVkDevice(), &info, nullptr, &m_VkBuffer) != VK_SUCCESS)
 		{
-			LOG_DEBUG_ERROR("Vulkan: Failed to create Buffer\n");
+			LOG_DEBUG_ERROR("[Vulkan] [DYNAMIC MEMORY ALLOCATOR] Failed to create Buffer\n");
 			return;
 		}
 		else
 		{
-			LOG_DEBUG_WARNING("Vulkan: Created Dynamic Memory-Page\n");
+			LOG_DEBUG_WARNING("[Vulkan] [DYNAMIC MEMORY ALLOCATOR] Created Page\n");
 		}
 
 		//Memory properties
@@ -62,26 +59,26 @@ namespace Lambda
 
 		//Allocate memory
 		VkMemoryRequirements memoryRequirements = {};
-		vkGetBufferMemoryRequirements(pDevice->GetVkDevice(), m_Buffer, &memoryRequirements);
-		if (!pDevice->Allocate(m_Memory, memoryRequirements, memoryProperties))
+		vkGetBufferMemoryRequirements(pVkDevice->GetVkDevice(), m_VkBuffer, &memoryRequirements);
+		if (!pVkDevice->Allocate(m_Memory, memoryRequirements, memoryProperties))
 		{
-			LOG_DEBUG_ERROR("Vulkan: Failed to allocate Dynamic Memory-Page '%p'\n", m_Buffer);
+			LOG_DEBUG_ERROR("[Vulkan] [DYNAMIC MEMORY ALLOCATOR] Failed to allocate page '%p'\n", m_VkBuffer);
 			return;
 		}
 		else
 		{
-			LOG_DEBUG_WARNING("Vulkan: Allocated '%d' bytes for Dynamic Memory-Page\n", m_SizeInBytes);
-			if (vkBindBufferMemory(pDevice->GetVkDevice(), m_Buffer, m_Memory.DeviceMemory, m_Memory.DeviceMemoryOffset) != VK_SUCCESS)
+			LOG_DEBUG_WARNING("[Vulkan] [DYNAMIC MEMORY ALLOCATOR] Allocated '%d' bytes for page\n", m_SizeInBytes);
+			if (vkBindBufferMemory(pVkDevice->GetVkDevice(), m_VkBuffer, m_Memory.DeviceMemory, m_Memory.DeviceMemoryOffset) != VK_SUCCESS)
 			{
-				LOG_DEBUG_WARNING("Vulkan: Failed to bind Buffer-Memory for Dynamic Memory-Page\n", m_SizeInBytes);
+				LOG_DEBUG_WARNING("[Vulkan] [DYNAMIC MEMORY ALLOCATOR] Failed to bind Buffer-Memory\n", m_SizeInBytes);
 			}
 		}
 
 		//Set name
-		pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_BUFFER, (uint64)m_Buffer, "Dynamic Memory Page [" + std::to_string(m_ID) + "]");
+		pVkDevice->SetVulkanObjectName(VK_OBJECT_TYPE_BUFFER, (uint64)m_VkBuffer, "Dynamic Memory Page [" + std::to_string(m_ID) + "]");
 
 		//Setup first block
-		m_pHead					= m_BlockPool.Get();
+		m_pHead					= m_VkBlockPool.Get();
 		m_pHead->pPage			= this;
 		m_pHead->pNext			= nullptr;
 		m_pHead->pPrevious		= nullptr;
@@ -160,7 +157,7 @@ namespace Lambda
 		if (pBestFit->SizeInBytes > paddedSizeInBytes)
 		{
 			//Create a new block after allocation
-			VKNDynamicMemoryBlock* pBlock = m_BlockPool.Get();
+			VKNDynamicMemoryBlock* pBlock = m_VkBlockPool.Get();
 			pBlock->pPage			= this;
 			pBlock->SizeInBytes		= pBestFit->SizeInBytes - paddedSizeInBytes;
 			pBlock->BufferOffset	= paddedBufferOffset + sizeInBytes;
@@ -190,13 +187,13 @@ namespace Lambda
 
 		//Setup allocation
 		allocation.pBlock		= pBestFit;
-		allocation.Buffer		= m_Buffer;
+		allocation.Buffer		= m_VkBuffer;
 		allocation.BufferOffset = paddedBufferOffset;
 		allocation.pHostMemory	= m_Memory.pHostMemory + allocation.BufferOffset;
 
 #if defined (LAMBDA_DYNAMIC_ALLOCATOR_DEBUG_ALLOC)
 		{
-			LOG_DEBUG_INFO("Vulkan: [DYNAMIC ALLOCATION] Dynamic Memory Page '%d'\n", m_ID);
+			LOG_DEBUG_INFO("[Vulkan] [DYNAMIC MEMORY ALLOCATOR] Page '%d'\n", m_ID);
 			for (VKNDynamicMemoryBlock* pCurrent = m_pHead; pCurrent != nullptr; pCurrent = pCurrent->pNext)
 			{
 				LOG_DEBUG_INFO("----Block %d----\n", pCurrent->ID);
@@ -207,7 +204,7 @@ namespace Lambda
 					VKNDynamicMemoryBlock* pPrevious = pCurrent->pPrevious;
 					if ((pPrevious->BufferOffset + pPrevious->PaddedSizeInBytes) > pCurrent->BufferOffset)
 					{
-						LOG_DEBUG_WARNING("Overlapping memory in page '%d' between blocks '%d' and '%d'\n", m_ID, pPrevious->ID, pCurrent->ID);
+						LOG_DEBUG_WARNING("[Vulkan] [DYNAMIC MEMORY ALLOCATOR] Overlapping memory in page '%d' between blocks '%d' and '%d'\n", m_ID, pPrevious->ID, pCurrent->ID);
 					}
 				}
 				LOG_DEBUG_INFO("   End at: %llu\n", pCurrent->BufferOffset + pCurrent->PaddedSizeInBytes);
@@ -228,7 +225,7 @@ namespace Lambda
 		VKNDynamicMemoryBlock* pCurrent = allocation.pBlock;
 		if (!pCurrent)
 		{
-			LOG_DEBUG_ERROR("Vulkan: Block for Dynamic Allocation is invalid\n");
+			LOG_DEBUG_ERROR("[Vulkan] [DYNAMIC MEMORY ALLOCATOR] Block for allocation is invalid\n");
 			return;
 		}
 
@@ -250,7 +247,7 @@ namespace Lambda
 					pCurrent->pNext->pPrevious = pPrevious;
 
 				//Remove block
-				m_BlockPool.Return(pCurrent);
+				m_VkBlockPool.Return(pCurrent);
 				pCurrent = pPrevious;
 			}
 		}
@@ -270,13 +267,13 @@ namespace Lambda
 				pCurrent->pNext = pNext->pNext;
 
 				//Remove block
-				m_BlockPool.Return(pNext);
+				m_VkBlockPool.Return(pNext);
 			}
 		}
 
 #if defined (LAMBDA_DYNAMIC_ALLOCATOR_DEBUG_DEALLOC)
 		{
-			LOG_DEBUG_INFO("Vulkan: [DYNAMIC DEALLOCATION] Dynamic Memory Page '%d'\n", m_ID);
+			LOG_DEBUG_INFO("[Vulkan] [DYNAMIC MEMORY ALLOCATOR] Page '%d'\n", m_ID);
 			for (pCurrent = m_pHead; pCurrent != nullptr; pCurrent = pCurrent->pNext)
 			{
 				LOG_DEBUG_INFO("----Block %d----\n", pCurrent->ID);
@@ -287,7 +284,7 @@ namespace Lambda
 					VKNDynamicMemoryBlock* pPrevious = pCurrent->pPrevious;
 					if ((pPrevious->BufferOffset + pPrevious->PaddedSizeInBytes) > pCurrent->BufferOffset)
 					{
-						LOG_DEBUG_WARNING("Overlapping memory in page '%d' between blocks '%d' and '%d'\n", m_ID, pPrevious->ID, pCurrent->ID);
+						LOG_DEBUG_WARNING("[Vulkan] [DYNAMIC MEMORY ALLOCATOR] Overlapping memory in page '%d' between blocks '%d' and '%d'\n", m_ID, pPrevious->ID, pCurrent->ID);
 					}
 				}
 				LOG_DEBUG_INFO("   End at: %llu\n", pCurrent->BufferOffset + pCurrent->PaddedSizeInBytes);
@@ -298,32 +295,32 @@ namespace Lambda
 	}
 
 
-	void VKNDynamicMemoryPage::Destroy(VKNDevice* pDevice)
+	void VKNDynamicMemoryPage::Destroy(VKNDevice* pVkDevice)
 	{
-		LAMBDA_ASSERT(pDevice != nullptr);
+		LAMBDA_ASSERT(pVkDevice != nullptr);
 
 		//Print memoryleaks
 #if defined(LAMBDA_DEBUG)
 		VKNDynamicMemoryBlock* pDebug = m_pHead;
-		LOG_DEBUG_WARNING("Allocated blocks left in Dynamic Memory-Page %u:\n", m_ID);
+		LOG_DEBUG_WARNING("[Vulkan] [DYNAMIC MEMORY ALLOCATOR] Allocated blocks left in page %u:\n", m_ID);
 		while (pDebug)
 		{
-			LOG_DEBUG_WARNING("    VulkanDynamicBlock: ID=%u, Offset=%u, Size=%u, IsFree=%s\n", pDebug->ID, pDebug->BufferOffset, pDebug->SizeInBytes, pDebug->IsFree ? "True" : "False");
+			LOG_DEBUG_WARNING("    DynamicBlock: ID=%u, Offset=%u, Size=%u, IsFree=%s\n", pDebug->ID, pDebug->BufferOffset, pDebug->SizeInBytes, pDebug->IsFree ? "True" : "False");
 			pDebug = pDebug->pNext;
 		}
 #endif
 
 		//Deallocate memory from global memory manager
-		pDevice->Deallocate(m_Memory);
+		pVkDevice->Deallocate(m_Memory);
 
 		//Delete first block
-		m_BlockPool.Return(m_pHead);
+		m_VkBlockPool.Return(m_pHead);
 
 		//Delete buffer
-		if (m_Buffer != VK_NULL_HANDLE)
-			pDevice->SafeReleaseVulkanResource<VkBuffer>(m_Buffer);
+		if (m_VkBuffer != VK_NULL_HANDLE)
+			pVkDevice->SafeReleaseVkResource<VkBuffer>(m_VkBuffer);
 
-		LOG_SYSTEM(LOG_SEVERITY_WARNING, "[VULKAN DYNAMIC MEMORY ALLOCATOR] Deallocated Dynamic Memory-Page\n");
+		LOG_SYSTEM(LOG_SEVERITY_WARNING, "[Vulkan] [DYNAMIC MEMORY ALLOCATOR] Deallocated page\n");
 		delete this;
 	}
 
@@ -335,8 +332,8 @@ namespace Lambda
 	constexpr size_t numFrames = 3;
 	constexpr uint64 pageSize = MB(32);
 
-	VKNDynamicMemoryAllocator::VKNDynamicMemoryAllocator(VKNDevice* pDevice)
-		: m_pDevice(pDevice),
+	VKNDynamicMemoryAllocator::VKNDynamicMemoryAllocator(VKNDevice* pVkDevice)
+		: m_pVkDevice(pVkDevice),
 		m_pCurrentPage(nullptr),
 		m_TotalReserved(0),
 		m_TotalAllocated(0),
@@ -346,7 +343,7 @@ namespace Lambda
 		m_MemoryToDeallocate()
 	{
 		//Create first page
-		m_pCurrentPage = DBG_NEW VKNDynamicMemoryPage(m_pDevice, uint32(m_Pages.size()), pageSize);
+		m_pCurrentPage = DBG_NEW VKNDynamicMemoryPage(m_pVkDevice, uint32(m_Pages.size()), pageSize);
 		m_Pages.emplace_back(m_pCurrentPage);
 
 		//Resize the number of garbage memory vectors
@@ -363,14 +360,14 @@ namespace Lambda
 			EmptyGarbageMemory();
 
 		//Delete allocator
-		LOG_SYSTEM(LOG_SEVERITY_WARNING, "Vulkan: Deleting Dynamic MemoryAllocator. Number of pages: %u\n", m_Pages.size());
+		LOG_SYSTEM(LOG_SEVERITY_WARNING, "[Vulkan] [DYNAMIC MEMORY ALLOCATOR] Deleting allocator. Number of pages: %u\n", m_Pages.size());
 		for (auto page : m_Pages)
 		{
 			if (page)
-				page->Destroy(m_pDevice);
+				page->Destroy(m_pVkDevice);
 		}
 
-		LOG_DEBUG_INFO("Vulkan: Destroyed Dynamic MemoryAllocator\n");
+		LOG_DEBUG_INFO("[Vulkan] [DYNAMIC MEMORY ALLOCATOR] Destroyed allocator\n");
 	}
 
 
@@ -404,7 +401,7 @@ namespace Lambda
         m_TotalReserved += bytesToReserve;
 
         //Only allocate a new page if necessary, by now we should have found a page with enough space in case there are any empty pages
-		m_pCurrentPage = DBG_NEW VKNDynamicMemoryPage(m_pDevice, uint32(m_Pages.size()), bytesToReserve);
+		m_pCurrentPage = DBG_NEW VKNDynamicMemoryPage(m_pVkDevice, uint32(m_Pages.size()), bytesToReserve);
 		m_Pages.emplace_back(m_pCurrentPage);
 
 		return m_pCurrentPage->Allocate(allocation, sizeInBytes, alignment);
@@ -463,7 +460,7 @@ namespace Lambda
             for (uint32 i = 0; i < numToRemove; i++)
 			{
                 //Destroy the last page and then pop it. We repeat this numToRemove number of times
-                m_EmptyPages.back()->Destroy(m_pDevice);
+                m_EmptyPages.back()->Destroy(m_pVkDevice);
                 m_EmptyPages.pop_back();
 			}
 		}

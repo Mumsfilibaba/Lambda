@@ -9,9 +9,9 @@ namespace Lambda
 	//VKNSamplerState
 	//---------------
 
-	VKNSamplerState::VKNSamplerState(VKNDevice* pDevice, const SamplerStateDesc& desc)
-		: TSamplerState(pDevice, desc),
-		m_Sampler(VK_NULL_HANDLE)
+	VKNSamplerState::VKNSamplerState(VKNDevice* pVkDevice, const SamplerStateDesc& desc)
+		: TSamplerState(pVkDevice, desc),
+		m_VkSampler(VK_NULL_HANDLE)
 	{
 		//Add a ref to the refcounter
 		this->AddRef();
@@ -21,10 +21,10 @@ namespace Lambda
 
 	VKNSamplerState::~VKNSamplerState()
 	{
-		if (m_Sampler != VK_NULL_HANDLE)
-			m_pDevice->SafeReleaseVulkanResource<VkSampler>(m_Sampler);
+		if (m_VkSampler != VK_NULL_HANDLE)
+			m_pDevice->SafeReleaseVkResource<VkSampler>(m_VkSampler);
 
-		LOG_DEBUG_INFO("Vulkan: Destroyed SamplerState\n");
+		LOG_DEBUG_INFO("[Vulkan] Destroyed SamplerState\n");
 	}
 
 
@@ -53,13 +53,13 @@ namespace Lambda
 		info.minLod = desc.MinMipLOD;
 		info.maxLod = desc.MaxMipLOD;
 		info.mipLodBias = desc.MipLODBias;
-		if (vkCreateSampler(m_pDevice->GetVkDevice(), &info, nullptr, &m_Sampler) != VK_SUCCESS)
+		if (vkCreateSampler(m_pDevice->GetVkDevice(), &info, nullptr, &m_VkSampler) != VK_SUCCESS)
 		{
-			LOG_DEBUG_ERROR("Vulkan: Failed to create samplerstate\n");
+			LOG_DEBUG_ERROR("[Vulkan] Failed to create samplerstate\n");
 		}
 		else
 		{
-			LOG_DEBUG_INFO("Vulkan: Created samplerstate\n");
+			LOG_DEBUG_INFO("[Vulkan] Created samplerstate\n");
 			SetName(desc.pName);
 		}
 	}
@@ -67,14 +67,14 @@ namespace Lambda
 
 	void* VKNSamplerState::GetNativeHandle() const
 	{
-		return reinterpret_cast<VkSampler>(m_Sampler);
+		return reinterpret_cast<VkSampler>(m_VkSampler);
 	}
 	
 	
 	void VKNSamplerState::SetName(const char* pName)
 	{
 		TSamplerState::SetName(pName);
-		m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_SAMPLER, (uint64)m_Sampler, m_Name);
+		m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_SAMPLER, (uint64)m_VkSampler, m_Name);
 		m_Desc.pName = m_Name.c_str();
 	}
 }

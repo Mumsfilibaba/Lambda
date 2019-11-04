@@ -24,11 +24,11 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(VKNUploadPage);
 
-		VKNUploadPage(VKNDevice* pDevice, VkDeviceSize sizeInBytes);
+		VKNUploadPage(VKNDevice* pVkDevice, VkDeviceSize sizeInBytes);
 		~VKNUploadPage() = default;
 
 		VKNUploadAllocation Allocate(VkDeviceSize sizeInBytes, VkDeviceSize alignment);
-		void Destroy(VKNDevice* pDevice);
+		void Destroy(VKNDevice* pVkDevice);
 
 
 		_forceinline void Reset()
@@ -54,10 +54,10 @@ namespace Lambda
 			return m_VkBuffer;
 		}
 	private:
-		void Init(VKNDevice* pDevice);
+		void Init(VKNDevice* pVkDevice);
 	private:
-		VkBuffer m_VkBuffer;
 		VKNAllocation m_Memory;
+		VkBuffer m_VkBuffer;
 		VkDeviceSize m_SizeInBytes;
 		VkDeviceSize m_OffsetInBytes;
 	};
@@ -72,14 +72,14 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(VKNUploadAllocator);
 
-		VKNUploadAllocator(VKNDevice* pDevice, VkDeviceSize sizeInBytes = MB(1));
+		VKNUploadAllocator(VKNDevice* pVkDevice, VkDeviceSize sizeInBytes = MB(1));
 		~VKNUploadAllocator();
 
 		VKNUploadAllocation Allocate(VkDeviceSize sizeInBytes, VkDeviceSize alignment);
 		void Reset();
 	private:
-		VKNDevice* m_pDevice;
-		VKNUploadPage* m_pCurrentPage;
 		std::vector<VKNUploadPage*> m_DiscardedPages;		
+		VKNDevice* m_pVkDevice;
+		VKNUploadPage* m_pCurrentPage;
 	};
 }

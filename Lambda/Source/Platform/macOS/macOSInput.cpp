@@ -11,14 +11,14 @@ namespace Lambda
     
     Input* Input::Create()
     {
-        return DBG_NEW MacOSInput();
+        return DBG_NEW macOSInput();
     }
     
     //----------
-    //MacOSInput
+    //macOSInput
     //----------
 
-    MacOSInput::MacOSInput()
+    macOSInput::macOSInput()
         : m_LambdaKeyTable(),
         m_GLFWKeyTable()
     {
@@ -270,28 +270,28 @@ namespace Lambda
     }
     
     
-    bool MacOSInput::InternalIsKeyUp(Key keycode) const
+    bool macOSInput::InternalIsKeyUp(Key keycode) const
     {
         GLFWwindow* pWindow = reinterpret_cast<GLFWwindow*>(Application::Get().GetWindow()->GetNativeHandle());
         return glfwGetKey(pWindow, LambdaKeyToGLFW(keycode)) == GLFW_RELEASE;
     }
     
     
-    bool MacOSInput::InternalIsKeyDown(Key keycode) const
+    bool macOSInput::InternalIsKeyDown(Key keycode) const
     {
         GLFWwindow* pWindow = reinterpret_cast<GLFWwindow*>(Application::Get().GetWindow()->GetNativeHandle());
         return glfwGetKey(pWindow, LambdaKeyToGLFW(keycode)) == GLFW_PRESS;
     }
     
     
-    void MacOSInput::InternalSetMousePosition(float x, float y) const
+    void macOSInput::InternalSetMousePosition(float x, float y) const
     {
         GLFWwindow* pWindow = reinterpret_cast<GLFWwindow*>(Application::Get().GetWindow()->GetNativeHandle());
         glfwSetCursorPos(pWindow, double(x), double(y));
     }
     
     
-    void MacOSInput::InternalGetMousePosition(float& x, float& y) const
+    void macOSInput::InternalGetMousePosition(float& x, float& y) const
     {
         GLFWwindow* pWindow = reinterpret_cast<GLFWwindow*>(Application::Get().GetWindow()->GetNativeHandle());
         double dx = 0.0;
@@ -303,14 +303,14 @@ namespace Lambda
     }
     
     
-    void MacOSInput::InternalSetMousePosition(IWindow* pRelativeTo, float x, float y) const
+    void macOSInput::InternalSetMousePosition(IWindow* pRelativeTo, float x, float y) const
     {
         GLFWwindow* pWindow = reinterpret_cast<GLFWwindow*>(pRelativeTo->GetNativeHandle());
         glfwSetCursorPos(pWindow, double(x), double(y));
     }
     
     
-    void MacOSInput::InternalGetMousePosition(IWindow* pRelativeTo, float& x, float& y) const
+    void macOSInput::InternalGetMousePosition(IWindow* pRelativeTo, float& x, float& y) const
     {
         GLFWwindow* pWindow = reinterpret_cast<GLFWwindow*>(pRelativeTo->GetNativeHandle());
         double dx = 0.0;
@@ -322,13 +322,13 @@ namespace Lambda
     }
     
     
-    Key MacOSInput::GLFWKeyToLambda(uint32 keycode) const
+    Key macOSInput::GLFWKeyToLambda(uint32 keycode) const
     {
         return m_LambdaKeyTable[keycode];
     }
     
     
-    uint32 MacOSInput::LambdaKeyToGLFW(Key keycode) const
+    uint32 macOSInput::LambdaKeyToGLFW(Key keycode) const
     {
         return m_GLFWKeyTable[keycode];
     }

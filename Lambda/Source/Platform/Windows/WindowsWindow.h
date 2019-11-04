@@ -37,15 +37,14 @@ namespace Lambda
 		void DispatchEvent(const Event& event);
 		LRESULT OnEvent(uint32 msg, WPARAM wParam, LPARAM lParam);
 	private:
-		AutoRef<IDevice>	m_GraphicsDevice;
-		IEventCallback*		m_pEventCallback;
-		HWND				m_hWindow;
-		uint32				m_Height;
-		uint32				m_Width;
-		DWORD				m_Style;
-		DWORD				m_ExStyle;
-		bool				m_Fullscreen;
-		bool				m_HasFocus;
+		IEventCallback*	 m_pEventCallback;
+		HWND m_hWindow;
+		uint32 m_Height;
+		uint32 m_Width;
+		DWORD m_Style;
+		DWORD m_ExStyle;
+		bool m_Fullscreen;
+		bool m_HasFocus;
 	};
 }
 #endif

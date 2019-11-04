@@ -9,8 +9,8 @@ namespace Lambda
 	//-------------------------
 
 	VKNDescriptorSetAllocator::VKNDescriptorSetAllocator(VKNDevice* pDevice, uint32 uniformBufferCount, uint32 dynamicUniformBufferCount, uint32 samplerCount, uint32 sampledImageCount, uint32 combinedImageSamplerCount, uint32 numSets)
-		: m_pDevice(pDevice),
-		m_Pool(VK_NULL_HANDLE),
+		: m_pVkDevice(pDevice),
+		m_VkPool(VK_NULL_HANDLE),
 		m_NumSets(0),
 		m_UniformBufferCount(uniformBufferCount),
 		m_DynamicUniformBufferCount(dynamicUniformBufferCount),
@@ -35,17 +35,17 @@ namespace Lambda
 		VkDescriptorSetAllocateInfo descriptorAllocInfo = {};
 		descriptorAllocInfo.sType				= VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 		descriptorAllocInfo.pNext				= nullptr;
-		descriptorAllocInfo.descriptorPool		= m_Pool;
+		descriptorAllocInfo.descriptorPool		= m_VkPool;
 		descriptorAllocInfo.descriptorSetCount	= 1;
 		descriptorAllocInfo.pSetLayouts			= &descriptorSetLayout;
-		if (vkAllocateDescriptorSets(m_pDevice->GetVkDevice(), &descriptorAllocInfo, &set))
+		if (vkAllocateDescriptorSets(m_pVkDevice->GetVkDevice(), &descriptorAllocInfo, &set))
 		{
-			LOG_DEBUG_ERROR("Vulkan: Failed to allocate DescriptorSets\n");
+			LOG_DEBUG_ERROR("[Vulkan] Failed to allocate DescriptorSets\n");
 			return VK_NULL_HANDLE;
 		}
 		else
 		{
-			LOG_DEBUG_INFO("Vulkan: Allocated DescriptorSets\n");
+			LOG_DEBUG_INFO("[Vulkan]  Allocated DescriptorSets\n");
 			m_NumSets--;
 
 			return set;
@@ -57,8 +57,8 @@ namespace Lambda
 	{
 		LAMBDA_ASSERT(device != VK_NULL_HANDLE);
 
-		if (m_Pool != VK_NULL_HANDLE)
-			m_pDevice->SafeReleaseVulkanResource<VkDescriptorPool>(m_Pool);
+		if (m_VkPool != VK_NULL_HANDLE)
+			m_pVkDevice->SafeReleaseVkResource<VkDescriptorPool>(m_VkPool);
 
 		delete this;
 	}
@@ -114,30 +114,30 @@ namespace Lambda
 		descriptorPoolInfo.poolSizeCount = uint32(poolSizes.size());
 		descriptorPoolInfo.pPoolSizes	 = poolSizes.data();
 		descriptorPoolInfo.maxSets		 = m_SetCount;
-		if (vkCreateDescriptorPool(m_pDevice->GetVkDevice(), &descriptorPoolInfo, nullptr, &pool) != VK_SUCCESS)
+		if (vkCreateDescriptorPool(m_pVkDevice->GetVkDevice(), &descriptorPoolInfo, nullptr, &pool) != VK_SUCCESS)
 		{
-			if (m_Pool == VK_NULL_HANDLE)
+			if (m_VkPool == VK_NULL_HANDLE)
 			{
-				LOG_DEBUG_ERROR("Vulkan: Failed to create DescriptorPool\n");
+				LOG_DEBUG_ERROR("[Vulkan]  Failed to create DescriptorPool\n");
 			}
 			else
 			{
-				LOG_DEBUG_ERROR("Vulkan: Failed to reallocate DescriptorPool\n");
+				LOG_DEBUG_ERROR("[Vulkan]  Failed to reallocate DescriptorPool\n");
 			}
 		}
 		else
 		{
-			if (m_Pool == VK_NULL_HANDLE)
+			if (m_VkPool == VK_NULL_HANDLE)
 			{
-				LOG_DEBUG_INFO("Vulkan: Created DescriptorPool\n");
+				LOG_DEBUG_INFO("[Vulkan]  Created DescriptorPool\n");
 			}
 			else
 			{
-				LOG_DEBUG_INFO("Vulkan: Reallocated DescriptorPool\n");
-				m_pDevice->SafeReleaseVulkanResource<VkDescriptorPool>(m_Pool);
+				LOG_DEBUG_INFO("[Vulkan]  Reallocated DescriptorPool\n");
+				m_pVkDevice->SafeReleaseVkResource<VkDescriptorPool>(m_VkPool);
 			}
 
-			m_Pool = pool;
+			m_VkPool = pool;
 			m_NumSets = m_SetCount;
 		}
 	}

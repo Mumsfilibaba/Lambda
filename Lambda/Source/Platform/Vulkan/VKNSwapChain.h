@@ -19,7 +19,7 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(VKNSwapChain);
 
-		VKNSwapChain(VKNDevice* pDevice, const SwapChainDesc& desc);
+		VKNSwapChain(VKNDevice* pVkDevice, const SwapChainDesc& desc);
 		~VKNSwapChain();
 
 		virtual void ResizeBuffers(uint32 width, uint32 height) override final;
@@ -49,18 +49,18 @@ namespace Lambda
         void ReleaseResources();
 		void RecreateSwapChain();
 	private:
-		AutoRef<VKNDeviceContext> m_Context;
-        VkSurfaceKHR        m_Surface;
-		VkSwapchainKHR		m_VkSwapChain;
-		VkSurfaceFormatKHR	m_VkFormat;
-        VkPresentModeKHR	m_PresentationMode;
-        AutoRef<VKNTexture> m_SampleBuffer;
-        AutoRef<VKNTexture> m_DepthStencilBuffer;
-		mutable uint32		m_CurrentBufferIndex;
-        mutable uint32      m_SemaphoreIndex;
+		mutable std::vector<AutoRef<VKNTexture>> m_Buffers;
         std::vector<VkSemaphore> m_RenderSemaphores;
         std::vector<VkSemaphore> m_ImageSemaphores;
-		mutable std::vector<AutoRef<VKNTexture>> m_Buffers;
+		VkSurfaceFormatKHR m_VkFormat;
+		AutoRef<VKNDeviceContext> m_Context;
+        AutoRef<VKNTexture> m_SampleBuffer;
+        AutoRef<VKNTexture> m_DepthStencilBuffer;
+        VkSurfaceKHR m_VkSurface;
+		VkSwapchainKHR m_VkSwapChain;
+        VkPresentModeKHR m_VkPresentMode;
+		mutable uint32 m_CurrentBufferIndex;
+        mutable uint32 m_SemaphoreIndex;
 		bool m_FullscreenState;
 	};
 }

@@ -61,8 +61,8 @@ namespace Lambda
 
 	VKNRenderPassCache* VKNRenderPassCache::s_pInstance = nullptr;
 
-	VKNRenderPassCache::VKNRenderPassCache(VKNDevice* pDevice)
-		: m_pDevice(pDevice),
+	VKNRenderPassCache::VKNRenderPassCache(VKNDevice* pVkDevice)
+		: m_pDevice(pVkDevice),
 		m_RenderPasses()
 	{
 		LAMBDA_ASSERT(s_pInstance == nullptr);
@@ -167,12 +167,12 @@ namespace Lambda
 		VkRenderPass renderPass = VK_NULL_HANDLE;
 		if (vkCreateRenderPass(m_pDevice->GetVkDevice(), &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
 		{
-			LOG_DEBUG_ERROR("Vulkan: Failed to create renderpass\n");
+			LOG_DEBUG_ERROR("[Vulkan] Failed to create renderpass\n");
 			return VK_NULL_HANDLE;
 		}
 		else
 		{
-			LOG_DEBUG_INFO("Vulkan: Created new renderpass\n");
+			LOG_DEBUG_INFO("[Vulkan] Created new renderpass\n");
 
 			m_RenderPasses.insert(std::pair<VKNRenderPassCacheKey, VkRenderPass>(key, renderPass));
 			return renderPass;
@@ -192,7 +192,7 @@ namespace Lambda
 
 			//Safely destroy this renderpass
 			if (pass.second != VK_NULL_HANDLE)
-				m_pDevice->SafeReleaseVulkanResource(pass.second);
+				m_pDevice->SafeReleaseVkResource(pass.second);
 		}
 
 		//Clear all

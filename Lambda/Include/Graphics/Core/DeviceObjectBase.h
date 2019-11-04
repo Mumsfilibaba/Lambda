@@ -39,7 +39,7 @@ namespace Lambda
 				m_Name = std::string(pName);
 		}
 	protected:
-		TDeviceImpl* m_pDevice;
 		std::string m_Name;
+		TDeviceImpl* m_pDevice;
 	};
 }

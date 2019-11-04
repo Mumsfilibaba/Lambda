@@ -17,7 +17,7 @@ namespace Lambda
 		m_Memory(),
         m_IsOwner(false),
 		m_VkImage(VK_NULL_HANDLE),
-        m_ImageView(VK_NULL_HANDLE),
+        m_VkImageView(VK_NULL_HANDLE),
         m_VkAspectFlags(0)
     {
 		//Add a ref to the refcounter
@@ -31,7 +31,7 @@ namespace Lambda
 		m_Memory(),
 		m_IsOwner(false),
 		m_VkImage(VK_NULL_HANDLE),
-		m_ImageView(VK_NULL_HANDLE),
+		m_VkImageView(VK_NULL_HANDLE),
 		m_VkAspectFlags(0)
     {
 		LAMBDA_ASSERT(image != VK_NULL_HANDLE);
@@ -44,7 +44,7 @@ namespace Lambda
 
 	VKNTexture::~VKNTexture()
 	{
-		LOG_DEBUG_INFO("Vulkan: Destroying Texture2D '%p' '%s'\n", this, m_Name.c_str());
+		LOG_DEBUG_INFO("[Vulkan] Destroying Texture2D '%p' '%s'\n", this, m_Name.c_str());
 
 		//Remove the image from the global layout
 		if (VKNResourceLayoutTracker::HasGlobalLayout(m_VkImage))
@@ -53,13 +53,13 @@ namespace Lambda
 		}
 
 		//Destroy view
-		if (m_ImageView != VK_NULL_HANDLE)
+		if (m_VkImageView != VK_NULL_HANDLE)
 		{
 			//Release all framebuffers with this imageview
 			VKNFramebufferCache& cache = VKNFramebufferCache::Get();
-			cache.OnReleaseImageView(m_ImageView);
+			cache.OnReleaseImageView(m_VkImageView);
 
-			m_pDevice->SafeReleaseVulkanResource<VkImageView>(m_ImageView);
+			m_pDevice->SafeReleaseVkResource<VkImageView>(m_VkImageView);
 		}
 
 		//Destroy if texture was created from init
@@ -68,7 +68,7 @@ namespace Lambda
 			if (m_VkImage != VK_NULL_HANDLE)
 			{
 				m_pDevice->Deallocate(m_Memory);
-				m_pDevice->SafeReleaseVulkanResource<VkImage>(m_VkImage);
+				m_pDevice->SafeReleaseVkResource<VkImage>(m_VkImage);
 			}
 		}
 	}
@@ -104,7 +104,7 @@ namespace Lambda
 		VkSampleCountFlagBits highestSampleCount = m_pDevice->GetHighestSampleCount();
         if (sampleCount > highestSampleCount)
         {
-            LOG_DEBUG_ERROR("Vulkan: TextureDesc::SampleCount (=%u) is higher than the maximum of the device (=%u)\n", sampleCount, highestSampleCount);
+            LOG_DEBUG_ERROR("[Vulkan] TextureDesc::SampleCount (=%u) is higher than the maximum of the device (=%u)\n", sampleCount, highestSampleCount);
             return;
         }
         
@@ -125,7 +125,7 @@ namespace Lambda
 		}
 		else
 		{
-			LOG_DEBUG_ERROR("Vulkan: Unknown Texture-Type\n");
+			LOG_DEBUG_ERROR("[Vulkan] Unknown Texture-Type\n");
 			return;
 		}
 		info.extent.width           = desc.Width;
@@ -175,7 +175,7 @@ namespace Lambda
 		//Create image
         if (vkCreateImage(m_pDevice->GetVkDevice(), &info, nullptr, &m_VkImage) != VK_SUCCESS)
         {
-            LOG_DEBUG_ERROR("Vulkan: Failed to create Image\n");
+            LOG_DEBUG_ERROR("[Vulkan] Failed to create Image\n");
             return;
         }
         else
@@ -185,7 +185,7 @@ namespace Lambda
             m_IsOwner = true;
 			
 			SetName(m_Desc.pName);
-			LOG_DEBUG_INFO("Vulkan: Created Image '%p'. w=%u, h=%u, format=%s, name='%s'\n", m_VkImage, desc.Width, desc.Height, VkFormatToString(info.format), m_Desc.pName);
+			LOG_DEBUG_INFO("[Vulkan] Created Image '%p'. w=%u, h=%u, format=%s, name='%s'\n", m_VkImage, desc.Width, desc.Height, VkFormatToString(info.format), m_Desc.pName);
         }
         
 
@@ -200,15 +200,15 @@ namespace Lambda
 			vkGetImageMemoryRequirements(m_pDevice->GetVkDevice(), m_VkImage, &memoryRequirements);
 			if (!m_pDevice->Allocate(m_Memory, memoryRequirements, memoryProperties))
 			{
-				LOG_DEBUG_ERROR("Vulkan: Failed to allocate Image '%p'\n", m_VkImage);
+				LOG_DEBUG_ERROR("[Vulkan] Failed to allocate Image '%p'\n", m_VkImage);
 				return;
 			}
 			else
 			{
-				LOG_DEBUG_WARNING("Vulkan: Allocated '%d' bytes for Image\n", memoryRequirements.size);
+				LOG_DEBUG_WARNING("[Vulkan] Allocated '%d' bytes for Image\n", memoryRequirements.size);
 				if (vkBindImageMemory(m_pDevice->GetVkDevice(), m_VkImage, m_Memory.DeviceMemory, m_Memory.DeviceMemoryOffset) != VK_SUCCESS)
 				{
-					LOG_DEBUG_WARNING("Vulkan: Failed to bind memory for Image\n");
+					LOG_DEBUG_WARNING("[Vulkan] Failed to bind memory for Image\n");
 				}
 			}
 		}
@@ -231,15 +231,15 @@ namespace Lambda
 			sbInfo.pQueueFamilyIndices		= nullptr;
 			sbInfo.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
 			
-			VkBuffer stagingBuffer = VK_NULL_HANDLE;
-			if (vkCreateBuffer(m_pDevice->GetVkDevice(), &sbInfo, nullptr, &stagingBuffer) != VK_SUCCESS)
+			VkBuffer vkStagingBuffer = VK_NULL_HANDLE;
+			if (vkCreateBuffer(m_pDevice->GetVkDevice(), &sbInfo, nullptr, &vkStagingBuffer) != VK_SUCCESS)
 			{
-				LOG_DEBUG_ERROR("Vulkan: Failed to create Staging-Buffer\n");
+				LOG_DEBUG_ERROR("[Vulkan] Failed to create Staging-Buffer\n");
 				return;
 			}
 			else
 			{
-				LOG_DEBUG_INFO("Vulkan: Created Staging-Buffer '%p'\n", stagingBuffer);
+				LOG_DEBUG_INFO("[Vulkan] Created Staging-Buffer '%p'\n", vkStagingBuffer);
 			}
 
 
@@ -251,18 +251,18 @@ namespace Lambda
 
 			//Allocate memory
 			VkMemoryRequirements memoryRequirements = {};
-			vkGetBufferMemoryRequirements(m_pDevice->GetVkDevice(), stagingBuffer, &memoryRequirements);
+			vkGetBufferMemoryRequirements(m_pDevice->GetVkDevice(), vkStagingBuffer, &memoryRequirements);
 			if (!m_pDevice->Allocate(stagingMemory, memoryRequirements, memoryProperties))
 			{
-				LOG_DEBUG_ERROR("Vulkan: Failed to allocate StagingBuffer '%p'\n", stagingBuffer);
+				LOG_DEBUG_ERROR("[Vulkan] Failed to allocate StagingBuffer '%p'\n", vkStagingBuffer);
 				return;
 			}
 			else
 			{
-				LOG_DEBUG_WARNING("Vulkan: Allocated '%d' bytes for StagingBuffer\n", pInitalData->SizeInBytes);
-				if (vkBindBufferMemory(m_pDevice->GetVkDevice(), stagingBuffer, stagingMemory.DeviceMemory, stagingMemory.DeviceMemoryOffset) != VK_SUCCESS)
+				LOG_DEBUG_WARNING("[Vulkan] Allocated '%d' bytes for StagingBuffer\n", pInitalData->SizeInBytes);
+				if (vkBindBufferMemory(m_pDevice->GetVkDevice(), vkStagingBuffer, stagingMemory.DeviceMemory, stagingMemory.DeviceMemoryOffset) != VK_SUCCESS)
 				{
-					LOG_DEBUG_WARNING("Vulkan: Failed to bind memory for StagingBuffer\n");
+					LOG_DEBUG_WARNING("[Vulkan] Failed to bind memory for StagingBuffer\n");
 				}
 				else
 				{
@@ -279,11 +279,11 @@ namespace Lambda
 
 			//Copy buffer to image
 			pContext->TransitionTextureStates(&barrier, 1);
-			pContext->CopyBufferToImage(m_VkImage, 0, m_VkAspectFlags, m_Desc.Width, m_Desc.Height, m_Desc.Depth, stagingBuffer, 0, pInitalData->SizeInBytes);
+			pContext->CopyBufferToImage(m_VkImage, 0, m_VkAspectFlags, m_Desc.Width, m_Desc.Height, m_Desc.Depth, vkStagingBuffer, 0, pInitalData->SizeInBytes);
 
 			//Delete the stagingbuffer
 			m_pDevice->Deallocate(stagingMemory);
-			m_pDevice->SafeReleaseVulkanResource<VkBuffer>(stagingBuffer);
+			m_pDevice->SafeReleaseVkResource<VkBuffer>(vkStagingBuffer);
 		}
 		else
 		{
@@ -319,7 +319,7 @@ namespace Lambda
         }
         else
         {
-            LOG_DEBUG_ERROR("Vulkan: Unknown Texture-Type\n");
+            LOG_DEBUG_ERROR("[Vulkan] Unknown Texture-Type\n");
             return;
         }
         viewInfo.subresourceRange.aspectMask        = m_VkAspectFlags;
@@ -327,13 +327,13 @@ namespace Lambda
         viewInfo.subresourceRange.levelCount        = m_Desc.MipLevels;
         viewInfo.subresourceRange.baseArrayLayer    = 0;
         viewInfo.subresourceRange.layerCount        = 1;
-        if (vkCreateImageView(m_pDevice->GetVkDevice(), &viewInfo, nullptr, &m_ImageView) != VK_SUCCESS)
+        if (vkCreateImageView(m_pDevice->GetVkDevice(), &viewInfo, nullptr, &m_VkImageView) != VK_SUCCESS)
         {
-            LOG_DEBUG_ERROR("Vulkan: Failed to create ImageView\n");
+            LOG_DEBUG_ERROR("[Vulkan] Failed to create ImageView\n");
         }
         else
         {
-            LOG_DEBUG_INFO("Vulkan: Created ImageView '%p'\n", m_ImageView);
+            LOG_DEBUG_INFO("[Vulkan] Created ImageView '%p'\n", m_VkImageView);
         }
     }
 

@@ -54,13 +54,13 @@ namespace Lambda
 		bool OnMouseMove(const MouseMovedEvent& event);
 		bool OnWindowResize(const WindowResizeEvent& event);
 	private:
-		AutoRef<IShader>		m_VS;
-		AutoRef<IShader>		m_PS;
-		AutoRef<ISamplerState>	m_SamplerState;
+		AutoRef<IShader> m_VS;
+		AutoRef<IShader> m_PS;
+		AutoRef<ISamplerState> m_SamplerState;
 		AutoRef<IPipelineState>	m_PipelineState;
-		AutoRef<ITexture>		m_FontTexture;
-		AutoRef<IBuffer>		m_VertexBuffer;
-		AutoRef<IBuffer>		m_IndexBuffer;
+		AutoRef<ITexture> m_FontTexture;
+		AutoRef<IBuffer> m_VertexBuffer;
+		AutoRef<IBuffer> m_IndexBuffer;
 		AutoRef<IShaderVariableTable> m_VariableTable;
 	};
 }

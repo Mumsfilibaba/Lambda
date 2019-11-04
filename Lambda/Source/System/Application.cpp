@@ -5,7 +5,7 @@
 #include "Time/Clock.h"
 #include "System/Log.h"
 #include "System/Input.h"
-#include "System/JoystickManager.h"
+#include "System/GamePadManager.h"
 #include "Events/KeyEvent.h"
 #include "Events/WindowEvent.h"
 
@@ -42,7 +42,7 @@ namespace Lambda
 	{
 		OnLoad();
 
-        LOG_DEBUG_INFO("Lambda Engine: STARTING\n");
+        LOG_DEBUG_INFO("[LAMBDA ENGINE] STARTING\n");
         
 		Clock clock;
 		Timestep accumulator;
@@ -86,13 +86,13 @@ namespace Lambda
 			//Print UPS to console
 			if (clock.GetTotalTime().AsSeconds() >= 1.0f)
 			{
-                LOG_SYSTEM_PRINT("UPS: %u, Frametime: %.1fms\n", ups, clock.GetDeltaTime().AsMilliSeconds());
+                LOG_SYSTEM_PRINT("[LAMBDA ENGINE] UPS: %u, Frametime: %.1fms\n", ups, clock.GetDeltaTime().AsMilliSeconds());
                 ups = 0;
                 clock.Reset();
 			}
 		}
 
-        LOG_DEBUG_INFO("Lambda Engine: EXITING\n");        
+        LOG_DEBUG_INFO("[LAMBDA ENGINE] EXITING\n");        
 		OnRelease();
 		return m_ExitCode;
 	}
@@ -141,7 +141,7 @@ namespace Lambda
         PushLayer(m_pUILayer);
 		
 		//Set joystick-pollingrate
-		JoystickManager::SetPollrate(Timestep::Seconds(1.0f / 60.0f));
+		GamePadManager::SetPollrate(Timestep::Seconds(1.0f / 60.0f));
 
 		//Init renderer
 		m_Renderer.Init();
@@ -160,7 +160,7 @@ namespace Lambda
         //Window update (Handle events)
         m_pWindow->OnUpdate();
         //Update controllers
-		JoystickManager::OnUpdate();
+		GamePadManager::OnUpdate();
         //Call update
         for (auto it = m_LayerStack.Begin(); it != m_LayerStack.End(); it++)
 		{
@@ -256,7 +256,7 @@ namespace Lambda
     bool Application::OnWindowClose(const WindowClosedEvent& event)
     {
         Quit(0);
-        LOG_DEBUG_INFO("Window closed\n");
+        LOG_DEBUG_INFO("[LAMBDA ENGINE] Window closed\n");
         return true;
     }
 
@@ -266,7 +266,7 @@ namespace Lambda
         if (event.GetKey() == KEY_ESCAPE)
         {
             Quit(0);
-            LOG_DEBUG_INFO("Escape pressed, exiting\n");
+            LOG_DEBUG_INFO("[LAMBDA ENGINE] Escape pressed, exiting\n");
             return true;
         }
         else
@@ -330,7 +330,7 @@ namespace Lambda
         m_Running = false;
         m_ExitCode = exitCode;
         
-        LOG_DEBUG_INFO("Quit called\n");
+        LOG_DEBUG_INFO("[LAMBDA ENGINE] Quit called\n");
     }
 
 

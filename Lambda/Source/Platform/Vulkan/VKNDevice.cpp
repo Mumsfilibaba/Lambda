@@ -28,19 +28,19 @@ namespace Lambda
 
     VKNDevice::VKNDevice(const DeviceDesc& desc)
         : DeviceBase(desc),
-		m_GraphicsQueue(VK_NULL_HANDLE),
-        m_PresentationQueue(VK_NULL_HANDLE),
-		m_pDeviceAllocator(nullptr),
-		m_pDynamicMemoryAllocator(nullptr),
-		m_pFramebufferCache(nullptr),
-		m_pRenderPassCache(nullptr),
-		m_pImmediateContext(nullptr),
-		m_Instance(VK_NULL_HANDLE),
-		m_DebugMessenger(VK_NULL_HANDLE),
-		m_Device(VK_NULL_HANDLE),
-		m_PhysicalDevice(VK_NULL_HANDLE),
+		m_GraphicsVkQueue(VK_NULL_HANDLE),
+        m_PresentationVkQueue(VK_NULL_HANDLE),
+		m_pVkDeviceAllocator(nullptr),
+		m_pVkDynamicMemoryAllocator(nullptr),
+		m_pVkFramebufferCache(nullptr),
+		m_pVkRenderPassCache(nullptr),
+		m_pVkImmediateContext(nullptr),
+		m_VkInstance(VK_NULL_HANDLE),
+		m_VkDebugMessenger(VK_NULL_HANDLE),
+		m_VkDevice(VK_NULL_HANDLE),
+		m_VkPhysicalDevice(VK_NULL_HANDLE),
 		m_FamiliyIndices(),
-		m_PhysicalDeviceProperties()
+		m_VkPhysicalDeviceProperties()
     {   
         //Add a ref to the refcounter
         this->AddRef();
@@ -61,36 +61,36 @@ namespace Lambda
 		SafeRelease(m_pDefaultSamplerState);
 
 		//Release context
-		SafeRelease(m_pImmediateContext);
+		SafeRelease(m_pVkImmediateContext);
         
 		//Release all renderpasses
-		if (m_pRenderPassCache)
-			m_pRenderPassCache->ReleaseAll();
+		if (m_pVkRenderPassCache)
+			m_pVkRenderPassCache->ReleaseAll();
 
 		//Release all framebuffers
-		if (m_pFramebufferCache)
-			m_pFramebufferCache->ReleaseAll();
+		if (m_pVkFramebufferCache)
+			m_pVkFramebufferCache->ReleaseAll();
 
-		SafeDelete(m_pDynamicMemoryAllocator);
-		SafeDelete(m_pSafeReleaseManager);
-		SafeDelete(m_pRenderPassCache);
-		SafeDelete(m_pFramebufferCache);
-		SafeDelete(m_pDeviceAllocator);
+		SafeDelete(m_pVkDynamicMemoryAllocator);
+		SafeDelete(m_pVkSafeReleaseManager);
+		SafeDelete(m_pVkRenderPassCache);
+		SafeDelete(m_pVkFramebufferCache);
+		SafeDelete(m_pVkDeviceAllocator);
 
-		if (m_Device != VK_NULL_HANDLE)
+		if (m_VkDevice != VK_NULL_HANDLE)
 		{
-			vkDestroyDevice(m_Device, nullptr);
-			m_Device = VK_NULL_HANDLE;
+			vkDestroyDevice(m_VkDevice, nullptr);
+			m_VkDevice = VK_NULL_HANDLE;
 		}
-		if (m_DebugMessenger != VK_NULL_HANDLE)
+		if (m_VkDebugMessenger != VK_NULL_HANDLE)
 		{
-			vkDestroyDebugUtilsMessengerEXT(m_Instance, m_DebugMessenger, nullptr);
-			m_DebugMessenger = VK_NULL_HANDLE;
+			vkDestroyDebugUtilsMessengerEXT(m_VkInstance, m_VkDebugMessenger, nullptr);
+			m_VkDebugMessenger = VK_NULL_HANDLE;
 		}
-		if (m_Instance != VK_NULL_HANDLE)
+		if (m_VkInstance != VK_NULL_HANDLE)
 		{
-			vkDestroyInstance(m_Instance, nullptr);
-			m_Instance = VK_NULL_HANDLE;
+			vkDestroyInstance(m_VkInstance, nullptr);
+			m_VkInstance = VK_NULL_HANDLE;
 		}
     }
     
@@ -124,7 +124,7 @@ namespace Lambda
 		}
 		else
 		{
-			LOG_DEBUG_ERROR("Vulkan: No available Instance-Layers\n");
+			LOG_DEBUG_ERROR("[Vulkan] No available Instance-Layers\n");
 		}
         
         //Get required layers
@@ -177,7 +177,7 @@ namespace Lambda
         }
         else
         {
-            LOG_DEBUG_ERROR("Vulkan: No available Instance-Extensions\n");
+            LOG_DEBUG_ERROR("[Vulkan]  No available Instance-Extensions\n");
         }
         
 
@@ -226,35 +226,35 @@ namespace Lambda
         instanceInfo.ppEnabledLayerNames		= requiredLayers.data();
 		instanceInfo.enabledExtensionCount		= uint32(instanceExtensions.size());
 		instanceInfo.ppEnabledExtensionNames	= instanceExtensions.data();
-		VkResult res = vkCreateInstance(&instanceInfo, nullptr, &m_Instance);
+		VkResult res = vkCreateInstance(&instanceInfo, nullptr, &m_VkInstance);
 		if (res != VK_SUCCESS)
 		{
-			LOG_DEBUG_ERROR("Vulkan: Failed to create Vulkan Instance. Error %d\n", res);
+			LOG_DEBUG_ERROR("[Vulkan] Failed to create Vulkan Instance. Error %d\n", res);
 
-			m_Instance = VK_NULL_HANDLE;
+			m_VkInstance = VK_NULL_HANDLE;
 			return;
 		}
 		else
 		{
-			LOG_SYSTEM_PRINT("Vulkan: Created Vulkan instance\n");
+			LOG_SYSTEM_PRINT("[Vulkan] Created Vulkan instance\n");
 		}
 
 
 		//Get instance functions
-		vkSetDebugUtilsObjectNameEXT = (PFN_vkSetDebugUtilsObjectNameEXT)vkGetInstanceProcAddr(m_Instance, "vkSetDebugUtilsObjectNameEXT");
+		vkSetDebugUtilsObjectNameEXT = (PFN_vkSetDebugUtilsObjectNameEXT)vkGetInstanceProcAddr(m_VkInstance, "vkSetDebugUtilsObjectNameEXT");
 		if (!vkSetDebugUtilsObjectNameEXT)
 		{
-			LOG_DEBUG_ERROR("Vulkan: Failed to retrive 'vkSetDebugUtilsObjectNameEXT'\n");
+			LOG_DEBUG_ERROR("[Vulkan] Failed to retrive 'vkSetDebugUtilsObjectNameEXT'\n");
 		}
-		vkCreateDebugUtilsMessengerEXT = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(m_Instance, "vkCreateDebugUtilsMessengerEXT");
+		vkCreateDebugUtilsMessengerEXT = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(m_VkInstance, "vkCreateDebugUtilsMessengerEXT");
 		if (!vkCreateDebugUtilsMessengerEXT)
 		{
-			LOG_DEBUG_ERROR("Vulkan: Failed to retrive 'vkCreateDebugUtilsMessengerEXT'\n");
+			LOG_DEBUG_ERROR("[Vulkan] Failed to retrive 'vkCreateDebugUtilsMessengerEXT'\n");
 		}
-		vkDestroyDebugUtilsMessengerEXT = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(m_Instance, "vkDestroyDebugUtilsMessengerEXT");
+		vkDestroyDebugUtilsMessengerEXT = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(m_VkInstance, "vkDestroyDebugUtilsMessengerEXT");
 		if (!vkDestroyDebugUtilsMessengerEXT)
 		{
-			LOG_DEBUG_ERROR("Vulkan: Failed to retrive 'vkDestroyDebugUtilsMessengerEXT'\n");
+			LOG_DEBUG_ERROR("[Vulkan] Failed to retrive 'vkDestroyDebugUtilsMessengerEXT'\n");
 		}
 
 
@@ -265,35 +265,35 @@ namespace Lambda
 			VkDebugUtilsMessengerCreateInfoEXT info;
 			InitDebugMessengerCreateInfo(&info);
 
-			if (vkCreateDebugUtilsMessengerEXT(m_Instance, &info, nullptr, &m_DebugMessenger) != VK_SUCCESS)
+			if (vkCreateDebugUtilsMessengerEXT(m_VkInstance, &info, nullptr, &m_VkDebugMessenger) != VK_SUCCESS)
 			{
-				LOG_DEBUG_ERROR("Vulkan: Failed to create debugmessenger, maybe the extension is not present?\n");
+				LOG_DEBUG_ERROR("[Vulkan] Failed to create debugmessenger, maybe the extension is not present?\n");
 
-				m_DebugMessenger = VK_NULL_HANDLE;
+				m_VkDebugMessenger = VK_NULL_HANDLE;
 				return;
 			}
 			else
 			{
-				LOG_DEBUG_INFO("Vulkan: Created Debugmessenger\n");
+				LOG_DEBUG_INFO("[Vulkan] Created Debugmessenger\n");
 			}
 		}
 
         
 		//Choose an physical device (GPU) 
-		m_PhysicalDevice = QueryPhyscialDevice();
-		if (m_PhysicalDevice == VK_NULL_HANDLE)
+		m_VkPhysicalDevice = QueryPhyscialDevice();
+		if (m_VkPhysicalDevice == VK_NULL_HANDLE)
 		{
-			LOG_DEBUG_ERROR("Vulkan: Failed to find a suitable GPU\n");
+			LOG_DEBUG_ERROR("[Vulkan] Failed to find a suitable GPU\n");
 			return;
 		}
 		else
 		{
-			vkGetPhysicalDeviceProperties(m_PhysicalDevice, &m_PhysicalDeviceProperties);
-			m_FamiliyIndices = FindQueueFamilies(m_PhysicalDevice);
+			vkGetPhysicalDeviceProperties(m_VkPhysicalDevice, &m_VkPhysicalDeviceProperties);
+			m_FamiliyIndices = FindQueueFamilies(m_VkPhysicalDevice);
 
 			//Get memory available on the physical device
 			VkPhysicalDeviceMemoryProperties memoryProperties = {};
-			vkGetPhysicalDeviceMemoryProperties(m_PhysicalDevice, &memoryProperties);
+			vkGetPhysicalDeviceMemoryProperties(m_VkPhysicalDevice, &memoryProperties);
 
 			uint64 hostVRAM		= 0;
 			uint64 deviceVRAM	= 0;
@@ -307,10 +307,10 @@ namespace Lambda
 
 			hostVRAM = hostVRAM / (1024 * 1024);
 			deviceVRAM = deviceVRAM / (1024 * 1024);
-			LOG_SYSTEM_PRINT("Vulkan: Selected GPU '%s'\n", m_PhysicalDeviceProperties.deviceName);
-			LOG_SYSTEM_PRINT("        Host VRAM:    %llu MB\n", hostVRAM);
-			LOG_SYSTEM_PRINT("        Device VRAM:  %llu MB\n", deviceVRAM);
-			LOG_SYSTEM_PRINT("        Total VRAM:   %llu MB\n", hostVRAM + deviceVRAM);
+			LOG_SYSTEM_PRINT("[Vulkan] Selected GPU '%s'\n", m_VkPhysicalDeviceProperties.deviceName);
+			LOG_SYSTEM_PRINT("         Host VRAM:    %llu MB\n", hostVRAM);
+			LOG_SYSTEM_PRINT("         Device VRAM:  %llu MB\n", deviceVRAM);
+			LOG_SYSTEM_PRINT("         Total VRAM:   %llu MB\n", hostVRAM + deviceVRAM);
 		}
 
 		//Find the queuefamily indices for the adapter that we have chosen
@@ -343,10 +343,10 @@ namespace Lambda
 
 		//Get all the available extensions
 		uint32 extensionCount;
-		vkEnumerateDeviceExtensionProperties(m_PhysicalDevice, nullptr, &extensionCount, nullptr);
+		vkEnumerateDeviceExtensionProperties(m_VkPhysicalDevice, nullptr, &extensionCount, nullptr);
 
 		std::vector<VkExtensionProperties> availableDeviceExtensions(extensionCount);
-		vkEnumerateDeviceExtensionProperties(m_PhysicalDevice, nullptr, &extensionCount, availableDeviceExtensions.data());
+		vkEnumerateDeviceExtensionProperties(m_VkPhysicalDevice, nullptr, &extensionCount, availableDeviceExtensions.data());
 		
 		if (!availableDeviceExtensions.empty())
 		{
@@ -409,33 +409,33 @@ namespace Lambda
 		info.queueCreateInfoCount		= uint32(queueCreateInfos.size());
 		info.pQueueCreateInfos			= queueCreateInfos.data();
 
-		if (vkCreateDevice(m_PhysicalDevice, &info, nullptr, &m_Device) != VK_SUCCESS)
+		if (vkCreateDevice(m_VkPhysicalDevice, &info, nullptr, &m_VkDevice) != VK_SUCCESS)
 		{
-			LOG_DEBUG_ERROR("Vulkan: Failed to create device\n");
+			LOG_DEBUG_ERROR("[Vulkan] Failed to create device\n");
 
-			m_Device = VK_NULL_HANDLE;
+			m_VkDevice = VK_NULL_HANDLE;
 			return;
 		}
 		else
 		{
-			LOG_SYSTEM_PRINT("Vulkan: Created device and retrived queues\n");
+			LOG_SYSTEM_PRINT("[Vulkan] Created device and retrived queues\n");
 		}
 
 
 		//Setup properties structure
 		m_Properties.Api = GRAPHICS_API_VULKAN;
-		strcpy(m_Properties.AdapterString, m_PhysicalDeviceProperties.deviceName);
-		if (m_PhysicalDeviceProperties.vendorID == VENDOR_ID_NVIDIA)
+		strcpy(m_Properties.AdapterString, m_VkPhysicalDeviceProperties.deviceName);
+		if (m_VkPhysicalDeviceProperties.vendorID == VENDOR_ID_NVIDIA)
 			strcpy(m_Properties.VendorString, "NVIDIA");
-		else if (m_PhysicalDeviceProperties.vendorID == VENDOR_ID_AMD)
+		else if (m_VkPhysicalDeviceProperties.vendorID == VENDOR_ID_AMD)
 			strcpy(m_Properties.VendorString, "AMD");
-		else if (m_PhysicalDeviceProperties.vendorID == VENDOR_ID_INTEL)
+		else if (m_VkPhysicalDeviceProperties.vendorID == VENDOR_ID_INTEL)
 			strcpy(m_Properties.VendorString, "INTEL");
-		else if (m_PhysicalDeviceProperties.vendorID == VENDOR_ID_ARM)
+		else if (m_VkPhysicalDeviceProperties.vendorID == VENDOR_ID_ARM)
 			strcpy(m_Properties.VendorString, "ARM");
-		else if (m_PhysicalDeviceProperties.vendorID == VENDOR_ID_QUALCOMM)
+		else if (m_VkPhysicalDeviceProperties.vendorID == VENDOR_ID_QUALCOMM)
 			strcpy(m_Properties.VendorString, "Qualcomm");
-		else if (m_PhysicalDeviceProperties.vendorID == VENDOR_ID_IMGTEC)
+		else if (m_VkPhysicalDeviceProperties.vendorID == VENDOR_ID_IMGTEC)
 			strcpy(m_Properties.VendorString, "ImgTec");
 
 
@@ -452,31 +452,31 @@ namespace Lambda
 	
 
 		//Get queues
-		vkGetDeviceQueue(m_Device, m_FamiliyIndices.GraphicsFamily, 0, &m_GraphicsQueue);
-		vkGetDeviceQueue(m_Device, m_FamiliyIndices.PresentFamily, 0, &m_PresentationQueue);
+		vkGetDeviceQueue(m_VkDevice, m_FamiliyIndices.GraphicsFamily, 0, &m_GraphicsVkQueue);
+		vkGetDeviceQueue(m_VkDevice, m_FamiliyIndices.PresentFamily, 0, &m_PresentationVkQueue);
 
 		//Get queueproperties
 		uint32 propertyCount = 0;
-		vkGetPhysicalDeviceQueueFamilyProperties(m_PhysicalDevice, &propertyCount, nullptr);
+		vkGetPhysicalDeviceQueueFamilyProperties(m_VkPhysicalDevice, &propertyCount, nullptr);
 
 		std::vector<VkQueueFamilyProperties> properties(propertyCount);
-		vkGetPhysicalDeviceQueueFamilyProperties(m_PhysicalDevice, &propertyCount, properties.data());
-		m_GraphicsQueueProperties = properties[m_FamiliyIndices.GraphicsFamily];
+		vkGetPhysicalDeviceQueueFamilyProperties(m_VkPhysicalDevice, &propertyCount, properties.data());
+		m_GraphicsVkQueueProperties = properties[m_FamiliyIndices.GraphicsFamily];
         
 		//Create allocator
-		m_pDeviceAllocator = DBG_NEW VKNDeviceAllocator(this);
+		m_pVkDeviceAllocator = DBG_NEW VKNDeviceAllocator(this);
 		//Create dynamic memory allocator
-		m_pDynamicMemoryAllocator = DBG_NEW VKNDynamicMemoryAllocator(this);
+		m_pVkDynamicMemoryAllocator = DBG_NEW VKNDynamicMemoryAllocator(this);
 		//Create SafeReleaseManager
-		m_pSafeReleaseManager = DBG_NEW VKNSafeReleaseManager(this);
+		m_pVkSafeReleaseManager = DBG_NEW VKNSafeReleaseManager(this);
 		//Create framebuffercache
-		m_pFramebufferCache = DBG_NEW VKNFramebufferCache(this);
+		m_pVkFramebufferCache = DBG_NEW VKNFramebufferCache(this);
 		//Create renderpasscache
-		m_pRenderPassCache = DBG_NEW VKNRenderPassCache(this);        
+		m_pVkRenderPassCache = DBG_NEW VKNRenderPassCache(this);        
       
         //Init internal commandlist, used for copying from staging buffers to final resource etc.
-        m_pImmediateContext = DBG_NEW VKNDeviceContext(this, DEVICE_CONTEXT_TYPE_IMMEDIATE);
-        m_pImmediateContext->SetName("Graphics Device ImmediateContext");
+        m_pVkImmediateContext = DBG_NEW VKNDeviceContext(this, DEVICE_CONTEXT_TYPE_IMMEDIATE);
+        m_pVkImmediateContext->SetName("Graphics Device ImmediateContext");
 
 		//Create default resources
 		{
@@ -579,7 +579,7 @@ namespace Lambda
 			barrier.pTexture	= m_pDefaultTexture;
 			barrier.AfterState	= RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 			barrier.MipLevel	= LAMBDA_ALL_MIP_LEVELS;
-			m_pImmediateContext->TransitionTextureStates(&barrier, 1);
+			m_pVkImmediateContext->TransitionTextureStates(&barrier, 1);
 		}
     }
     
@@ -635,16 +635,16 @@ namespace Lambda
 
     IDeviceContext* VKNDevice::GetImmediateContext() const
     {
-        m_pImmediateContext->AddRef();
-        return m_pImmediateContext;
+        m_pVkImmediateContext->AddRef();
+        return m_pVkImmediateContext;
     }
     
 
     void VKNDevice::ExecuteCommandBuffer(VkSubmitInfo* pInfo, uint32 numBuffers, VkFence fence) const
     {
-        if (vkQueueSubmit(m_GraphicsQueue, numBuffers, pInfo, fence) != VK_SUCCESS)
+        if (vkQueueSubmit(m_GraphicsVkQueue, numBuffers, pInfo, fence) != VK_SUCCESS)
         {
-            LOG_DEBUG_ERROR("Vulkan: Failed to submit CommandBuffers\n");
+            LOG_DEBUG_ERROR("[Vulkan] Failed to submit CommandBuffers\n");
         }
 		else
 		{
@@ -656,38 +656,38 @@ namespace Lambda
 	
 	VkResult VKNDevice::Present(VkPresentInfoKHR* pInfo)
 	{
-		return vkQueuePresentKHR(m_PresentationQueue, pInfo);
+		return vkQueuePresentKHR(m_PresentationVkQueue, pInfo);
 	}
 
 
 	VKNDeviceContext* VKNDevice::GetVKNImmediateContext() const
 	{
-		m_pImmediateContext->AddRef();
-		return m_pImmediateContext;
+		m_pVkImmediateContext->AddRef();
+		return m_pVkImmediateContext;
 	}
     
     
     void VKNDevice::FinishFrame() const
     {
         //Cleanup memory
-		m_pDeviceAllocator->EmptyGarbageMemory();
-		m_pDynamicMemoryAllocator->EmptyGarbageMemory();
-		m_pSafeReleaseManager->EmptyResources();
+		m_pVkDeviceAllocator->EmptyGarbageMemory();
+		m_pVkDynamicMemoryAllocator->EmptyGarbageMemory();
+		m_pVkSafeReleaseManager->EmptyResources();
     }
     
     
     void VKNDevice::WaitUntilIdle() const
     {
-        LOG_DEBUG_INFO("VKNDevice::WaitUntilIdle\n");
-        vkDeviceWaitIdle(m_Device);
+        LOG_DEBUG_INFO("[Vulkan] VKNDevice::WaitUntilIdle\n");
+        vkDeviceWaitIdle(m_VkDevice);
     }
 
 
 	VkSampleCountFlagBits VKNDevice::GetHighestSampleCount() const
 	{
 		//Get max MSAA we can use on the device
-		VkSampleCountFlags sampleCountFlags = std::min(m_PhysicalDeviceProperties.limits.framebufferStencilSampleCounts,
-			std::min(m_PhysicalDeviceProperties.limits.framebufferColorSampleCounts, m_PhysicalDeviceProperties.limits.framebufferDepthSampleCounts));
+		VkSampleCountFlags sampleCountFlags = std::min(m_VkPhysicalDeviceProperties.limits.framebufferStencilSampleCounts,
+			std::min(m_VkPhysicalDeviceProperties.limits.framebufferColorSampleCounts, m_VkPhysicalDeviceProperties.limits.framebufferDepthSampleCounts));
 		
 		VkSampleCountFlagBits sampleCount = VK_SAMPLE_COUNT_1_BIT;
 		if (sampleCountFlags & VK_SAMPLE_COUNT_64_BIT)		{ sampleCount = VK_SAMPLE_COUNT_64_BIT; }
@@ -712,9 +712,9 @@ namespace Lambda
 			info.pObjectName    = name.c_str();
 			info.objectHandle   = objectHandle;
 
-			if (vkSetDebugUtilsObjectNameEXT(m_Device, &info) != VK_SUCCESS)
+			if (vkSetDebugUtilsObjectNameEXT(m_VkDevice, &info) != VK_SUCCESS)
 			{
-				LOG_DEBUG_ERROR("Vulkan: Failed to set name '%s'\n", info.pObjectName);
+				LOG_DEBUG_ERROR("[Vulkan] Failed to set name '%s'\n", info.pObjectName);
 			}
 		}
 	}
@@ -731,7 +731,7 @@ namespace Lambda
 		pCreateInfo->messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
 			VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
 			VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-		pCreateInfo->pfnUserCallback = VKNDevice::VulkanDebugCallback;
+		pCreateInfo->pfnUserCallback = VKNDevice::DebugCallback;
 		pCreateInfo->pUserData = nullptr;
 	}
 
@@ -740,18 +740,18 @@ namespace Lambda
 	{
 		//Enumerate all adapters
 		uint32 adapterCount = 0;
-		vkEnumeratePhysicalDevices(m_Instance, &adapterCount, nullptr);
+		vkEnumeratePhysicalDevices(m_VkInstance, &adapterCount, nullptr);
 		if (adapterCount == 0)
 		{
-			LOG_DEBUG_ERROR("Vulkan: No vulkan-supported GPUs found\n");
+			LOG_DEBUG_ERROR("[Vulkan] No vulkan-supported GPUs found\n");
 			return VK_NULL_HANDLE;
 		}
 
 		std::vector<VkPhysicalDevice> adapters(adapterCount);
-		vkEnumeratePhysicalDevices(m_Instance, &adapterCount, adapters.data());
+		vkEnumeratePhysicalDevices(m_VkInstance, &adapterCount, adapters.data());
 
 #if defined(LAMBDA_DEBUG)
-		LOG_DEBUG_INFO("Vulkan: Following of physcial devices found:\n");
+		LOG_DEBUG_INFO("[Vulkan] Following of physcial devices found:\n");
 		for (auto& dev : adapters)
 		{
 			VkPhysicalDeviceProperties properties = {};
@@ -784,7 +784,7 @@ namespace Lambda
 		//Check for adapter features
 		if (!adapterFeatures.samplerAnisotropy)
 		{
-			LOG_DEBUG_ERROR("Vulkan: Anisotropic filtering is not supported by adapter\n");
+			LOG_DEBUG_ERROR("[Vulkan] Anisotropic filtering is not supported by adapter\n");
 			return false;
 		}
 
@@ -792,12 +792,12 @@ namespace Lambda
 		QueueFamilyIndices indices = FindQueueFamilies(adapter);
 		if (!indices.Valid())
 		{
-			LOG_DEBUG_ERROR("Vulkan: Failed to find a suitable queuefamilies\n");
+			LOG_DEBUG_ERROR("[Vulkan] Failed to find a suitable queuefamilies\n");
 			return false;
 		}
 		else
 		{
-			LOG_DEBUG_INFO("Vulkan: Using queueFamily-Index '%d' for graphics and '%d' for presentation\n", indices.GraphicsFamily, indices.PresentFamily);
+			LOG_DEBUG_INFO("[Vulkan] Using queueFamily-Index '%d' for graphics and '%d' for presentation\n", indices.GraphicsFamily, indices.PresentFamily);
 		}
 
 		//Check if required extension for device is supported
@@ -823,7 +823,7 @@ namespace Lambda
 
 			if (!extensionFound)
 			{
-				LOG_DEBUG_ERROR("Vulkan: Adapter '%s' does not support the device extension '%s'\n", adapterProperties.deviceName, extensionName);
+				LOG_DEBUG_ERROR("[Vulkan] Adapter '%s' does not support the device extension '%s'\n", adapterProperties.deviceName, extensionName);
 				return false;
 			}
 		}
@@ -861,7 +861,6 @@ namespace Lambda
 		std::vector<const char*> requiredExtensions;
 		requiredExtensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 		requiredExtensions.push_back(VK_KHR_MAINTENANCE1_EXTENSION_NAME);
-
 		return requiredExtensions;
 	}
 
@@ -910,7 +909,7 @@ namespace Lambda
 	}
 
 
-	VKAPI_ATTR VkBool32 VKAPI_CALL VKNDevice::VulkanDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+	VKAPI_ATTR VkBool32 VKAPI_CALL VKNDevice::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 		VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
 	{
 		//Get severity
@@ -944,6 +943,6 @@ namespace Lambda
     
     void* VKNDevice::GetNativeHandle() const
     {
-        return reinterpret_cast<void*>(m_Device);
+        return reinterpret_cast<void*>(m_VkDevice);
     }
 }

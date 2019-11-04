@@ -82,22 +82,18 @@ namespace Lambda
 	public:
 		LAMBDA_STATIC_CLASS(Log);
 
-		static ILog& GetDebugLog();
-		static ILog& GetSystemLog();
+		_forceinline static ILog& GetDebugLog()
+		{
+			return *s_DebugLog;
+		}
+
+
+		_forceinline static ILog& GetSystemLog()
+		{
+			return *s_SystemLog;
+		}
 	private:
 		static std::unique_ptr<ILog> s_DebugLog;
 		static std::unique_ptr<ILog> s_SystemLog;
 	};
-
-
-	inline ILog& Log::GetDebugLog()
-	{
-		return *s_DebugLog;
-	}
-
-
-	inline ILog& Log::GetSystemLog()
-	{
-		return *s_SystemLog;
-	}
 }

@@ -36,6 +36,7 @@ namespace Lambda
 		RefCountedObject() : Base(), m_StrongReferences(0) {}
 		virtual ~RefCountedObject() = default;
 
+
 		virtual RefCountValue Release() override
 		{
 			RefCountValue counter = --m_StrongReferences;
@@ -45,11 +46,11 @@ namespace Lambda
 			return counter;
 		}
 
+
 		virtual RefCountValue AddRef() override
 		{
 			return ++m_StrongReferences;
 		}
-
 	private:
 		RefCountValue m_StrongReferences;
 	};
@@ -194,7 +195,6 @@ namespace Lambda
 		{
 			return m_pObject != nullptr;
 		}
-
 	private:
 		TObject* m_pObject;
 	};

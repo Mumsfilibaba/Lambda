@@ -53,9 +53,10 @@ namespace Lambda
 		virtual void Flush() override = 0;
 		virtual void* GetNativeHandle() const override = 0;
 
+
 		virtual void SetRendertargets(ITexture* const* ppRenderTargets, uint32 numRenderTargets, ITexture* pDepthStencil) override
 		{
-			LAMBDA_ASSERT_PRINT(numRenderTargets <= LAMBDA_MAX_RENDERTARGET_COUNT, "Lambda Engine: 'numRendertargets' must be less that the maximum of '%d'\n", LAMBDA_MAX_RENDERTARGET_COUNT);
+			LAMBDA_ASSERT_PRINT(numRenderTargets <= LAMBDA_MAX_RENDERTARGET_COUNT, "[Lambda Engine] 'numRendertargets' must be less that the maximum of '%d'\n", LAMBDA_MAX_RENDERTARGET_COUNT);
 
             //Set rendertarget state
             m_NumRenderTargets = numRenderTargets;
@@ -64,7 +65,7 @@ namespace Lambda
                 m_RenderTargets[i] = reinterpret_cast<TTextureImpl*>(ppRenderTargets[i]);
                 m_RenderTargets[i]->AddRef();
 				
-				LAMBDA_ASSERT_PRINT(m_RenderTargets[i]->GetDesc().Flags & TEXTURE_FLAGS_RENDER_TARGET, "Lambda Engine: ppRenderTargets[%d] was not created with flag TEXTURE_FLAGS_RENDER_TARGET\n", i);
+				LAMBDA_ASSERT_PRINT(m_RenderTargets[i]->GetDesc().Flags & TEXTURE_FLAGS_RENDER_TARGET, "[Lambda Engine] ppRenderTargets[%d] was not created with flag TEXTURE_FLAGS_RENDER_TARGET\n", i);
             }
             
             
@@ -75,7 +76,7 @@ namespace Lambda
                 m_DepthStencil = reinterpret_cast<TTextureImpl*>(pDepthStencil);
                 m_DepthStencil->AddRef();
 
-				LAMBDA_ASSERT_PRINT(m_DepthStencil->GetDesc().Flags & TEXTURE_FLAGS_DEPTH_STENCIL, "Lambda Engine: pDepthStencil was not created with flag TEXTURE_FLAGS_DEPTH_STENCIL\n");
+				LAMBDA_ASSERT_PRINT(m_DepthStencil->GetDesc().Flags & TEXTURE_FLAGS_DEPTH_STENCIL, "[Lambda Engine] pDepthStencil was not created with flag TEXTURE_FLAGS_DEPTH_STENCIL\n");
                 
                 const TextureDesc& desc = m_DepthStencil->GetDesc();
                 m_FrameBufferHeight         = desc.Height;
@@ -98,7 +99,7 @@ namespace Lambda
 		virtual void SetViewports(const Viewport* pViewports, uint32 numViewports) override
 		{
 			LAMBDA_ASSERT(pViewports != nullptr);
-			LAMBDA_ASSERT_PRINT(numViewports <= LAMBDA_MAX_VIEWPORT_COUNT, "Lambda Engine: 'numViewports' must be less that the maximum of '%d'\n", LAMBDA_MAX_VIEWPORT_COUNT);
+			LAMBDA_ASSERT_PRINT(numViewports <= LAMBDA_MAX_VIEWPORT_COUNT, "[Lambda Engine] 'numViewports' must be less that the maximum of '%d'\n", LAMBDA_MAX_VIEWPORT_COUNT);
 
 			//Set viewports
 			m_NumViewports = numViewports;
@@ -110,7 +111,7 @@ namespace Lambda
 		virtual void SetScissorRects(const Rectangle* pScissorRects, uint32 numRects) override
 		{
 			LAMBDA_ASSERT(pScissorRects != nullptr);
-			LAMBDA_ASSERT_PRINT(numRects <= LAMBDA_MAX_SCISSOR_RECT_COUNT, "Lambda Engine: 'numRects' must be less that the maximum of '%d'\n", LAMBDA_MAX_SCISSOR_RECT_COUNT);
+			LAMBDA_ASSERT_PRINT(numRects <= LAMBDA_MAX_SCISSOR_RECT_COUNT, "[Lambda Engine] 'numRects' must be less that the maximum of '%d'\n", LAMBDA_MAX_SCISSOR_RECT_COUNT);
 
 			//Set Scissor Rectangles
 			m_NumScissorRects = numRects;
@@ -121,9 +122,9 @@ namespace Lambda
 
 		virtual void SetVertexBuffers(IBuffer* const* ppBuffers, uint32 numBuffers, uint32 slot) override
 		{
-			LAMBDA_ASSERT_PRINT(numBuffers <= LAMBDA_MAX_VERTEXBUFFER_COUNT, "Lambda Engine: 'numBuffers' must be less that the maximum of '%d'\n", LAMBDA_MAX_VERTEXBUFFER_COUNT);
-			LAMBDA_ASSERT_PRINT(slot < LAMBDA_MAX_VERTEXBUFFER_COUNT, "Lambda Engine: 'slot' cannot be more than last slot of '%d' slot\n", LAMBDA_MAX_VERTEXBUFFER_COUNT - 1);
-			LAMBDA_ASSERT_PRINT((slot + numBuffers - 1) < LAMBDA_MAX_VERTEXBUFFER_COUNT, "Lambda Engine: Current call to IDeviceContext::SetVertexBuffers will write to a slot outside of the range [0, %d]\n", LAMBDA_MAX_VERTEXBUFFER_COUNT - 1);
+			LAMBDA_ASSERT_PRINT(numBuffers <= LAMBDA_MAX_VERTEXBUFFER_COUNT, "[Lambda Engine] 'numBuffers' must be less that the maximum of '%d'\n", LAMBDA_MAX_VERTEXBUFFER_COUNT);
+			LAMBDA_ASSERT_PRINT(slot < LAMBDA_MAX_VERTEXBUFFER_COUNT, "[Lambda Engine] 'slot' cannot be more than last slot of '%d' slot\n", LAMBDA_MAX_VERTEXBUFFER_COUNT - 1);
+			LAMBDA_ASSERT_PRINT((slot + numBuffers - 1) < LAMBDA_MAX_VERTEXBUFFER_COUNT, "[Lambda Engine] Current call to IDeviceContext::SetVertexBuffers will write to a slot outside of the range [0, %d]\n", LAMBDA_MAX_VERTEXBUFFER_COUNT - 1);
 
 			//Set vertexbuffers
 			m_NumVertexBuffers = std::max(m_NumVertexBuffers, slot + numBuffers);
@@ -134,7 +135,7 @@ namespace Lambda
 				{
 					m_VertexBuffers[slot + i]->AddRef();
 
-					LAMBDA_ASSERT_PRINT(m_VertexBuffers[slot + i]->GetDesc().Flags & BUFFER_FLAGS_VERTEX_BUFFER, "Lambda Engine: ppBuffers[%d] was not created with flag BUFFER_FLAGS_VERTEX_BUFFER\n", slot + i);
+					LAMBDA_ASSERT_PRINT(m_VertexBuffers[slot + i]->GetDesc().Flags & BUFFER_FLAGS_VERTEX_BUFFER, "[Lambda Engine] ppBuffers[%d] was not created with flag BUFFER_FLAGS_VERTEX_BUFFER\n", slot + i);
 				}
 			}
 		}
@@ -142,7 +143,7 @@ namespace Lambda
 
 		virtual void SetIndexBuffer(IBuffer* pBuffer, Format format) override
 		{
-			LAMBDA_ASSERT_PRINT(format == FORMAT_R32_UINT || format == FORMAT_R16_UINT, "Lambda Engine: Only supported formats for IDeviceContext::SetIndexBuffer is FORMAT_R32_UINT or FORMAT_R16_UINT\n");
+			LAMBDA_ASSERT_PRINT(format == FORMAT_R32_UINT || format == FORMAT_R16_UINT, "[Lambda Engine] Only supported formats for IDeviceContext::SetIndexBuffer is FORMAT_R32_UINT or FORMAT_R16_UINT\n");
 
 			//Set indexbuffer
 			if (pBuffer)
@@ -150,7 +151,7 @@ namespace Lambda
 				m_IndexBuffer = reinterpret_cast<TBufferImpl*>(pBuffer);
 				m_IndexBuffer->AddRef();
 
-				LAMBDA_ASSERT_PRINT(m_IndexBuffer->GetDesc().Flags & BUFFER_FLAGS_INDEX_BUFFER, "Lambda Engine: pBuffer was not created with flag BUFFER_FLAGS_INDEX_BUFFER\n");
+				LAMBDA_ASSERT_PRINT(m_IndexBuffer->GetDesc().Flags & BUFFER_FLAGS_INDEX_BUFFER, "[Lambda Engine] pBuffer was not created with flag BUFFER_FLAGS_INDEX_BUFFER\n");
 
 				m_IndexBufferFormat = format;
 			}

@@ -59,9 +59,9 @@ namespace Lambda
     }
     
     
-    inline Format ConvertVkFormat(VkFormat format)
+    inline Format ConvertVkFormat(VkFormat vkFormat)
     {
-        switch (format)
+        switch (vkFormat)
         {
             case VK_FORMAT_R32G32B32A32_SFLOAT:    return FORMAT_R32G32B32A32_FLOAT;
             case VK_FORMAT_R32G32B32A32_UINT:      return FORMAT_R32G32B32A32_UINT;

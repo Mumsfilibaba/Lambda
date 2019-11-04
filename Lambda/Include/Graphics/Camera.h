@@ -14,6 +14,9 @@ namespace Lambda
         Camera();
         ~Camera() = default;
         
+        void CreateView();
+        void CreateProjection();
+
         void Rotate(const glm::vec3& rotation);
         void Translate(const glm::vec3& translation);
         
@@ -21,38 +24,31 @@ namespace Lambda
         void SetRotation(const glm::vec3& rotation);
         void SetAspect(float width, float height);
         
-        const glm::mat4& GetView() const;
-        const glm::mat4& GetProjection() const;
-        const glm::vec3& GetPosition() const;
+
+		_forceinline const glm::mat4& Camera::GetView() const
+		{
+			return m_View;
+		}
+		
+		
+		_forceinline const glm::mat4& GetProjection() const
+		{
+			return m_Projection;
+		}
         
-        void CreateView();
-        void CreateProjection();
+		
+		_forceinline const glm::vec3& GetPosition() const
+		{
+			return m_Position;
+		}
     private:
-        glm::mat4   m_View;
-        glm::mat4   m_Projection;
-        glm::vec3   m_Position;
-        glm::vec3   m_Rotation;
-        glm::vec3   m_Forward;
-        glm::vec3   m_Right;
-        glm::vec3   m_Up;
-        float       m_Aspect;
+        glm::mat4 m_View;
+        glm::mat4 m_Projection;
+        glm::vec3 m_Position;
+        glm::vec3 m_Rotation;
+        glm::vec3 m_Forward;
+        glm::vec3 m_Right;
+        glm::vec3 m_Up;
+        float m_Aspect;
     };
-    
-    
-    inline const glm::mat4& Camera::GetView() const
-    {
-        return m_View;
-    }
-    
-    
-    inline const glm::mat4& Camera::GetProjection() const
-    {
-        return m_Projection;
-    }
-    
-    
-    inline const glm::vec3& Camera::GetPosition() const
-    {
-        return m_Position;
-    }
 }

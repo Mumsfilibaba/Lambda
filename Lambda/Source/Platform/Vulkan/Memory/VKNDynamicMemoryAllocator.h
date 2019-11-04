@@ -21,9 +21,9 @@ namespace Lambda
 
 	public:
 		VKNDynamicMemoryBlock* pBlock	= nullptr;
-		VkDeviceSize    BufferOffset	= 0;
 		uint8*			pHostMemory		= nullptr;
 		VkBuffer		Buffer			= VK_NULL_HANDLE;
+		VkDeviceSize    BufferOffset	= 0;
 	};
 
 	//---------------------
@@ -37,10 +37,10 @@ namespace Lambda
 		VKNDynamicMemoryBlock*  pPrevious	= nullptr;
 		VkDeviceSize SizeInBytes			= 0;
 		VkDeviceSize BufferOffset			= 0;
-		bool         IsFree					= true;
 #if defined(LAMBDA_DEBUG)
 		uint32       ID						= 0;
 #endif
+		bool         IsFree					= true;
 	};
 
 	//---------------------
@@ -66,19 +66,19 @@ namespace Lambda
 		private:
 			VKNDynamicMemoryBlock* AllocateBlocks(uint32 numBlocks);
 		private:
-			VKNDynamicMemoryBlock* m_pHead;
 			std::vector<VKNDynamicMemoryBlock*> m_Chains;
+			VKNDynamicMemoryBlock* m_pHead;
 		};
 
 	public:
 		LAMBDA_NO_COPY(VKNDynamicMemoryPage);
 
-		VKNDynamicMemoryPage(VKNDevice* pDevice, uint32 id, VkDeviceSize sizeInBytes);
+		VKNDynamicMemoryPage(VKNDevice* pVkDevice, uint32 id, VkDeviceSize sizeInBytes);
 		~VKNDynamicMemoryPage() = default;
 
 		bool Allocate(VKNDynamicAllocation& allocation, VkDeviceSize sizeInBytes, VkDeviceSize alignment);
 		void Deallocate(VKNDynamicAllocation& allocation);
-		void Destroy(VKNDevice* pDevice);
+		void Destroy(VKNDevice* pVkDevice);
 
 
 		_forceinline bool IsEmpty() const
@@ -92,15 +92,15 @@ namespace Lambda
 			return m_SizeInBytes;
 		}
 	private:
-		void Init(VKNDevice* pDevice);
+		void Init(VKNDevice* pVkDevice);
 	private:
-		VKNBlockPool m_BlockPool;
 		VKNDynamicMemoryBlock* m_pHead;
 		VKNDynamicMemoryBlock* m_pNextFree;
-		VkBuffer m_Buffer;
+		VKNBlockPool m_VkBlockPool;
 		VKNAllocation m_Memory;
-		const uint32 m_ID;
 		const uint64 m_SizeInBytes;
+		VkBuffer m_VkBuffer;
+		const uint32 m_ID;
 		uint32 m_BlockCount;
 	};
 
@@ -113,7 +113,7 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(VKNDynamicMemoryAllocator);
 
-		VKNDynamicMemoryAllocator(VKNDevice* pDevice);
+		VKNDynamicMemoryAllocator(VKNDevice* pVkDevice);
 		~VKNDynamicMemoryAllocator();
 
 		bool Allocate(VKNDynamicAllocation& allocation, uint64 sizeInBytes, uint64 alignment);
@@ -132,12 +132,12 @@ namespace Lambda
 			return m_TotalAllocated; 
 		}
 	private:
-		VKNDevice* m_pDevice;
-		uint64 m_FrameIndex;
-		VKNDynamicMemoryPage* m_pCurrentPage;
 		std::vector<VKNDynamicMemoryPage*> m_Pages;
         std::vector<VKNDynamicMemoryPage*> m_EmptyPages;
 		std::vector<std::vector<VKNDynamicAllocation>> m_MemoryToDeallocate;
+		VKNDevice* m_pVkDevice;
+		VKNDynamicMemoryPage* m_pCurrentPage;
+		uint64 m_FrameIndex;
 		uint64 m_TotalReserved;
 		uint64 m_TotalAllocated;
 	};

@@ -18,7 +18,6 @@ namespace Lambda
 
 		Input() = default;
 		virtual ~Input() = default;
-
 	private:
 		virtual bool InternalIsKeyUp(Key keycode) const = 0;
 		virtual bool InternalIsKeyDown(Key keycode) const = 0;
@@ -27,7 +26,6 @@ namespace Lambda
 		virtual void InternalGetMousePosition(float& x, float& y) const = 0;
 		virtual void InternalSetMousePosition(IWindow* pRelativeTo, float x, float y) const = 0;
 		virtual void InternalGetMousePosition(IWindow* pRelativeTo, float& x, float& y) const = 0;
-
 	public:
 		static bool IsKeyUp(Key keycode);
 		static bool IsKeyDown(Key keycode);
@@ -36,17 +34,14 @@ namespace Lambda
 		static void SetMousePosition(IWindow* pRelativeTo, float x, float y);
 		static void GetMousePosition(IWindow* pRelativeTo, float& x, float& y);
 	protected:
-		static Input& Get();
+		_forceinline static Input& Get()
+		{
+			LAMBDA_ASSERT(s_Instance != nullptr);
+			return *s_Instance;
+		}
 	private:
 		static Input* Create();
 	private:
 		static std::unique_ptr<Input> s_Instance;
 	};
-
-    
-	inline Input& Input::Get()
-	{
-        LAMBDA_ASSERT(s_Instance != nullptr);
-		return *s_Instance;
-	}
 }

@@ -35,8 +35,8 @@ namespace Lambda
         VkDeviceSize    SizeInBytes			= 0;
 		VkDeviceSize    PaddedSizeInBytes	= 0;
         VkDeviceSize    DeviceMemoryOffset  = 0;
-        bool            IsFree              = true;
 		uint32          ID                  = 0;
+        bool            IsFree              = true;
     };
     
 	//--------------
@@ -48,12 +48,12 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(VKNMemoryPage);
 
-		VKNMemoryPage(VKNDevice* pDevice, uint32 id, VkDeviceSize sizeInBytes, uint32 memoryType, VkMemoryPropertyFlags properties);
+		VKNMemoryPage(VKNDevice* pVkDevice, uint32 id, VkDeviceSize sizeInBytes, uint32 memoryType, VkMemoryPropertyFlags properties);
 		~VKNMemoryPage() = default;
 
 		bool Allocate(VKNAllocation& allocation, VkDeviceSize sizeInBytes, VkDeviceSize alignment, VkDeviceSize granularity);
 		void Deallocate(VKNAllocation& allocation);
-		void Destroy(VKNDevice* pDevice);
+		void Destroy(VKNDevice* pVkDevice);
 
 
 		_forceinline bool IsEmpty() const
@@ -74,17 +74,17 @@ namespace Lambda
 		}
 	private:
         bool IsOnSamePage(VkDeviceSize aOffset, VkDeviceSize aSize, VkDeviceSize bOffset, VkDeviceSize pageSize);
-		void Init(VKNDevice* pDevice);
-		void Map(VKNDevice* pDevice);
-		void Unmap(VKNDevice* pDevice);
+		void Init(VKNDevice* pVkDevice);
+		void Map(VKNDevice* pVkDevice);
+		void Unmap(VKNDevice* pVkDevice);
 	private:
-		VkDeviceMemory	m_DeviceMemory;
 		VKNMemoryBlock*	m_pHead;
 		uint8* m_pHostMemory;
+		VkDeviceMemory	m_VkDeviceMemory;
+		const uint64 m_SizeInBytes;
 		VkMemoryPropertyFlags m_Properties;
 		const uint32 m_ID;
 		const uint32 m_MemoryType;
-		const uint64 m_SizeInBytes;
         uint32 m_BlockCount;
 		bool m_IsMapped;
 	};
@@ -117,10 +117,10 @@ namespace Lambda
 			return m_TotalAllocated; 
 		}
 	private:
-		VKNDevice* m_pDevice;
-        uint64 m_FrameIndex;
-		std::vector<VKNMemoryPage*> m_Pages;
 		std::vector<std::vector<VKNAllocation>>	m_MemoryToDeallocate;
+		std::vector<VKNMemoryPage*> m_Pages;
+		VKNDevice* m_pVkDevice;
+        uint64 m_FrameIndex;
 		uint64 m_TotalAllocated;
 		uint64 m_TotalReserved;
 		uint64 m_MaxAllocations;

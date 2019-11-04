@@ -6,20 +6,20 @@
 namespace Lambda
 {
     //----------
-    //MacOSInput
+    //macOSInput
     //----------
     
-    class MacOSInput final : public Input
+    class macOSInput final : public Input
     {
-        friend class MacOSWindow;
+        friend class macOSWindow;
         
     public:
-        LAMBDA_NO_COPY(MacOSInput);
+        LAMBDA_NO_COPY(macOSInput);
         
-        MacOSInput();
-        ~MacOSInput() = default;
+        macOSInput();
+        ~macOSInput() = default;
         
-        Key     GLFWKeyToLambda(uint32 keycode) const;
+        Key GLFWKeyToLambda(uint32 keycode) const;
         uint32  LambdaKeyToGLFW(Key keycode) const;
         
         virtual bool InternalIsKeyUp(Key keycode) const override final;
@@ -40,15 +40,15 @@ namespace Lambda
     };
     
     
-    inline Key MacOSInput::ConvertGLFWKey(uint32 keycode)
+    inline Key macOSInput::ConvertGLFWKey(uint32 keycode)
     {
-        return ((MacOSInput&)Input::Get()).GLFWKeyToLambda(keycode);
+        return ((macOSInput&)Input::Get()).GLFWKeyToLambda(keycode);
     }
     
     
-    inline uint32 MacOSInput::ConvertLambdaKey(Key keycode)
+    inline uint32 macOSInput::ConvertLambdaKey(Key keycode)
     {
-        return ((MacOSInput&)Input::Get()).LambdaKeyToGLFW(keycode);
+        return ((macOSInput&)Input::Get()).LambdaKeyToGLFW(keycode);
     }
 }
 

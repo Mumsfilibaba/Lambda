@@ -10,10 +10,10 @@ namespace Lambda
 	//VKNShaderVariableTable
 	//----------------------
 
-	VKNShaderVariableTable::VKNShaderVariableTable(VKNDevice* pDevice, VKNPipelineState* pPipelineState, const ShaderVariableTableDesc& desc)
-		: TShaderVariableTable(pDevice, pPipelineState),
-		m_DescriptorSet(VK_NULL_HANDLE),
-		m_pDescriptors(nullptr),
+	VKNShaderVariableTable::VKNShaderVariableTable(VKNDevice* pVkDevice, VKNPipelineState* pVkPipelineState, const ShaderVariableTableDesc& desc)
+		: TShaderVariableTable(pVkDevice, pVkPipelineState),
+		m_VkDescriptorSet(VK_NULL_HANDLE),
+		m_pVkDescriptors(nullptr),
 		m_NumDescriptors(0)
 	{
 		this->AddRef();	
@@ -24,16 +24,16 @@ namespace Lambda
 	VKNShaderVariableTable::~VKNShaderVariableTable()
 	{
 		SafeDeleteArr(m_pDynamicOffsets);
-		SafeDeleteArr(m_pDescriptors);
+		SafeDeleteArr(m_pVkDescriptors);
 
-		LOG_DEBUG_INFO("Vulkan: Destroyed ShaderVariableTable\n");
+		LOG_DEBUG_INFO("[Vulkan] Destroyed ShaderVariableTable\n");
 	}
 
 
 	void VKNShaderVariableTable::Init(const ShaderVariableTableDesc& desc)
 	{
 		//Set size of descriptorwrites
-		m_pDescriptors		= DBG_NEW VkWriteDescriptorSet[desc.NumVariables];
+		m_pVkDescriptors		= DBG_NEW VkWriteDescriptorSet[desc.NumVariables];
 		m_NumDescriptors	= desc.NumVariables;
 
 		//Create variables
@@ -52,7 +52,7 @@ namespace Lambda
 		}
 
 		//Allocate descriptorset
-		m_DescriptorSet = m_PipelineState->AllocateDescriptorSet();;
+		m_VkDescriptorSet = m_PipelineState->AllocateDescriptorSet();;
 
 		//Dynamic offsets for dynamic constantbuffers
 		m_pDynamicOffsets = DBG_NEW uint32[m_DynamicVars.size()];
@@ -64,7 +64,7 @@ namespace Lambda
 		auto var = m_NameTable.find(std::string(pName));
 		if (var == m_NameTable.end())
 		{
-			LOG_DEBUG_ERROR("Vulkan: Invalid name on ShaderVariable\n");
+			LOG_DEBUG_ERROR("[Vulkan] Invalid name on ShaderVariable\n");
 			return nullptr;
 		}
 
@@ -96,7 +96,7 @@ namespace Lambda
 			if (!pVar->Validate())
 			{
 				//Setup write info
-				m_pDescriptors[index] = pVar->GetVkWriteDescriptorSet();
+				m_pVkDescriptors[index] = pVar->GetVkWriteDescriptorSet();
                 writeDescriptors = true;
 			}
             	
@@ -117,14 +117,14 @@ namespace Lambda
 		if (writeDescriptors)
 		{
             //Allocate descriptorset
-            m_DescriptorSet = m_PipelineState->AllocateDescriptorSet();
+            m_VkDescriptorSet = m_PipelineState->AllocateDescriptorSet();
             
 			//Setup the current set for writing
 			for (uint32 i = 0; i < m_NumDescriptors; i++)
-				m_pDescriptors[i].dstSet = m_DescriptorSet;
+				m_pVkDescriptors[i].dstSet = m_VkDescriptorSet;
 
 			//Write all descriptors
-			vkUpdateDescriptorSets(m_pDevice->GetVkDevice(), m_NumDescriptors, m_pDescriptors, 0, nullptr);
+			vkUpdateDescriptorSets(m_pDevice->GetVkDevice(), m_NumDescriptors, m_pVkDescriptors, 0, nullptr);
 		}
 	}
 }

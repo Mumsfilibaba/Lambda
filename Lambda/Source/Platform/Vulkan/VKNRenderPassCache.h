@@ -48,19 +48,16 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(VKNRenderPassCache);
 
-		VKNRenderPassCache(VKNDevice* pDevice);
+		VKNRenderPassCache(VKNDevice* pVkDevice);
 		~VKNRenderPassCache();
 
 		void ReleaseAll();
 		VkRenderPass GetRenderPass(const VKNRenderPassCacheKey& key);
-
 	private:
 		VKNDevice* m_pDevice;
 		std::unordered_map<VKNRenderPassCacheKey, VkRenderPass, VKNRenderPassCacheKeyHash> m_RenderPasses;
-
 	public:
 		static VKNRenderPassCache& Get();
-
 	private:
 		static VKNRenderPassCache* s_pInstance;
 	};

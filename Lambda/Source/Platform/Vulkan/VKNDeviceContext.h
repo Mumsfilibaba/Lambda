@@ -35,11 +35,11 @@ namespace Lambda
 
 	private:
 
-		//-------------
-		//FrameResource
-		//-------------
+		//----------------
+		//VKNFrameResource
+		//----------------
 
-		struct FrameResource
+		struct VKNFrameResource
 		{
 			VkFence				Fence			= VK_NULL_HANDLE;
 			VkCommandBuffer		CommandBuffer	= VK_NULL_HANDLE;
@@ -50,7 +50,7 @@ namespace Lambda
     public:
         LAMBDA_NO_COPY(VKNDeviceContext);
         
-        VKNDeviceContext(VKNDevice* pDevice, DeviceContextType type);
+        VKNDeviceContext(VKNDevice* pVkDevice, DeviceContextType type);
         ~VKNDeviceContext();
         
         virtual void ClearRenderTarget(ITexture* pRenderTarget, float color[4]) override final;
@@ -136,22 +136,22 @@ namespace Lambda
 			return m_ContextState == DEVICE_CONTEXT_STATE_RENDERPASS; 
 		}
     private:
-        VkCommandPool m_CommandPool;
-		FrameResource* m_pFrameResources;
-		FrameResource* m_pCurrentFrameResource;
+		std::vector<VkSemaphore> m_SignalSemaphores;
+        std::vector<VkSemaphore> m_WaitSemaphores;
+        std::vector<VkPipelineStageFlags> m_WaitDstStageMasks;
+		VKNFrameResource* m_pFrameResources;
+		VKNFrameResource* m_pCurrentFrameResource;
+		VKNResourceLayoutTracker* m_pResourceTracker;
+        VkCommandPool m_VkCommandPool;
+        VkRenderPass m_VkRenderPass;
+        VkFramebuffer m_VkFramebuffer;
+		VkPipeline m_VkPipeline;
+		VkPipelineLayout m_VkPipelineLayout;
+		DeviceContextState m_ContextState;
 		uint32 m_MaxNumCommands;
 		uint32 m_NumCommands;
         uint32 m_NumFrameResources;
         uint32 m_FrameIndex;
-		VKNResourceLayoutTracker* m_pResourceTracker;
-		std::vector<VkSemaphore> m_SignalSemaphores;
-        std::vector<VkSemaphore> m_WaitSemaphores;
-        std::vector<VkPipelineStageFlags> m_WaitDstStageMasks;
-        VkRenderPass	 m_RenderPass;
-        VkFramebuffer	 m_Framebuffer;
-		VkPipeline		 m_Pipeline;
-		VkPipelineLayout m_PipelineLayout;
-		DeviceContextState m_ContextState;
 		bool m_CommitScissorRects;
 		bool m_CommitViewports;
 		bool m_CommitVertexBuffers;

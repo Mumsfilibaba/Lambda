@@ -43,11 +43,11 @@ namespace Lambda
 			pDevice->CreateTexture(&pTexture, &data, desc);
 			SafeDelete(pTexData);
 
-			LOG_DEBUG_INFO("Lambda Engine: Loaded texture '%s'\n", pFileName);
+			LOG_DEBUG_INFO("[LAMBDA ENGINE] Loaded texture '%s'\n", pFileName);
 		}
 		else
 		{
-			LOG_DEBUG_ERROR("Lambda Engine: Failed to load texture '%s'\n", pFileName);
+			LOG_DEBUG_ERROR("[LAMBDA ENGINE] Failed to load texture '%s'\n", pFileName);
 		}
 
 		return pTexture;

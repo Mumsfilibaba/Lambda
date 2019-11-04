@@ -15,14 +15,14 @@ namespace Lambda
 	class LAMBDA_API IEventCallback
 	{
 	public:
-        IEventCallback()    = default;
-        virtual ~IEventCallback()   = default;
+        IEventCallback() = default;
+        virtual ~IEventCallback() = default;
 		virtual bool Callback(const Event& event) = 0;
 	};
 
-	//-------------
+	//-----------------
 	//EventCallbackFunc
-	//-------------
+	//-----------------
 
 	template<typename EventT>
 	class EventCallback : public IEventCallback
@@ -30,14 +30,14 @@ namespace Lambda
 		typedef bool(*EventCallbackFunc)(const EventT&);
 
 	public:
-		inline EventCallback(EventCallbackFunc func)
+		_forceinline  EventCallback(EventCallbackFunc func)
 			: m_Func(func) {}
 		virtual ~EventCallback() = default;
-		inline virtual bool Callback(const Event& event) override final
+		
+		_forceinline  virtual bool Callback(const Event& event) override final
 		{
 			return m_Func(static_cast<const EventT&>(event));
 		}
-
 	private:
 		EventCallbackFunc m_Func;
 	};
@@ -52,16 +52,16 @@ namespace Lambda
 		typedef bool(ObjectType::*ObjectEventCallbackFunc)(const EventT&);
 
 	public:
-		inline ObjectEventCallback(ObjectType* pObjectRef, ObjectEventCallbackFunc func)
+		_forceinline ObjectEventCallback(ObjectType* pObjectRef, ObjectEventCallbackFunc func)
 			: m_pObjectRef(pObjectRef), m_Func(func) {}
 		virtual ~ObjectEventCallback() = default;
-		inline virtual bool Callback(const Event& event) override final
+		
+		_forceinline virtual bool Callback(const Event& event) override final
 		{
 			return (m_pObjectRef->*m_Func)(static_cast<const EventT&>(event));
 		}
-
 	private:
-		ObjectType*				m_pObjectRef;
+		ObjectType*	m_pObjectRef;
 		ObjectEventCallbackFunc m_Func;
 	};
 
@@ -99,7 +99,7 @@ namespace Lambda
         
         //Forward event to another function
         template <typename ObjectType, typename EventT>
-        bool ForwardEvent(ObjectType* pObjectRef, bool(ObjectType::* objectCallbackFunc)(const EventT&), const Event& event)
+        inline bool ForwardEvent(ObjectType* pObjectRef, bool(ObjectType::* objectCallbackFunc)(const EventT&), const Event& event)
         {
             if (event.GetType() == EventT::GetStaticType())
             {

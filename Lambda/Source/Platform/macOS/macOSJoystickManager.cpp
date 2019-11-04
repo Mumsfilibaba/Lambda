@@ -8,28 +8,28 @@ namespace Lambda
     //JoystickManager
     //---------------
     
-    JoystickManager* JoystickManager::Create()
+    GamePadManager* GamePadManager::Create()
     {
-        return DBG_NEW MacOSJoystickManager();
+        return DBG_NEW macOSGamePadManager();
     }
     
     //--------------------
-    //MacOSJoystickManager
+    //macOSGamePadManager
     //--------------------
     
-    void MacOSJoystickManager::InternalOnUpdate()
+    void macOSGamePadManager::InternalOnUpdate()
     {
         
     }
     
     
-    void MacOSJoystickManager::InternalSetPollrate(const Timestep& time)
+    void macOSGamePadManager::InternalSetPollrate(const Timestep& time)
     {
         
     }
     
     
-    Timestep MacOSJoystickManager::InternalGetPollrate() const
+    Timestep macOSGamePadManager::InternalGetPollrate() const
     {
         return Timestep();
     }

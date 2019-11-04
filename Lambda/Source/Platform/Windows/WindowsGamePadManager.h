@@ -1,5 +1,5 @@
 #pragma once
-#include "System/JoystickManager.h"
+#include "System/GamePadManager.h"
 #include "Time/Clock.h"
 
 #if defined(LAMBDA_PLAT_WINDOWS)
@@ -11,23 +11,22 @@ namespace Lambda
 	//WindowsJoystickManager
 	//----------------------
 
-	class WindowsJoystickManager final : public JoystickManager
+	class WindowsGamePadManager final : public GamePadManager
 	{
 	public:
-		LAMBDA_NO_COPY(WindowsJoystickManager);
+		LAMBDA_NO_COPY(WindowsGamePadManager);
 
-		WindowsJoystickManager();
-		~WindowsJoystickManager() = default;
+		WindowsGamePadManager();
+		~WindowsGamePadManager() = default;
 
 		virtual void InternalOnUpdate() override final;
 		virtual void InternalSetPollrate(const Timestep& time) override final;
 		virtual Timestep InternalGetPollrate() const override final;
-
 	private:
+		XINPUT_STATE m_ControllerState[XUSER_MAX_COUNT];
 		Clock m_PollingTimer;
 		Timestep m_PollRate;
 		Timestep m_CurrentPollRate;
-		XINPUT_STATE m_ControllerState[XUSER_MAX_COUNT];
 	};
 }
 #endif

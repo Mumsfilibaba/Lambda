@@ -15,7 +15,7 @@ namespace Lambda
     public:
         LAMBDA_NO_COPY(VKNQuery);
         
-        VKNQuery(VKNDevice* pDevice, const QueryDesc& desc);
+        VKNQuery(VKNDevice* pVkDevice, const QueryDesc& desc);
         ~VKNQuery();
         
         virtual void GetResults(uint64* pResults, uint32 numResults, uint32 startQuery) override final;
@@ -27,7 +27,7 @@ namespace Lambda
     private:
         void Init(const QueryDesc& desc);
     private:
-        VkQueryPool m_QueryPool;
+        VkQueryPool m_VkQueryPool;
 		uint64 m_ValidBitsMask;
         uint32 m_CurrentQuery;
         float  m_TimeStampPeriod;

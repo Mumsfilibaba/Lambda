@@ -49,21 +49,18 @@ namespace Lambda
     public:
         LAMBDA_NO_COPY(VKNFramebufferCache);
         
-		VKNFramebufferCache(VKNDevice* pDevice);
+		VKNFramebufferCache(VKNDevice* pVkDevice);
 		~VKNFramebufferCache();
 
         void ReleaseAll();
         void OnReleaseImageView(VkImageView view);
 		void OnReleaseRenderPass(VkRenderPass renderpass);
         VkFramebuffer GetFramebuffer(const VKNFramebufferCacheKey& key, VkExtent2D extent);
-        
     private:
 		VKNDevice* m_pDevice;
         std::unordered_map<VKNFramebufferCacheKey, VkFramebuffer, VKNFramebufferCacheKeyHash> m_Framebuffers;
-
 	public:
 		static VKNFramebufferCache& Get();
-
 	private:
 		static VKNFramebufferCache* s_pInstance;
     };

@@ -49,7 +49,10 @@ namespace Lambda
 
 		VkImageLayout GetLayout(VkImage image, uint32 mipLevel) const;
 
-		inline bool NeedsFlush() const { return !m_DefferedBarriers.empty(); };
+		_forceinline bool NeedsFlush() const 
+		{ 
+			return !m_DefferedBarriers.empty(); 
+		};
 	private:
 		void FinishBarrier(ImageBarrier& barrier);
 	private:

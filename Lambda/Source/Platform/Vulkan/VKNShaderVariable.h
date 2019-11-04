@@ -19,7 +19,7 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(VKNShaderVariable);
 
-		VKNShaderVariable(VKNDevice* pDevice, VKNShaderVariableTable* pVariableTable, const ShaderVariableDesc& desc);
+		VKNShaderVariable(VKNDevice* pVkDevice, VKNShaderVariableTable* pVkVariableTable, const ShaderVariableDesc& desc);
 		~VKNShaderVariable() = default;
 
 		virtual void SetTexture(ITexture* pTexture) override final;
@@ -40,16 +40,16 @@ namespace Lambda
 
 		_forceinline const VkWriteDescriptorSet& GetVkWriteDescriptorSet()
 		{ 
-			return m_DescriptorWrite; 
+			return m_VkDescriptorWrite; 
 		}
 	private:
-		AutoRef<IDeviceObject>	m_Resource;
-        VkWriteDescriptorSet    m_DescriptorWrite;
-        uint64                  m_ResourceHandle;
+		AutoRef<IDeviceObject> m_Resource;
+        VkWriteDescriptorSet m_VkDescriptorWrite;
+        uint64 m_ResourceHandle;
 		union
 		{
-			VkDescriptorBufferInfo	m_BufferInfo;
-			VkDescriptorImageInfo	m_ImageInfo;
+			VkDescriptorBufferInfo m_VkBufferInfo;
+			VkDescriptorImageInfo m_VkImageInfo;
 		};
 		bool m_IsValid;
 	};

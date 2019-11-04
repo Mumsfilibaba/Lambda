@@ -20,7 +20,7 @@ namespace Lambda
     public:
         LAMBDA_NO_COPY(VKNBuffer);
         
-        VKNBuffer(VKNDevice* pDevice, const ResourceData* pInitalData, const BufferDesc& desc);
+        VKNBuffer(VKNDevice* pVkDevice, const ResourceData* pInitalData, const BufferDesc& desc);
         ~VKNBuffer();
         
         virtual void* GetNativeHandle() const override final;
@@ -49,9 +49,9 @@ namespace Lambda
     private:
         void Init(const ResourceData* pInitalData, const BufferDesc& desc);
     private:
-        VkBuffer m_VkBuffer;
-        VKNAllocation m_Memory;
 		VKNDynamicAllocation m_DynamicMemory;
+        VKNAllocation m_Memory;
+        VkBuffer m_VkBuffer;
 		VkDeviceSize m_DynamicOffsetAlignment;
     };
 }
