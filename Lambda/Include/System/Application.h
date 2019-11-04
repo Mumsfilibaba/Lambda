@@ -1,6 +1,7 @@
 #pragma once
 #include "IWindow.h"
 #include "LayerStack.h"
+#include "GamePadManager.h"
 #include "Time/Clock.h"
 #include "Events/EventDispatcher.h"
 #include "Debug/DebugLayer.h"
@@ -29,7 +30,7 @@ namespace Lambda
 	//Application
 	//-----------
 
-	class LAMBDA_API Application
+	class LAMBDA_API Application : public Singleton<Application>
 	{
 	public:
 		Application(const EngineParams& params);
@@ -76,6 +77,7 @@ namespace Lambda
 	private:
 		IWindow* m_pWindow;
 		DebugLayer*	m_pUILayer;
+		GamePadManager* m_pGamePadManager;
         AutoRef<IDevice> m_GraphicsDevice;
         AutoRef<IDeviceContext> m_Context;
         AutoRef<ISwapChain> m_SwapChain;
@@ -85,9 +87,5 @@ namespace Lambda
 		EngineParams m_Params;
 		int32 m_ExitCode;
 		bool m_Running;
-	public:
-		static Application& Get();
-	private:
-		static Application* s_pInstance;
 	};
 }

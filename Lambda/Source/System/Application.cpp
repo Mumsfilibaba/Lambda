@@ -15,10 +15,10 @@ namespace Lambda
 	//Application
 	//-----------
 
-	Application* Application::s_pInstance = nullptr;
-
 	Application::Application(const EngineParams& params)
-		: m_pWindow(nullptr),
+		: Singleton<Application>(),
+		m_pWindow(nullptr),
+		m_pGamePadManager(nullptr),
 		m_pUILayer(nullptr),
         m_GraphicsDevice(nullptr),
         m_Context(nullptr),
@@ -27,8 +27,6 @@ namespace Lambda
 		m_ExitCode(0),
 		m_Running(true)
 	{
-		LAMBDA_ASSERT(s_pInstance == nullptr);
-		s_pInstance = this;
 	}
 
 
@@ -113,17 +111,21 @@ namespace Lambda
 		m_pWindow = IWindow::Create(desc);
 		m_pWindow->SetEventCallback(DBG_NEW ObjectEventCallback(this, &Application::OnEvent));
 		
-        //Create device and swapchain
+		//Init GamePad-Manager
+		m_pGamePadManager = GamePadManager::Create();
+		GamePadManager::SetPollrate(Timestep::Seconds(1.0f / 60.0f));
+
+        //Create factor
         AutoRef<IFactory> factory = nullptr;
         IFactory::CreateFactory(&factory, m_Params.GraphicsDeviceApi);
-        
+		//Setup device
         DeviceDesc deviceDesc = {};
 #if defined(LAMBDA_DEBUG)
         deviceDesc.Flags = DEVICE_FLAG_DEBUG;
 #else
         deviceDesc.Flags = DEVICE_FLAG_NONE;
 #endif
-        
+        //Setup swapchain
         SwapChainDesc swapChainDesc = {};
         swapChainDesc.pWindowHandle     = m_pWindow->GetNativeHandle();
         swapChainDesc.BufferCount       = 3;
@@ -135,13 +137,9 @@ namespace Lambda
         swapChainDesc.VerticalSync      = m_Params.VerticalSync;
         factory->CreateDeviceAndSwapChain(&m_GraphicsDevice, deviceDesc, &m_Context, &m_SwapChain, swapChainDesc);
     
-		//Create UI-Layer
+		//Init Debug-Layer
 		m_pUILayer = DBG_NEW DebugLayer();
-		//Push ImGui-Layer
         PushLayer(m_pUILayer);
-		
-		//Set joystick-pollingrate
-		GamePadManager::SetPollrate(Timestep::Seconds(1.0f / 60.0f));
 
 		//Init renderer
 		m_Renderer.Init();
@@ -221,6 +219,8 @@ namespace Lambda
         m_Context.Release();
         m_GraphicsDevice.Release();
         
+		//Destroy GamePadManager
+		SafeDelete(m_pGamePadManager);
 		//Destroy window
 		SafeDelete(m_pWindow);
 	}
@@ -331,12 +331,5 @@ namespace Lambda
         m_ExitCode = exitCode;
         
         LOG_DEBUG_INFO("[LAMBDA ENGINE] Quit called\n");
-    }
-
-
-    Application& Application::Get()
-    {
-        LAMBDA_ASSERT(s_pInstance != nullptr);
-        return *s_pInstance;
     }
 }

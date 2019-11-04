@@ -21,6 +21,7 @@ namespace Lambda
 	//----------------------
 
 	WindowsGamePadManager::WindowsGamePadManager()
+		: GamePadManager()
 	{
 		memset(&m_ControllerState, 0, sizeof(XINPUT_STATE) * XUSER_MAX_COUNT);
 		m_PollRate = Timestep::Seconds(1.0f / 60.0f);
