@@ -25,7 +25,7 @@ namespace Lambda
         void SetAspect(float width, float height);
         
 
-		_forceinline const glm::mat4& Camera::GetView() const
+		_forceinline const glm::mat4& GetView() const
 		{
 			return m_View;
 		}

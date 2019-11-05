@@ -67,7 +67,7 @@ namespace Lambda
 #if defined(LAMBDA_PLAT_MACOS)
         //Create surface for macOS
         GLFWwindow* pGLFWWindow = reinterpret_cast<GLFWwindow*>(desc.pWindowHandle);
-        if (glfwCreateWindowSurface(m_pVkDevice->GetVkInstance(), pGLFWWindow, nullptr, &m_VkSurface) != VK_SUCCESS)
+        if (glfwCreateWindowSurface(m_pDevice->GetVkInstance(), pGLFWWindow, nullptr, &m_VkSurface) != VK_SUCCESS)
             m_VkSurface = VK_NULL_HANDLE;
 #elif defined(LAMBDA_PLAT_WINDOWS)	
 		//Create a surface for windows

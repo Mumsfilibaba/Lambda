@@ -23,19 +23,19 @@ namespace Lambda
 		virtual void InternalSetPollrate(const Timestep& time) = 0;
 		virtual Timestep InternalGetPollrate() const = 0;
 	public:
-		_forceinline static void GamePadManager::OnUpdate()
+		_forceinline static void OnUpdate()
 		{
 			Get().InternalOnUpdate();
 		}
 
 
-		_forceinline static void GamePadManager::SetPollrate(const Timestep& time)
+		_forceinline static void SetPollrate(const Timestep& time)
 		{
 			Get().InternalSetPollrate(time);
 		}
 
 
-		_forceinline static Timestep GamePadManager::GetPollrate()
+		_forceinline static Timestep GetPollrate()
 		{
 			return Get().InternalGetPollrate();
 		}

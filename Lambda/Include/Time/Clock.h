@@ -16,7 +16,7 @@ namespace Lambda
 	class Clock
 	{
 	public:
-		_forceinline Clock::Clock()
+		_forceinline Clock()
 			: m_Frequency(0),
 			m_LastTime(0),
 			m_TotalTime(0),
@@ -34,7 +34,7 @@ namespace Lambda
 		}
 
 
-		_forceinline Clock::Clock(Clock&& other)
+		_forceinline Clock(Clock&& other)
 			: m_Frequency(other.m_Frequency),
 			m_LastTime(other.m_LastTime),
 			m_TotalTime(other.m_TotalTime),
@@ -43,7 +43,7 @@ namespace Lambda
 		}
 
 
-		_forceinline Clock::Clock(const Clock& other)
+		_forceinline Clock(const Clock& other)
 			: m_Frequency(other.m_Frequency),
 			m_LastTime(other.m_LastTime),
 			m_TotalTime(other.m_TotalTime),
@@ -53,7 +53,7 @@ namespace Lambda
 		~Clock() = default;
 
 
-		_forceinline void Clock::Tick()
+		_forceinline void Tick()
 		{
 #if defined(LAMBDA_PLAT_WINDOWS)
 			//Get current time
@@ -82,20 +82,20 @@ namespace Lambda
 		}
 
 
-		_forceinline void Clock::Reset()
+		_forceinline void Reset()
 		{
 			m_DeltaTime = Timestep(0);
 			m_TotalTime = Timestep(0);
 		}
 
 
-		_forceinline Timestep Clock::GetDeltaTime() const
+		_forceinline Timestep GetDeltaTime() const
 		{
 			return m_DeltaTime;
 		}
 
 
-		_forceinline Timestep Clock::GetTotalTime() const
+		_forceinline Timestep GetTotalTime() const
 		{
 			return m_TotalTime;
 		}

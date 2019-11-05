@@ -145,11 +145,8 @@ namespace Lambda
 		m_Renderer.Init();
 
 		//Load rest of application
-		for (auto it = m_LayerStack.Begin(); it != m_LayerStack.End(); it++)
-		{
-			Layer* pLayer = (*it);
+		for (auto pLayer : m_LayerStack)
 			pLayer->OnLoad();
-		}
 	}
 	
 
@@ -160,22 +157,16 @@ namespace Lambda
         //Update controllers
 		GamePadManager::OnUpdate();
         //Call update
-        for (auto it = m_LayerStack.Begin(); it != m_LayerStack.End(); it++)
-		{
-			Layer* pLayer = (*it);
-			pLayer->OnUpdate(dt);
-		}
+        for (auto pLayer : m_LayerStack)
+            pLayer->OnUpdate(dt);
 	}
 
 
 	void Application::OnRender(Timestep dt)
 	{
 		m_Renderer.Begin();
-		for (auto it = m_LayerStack.Begin(); it != m_LayerStack.End(); it++)
-		{
-			Layer* pLayer = (*it);
+        for (auto pLayer : m_LayerStack)
             pLayer->OnRender(m_Renderer, dt);
-		}
 		m_Renderer.End();
 		m_Renderer.Swapbuffers();
 	}
@@ -184,11 +175,8 @@ namespace Lambda
     void Application::OnRenderUI(Timestep dt)
     {
 		m_pUILayer->Begin(dt);
-		for (auto it = m_LayerStack.Begin(); it != m_LayerStack.End(); it++)
-		{
-			Layer* pLayer = (*it);
+        for (auto pLayer : m_LayerStack)
             pLayer->OnRenderUI(dt);
-		}
 		m_pUILayer->End();
     }
 
@@ -202,11 +190,8 @@ namespace Lambda
 		m_pWindow->SetEventCallback(nullptr);
 		
 		//Release all layers
-		for (auto it = m_LayerStack.Begin(); it != m_LayerStack.End(); it++)
-		{
-			Layer* pLayer = (*it);
+		for (auto pLayer : m_LayerStack)
 			pLayer->OnRelease();
-		}
         
 		//Release LayerStack
         m_LayerStack.Release();
@@ -235,7 +220,7 @@ namespace Lambda
 		forwarder.ForwardEvent(this, &Application::OnWindowResize, event);
 
         //Dispatch to all layers
-        for (auto it = m_LayerStack.End(); it != m_LayerStack.Begin(); )
+        for (auto it = m_LayerStack.end(); it != m_LayerStack.begin(); )
         {
             Layer* pLayer = (*--it);
             if (event.GetCategoryFlags() & pLayer->GetRecivableCategories())

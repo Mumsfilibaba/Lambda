@@ -25,13 +25,13 @@ namespace Lambda
         void PopLayer();
 
 		//Enables foreachloops
-		_forceinline std::vector<Layer*>::iterator LayerStack::Begin()
+		_forceinline std::vector<Layer*>::iterator begin()
 		{
 			return m_Layers.begin();
 		}
 
 
-		_forceinline std::vector<Layer*>::iterator LayerStack::End()
+		_forceinline std::vector<Layer*>::iterator end()
 		{
 			return m_Layers.end();
 		}

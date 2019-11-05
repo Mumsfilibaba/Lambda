@@ -9,7 +9,7 @@
     #include "Events/MouseEvent.h"
     #include "Graphics/Core/IDevice.h"
     #include "System/Input.h"
-    #include "System/JoystickManager.h"
+    #include "System/GamePadManager.h"
     #include "System/Log.h"
 
 namespace Lambda

@@ -11,92 +11,92 @@ namespace Lambda
 	class Timestep
 	{
 	public:
-		_forceinline Timestep::Timestep(uint64 ns = 0)
+		_forceinline Timestep(uint64 ns = 0)
 			: m_Ns(ns)
 		{
 		}
 
 
-		_forceinline Timestep::Timestep(Timestep&& other)
+		_forceinline Timestep(Timestep&& other)
 			: m_Ns(other.m_Ns)
 		{
 		}
 
 
-		_forceinline Timestep::Timestep(const Timestep& other)
+		_forceinline Timestep(const Timestep& other)
 			: m_Ns(other.m_Ns)
 		{
 		}
 
 
-		_forceinline float Timestep::AsSeconds() const
+		_forceinline float AsSeconds() const
 		{
 			constexpr float second = 1000.0f * 1000.0f * 1000.0f;
 			return m_Ns / second;
 		}
 
 
-		_forceinline float Timestep::AsMilliSeconds() const
+		_forceinline float AsMilliSeconds() const
 		{
 			constexpr float ms = 1000.0f * 1000.0f;
 			return m_Ns / ms;
 		}
 
 
-		_forceinline float Timestep::AsMicroSeconds() const
+		_forceinline float AsMicroSeconds() const
 		{
 			constexpr float us = 1000.0f;
 			return m_Ns / us;
 		}
 
 
-		_forceinline uint64 Timestep::AsNanoSeconds() const
+		_forceinline uint64 AsNanoSeconds() const
 		{
 			return m_Ns;
 		}
 
 
-		_forceinline Timestep& Timestep::operator=(const Timestep& other)
+		_forceinline Timestep& operator=(const Timestep& other)
 		{
 			m_Ns = other.m_Ns;
 			return *this;
 		}
 
 
-		_forceinline bool Timestep::operator==(const Timestep& other) const
+		_forceinline bool operator==(const Timestep& other) const
 		{
 			return m_Ns == other.m_Ns;
 		}
 
 
-		_forceinline bool Timestep::operator!=(const Timestep& other) const
+		_forceinline bool operator!=(const Timestep& other) const
 		{
 			return m_Ns != other.m_Ns;
 		}
 
 
-		_forceinline Timestep& Timestep::operator+=(const Timestep& right)
+		_forceinline Timestep& operator+=(const Timestep& right)
 		{
 			m_Ns += right.m_Ns;
 			return *this;
 		}
 
 
-		_forceinline Timestep& Timestep::operator-=(const Timestep& right)
+		_forceinline Timestep& operator-=(const Timestep& right)
 		{
 			m_Ns -= right.m_Ns;
 			return *this;
 		}
 
 
-		_forceinline Timestep& Timestep::operator*=(const Timestep& right)
+		_forceinline Timestep& operator*=(const Timestep& right)
 		{
 			m_Ns *= right.m_Ns;
 			return *this;
 		}
 
 
-		_forceinline Timestep& Timestep::operator/=(const Timestep& right)
+		_forceinline Timestep& operator/=(const Timestep& right)
 		{
 			m_Ns /= right.m_Ns;
 			return *this;
@@ -113,28 +113,28 @@ namespace Lambda
 	private:
 		uint64 m_Ns;
 	public:
-		_forceinline static Timestep Timestep::Seconds(float s)
+		_forceinline static Timestep Seconds(float s)
 		{
 			constexpr float second = 1000.0f * 1000.0f * 1000.0f;
 			return Timestep(uint64(s * second));
 		}
 
 
-		_forceinline static Timestep Timestep::MilliSeconds(float ms)
+		_forceinline static Timestep MilliSeconds(float ms)
 		{
 			constexpr float millisecond = 1000.0f * 1000.0f;
 			return Timestep(uint64(ms * millisecond));
 		}
 
 
-		_forceinline static Timestep Timestep::MicroSeconds(float us)
+		_forceinline static Timestep MicroSeconds(float us)
 		{
 			constexpr float microsecond = 1000.0f;
 			return Timestep(uint64(us * microsecond));
 		}
 
 
-		_forceinline static Timestep Timestep::NanoSeconds(uint64 ns)
+		_forceinline static Timestep NanoSeconds(uint64 ns)
 		{
 			return Timestep(ns);
 		}
