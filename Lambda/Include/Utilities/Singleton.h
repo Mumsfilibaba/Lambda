@@ -1,6 +1,5 @@
 #pragma once
-#include "Defines.h"
-#include "Types.h"
+#include "LambdaCore.h"
 #include <cassert>
 
 namespace Lambda
@@ -13,6 +12,8 @@ namespace Lambda
 	class Singleton
 	{
 	protected:
+		LAMBDA_NO_COPY(Singleton);
+
 		_forceinline Singleton()
 		{
 			assert(s_pInstance == nullptr);

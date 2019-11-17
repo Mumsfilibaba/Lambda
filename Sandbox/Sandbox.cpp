@@ -1,6 +1,6 @@
 #include "SandBox.h"
-#include "System/Log.h"
-#include "System/Input.h"
+#include "Core/LogManager.h"
+#include "Core/Input.h"
 #include "Events/WindowEvent.h"
 #include "Events/KeyEvent.h"
 #include "Events/MouseEvent.h"

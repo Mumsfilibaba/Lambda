@@ -1,6 +1,6 @@
 #include "LambdaPch.h"
-#include "System/LayerStack.h"
-#include "System/Layer.h"
+#include "Core/LayerStack.h"
+#include "Core/Layer.h"
 
 namespace Lambda
 {
@@ -22,7 +22,7 @@ namespace Lambda
         LAMBDA_ASSERT(pLayer != nullptr);
         
         m_Layers.emplace_back(pLayer);
-        LOG_DEBUG_INFO("[LAMBDA ENGINE] Pushed eventlayer %d '%s'.\n", m_Layers.size(), pLayer->GetName());
+        LOG_DEBUG_INFO("[LAMBDA ENGINE] Pushed Layer %d '%s'.\n", m_Layers.size(), pLayer->GetName());
     }
 
 
@@ -31,7 +31,7 @@ namespace Lambda
         Layer* pLayer = m_Layers.back();
         m_Layers.pop_back();
         
-        LOG_DEBUG_INFO("[LAMBDA ENGINE] Poped eventlayer '%s'.\n", pLayer->GetName());
+        LOG_DEBUG_INFO("[LAMBDA ENGINE] Poped Layer '%s'.\n", pLayer->GetName());
         SafeDelete(pLayer);
     }
 }

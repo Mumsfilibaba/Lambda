@@ -1,5 +1,5 @@
 #include "LambdaPch.h"
-#include "System/GamePadManager.h"
+#include "Core/GamePadManager.h"
 
 namespace Lambda
 {

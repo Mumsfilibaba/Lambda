@@ -1,5 +1,5 @@
 #pragma once
-#include "System/Input.h"
+#include "Core/Input.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 namespace Lambda
 {

@@ -1,6 +1,6 @@
 #pragma once
 #include "Events/WindowEvent.h"
-#include "System/IWindow.h"
+#include "Core/IWindow.h"
 #include "IDeviceContext.h"
 
 namespace Lambda

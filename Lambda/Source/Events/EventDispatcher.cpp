@@ -1,7 +1,7 @@
 #include "LambdaPch.h"
 #include "Events/Event.h"
 #include "Events/EventDispatcher.h"
-#include "System/Log.h"
+#include "Core/LogManager.h"
 
 namespace Lambda
 {

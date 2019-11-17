@@ -1,5 +1,5 @@
 #pragma once
-#include "System/GamePadManager.h"
+#include "Core/GamePadManager.h"
 #if defined(LAMBDA_PLAT_MACOS)
 
 namespace Lambda

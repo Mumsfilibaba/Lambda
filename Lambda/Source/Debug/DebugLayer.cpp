@@ -5,7 +5,7 @@
 #include "Graphics/Core/IPipelineState.h"
 #include "Graphics/Core/ITexture.h"
 #include "Graphics/Core/IBuffer.h"
-#include "System/Application.h"
+#include "Core/Application.h"
 #include "Events/KeyEvent.h"
 #include "Events/MouseEvent.h"
 #include "Events/WindowEvent.h"

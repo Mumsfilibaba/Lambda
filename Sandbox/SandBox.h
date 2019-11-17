@@ -1,5 +1,5 @@
 #pragma once
-#include "System/Application.h"
+#include "Core/Application.h"
 #include "Graphics/Core/IDeviceContext.h"
 #include "Graphics/Core/IShader.h"
 #include "Graphics/Core/IPipelineState.h"

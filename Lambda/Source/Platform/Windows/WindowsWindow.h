@@ -1,5 +1,5 @@
 #pragma once
-#include "System/IWindow.h"
+#include "Core/IWindow.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#if !defined(WIN32_LEAN_AND_MEAN)
 		#define WIN32_LEAN_AND_MEAN 1
@@ -21,7 +21,7 @@ namespace Lambda
 	public:
 		LAMBDA_NO_COPY(WindowsWindow);
 
-		WindowsWindow(const WindowDesc& desc);
+		WindowsWindow(const char* pTitle, uint32 width, uint32 height);
 		~WindowsWindow();
 
 		virtual void OnUpdate() const override final;
@@ -33,7 +33,7 @@ namespace Lambda
         virtual uint32 GetHeight() const override;
         virtual uint32 GetWidth() const override;
 	private:
-		void Init(const WindowDesc& desc);
+		void Init(const char* pTitle, uint32 width, uint32 height);
 		void DispatchEvent(const Event& event);
 		LRESULT OnEvent(uint32 msg, WPARAM wParam, LPARAM lParam);
 	private:

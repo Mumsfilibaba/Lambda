@@ -1,5 +1,5 @@
 #pragma once
-#include "System/Log.h"
+#include "Core/LogManager.h"
 
 #if defined(LAMBDA_PLAT_MACOS)
 namespace Lambda

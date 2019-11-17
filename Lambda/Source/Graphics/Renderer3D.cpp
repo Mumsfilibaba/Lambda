@@ -4,7 +4,7 @@
 #include "Graphics/Core/IDevice.h"
 #include "Graphics/Core/IBuffer.h"
 #include "Graphics/Core/IQuery.h"
-#include "System/Application.h"
+#include "Core/Application.h"
 #include <glm/gtc/type_ptr.hpp>
 
 namespace Lambda

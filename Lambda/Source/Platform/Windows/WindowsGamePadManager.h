@@ -1,5 +1,5 @@
 #pragma once
-#include "System/GamePadManager.h"
+#include "Core/GamePadManager.h"
 #include "Time/Clock.h"
 
 #if defined(LAMBDA_PLAT_WINDOWS)

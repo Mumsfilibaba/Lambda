@@ -1,5 +1,4 @@
-#include "Defines.h"
-#include "Types.h"
+#include "LambdaCore.h"
 
 #if defined(LAMBDA_EXPORT)
 	//All headers specific for windows
@@ -12,7 +11,7 @@
 		#include <Windowsx.h>
 		#include <crtdbg.h>
 
-		#include "..\Source\Platform\DX12\d3dx12.h"
+		#include "../Source/Platform/DX12/d3dx12.h"
 		#include <wrl/client.h>
 		#include <dxgi1_6.h>
 		#include <d3dcompiler.h>
@@ -20,7 +19,7 @@
 	#endif
 #endif
 
-#include "System/Log.h"
+#include "Core/LogManager.h"
 
 #include <cassert>
 #include <cfloat>

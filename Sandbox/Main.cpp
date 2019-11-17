@@ -1,31 +1,19 @@
 #include "SandBox.h"
 #include "Events/WindowEvent.h"
-#include "System/Log.h"
+#include "Core/LogManager.h"
+#include "Core/LEngine.h"
 
-int main()
+int main(int argc, const char* argv[])
 {
 	using namespace Lambda;
 
-	DBG_MEMLEAK_CHECK();
+	Layer* pLayer = DBG_NEW SandBoxLayer();
 
-	EngineParams params = {};
-	params.pTitle = "Lambda Engine - Sandbox";
-#if defined(LAMBDA_PLAT_WINDOWS)
-	params.GraphicsDeviceApi    = GRAPHICS_API_VULKAN;
-#else
-    params.GraphicsDeviceApi    = GRAPHICS_API_VULKAN;
-#endif
-    params.Fullscreen   = false;
-    params.VerticalSync = false;
-    params.SampleCount  = 8;
-    params.WindowWidth  = 1920;
-    params.WindowHeight = 1080;
+	LEngineParams params = {};
+	params.ppCmdArgs	= argv;
+	params.CmdArgsCount = argc;
+	params.ppLayers		= &pLayer;
+	params.LayerCount	= 1;
 
-	Application* pApplication = DBG_NEW Application(params);
-	pApplication->PushLayer(DBG_NEW SandBoxLayer());
-
-	int32 result = pApplication->Run();
-	delete pApplication;
-
-	return result;
+	return LambdaMain(params);
 }

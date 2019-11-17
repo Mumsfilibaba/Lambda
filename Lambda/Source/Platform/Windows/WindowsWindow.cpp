@@ -1,6 +1,8 @@
 #include "LambdaPch.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
-	#include "System/Log.h"
+	#include "Core/LogManager.h"
+	#include "Core/WindowEventDispatcher.h"
+	
 	#include "Utilities/StringHelper.h"
 	#include "Events/KeyEvent.h"
 	#include "Events/WindowEvent.h"
@@ -9,8 +11,6 @@
 	#include "WindowsWindow.h"
 	#include "WindowClass.h"
 	#include "WindowsInput.h"
-	#include "../Vulkan/VKNDevice.h"
-	#include "../DX12/DX12Device.h"
 	#define	NAME_APPWINDOW L"AppWindow"
 
 namespace Lambda
@@ -21,7 +21,7 @@ namespace Lambda
 
 	IWindow* IWindow::Create(const WindowDesc& desc)
 	{
-		return DBG_NEW WindowsWindow(desc);
+		return nullptr;
 	}
 
 	//-------------
@@ -30,14 +30,14 @@ namespace Lambda
 
 	LRESULT CALLBACK WindowEventCallback(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-	WindowsWindow::WindowsWindow(const WindowDesc& desc)
+	WindowsWindow::WindowsWindow(const char* pTitle, uint32 width, uint32 height)
 		: m_pEventCallback(nullptr),
 		m_hWindow(0),
 		m_Fullscreen(false),
 		m_HasFocus(false)
 	{
-		Init(desc);
-		LOG_SYSTEM_INFO("[LAMBDA ENGINE] Created window. w: %d, h: %d\n", desc.Width, desc.Height);
+		Init(pTitle, width, height);
+		LOG_SYSTEM_INFO("[LAMBDA ENGINE] Created window. w: %d, h: %d\n", width, height);
 	}
 	
 
@@ -68,12 +68,6 @@ namespace Lambda
 
 	void WindowsWindow::OnUpdate() const
 	{
-		MSG msg = {};
-		while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
-		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
 	}
 
 
@@ -173,7 +167,7 @@ namespace Lambda
 	}
 
 
-	void WindowsWindow::Init(const WindowDesc& desc)
+	void WindowsWindow::Init(const char* pTitle, uint32 width, uint32 height)
 	{
 		//Should only be called once
 		LAMBDA_ASSERT(m_hWindow == 0);
@@ -199,12 +193,12 @@ namespace Lambda
 			//Set client area size
 			m_Style		= WS_OVERLAPPEDWINDOW;
 			m_ExStyle	= 0;
-			RECT rect	= { 0, 0, static_cast<LONG>(desc.Width), static_cast<LONG>(desc.Height) };
+			RECT rect	= { 0, 0, static_cast<LONG>(width), static_cast<LONG>(height) };
 			AdjustWindowRect(&rect, m_Style, false);
 
             
             //Make sure name is not nullptr
-            const char* pName = desc.pTitle;
+            const char* pName = pTitle;
             if (pName == nullptr)
                 pName = "";
             
@@ -217,8 +211,8 @@ namespace Lambda
 			}
 			else
 			{
-				m_Width	 = desc.Width;
-				m_Height = desc.Height;
+				m_Width	 = width;
+				m_Height = height;
 
 				//Set userdata so we can retrive this-pointer when handling events
 				SetWindowLongPtr(m_hWindow, GWLP_USERDATA, reinterpret_cast<uintptr_t>(this));
@@ -227,7 +221,7 @@ namespace Lambda
 		}
 
 		//Set fullscreen
-		SetFullscreen(desc.Fullscreen);
+		SetFullscreen(false);
 	}
 
 
@@ -244,6 +238,7 @@ namespace Lambda
 		{
 		case WM_DESTROY:
 		{
+			WindowEventDispatcher::Get().OnWindowDestroy();
 			WindowClosedEvent event = WindowClosedEvent();
 			DispatchEvent(event);
 			break;
