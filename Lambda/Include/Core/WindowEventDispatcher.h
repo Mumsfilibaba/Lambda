@@ -18,9 +18,11 @@ namespace Lambda
 
 		void AddListener(IWindowEventListener* pWindowListener);
 		void Release();
-
+		
+		void OnWindowMove(uint32 x, uint32 y);
+		void OnWindowFocusChanges(bool hasFocus);
 		void OnWindowResize(uint32 width, uint32 height);
-		void OnWindowDestroy();
+		void OnWindowClose();
 	private:
 		std::vector<IWindowEventListener*> m_Listeners;
 	};

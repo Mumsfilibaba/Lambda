@@ -28,11 +28,11 @@ namespace Lambda
 		//Debug
 		if (m_VkBuffer == VK_NULL_HANDLE)
 		{
-			LOG_DEBUG_INFO("[Vulkan] Destroyed Buffer '%s'\n", m_Name.c_str());
+			LOG_RENDER_API_INFO("[Vulkan] Destroyed Buffer '%s'\n", m_Name.c_str());
 		}
 		else
 		{
-			LOG_DEBUG_INFO("[Vulkan] Destroyed Buffer '%p' '%s'\n", m_VkBuffer, m_Name.c_str());
+			LOG_RENDER_API_INFO("[Vulkan] Destroyed Buffer '%p' '%s'\n", m_VkBuffer, m_Name.c_str());
 		}
 
 		//Deallocate the dynamic resource
@@ -79,12 +79,12 @@ namespace Lambda
 			//If dynamic we allocate dynamic memory
 			if (!m_pDevice->AllocateDynamicMemory(m_DynamicMemory, m_Desc.SizeInBytes, m_DynamicOffsetAlignment))
 			{
-				LOG_DEBUG_ERROR("[Vulkan] Failed to allocate memory for Buffer\n");
+				LOG_RENDER_API_ERROR("[Vulkan] Failed to allocate memory for Buffer\n");
 				return;
 			}
 			else
 			{
-				LOG_DEBUG_INFO("[Vulkan] Allocated memory for Dynamic Buffer\n");
+				LOG_RENDER_API_INFO("[Vulkan] Allocated memory for Dynamic Buffer\n");
 				SetName(m_Desc.pName);
 			}
 		}
@@ -100,7 +100,7 @@ namespace Lambda
 			info.sharingMode			= VK_SHARING_MODE_EXCLUSIVE;
 			if (vkCreateBuffer(m_pDevice->GetVkDevice(), &info, nullptr, &m_VkBuffer) != VK_SUCCESS)
 			{
-				LOG_DEBUG_ERROR("[Vulkan] Failed to create Buffer\n");
+				LOG_RENDER_API_ERROR("[Vulkan] Failed to create Buffer\n");
 				return;
 			}
 			else
@@ -108,11 +108,11 @@ namespace Lambda
 				SetName(m_Desc.pName);
 				if (m_Desc.pName)
 				{
-					LOG_DEBUG_INFO("[Vulkan] Created Buffer. Name=\"%s\". '%p'\n", m_Desc.pName, m_VkBuffer);
+					LOG_RENDER_API_INFO("[Vulkan] Created Buffer. Name=\"%s\". '%p'\n", m_Desc.pName, m_VkBuffer);
 				}
 				else
 				{
-					LOG_DEBUG_INFO("[Vulkan] Created Buffer '%p'\n", m_VkBuffer);
+					LOG_RENDER_API_INFO("[Vulkan] Created Buffer '%p'\n", m_VkBuffer);
 				}
 			}
 
@@ -125,15 +125,15 @@ namespace Lambda
 			vkGetBufferMemoryRequirements(m_pDevice->GetVkDevice(), m_VkBuffer, &memoryRequirements);
 			if (!m_pDevice->Allocate(m_Memory, memoryRequirements, memoryProperties))
 			{
-				LOG_DEBUG_ERROR("[Vulkan] Failed to allocate Dynamic Memory-Page '%p'\n", m_VkBuffer);
+				LOG_RENDER_API_ERROR("[Vulkan] Failed to allocate Dynamic Memory-Page '%p'\n", m_VkBuffer);
 				return;
 			}
 			else
 			{
-				LOG_DEBUG_WARNING("[Vulkan] Allocated '%d' bytes for Dynamic Memory-Page\n", m_Desc.SizeInBytes);
+				LOG_RENDER_API_WARNING("[Vulkan] Allocated '%d' bytes for Dynamic Memory-Page\n", m_Desc.SizeInBytes);
 				if (vkBindBufferMemory(m_pDevice->GetVkDevice(), m_VkBuffer, m_Memory.DeviceMemory, m_Memory.DeviceMemoryOffset) != VK_SUCCESS)
 				{
-					LOG_DEBUG_WARNING("[Vulkan] Failed to bind memory for Dynamic Memory-Page\n");
+					LOG_RENDER_API_WARNING("[Vulkan] Failed to bind memory for Dynamic Memory-Page\n");
 				}
 			}
 		}
@@ -158,12 +158,12 @@ namespace Lambda
 				VkBuffer vkStagingBuffer = VK_NULL_HANDLE;
 				if (vkCreateBuffer(m_pDevice->GetVkDevice(), &info, nullptr, &vkStagingBuffer) != VK_SUCCESS)
 				{
-					LOG_DEBUG_ERROR("[Vulkan] Failed to create Staging-Buffer\n");
+					LOG_RENDER_API_ERROR("[Vulkan] Failed to create Staging-Buffer\n");
 					return;
 				}
 				else
 				{
-					LOG_DEBUG_INFO("[Vulkan] Created Staging-Buffer '%p'\n", vkStagingBuffer);
+					LOG_RENDER_API_INFO("[Vulkan] Created Staging-Buffer '%p'\n", vkStagingBuffer);
 				}
 
 
@@ -178,15 +178,15 @@ namespace Lambda
 				vkGetBufferMemoryRequirements(m_pDevice->GetVkDevice(), vkStagingBuffer, &memoryRequirements);
 				if (!m_pDevice->Allocate(stagingMemory, memoryRequirements, memoryProperties))
 				{
-					LOG_DEBUG_ERROR("[Vulkan] Failed to allocate StagingBuffer '%p'\n", vkStagingBuffer);
+					LOG_RENDER_API_ERROR("[Vulkan] Failed to allocate StagingBuffer '%p'\n", vkStagingBuffer);
 					return;
 				}
 				else
 				{
-					LOG_DEBUG_WARNING("[Vulkan] Allocated '%d' bytes for StagingBuffer\n", m_Desc.SizeInBytes);
+					LOG_RENDER_API_WARNING("[Vulkan] Allocated '%d' bytes for StagingBuffer\n", m_Desc.SizeInBytes);
 					if (vkBindBufferMemory(m_pDevice->GetVkDevice(), vkStagingBuffer, stagingMemory.DeviceMemory, stagingMemory.DeviceMemoryOffset) != VK_SUCCESS)
 					{
-						LOG_DEBUG_WARNING("[Vulkan] Failed to bind memory StagingBuffer\n");
+						LOG_RENDER_API_WARNING("[Vulkan] Failed to bind memory StagingBuffer\n");
 					}
 					else
 					{

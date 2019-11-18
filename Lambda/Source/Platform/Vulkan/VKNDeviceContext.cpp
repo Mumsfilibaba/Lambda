@@ -73,7 +73,7 @@ namespace Lambda
 		//Destroy layout-tracker
 		SafeDelete(m_pResourceTracker);
 
-        LOG_DEBUG_INFO("[Vulkan] Destroyed DeviceContext '%s'\n", m_Name.c_str());
+		LOG_RENDER_API_INFO("[Vulkan] Destroyed DeviceContext '%s'\n", m_Name.c_str());
     }
     
 
@@ -91,12 +91,12 @@ namespace Lambda
         poolInfo.queueFamilyIndex = familyIndices.GraphicsFamily;
         if (vkCreateCommandPool(m_pDevice->GetVkDevice(), &poolInfo, nullptr, &m_VkCommandPool) != VK_SUCCESS)
         {
-            LOG_DEBUG_ERROR("[Vulkan] Failed to create commandpool\n");
+			LOG_RENDER_API_ERROR("[Vulkan] Failed to create commandpool\n");
             return;
         }
         else
         {
-            LOG_DEBUG_INFO("[Vulkan] Created commandpool\n");
+			LOG_RENDER_API_INFO("[Vulkan] Created commandpool\n");
         }
          
         //Setup commandbuffers
@@ -113,12 +113,12 @@ namespace Lambda
         {
             if (vkAllocateCommandBuffers(m_pDevice->GetVkDevice(), &allocInfo, &m_pFrameResources[i].CommandBuffer) != VK_SUCCESS)
             {
-                LOG_DEBUG_ERROR("[Vulkan] Failed to create commandbuffer\n");
+				LOG_RENDER_API_ERROR("[Vulkan] Failed to create commandbuffer\n");
                 return;
             }
         }
         
-		LOG_DEBUG_INFO("[Vulkan] Created commandbuffers\n");
+		LOG_RENDER_API_INFO("[Vulkan] Created commandbuffers\n");
         
         //Setup fences
         VkFenceCreateInfo fenceInfo = {};
@@ -130,7 +130,7 @@ namespace Lambda
             //Create fence
             if (vkCreateFence(m_pDevice->GetVkDevice(), &fenceInfo, nullptr, &m_pFrameResources[i].Fence) != VK_SUCCESS)
             {
-                LOG_DEBUG_ERROR("[Vulkan] Failed to create fence\n");
+				LOG_RENDER_API_ERROR("[Vulkan] Failed to create fence\n");
                 return;
             }
             else
@@ -140,7 +140,7 @@ namespace Lambda
 				//Initial fence signal
 				m_pDevice->ExecuteCommandBuffer(nullptr, 0, m_pFrameResources[i].Fence);
 
-				LOG_DEBUG_INFO("[Vulkan] Created fence '%p'\n", m_pFrameResources[i].Fence);
+				LOG_RENDER_API_INFO("[Vulkan] Created fence '%p'\n", m_pFrameResources[i].Fence);
             }
         }
 		
@@ -780,7 +780,7 @@ namespace Lambda
 		}
 		else if (bufferDesc.Usage == USAGE_DYNAMIC)
 		{
-			LOG_DEBUG_ERROR("[Vulkan] USAGE_DYNAMIC can only be updated with MapBuffer\n");
+			LOG_RENDER_API_ERROR("[Vulkan] USAGE_DYNAMIC can only be updated with MapBuffer\n");
 		}
     }
     
@@ -819,7 +819,7 @@ namespace Lambda
 		VKNBuffer* pVkBuffer = reinterpret_cast<VKNBuffer*>(pBuffer);
 		if (pVkBuffer->m_Desc.Usage != USAGE_DYNAMIC)
 		{
-			LOG_DEBUG_ERROR("[Vulkan] Cannot map a buffer without usage USAGE_DYNAMIC\n");
+			LOG_RENDER_API_ERROR("[Vulkan] Cannot map a buffer without usage USAGE_DYNAMIC\n");
 		}
 
 		//Only writing supported for now
@@ -840,7 +840,7 @@ namespace Lambda
 				}
 				else
 				{
-					LOG_DEBUG_ERROR("[Vulkan] Only an ImmediateContext can map with MAP_FLAG_WRITE\n");
+					LOG_RENDER_API_ERROR("[Vulkan] Only an ImmediateContext can map with MAP_FLAG_WRITE\n");
 				}
 			}
 
@@ -936,17 +936,17 @@ namespace Lambda
 				}
 				else
 				{
-					LOG_DEBUG_ERROR("[Vulkan] PhysicalDevice does not support mipmap generation for this format\n");
+					LOG_RENDER_API_ERROR("[Vulkan] PhysicalDevice does not support mipmap generation for this format\n");
 				}
 			}
 			else
 			{
-				LOG_DEBUG_ERROR("[Vulkan] Only textures with TextureDesc::Flags TEXTURE_FLAGS_GENEATE_MIPS can use GenerateMipLevels()\n");
+				LOG_RENDER_API_ERROR("[Vulkan] Only textures with TextureDesc::Flags TEXTURE_FLAGS_GENEATE_MIPS can use GenerateMipLevels()\n");
 			}
 		}
 		else
 		{
-			LOG_DEBUG_ERROR("[Vulkan] Only textures with TextureDesc::Type=TEXTURE_TYPE_2D can use GenerateMipLevels()\n");
+			LOG_RENDER_API_ERROR("[Vulkan] Only textures with TextureDesc::Type=TEXTURE_TYPE_2D can use GenerateMipLevels()\n");
 		}
 	}
 
@@ -1075,7 +1075,7 @@ namespace Lambda
 			info.pInheritanceInfo = nullptr;
 			if (vkBeginCommandBuffer(m_pCurrentFrameResource->CommandBuffer, &info) != VK_SUCCESS)
 			{
-				LOG_DEBUG_ERROR("[Vulkan] Failed to Begin CommandBuffer\n");
+				LOG_RENDER_API_ERROR("[Vulkan] Failed to Begin CommandBuffer\n");
 			}
         
 			//Reset dependencies, when mapping a UploadBuffer, reset is called aswell
@@ -1101,7 +1101,7 @@ namespace Lambda
 			//End commandbuffer
 			if (vkEndCommandBuffer(m_pCurrentFrameResource->CommandBuffer) != VK_SUCCESS)
 			{
-				LOG_DEBUG_ERROR("[Vulkan] Failed to End CommandBuffer\n");
+				LOG_RENDER_API_ERROR("[Vulkan] Failed to End CommandBuffer\n");
 			}
 
 			//Set context state

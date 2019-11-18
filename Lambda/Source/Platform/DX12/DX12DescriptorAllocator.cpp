@@ -39,7 +39,7 @@ namespace Lambda
 			descriptor.GPU.ptr = (SIZE_T)-1;
 			descriptor.Index= (uint32)-1;
 
-			LOG_DEBUG_ERROR("DX12: No more free descriptors. [DX12DescriptorAllocator]\n");
+			LOG_RENDER_API_ERROR("DX12: No more free descriptors. [DX12DescriptorAllocator]\n");
 		}
 		else
 		{
@@ -69,11 +69,11 @@ namespace Lambda
 		HRESULT hr = pDevice->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&m_Heap));
 		if (FAILED(hr))
 		{
-			LOG_DEBUG_ERROR("DX12: Failed to create Descriptor Heap. [DX12DescriptorAllocator]\n");
+			LOG_RENDER_API_ERROR("DX12: Failed to create Descriptor Heap. [DX12DescriptorAllocator]\n");
 		}
 		else
 		{
-			LOG_DEBUG_INFO("DX12: Created Descriptor Heap. [DX12DescriptorAllocator]\n");
+			LOG_RENDER_API_INFO("DX12: Created Descriptor Heap. [DX12DescriptorAllocator]\n");
 
 			//Init values
 			m_Count = count;

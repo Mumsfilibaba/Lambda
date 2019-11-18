@@ -28,7 +28,7 @@ namespace Lambda
 			DispatchMessage(&msg);
 
 			if (msg.message == WM_QUIT)
-				this->OnQuit();
+				this->OnQuit(int32(msg.wParam));
 		}
 	}
 
@@ -38,14 +38,42 @@ namespace Lambda
 		SafeDelete(m_pWindow);
 		delete this;
 	}
+
 	
-	
-	void WindowsHost::OnWindowResize(uint32 width, uint32 height)
+	void WindowsHost::PrintF(const char* pFormat, ...)
 	{
+		constexpr uint32 MAX_BUFFER_COUNT = 1024;
+		static char s_Buffer[MAX_BUFFER_COUNT];
+	
+		va_list args;
+		va_start(args, pFormat);
+		vsnprintf(s_Buffer, MAX_BUFFER_COUNT, pFormat, args);
+		va_end(args);
+
+		printf(s_Buffer);
+		OutputDebugStringA(s_Buffer);
 	}
 	
 	
-	void WindowsHost::OnWindowDestroy()
+	void WindowsHost::OnWindowMove(uint32 x, uint32 y)
+	{
+		LOG_HOST_INFO("Window Moved x: %d, y: %d\n", x, y);
+	}
+
+
+	void WindowsHost::OnWindowFocusChanges(bool hasFocus)
+	{
+		LOG_HOST_INFO("Window Focus %s\n", hasFocus ? "Has Focus" : "Does not have focus");
+	}
+
+
+	void WindowsHost::OnWindowResize(uint32 width, uint32 height)
+	{
+		LOG_HOST_INFO("Window Resized w: %d, h: %d\n", width, height);
+	}
+	
+	
+	void WindowsHost::OnWindowClose()
 	{
 		PostQuitMessage(0);
 	}

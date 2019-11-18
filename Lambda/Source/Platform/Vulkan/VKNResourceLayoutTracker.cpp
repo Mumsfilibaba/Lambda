@@ -276,7 +276,7 @@ namespace Lambda
 			barrier.SourceStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 			break;
 		default:
-			LOG_DEBUG_ERROR("[Vulkan] Unsupported src-image layout transition '%d'\n", barrier.Barrier.oldLayout);
+			LOG_RENDER_API_ERROR("[Vulkan] Unsupported src-image layout transition '%d'\n", barrier.Barrier.oldLayout);
 			break;
 		}
 
@@ -284,7 +284,7 @@ namespace Lambda
 		switch (barrier.Barrier.newLayout)
 		{
 		case VK_IMAGE_LAYOUT_UNDEFINED:
-			LOG_DEBUG_ERROR("[Vulkan] Cannot transition to undefined\n");
+			LOG_RENDER_API_ERROR("[Vulkan] Cannot transition to undefined\n");
 			break;
 		case VK_IMAGE_LAYOUT_GENERAL:
 			barrier.Barrier.dstAccessMask = 0;
@@ -315,7 +315,7 @@ namespace Lambda
 			barrier.DestinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 			break;
 		default:
-			LOG_DEBUG_ERROR("[Vulkan] Unsupported dst-image layout transition '%d'\n", barrier.Barrier.newLayout);
+			LOG_RENDER_API_ERROR("[Vulkan] Unsupported dst-image layout transition '%d'\n", barrier.Barrier.newLayout);
 			break;
 		}
 	}

@@ -24,7 +24,7 @@ namespace Lambda
 		if (m_VkSampler != VK_NULL_HANDLE)
 			m_pDevice->SafeReleaseVkResource<VkSampler>(m_VkSampler);
 
-		LOG_DEBUG_INFO("[Vulkan] Destroyed SamplerState\n");
+		LOG_RENDER_API_INFO("[Vulkan] Destroyed SamplerState\n");
 	}
 
 
@@ -55,11 +55,11 @@ namespace Lambda
 		info.mipLodBias = desc.MipLODBias;
 		if (vkCreateSampler(m_pDevice->GetVkDevice(), &info, nullptr, &m_VkSampler) != VK_SUCCESS)
 		{
-			LOG_DEBUG_ERROR("[Vulkan] Failed to create samplerstate\n");
+			LOG_RENDER_API_ERROR("[Vulkan] Failed to create samplerstate\n");
 		}
 		else
 		{
-			LOG_DEBUG_INFO("[Vulkan] Created samplerstate\n");
+			LOG_RENDER_API_INFO("[Vulkan] Created samplerstate\n");
 			SetName(desc.pName);
 		}
 	}

@@ -25,7 +25,7 @@ namespace Lambda
 		if (m_VkShaderModule != VK_NULL_HANDLE)
 			m_pDevice->SafeReleaseVkResource<VkShaderModule>(m_VkShaderModule);
 
-		LOG_DEBUG_INFO("[Vulkan] Destroyed Shader\n");
+		LOG_RENDER_API_INFO("[Vulkan] Destroyed Shader\n");
 	}
     
     
@@ -38,7 +38,7 @@ namespace Lambda
         }
         else
         {
-            LOG_DEBUG_ERROR("[Vulkan] Language not supported\n");
+			LOG_RENDER_API_ERROR("[Vulkan] Language not supported\n");
         }
         
 		//Create a vulkan shader
@@ -50,12 +50,12 @@ namespace Lambda
         info.pCode = reinterpret_cast<const uint32_t*>(m_ByteCode.data());
         if (vkCreateShaderModule(m_pDevice->GetVkDevice(), &info, nullptr, &m_VkShaderModule) != VK_SUCCESS)
         {
-            LOG_DEBUG_ERROR("[Vulkan] Failed to create shadermodule\n");
+			LOG_RENDER_API_ERROR("[Vulkan] Failed to create shadermodule\n");
             m_VkShaderModule = VK_NULL_HANDLE;
         }
         else
         {
-            LOG_DEBUG_INFO("[Vulkan] Created shader\n");
+			LOG_RENDER_API_INFO("[Vulkan] Created shader\n");
 
             m_EntryPoint = std::string(desc.pEntryPoint);
 			m_Desc.pSource = nullptr;

@@ -86,12 +86,12 @@ namespace Lambda
 		//Did we successfully create a surface?
         if (m_VkSurface == VK_NULL_HANDLE)
         {
-            LOG_DEBUG_ERROR("[Vulkan] Failed to create surface for SwapChain\n");
+			LOG_RENDER_API_ERROR("[Vulkan] Failed to create surface for SwapChain\n");
             return;
         }
         else
         {
-            LOG_DEBUG_INFO("[Vulkan] Created Surface\n");
+			LOG_RENDER_API_INFO("[Vulkan] Created Surface\n");
         }
 
         //Check for presentationsupport
@@ -100,7 +100,7 @@ namespace Lambda
         vkGetPhysicalDeviceSurfaceSupportKHR(m_pDevice->GetVkPhysicalDevice(), familyIndices.PresentFamily, m_VkSurface, &presentSupport);
         if (!presentSupport)
         {
-            LOG_DEBUG_ERROR("[Vulkan] Current queuefamily does not support presentation\n");
+			LOG_RENDER_API_ERROR("[Vulkan] Current queuefamily does not support presentation\n");
             return;
         }
           
@@ -118,16 +118,16 @@ namespace Lambda
             if (vkCreateSemaphore(m_pDevice->GetVkDevice(), &semaphoreInfo, nullptr, &m_ImageSemaphores[i]) != VK_SUCCESS ||
                 vkCreateSemaphore(m_pDevice->GetVkDevice(), &semaphoreInfo, nullptr, &m_RenderSemaphores[i]) != VK_SUCCESS)
             {
-                LOG_DEBUG_ERROR("[Vulkan] Failed to create Semaphore\n");
+				LOG_RENDER_API_ERROR("[Vulkan] Failed to create Semaphore\n");
                 return;
             }
             else
             {
                 m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_SEMAPHORE, (uint64)m_ImageSemaphores[i],  m_Name + " ImageSemaphore[" +  std::to_string(i) + "]");
-				LOG_DEBUG_INFO("[Vulkan] Created Semaphore %p\n", m_ImageSemaphores[i]);
+				LOG_RENDER_API_INFO("[Vulkan] Created Semaphore %p\n", m_ImageSemaphores[i]);
 
                 m_pDevice->SetVulkanObjectName(VK_OBJECT_TYPE_SEMAPHORE, (uint64)m_RenderSemaphores[i], m_Name + "RenderSemaphore[" + std::to_string(i) + "]");
-				LOG_DEBUG_INFO("[Vulkan] Created Semaphore %p\n", m_RenderSemaphores[i]);
+				LOG_RENDER_API_INFO("[Vulkan] Created Semaphore %p\n", m_RenderSemaphores[i]);
             }
         }
 
@@ -137,7 +137,7 @@ namespace Lambda
 		VkResult result = QuerySwapChainSupport(cap, m_pDevice->GetVkPhysicalDevice(), m_VkSurface);
 		if (result != VK_SUCCESS)
 		{
-			LOG_DEBUG_ERROR("[Vulkan] QuerySwapChainSupport failed. Error: %s\n", VkResultToString(result));
+			LOG_RENDER_API_ERROR("[Vulkan] QuerySwapChainSupport failed. Error: %s\n", VkResultToString(result));
 			return;
 		}
 
@@ -157,13 +157,13 @@ namespace Lambda
         //Did we find it?
         if (m_VkFormat.format != VK_FORMAT_UNDEFINED)
         {
-            LOG_DEBUG_INFO("[Vulkan] Chosen SwapChain format '%s'\n", VkFormatToString(m_VkFormat.format));
+			LOG_RENDER_API_INFO("[Vulkan] Chosen SwapChain format '%s'\n", VkFormatToString(m_VkFormat.format));
         }
         else
         {
-            LOG_DEBUG_ERROR("[Vulkan] Format %s is not supported on. Following formats is supported for Creating a SwapChain\n", VkFormatToString(lookingFor));
+			LOG_RENDER_API_ERROR("[Vulkan] Format %s is not supported on. Following formats is supported for Creating a SwapChain\n", VkFormatToString(lookingFor));
             for (const auto& availableFormat : cap.Formats)
-                LOG_DEBUG_ERROR("    %s\n", VkFormatToString(availableFormat.format));
+				LOG_RENDER_API_ERROR("    %s\n", VkFormatToString(availableFormat.format));
             
             return;
         }
@@ -196,7 +196,7 @@ namespace Lambda
 			}
         }
        
-		LOG_DEBUG_INFO("[Vulkan] Chosen SwapChain PresentationMode '%s'\n", VkPresentatModeToString(m_VkPresentMode));
+		LOG_RENDER_API_INFO("[Vulkan] Chosen SwapChain PresentationMode '%s'\n", VkPresentatModeToString(m_VkPresentMode));
 
 		//Setup swapchain images
         if (desc.BufferCount >= cap.Capabilities.minImageCount && desc.BufferCount <= cap.Capabilities.maxImageCount)
@@ -205,12 +205,12 @@ namespace Lambda
 			m_Desc = desc;
 
 			//Continue to init swapchain
-            LOG_DEBUG_INFO("[Vulkan] Number of buffers in SwapChain '%u'\n", desc.BufferCount);
+			LOG_RENDER_API_INFO("[Vulkan] Number of buffers in SwapChain '%u'\n", desc.BufferCount);
             this->InitSwapChain({ desc.BufferWidth, desc.BufferHeight });
         }
         else
         {
-            LOG_DEBUG_ERROR("[Vulkan] Number of buffers(=%u) is not supported. MinBuffers=%u MaxBuffers=%u\n", desc.BufferCount, cap.Capabilities.minImageCount, cap.Capabilities.maxImageCount);
+			LOG_RENDER_API_ERROR("[Vulkan] Number of buffers(=%u) is not supported. MinBuffers=%u MaxBuffers=%u\n", desc.BufferCount, cap.Capabilities.minImageCount, cap.Capabilities.maxImageCount);
         }
 	}
     
@@ -221,7 +221,7 @@ namespace Lambda
 		VkResult result = QuerySwapChainSupport(cap, m_pDevice->GetVkPhysicalDevice(), m_VkSurface);
 		if (result != VK_SUCCESS)
 		{
-			LOG_DEBUG_WARNING("[Vulkan] QuerySwapChainSupport returned '%s'\n", VkResultToString(result));
+			LOG_RENDER_API_WARNING("[Vulkan] QuerySwapChainSupport returned '%s'\n", VkResultToString(result));
 			return;
 		}
         
@@ -244,7 +244,7 @@ namespace Lambda
 		m_Desc.BufferWidth	= newExtent.width;
 		m_Desc.BufferHeight	= newExtent.height;
 
-        LOG_DEBUG_INFO("[Vulkan] Chosen SwapChain size w: %u h: %u\n", newExtent.width, newExtent.height);
+		LOG_RENDER_API_INFO("[Vulkan] Chosen SwapChain size w: %u h: %u\n", newExtent.width, newExtent.height);
     
         //Setup swapchain
         VkSwapchainCreateInfoKHR info = {};
@@ -286,13 +286,13 @@ namespace Lambda
 		result = vkCreateSwapchainKHR(m_pDevice->GetVkDevice(), &info, nullptr, &m_VkSwapChain);
         if (result != VK_SUCCESS)
         {
-            LOG_DEBUG_ERROR("[Vulkan] Failed to create SwapChain\n");
+			LOG_RENDER_API_ERROR("[Vulkan] Failed to create SwapChain\n");
             m_VkSwapChain = VK_NULL_HANDLE;
             return;
         }
         else
         {
-            LOG_DEBUG_INFO("[Vulkan] Created SwapChain\n");
+			LOG_RENDER_API_INFO("[Vulkan] Created SwapChain\n");
             m_Desc.BufferWidth  = newExtent.width;
             m_Desc.BufferHeight = newExtent.height;
 			
@@ -325,7 +325,7 @@ namespace Lambda
             m_Buffers.push_back(AutoRef(DBG_NEW VKNTexture(m_pDevice, textures[i], desc)));
         }
         
-        LOG_DEBUG_INFO("[Vulkan] Created Backbuffers\n");
+		LOG_RENDER_API_INFO("[Vulkan] Created Backbuffers\n");
         
         //Create depthbuffer
         TextureDesc depthBufferDesc = {};
@@ -362,7 +362,7 @@ namespace Lambda
         result = AquireNextImage();
 		if (result != VK_SUCCESS)
 		{
-			LOG_DEBUG_ERROR("[Vulkan] AquireNextImage Failed\n");
+			LOG_RENDER_API_ERROR("[Vulkan] AquireNextImage Failed\n");
 		}
     }
 
@@ -400,7 +400,7 @@ namespace Lambda
         VkExtent2D extent = { width, height };
         InitSwapChain(extent);
 		
-		LOG_DEBUG_INFO("[Vulkan] VKNSwapChain: RESIZED w: %d h: %d\n", width, height);
+		LOG_RENDER_API_INFO("[Vulkan] VKNSwapChain: RESIZED w: %d h: %d\n", width, height);
 	}
 
 
@@ -465,11 +465,11 @@ namespace Lambda
 			if (result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_OUT_OF_DATE_KHR)
 			{
 				RecreateSwapChain();
-				LOG_DEBUG_WARNING("[Vulkan] Suboptimal SwapChain result='%s'\n", VkResultToString(result));
+				LOG_RENDER_API_WARNING("[Vulkan] Suboptimal SwapChain result='%s'\n", VkResultToString(result));
 			}
     		else
 			{
-				LOG_DEBUG_ERROR("[Vulkan] Present Failed. Error: %s\n", VkResultToString(result));
+				LOG_RENDER_API_ERROR("[Vulkan] Present Failed. Error: %s\n", VkResultToString(result));
 				return;
 			}
 		}

@@ -115,34 +115,34 @@ namespace Lambda
 
 		if (!availableLayers.empty())
 		{
-			LOG_DEBUG_INFO("[Vulkan] Available Instance-Layers (count=%d):\n", availableLayers.size());
+			LOG_RENDER_API_INFO("[Vulkan] Available Instance-Layers (count=%d):\n", availableLayers.size());
 			for (const auto& layer : availableLayers)
 			{
 				const char* name = layer.layerName;
-				LOG_DEBUG_INFO("   Instance-Layer '%s'\n", name);
+				LOG_RENDER_API_INFO("   Instance-Layer '%s'\n", name);
 			}
 		}
 		else
 		{
-			LOG_DEBUG_ERROR("[Vulkan] No available Instance-Layers\n");
+			LOG_RENDER_API_ERROR("[Vulkan] No available Instance-Layers\n");
 		}
         
         //Get required layers
         std::vector<const char*> requiredLayers = GetRequiredValidationLayers(desc.Flags & DEVICE_FLAG_DEBUG);
         if (!requiredLayers.empty())
         {
-            LOG_DEBUG_INFO("[Vulkan] Required Instance-Layers:\n");
+			LOG_RENDER_API_INFO("[Vulkan] Required Instance-Layers:\n");
             for (const auto& layer : requiredLayers)
-                LOG_DEBUG_INFO("   Instance-Layer '%s'\n", layer);
+				LOG_RENDER_API_INFO("   Instance-Layer '%s'\n", layer);
         }
 
 		//Get optional layers
 		std::vector<const char*> optionalLayers = GetOptionalValidationLayers(desc.Flags & DEVICE_FLAG_DEBUG);
 		if (!optionalLayers.empty())
 		{
-			LOG_DEBUG_INFO("[Vulkan] Optional Instance-Layers:\n");
+			LOG_RENDER_API_INFO("[Vulkan] Optional Instance-Layers:\n");
 			for (const auto& layer : optionalLayers)
-				LOG_DEBUG_INFO("   Instance-Layer '%s'\n", layer);
+				LOG_RENDER_API_INFO("   Instance-Layer '%s'\n", layer);
 		}
 
 		//Add optional layers. if we found a optional layer among the available ones we add it
@@ -168,16 +168,16 @@ namespace Lambda
 
         if (!availableInstanceExtensions.empty())
         {
-            LOG_DEBUG_INFO("[Vulkan] Available Instance-Extensions (count=%d):\n", availableInstanceExtensions.size());
+			LOG_RENDER_API_INFO("[Vulkan] Available Instance-Extensions (count=%d):\n", availableInstanceExtensions.size());
             for (const auto& extension : availableInstanceExtensions)
             {
                 const char* name = extension.extensionName;
-                LOG_DEBUG_INFO("   Instance-Extension '%s'\n", name);
+				LOG_RENDER_API_INFO("   Instance-Extension '%s'\n", name);
             }
         }
         else
         {
-            LOG_DEBUG_ERROR("[Vulkan]  No available Instance-Extensions\n");
+			LOG_RENDER_API_ERROR("[Vulkan]  No available Instance-Extensions\n");
         }
         
 
@@ -185,18 +185,18 @@ namespace Lambda
 		std::vector<const char*> instanceExtensions = GetRequiredInstanceExtensions(desc.Flags & DEVICE_FLAG_DEBUG);
 		if (!instanceExtensions.empty())
 		{
-			LOG_DEBUG_INFO("[Vulkan] Required Instance-Extensions:\n");
+			LOG_RENDER_API_INFO("[Vulkan] Required Instance-Extensions:\n");
 			for (const auto& extension : instanceExtensions)
-				LOG_DEBUG_INFO("   Instance-Extension '%s'\n", extension);
+				LOG_RENDER_API_INFO("   Instance-Extension '%s'\n", extension);
 		}
 
 		//Get extensions
 		std::vector<const char*> optionalInstanceExtensions = GetOptionalInstanceExtensions(desc.Flags & DEVICE_FLAG_DEBUG);
 		if (!optionalInstanceExtensions.empty())
 		{
-			LOG_DEBUG_INFO("[Vulkan] Optional Instance-Extensions:\n");
+			LOG_RENDER_API_INFO("[Vulkan] Optional Instance-Extensions:\n");
 			for (const auto& extension : optionalInstanceExtensions)
-				LOG_DEBUG_INFO("   Instance-Extension '%s'\n", extension);
+				LOG_RENDER_API_INFO("   Instance-Extension '%s'\n", extension);
 		}
 
 		//Add optional extensions. if we found a optional extension among the available ones we add it
@@ -229,14 +229,14 @@ namespace Lambda
 		VkResult res = vkCreateInstance(&instanceInfo, nullptr, &m_VkInstance);
 		if (res != VK_SUCCESS)
 		{
-			LOG_DEBUG_ERROR("[Vulkan] Failed to create Vulkan Instance. Error %d\n", res);
+			LOG_RENDER_API_ERROR("[Vulkan] Failed to create Vulkan Instance. Error %d\n", res);
 
 			m_VkInstance = VK_NULL_HANDLE;
 			return;
 		}
 		else
 		{
-			LOG_SYSTEM_PRINT("[Vulkan] Created Vulkan instance\n");
+			LOG(LOG_CHANNEL_RENDER_API, LOG_SEVERITY_INFO, "[Vulkan] Created Vulkan instance\n");
 		}
 
 
@@ -244,17 +244,17 @@ namespace Lambda
 		vkSetDebugUtilsObjectNameEXT = (PFN_vkSetDebugUtilsObjectNameEXT)vkGetInstanceProcAddr(m_VkInstance, "vkSetDebugUtilsObjectNameEXT");
 		if (!vkSetDebugUtilsObjectNameEXT)
 		{
-			LOG_DEBUG_ERROR("[Vulkan] Failed to retrive 'vkSetDebugUtilsObjectNameEXT'\n");
+			LOG_RENDER_API_ERROR("[Vulkan] Failed to retrive 'vkSetDebugUtilsObjectNameEXT'\n");
 		}
 		vkCreateDebugUtilsMessengerEXT = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(m_VkInstance, "vkCreateDebugUtilsMessengerEXT");
 		if (!vkCreateDebugUtilsMessengerEXT)
 		{
-			LOG_DEBUG_ERROR("[Vulkan] Failed to retrive 'vkCreateDebugUtilsMessengerEXT'\n");
+			LOG_RENDER_API_ERROR("[Vulkan] Failed to retrive 'vkCreateDebugUtilsMessengerEXT'\n");
 		}
 		vkDestroyDebugUtilsMessengerEXT = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(m_VkInstance, "vkDestroyDebugUtilsMessengerEXT");
 		if (!vkDestroyDebugUtilsMessengerEXT)
 		{
-			LOG_DEBUG_ERROR("[Vulkan] Failed to retrive 'vkDestroyDebugUtilsMessengerEXT'\n");
+			LOG_RENDER_API_ERROR("[Vulkan] Failed to retrive 'vkDestroyDebugUtilsMessengerEXT'\n");
 		}
 
 
@@ -267,14 +267,14 @@ namespace Lambda
 
 			if (vkCreateDebugUtilsMessengerEXT(m_VkInstance, &info, nullptr, &m_VkDebugMessenger) != VK_SUCCESS)
 			{
-				LOG_DEBUG_ERROR("[Vulkan] Failed to create debugmessenger, maybe the extension is not present?\n");
+				LOG_RENDER_API_ERROR("[Vulkan] Failed to create debugmessenger, maybe the extension is not present?\n");
 
 				m_VkDebugMessenger = VK_NULL_HANDLE;
 				return;
 			}
 			else
 			{
-				LOG_DEBUG_INFO("[Vulkan] Created Debugmessenger\n");
+				LOG_RENDER_API_INFO("[Vulkan] Created Debugmessenger\n");
 			}
 		}
 
@@ -283,7 +283,7 @@ namespace Lambda
 		m_VkPhysicalDevice = QueryPhyscialDevice();
 		if (m_VkPhysicalDevice == VK_NULL_HANDLE)
 		{
-			LOG_DEBUG_ERROR("[Vulkan] Failed to find a suitable GPU\n");
+			LOG_RENDER_API_ERROR("[Vulkan] Failed to find a suitable GPU\n");
 			return;
 		}
 		else
@@ -307,10 +307,10 @@ namespace Lambda
 
 			hostVRAM = hostVRAM / (1024 * 1024);
 			deviceVRAM = deviceVRAM / (1024 * 1024);
-			LOG_SYSTEM_PRINT("[Vulkan] Selected GPU '%s'\n", m_VkPhysicalDeviceProperties.deviceName);
-			LOG_SYSTEM_PRINT("         Host VRAM:    %llu MB\n", hostVRAM);
-			LOG_SYSTEM_PRINT("         Device VRAM:  %llu MB\n", deviceVRAM);
-			LOG_SYSTEM_PRINT("         Total VRAM:   %llu MB\n", hostVRAM + deviceVRAM);
+			LOG(LOG_CHANNEL_RENDER_API, LOG_SEVERITY_INFO, "[Vulkan] Selected GPU '%s'\n", m_VkPhysicalDeviceProperties.deviceName);
+			LOG(LOG_CHANNEL_RENDER_API, LOG_SEVERITY_INFO, "         Host VRAM:    %llu MB\n", hostVRAM);
+			LOG(LOG_CHANNEL_RENDER_API, LOG_SEVERITY_INFO, "         Device VRAM:  %llu MB\n", deviceVRAM);
+			LOG(LOG_CHANNEL_RENDER_API, LOG_SEVERITY_INFO, "         Total VRAM:   %llu MB\n", hostVRAM + deviceVRAM);
 		}
 
 		//Find the queuefamily indices for the adapter that we have chosen
@@ -350,10 +350,10 @@ namespace Lambda
 		
 		if (!availableDeviceExtensions.empty())
 		{
-			LOG_DEBUG_INFO("[Vulkan] Available Device-Extensions (count=%d):\n", availableDeviceExtensions.size());
+			LOG_RENDER_API_INFO("[Vulkan] Available Device-Extensions (count=%d):\n", availableDeviceExtensions.size());
 			for (const auto& extension : availableDeviceExtensions)
 			{
-				LOG_DEBUG_INFO("   Device-Extension '%s'\n", extension.extensionName);
+				LOG_RENDER_API_INFO("   Device-Extension '%s'\n", extension.extensionName);
 			}
 		}
 
@@ -362,10 +362,10 @@ namespace Lambda
 		std::vector<const char*> deviceExtensions = GetRequiredDeviceExtensions();
 		if (!deviceExtensions.empty())
 		{
-			LOG_DEBUG_INFO("[Vulkan] Required Device-Extensions:\n");
+			LOG_RENDER_API_INFO("[Vulkan] Required Device-Extensions:\n");
 			for (const auto& extension : deviceExtensions)
 			{
-				LOG_DEBUG_INFO("   Device-Extension '%s'\n", extension);
+				LOG_RENDER_API_INFO("   Device-Extension '%s'\n", extension);
 			}
 		}
 
@@ -374,10 +374,10 @@ namespace Lambda
 		std::vector<const char*> optionalDeviceExtensions = GetOptionalDeviceExtensions();
 		if (!optionalDeviceExtensions.empty())
 		{
-			LOG_DEBUG_INFO("[Vulkan] Optional Device-Extensions:\n");
+			LOG_RENDER_API_INFO("[Vulkan] Optional Device-Extensions:\n");
 			for (const auto& extension : optionalDeviceExtensions)
 			{
-				LOG_DEBUG_INFO("   Device-Extension '%s'\n", extension);
+				LOG_RENDER_API_INFO("   Device-Extension '%s'\n", extension);
 			}
 		}
 
@@ -411,14 +411,14 @@ namespace Lambda
 
 		if (vkCreateDevice(m_VkPhysicalDevice, &info, nullptr, &m_VkDevice) != VK_SUCCESS)
 		{
-			LOG_DEBUG_ERROR("[Vulkan] Failed to create device\n");
+			LOG_RENDER_API_ERROR("[Vulkan] Failed to create device\n");
 
 			m_VkDevice = VK_NULL_HANDLE;
 			return;
 		}
 		else
 		{
-			LOG_SYSTEM_PRINT("[Vulkan] Created device and retrived queues\n");
+			LOG(LOG_CHANNEL_RENDER_API, LOG_SEVERITY_INFO, "[Vulkan] Created device and retrived queues\n");
 		}
 
 
@@ -644,7 +644,7 @@ namespace Lambda
     {
         if (vkQueueSubmit(m_GraphicsVkQueue, numBuffers, pInfo, fence) != VK_SUCCESS)
         {
-            LOG_DEBUG_ERROR("[Vulkan] Failed to submit CommandBuffers\n");
+			LOG_RENDER_API_ERROR("[Vulkan] Failed to submit CommandBuffers\n");
         }
 		else
 		{
@@ -678,7 +678,7 @@ namespace Lambda
     
     void VKNDevice::WaitUntilIdle() const
     {
-        LOG_DEBUG_INFO("[Vulkan] VKNDevice::WaitUntilIdle\n");
+		LOG_RENDER_API_INFO("[Vulkan] VKNDevice::WaitUntilIdle\n");
         vkDeviceWaitIdle(m_VkDevice);
     }
 
@@ -714,7 +714,7 @@ namespace Lambda
 
 			if (vkSetDebugUtilsObjectNameEXT(m_VkDevice, &info) != VK_SUCCESS)
 			{
-				LOG_DEBUG_ERROR("[Vulkan] Failed to set name '%s'\n", info.pObjectName);
+				LOG_RENDER_API_ERROR("[Vulkan] Failed to set name '%s'\n", info.pObjectName);
 			}
 		}
 	}
@@ -743,7 +743,7 @@ namespace Lambda
 		vkEnumeratePhysicalDevices(m_VkInstance, &adapterCount, nullptr);
 		if (adapterCount == 0)
 		{
-			LOG_DEBUG_ERROR("[Vulkan] No vulkan-supported GPUs found\n");
+			LOG_RENDER_API_ERROR("[Vulkan] No vulkan-supported GPUs found\n");
 			return VK_NULL_HANDLE;
 		}
 
@@ -751,12 +751,12 @@ namespace Lambda
 		vkEnumeratePhysicalDevices(m_VkInstance, &adapterCount, adapters.data());
 
 #if defined(LAMBDA_DEBUG)
-		LOG_DEBUG_INFO("[Vulkan] Following of physcial devices found:\n");
+		LOG_RENDER_API_INFO("[Vulkan] Following of physcial devices found:\n");
 		for (auto& dev : adapters)
 		{
 			VkPhysicalDeviceProperties properties = {};
 			vkGetPhysicalDeviceProperties(dev, &properties);
-			LOG_DEBUG_INFO("    %s\n", properties.deviceName);
+			LOG_RENDER_API_INFO("    %s\n", properties.deviceName);
 		}
 #endif
 
@@ -784,7 +784,7 @@ namespace Lambda
 		//Check for adapter features
 		if (!adapterFeatures.samplerAnisotropy)
 		{
-			LOG_DEBUG_ERROR("[Vulkan] Anisotropic filtering is not supported by adapter\n");
+			LOG_RENDER_API_ERROR("[Vulkan] Anisotropic filtering is not supported by adapter\n");
 			return false;
 		}
 
@@ -792,12 +792,12 @@ namespace Lambda
 		QueueFamilyIndices indices = FindQueueFamilies(adapter);
 		if (!indices.Valid())
 		{
-			LOG_DEBUG_ERROR("[Vulkan] Failed to find a suitable queuefamilies\n");
+			LOG_RENDER_API_ERROR("[Vulkan] Failed to find a suitable queuefamilies\n");
 			return false;
 		}
 		else
 		{
-			LOG_DEBUG_INFO("[Vulkan] Using queueFamily-Index '%d' for graphics and '%d' for presentation\n", indices.GraphicsFamily, indices.PresentFamily);
+			LOG_RENDER_API_INFO("[Vulkan] Using queueFamily-Index '%d' for graphics and '%d' for presentation\n", indices.GraphicsFamily, indices.PresentFamily);
 		}
 
 		//Check if required extension for device is supported
@@ -823,7 +823,7 @@ namespace Lambda
 
 			if (!extensionFound)
 			{
-				LOG_DEBUG_ERROR("[Vulkan] Adapter '%s' does not support the device extension '%s'\n", adapterProperties.deviceName, extensionName);
+				LOG_RENDER_API_ERROR("[Vulkan] Adapter '%s' does not support the device extension '%s'\n", adapterProperties.deviceName, extensionName);
 				return false;
 			}
 		}
@@ -936,7 +936,7 @@ namespace Lambda
 		const char* pObjectName = (pCallbackData->objectCount != 0) ? pCallbackData->pObjects->pObjectName : "";
 
 		//Log
-		LogManager::Get().GetDebugLog().Print(severity, "[Vulkan Validation Layer - type=%s, object=0x%llx, objectname=%s] %s\n", pTypeStr, object, pObjectName, pCallbackData->pMessage);
+		LOG(LOG_CHANNEL_RENDER_API, severity, "[Vulkan Validation Layer - type=%s, object=0x%llx, objectname=%s] %s\n", pTypeStr, object, pObjectName, pCallbackData->pMessage);
 		return VK_FALSE;
 	}
 

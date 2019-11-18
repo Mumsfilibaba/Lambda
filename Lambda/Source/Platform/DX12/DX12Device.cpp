@@ -46,7 +46,7 @@ namespace Lambda
 		LAMBDA_ASSERT(s_pInstance == nullptr);
 		s_pInstance = this;
 
-		LOG_SYSTEM_INFO("Creating DX12Device\n");
+		LOG_RENDER_API_INFO("Creating DX12Device\n");
 		
 		//TODO: Allow tearing?
 		m_BackBufferFlags	= DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
@@ -95,7 +95,7 @@ namespace Lambda
 
 			if (FAILED(D3D12GetDebugInterface(IID_PPV_ARGS(&m_Debug))))
 			{
-				LOG_DEBUG_ERROR("DX12: Failed to get debug interface\n");
+				LOG_RENDER_API_ERROR("DX12: Failed to get debug interface\n");
 				return;
 			}
 			else
@@ -110,14 +110,14 @@ namespace Lambda
 		HRESULT hr = CreateDXGIFactory2(factoryFlags, IID_PPV_ARGS(&factory));
 		if (FAILED(hr))
 		{
-			LOG_DEBUG_ERROR("DX12: Failed to create factory\n");
+			LOG_RENDER_API_ERROR("DX12: Failed to create factory\n");
 			return;
 		}
 		else
 		{
 			if (FAILED(factory.As<IDXGIFactory5>(&m_Factory)))
 			{
-				LOG_DEBUG_ERROR("DX12: Failed to retrive IDXGIFactory5\n");
+				LOG_RENDER_API_ERROR("DX12: Failed to retrive IDXGIFactory5\n");
 				return;
 			}
 		}
@@ -134,7 +134,7 @@ namespace Lambda
 		hr = D3D12CreateDevice(m_Adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&m_Device));
 		if (SUCCEEDED(hr))
 		{
-			LOG_DEBUG_INFO("DX12: Created device.\n");
+			LOG_RENDER_API_INFO("DX12: Created device.\n");
 			
 			//Set desc
 			m_Desc = desc;
@@ -146,17 +146,17 @@ namespace Lambda
 				hr = m_Device.As<ID3D12Device5>(&m_DXRDevice);
 				if (FAILED(hr))
 				{
-					LOG_DEBUG_ERROR("DX12: Failed to retrive ID3D12Device5, no DXR support\n");
+					LOG_RENDER_API_ERROR("DX12: Failed to retrive ID3D12Device5, no DXR support\n");
 					return;
 				}
 				else
 				{
-					LOG_DEBUG_PRINT("DX12: DXR is supported\n");
+					LOG(LOG_CHANNEL_RENDER_API, LOG_SEVERITY_INFO, "[D3D12] DXR is supported\n");
 				}
 			}
 			else
 			{
-				LOG_DEBUG_WARNING("DX12: DXR is not supported on this system\n");
+				LOG(LOG_CHANNEL_RENDER_API, LOG_SEVERITY_WARNING, "[D3D12] DXR is not supported\n");
 			}
 
 			//Create debug interface
@@ -167,7 +167,7 @@ namespace Lambda
 				hr = m_Device.As<ID3D12InfoQueue>(&infoQueue);
 				if (FAILED(hr))
 				{
-					LOG_DEBUG_ERROR("DX12: Could not retrive infoqueue.\n");
+					LOG_RENDER_API_ERROR("DX12: Could not retrive infoqueue.\n");
 					return;
 				}
 				else
@@ -193,7 +193,7 @@ namespace Lambda
 		}
 		else
 		{
-			LOG_DEBUG_ERROR("DX12: Could not create device.\n");
+			LOG_RENDER_API_ERROR("DX12: Could not create device.\n");
 			return;
 		}
 
@@ -223,7 +223,7 @@ namespace Lambda
 		hr = m_Factory->CreateSwapChainForHwnd(m_DirectQueue.GetQueue(), hWnd, &scDesc, nullptr, nullptr, &swapChain);
 		if (FAILED(hr))
 		{
-			LOG_DEBUG_ERROR("DX12: Failed to create swapchain.\n");
+			LOG_RENDER_API_ERROR("DX12: Failed to create swapchain.\n");
 			return;
 		}
 		else
@@ -231,7 +231,7 @@ namespace Lambda
 			//Retrive newer interface
 			if (FAILED(swapChain.As<IDXGISwapChain3>(&m_SwapChain)))
 			{
-				LOG_DEBUG_ERROR("DX12: Failed to retrive IDXGISwapChain3.\n");
+				LOG_RENDER_API_ERROR("DX12: Failed to retrive IDXGISwapChain3.\n");
 				return;
 			}
 
@@ -242,7 +242,7 @@ namespace Lambda
 			//No fullscreen with ALT+ENTER
 			if (FAILED(m_Factory->MakeWindowAssociation(hWnd, DXGI_MWA_NO_ALT_ENTER)))
 			{
-				LOG_DEBUG_ERROR("DX12: Failed to retrive disable ALT+ENTER fullscreen.\n");
+				LOG_RENDER_API_ERROR("DX12: Failed to retrive disable ALT+ENTER fullscreen.\n");
 				return;
 			}
 
@@ -258,7 +258,7 @@ namespace Lambda
 			for (uint32 i = 0; i < m_NumBackbuffers; i++)
 				m_BackBuffers[i] = DBG_NEW DX12Texture(this, nullptr);
 
-			LOG_DEBUG_INFO("DX12: Created swapchain\n");
+			LOG_RENDER_API_INFO("DX12: Created swapchain\n");
 		}
 
 
@@ -381,7 +381,7 @@ namespace Lambda
 		//Return early if errors
 		if (desc.Usage == USAGE_DYNAMIC)
 		{
-			LOG_DEBUG_ERROR("Lambda Engine: Texture2D cannot have resource usage dynamic\n");
+			LOG_RENDER_API_ERROR("Lambda Engine: Texture2D cannot have resource usage dynamic\n");
 			(*ppTexture) = nullptr;
 			return;
 		}
@@ -746,13 +746,13 @@ namespace Lambda
 			}
 			else
 			{
-				LOG_DEBUG_WARNING("DX12: Adapter %d does not support D3D12", i);
+				LOG_RENDER_API_WARNING("DX12: Adapter %d does not support D3D12", i);
 			}
 		}
 
 		if (adapterCount < 1 || bestAdapterIndex < 0)
 		{
-			LOG_DEBUG_ERROR("DX12: No adapter supporting D3D12 was found\n");
+			LOG_RENDER_API_ERROR("DX12: No adapter supporting D3D12 was found\n");
 			return false;
 		}
 		else
@@ -768,7 +768,7 @@ namespace Lambda
 				//Get newer interface
 				if (FAILED(adapter.As<IDXGIAdapter3>(&m_Adapter)))
 				{
-					LOG_DEBUG_ERROR("DX12: Failed to query IDXGIAdapter3\n");
+					LOG_RENDER_API_ERROR("DX12: Failed to query IDXGIAdapter3\n");
 					return false;
 				}
 				else
@@ -777,7 +777,7 @@ namespace Lambda
 					m_Adapter->GetDesc1(&desc);
 
 					std::string adaptername = WidestringToString(desc.Description);
-					LOG_DEBUG_PRINT("DX12: Selected adapter: %s\n", adaptername.c_str());
+					LOG(LOG_CHANNEL_RENDER_API, LOG_SEVERITY_INFO, "DX12: Selected adapter: %s\n", adaptername.c_str());
 
 					return true;
 				}
@@ -806,7 +806,7 @@ namespace Lambda
 			ComPtr<ID3D12Resource> backBuffer = nullptr;
 			if (FAILED(m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&backBuffer))))
 			{
-				LOG_DEBUG_ERROR("DX12: Failed to retrive backbuffer '%d'.", i);
+				LOG_RENDER_API_ERROR("DX12: Failed to retrive backbuffer '%d'.", i);
 				return false;
 			}
 
@@ -817,7 +817,7 @@ namespace Lambda
 			m_BackBuffers[i]->SetDescriptorHandle(descriptor);
 		}
 
-		LOG_DEBUG_INFO("DX12: Created textures and descriptors for backbuffers\n");
+		LOG_RENDER_API_INFO("DX12: Created textures and descriptors for backbuffers\n");
 		return true;
 	}
 

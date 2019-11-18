@@ -1,6 +1,6 @@
 #pragma once
-#include "Defines.h"
-#include "Types.h"
+#include "LambdaCore.h"
+#include "Core/LogManager.h"
 #include "Utilities/TextureHelper.h"
 #include <vector>
 #include "Vulkan.h"
@@ -126,7 +126,7 @@ namespace Lambda
         }
         
         //Return error
-        LOG_DEBUG_ERROR("Vulkan: Failed to find a suitable memory type\n");
+        LOG_RENDER_API_ERROR("Vulkan: Failed to find a suitable memory type\n");
         return uint32(-1);
     }
     

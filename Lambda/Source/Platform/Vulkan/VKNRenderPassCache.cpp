@@ -167,12 +167,12 @@ namespace Lambda
 		VkRenderPass renderPass = VK_NULL_HANDLE;
 		if (vkCreateRenderPass(m_pDevice->GetVkDevice(), &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
 		{
-			LOG_DEBUG_ERROR("[Vulkan] Failed to create renderpass\n");
+			LOG_RENDER_API_ERROR("[Vulkan] Failed to create renderpass\n");
 			return VK_NULL_HANDLE;
 		}
 		else
 		{
-			LOG_DEBUG_INFO("[Vulkan] Created new renderpass\n");
+			LOG_RENDER_API_INFO("[Vulkan] Created new renderpass\n");
 
 			m_RenderPasses.insert(std::pair<VKNRenderPassCacheKey, VkRenderPass>(key, renderPass));
 			return renderPass;

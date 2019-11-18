@@ -33,12 +33,12 @@ namespace Lambda
 		info.usage					= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 		if (vkCreateBuffer(pVkDevice->GetVkDevice(), &info, nullptr, &m_VkBuffer) != VK_SUCCESS)
 		{
-			LOG_DEBUG_ERROR("[Vulkan] [UPLOADBUFFER] Failed to create page\n");
+			LOG_RENDER_API_ERROR("[Vulkan] [UPLOADBUFFER] Failed to create page\n");
 			return;
 		}
 		else
 		{
-			LOG_DEBUG_WARNING("[Vulkan] [UPLOADBUFFER] Created page\n");
+			LOG_RENDER_API_WARNING("[Vulkan] [UPLOADBUFFER] Created page\n");
 		}
 
 
@@ -50,15 +50,15 @@ namespace Lambda
 		vkGetBufferMemoryRequirements(pVkDevice->GetVkDevice(), m_VkBuffer, &memoryRequirements);
 		if (!pVkDevice->Allocate(m_Memory, memoryRequirements, memoryProperties))
 		{
-			LOG_DEBUG_ERROR("[Vulkan] [UPLOADBUFFER] Failed to allocate page '%p'\n", m_VkBuffer);
+			LOG_RENDER_API_ERROR("[Vulkan] [UPLOADBUFFER] Failed to allocate page '%p'\n", m_VkBuffer);
 			return;
 		}
 		else
 		{
-			LOG_DEBUG_WARNING("[Vulkan] [UPLOADBUFFER] Allocated '%d' bytes for page\n", m_SizeInBytes);
+			LOG_RENDER_API_WARNING("[Vulkan] [UPLOADBUFFER] Allocated '%d' bytes for page\n", m_SizeInBytes);
 			if (vkBindBufferMemory(pVkDevice->GetVkDevice(), m_VkBuffer, m_Memory.DeviceMemory, m_Memory.DeviceMemoryOffset) != VK_SUCCESS)
 			{
-				LOG_DEBUG_WARNING("[Vulkan] [UPLOADBUFFER] Failed to bind memory page\n");
+				LOG_RENDER_API_WARNING("[Vulkan] [UPLOADBUFFER] Failed to bind memory page\n");
 			}
 		}
 	}
@@ -99,7 +99,7 @@ namespace Lambda
 		if (m_VkBuffer != VK_NULL_HANDLE)
 			pVkDevice->SafeReleaseVkResource<VkBuffer>(m_VkBuffer);
 
-		LOG_SYSTEM(LOG_SEVERITY_WARNING, "[Vulkan] [UPLOADBUFFER] Deallocated page\n");
+		LOG(LOG_CHANNEL_RENDER_API, LOG_SEVERITY_WARNING, "[Vulkan] [UPLOADBUFFER] Deallocated page\n");
 		delete this;
 	}
 
@@ -123,7 +123,7 @@ namespace Lambda
 		Reset();
 		m_pCurrentPage->Destroy(m_pVkDevice);
 
-		LOG_DEBUG_INFO("[Vulkan] [UPLOADBUFFER] Destroyed allocator\n");
+		LOG_RENDER_API_INFO("[Vulkan] [UPLOADBUFFER] Destroyed allocator\n");
 	}
 
 

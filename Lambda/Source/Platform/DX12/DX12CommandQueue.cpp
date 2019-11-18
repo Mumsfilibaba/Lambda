@@ -45,17 +45,17 @@ namespace Lambda
 		HRESULT hr = pDevice->CreateCommandQueue(&qDesc, IID_PPV_ARGS(&m_Queue));
 		if (FAILED(hr))
 		{
-			LOG_DEBUG_ERROR("DX12: Could not create CommandQueue.\n");
+			LOG_RENDER_API_ERROR("DX12: Could not create CommandQueue.\n");
 			return false;
 		}
 		else
 		{
-			LOG_DEBUG_INFO("DX12: Created CommandQueue.\n");
+			LOG_RENDER_API_INFO("DX12: Created CommandQueue.\n");
 
 			m_GPUWaitEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 			if (m_GPUWaitEvent == 0)
 			{
-				LOG_DEBUG_INFO("DX12: Failed to create GPU-event handle.\n");
+				LOG_RENDER_API_INFO("DX12: Failed to create GPU-event handle.\n");
 				return false;
 			}
 		}
@@ -64,12 +64,12 @@ namespace Lambda
 		hr = pDevice->CreateFence(initalFence, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fence));
 		if (FAILED(hr))
 		{
-			LOG_DEBUG_ERROR("DX12: Could not create Fence.\n");
+			LOG_RENDER_API_ERROR("DX12: Could not create Fence.\n");
 			return false;
 		}
 		else
 		{
-			LOG_DEBUG_INFO("DX12: Created Fence.\n");
+			LOG_RENDER_API_INFO("DX12: Created Fence.\n");
 		}
 
 		return true;

@@ -46,12 +46,12 @@ namespace Lambda
 										VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 		if (vkCreateBuffer(pVkDevice->GetVkDevice(), &info, nullptr, &m_VkBuffer) != VK_SUCCESS)
 		{
-			LOG_DEBUG_ERROR("[Vulkan] [DYNAMIC MEMORY ALLOCATOR] Failed to create Buffer\n");
+			LOG_RENDER_API_ERROR("[Vulkan] [DYNAMIC MEMORY ALLOCATOR] Failed to create Buffer\n");
 			return;
 		}
 		else
 		{
-			LOG_DEBUG_WARNING("[Vulkan] [DYNAMIC MEMORY ALLOCATOR] Created Page\n");
+			LOG_RENDER_API_WARNING("[Vulkan] [DYNAMIC MEMORY ALLOCATOR] Created Page\n");
 		}
 
 		//Memory properties
@@ -62,15 +62,15 @@ namespace Lambda
 		vkGetBufferMemoryRequirements(pVkDevice->GetVkDevice(), m_VkBuffer, &memoryRequirements);
 		if (!pVkDevice->Allocate(m_Memory, memoryRequirements, memoryProperties))
 		{
-			LOG_DEBUG_ERROR("[Vulkan] [DYNAMIC MEMORY ALLOCATOR] Failed to allocate page '%p'\n", m_VkBuffer);
+			LOG_RENDER_API_ERROR("[Vulkan] [DYNAMIC MEMORY ALLOCATOR] Failed to allocate page '%p'\n", m_VkBuffer);
 			return;
 		}
 		else
 		{
-			LOG_DEBUG_WARNING("[Vulkan] [DYNAMIC MEMORY ALLOCATOR] Allocated '%d' bytes for page\n", m_SizeInBytes);
+			LOG_RENDER_API_WARNING("[Vulkan] [DYNAMIC MEMORY ALLOCATOR] Allocated '%d' bytes for page\n", m_SizeInBytes);
 			if (vkBindBufferMemory(pVkDevice->GetVkDevice(), m_VkBuffer, m_Memory.DeviceMemory, m_Memory.DeviceMemoryOffset) != VK_SUCCESS)
 			{
-				LOG_DEBUG_WARNING("[Vulkan] [DYNAMIC MEMORY ALLOCATOR] Failed to bind Buffer-Memory\n", m_SizeInBytes);
+				LOG_RENDER_API_WARNING("[Vulkan] [DYNAMIC MEMORY ALLOCATOR] Failed to bind Buffer-Memory\n", m_SizeInBytes);
 			}
 		}
 
@@ -225,7 +225,7 @@ namespace Lambda
 		VKNDynamicMemoryBlock* pCurrent = allocation.pBlock;
 		if (!pCurrent)
 		{
-			LOG_DEBUG_ERROR("[Vulkan] [DYNAMIC MEMORY ALLOCATOR] Block for allocation is invalid\n");
+			LOG_RENDER_API_ERROR("[Vulkan] [DYNAMIC MEMORY ALLOCATOR] Block for allocation is invalid\n");
 			return;
 		}
 
@@ -302,10 +302,10 @@ namespace Lambda
 		//Print memoryleaks
 #if defined(LAMBDA_DEBUG)
 		VKNDynamicMemoryBlock* pDebug = m_pHead;
-		LOG_DEBUG_WARNING("[Vulkan] [DYNAMIC MEMORY ALLOCATOR] Allocated blocks left in page %u:\n", m_ID);
+		LOG_RENDER_API_WARNING("[Vulkan] [DYNAMIC MEMORY ALLOCATOR] Allocated blocks left in page %u:\n", m_ID);
 		while (pDebug)
 		{
-			LOG_DEBUG_WARNING("    DynamicBlock: ID=%u, Offset=%u, Size=%u, IsFree=%s\n", pDebug->ID, pDebug->BufferOffset, pDebug->SizeInBytes, pDebug->IsFree ? "True" : "False");
+			LOG_RENDER_API_WARNING("    DynamicBlock: ID=%u, Offset=%u, Size=%u, IsFree=%s\n", pDebug->ID, pDebug->BufferOffset, pDebug->SizeInBytes, pDebug->IsFree ? "True" : "False");
 			pDebug = pDebug->pNext;
 		}
 #endif
@@ -320,7 +320,7 @@ namespace Lambda
 		if (m_VkBuffer != VK_NULL_HANDLE)
 			pVkDevice->SafeReleaseVkResource<VkBuffer>(m_VkBuffer);
 
-		LOG_SYSTEM(LOG_SEVERITY_WARNING, "[Vulkan] [DYNAMIC MEMORY ALLOCATOR] Deallocated page\n");
+		LOG(LOG_CHANNEL_RENDER_API, LOG_SEVERITY_WARNING, "[Vulkan] [DYNAMIC MEMORY ALLOCATOR] Deallocated page\n");
 		delete this;
 	}
 
@@ -360,14 +360,14 @@ namespace Lambda
 			EmptyGarbageMemory();
 
 		//Delete allocator
-		LOG_SYSTEM(LOG_SEVERITY_WARNING, "[Vulkan] [DYNAMIC MEMORY ALLOCATOR] Deleting allocator. Number of pages: %u\n", m_Pages.size());
+		LOG(LOG_CHANNEL_RENDER_API, LOG_SEVERITY_WARNING, "[Vulkan] [DYNAMIC MEMORY ALLOCATOR] Deleting allocator. Number of pages: %u\n", m_Pages.size());
 		for (auto page : m_Pages)
 		{
 			if (page)
 				page->Destroy(m_pVkDevice);
 		}
 
-		LOG_DEBUG_INFO("[Vulkan] [DYNAMIC MEMORY ALLOCATOR] Destroyed allocator\n");
+		LOG_RENDER_API_INFO("[Vulkan] [DYNAMIC MEMORY ALLOCATOR] Destroyed allocator\n");
 	}
 
 

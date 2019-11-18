@@ -26,7 +26,7 @@ namespace Lambda
 		SafeDeleteArr(m_pDynamicOffsets);
 		SafeDeleteArr(m_pVkDescriptors);
 
-		LOG_DEBUG_INFO("[Vulkan] Destroyed ShaderVariableTable\n");
+		LOG_RENDER_API_INFO("[Vulkan] Destroyed ShaderVariableTable\n");
 	}
 
 
@@ -64,7 +64,7 @@ namespace Lambda
 		auto var = m_NameTable.find(std::string(pName));
 		if (var == m_NameTable.end())
 		{
-			LOG_DEBUG_ERROR("[Vulkan] Invalid name on ShaderVariable\n");
+			LOG_RENDER_API_ERROR("[Vulkan] Invalid name on ShaderVariable\n");
 			return nullptr;
 		}
 

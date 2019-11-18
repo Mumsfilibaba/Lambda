@@ -15,5 +15,6 @@ int main(int argc, const char* argv[])
 	params.ppLayers		= &pLayer;
 	params.LayerCount	= 1;
 
+	delete pLayer;
 	return LambdaMain(params);
 }

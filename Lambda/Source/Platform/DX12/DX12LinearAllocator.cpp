@@ -56,11 +56,11 @@ namespace Lambda
 		HRESULT hr = pDevice->CreateCommittedResource(&heapProp, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&m_Resource));
 		if (FAILED(hr))
 		{
-			LOG_DEBUG_ERROR("DX12: Failed to create Linear-page. [DX12LinearAllocatorBlock]\n");
+			LOG_RENDER_API_ERROR("DX12: Failed to create Linear-page. [DX12LinearAllocatorBlock]\n");
 		}
 		else
 		{
-			LOG_DEBUG_INFO("DX12: Created a Linear-page with the size '%d' bytes. [DX12LinearAllocatorBlock]\n", size);
+			LOG_RENDER_API_INFO("DX12: Created a Linear-page with the size '%d' bytes. [DX12LinearAllocatorBlock]\n", size);
 
 			//Map if successfull
 			m_Resource->Map(0, nullptr, &m_CPUPtr);
@@ -106,7 +106,7 @@ namespace Lambda
 		DX12Allocation allocation;
 		if (size >= m_PageSize)
 		{
-			LOG_DEBUG_ERROR("DX12: Failed to allocate. Requested size were '%d' while the total page size was '%d'.\n", size, m_PageSize);
+			LOG_RENDER_API_ERROR("DX12: Failed to allocate. Requested size were '%d' while the total page size was '%d'.\n", size, m_PageSize);
 		}
 		else
 		{

@@ -15,7 +15,7 @@ namespace Lambda
     {
         if (api == GRAPHICS_API_VULKAN)
         {
-            LOG_DEBUG_INFO("[LAMBDA ENGINE] Created Vulkan-Factory\n");
+            LOG_ENGINE_INFO("Created Vulkan-Factory\n");
             (*ppFactory) = DBG_NEW VKNFactory();
         }
         else if (api == GRAPHICS_API_D3D12)
@@ -23,13 +23,13 @@ namespace Lambda
 #if defined(LAMBDA_PLAT_WINDOWS)
             //TODO: Return DX12 here 
 #else
-            LOG_DEBUG_ERROR("[LAMBDA ENGINE] GRAPHICS_API_D3D12 is only available on the Windows platform\n");
+			LOG_ENGINE_INFO("GRAPHICS_API_D3D12 is only available on the Windows platform\n");
             (*ppFactory) = nullptr;
 #endif
         }
         else
         {
-            LOG_DEBUG_ERROR("[LAMBDA ENGINE] Unknown GraphicsAPI\n");
+			LOG_ENGINE_ERROR("Unknown GraphicsAPI\n");
             (*ppFactory) = nullptr;
         }
     }

@@ -44,11 +44,12 @@ namespace Lambda
 		void Release();
 
 		//SystemEventCallbacks
-		virtual void OnHostQuit() override final;
+		virtual void OnHostQuit(int32 exitCode) override final;
 	private:
 		Host* m_pHost;
 		LogManager* m_pLogManager;
 		WindowEventDispatcher* m_pWindowEventDispatcher;
+		int32 m_ExitCode;
 		bool m_IsRunning;
 	};
 }

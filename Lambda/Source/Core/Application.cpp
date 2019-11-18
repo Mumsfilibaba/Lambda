@@ -40,7 +40,7 @@ namespace Lambda
 	{
 		OnLoad();
 
-        LOG_DEBUG_INFO("[LAMBDA ENGINE] STARTING\n");
+		LOG_ENGINE_INFO("STARTING\n");
         
 		Clock clock;
 		Timestep accumulator;
@@ -84,13 +84,13 @@ namespace Lambda
 			//Print UPS to console
 			if (clock.GetTotalTime().AsSeconds() >= 1.0f)
 			{
-                LOG_SYSTEM_PRINT("[LAMBDA ENGINE] UPS: %u, Frametime: %.1fms\n", ups, clock.GetDeltaTime().AsMilliSeconds());
+                LOG(LOG_CHANNEL_ENGINE, LOG_SEVERITY_INFO, "UPS: %u, Frametime: %.1fms\n", ups, clock.GetDeltaTime().AsMilliSeconds());
                 ups = 0;
                 clock.Reset();
 			}
 		}
 
-        LOG_DEBUG_INFO("[LAMBDA ENGINE] EXITING\n");        
+		LOG_ENGINE_INFO("EXITING\n");
 		OnRelease();
 		return m_ExitCode;
 	}
@@ -241,7 +241,7 @@ namespace Lambda
     bool Application::OnWindowClose(const WindowClosedEvent& event)
     {
         Quit(0);
-        LOG_DEBUG_INFO("[LAMBDA ENGINE] Window closed\n");
+		LOG_ENGINE_INFO("Window closed\n");
         return true;
     }
 
@@ -251,7 +251,7 @@ namespace Lambda
         if (event.GetKey() == KEY_ESCAPE)
         {
             Quit(0);
-            LOG_DEBUG_INFO("[LAMBDA ENGINE] Escape pressed, exiting\n");
+			LOG_ENGINE_INFO("Escape pressed, exiting\n");
             return true;
         }
         else
@@ -315,6 +315,6 @@ namespace Lambda
         m_Running = false;
         m_ExitCode = exitCode;
         
-        LOG_DEBUG_INFO("[LAMBDA ENGINE] Quit called\n");
+		LOG_ENGINE_INFO("Quit called\n");
     }
 }

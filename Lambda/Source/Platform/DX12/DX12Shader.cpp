@@ -41,7 +41,7 @@ namespace Lambda
 			m_ShaderBlob.resize(len);
 			memcpy(m_ShaderBlob.data(), desc.pSource, len);
 
-			LOG_DEBUG_INFO("DX12: Loaded shader from compiled source.\n");
+			LOG_RENDER_API_INFO("DX12: Loaded shader from compiled source.\n");
 		}
 		else if (desc.Languange == SHADER_LANG_HLSL)
 		{
@@ -61,11 +61,11 @@ namespace Lambda
 	#if defined(LAMBDA_DEBUG)
 				const char* pMessage = reinterpret_cast<const char*>(error->GetBufferPointer());
 	#endif
-				LOG_DEBUG_ERROR("DX12: Failed to compile shader. Error-message:\n%s", pMessage);
+				LOG_RENDER_API_ERROR("DX12: Failed to compile shader. Error-message:\n%s", pMessage);
 			}
 			else
 			{
-				LOG_DEBUG_INFO("DX12: Compiled shader.\n");
+				LOG_RENDER_API_INFO("DX12: Compiled shader.\n");
 
 				m_ShaderBlob.resize(shaderBlob->GetBufferSize());
 				memcpy(m_ShaderBlob.data(), shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize());

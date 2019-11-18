@@ -51,12 +51,12 @@ namespace Lambda
 		HRESULT hr = m_pDevice->GetDevice()->CreateCommandAllocator(listType, IID_PPV_ARGS(&m_Allocator));
 		if (FAILED(hr))
 		{
-			LOG_DEBUG_ERROR("DX12: Failed to create CommandAllocator.\n");
+			LOG_RENDER_API_ERROR("DX12: Failed to create CommandAllocator.\n");
 			return;
 		}
 		else
 		{
-			LOG_DEBUG_INFO("DX12: Created CommandList.\n");
+			LOG_RENDER_API_INFO("DX12: Created CommandList.\n");
 		}
 
 		//Create commandlist
@@ -64,7 +64,7 @@ namespace Lambda
 		hr = m_pDevice->GetDevice()->CreateCommandList(1, listType, m_Allocator.Get(), nullptr, IID_PPV_ARGS(&commandList));
 		if (FAILED(hr))
 		{
-			LOG_DEBUG_ERROR("DX12: Failed to create CommandList.\n");
+			LOG_RENDER_API_ERROR("DX12: Failed to create CommandList.\n");
 			return;
 		}
 		else
@@ -72,7 +72,7 @@ namespace Lambda
 			hr = commandList.As<ID3D12GraphicsCommandList4>(&m_List);
 			if (FAILED(hr))
 			{
-				LOG_DEBUG_ERROR("DX12: Failed to retrive ID3D12GraphicsCommandList4.\n");
+				LOG_RENDER_API_ERROR("DX12: Failed to retrive ID3D12GraphicsCommandList4.\n");
 				return;
 			}
 			else
@@ -531,12 +531,12 @@ namespace Lambda
 		//Reset commandallocator and commandlist
 		if (FAILED(m_Allocator->Reset()))
 		{
-			LOG_DEBUG_ERROR("DX12: Failed to reset commandallocator\n");
+			LOG_RENDER_API_ERROR("DX12: Failed to reset commandallocator\n");
 		}
 
 		if (FAILED(m_List->Reset(m_Allocator.Get(), nullptr)))
 		{
-			LOG_DEBUG_ERROR("DX12: Failed to reset commandlist\n");
+			LOG_RENDER_API_ERROR("DX12: Failed to reset commandlist\n");
 		}
 		
 		//Reset allocators

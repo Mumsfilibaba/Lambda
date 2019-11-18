@@ -37,7 +37,7 @@ namespace Lambda
 		m_HasFocus(false)
 	{
 		Init(pTitle, width, height);
-		LOG_SYSTEM_INFO("[LAMBDA ENGINE] Created window. w: %d, h: %d\n", width, height);
+		LOG_HOST_INFO("[LAMBDA ENGINE] Created window. w: %d, h: %d\n", width, height);
 	}
 	
 
@@ -129,11 +129,11 @@ namespace Lambda
                 
                 m_Fullscreen = true;
 
-				LOG_DEBUG_WARNING("[LAMBDA ENGINE] Switched into fullscreen\n");
+				LOG_HOST_WARNING("[LAMBDA ENGINE] Switched into fullscreen\n");
 			}
 			else 
 			{
-				LOG_DEBUG_ERROR("[LAMBDA ENGINE] Failed to switch into fullscreen\n");
+				LOG_HOST_ERROR("[LAMBDA ENGINE] Failed to switch into fullscreen\n");
 				return false;
 			}
 		}
@@ -148,11 +148,11 @@ namespace Lambda
 
                 m_Fullscreen = false;
 
-				LOG_DEBUG_INFO("[LAMBDA ENGINE] Switched into windowed mode\n");
+				LOG_HOST_INFO("[LAMBDA ENGINE] Switched into windowed mode\n");
 			}
             else
             {
-				LOG_DEBUG_ERROR("[LAMBDA ENGINE] Failed to switch from fullscreen\n");
+				LOG_HOST_ERROR("[LAMBDA ENGINE] Failed to switch from fullscreen\n");
                 return false;
             }
 		}
@@ -238,23 +238,19 @@ namespace Lambda
 		{
 		case WM_DESTROY:
 		{
-			WindowEventDispatcher::Get().OnWindowDestroy();
-			WindowClosedEvent event = WindowClosedEvent();
-			DispatchEvent(event);
+			WindowEventDispatcher::Get().OnWindowClose();
 			break;
 		}
 		
 		case WM_SIZE:
 		{
-			WindowResizeEvent event = WindowResizeEvent(uint32(LOWORD(lParam)), uint32(HIWORD(lParam)));
-			DispatchEvent(event);
+			WindowEventDispatcher::Get().OnWindowResize(uint32(LOWORD(lParam)), uint32(HIWORD(lParam)));
 			break;
 		}
 
 		case WM_MOVE:
 		{
-			WindowMoveEvent event = WindowMoveEvent(uint32(LOWORD(lParam)), uint32(HIWORD(lParam)));
-			DispatchEvent(event);
+			WindowEventDispatcher::Get().OnWindowMove(uint32(LOWORD(lParam)), uint32(HIWORD(lParam)));
 			break;
 		}
 		
@@ -328,8 +324,7 @@ namespace Lambda
 			m_HasFocus = msg == WM_SETFOCUS;
 
 			//Send event to rest of the system
-			WindowFocusChangedEvent event = WindowFocusChangedEvent(m_HasFocus);
-			DispatchEvent(event);
+			WindowEventDispatcher::Get().OnWindowFocusChanges(m_HasFocus);
 			break;
 		}
 

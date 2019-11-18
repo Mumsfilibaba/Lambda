@@ -10,7 +10,7 @@ namespace Lambda
 
 	void WindowEventDispatcher::AddListener(IWindowEventListener* pWindowListener)
 	{
-		LAMBDA_ASSERT(pWindowListener != nullptr, "[LAMBDA ENGINE] pWindowListener cannot be nullptr");
+		LAMBDA_ASSERT_PRINT(pWindowListener != nullptr, "[LAMBDA ENGINE] pWindowListener cannot be nullptr");
 		m_Listeners.emplace_back(pWindowListener);
 	}
 	
@@ -21,6 +21,20 @@ namespace Lambda
 	}
 
 
+	void WindowEventDispatcher::OnWindowMove(uint32 x, uint32 y)
+	{
+		for (auto pListener : m_Listeners)
+			pListener->OnWindowMove(x, y);
+	}
+
+
+	void WindowEventDispatcher::OnWindowFocusChanges(bool hasFocus)
+	{
+		for (auto pListener : m_Listeners)
+			pListener->OnWindowFocusChanges(hasFocus);
+	}
+
+
 	void WindowEventDispatcher::OnWindowResize(uint32 width, uint32 height)
 	{
 		for (auto pListener : m_Listeners)
@@ -28,9 +42,9 @@ namespace Lambda
 	}
 	
 	
-	void WindowEventDispatcher::OnWindowDestroy()
+	void WindowEventDispatcher::OnWindowClose()
 	{
 		for (auto pListener : m_Listeners)
-			pListener->OnWindowDestroy();
+			pListener->OnWindowClose();
 	}
 }

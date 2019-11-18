@@ -32,7 +32,7 @@ namespace Lambda
 		//Since only one heap can be used at a time we only use one heap, only return error here
 		if (m_Used + num >= m_Count)
 		{
-			LOG_DEBUG_ERROR("DX12: No room for allocating '%d' descriptors in linearallocator\n", num);
+			LOG_RENDER_API_ERROR("DX12: No room for allocating '%d' descriptors in linearallocator\n", num);
 			return DX12DescriptorHandle();
 		}
 
@@ -58,11 +58,11 @@ namespace Lambda
 		HRESULT hr = pDevice->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&m_Heap));
 		if (FAILED(hr))
 		{
-			LOG_DEBUG_ERROR("DX12: Failed to create Descriptor Heap. [DX12LinearDescriptorAllocator]\n");
+			LOG_RENDER_API_ERROR("DX12: Failed to create Descriptor Heap. [DX12LinearDescriptorAllocator]\n");
 		}
 		else
 		{
-			LOG_DEBUG_INFO("DX12: Created Descriptor Heap. [DX12LinearDescriptorAllocator]\n");
+			LOG_RENDER_API_INFO("DX12: Created Descriptor Heap. [DX12LinearDescriptorAllocator]\n");
 
 			//Init values
 			m_Count = count;

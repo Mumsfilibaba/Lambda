@@ -142,7 +142,7 @@ namespace Lambda
 			{
 #if defined(LAMBDA_DEBUG)
 				const char* pMessage = reinterpret_cast<const char*>(error->GetBufferPointer());
-				LOG_DEBUG_ERROR("DX12: Failed to serialize RootSignature. Error-message:\n%s\n", pMessage);
+				LOG_RENDER_API_ERROR("DX12: Failed to serialize RootSignature. Error-message:\n%s\n", pMessage);
 #endif
 				return;
 			}
@@ -150,12 +150,12 @@ namespace Lambda
 			hr = m_pDevice->GetDevice()->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_RootSignature));
 			if (FAILED(hr))
 			{
-				LOG_DEBUG_ERROR("DX12: Failed to create RootSignature\n");
+				LOG_RENDER_API_ERROR("DX12: Failed to create RootSignature\n");
 				return;
 			}
 			else
 			{
-				LOG_DEBUG_INFO("DX12: Created RootSignature\n");
+				LOG_RENDER_API_INFO("DX12: Created RootSignature\n");
 			}
 		}
 
@@ -194,11 +194,11 @@ namespace Lambda
 			HRESULT hr = m_pDevice->GetDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_State));
 			if (FAILED(hr))
 			{
-				LOG_DEBUG_ERROR("DX12: Failed to create pipelinestate\n");
+				LOG_RENDER_API_ERROR("DX12: Failed to create pipelinestate\n");
 			}
 			else
 			{
-				LOG_DEBUG_INFO("DX12: Created pipelinestate\n");
+				LOG_RENDER_API_INFO("DX12: Created pipelinestate\n");
 			}
 		}
 	}

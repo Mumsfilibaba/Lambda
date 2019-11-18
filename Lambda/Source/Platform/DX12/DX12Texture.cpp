@@ -90,12 +90,12 @@ namespace Lambda
 			HRESULT hr = m_pDevice->GetDevice()->CreateCommittedResource(&heapProp, D3D12_HEAP_FLAG_NONE, &rDesc, state, pClearValue, IID_PPV_ARGS(&m_Texture));
 			if (FAILED(hr))
 			{
-				LOG_DEBUG_ERROR("DX12: Failed to create Texture2D.\n");
+				LOG_RENDER_API_ERROR("DX12: Failed to create Texture2D.\n");
 				return;
 			}
 			else
 			{
-				LOG_DEBUG_INFO("DX12: Created Texture2D.\n");
+				LOG_RENDER_API_INFO("DX12: Created Texture2D.\n");
 				
 				m_Desc = desc;
 			}

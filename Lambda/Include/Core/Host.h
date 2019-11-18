@@ -18,18 +18,18 @@ namespace Lambda
 		virtual void Init() = 0;
 		virtual void ProcessEvents() = 0;
 		virtual void Release() = 0;
-
+		virtual void PrintF(const char* pFormat, ...) = 0;
 
 		virtual void AddEventListener(IHostEventListener* pListener)
 		{
-			LAMBDA_ASSERT(pListener != nullptr, "[LAMBDA ENGINE] pListener cannot be nullptr");
+			LAMBDA_ASSERT_PRINT(pListener != nullptr, "[LAMBDA ENGINE] pListener cannot be nullptr");
 			m_pEventListeners.emplace_back(pListener);
 		}
 	protected:
-		virtual void OnQuit()
+		virtual void OnQuit(int32 exitCode)
 		{
 			for (auto pListener : m_pEventListeners)
-				pListener->OnHostQuit();
+				pListener->OnHostQuit(exitCode);
 		}
 	protected:
 		std::vector<IHostEventListener*> m_pEventListeners;

@@ -111,12 +111,12 @@ namespace Lambda
 		VkFramebuffer framebuffer = VK_NULL_HANDLE;
 		if (vkCreateFramebuffer(m_pDevice->GetVkDevice(), &info, nullptr, &framebuffer) != VK_SUCCESS)
 		{
-			LOG_DEBUG_ERROR("[Vulkan] Failed to create Framebuffer\n");
+			LOG_RENDER_API_ERROR("[Vulkan] Failed to create Framebuffer\n");
 			return VK_NULL_HANDLE;
 		}
 		else
 		{
-			LOG_SYSTEM_PRINT("[Vulkan] Created new Framebuffer\n");
+			LOG(LOG_CHANNEL_RENDER_API, LOG_SEVERITY_INFO, "[Vulkan] Created new Framebuffer\n");
 
 			m_Framebuffers.insert(std::pair<VKNFramebufferCacheKey, VkFramebuffer>(fbKey, framebuffer));
 			return framebuffer;

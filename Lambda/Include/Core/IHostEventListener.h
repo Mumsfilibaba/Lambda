@@ -7,11 +7,10 @@ namespace Lambda
 	//IHostEventListener
 	//------------------
 
-	class IHostEventListener
+	class LAMBDA_API IHostEventListener
 	{
 	public:
 		LAMBDA_INTERFACE(IHostEventListener);
-
-		virtual void OnHostQuit() = 0;
+		virtual void OnHostQuit(int32 exitCode) = 0;
 	};
 }

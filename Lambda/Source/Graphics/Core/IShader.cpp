@@ -26,7 +26,7 @@ namespace Lambda
 		std::ifstream file(pFilename, mode);
 		if (file.is_open())
 		{
-            LOG_DEBUG_INFO("[LAMBDA ENGINE] Loaded shaderfile '%s' successfully\n", pFilename);
+			LOG_ENGINE_INFO("Loaded shaderfile '%s' successfully\n", pFilename);
             
 			//Load file into string
 			std::string source;
@@ -53,7 +53,7 @@ namespace Lambda
 		}
 		else
 		{
-			LOG_DEBUG_ERROR("[LAMBDA ENGINE] Failed to read shaderfile '%s'\n", pFilename);
+			LOG_ENGINE_ERROR("Failed to read shaderfile '%s'\n", pFilename);
 		}
 
 		return pShader;

@@ -43,6 +43,12 @@ namespace Lambda
 	}
 
 
+	void LEngine::Release()
+	{
+		delete this;
+	}
+
+
 	void LEngine::Init(const LEngineParams& params)
 	{
 		//Create Host
@@ -72,17 +78,13 @@ namespace Lambda
 	void LEngine::DoFrame()
 	{
 	}
-
-
-	void LEngine::Release()
-	{
-		delete this;
-	}
 	
 	
-	void LEngine::OnHostQuit()
+	void LEngine::OnHostQuit(int32 exitCode)
 	{
-		LOG_DEBUG_INFO("[LAMBDA ENGINE] Quiting\n");
+		LOG_ENGINE_INFO("Quiting with code %d\n", exitCode);
+
+		m_ExitCode	= exitCode;
 		m_IsRunning = false;
 	}
 }

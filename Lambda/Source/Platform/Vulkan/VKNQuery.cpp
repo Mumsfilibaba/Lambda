@@ -32,7 +32,7 @@ namespace Lambda
 		if (m_VkQueryPool != VK_NULL_HANDLE)
 			m_pDevice->SafeReleaseVkResource<VkQueryPool>(m_VkQueryPool);
 
-		LOG_DEBUG_INFO("[Vulkan] Destroyed Query\n");
+		LOG_RENDER_API_INFO("[Vulkan] Destroyed Query\n");
 	}
     
     
@@ -50,11 +50,11 @@ namespace Lambda
         
         if (vkCreateQueryPool(m_pDevice->GetVkDevice(), &queryInfo, nullptr, &m_VkQueryPool) != VK_SUCCESS)
         {
-            LOG_DEBUG_ERROR("[Vulkan] Failed to create querypool\n");
+			LOG_RENDER_API_ERROR("[Vulkan] Failed to create querypool\n");
         }
         else
         {
-            LOG_DEBUG_INFO("[Vulkan] Created querypool\n");
+			LOG_RENDER_API_INFO("[Vulkan] Created querypool\n");
         }
     }
     
