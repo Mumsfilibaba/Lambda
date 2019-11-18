@@ -7,6 +7,7 @@ namespace Lambda
 {
 	class Host;
 	class Layer;
+	class LayerStack;
 	class LogManager;
 	class WindowEventDispatcher;
 
@@ -48,6 +49,7 @@ namespace Lambda
 	private:
 		Host* m_pHost;
 		LogManager* m_pLogManager;
+		LayerStack* m_pLayerStack;
 		WindowEventDispatcher* m_pWindowEventDispatcher;
 		int32 m_ExitCode;
 		bool m_IsRunning;

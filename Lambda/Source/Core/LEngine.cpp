@@ -1,6 +1,7 @@
 #include "LambdaPch.h"
 #include "Core/LEngine.h"
 #include "Core/Host.h"
+#include "Core/LayerStack.h"
 #include "Core/LogManager.h"
 #include "Core/WindowEventDispatcher.h"
 
@@ -30,6 +31,8 @@ namespace Lambda
 		IHostEventListener(),
 		m_pHost(nullptr),
 		m_pLogManager(nullptr),
+		m_pLayerStack(nullptr),
+		m_pWindowEventDispatcher(nullptr),
 		m_IsRunning(true)
 	{
 	}
@@ -38,6 +41,7 @@ namespace Lambda
 	LEngine::~LEngine()
 	{
 		m_pWindowEventDispatcher->Release();
+		m_pLayerStack->Release();
 		m_pLogManager->Release();
 		m_pHost->Release();
 	}
@@ -62,6 +66,11 @@ namespace Lambda
 		//Init Host
 		m_pHost->Init();
 		m_pHost->AddEventListener(this);
+
+		//Init LayerStack
+		m_pLayerStack = DBG_NEW LayerStack();
+		for (uint32 i = 0; i < params.LayerCount; i++)
+			m_pLayerStack->PushLayer(params.ppLayers[i]);
 	}
 
 

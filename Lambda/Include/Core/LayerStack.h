@@ -1,6 +1,6 @@
 #pragma once
-#include "Defines.h"
-#include "Types.h"
+#include "LambdaCore.h"
+#include "Utilities/Singleton.h"
 #include <vector>
 
 namespace Lambda
@@ -11,7 +11,7 @@ namespace Lambda
     //LayerStack
     //----------
 
-    class LAMBDA_API LayerStack
+    class LAMBDA_API LayerStack : public Singleton<LayerStack>
     {
     public:
         LAMBDA_NO_COPY(LayerStack);

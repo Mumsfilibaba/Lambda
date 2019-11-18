@@ -14,6 +14,8 @@ namespace Lambda
     {
         for (auto pLayer : m_Layers)
             SafeDelete(pLayer);
+
+		delete this;
     }
 
 
