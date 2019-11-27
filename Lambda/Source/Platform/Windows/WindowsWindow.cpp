@@ -2,28 +2,14 @@
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include "Core/LogManager.h"
 	#include "Core/WindowEventDispatcher.h"
-	
 	#include "Utilities/StringHelper.h"
-	#include "Events/KeyEvent.h"
-	#include "Events/WindowEvent.h"
-	#include "Events/MouseEvent.h"
 	#include "WindowsHelper.h"
 	#include "WindowsWindow.h"
 	#include "WindowClass.h"
-	#include "WindowsInput.h"
 	#define	NAME_APPWINDOW L"AppWindow"
 
 namespace Lambda
 {
-	//-------
-	//IWindow
-	//-------
-
-	IWindow* IWindow::Create(const WindowDesc& desc)
-	{
-		return nullptr;
-	}
-
 	//-------------
 	//WindowsWindow
 	//-------------
@@ -31,8 +17,7 @@ namespace Lambda
 	LRESULT CALLBACK WindowEventCallback(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 	WindowsWindow::WindowsWindow(const char* pTitle, uint32 width, uint32 height)
-		: m_pEventCallback(nullptr),
-		m_hWindow(0),
+		: m_hWindow(0),
 		m_Fullscreen(false),
 		m_HasFocus(false)
 	{
@@ -45,7 +30,7 @@ namespace Lambda
 	{
 		SetFullscreen(false);
 
-		SafeDelete(m_pEventCallback);
+		//Remove window
 		if (IsWindow(m_hWindow))
 		{
 			DestroyWindow(m_hWindow);
@@ -53,21 +38,6 @@ namespace Lambda
 
 			WindowClass::Unregister(NAME_APPWINDOW);
 		}
-	}
-	
-
-	void WindowsWindow::SetEventCallback(IEventCallback* pCallback)
-	{
-		if (m_pEventCallback)
-		{
-			SafeDelete(m_pEventCallback);
-		}
-		m_pEventCallback = pCallback;
-	}
-
-
-	void WindowsWindow::OnUpdate() const
-	{
 	}
 
 
@@ -225,13 +195,6 @@ namespace Lambda
 	}
 
 
-	void WindowsWindow::DispatchEvent(const Event& event)
-	{
-		if (m_pEventCallback)
-			m_pEventCallback->Callback(event);
-	}
-
-
 	LRESULT WindowsWindow::OnEvent(uint32 msg, WPARAM wParam, LPARAM lParam)
 	{
 		switch (msg)
@@ -256,28 +219,28 @@ namespace Lambda
 		
 		case WM_KEYDOWN:
 		{
-			KeyPressedEvent event = KeyPressedEvent(WindowsInput::ConvertWindowsKey(uint32(wParam)), GetKeyModifers(), uint32(LOWORD(lParam)));
-			DispatchEvent(event);
+			//KeyPressedEvent event = KeyPressedEvent(WindowsInput::ConvertWindowsKey(uint32(wParam)), GetKeyModifers(), uint32(LOWORD(lParam)));
+			//DispatchEvent(event);
 			break;
 		}
 		case WM_KEYUP:
 		{
-			KeyReleasedEvent event = KeyReleasedEvent(WindowsInput::ConvertWindowsKey(uint32(wParam)), Lambda::GetKeyModifers());
-			DispatchEvent(event);
+			//KeyReleasedEvent event = KeyReleasedEvent(WindowsInput::ConvertWindowsKey(uint32(wParam)), Lambda::GetKeyModifers());
+			//DispatchEvent(event);
 			break;
 		}
 
 		case WM_CHAR:
 		{
-			KeyTypedEvent event = KeyTypedEvent(uint32(wParam));
-			DispatchEvent(event);
+			//KeyTypedEvent event = KeyTypedEvent(uint32(wParam));
+			//DispatchEvent(event);
 			break;
 		}
 
 		case WM_MOUSEMOVE:
 		{
-			MouseMovedEvent event = MouseMovedEvent(uint32(GET_X_LPARAM(lParam)), uint32(GET_Y_LPARAM(lParam)));
-			DispatchEvent(event);
+			//MouseMovedEvent event = MouseMovedEvent(uint32(GET_X_LPARAM(lParam)), uint32(GET_Y_LPARAM(lParam)));
+			//DispatchEvent(event);
 			break;
 		}
 
@@ -286,8 +249,8 @@ namespace Lambda
 		case WM_RBUTTONDOWN:
 		case WM_XBUTTONDOWN:
 		{
-			MouseButtonPressedEvent event = MouseButtonPressedEvent(WindowsInput::ConvertWindowsButton(uint32(wParam)), Lambda::GetKeyModifers());
-			DispatchEvent(event);
+			//MouseButtonPressedEvent event = MouseButtonPressedEvent(WindowsInput::ConvertWindowsButton(uint32(wParam)), Lambda::GetKeyModifers());
+			//DispatchEvent(event);
 			break;
 		}
 
@@ -296,8 +259,8 @@ namespace Lambda
 		case WM_RBUTTONUP:
 		case WM_XBUTTONUP:
 		{
-			MouseButtonReleasedEvent event = MouseButtonReleasedEvent(WindowsInput::ConvertWindowsButton(uint32(wParam)), Lambda::GetKeyModifers());
-			DispatchEvent(event);
+			//MouseButtonReleasedEvent event = MouseButtonReleasedEvent(WindowsInput::ConvertWindowsButton(uint32(wParam)), Lambda::GetKeyModifers());
+			//DispatchEvent(event);
 			break;
 		}
 		
@@ -312,8 +275,8 @@ namespace Lambda
 			else
 				verticalValue = value;
 
-			MouseScrolledEvent event = MouseScrolledEvent(horizontalValue, verticalValue);
-			DispatchEvent(event);
+			//MouseScrolledEvent event = MouseScrolledEvent(horizontalValue, verticalValue);
+			//DispatchEvent(event);
 			break;
 		}
 

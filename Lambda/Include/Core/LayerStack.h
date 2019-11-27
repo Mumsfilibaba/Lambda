@@ -11,7 +11,7 @@ namespace Lambda
     //LayerStack
     //----------
 
-    class LAMBDA_API LayerStack : public Singleton<LayerStack>
+    class LAMBDA_API LayerStack
     {
     public:
         LAMBDA_NO_COPY(LayerStack);
@@ -19,8 +19,7 @@ namespace Lambda
         LayerStack() = default;
         ~LayerStack() = default;
         
-        void Init();
-        void Release();
+        void ReleaseLayers();
         void PushLayer(Layer* pLayer);
         void PopLayer();
 
@@ -35,6 +34,8 @@ namespace Lambda
 		{
 			return m_Layers.end();
 		}
+	private:
+		void ReleaseLayer(Layer* pLayer);
     private:
         std::vector<Layer*> m_Layers;
     };

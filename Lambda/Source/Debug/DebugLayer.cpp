@@ -5,10 +5,9 @@
 #include "Graphics/Core/IPipelineState.h"
 #include "Graphics/Core/ITexture.h"
 #include "Graphics/Core/IBuffer.h"
-#include "Core/Application.h"
-#include "Events/KeyEvent.h"
-#include "Events/MouseEvent.h"
-#include "Events/WindowEvent.h"
+#include "Graphics/Core/IDevice.h"
+#include "Graphics/Core/ISwapChain.h"
+#include "Graphics/Renderer3D.h"
 
 namespace Lambda
 {
@@ -145,11 +144,9 @@ namespace Lambda
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
 
-        IWindow* pWindow = Application::Get().GetWindow();
-
         ImGuiIO& io = ImGui::GetIO();
         io.BackendPlatformName = "Lambda Engine";
-        io.DisplaySize = ImVec2(float(pWindow->GetWidth()), float(pWindow->GetHeight()));
+        //io.DisplaySize = ImVec2(float(pWindow->GetWidth()), float(pWindow->GetHeight()));
 
         // Keyboard mapping. ImGui will use those indices to peek into the io.KeysDown[] array.
         io.KeyMap[ImGuiKey_Tab]          = KEY_TAB;
@@ -176,7 +173,7 @@ namespace Lambda
         io.KeyMap[ImGuiKey_Z]            = KEY_Z;
 
 #if defined(LAMBDA_PLAT_WINDOWS)
-        io.ImeWindowHandle = reinterpret_cast<HWND>(pWindow->GetNativeHandle());
+        //io.ImeWindowHandle = reinterpret_cast<HWND>(pWindow->GetNativeHandle());
 #endif
                 
         ImGui::StyleColorsDark();
@@ -188,8 +185,8 @@ namespace Lambda
         ImGui::GetStyle().ScrollbarRounding = 0.0f;
 
 		//Create graphics objects
-		Application& app = Application::Get();
-		IDevice* pDevice = app.GetGraphicsDevice();
+		//Application& app = nullptr; Application::Get();
+		IDevice* pDevice = nullptr;// app.GetGraphicsDevice();
 
 		//Create shaders
 		ShaderDesc shaderDesc = {};
@@ -283,7 +280,7 @@ namespace Lambda
 		graphicsPipeline.RenderTargetFormats[0] = FORMAT_B8G8R8A8_UNORM;
 		graphicsPipeline.DepthStencilFormat		= FORMAT_D24_UNORM_S8_UINT;
 		graphicsPipeline.Topology				= PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-		graphicsPipeline.SampleCount = app.GetEngineParams().SampleCount;
+		graphicsPipeline.SampleCount = 1;// app.GetEngineParams().SampleCount;
 
 		PipelineStateDesc pipelineDesc = {};
 		pipelineDesc.pName				 = "ImGui PipelineState";
@@ -361,7 +358,7 @@ namespace Lambda
 	
 	void DebugLayer::OnRenderUI(Timestep dt)
 	{
-        Application& app = Application::Get();
+        //Application& app = Application::Get();
         
         const float DISTANCE = 10.0f;
         static int corner = 0;
@@ -374,32 +371,32 @@ namespace Lambda
         }
         
         ImGui::SetNextWindowBgAlpha(0.75f); // Transparent background
-        if (ImGui::Begin("Timings", NULL, (corner != -1 ? ImGuiWindowFlags_NoMove : 0) | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))
-        {
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 0.0f, 1.0f));
+		if (ImGui::Begin("Timings", NULL, (corner != -1 ? ImGuiWindowFlags_NoMove : 0) | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))
+		{
+			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 0.0f, 1.0f));
 
-			IDevice* pDevice = app.GetGraphicsDevice();
+			IDevice* pDevice = nullptr;// app.GetGraphicsDevice();
 			const DeviceProperties props = pDevice->GetProperties();
 			if (props.Api == GRAPHICS_API_VULKAN)
 				ImGui::Text("Renderer [Vulkan]");
 			else if (props.Api == GRAPHICS_API_D3D12)
 				ImGui::Text("Renderer [D3D12]");
-            ImGui::Separator();
-            
-            ISwapChain* pSwapChain = app.GetSwapChain();
-            const SwapChainDesc& swapChainDesc = pSwapChain->GetDesc();
+			ImGui::Separator();
+
+			ISwapChain* pSwapChain = nullptr;// app.GetSwapChain();
+			const SwapChainDesc& swapChainDesc = pSwapChain->GetDesc();
 			ImGui::Text("Vendor: %s", props.VendorString);
 			ImGui::Text("Adapter: %s", props.AdapterString);
-            ImGui::Text("Resolution: %u x %u", swapChainDesc.BufferWidth, swapChainDesc.BufferHeight);
-            ImGui::Text("MSAA: %ux", swapChainDesc.BufferSampleCount);
-            ImGui::Text("BackBufferCount: %u", swapChainDesc.BufferCount);
-            ImGui::Text("VerticalSync: %s", swapChainDesc.VerticalSync ? "On" : "Off");
-            
-            ImGui::Separator();
-            ImGui::Text("Timings:");
-            ImGui::Separator();
-            
-			FrameStatistics stats = Application::Get().GetRenderer().GetFrameStatistics();                    
+			ImGui::Text("Resolution: %u x %u", swapChainDesc.BufferWidth, swapChainDesc.BufferHeight);
+			ImGui::Text("MSAA: %ux", swapChainDesc.BufferSampleCount);
+			ImGui::Text("BackBufferCount: %u", swapChainDesc.BufferCount);
+			ImGui::Text("VerticalSync: %s", swapChainDesc.VerticalSync ? "On" : "Off");
+
+			ImGui::Separator();
+			ImGui::Text("Timings:");
+			ImGui::Separator();
+
+			FrameStatistics stats = {};//sApplication::Get().GetRenderer().GetFrameStatistics();
             static float timer = 0.0f;
             timer += dt.AsMilliSeconds();
 
@@ -597,124 +594,4 @@ namespace Lambda
     void DebugLayer::OnLoad()
     {
     }
-
-
-    bool DebugLayer::OnEvent(const Event& event)
-    {
-        EventForwarder forwarder;
-		forwarder.ForwardEvent(this, &DebugLayer::OnKeyTyped, event);
-		forwarder.ForwardEvent(this, &DebugLayer::OnKeyPressed, event);
-        forwarder.ForwardEvent(this, &DebugLayer::OnKeyReleased, event);
-		forwarder.ForwardEvent(this, &DebugLayer::OnMouseScroll, event);
-		forwarder.ForwardEvent(this, &DebugLayer::OnMousePressed, event);
-		forwarder.ForwardEvent(this, &DebugLayer::OnMouseReleased, event);
-		forwarder.ForwardEvent(this, &DebugLayer::OnMouseMove, event);
-		forwarder.ForwardEvent(this, &DebugLayer::OnWindowResize, event);
-        return false;
-    }
-
-
-    uint32 DebugLayer::GetRecivableCategories() const
-    {
-        return EVENT_CATEGORY_INPUT | EVENT_CATEGORY_WINDOW;
-    }
-	
-	
-	bool DebugLayer::OnKeyTyped(const KeyTypedEvent& event)
-	{
-		ImGuiIO& io = ImGui::GetIO();
-		io.AddInputCharacter(event.GetCharacter());
-		return false;
-	}
-
-
-	bool DebugLayer::OnKeyPressed(const KeyPressedEvent& event)
-	{
-		ImGuiIO& io = ImGui::GetIO();
-		io.KeysDown[event.GetKey()] = true;
-
-		// Modifiers are not reliable across systems
-		io.KeyCtrl	= io.KeysDown[KEY_LEFT_CONTROL] || io.KeysDown[KEY_RIGHT_CONTROL];
-		io.KeyShift = io.KeysDown[KEY_LEFT_SHIFT]	|| io.KeysDown[KEY_RIGHT_SHIFT];
-		io.KeyAlt	= io.KeysDown[KEY_LEFT_ALT]		|| io.KeysDown[KEY_RIGHT_ALT];
-		io.KeySuper = io.KeysDown[KEY_LEFT_SUPER]	|| io.KeysDown[KEY_RIGHT_SUPER];
-		return false;
-	}
-
-	
-	bool DebugLayer::OnKeyReleased(const KeyReleasedEvent& event)
-	{
-		ImGuiIO& io = ImGui::GetIO();
-		io.KeysDown[event.GetKey()] = false;
-
-		// Modifiers are not reliable across systems
-		io.KeyCtrl	= io.KeysDown[KEY_LEFT_CONTROL] || io.KeysDown[KEY_RIGHT_CONTROL];
-		io.KeyShift = io.KeysDown[KEY_LEFT_SHIFT]	|| io.KeysDown[KEY_RIGHT_SHIFT];
-		io.KeyAlt	= io.KeysDown[KEY_LEFT_ALT]		|| io.KeysDown[KEY_RIGHT_ALT];
-		io.KeySuper = io.KeysDown[KEY_LEFT_SUPER]	|| io.KeysDown[KEY_RIGHT_SUPER];
-		return false;
-	}
-	
-	
-	bool DebugLayer::OnMouseScroll(const MouseScrolledEvent& event)
-	{
-		ImGuiIO& io = ImGui::GetIO();
-		io.MouseWheelH	+= event.GetHorizontalValue();
-		io.MouseWheel	+= event.GetVerticalValue();
-		return false;
-	}
-	
-	
-	bool DebugLayer::OnMousePressed(const MouseButtonPressedEvent& event)
-	{
-		int32 button = 0;
-		switch (event.GetButton())
-		{
-		case MOUSEBUTTON_LEFT:		button = 0; break;
-		case MOUSEBUTTON_MIDDLE:	button = 2; break;
-		case MOUSEBUTTON_RIGHT:		button = 1; break;
-		case MOUSEBUTTON_FORWARD:	button = 3; break;
-		case MOUSEBUTTON_BACKWARD:	button = 4; break;
-		default: break;
-		}
-
-		ImGuiIO& io = ImGui::GetIO();
-		io.MouseDown[button] = true;
-		return false;
-	}
-	
-	
-	bool DebugLayer::OnMouseReleased(const MouseButtonReleasedEvent& event)
-	{
-		int32 button = 0;
-		switch (event.GetButton())
-		{
-		case MOUSEBUTTON_LEFT:		button = 0; break;
-		case MOUSEBUTTON_MIDDLE:	button = 2; break;
-		case MOUSEBUTTON_RIGHT:		button = 1; break;
-		case MOUSEBUTTON_FORWARD:	button = 3; break;
-		case MOUSEBUTTON_BACKWARD:	button = 4; break;
-		default: break;
-		}
-
-		ImGuiIO& io = ImGui::GetIO();
-		io.MouseDown[button] = false;
-		return false;
-	}
-	
-	
-	bool DebugLayer::OnMouseMove(const MouseMovedEvent& event)
-	{
-		ImGuiIO& io = ImGui::GetIO();
-		io.MousePos = ImVec2(float(event.GetX()), float(event.GetY()));
-		return false;
-	}
-	
-	
-	bool DebugLayer::OnWindowResize(const WindowResizeEvent& event)
-	{
-		ImGuiIO& io = ImGui::GetIO();
-		io.DisplaySize = ImVec2(float(event.GetWidth()), float(event.GetHeight()));
-		return false;
-	}
 }

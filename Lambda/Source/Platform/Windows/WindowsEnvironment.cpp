@@ -1,7 +1,20 @@
 #include "LambdaPch.h"
-#include "WindowsHost.h"
+#include "WindowsEnvironment.h"
 #include "WindowsWindow.h"
 #include "Core/WindowEventDispatcher.h"
+
+//--------------------------------------------------------
+//Advise graphics drivers to use discrete GPU on notebooks
+//--------------------------------------------------------
+
+extern "C"
+{
+	// nVidia
+	LAMBDA_API DWORD NvOptimusEnablement = 0x00000001;
+	// AMD
+	LAMBDA_API int AmdPowerXpressRequestHighPerformance = 1;
+}
+
 
 namespace Lambda
 {
@@ -9,7 +22,7 @@ namespace Lambda
 	//WindowsHost
 	//-----------
 
-	void WindowsHost::Init()
+	void WindowsEnvironment::Init()
 	{
 		//Add windowlistener
 		WindowEventDispatcher::Get().AddListener(this);
@@ -19,7 +32,7 @@ namespace Lambda
 	}
 
 
-	void WindowsHost::ProcessEvents()
+	void WindowsEnvironment::ProcessEvents()
 	{
 		MSG msg = {};
 		while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
@@ -33,14 +46,14 @@ namespace Lambda
 	}
 
 
-	void WindowsHost::Release()
+	void WindowsEnvironment::Release()
 	{
 		SafeDelete(m_pWindow);
 		delete this;
 	}
 
 	
-	void WindowsHost::PrintF(const char* pFormat, ...)
+	void WindowsEnvironment::PrintF(const char* pFormat, ...)
 	{
 		constexpr uint32 MAX_BUFFER_COUNT = 1024;
 		static char s_Buffer[MAX_BUFFER_COUNT];
@@ -55,25 +68,25 @@ namespace Lambda
 	}
 	
 	
-	void WindowsHost::OnWindowMove(uint32 x, uint32 y)
+	void WindowsEnvironment::OnWindowMove(uint32 x, uint32 y)
 	{
 		LOG_HOST_INFO("Window Moved x: %d, y: %d\n", x, y);
 	}
 
 
-	void WindowsHost::OnWindowFocusChanges(bool hasFocus)
+	void WindowsEnvironment::OnWindowFocusChanges(bool hasFocus)
 	{
 		LOG_HOST_INFO("Window Focus %s\n", hasFocus ? "Has Focus" : "Does not have focus");
 	}
 
 
-	void WindowsHost::OnWindowResize(uint32 width, uint32 height)
+	void WindowsEnvironment::OnWindowResize(uint32 width, uint32 height)
 	{
 		LOG_HOST_INFO("Window Resized w: %d, h: %d\n", width, height);
 	}
 	
 	
-	void WindowsHost::OnWindowClose()
+	void WindowsEnvironment::OnWindowClose()
 	{
 		PostQuitMessage(0);
 	}

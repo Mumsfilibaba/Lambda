@@ -23,10 +23,7 @@ namespace Lambda
         virtual void OnUpdate(Timestep dt);
         virtual void OnRender(Renderer3D& renderer, Timestep dt);
         virtual void OnRenderUI(Timestep dt);
-        virtual void OnRelease();
-        virtual bool OnEvent(const Event& event) = 0;
-        virtual uint32 GetRecivableCategories() const = 0;
-        
+        virtual void OnRelease();        
         const char* GetName() const;
     private:
         const char* m_pName;

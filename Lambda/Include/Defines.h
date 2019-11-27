@@ -2,10 +2,14 @@
 
 //DLL declaration
 #if defined(LAMBDA_PLAT_WINDOWS)
-	#if defined(LAMBDA_EXPORT)
-		#define LAMBDA_API __declspec(dllexport)
+	#if defined(LAMBDA_SHARED_LIB)
+		#if defined(LAMBDA_EXPORT)
+			#define LAMBDA_API __declspec(dllexport)
+		#else
+			#define LAMBDA_API __declspec(dllimport)
+		#endif
 	#else
-		#define LAMBDA_API __declspec(dllimport)
+		#define LAMBDA_API
 	#endif
 #else
 	#define LAMBDA_API
@@ -53,22 +57,22 @@
 
 //Saferelease and delete
 #if !defined(SafeRelease)
-	#define SafeRelease(x) if (x != nullptr) { x->Release(); x = nullptr; }
+	#define SafeRelease(x)		if (x != nullptr) { x->Release(); x = nullptr; }
 #endif
 
 #if !defined(SafeDelete)
-	#define SafeDelete(x) if (x != nullptr) { delete x; x = nullptr; }
+	#define SafeDelete(x)		if (x != nullptr) { delete x; x = nullptr; }
 #endif
 
 #if !defined(SafeDeleteArr)
-	#define SafeDeleteArr(x) if (x != nullptr) { delete[] x; x = nullptr; }
+	#define SafeDeleteArr(x)	if (x != nullptr) { delete[] x; x = nullptr; }
 #endif
 
 
 //Memleak debugging
 #if defined(LAMBDA_DEBUG) && defined(LAMBDA_PLAT_WINDOWS)
-	#define DBG_NEW new (_NORMAL_BLOCK, __FILE__, __LINE__)
-	#define DBG_MEMLEAK_CHECK() _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+	#define DBG_NEW					new(_NORMAL_BLOCK, __FILE__, __LINE__)
+	#define DBG_MEMLEAK_CHECK()		_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #else
 	#define DBG_NEW new
 	#define DBG_MEMLEAK_CHECK()

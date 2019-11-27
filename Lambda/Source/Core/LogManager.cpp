@@ -1,5 +1,5 @@
 #include "LambdaPch.h"
-#include "Core/Host.h"
+#include "Core/Environment.h"
 #include "Core/LogManager.h"
 
 namespace Lambda
@@ -7,6 +7,9 @@ namespace Lambda
 	//----------
 	//LogManager
 	//----------
+
+	template<>
+	LogManager* Singleton<LogManager>::s_pInstance = nullptr;
 
 	LogManager::LogManager()
 		: m_ChannelFilter(LOG_CHANNEL_ALL_CHANNELS)
@@ -17,7 +20,7 @@ namespace Lambda
 	void LogManager::Print(LogChannel channel, LogSeverity severity, const char* pFormat, ...)
 	{
 		//Filter the channel
-		if (m_ChannelFilter & channel == 0)
+		if ((m_ChannelFilter & channel) == 0)
 		{
 			return;
 		}
@@ -56,7 +59,7 @@ namespace Lambda
 		va_end(args);
 
 		//Print to the host
-		Host::Get().PrintF("[%s]: [%s] - %s", pSeverity, pChannel, s_Buffer);
+		Environment::Get().PrintF("[%s]: [%s] - %s", pSeverity, pChannel, s_Buffer);
 	}
 
 

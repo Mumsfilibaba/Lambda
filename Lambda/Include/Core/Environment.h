@@ -1,7 +1,7 @@
 #pragma once
 #include "LambdaCore.h"
 #include "Utilities/Singleton.h"
-#include "IHostEventListener.h"
+#include "IEnvironmentEventListener.h"
 #include "IWindowEventListener.h"
 
 namespace Lambda
@@ -10,17 +10,17 @@ namespace Lambda
 	//Host
 	//----
 
-	class Host : public Singleton<Host>
+	class Environment : public Singleton<Environment>
 	{
 	public:
-		LAMBDA_INTERFACE(Host);
+		LAMBDA_INTERFACE(Environment);
 
 		virtual void Init() = 0;
 		virtual void ProcessEvents() = 0;
 		virtual void Release() = 0;
 		virtual void PrintF(const char* pFormat, ...) = 0;
 
-		virtual void AddEventListener(IHostEventListener* pListener)
+		virtual void AddEventListener(IEnvironmentEventListener* pListener)
 		{
 			LAMBDA_ASSERT_PRINT(pListener != nullptr, "[LAMBDA ENGINE] pListener cannot be nullptr");
 			m_pEventListeners.emplace_back(pListener);
@@ -32,8 +32,8 @@ namespace Lambda
 				pListener->OnHostQuit(exitCode);
 		}
 	protected:
-		std::vector<IHostEventListener*> m_pEventListeners;
+		std::vector<IEnvironmentEventListener*> m_pEventListeners;
 	public:
-		static Host* Create();
+		static Environment* Create();
 	};
 }

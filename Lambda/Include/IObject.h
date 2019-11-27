@@ -1,6 +1,5 @@
 #pragma once
-#include "Defines.h"
-#include "Types.h"
+#include "LambdaCore.h"
 
 namespace Lambda
 {

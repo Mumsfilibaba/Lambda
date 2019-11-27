@@ -1,11 +1,10 @@
 #pragma once
-#include "Core/IWindow.h"
+#include "LambdaCore.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#if !defined(WIN32_LEAN_AND_MEAN)
 		#define WIN32_LEAN_AND_MEAN 1
 	#endif
 	#include <Windows.h>
-	#include "Graphics/Core/IDevice.h"
 	#include <vector>
 
 namespace Lambda
@@ -14,7 +13,7 @@ namespace Lambda
 	//WindowsWindow
 	//-------------
 
-	class WindowsWindow : public IWindow
+	class WindowsWindow
 	{
 		friend LRESULT CALLBACK WindowEventCallback(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -24,20 +23,16 @@ namespace Lambda
 		WindowsWindow(const char* pTitle, uint32 width, uint32 height);
 		~WindowsWindow();
 
-		virtual void OnUpdate() const override final;
-		virtual bool HasFocus() const override final;
-		virtual void SetEventCallback(IEventCallback* pCallback) override final;
-        virtual bool SetFullscreen(bool fullscreen) override final;
-        virtual bool GetFullscreen() const override final;
-        virtual void* GetNativeHandle() const override;
-        virtual uint32 GetHeight() const override;
-        virtual uint32 GetWidth() const override;
+		virtual bool HasFocus() const;
+        virtual bool SetFullscreen(bool fullscreen);
+        virtual bool GetFullscreen() const;
+        virtual void* GetNativeHandle() const;
+        virtual uint32 GetHeight() const;
+        virtual uint32 GetWidth() const;
 	private:
 		void Init(const char* pTitle, uint32 width, uint32 height);
-		void DispatchEvent(const Event& event);
 		LRESULT OnEvent(uint32 msg, WPARAM wParam, LPARAM lParam);
 	private:
-		IEventCallback*	 m_pEventCallback;
 		HWND m_hWindow;
 		uint32 m_Height;
 		uint32 m_Width;

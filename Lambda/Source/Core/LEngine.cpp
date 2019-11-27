@@ -1,9 +1,17 @@
 #include "LambdaPch.h"
 #include "Core/LEngine.h"
-#include "Core/Host.h"
+#include "Core/Environment.h"
 #include "Core/LayerStack.h"
 #include "Core/LogManager.h"
 #include "Core/WindowEventDispatcher.h"
+#include "Core/Layer.h"
+#include "Time/Clock.h"
+
+//--------------------------------------------------------------------------------------------------------
+//_CreateGameLayer - Function pointer to create the gamelayer - Needed for DLL- and Static-Lib compilation
+//--------------------------------------------------------------------------------------------------------
+
+LAMBDA_API Lambda::Layer* (*_CreateGameLayer)(void) = nullptr;
 
 namespace Lambda
 {
@@ -11,12 +19,15 @@ namespace Lambda
 	//LambdaMain
 	//----------
 
+	template<>
+	LEngine* Singleton<LEngine>::s_pInstance = nullptr;
+
 	int32 LambdaMain(const LEngineParams& params)
 	{
 		DBG_MEMLEAK_CHECK();
 
 		LEngine* pLEngine = DBG_NEW LEngine();
-		pLEngine->Init(params);
+		pLEngine->Initialize(params);
 		pLEngine->Run();
 		pLEngine->Release();
 		return 0;
@@ -28,11 +39,14 @@ namespace Lambda
 
 	LEngine::LEngine()
 		: Singleton<LEngine>(),
-		IHostEventListener(),
-		m_pHost(nullptr),
+		IEnvironmentEventListener(),
+		m_pEnvironment(nullptr),
 		m_pLogManager(nullptr),
-		m_pLayerStack(nullptr),
 		m_pWindowEventDispatcher(nullptr),
+		m_LayerStack(),
+		m_FrameClock(),
+		m_FrameAccumulator(),
+		m_Timestep(Timestep::Seconds(1.0f / 60.0f)),
 		m_IsRunning(true)
 	{
 	}
@@ -40,10 +54,13 @@ namespace Lambda
 
 	LEngine::~LEngine()
 	{
+		//Release layers
+		m_LayerStack.ReleaseLayers();
+
+		//Release subsystems
 		m_pWindowEventDispatcher->Release();
-		m_pLayerStack->Release();
 		m_pLogManager->Release();
-		m_pHost->Release();
+		m_pEnvironment->Release();
 	}
 
 
@@ -53,10 +70,10 @@ namespace Lambda
 	}
 
 
-	void LEngine::Init(const LEngineParams& params)
+	void LEngine::Initialize(const LEngineParams& params)
 	{
 		//Create Host
-		m_pHost = Host::Create();
+		m_pEnvironment = Environment::Create();
 
 		//Init LogManager
 		m_pLogManager = DBG_NEW LogManager();
@@ -64,21 +81,32 @@ namespace Lambda
 		m_pWindowEventDispatcher = DBG_NEW WindowEventDispatcher();
 				
 		//Init Host
-		m_pHost->Init();
-		m_pHost->AddEventListener(this);
+		m_pEnvironment->Init();
+		m_pEnvironment->AddEventListener(this);
 
-		//Init LayerStack
-		m_pLayerStack = DBG_NEW LayerStack();
-		for (uint32 i = 0; i < params.LayerCount; i++)
-			m_pLayerStack->PushLayer(params.ppLayers[i]);
+		//Create Game Layer
+		if (_CreateGameLayer != nullptr)
+		{
+			m_LayerStack->PushLayer(_CreateGameLayer());
+		}
+		else
+		{
+			//TODO: RETURN FATAL ERROR
+		}
 	}
 
 
 	void LEngine::Run()
 	{
+		LOG_ENGINE_INFO("STARTING\n");
+
+		//Reset clock before starting the loop or we get inaccurate timings
+		m_FrameClock.Reset();
+
+		//Start loop
 		while (m_IsRunning)
 		{
-			m_pHost->ProcessEvents();
+			m_pEnvironment->ProcessEvents();
 			DoFrame();
 		}
 	}
@@ -86,6 +114,28 @@ namespace Lambda
 	
 	void LEngine::DoFrame()
 	{
+		static uint32 ups = 0;
+
+		//Logic update
+		m_FrameClock.Tick();
+		m_FrameAccumulator += m_FrameClock.GetDeltaTime();
+		while (m_FrameAccumulator >= m_Timestep)
+		{
+			//Update all layers
+			for (Layer* pLayer : m_LayerStack)
+				pLayer->OnUpdate(m_Timestep);
+
+			m_FrameAccumulator -= m_Timestep;
+			ups++;
+		}
+
+		//Print UPS to console
+		if (m_FrameClock.GetTotalTime().AsSeconds() >= 1.0f)
+		{
+			LOG(LOG_CHANNEL_ENGINE, LOG_SEVERITY_INFO, "UPS: %u, Frametime: %.4fms\n", ups, m_FrameClock.GetDeltaTime().AsMilliSeconds());
+			ups = 0;
+			m_FrameClock.Reset();
+		}
 	}
 	
 	

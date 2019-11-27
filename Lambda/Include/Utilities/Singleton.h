@@ -9,7 +9,7 @@ namespace Lambda
 	//---------
 
 	template <typename T>
-	class Singleton
+	class LAMBDA_API Singleton
 	{
 	protected:
 		LAMBDA_NO_COPY(Singleton);
@@ -35,7 +35,4 @@ namespace Lambda
 	protected:
 		static T* s_pInstance;
 	};
-
-	template <typename T>
-	T* Singleton<T>::s_pInstance = nullptr;
 }

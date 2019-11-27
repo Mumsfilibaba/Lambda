@@ -7,23 +7,53 @@ workspace "Lambda"
 
 	configurations 
 	{ 
+		-- Build Engine as dynamic lib
+		"Debug_Shared", 
+		"Release_Shared",
+		"Production_Shared",
+		-- Build Engine as static lib
 		"Debug", 
-		"Release" 
+		"Release",
+		"Production"
 	}
-	filter "configurations:Debug"
+	filter "configurations:Debug or Debug_Shared"
 		symbols "On"
 		runtime "Debug"
 		defines 
 		{ 
-			"LAMBDA_DEBUG"
+			"LAMBDA_DEBUG",
+			"_DEBUG",
 		}	
-	filter "configurations:Release"
+	filter "configurations:Release or Release_Shared"
 		symbols "On"
 		runtime "Release"
 		optimize "Full"
 		defines 
 		{ 
 			"LAMBDA_RELEASE" 
+		}
+	filter "configurations:Debug or Debug_Shared or Release or Release_Shared"
+		defines
+		{
+			"LAMBDA_DEVELOP"
+		}
+	filter "configurations:Production or Production_Shared"
+		symbols "Off"
+		runtime "Release"
+		optimize "Full"
+		defines 
+		{ 
+			"LAMBDA_PRODUCTION" 
+		}
+	filter "configurations:Debug_Shared or Release_Shared or Production_Shared"
+		defines 
+		{ 
+			"LAMBDA_SHARED_LIB" 
+		}
+	filter "configurations:Release or Release_Shared or Production or Production_Shared"
+		defines
+		{
+			"NDEBUG"
 		}
 
 	-- Visual Studio SPECIFIC
@@ -34,16 +64,10 @@ workspace "Lambda"
 			"_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING",
 			"_CRT_SECURE_NO_WARNINGS"
 		}
-	filter { "action:vs*", "configurations:Debug" }
+	filter { "action:vs*", "configurations:Debug or Debug_Shared" }
 		defines
 		{
-			"_DEBUG",
 			"_CRTDBG_MAP_ALLOC"
-		}
-	filter { "action:vs*", "configurations:Release" }
-		defines
-		{
-			"NDEBUG"
 		}
 	-- macOS SPECIFIC
 	filter "system:macosx"
@@ -51,12 +75,14 @@ workspace "Lambda"
 		{
 			"LAMBDA_PLAT_MACOS" 
 		}
+	filter {}
 	-- WINDOWS SPECIFIC
 	filter "system:windows"
 		defines
 		{
 			"LAMBDA_PLAT_WINDOWS" 
 		}
+	filter {}
 
 	-- Dependencies
 	group "Dependencies"
@@ -65,7 +91,14 @@ workspace "Lambda"
 
 	-- ENGINE PROJECT
 	project "Lambda"
-		kind "SharedLib"
+		filter "configurations:Debug or Release or Production"
+			kind "StaticLib"
+		filter {}
+
+		filter "configurations:Debug_Shared or Release_Shared or Production_Shared"
+			kind "SharedLib"
+		filter {}
+
 		language "C++"
 		cppdialect "C++17"
 		systemversion "latest"
@@ -96,6 +129,11 @@ workspace "Lambda"
 			"Dependencies/stb",
 			"Dependencies/glm",
 			"Dependencies/ImGui"
+		}
+		-- Define that we are exporting the engine and not a application
+		defines
+		{
+			"LAMBDA_EXPORT"
 		}
 		--	macOS SPECIFIC
 		filter "system:macosx"
@@ -140,44 +178,42 @@ workspace "Lambda"
 			{
 				"Dependencies/Assimp/include"
 			}
-			defines 
-			{ 
-				"LAMBDA_EXPORT" 
-			}
+			-- Copy DLL into correct folder
 			postbuildcommands
 			{
 				("{COPY} %{cfg.buildtarget.relpath} \"../Build/bin/" .. outputdir .. "/Sandbox/\"")
 			}
-		filter { "system:windows", "configurations:Debug" }
-			links
-			{
-				"assimp-vc141-mtd",
-				"IrrXMLd",
-				"zlibstaticd",
-			}
+			-- Debug Libs
+		filter { "system:windows", "configurations:Debug or Debug_Shared" }
 			libdirs
 			{
 				"Dependencies/Assimp/build/code/Debug/",
 				"Dependencies/Assimp/build/contrib/irrXML/Debug",
 				"Dependencies/Assimp/build/contrib/zlib/Debug"
 			}
-		filter { "system:windows", "configurations:Release" }
 			links
 			{
-				"assimp-vc141-mt",
-				"IrrXML",
-				"zlibstatic",
+				"assimp-vc141-mtd",
+				"IrrXMLd",
+				"zlibstaticd",
 			}
+		-- Release/Production Libs
+		filter { "system:windows", "configurations:Release or Release_Shared or Production or Production_Shared" }
 			libdirs
 			{
 				"Dependencies/Assimp/build/code/Release/",
 				"Dependencies/Assimp/build/contrib/irrXML/Release",
 				"Dependencies/Assimp/build/contrib/zlib/Release"
 			}
-
+			links
+			{
+				"assimp-vc141-mt",
+				"IrrXML",
+				"zlibstatic",
+			}
 	-- EXAMPLE PROJECTS
 	project "Sandbox"
-		kind "ConsoleApp"
+		kind "WindowedApp"
 		language "C++"
 		cppdialect "C++17"
 		systemversion "latest"

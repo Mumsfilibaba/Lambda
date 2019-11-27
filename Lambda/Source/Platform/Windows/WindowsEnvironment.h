@@ -1,20 +1,20 @@
 #pragma once
-#include "Core/Host.h"
+#include "Core/Environment.h"
 #include "Core/IWindowEventListener.h"
 
 namespace Lambda
 {
 	class WindowsWindow;
 
-	//-----------
-	//WindowsHost
-	//-----------
+	//------------------
+	//WindowsEnvironment
+	//------------------
 
-	class WindowsHost final : public Host, public IWindowEventListener
+	class WindowsEnvironment final : public Environment, public IWindowEventListener
 	{
 	public:
-		WindowsHost() = default;
-		~WindowsHost() = default;
+		WindowsEnvironment() = default;
+		~WindowsEnvironment() = default;
 
 		virtual void Init() override final;
 		virtual void ProcessEvents() override final;

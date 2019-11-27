@@ -10,7 +10,7 @@ namespace Lambda
 	//WindowEventDispatcher
 	//---------------------
 
-	class LAMBDA_API WindowEventDispatcher : public Singleton<WindowEventDispatcher>
+	class LAMBDA_API WindowEventDispatcher
 	{
 	public:
 		WindowEventDispatcher() = default;

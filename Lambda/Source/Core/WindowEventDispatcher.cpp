@@ -8,10 +8,13 @@ namespace Lambda
 	//WindowEventDispatcher
 	//---------------------
 
+	template<>
+	WindowEventDispatcher* Singleton<WindowEventDispatcher>::s_pInstance = nullptr;
+
 	void WindowEventDispatcher::AddListener(IWindowEventListener* pWindowListener)
 	{
 		LAMBDA_ASSERT_PRINT(pWindowListener != nullptr, "[LAMBDA ENGINE] pWindowListener cannot be nullptr");
-		m_Listeners.emplace_back(pWindowListener);
+		s_Listeners.emplace_back(pWindowListener);
 	}
 	
 	

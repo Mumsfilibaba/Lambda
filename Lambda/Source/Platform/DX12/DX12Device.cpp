@@ -1,6 +1,5 @@
 #include "LambdaPch.h"
 #include "Utilities/StringHelper.h"
-#include "Events/WindowEvent.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#pragma comment(lib, "dxguid.lib")
 	#include "DX12Device.h"

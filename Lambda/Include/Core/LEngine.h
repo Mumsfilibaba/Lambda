@@ -1,14 +1,16 @@
 #pragma once
 #include "LambdaCore.h"
-#include "IHostEventListener.h"
+#include "IEnvironmentEventListener.h"
+#include "Time/Clock.h"
+#include "Time/Timestep.h"
 #include "Utilities/Singleton.h"
 
 namespace Lambda
 {
-	class Host;
 	class Layer;
 	class LayerStack;
 	class LogManager;
+	class Environment;
 	class WindowEventDispatcher;
 
 	//------------
@@ -19,8 +21,6 @@ namespace Lambda
 	{
 		const char** ppCmdArgs	= nullptr;
 		uint32	CmdArgsCount	= 0;
-		Layer** ppLayers		= nullptr;
-		uint32	LayerCount		= 0;
 	};
 
 	//----------
@@ -28,18 +28,23 @@ namespace Lambda
 	//----------
 
 	int32 LAMBDA_API LambdaMain(const LEngineParams& params);
+	
+	//-----------------------------------------------
+	//CreateGameLayer - NEEDS TO BE DEFINED BY CLIENT
+	//-----------------------------------------------
+	Layer* CreateGameLayer();
 
 	//-------
 	//LEngine
 	//-------
 
-	class LAMBDA_API LEngine final : public Singleton<LEngine>, public IHostEventListener
+	class LAMBDA_API LEngine final : public Singleton<LEngine>, public IEnvironmentEventListener
 	{
 	public:
 		LEngine();
 		~LEngine();
 
-		void Init(const LEngineParams& params);
+		void Initialize(const LEngineParams& params);
 		void Run();
 		void DoFrame();
 		void Release();
@@ -47,10 +52,13 @@ namespace Lambda
 		//SystemEventCallbacks
 		virtual void OnHostQuit(int32 exitCode) override final;
 	private:
-		Host* m_pHost;
+		Environment* m_pEnvironment;
 		LogManager* m_pLogManager;
-		LayerStack* m_pLayerStack;
 		WindowEventDispatcher* m_pWindowEventDispatcher;
+		LayerStack m_LayerStack;
+		Clock m_FrameClock;
+		Timestep m_FrameAccumulator;
+		const Timestep m_Timestep;
 		int32 m_ExitCode;
 		bool m_IsRunning;
 	};

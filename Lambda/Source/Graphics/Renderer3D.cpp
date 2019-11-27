@@ -4,7 +4,6 @@
 #include "Graphics/Core/IDevice.h"
 #include "Graphics/Core/IBuffer.h"
 #include "Graphics/Core/IQuery.h"
-#include "Core/Application.h"
 #include <glm/gtc/type_ptr.hpp>
 
 namespace Lambda
@@ -35,13 +34,6 @@ namespace Lambda
 
 	void Renderer3D::Init()
 	{
-        //Get reference to the device
-        m_Device = Application::Get().GetGraphicsDevice();
-        m_Device->AddRef();
-        
-        //Get reference to the swapchain
-        m_SwapChain = Application::Get().GetSwapChain();
-        m_SwapChain->AddRef();
 		const SwapChainDesc& desc = m_SwapChain->GetDesc();
 
 		for (uint32 i = 0; i < desc.BufferCount; i++)
@@ -102,9 +94,6 @@ namespace Lambda
 		materialBufferDesc.StrideInBytes	= sizeof(MaterialBuffer);
 		m_Device->CreateBuffer(&m_MaterialBuffer, nullptr, materialBufferDesc);
 
-		//Setup viewport
-		IWindow* pWindow = Application::Get().GetWindow();
-		SetDisplaySize(pWindow->GetWidth(), pWindow->GetHeight());
 	}
 
 
@@ -199,12 +188,6 @@ namespace Lambda
 		m_Context->MapBuffer(m_MaterialBuffer.Get(), MAP_FLAG_WRITE | MAP_FLAG_WRITE_DISCARD, &pMaterialData);
 		memcpy(pMaterialData, &materialBuffer, sizeof(MaterialBuffer));
 		m_Context->UnmapBuffer(m_MaterialBuffer.Get());
-	
-		//Set variables
-		material.pVariableTable->GetVariableByName(SHADER_STAGE_VERTEX, "u_CameraBuffer")->SetConstantBuffer(m_CameraBuffer.Get());
-		material.pVariableTable->GetVariableByName(SHADER_STAGE_VERTEX, "u_TransformBuffer")->SetConstantBuffer(m_TransformBuffer.Get());
-		material.pVariableTable->GetVariableByName(SHADER_STAGE_PIXEL,	"u_MaterialBuffer")->SetConstantBuffer(m_MaterialBuffer.Get());
-		material.pVariableTable->GetVariableByName(SHADER_STAGE_PIXEL,	"u_LightBuffer")->SetConstantBuffer(m_LightBuffer.Get());
 
 		//Set mesh
         m_Context->SetVertexBuffers(&model.pVertexBuffer, 1, 0);
@@ -219,8 +202,6 @@ namespace Lambda
 
 	void Renderer3D::EndScene() const
 	{
-		//Draw UI before ending
-		Application::Get().GetUILayer()->Draw(m_Context.Get());
 		//End by writing a timestamp
 		m_Context->WriteTimeStamp(m_pCurrentQuery);
 	}

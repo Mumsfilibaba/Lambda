@@ -4,18 +4,14 @@
 
 namespace Lambda
 {
-    void LayerStack::Init()
+	//----------
+	//LayerStack
+	//----------
+
+    void LayerStack::ReleaseLayers()
     {
-        //Nothing for now
-    }
-
-
-    void LayerStack::Release()
-    {
-        for (auto pLayer : m_Layers)
-            SafeDelete(pLayer);
-
-		delete this;
+		for (auto pLayer : m_Layers)
+			ReleaseLayer(pLayer);
     }
 
 
@@ -34,6 +30,13 @@ namespace Lambda
         m_Layers.pop_back();
         
 		LOG_ENGINE_INFO("Poped Layer '%s'.\n", pLayer->GetName());
-        SafeDelete(pLayer);
+		
+		ReleaseLayer(pLayer);
     }
+	
+	
+	void LayerStack::ReleaseLayer(Layer* pLayer)
+	{
+		pLayer->OnRelease();
+	}
 }

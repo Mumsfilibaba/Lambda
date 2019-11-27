@@ -1,8 +1,10 @@
 #pragma once
 #include "Timestep.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
-    #define WIN32_LEAN_AND_MEAN
-    #include <windows.h>
+	#if !defined(WIN32_LEAN_AND_MEAN)    
+		#define WIN32_LEAN_AND_MEAN 1
+	#endif
+	#include <windows.h>
 #else
     #include <chrono>
 #endif

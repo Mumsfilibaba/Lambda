@@ -4,7 +4,9 @@
 	//All headers specific for windows
 	#if defined(LAMBDA_PLAT_WINDOWS)
 		//Remove unneccesary stuff
-		#define WIN32_LEAN_AND_MEAN 
+		#if !defined(WIN32_LEAN_AND_MEAN )
+			#define WIN32_LEAN_AND_MEAN 1
+		#endif
 		//Remove min max macros
         #define NOMINMAX
         #include <Windows.h>
