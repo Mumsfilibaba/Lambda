@@ -5,23 +5,23 @@
 namespace Lambda
 {
 	//---------
-	//Singleton
+	//CSingleton
 	//---------
 
 	template <typename T>
-	class LAMBDA_API Singleton
+	class LAMBDA_API CSingleton
 	{
 	protected:
-		LAMBDA_NO_COPY(Singleton);
+		LAMBDA_NO_COPY(CSingleton);
 
-		_forceinline Singleton()
+		_forceinline CSingleton()
 		{
 			assert(s_pInstance == nullptr);
 			s_pInstance = static_cast<T*>(this);
 		}
 
 
-		_forceinline ~Singleton()
+		_forceinline ~CSingleton()
 		{
 			assert(s_pInstance != nullptr);
 			s_pInstance = nullptr;

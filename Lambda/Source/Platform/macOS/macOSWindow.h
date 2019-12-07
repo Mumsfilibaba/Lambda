@@ -1,5 +1,4 @@
 #pragma once
-#include "System/IWindow.h"
 #if defined(LAMBDA_PLAT_MACOS)
     #include "IObject.h"
     #include <GLFW/glfw3.h>
@@ -10,7 +9,7 @@ namespace Lambda
     //macOSWindow
     //-----------
     
-    class macOSWindow : public IWindow
+    class macOSWindow
     {
     public:
         macOSWindow(const WindowDesc& desc);

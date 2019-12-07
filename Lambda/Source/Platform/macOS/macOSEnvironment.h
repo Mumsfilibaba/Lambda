@@ -1,6 +1,6 @@
 #pragma once
 #if defined(LAMBDA_PLAT_MACOS)
-#include "Core/Environment.h"
+    #include "Core/Environment.h"
 
 namespace Lambda
 {

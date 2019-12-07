@@ -3,139 +3,159 @@ workspace "Lambda"
 	startproject "Sandbox"
 	warnings "Extra"
 
+	-- Were to output files
 	outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
-
+	-- Confingurations
 	configurations 
-	{ 
-		-- Build Engine as dynamic lib
-		"Debug_Shared", 
-		"Release_Shared",
-		"Production_Shared",
-		-- Build Engine as static lib
+	{
 		"Debug", 
 		"Release",
-		"Production"
+		"Production",
 	}
-	filter "configurations:Debug or Debug_Shared"
+	-- Platform
+	platforms
+	{
+		"x64_SharedLib",
+		"x64_StaticLib",
+	}
+	-- Debug builds
+	filter "configurations:Debug"
 		symbols "On"
 		runtime "Debug"
 		defines 
 		{ 
 			"LAMBDA_DEBUG",
 			"_DEBUG",
-		}	
-	filter "configurations:Release or Release_Shared"
+		}
+	-- Release builds
+	filter "configurations:Release"
 		symbols "On"
 		runtime "Release"
 		optimize "Full"
 		defines 
 		{ 
-			"LAMBDA_RELEASE" 
+			"LAMBDA_RELEASE",
 		}
-	filter "configurations:Debug or Debug_Shared or Release or Release_Shared"
-		defines
-		{
-			"LAMBDA_DEVELOP"
-		}
-	filter "configurations:Production or Production_Shared"
+	-- Production builds
+	filter "configurations:Production"
 		symbols "Off"
 		runtime "Release"
 		optimize "Full"
 		defines 
 		{ 
-			"LAMBDA_PRODUCTION" 
+			"LAMBDA_PRODUCTION",
 		}
-	filter "configurations:Debug_Shared or Release_Shared or Production_Shared"
-		defines 
-		{ 
-			"LAMBDA_SHARED_LIB" 
-		}
-	filter "configurations:Release or Release_Shared or Production or Production_Shared"
+	-- Setup dev-builds
+	filter "configurations:Debug or Release"
 		defines
 		{
-			"NDEBUG"
+			"LAMBDA_DEVELOP",
 		}
-
-	-- Visual Studio SPECIFIC
+	-- Not debug builds
+	filter "configurations:Release or Production"
+		defines
+		{
+			"NDEBUG",
+		}
+	-- Visual Studio
 	filter "action:vs*"
 		defines
 		{
 			"LAMBDA_VISUAL_STUDIO",
 			"_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING",
-			"_CRT_SECURE_NO_WARNINGS"
+			"_CRT_SECURE_NO_WARNINGS",
 		}
-	filter { "action:vs*", "configurations:Debug or Debug_Shared" }
+	filter { "action:vs*", "configurations:Debug" }
 		defines
 		{
-			"_CRTDBG_MAP_ALLOC"
+			"_CRTDBG_MAP_ALLOC",
 		}
-	-- macOS SPECIFIC
+	-- macOS
 	filter "system:macosx"
 		defines
 		{
-			"LAMBDA_PLAT_MACOS" 
+			"LAMBDA_PLAT_MACOS",
 		}
-	filter {}
-	-- WINDOWS SPECIFIC
+	-- Windows
 	filter "system:windows"
 		defines
 		{
-			"LAMBDA_PLAT_WINDOWS" 
+			"LAMBDA_PLAT_WINDOWS",
 		}
 	filter {}
-
-	-- Dependencies
-	group "Dependencies"
-		include "Dependencies/ImGui"
-	group ""
-
+	
 	-- ENGINE PROJECT
 	project "Lambda"
-		filter "configurations:Debug or Release or Production"
-			kind "StaticLib"
-		filter {}
-
-		filter "configurations:Debug_Shared or Release_Shared or Production_Shared"
-			kind "SharedLib"
-		filter {}
-
 		language "C++"
 		cppdialect "C++17"
 		systemversion "latest"
 		location "Lambda"
 
+		-- SharedLib builds
+		filter "platforms:x64_SharedLib"
+			kind "SharedLib"
+
+			defines 
+			{ 
+				"LAMBDA_SHARED_LIB",
+			}
+		filter {}
+		-- StaticLib builds
+		filter "platforms:x64_StaticLib"
+			kind "StaticLib"
+		filter {}
+
+		-- Targets
 		targetdir 	("Build/bin/" .. outputdir .. "/%{prj.name}")
 		objdir 		("Build/bin-int/" .. outputdir .. "/%{prj.name}")	
 		
+		-- Files to include
 		files 
 		{ 
-			"%{prj.name}/**.hpp",
 			"%{prj.name}/**.h",
+			"%{prj.name}/**.hpp",
 			"%{prj.name}/**.inl",
-			"%{prj.name}/**.cpp",
 			"%{prj.name}/**.c",
-			"%{prj.name}/**.hlsl"
+			"%{prj.name}/**.cpp",
+			"%{prj.name}/**.hlsl",
 		}
+		-- Remove files not available for windows builds
+		filter "system:windows"
+			removefiles
+			{
+				"%{prj.name}/Source/Platform/macOS/**",
+			}
+		filter {}
+		-- Remove files not available for windows builds
+		filter "system:macosx"
+			removefiles
+			{
+				"%{prj.name}/Source/Platform/DX12/**",
+				"%{prj.name}/Source/Platform/Windows/**",
+			}
+		filter {}
+		-- We do not want to compile HLSL files
 		excludes 
 		{	
-			"**.hlsl"
+			"**.hlsl",
 		}
+		-- Includes
 		includedirs 
 		{ 
-			"%{prj.name}/Include"
+			"%{prj.name}/Include",
 		}
 		sysincludedirs
 		{
 			"Dependencies/stb",
 			"Dependencies/glm",
-			"Dependencies/ImGui"
+			"Dependencies/ImGui",
 		}
 		-- Define that we are exporting the engine and not a application
 		defines
 		{
-			"LAMBDA_EXPORT"
+			"LAMBDA_EXPORT",
 		}
-		--	macOS SPECIFIC
+		--	macOS
 		filter "system:macosx"
 			links
 			{
@@ -152,9 +172,9 @@ workspace "Lambda"
 			sysincludedirs
 			{
 				"/usr/local/include",
-				"../vulkansdk-macos-1.1.121.1/MoltenVK/include"
+				"../vulkansdk-macos-1.1.121.1/MoltenVK/include",
 			}
-		-- WINDOWS SPECIFIC
+		-- Windows
 		filter "system:windows"
 			pchheader "LambdaPch.h"
 			pchsource "Lambda/Source/LambdaPch.cpp"
@@ -164,32 +184,33 @@ workspace "Lambda"
 				"dxgi",
 				"d3dcompiler",
 				"vulkan-1",
-				"ImGui"
+				"ImGui",
 			}
 			libdirs
 			{
-				"C:/VulkanSDK/1.1.121.2/Lib"
+				"C:/VulkanSDK/1.1.121.2/Lib",
 			}
 			sysincludedirs
 			{
-				"C:/VulkanSDK/1.1.121.2/Include"
+				"C:/VulkanSDK/1.1.121.2/Include",
 			}
 			sysincludedirs
 			{
-				"Dependencies/Assimp/include"
+				"Dependencies/Assimp/include",
 			}
+		filter { "system:windows", "platforms:x64_SharedLib" }
 			-- Copy DLL into correct folder
 			postbuildcommands
 			{
 				("{COPY} %{cfg.buildtarget.relpath} \"../Build/bin/" .. outputdir .. "/Sandbox/\"")
 			}
 			-- Debug Libs
-		filter { "system:windows", "configurations:Debug or Debug_Shared" }
+		filter { "system:windows", "configurations:Debug" }
 			libdirs
 			{
 				"Dependencies/Assimp/build/code/Debug/",
 				"Dependencies/Assimp/build/contrib/irrXML/Debug",
-				"Dependencies/Assimp/build/contrib/zlib/Debug"
+				"Dependencies/Assimp/build/contrib/zlib/Debug",
 			}
 			links
 			{
@@ -198,12 +219,12 @@ workspace "Lambda"
 				"zlibstaticd",
 			}
 		-- Release/Production Libs
-		filter { "system:windows", "configurations:Release or Release_Shared or Production or Production_Shared" }
+		filter { "system:windows", "configurations:Release or Production" }
 			libdirs
 			{
 				"Dependencies/Assimp/build/code/Release/",
 				"Dependencies/Assimp/build/contrib/irrXML/Release",
-				"Dependencies/Assimp/build/contrib/zlib/Release"
+				"Dependencies/Assimp/build/contrib/zlib/Release",
 			}
 			links
 			{
@@ -211,6 +232,8 @@ workspace "Lambda"
 				"IrrXML",
 				"zlibstatic",
 			}
+	project "*"
+	
 	-- EXAMPLE PROJECTS
 	project "Sandbox"
 		kind "WindowedApp"
@@ -219,18 +242,21 @@ workspace "Lambda"
 		systemversion "latest"
 		location "Sandbox"
 		
+		-- Targets
 		targetdir ("Build/bin/" .. outputdir .. "/%{prj.name}")
 		objdir ("Build/bin-int/" .. outputdir .. "/%{prj.name}")
 		
+		--Includes
 		includedirs
 		{ 
-			"Lambda/Include"
+			"Lambda/Include",
 		}
 		sysincludedirs
 		{
 			"Dependencies/glm",
-			"Dependencies/ImGui"
+			"Dependencies/ImGui",
 		}
+		-- Files
 		files 
 		{ 
 			"%{prj.name}/**.hpp",
@@ -238,17 +264,21 @@ workspace "Lambda"
 			"%{prj.name}/**.inl",
 			"%{prj.name}/**.cpp",
 			"%{prj.name}/**.c",
-			"%{prj.name}/**.hlsl"
+			"%{prj.name}/**.hlsl",
 		}
+		-- We do not want to compile HLSL files
 		excludes 
 		{	
-			"**.hlsl"
+			"**.hlsl",
 		}
-		dependson 
-		{ 
-			"Lambda" 
-		}
+		-- Linking
 		links 
 		{ 
-			"Lambda"
+			"Lambda",
 		}
+	project "*"
+
+	-- Dependencies
+	group "Dependencies"
+		include "Dependencies/ImGui"
+	group ""

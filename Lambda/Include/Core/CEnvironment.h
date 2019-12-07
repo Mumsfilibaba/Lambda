@@ -1,39 +1,38 @@
 #pragma once
 #include "LambdaCore.h"
-#include "Utilities/Singleton.h"
-#include "IEnvironmentEventListener.h"
-#include "IWindowEventListener.h"
+#include "CSingleton.h"
+#include "Event/ISystemEventListener.h"
 
 namespace Lambda
 {
-	//----
-	//Host
-	//----
+	//------------
+	//CEnvironment
+	//------------
 
-	class Environment : public Singleton<Environment>
+	class CEnvironment : public CSingleton<CEnvironment>
 	{
 	public:
-		LAMBDA_INTERFACE(Environment);
+		LAMBDA_INTERFACE(CEnvironment);
 
 		virtual void Init() = 0;
 		virtual void ProcessEvents() = 0;
 		virtual void Release() = 0;
 		virtual void PrintF(const char* pFormat, ...) = 0;
 
-		virtual void AddEventListener(IEnvironmentEventListener* pListener)
+		virtual void AddEventListener(ISystemEventListener* pListener)
 		{
 			LAMBDA_ASSERT_PRINT(pListener != nullptr, "[LAMBDA ENGINE] pListener cannot be nullptr");
 			m_pEventListeners.emplace_back(pListener);
 		}
 	protected:
-		virtual void OnQuit(int32 exitCode)
+		virtual void OnEvent(const SSystemEvent& event)
 		{
 			for (auto pListener : m_pEventListeners)
-				pListener->OnHostQuit(exitCode);
+				pListener->OnEvent(event);
 		}
 	protected:
-		std::vector<IEnvironmentEventListener*> m_pEventListeners;
+		std::vector<ISystemEventListener*> m_pEventListeners;
 	public:
-		static Environment* Create();
+		static CEnvironment* Create();
 	};
 }
