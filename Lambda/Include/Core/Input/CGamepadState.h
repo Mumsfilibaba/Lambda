@@ -3,7 +3,11 @@
 
 namespace Lambda
 {
-    class CGamepadState final
+    //--------
+    //CGamePad
+    //--------
+
+    class LAMBDA_API CGamepadState final
     {
     public:
         CGamepadState();

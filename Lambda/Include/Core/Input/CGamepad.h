@@ -4,7 +4,11 @@
 
 namespace Lambda
 {
-    class CGamePad : final
+    //--------
+    //CGamePad
+    //--------
+
+    class LAMBDA_API CGamePad : final
     {
     public:
         LAMBDA_STATIC_CLASS(CGamePad);
