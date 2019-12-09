@@ -1,23 +1,22 @@
 #pragma once
 #include "LambdaCore.h"
-#include "IEnvironmentEventListener.h"
+#include "Event/IEventListener.h"
+#include "CSingleton.h"
 #include "Time/Clock.h"
 #include "Time/Timestep.h"
-#include "Utilities/Singleton.h"
 
 namespace Lambda
 {
 	class Layer;
 	class LayerStack;
 	class LogManager;
-	class Environment;
-	class WindowEventDispatcher;
+	class CEnvironment;
 
-	//------------
-	//EngineParams
-	//------------
+	//-------------
+	//SEngineParams
+	//-------------
 
-	struct LEngineParams
+	struct SEngineParams
 	{
 		const char** ppCmdArgs	= nullptr;
 		uint32	CmdArgsCount	= 0;
@@ -27,7 +26,7 @@ namespace Lambda
 	//LambdaMain
 	//----------
 
-	int32 LAMBDA_API LambdaMain(const LEngineParams& params);
+	int32 LAMBDA_API LambdaMain(const SEngineParams& params);
 	
 	//-----------------------------------------------
 	//CreateGameLayer - NEEDS TO BE DEFINED BY CLIENT
@@ -35,26 +34,26 @@ namespace Lambda
 	Layer* CreateGameLayer();
 
 	//-------
-	//LEngine
+	//CEngine
 	//-------
 
-	class LAMBDA_API LEngine final : public Singleton<LEngine>, public IEnvironmentEventListener
+	class LAMBDA_API CEngine final : public CSingleton<CEngine>, public IEventListener
 	{
 	public:
-		LEngine();
-		~LEngine();
+		CEngine();
+		~CEngine();
 
-		void Initialize(const LEngineParams& params);
-		void Run();
-		void DoFrame();
-		void Release();
+        LAMBDA_NO_COPY(CEngine);
+        
+        virtual void OnEvent(const CEvent& event) override final;
 
-		//SystemEventCallbacks
-		virtual void OnHostQuit(int32 exitCode) override final;
+        void Initialize(const SEngineParams& params);
+        void Run();
+        void DoFrame();
+        void Release();
 	private:
-		Environment* m_pEnvironment;
+		CEnvironment* m_pEnvironment;
 		LogManager* m_pLogManager;
-		WindowEventDispatcher* m_pWindowEventDispatcher;
 		LayerStack m_LayerStack;
 		Clock m_FrameClock;
 		Timestep m_FrameAccumulator;

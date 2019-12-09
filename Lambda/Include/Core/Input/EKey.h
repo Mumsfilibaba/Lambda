@@ -1,5 +1,5 @@
 #pragma once
-#include "LambdaCore"
+#include "LambdaCore.h"
 
 namespace Lambda
 {
@@ -131,5 +131,20 @@ namespace Lambda
         KEY_RIGHT_SUPER     = 128,
         KEY_MENU            = 129,
         KEY_LAST            = KEY_MENU
+    };
+
+    //------------
+    //EKeyModifier
+    //------------
+
+    enum EKeyModifier : uint32
+    {
+        KEY_MODIFIER_UNKNOWN    = 0,
+        KEY_MODIFIER_SHIFT      = (1 << 0),
+        KEY_MODIFIER_ALT        = (1 << 1),
+        KEY_MODIFIER_CONTROL    = (1 << 2),
+        KEY_MODIFIER_CAPS_LOCK  = (1 << 3),
+        KEY_MODIFIER_SUPER      = (1 << 4),
+        KEY_MODIFIER_NUM_LOCK   = (1 << 5),
     };
 }

@@ -12,37 +12,6 @@ namespace Lambda
 	typedef unsigned int		uint32;
 	typedef unsigned long long	uint64;
 
-
-    //All keys
-	enum Key : uint8
-
-
-
-    //Key modifiers
-    enum KeyModifier : uint32
-    {
-        KEY_MODIFIER_UNKNOWN    = 0,
-        KEY_MODIFIER_SHIFT      = (1 << 0),
-        KEY_MODIFIER_ALT        = (1 << 1),
-        KEY_MODIFIER_CONTROL    = (1 << 2),
-        KEY_MODIFIER_CAPS_LOCK  = (1 << 3),
-        KEY_MODIFIER_SUPER      = (1 << 4),
-        KEY_MODIFIER_NUM_LOCK   = (1 << 5),
-    };
-
-
-    //Mousebuttons
-	enum MouseButton : uint8
-	{
-		MOUSEBUTTON_UNKNOWN     = 0,
-		MOUSEBUTTON_LEFT        = 1,
-		MOUSEBUTTON_MIDDLE      = 2,
-		MOUSEBUTTON_RIGHT       = 3,
-		MOUSEBUTTON_FORWARD     = 4,
-		MOUSEBUTTON_BACKWARD    = 5,
-	};
-
-
     //Topology to use
 	enum PrimitiveTopology : uint32
 	{

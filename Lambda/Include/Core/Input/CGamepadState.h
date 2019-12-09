@@ -1,11 +1,11 @@
 #pragma once
-#include "LambdaCore.h"
+#include "EGamepads.h"
 
 namespace Lambda
 {
-    //--------
-    //CGamePad
-    //--------
+    //-------------
+    //CGamepadState
+    //-------------
 
     class LAMBDA_API CGamepadState final
     {
@@ -14,5 +14,15 @@ namespace Lambda
         CGamepadState(const CGamepadState& other);
         CGamepadState(CGamepadState&& other);
         ~CGamepadState() = default;
+        
+        CGamepadState& operator=(const CGamepadState& other);
+        CGamepadState& operator=(CGamepadState&& other);
+        
+        _forceinline EGamepad GetGamepadID() const
+        {
+            return m_Gamepad;
+        }
+    private:
+        EGamepad m_Gamepad;
     };
 }

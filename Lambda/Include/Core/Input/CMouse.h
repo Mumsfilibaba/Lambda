@@ -11,6 +11,7 @@ namespace Lambda
 
     class LAMBDA_API CMouse final
     {
+        friend class CEngine;
     public:
         LAMBDA_STATIC_CLASS(CMouse);
         
@@ -21,5 +22,10 @@ namespace Lambda
         static const void SetMousePosition(const glm::ivec2& position);
         static const glm::ivec2& GetMousePosition();
         static const CMouseState& GetMouseState();
+    private:
+        static void Update();
+    private:
+        static CMouseState s_CurrentState;
+        static CMouseState s_LastState;
     };
 }

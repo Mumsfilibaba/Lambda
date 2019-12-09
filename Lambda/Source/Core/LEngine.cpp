@@ -1,9 +1,11 @@
 #include "LambdaPch.h"
-#include "Core/LEngine.h"
-#include "Core/Environment.h"
+#include "Core/CEngine.h"
+#include "Core/CEnvironment.h"
 #include "Core/LayerStack.h"
 #include "Core/LogManager.h"
-#include "Core/WindowEventDispatcher.h"
+#include "Core/Input/CKeyboard.h"
+#include "Core/Input/CMouse.h"
+#include "Core/Input/CGamepad.h"
 #include "Core/Layer.h"
 #include "Time/Clock.h"
 
@@ -20,13 +22,13 @@ namespace Lambda
 	//----------
 
 	template<>
-	LEngine* Singleton<LEngine>::s_pInstance = nullptr;
+	CEngine* CSingleton<CEngine>::s_pInstance = nullptr;
 
-	int32 LambdaMain(const LEngineParams& params)
+	int32 LambdaMain(const SEngineParams& params)
 	{
 		DBG_MEMLEAK_CHECK();
 
-		LEngine* pLEngine = DBG_NEW LEngine();
+		CEngine* pLEngine = DBG_NEW CEngine();
 		pLEngine->Initialize(params);
 		pLEngine->Run();
 		pLEngine->Release();
@@ -37,12 +39,11 @@ namespace Lambda
 	//LEngine
 	//-------
 
-	LEngine::LEngine()
-		: Singleton<LEngine>(),
-		IEnvironmentEventListener(),
+	CEngine::CEngine()
+		: CSingleton<LEngine>(),
+		IEventListener(),
 		m_pEnvironment(nullptr),
 		m_pLogManager(nullptr),
-		m_pWindowEventDispatcher(nullptr),
 		m_LayerStack(),
 		m_FrameClock(),
 		m_FrameAccumulator(),
@@ -52,7 +53,7 @@ namespace Lambda
 	}
 
 
-	LEngine::~LEngine()
+	CEngine::~CEngine()
 	{
 		//Release layers
 		m_LayerStack.ReleaseLayers();
@@ -64,21 +65,19 @@ namespace Lambda
 	}
 
 
-	void LEngine::Release()
+	void CEngine::Release()
 	{
 		delete this;
 	}
 
 
-	void LEngine::Initialize(const LEngineParams& params)
+	void CEngine::Initialize(const SEngineParams& params)
 	{
 		//Create Host
-		m_pEnvironment = Environment::Create();
+		m_pEnvironment = CEnvironment::Create();
 
 		//Init LogManager
 		m_pLogManager = DBG_NEW LogManager();
-		//Init WindowEventDispatcher
-		m_pWindowEventDispatcher = DBG_NEW WindowEventDispatcher();
 				
 		//Init Host
 		m_pEnvironment->Init();
@@ -96,7 +95,7 @@ namespace Lambda
 	}
 
 
-	void LEngine::Run()
+	void CEngine::Run()
 	{
 		LOG_ENGINE_INFO("STARTING\n");
 
@@ -107,12 +106,18 @@ namespace Lambda
 		while (m_IsRunning)
 		{
 			m_pEnvironment->ProcessEvents();
+            
+            //Update input
+            CKeyboard::Update();
+            CMouse::Update();
+            CGamepad::Update();
+            
 			DoFrame();
 		}
 	}
 
 	
-	void LEngine::DoFrame()
+	void CEngine::DoFrame()
 	{
 		static uint32 ups = 0;
 
@@ -139,7 +144,7 @@ namespace Lambda
 	}
 	
 	
-	void LEngine::OnHostQuit(int32 exitCode)
+	void CEngine::OnHostQuit(int32 exitCode)
 	{
 		LOG_ENGINE_INFO("Quiting with code %d\n", exitCode);
 

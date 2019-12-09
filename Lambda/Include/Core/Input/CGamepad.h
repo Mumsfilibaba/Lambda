@@ -1,6 +1,6 @@
 #pragma once
 #include "LambdaCore.h"
-#include "CGamepad.h"
+#include "CGamepadState.h"
 
 namespace Lambda
 {
@@ -8,11 +8,16 @@ namespace Lambda
     //CGamePad
     //--------
 
-    class LAMBDA_API CGamePad : final
+    class LAMBDA_API CGamepad : final
     {
+        friend class CEngine;
     public:
-        LAMBDA_STATIC_CLASS(CGamePad);
-        
-        static const CGamepadState& GetGamepadState();
+        LAMBDA_STATIC_CLASS(CGamepad);
+        static const CGamepadState& GetState(EGamepad gamepadID);
+    private:
+        static void Update();
+    private:
+        static CGamepadState s_CurrentState[GAMEPAD_LAST];
+        static CGamepadState s_LastState[GAMEPAD_LAST];
     };
 }

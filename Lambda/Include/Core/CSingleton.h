@@ -16,20 +16,20 @@ namespace Lambda
 
 		_forceinline CSingleton()
 		{
-			assert(s_pInstance == nullptr);
+			LAMBDA_ASSERT(s_pInstance == nullptr);
 			s_pInstance = static_cast<T*>(this);
 		}
 
 
 		_forceinline ~CSingleton()
 		{
-			assert(s_pInstance != nullptr);
+			LAMBDA_ASSERT(s_pInstance != nullptr);
 			s_pInstance = nullptr;
 		}
 	public:
 		_forceinline static T& Get()
 		{
-			assert(s_pInstance != nullptr);
+			LAMBDA_ASSERT(s_pInstance != nullptr);
 			return *s_pInstance;
 		}
 	protected:

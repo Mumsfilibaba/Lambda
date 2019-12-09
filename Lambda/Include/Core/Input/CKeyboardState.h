@@ -16,6 +16,9 @@ namespace Lambda
         CKeyboardState(CKeyboardState&& other);
         ~CKeyboardState() = default;
         
+        CKeyboardState& operator=(const CGamepadState& other);
+        CKeyboardState& operator=(CGamepadState&& other);
+        
         bool IsKeyDown(EKey key);
         bool IsKeyUp(EKey key);
         // Difference between key-down and -pressed is that pressed only checks the current frame's state
