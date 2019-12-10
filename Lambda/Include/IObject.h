@@ -60,11 +60,11 @@ namespace Lambda
 
 	//Wrapper for an IObject that releases it when destroyed (out of scope)
 	//Similar to Microsoft's Microsoft::WRL::ComPtr class
-	template <typename TObject>
+	template <typename T>
 	class AutoRef
 	{
 	public:
-		_forceinline AutoRef(TObject* pObject = nullptr)
+		_forceinline AutoRef(T* pObject = nullptr)
 			: m_pObject(pObject)
 		{
 		}
@@ -90,7 +90,7 @@ namespace Lambda
 		}
 
 
-		_forceinline TObject* Get() const
+		_forceinline T* Get() const
 		{
 			return m_pObject;
 		}
@@ -103,13 +103,13 @@ namespace Lambda
         }
 
 
-		_forceinline TObject** GetAdressOf()
+		_forceinline T** GetAdressOf()
 		{
 			return &m_pObject;
 		}
 
 
-		_forceinline TObject* const * GetAdressOf() const
+		_forceinline T* const * GetAdressOf() const
 		{
 			return &m_pObject;
 		}
@@ -127,39 +127,39 @@ namespace Lambda
 		}
 
 
-		_forceinline TObject* operator->() const
+		_forceinline T* operator->() const
 		{
 			return m_pObject;
 		}
 
 
-		_forceinline TObject& operator*()
+		_forceinline T& operator*()
 		{
 			LAMBDA_ASSERT(m_pObject != nullptr);
 			return *m_pObject;
 		}
 
 
-		_forceinline const TObject& operator*() const
+		_forceinline const T& operator*() const
 		{
 			LAMBDA_ASSERT(m_pObject != nullptr);
 			return *m_pObject;
 		}
 
 
-		_forceinline TObject** operator&()
+		_forceinline T** operator&()
 		{
 			return &m_pObject;
 		}
 
 
-		_forceinline TObject* const * operator&() const
+		_forceinline T* const * operator&() const
 		{
 			return &m_pObject;
 		}
 
 
-		_forceinline AutoRef& operator=(TObject* pObject)
+		_forceinline AutoRef& operator=(T* pObject)
 		{
 			AutoRef other(pObject);
 			return *this = other;
@@ -195,6 +195,6 @@ namespace Lambda
 			return m_pObject != nullptr;
 		}
 	private:
-		TObject* m_pObject;
+		T* m_pObject;
 	};
 }
