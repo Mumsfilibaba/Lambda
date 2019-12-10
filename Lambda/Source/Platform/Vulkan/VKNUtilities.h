@@ -1,6 +1,6 @@
 #pragma once
 #include "LambdaCore.h"
-#include "Core/LogManager.h"
+#include "Core/CLogManager.h"
 #include "Utilities/TextureHelper.h"
 #include <vector>
 #include "Vulkan.h"

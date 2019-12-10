@@ -1,5 +1,5 @@
 #include "LambdaPch.h"
-#include "Graphics/MeshFactory.h"
+#include "Graphics/CMeshFactory.h"
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -8,11 +8,11 @@
 
 namespace Lambda
 {
-	//-----------
-	//MeshFactory
-	//-----------
+	//------------
+	//CMeshFactory
+	//------------
 
-	MeshData MeshFactory::CreateFromFile(const std::string& filename, bool mergeMeshes, bool leftHanded) noexcept
+	SMeshData CMeshFactory::CreateFromFile(const std::string& filename, bool mergeMeshes, bool leftHanded) noexcept
 	{
 		using namespace std;
         using namespace glm;
@@ -30,7 +30,7 @@ namespace Lambda
         const aiScene* pScene = importer.ReadFile(filename, flags);
         
 		//Extract scene-data
-		MeshData data;
+		SMeshData data;
         if (pScene)
         {
             if(pScene->HasMeshes())
@@ -116,7 +116,7 @@ namespace Lambda
 	}
 
 
-	MeshData MeshFactory::CreateCube(float width, float height, float depth) noexcept
+	SMeshData CMeshFactory::CreateCube(float width, float height, float depth) noexcept
 	{
 		using namespace glm;
 
@@ -124,7 +124,7 @@ namespace Lambda
 		float h = height * 0.5f;
 		float d = depth  * 0.5f;
 
-		MeshData data;
+		SMeshData data;
 		data.Vertices =
 		{
 			//FRONT FACE
@@ -195,12 +195,12 @@ namespace Lambda
 	}
 
 
-	MeshData MeshFactory::CreatePlane(uint32 width, uint32 height) noexcept
+	SMeshData CMeshFactory::CreatePlane(uint32 width, uint32 height) noexcept
 	{
 		using namespace glm;
 		using namespace std;
 
-		MeshData data;
+		SMeshData data;
 		if (width < 1)
 			width = 1;
 		if (height < 1)
@@ -249,11 +249,11 @@ namespace Lambda
 	}
 
 
-	MeshData MeshFactory::CreateSphere(uint32 subdivisions, float radius) noexcept
+	SMeshData CMeshFactory::CreateSphere(uint32 subdivisions, float radius) noexcept
 	{
 		using namespace glm;
 
-		MeshData data;
+		SMeshData data;
 		data.Vertices.resize(12);
 
 		//VERTICES
@@ -328,11 +328,11 @@ namespace Lambda
 	}
 
 
-	MeshData MeshFactory::CreateCone(uint32 sides, float radius, float height) noexcept
+	SMeshData CMeshFactory::CreateCone(uint32 sides, float radius, float height) noexcept
 	{
 		using namespace glm;
 
-		MeshData data;
+		SMeshData data;
 		//Num verts = (Sides*2)	(Bottom, since we need unique normals)
 		//		    +  Sides	(1 MiddlePoint per side)
 		//			+  1		(One middlepoint on the underside)
@@ -403,11 +403,11 @@ namespace Lambda
 	}
 
 
-	MeshData MeshFactory::CreatePyramid() noexcept
+	SMeshData CMeshFactory::CreatePyramid() noexcept
 	{
 		using namespace glm;
 
-		MeshData data;
+		SMeshData data;
 		data.Vertices.resize(16);
 		data.Indices.resize(18);
 
@@ -493,11 +493,11 @@ namespace Lambda
 	}
 
 
-	MeshData MeshFactory::CreateCylinder(uint32 sides, float radius, float height) noexcept
+	SMeshData CMeshFactory::CreateCylinder(uint32 sides, float radius, float height) noexcept
 	{
 		using namespace glm;
 		
-		MeshData data;
+		SMeshData data;
 		if (sides < 5)
 			sides = 5;
 		if (height < 0.1f)
@@ -597,7 +597,7 @@ namespace Lambda
 	}
 
 
-	void MeshFactory::Subdivide(MeshData& data, uint32 subdivisions) noexcept
+	void CMeshFactory::Subdivide(SMeshData& data, uint32 subdivisions) noexcept
 	{
 		using namespace glm;
 		
@@ -606,7 +606,7 @@ namespace Lambda
 			return;
 		}
 
-		Vertex v[3];
+		SVertex v[3];
 		size_t j = 0;
 		uint32 indexCount		= 0;
 		uint32 vertexCount		= 0;
@@ -670,7 +670,7 @@ namespace Lambda
 	}
 
 
-	void MeshFactory::Optimize(MeshData& data, uint32 startVertex) noexcept
+	void CMeshFactory::Optimize(SMeshData& data, uint32 startVertex) noexcept
 	{
 		using namespace std;
 
@@ -709,7 +709,7 @@ namespace Lambda
 	}
 
 
-	void MeshFactory::CalculateHardNormals(MeshData& data) noexcept
+	void CMeshFactory::CalculateHardNormals(SMeshData& data) noexcept
 	{
 		using namespace glm;
 		vec3 e1;
@@ -729,7 +729,7 @@ namespace Lambda
 	}
 
 
-	void MeshFactory::CalculateTangents(MeshData& data) noexcept
+	void CMeshFactory::CalculateTangents(SMeshData& data) noexcept
 	{
 		using namespace glm;
 
@@ -750,7 +750,7 @@ namespace Lambda
 	}
 
 
-	/*void Mesh::calcNormal()
+	/*void CMeshFactory::calcNormal()
 	{
 		using namespace Math;
 
@@ -769,7 +769,7 @@ namespace Lambda
 		}
 	}
 
-	void Mesh::calcTangent()
+	void CMeshFactory::calcTangent()
 	{
 		using namespace Math;
 

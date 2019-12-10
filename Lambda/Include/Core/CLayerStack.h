@@ -19,23 +19,23 @@ namespace Lambda
         LAMBDA_NO_COPY(CLayerStack);
         
         void ReleaseLayers();
-        void PushLayer(Layer* pLayer);
+        void PushLayer(CLayer* pLayer);
         void PopLayer();
 
 		//Enables foreachloops
-		_forceinline std::vector<Layer*>::iterator begin()
+		_forceinline std::vector<CLayer*>::iterator begin()
 		{
 			return m_Layers.begin();
 		}
 
 
-		_forceinline std::vector<Layer*>::iterator end()
+		_forceinline std::vector<CLayer*>::iterator end()
 		{
 			return m_Layers.end();
 		}
 	private:
-		void ReleaseLayer(Layer* pLayer);
+		void ReleaseLayer(CLayer* pLayer);
     private:
-        std::vector<Layer*> m_Layers;
+        std::vector<CLayer*> m_Layers;
     };
 }

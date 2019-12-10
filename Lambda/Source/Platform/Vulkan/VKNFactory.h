@@ -1,5 +1,6 @@
 #pragma once
 #include "Graphics/Core/IFactory.h"
+#include "Core/CRefCountBase.h"
 
 namespace Lambda
 {
@@ -7,7 +8,7 @@ namespace Lambda
     //VKNFactory
     //----------
 
-    class VKNFactory final : public RefCountedObject<IFactory>
+    class VKNFactory final : public CRefCountBase<IFactory>
     {
     public:
         LAMBDA_NO_COPY(VKNFactory);
@@ -15,6 +16,6 @@ namespace Lambda
         VKNFactory();
         ~VKNFactory() = default;
         
-        virtual void CreateDeviceAndSwapChain(IDevice** ppDevice, const DeviceDesc& deviceDesc, IDeviceContext** pImmediateContext, ISwapChain** ppSwapChain, const SwapChainDesc& swapChainDesc) override final;
+        virtual void CreateDeviceAndSwapChain(IDevice** ppDevice, const SDeviceDesc& deviceDesc, IDeviceContext** pImmediateContext, ISwapChain** ppSwapChain, const SSwapChainDesc& swapChainDesc) override final;
     };
 }

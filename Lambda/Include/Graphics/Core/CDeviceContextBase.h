@@ -2,6 +2,7 @@
 #include "CDeviceObjectBase.h"
 #include "IDeviceContext.h"
 #include "ITexture.h"
+#include "AutoRef.h"
 #include <algorithm>
 
 namespace Lambda
@@ -14,22 +15,22 @@ namespace Lambda
 	class CDeviceContextBase : public CDeviceObjectBase<TDeviceImpl, IDeviceContext>
 	{
 	public:
-        CDeviceContextBase.h(TDeviceImpl* pDevice, DeviceContextType type)
+        CDeviceContextBase(TDeviceImpl* pDevice, EDeviceContextType type)
             : CDeviceObjectBase<TDeviceImpl, IDeviceContext>(pDevice),
             m_Type(type)
         {
         }
-        ~CDeviceContextBase.h() = default;
+        ~CDeviceContextBase() = default;
 
-        LAMBDA_NO_COPY(CDeviceContextBase.h);
+        LAMBDA_NO_COPY(CDeviceContextBase);
 
         virtual void ClearRenderTarget(ITexture* pRenderTarget, float color[4]) override = 0;
 		virtual void ClearDepthStencil(ITexture* pDepthStencil, float depth, uint8 stencil) override = 0;
 
-		virtual void SetConstantBlocks(ShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData) override = 0;
+		virtual void SetConstantBlocks(EShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData) override = 0;
 
-		virtual void UpdateBuffer(IBuffer* pResource, const ResourceData& data) override = 0;
-		virtual void UpdateTexture(ITexture* pResource, const ResourceData& data, uint32 mipLevel) override = 0;
+		virtual void UpdateBuffer(IBuffer* pResource, const SResourceData& data) override = 0;
+		virtual void UpdateTexture(ITexture* pResource, const SResourceData& data, uint32 mipLevel) override = 0;
 
 		virtual void CopyBuffer(IBuffer* pDst, IBuffer* pSrc) override = 0;
 
@@ -78,14 +79,14 @@ namespace Lambda
 
 				LAMBDA_ASSERT_PRINT(m_DepthStencil->GetDesc().Flags & TEXTURE_FLAGS_DEPTH_STENCIL, "[Lambda Engine] pDepthStencil was not created with flag TEXTURE_FLAGS_DEPTH_STENCIL\n");
                 
-                const TextureDesc& desc = m_DepthStencil->GetDesc();
+                const STextureDesc& desc = m_DepthStencil->GetDesc();
                 m_FrameBufferHeight         = desc.Height;
                 m_FrameBufferWidth          = desc.Width;
                 m_FrameBufferSampleCount    = desc.SampleCount;
 			}
 			else
 			{
-				const TextureDesc& desc = m_RenderTargets[0]->GetDesc();
+				const STextureDesc& desc = m_RenderTargets[0]->GetDesc();
 				m_FrameBufferHeight			= desc.Height;
 				m_FrameBufferWidth			= desc.Width;
 				m_FrameBufferSampleCount	= desc.SampleCount;
@@ -96,7 +97,7 @@ namespace Lambda
 		}
 
 
-		virtual void SetViewports(const Viewport* pViewports, uint32 numViewports) override
+		virtual void SetViewports(const SViewport* pViewports, uint32 numViewports) override
 		{
 			LAMBDA_ASSERT(pViewports != nullptr);
 			LAMBDA_ASSERT_PRINT(numViewports <= LAMBDA_MAX_VIEWPORT_COUNT, "[Lambda Engine] 'numViewports' must be less that the maximum of '%d'\n", LAMBDA_MAX_VIEWPORT_COUNT);
@@ -108,7 +109,7 @@ namespace Lambda
 		}
 
 
-		virtual void SetScissorRects(const Rectangle* pScissorRects, uint32 numRects) override
+		virtual void SetScissorRects(const SRectangle* pScissorRects, uint32 numRects) override
 		{
 			LAMBDA_ASSERT(pScissorRects != nullptr);
 			LAMBDA_ASSERT_PRINT(numRects <= LAMBDA_MAX_SCISSOR_RECT_COUNT, "[Lambda Engine] 'numRects' must be less that the maximum of '%d'\n", LAMBDA_MAX_SCISSOR_RECT_COUNT);
@@ -141,7 +142,7 @@ namespace Lambda
 		}
 
 
-		virtual void SetIndexBuffer(IBuffer* pBuffer, Format format) override
+		virtual void SetIndexBuffer(IBuffer* pBuffer, EFormat format) override
 		{
 			LAMBDA_ASSERT_PRINT(format == FORMAT_R32_UINT || format == FORMAT_R16_UINT, "[Lambda Engine] Only supported formats for IDeviceContext::SetIndexBuffer is FORMAT_R32_UINT or FORMAT_R16_UINT\n");
 
@@ -208,12 +209,12 @@ namespace Lambda
 
 			//Viewport
 			for (uint32 i = 0; i < m_NumViewports; i++)
-				m_Viewports[i] = Viewport();
+				m_Viewports[i] = SViewport();
 			m_NumViewports = 0;
 
 			//Scissor rectangles
 			for (uint32 i = 0; i < m_NumScissorRects; i++)
-				m_ScissorRects[i] = Rectangle();
+				m_ScissorRects[i] = SRectangle();
 			m_NumScissorRects = 0;
 
 			//VertexBuffers
@@ -233,7 +234,7 @@ namespace Lambda
 		}
 
 
-		virtual DeviceContextType GetType() const override
+		virtual EDeviceContextType GetType() const override
 		{
 			return m_Type;
 		}
@@ -247,11 +248,11 @@ namespace Lambda
 		uint32 m_FrameBufferSampleCount = 0;
 		
 		//Viewport
-		Viewport m_Viewports[LAMBDA_MAX_VIEWPORT_COUNT];
+		SViewport m_Viewports[LAMBDA_MAX_VIEWPORT_COUNT];
 		uint32 m_NumViewports = 0;
 		
 		//Scissor rectangles
-		Rectangle m_ScissorRects[LAMBDA_MAX_SCISSOR_RECT_COUNT];
+		SRectangle m_ScissorRects[LAMBDA_MAX_SCISSOR_RECT_COUNT];
 		uint32 m_NumScissorRects = 0;
 
 		//VertexBuffers
@@ -260,7 +261,7 @@ namespace Lambda
 
 		//IndexBuffer
 		AutoRef<TBufferImpl> m_IndexBuffer;
-		Format m_IndexBufferFormat;
+		EFormat m_IndexBufferFormat;
 
 		//PipelineState
 		AutoRef<TPipelineStateImpl> m_PipelineState;
@@ -269,6 +270,6 @@ namespace Lambda
 		AutoRef<TShaderVariableTableImpl> m_ShaderVariableTable;
 
 		//Type
-		DeviceContextType m_Type;
+		EDeviceContextType m_Type;
 	};
 }

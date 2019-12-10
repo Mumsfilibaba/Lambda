@@ -1,25 +1,25 @@
 #pragma once
-#include "DeviceObjectBase.h"
+#include "CDeviceObjectBase.h"
 #include "ISwapChain.h"
 
 namespace Lambda
 {
-	//-------------
-	//SwapChainBase
-	//-------------
+	//--------------
+	//CSwapChainBase
+	//--------------
 
 	template<typename TDeviceImpl>
-	class SwapChainBase : public DeviceObjectBase<TDeviceImpl, ISwapChain>
+	class CSwapChainBase : public CDeviceObjectBase<TDeviceImpl, ISwapChain>
 	{
 	public:
-		LAMBDA_NO_COPY(SwapChainBase);
+        CSwapChainBase(TDeviceImpl* pDevice, const SSwapChainDesc& desc)
+            : CDeviceObjectBase<TDeviceImpl, ISwapChain>(pDevice),
+            m_Desc(desc)
+        {
+        }
+        ~CSwapChainBase() = default;
 
-		SwapChainBase(TDeviceImpl* pDevice, const SwapChainDesc& desc)
-			: DeviceObjectBase<TDeviceImpl, ISwapChain>(pDevice),
-			m_Desc(desc)
-		{
-		}
-		~SwapChainBase() = default;
+        LAMBDA_NO_COPY(CSwapChainBase);
 
 		virtual void ResizeBuffers(uint32 width, uint32 height) override = 0;
 		virtual void Present() override = 0;
@@ -30,11 +30,11 @@ namespace Lambda
 		virtual void* GetNativeHandle() const override = 0;
 
 
-		virtual const SwapChainDesc& GetDesc() const override
+		virtual const SSwapChainDesc& GetDesc() const override
 		{
 			return m_Desc;
 		}
 	protected:
-		SwapChainDesc m_Desc;
+		SSwapChainDesc m_Desc;
 	};
 }

@@ -575,7 +575,7 @@ namespace Lambda
 			textureData.SizeInBytes = sizeof(pixels);
 			m_pDefaultTexture = DBG_NEW VKNTexture(this, &textureData, textureDesc);
 
-			TextureTransitionBarrier barrier = {};
+			STextureTransitionBarrier barrier = {};
 			barrier.pTexture	= m_pDefaultTexture;
 			barrier.AfterState	= RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 			barrier.MipLevel	= LAMBDA_ALL_MIP_LEVELS;

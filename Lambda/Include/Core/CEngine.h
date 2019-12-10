@@ -1,15 +1,14 @@
 #pragma once
-#include "LambdaCore.h"
 #include "Event/IEventListener.h"
 #include "CSingleton.h"
-#include "Time/Clock.h"
-#include "Time/Timestep.h"
+#include "CLayerStack.h"
+#include "Time/CClock.h"
 
 namespace Lambda
 {
-	class Layer;
-	class LayerStack;
-	class LogManager;
+	class CLayer;
+	class CLayerStack;
+	class CLogManager;
 	class CEnvironment;
 
 	//-------------
@@ -31,7 +30,7 @@ namespace Lambda
 	//-----------------------------------------------
 	//CreateGameLayer - NEEDS TO BE DEFINED BY CLIENT
 	//-----------------------------------------------
-	Layer* CreateGameLayer();
+	CLayer* CreateGameLayer();
 
 	//-------
 	//CEngine
@@ -45,7 +44,7 @@ namespace Lambda
 
         LAMBDA_NO_COPY(CEngine);
         
-        virtual void OnEvent(const CEvent& event) override final;
+        virtual bool OnEvent(const CEvent& event) override final;
 
         void Initialize(const SEngineParams& params);
         void Run();
@@ -53,11 +52,11 @@ namespace Lambda
         void Release();
 	private:
 		CEnvironment* m_pEnvironment;
-		LogManager* m_pLogManager;
-		LayerStack m_LayerStack;
-		Clock m_FrameClock;
-		Timestep m_FrameAccumulator;
-		const Timestep m_Timestep;
+		CLogManager* m_pLogManager;
+		CLayerStack m_LayerStack;
+		CClock m_FrameClock;
+		CTime m_FrameAccumulator;
+		const CTime m_Timestep;
 		int32 m_ExitCode;
 		bool m_IsRunning;
 	};

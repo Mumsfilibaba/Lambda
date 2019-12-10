@@ -25,7 +25,7 @@ namespace Lambda
 		EVENT_CATEGORY_MOUSE		= (1 << 2),
 		EVENT_CATEGORY_JOYSTICK		= (1 << 3),
         EVENT_CATEGORY_INPUT        = (1 << 3),
-		EVENT_CATEGORY_APPLICATION	= (1 << 4),
+		EVENT_CATEGORY_ENVIRONMENT	= (1 << 4),
 		EVENT_CATEGORY_OTHER		= (1 << 5),
 		EVENT_CATEGORY_ALL			= 0xffffffff
 	};
@@ -38,13 +38,11 @@ namespace Lambda
     {
     public:
         _forceinline CEvent(uint32 categories)
-            : m_Handled(false), m_Categories(categories) {}
+            : m_Categories(categories) {}
         virtual ~CEvent() = default;
         
-		virtual EEventType GetType() const = 0;
-		
-        
-		_forceinline bool IsInCategory(EventCategory category) 
+		virtual EventType GetType() const = 0;
+		_forceinline bool IsInCategory(EEventCategory category)
 		{ 
 			return (m_Categories & category); 
 		}
@@ -56,9 +54,9 @@ namespace Lambda
     private:
         uint32 m_Categories;
 	private:
-		_forceinline static constexpr EEventType GetStaticType()
+		_forceinline static constexpr EventType GetStaticType()
 		{ 
-			constexpr EEventType hash = StringHash("Event");
+			constexpr EventType hash = StringHash("Event");
 			return hash; 
 		}
     };

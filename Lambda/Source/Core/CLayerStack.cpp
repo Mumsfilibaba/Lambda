@@ -1,21 +1,21 @@
 #include "LambdaPch.h"
-#include "Core/LayerStack.h"
-#include "Core/Layer.h"
+#include "Core/CLayerStack.h"
+#include "Core/CLayer.h"
 
 namespace Lambda
 {
-	//----------
-	//LayerStack
-	//----------
+	//----------–
+	//CLayerStack
+	//-----------
 
-    void LayerStack::ReleaseLayers()
+    void CLayerStack::ReleaseLayers()
     {
 		for (auto pLayer : m_Layers)
 			ReleaseLayer(pLayer);
     }
 
 
-    void LayerStack::PushLayer(Layer* pLayer)
+    void CLayerStack::PushLayer(CLayer* pLayer)
     {
         LAMBDA_ASSERT(pLayer != nullptr);
         
@@ -24,7 +24,7 @@ namespace Lambda
     }
 
 
-    void LayerStack::PopLayer()
+    void CLayerStack::PopLayer()
     {
         Layer* pLayer = m_Layers.back();
         m_Layers.pop_back();
@@ -35,7 +35,7 @@ namespace Lambda
     }
 	
 	
-	void LayerStack::ReleaseLayer(Layer* pLayer)
+	void CLayerStack::ReleaseLayer(Layer* pLayer)
 	{
 		pLayer->OnRelease();
 	}

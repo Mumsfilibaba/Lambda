@@ -15,7 +15,7 @@ namespace Lambda
 	}
 
 
-	void VKNFactory::CreateDeviceAndSwapChain(IDevice** ppDevice, const DeviceDesc& deviceDesc, IDeviceContext** ppImmediateContext, ISwapChain** ppSwapChain, const SwapChainDesc& swapChainDesc)
+	void VKNFactory::CreateDeviceAndSwapChain(IDevice** ppDevice, const SDeviceDesc& deviceDesc, IDeviceContext** ppImmediateContext, ISwapChain** ppSwapChain, const SSwapChainDesc& swapChainDesc)
     {
         LAMBDA_ASSERT_PRINT(ppDevice != nullptr, "[Vulkan] VKNFactory::CreateDeviceAndSwapChain: ppDevice cannot be nullptr\n");
         LAMBDA_ASSERT_PRINT(ppSwapChain != nullptr, "[Vulkan] VKNFactory::CreateDeviceAndSwapChain: ppSwapChain cannot be nullptr\n");

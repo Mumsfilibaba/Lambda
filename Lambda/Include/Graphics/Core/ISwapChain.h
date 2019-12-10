@@ -9,11 +9,11 @@ namespace Lambda
     //SwapChainDesc
     //-------------
 
-    struct SwapChainDesc
+    struct SSwapChainDesc
     {
         void* pWindowHandle         = nullptr; //HWND on Windows, GLFWWindow* on macOS
-        Format BufferFormat         = FORMAT_UNKNOWN;
-        Format DepthBufferFormat    = FORMAT_UNKNOWN;
+        EFormat BufferFormat        = FORMAT_UNKNOWN;
+        EFormat DepthBufferFormat   = FORMAT_UNKNOWN;
         uint32 BufferCount          = 3;
         uint32 BufferSampleCount    = 1;
         uint32 BufferWidth          = 0;
@@ -37,6 +37,6 @@ namespace Lambda
 		virtual ITexture* GetBuffer() = 0;
         virtual ITexture* GetDepthBuffer() = 0;
         virtual void* GetNativeHandle() const = 0;
-        virtual const SwapChainDesc& GetDesc() const = 0;
+        virtual const SSwapChainDesc& GetDesc() const = 0;
     };
 }

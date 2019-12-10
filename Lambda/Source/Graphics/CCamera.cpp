@@ -1,20 +1,19 @@
 #include "LambdaPch.h"
-#include "Graphics/Camera.h"
+#include "Graphics/CCamera.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/euler_angles.hpp>
 
 namespace Lambda
 {
-    //------
-    //Camera
-    //------
+    //-------
+    //CCamera
+    //-------
 
     constexpr glm::vec3 FORWARD = glm::vec3(0.0f, 0.0f, 1.0f);
     constexpr glm::vec3 RIGHT   = glm::vec3(1.0f, 0.0f, 0.0f);
     constexpr glm::vec3 UP      = glm::vec3(0.0f, 1.0f, 0.0f);
     
-    
-    Camera::Camera()
+    CCamera::CCamera()
         : m_View(1.0f),
         m_Projection(1.0f),
         m_Position(0.0f, 0.0f, 0.0f),
@@ -29,7 +28,7 @@ namespace Lambda
     }
     
     
-    void Camera::Rotate(const glm::vec3& rotation)
+    void CCamera::Rotate(const glm::vec3& rotation)
     {
         //Add to rotation
         m_Rotation += rotation;
@@ -48,20 +47,20 @@ namespace Lambda
     }
     
     
-    void Camera::Translate(const glm::vec3& translation)
+    void CCamera::Translate(const glm::vec3& translation)
     {
         //Move camera
         m_Position += translation.x * m_Right + translation.y * m_Up + translation.z * m_Forward;
     }
     
     
-    void Camera::SetPosition(const glm::vec3& position)
+    void CCamera::SetPosition(const glm::vec3& position)
     {
         m_Position = position;
     }
     
     
-    void Camera::SetRotation(const glm::vec3& rotation)
+    void CCamera::SetRotation(const glm::vec3& rotation)
     {
         m_Rotation = rotation;
         
@@ -74,13 +73,13 @@ namespace Lambda
     }
     
     
-    void Camera::SetAspect(float width, float height)
+    void CCamera::SetAspect(float width, float height)
     {
         m_Aspect = width / height;
     }
     
     
-    void Camera::CreateView()
+    void CCamera::CreateView()
     {
         //Calculate new lookat
         glm::vec3 lookAt    = m_Position + m_Forward;
@@ -88,7 +87,7 @@ namespace Lambda
     }
     
     
-    void Camera::CreateProjection()
+    void CCamera::CreateProjection()
     {
         m_Projection = glm::perspective(glm::radians(90.0f), m_Aspect, 0.01f, 10000.0f);
     }

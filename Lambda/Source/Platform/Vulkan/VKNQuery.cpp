@@ -4,8 +4,8 @@
 
 namespace Lambda
 {
-	VKNQuery::VKNQuery(VKNDevice* pVkDevice, const QueryDesc& desc)
-		: QueryBase<VKNDevice>(pVkDevice, desc),
+	VKNQuery::VKNQuery(VKNDevice* pVkDevice, const SQueryDesc& desc)
+		: CQueryBase<VKNDevice>(pVkDevice, desc),
 		m_VkQueryPool(VK_NULL_HANDLE),
         m_CurrentQuery(0),
         m_TimeStampPeriod(0)
@@ -36,7 +36,7 @@ namespace Lambda
 	}
     
     
-    void VKNQuery::Init(const QueryDesc& desc)
+    void VKNQuery::Init(const SQueryDesc& desc)
     {
         //Create
         VkQueryPoolCreateInfo queryInfo = {};

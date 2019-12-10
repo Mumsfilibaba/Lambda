@@ -11,7 +11,7 @@ namespace Lambda
 	//ITexture
 	//--------
 
-	ITexture* ITexture::CreateTextureFromFile(IDevice* pDevice, const char* pFileName, uint32 flags, Usage usage, Format format)
+	ITexture* ITexture::CreateTextureFromFile(IDevice* pDevice, const char* pFileName, uint32 flags, EUsage usage, EFormat format)
 	{
 		int32 width = 0;
 		int32 height = 0;
@@ -24,7 +24,7 @@ namespace Lambda
 		if (pTexData != nullptr)
 		{
 			//Setup desc
-			TextureDesc desc = {};
+			STextureDesc desc = {};
 			desc.Type			= TEXTURE_TYPE_2D;
 			desc.ArraySize		= 1;
 			desc.Flags			= flags;
@@ -36,7 +36,7 @@ namespace Lambda
 			desc.Usage			= usage;
 
 			//Create texture from loaded data
-			ResourceData data = {};
+			SResourceData data = {};
 			data.pData = reinterpret_cast<void*>(pTexData);
 			data.SizeInBytes = uint64(width) * uint64(height) * uint64(StrideInBytesFromResourceFormat(format));
 

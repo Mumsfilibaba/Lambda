@@ -1,5 +1,5 @@
 #pragma once
-#include "Graphics/Core/PipelineStateBase.h"
+#include "Graphics/Core/CPipelineStateBase.h"
 #include <map>
 #include <vector>
 #include <unordered_map>
@@ -20,14 +20,14 @@ namespace Lambda
 	//VKNPipelineState
 	//----------------
 
-    class VKNPipelineState final : public PipelineStateBase<VKNDevice>
+    class VKNPipelineState final : public CPipelineStateBase<VKNDevice>
     {
-		using TPipelineState = PipelineStateBase<VKNDevice>;
+		using TPipelineState = CPipelineStateBase<VKNDevice>;
 
     public:
         LAMBDA_NO_COPY(VKNPipelineState);
         
-        VKNPipelineState(VKNDevice* pVkDevice, const PipelineStateDesc& desc);
+        VKNPipelineState(VKNDevice* pVkDevice, const SPipelineStateDesc& desc);
         ~VKNPipelineState();
 
 		virtual void CreateShaderVariableTable(IShaderVariableTable** ppVariableTable) override final;
@@ -68,10 +68,10 @@ namespace Lambda
 			return VK_NULL_HANDLE;
 		}
     private:
-        void Init(const PipelineStateDesc& desc);
+        void Init(const SPipelineStateDesc& desc);
     private:
-        std::vector<ShaderVariableDesc> m_ShaderVariableDescs;
-        std::vector<ConstantBlockDesc>  m_ConstantBlockDescs;
+        std::vector<SShaderVariableDesc> m_ShaderVariableDescs;
+        std::vector<SConstantBlockDesc>  m_ConstantBlockDescs;
 		std::unordered_map<std::string, VkSampler> m_StaticSamplerStates;
         VKNDescriptorSetAllocator* m_pAllocator;
         VkPipeline m_VkPipeline;

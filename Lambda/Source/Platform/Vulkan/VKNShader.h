@@ -1,5 +1,5 @@
 #pragma once
-#include "Graphics/Core/ShaderBase.h"
+#include "Graphics/Core/CShaderBase.h"
 #include <vector>
 #include <string>
 #include "Vulkan.h"
@@ -12,13 +12,13 @@ namespace Lambda
 	//VKNSamplerState
 	//---------------
 
-    class VKNShader final : public ShaderBase<VKNDevice>
+    class VKNShader final : public CShaderBase<VKNDevice>
     {
     public:
-        LAMBDA_NO_COPY(VKNShader);
-        
-        VKNShader(VKNDevice* pVkDevice, const ShaderDesc& desc);
+        VKNShader(VKNDevice* pVkDevice, const SShaderDesc& desc);
         ~VKNShader();
+
+        LAMBDA_NO_COPY(VKNShader);
         
         virtual void* GetNativeHandle() const override final;
 
@@ -27,7 +27,7 @@ namespace Lambda
 			return m_VkShaderModule; 
 		}
     private:
-        void Init(const ShaderDesc& desc);
+        void Init(const SShaderDesc& desc);
     private:
         std::vector<char> m_ByteCode;
         std::string m_EntryPoint;

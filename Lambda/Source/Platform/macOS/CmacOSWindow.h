@@ -1,32 +1,30 @@
 #pragma once
 #if defined(LAMBDA_PLAT_MACOS)
-    #include "IObject.h"
+    #include "../Desktop/BaseWindow.h"
     #include <GLFW/glfw3.h>
 
 namespace Lambda
 {
-    //-----------
-    //macOSWindow
-    //-----------
+    //------------
+    //CmacOSWindow
+    //------------
     
-    class macOSWindow
+    class CmacOSWindow final : public CBaseWindow
     {
     public:
-        macOSWindow(const WindowDesc& desc);
-        ~macOSWindow();
+        CmacOSWindow(const char* pTitle, uint32 width, uint32 height);
+        ~CmacOSWindow();
         
-        virtual void OnUpdate() const override final;
         virtual bool HasFocus() const override final;
-        
         virtual void SetEventCallback(IEventCallback* pCallback) override final;
-        virtual bool SetFullscreen(bool fullscreen) override final;
-        virtual bool GetFullscreen() const override final;
         virtual uint32 GetHeight() const override final;
         virtual uint32 GetWidth() const override final;
-        virtual void* GetNativeHandle() const override final;
+        
+        bool SetFullscreen(bool fullscreen);
+        bool GetFullscreen() const;
+        void ProcessEvents() const;
     private:
-        void Init(const WindowDesc& desc);
-        void DispatchEvent(const Event& event);
+        void DispatchEvent(const CEvent& event);
     private:
         GLFWwindow* m_pWindow;
         IEventCallback* m_pCallback;

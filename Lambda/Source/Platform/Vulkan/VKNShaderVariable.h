@@ -1,5 +1,6 @@
 #pragma once
-#include "Graphics/Core/ShaderVariableBase.h"
+#include "Graphics/Core/CShaderVariableBase.h"
+#include "Core/AutoRef.h"
 #include "VKNBuffer.h"
 
 namespace Lambda
@@ -12,15 +13,14 @@ namespace Lambda
 	//VKNShaderVariableTable
 	//----------------------
 
-	class VKNShaderVariable : public ShaderVariableBase<VKNDevice, VKNShaderVariableTable>
+	class VKNShaderVariable : public CShaderVariableBase<VKNDevice, VKNShaderVariableTable>
 	{
-		using TShaderVariable = ShaderVariableBase<VKNDevice, VKNShaderVariableTable>;
-
+		using TShaderVariable = CShaderVariableBase<VKNDevice, VKNShaderVariableTable>;
 	public:
-		LAMBDA_NO_COPY(VKNShaderVariable);
+        VKNShaderVariable(VKNDevice* pVkDevice, VKNShaderVariableTable* pVkVariableTable, const SShaderVariableDesc& desc);
+        ~VKNShaderVariable() = default;
 
-		VKNShaderVariable(VKNDevice* pVkDevice, VKNShaderVariableTable* pVkVariableTable, const ShaderVariableDesc& desc);
-		~VKNShaderVariable() = default;
+        LAMBDA_NO_COPY(VKNShaderVariable);
 
 		virtual void SetTexture(ITexture* pTexture) override final;
 		virtual void SetConstantBuffer(IBuffer* pBuffer) override final;

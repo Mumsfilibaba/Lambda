@@ -8,8 +8,8 @@ namespace Lambda
 	//VKNShader
 	//---------
 
-	VKNShader::VKNShader(VKNDevice* pVkDevice, const ShaderDesc& desc)
-		: ShaderBase<VKNDevice>(pVkDevice, desc),
+	VKNShader::VKNShader(VKNDevice* pVkDevice, const SShaderDesc& desc)
+		: CShaderBase<VKNDevice>(pVkDevice, desc),
 		m_VkShaderModule(VK_NULL_HANDLE),
 		m_ByteCode(),
 		m_EntryPoint()
@@ -29,7 +29,7 @@ namespace Lambda
 	}
     
     
-    void VKNShader::Init(const ShaderDesc& desc)
+    void VKNShader::Init(const SShaderDesc& desc)
     {
         //Get the bytecode
         if (desc.Languange == SHADER_LANG_SPIRV)

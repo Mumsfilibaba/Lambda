@@ -9,8 +9,8 @@ namespace Lambda
     //CGamepad
     //--------
 
-    CGamepadState CGamepad::s_LastState;
-    CGamepadState CGamepad::s_CurrentState;
+    CGamepadState CGamepad::s_LastState[4];
+    CGamepadState CGamepad::s_CurrentState[4];
 
     void CGamepad::Update()
     {
@@ -20,7 +20,7 @@ namespace Lambda
         for (uint32 i = 0; i < GAMEPAD_LAST; i++)
         {
             s_LastState[i]      = s_CurrentState[i];
-            s_CurrentState[i]   = pGamepadController->GetGamepadState();
+            s_CurrentState[i]   = pGamepadController->GetGamepadState(EGamepad(i));
         }
         
     }

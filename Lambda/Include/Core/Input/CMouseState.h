@@ -1,5 +1,5 @@
 #pragma once
-#include "LambdaCore.h"
+#include "EMouseButton.h"
 
 namespace Lambda
 {
@@ -15,7 +15,8 @@ namespace Lambda
         CMouseState(CKeyboardState&& other);
         ~CMouseState() = default;
         
-        CMouseState& operator=(const CGamepadState& other);
-        CMouseState& operator=(CGamepadState&& other);
+        CMouseState& operator=(const CMouseState& other);
+        CMouseState& operator=(CMouseState&& other);
+    private:
     };
 }

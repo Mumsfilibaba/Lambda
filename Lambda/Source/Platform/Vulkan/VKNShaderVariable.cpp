@@ -11,7 +11,7 @@ namespace Lambda
 	//VKNShaderVariable
 	//-----------------
 
-	VKNShaderVariable::VKNShaderVariable(VKNDevice* pVkDevice, VKNShaderVariableTable* pVkShaderVariableTable, const ShaderVariableDesc& desc)
+	VKNShaderVariable::VKNShaderVariable(VKNDevice* pVkDevice, VKNShaderVariableTable* pVkShaderVariableTable, const SShaderVariableDesc& desc)
 		: TShaderVariable(pVkDevice, pVkShaderVariableTable, desc),
 		m_Resource(nullptr),
         m_ResourceHandle(VK_NULL_HANDLE),
@@ -181,7 +181,7 @@ namespace Lambda
             m_VkBufferInfo.buffer  = pVkBuffer->GetVkBuffer();
             m_VkBufferInfo.offset  = 0;
         
-            const BufferDesc& desc = pVkBuffer->GetDesc();
+            const SBufferDesc& desc = pVkBuffer->GetDesc();
             m_VkBufferInfo.range = desc.SizeInBytes;
             
             currentHandle = uint64(m_VkBufferInfo.buffer);

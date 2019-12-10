@@ -11,7 +11,7 @@ namespace Lambda
 	//VKNBuffer
 	//---------
 
-    VKNBuffer::VKNBuffer(VKNDevice* pVkDevice, const ResourceData* pInitalData, const BufferDesc& desc)
+    VKNBuffer::VKNBuffer(VKNDevice* pVkDevice, const SResourceData* pInitalData, const SBufferDesc& desc)
 		: TBuffer(pVkDevice, desc),
 		m_VkBuffer(VK_NULL_HANDLE),
         m_Memory(),
@@ -50,7 +50,7 @@ namespace Lambda
 	}
     
     
-    void VKNBuffer::Init(const ResourceData* pInitalData, const BufferDesc& desc)
+    void VKNBuffer::Init(const SResourceData* pInitalData, const SBufferDesc& desc)
     {
 		//Set alignment for buffer
 		VkPhysicalDeviceProperties properties = m_pDevice->GetVkPhysicalDeviceProperties();

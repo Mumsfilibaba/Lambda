@@ -1,5 +1,6 @@
 #include "LambdaPch.h"
-#include "Debug/DebugLayer.h"
+#include "Debug/CDebugLayer.h"
+#include "Core/Input/EKey.h"
 #include "Graphics/Core/IShader.h"
 #include "Graphics/Core/ISamplerState.h"
 #include "Graphics/Core/IPipelineState.h"
@@ -11,9 +12,9 @@
 
 namespace Lambda
 {
-	//--------
-	// SHADERS
-	//--------
+	//-------
+	//SHADERS
+	//-------
 
 	// glsl_shader.vert, compiled with:
 	// # glslangValidator -V -x -o glsl_shader.vert.u32 glsl_shader.vert
@@ -119,12 +120,12 @@ namespace Lambda
 	};
 
 
-	//-------
-	//DebugLayer
-	//-------
+	//-----------
+	//CDebugLayer
+	//-----------
 
-    DebugLayer::DebugLayer()
-        : Layer("DebugLayer"),
+    CDebugLayer::CDebugLayer()
+        : CLayer("DebugLayer"),
 		m_VS(nullptr),
 		m_PS(nullptr),
 		m_SamplerState(nullptr),
@@ -138,7 +139,7 @@ namespace Lambda
     }
 
 
-    void DebugLayer::Init()
+    void CDebugLayer::Init()
     {
         //Create context for ImGui
         IMGUI_CHECKVERSION();
@@ -189,7 +190,7 @@ namespace Lambda
 		IDevice* pDevice = nullptr;// app.GetGraphicsDevice();
 
 		//Create shaders
-		ShaderDesc shaderDesc = {};
+		SShaderDesc shaderDesc = {};
 #if defined(LAMBDA_DEBUG)
 		shaderDesc.Flags = SHADER_FLAG_COMPILE_DEBUG;
 #else
@@ -198,7 +199,7 @@ namespace Lambda
 		shaderDesc.pEntryPoint = "main";
 		shaderDesc.Type = SHADER_STAGE_VERTEX;
 
-		const DeviceProperties& deviceProps = pDevice->GetProperties();
+		const SDeviceProperties& deviceProps = pDevice->GetProperties();
 		if (deviceProps.Api == GRAPHICS_API_VULKAN)
 		{
 			shaderDesc.pSource = reinterpret_cast<const char*>(__glsl_shader_vert_spv);
@@ -217,7 +218,7 @@ namespace Lambda
 
 
 		//Create sampler
-		StaticSamplerStateDesc samplerDesc = {};
+		SStaticSamplerStateDesc samplerDesc = {};
 		samplerDesc.pName		= "sFontSampler";
 		samplerDesc.AdressMode	= SAMPLER_ADDRESS_MODE_REPEAT;
 		samplerDesc.Anisotropy	= 1.0f;
@@ -226,7 +227,7 @@ namespace Lambda
 		samplerDesc.MipLODBias	= 0.0f;
 
 		//Create pipelineresourcestate
-		ShaderVariableDesc shaderVariables[1];
+		SShaderVariableDesc shaderVariables[1];
 		shaderVariables[0].pName				= "sTexture";
 		shaderVariables[0].pStaticSamplerName	= "sFontSampler";
 		shaderVariables[0].Slot					= 0;
@@ -234,11 +235,11 @@ namespace Lambda
 		shaderVariables[0].Usage				= USAGE_DEFAULT;
 		shaderVariables[0].Stage				= SHADER_STAGE_PIXEL;
 
-		ConstantBlockDesc constantBlocks[1];
+		SConstantBlockDesc constantBlocks[1];
 		constantBlocks[0].Stage			= SHADER_STAGE_VERTEX;
 		constantBlocks[0].SizeInBytes	= sizeof(float) * 4;
 
-		ShaderVariableTableDesc variableTableDesc = {};
+		SShaderVariableTableDesc variableTableDesc = {};
 		variableTableDesc.NumVariables				= 1;
 		variableTableDesc.pVariables				= shaderVariables;
 		variableTableDesc.NumConstantBlocks			= 1;
@@ -247,32 +248,32 @@ namespace Lambda
 		variableTableDesc.pStaticSamplerStates		= &samplerDesc;
 
 		//Create pipelinestate
-		InputElementDesc inputElements[3] =
+		SInputElementDesc inputElements[3] =
 		{
 			{ "POSITION",   FORMAT_R32G32_FLOAT,	0, 0, sizeof(ImDrawVert), offsetof(ImDrawVert, pos),	false },
 			{ "TEXCOORD",   FORMAT_R32G32_FLOAT,	0, 1, sizeof(ImDrawVert), offsetof(ImDrawVert, uv),		false },
 			{ "COLOR",		FORMAT_R8G8B8A8_UNORM,	0, 2, sizeof(ImDrawVert), offsetof(ImDrawVert, col),    false },
 		};
 
-		InputLayoutDesc vertexInput = {};
+		SInputLayoutDesc vertexInput = {};
 		vertexInput.ElementCount = 3;
 		vertexInput.pElements = inputElements;
 
-		RasterizerStateDesc rasterizerState = {};
-		rasterizerState.Cull = CULL_MODE_NONE;
-		rasterizerState.FillMode = POLYGON_MODE_FILL;
+		SRasterizerStateDesc rasterizerState = {};
+		rasterizerState.CullMode    = CULL_MODE_NONE;
+		rasterizerState.PolygonMode = POLYGON_MODE_FILL;
 		rasterizerState.FrontFaceCounterClockWise = true;
 
-		BlendStateDesc blendState = {};
+		SBlendStateDesc blendState = {};
 		blendState.EnableBlending = true;
 
-		DepthStencilStateDesc depthStencilState = {};
+		SDepthStencilStateDesc depthStencilState = {};
 		depthStencilState.DepthTest = false;
 
-		GraphicsPipelineStateDesc graphicsPipeline = {};
+		SGraphicsPipelineStateDesc graphicsPipeline = {};
 		graphicsPipeline.pVertexShader			= m_VS.Get();
 		graphicsPipeline.pPixelShader			= m_PS.Get();
-		graphicsPipeline.VertexInput			= vertexInput;
+		graphicsPipeline.InputLayout			= vertexInput;
 		graphicsPipeline.RasterizerState		= rasterizerState;
 		graphicsPipeline.BlendState				= blendState;
 		graphicsPipeline.DepthStencilState		= depthStencilState;
@@ -282,7 +283,7 @@ namespace Lambda
 		graphicsPipeline.Topology				= PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 		graphicsPipeline.SampleCount = 1;// app.GetEngineParams().SampleCount;
 
-		PipelineStateDesc pipelineDesc = {};
+		SPipelineStateDesc pipelineDesc = {};
 		pipelineDesc.pName				 = "ImGui PipelineState";
 		pipelineDesc.Type				 = PIPELINE_TYPE_GRAPHICS;
 		pipelineDesc.ShaderVariableTable = variableTableDesc;
@@ -299,7 +300,7 @@ namespace Lambda
 		io.Fonts->GetTexDataAsRGBA32(&pPixels, &width, &height);
 		uint64 uploadSize = width * height * 4 * sizeof(char);
 
-		TextureDesc fontTextureDesc = {};
+		STextureDesc fontTextureDesc = {};
 		fontTextureDesc.pName		= "FontTexture";
 		fontTextureDesc.Type		= TEXTURE_TYPE_2D;
 		fontTextureDesc.Flags		= TEXTURE_FLAGS_SHADER_RESOURCE;
@@ -312,13 +313,13 @@ namespace Lambda
 		fontTextureDesc.SampleCount = 1;
 		fontTextureDesc.Usage		= USAGE_DEFAULT;
 
-		ResourceData initalData = {};
+		SResourceData initalData = {};
 		initalData.pData		= pPixels;
 		initalData.SizeInBytes	= uploadSize;
 		pDevice->CreateTexture(&m_FontTexture, &initalData, fontTextureDesc);
 
 		//Transition texture
-		TextureTransitionBarrier barrier = {};
+		STextureTransitionBarrier barrier = {};
 		barrier.AfterState	= RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 		barrier.MipLevel	= LAMBDA_ALL_MIP_LEVELS;
 		barrier.pTexture	= m_FontTexture.Get();
@@ -330,7 +331,7 @@ namespace Lambda
 		m_VariableTable->GetVariableByIndex(SHADER_STAGE_PIXEL, 0)->SetTexture(m_FontTexture.Get());
 
 		//Create vertex and indexbuffer
-		BufferDesc bufferDesc = {};
+		SBufferDesc bufferDesc = {};
 		bufferDesc.pName			= "ImGui VertexBuffer";
 		bufferDesc.Flags			= BUFFER_FLAGS_VERTEX_BUFFER;
 		bufferDesc.SizeInBytes		= MB(2);
@@ -347,7 +348,7 @@ namespace Lambda
     }
 
 
-	void DebugLayer::Begin(Timestep time)
+	void CDebugLayer::Begin(const CTime& time)
 	{
 		ImGuiIO& io = ImGui::GetIO();
 		io.DeltaTime = time.AsSeconds();
@@ -356,7 +357,7 @@ namespace Lambda
 	}
 
 	
-	void DebugLayer::OnRenderUI(Timestep dt)
+	void CDebugLayer::OnRenderUI(const CTime& time)
 	{
         //Application& app = Application::Get();
         
@@ -376,7 +377,7 @@ namespace Lambda
 			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 0.0f, 1.0f));
 
 			IDevice* pDevice = nullptr;// app.GetGraphicsDevice();
-			const DeviceProperties props = pDevice->GetProperties();
+			const SDeviceProperties props = pDevice->GetProperties();
 			if (props.Api == GRAPHICS_API_VULKAN)
 				ImGui::Text("Renderer [Vulkan]");
 			else if (props.Api == GRAPHICS_API_D3D12)
@@ -461,14 +462,14 @@ namespace Lambda
 	}
 
 	
-	void DebugLayer::End()
+	void CDebugLayer::End()
 	{
 		ImGui::EndFrame();
 		ImGui::Render();
 	}
 
 
-	void DebugLayer::Draw(IDeviceContext* pContext)
+	void CDebugLayer::Draw(IDeviceContext* pContext)
 	{
 		ImGuiIO& io = ImGui::GetIO();
 		ImDrawData* pDrawData = ImGui::GetDrawData();
@@ -505,7 +506,7 @@ namespace Lambda
 		pContext->SetIndexBuffer(m_IndexBuffer.Get(), sizeof(ImDrawIdx) == 2 ? FORMAT_R16_UINT : FORMAT_R32_UINT);
 		
 		//Setup viewport
-		Viewport viewport = {};
+		SViewport viewport = {};
 		viewport.TopX		= 0.0f;
 		viewport.TopY		= 0.0f;
 		viewport.Width		= io.DisplaySize.x;
@@ -558,7 +559,7 @@ namespace Lambda
 						clipRect.y = 0.0f;
 
 					// Apply scissor/clipping rectangle	
-					Rectangle scissor = {};
+					SRectangle scissor = {};
 					scissor.X		= clipRect.x;
 					scissor.Y		= clipRect.y;
 					scissor.Width	= clipRect.z - clipRect.x;
@@ -575,7 +576,7 @@ namespace Lambda
 	}
 
 
-	void DebugLayer::OnRelease()
+	void CDebugLayer::OnRelease()
     {
 		//Destroy ImGui context
 		ImGui::DestroyContext();
@@ -591,7 +592,7 @@ namespace Lambda
     }
 
 
-    void DebugLayer::OnLoad()
+    void CDebugLayer::OnLoad()
     {
     }
 }

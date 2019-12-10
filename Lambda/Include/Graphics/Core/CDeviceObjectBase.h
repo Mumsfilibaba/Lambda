@@ -1,6 +1,7 @@
 #pragma once
 #include "IDevice.h"
 #include "IDeviceObject.h"
+#include "Core/CRefCountBase.h"
 #include <string>
 
 namespace Lambda
@@ -10,11 +11,11 @@ namespace Lambda
 	//-----------------
 
 	template<typename TDeviceImpl, typename BaseInterface>
-	class CDeviceObjectBase : public RefCountedObject<BaseInterface>
+	class CDeviceObjectBase : public CRefCountBase<BaseInterface>
 	{
 	public:
         CDeviceObjectBase(TDeviceImpl* pDevice)
-            : RefCountedObject<BaseInterface>(),
+            : CRefCountBase<BaseInterface>(),
             m_pDevice(pDevice),
             m_Name("")
         {

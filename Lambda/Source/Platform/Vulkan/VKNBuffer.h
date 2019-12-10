@@ -1,5 +1,5 @@
 #pragma once
-#include "Graphics/Core/BufferBase.h"
+#include "Graphics/Core/CBufferBase.h"
 #include <string>
 #include "Memory/VKNDeviceAllocator.h"
 #include "Memory/VKNDynamicMemoryAllocator.h"
@@ -12,15 +12,15 @@ namespace Lambda
 	//VKNBuffer
 	//---------
 
-    class VKNBuffer final : public BufferBase<VKNDevice>
+    class VKNBuffer final : public CBufferBase<VKNDevice>
     {
 		friend class VKNDeviceContext;
-		using TBuffer = BufferBase<VKNDevice>;
+		using TBuffer = CBufferBase<VKNDevice>;
 
     public:
         LAMBDA_NO_COPY(VKNBuffer);
         
-        VKNBuffer(VKNDevice* pVkDevice, const ResourceData* pInitalData, const BufferDesc& desc);
+        VKNBuffer(VKNDevice* pVkDevice, const SResourceData* pInitalData, const SBufferDesc& desc);
         ~VKNBuffer();
         
         virtual void* GetNativeHandle() const override final;
@@ -47,7 +47,7 @@ namespace Lambda
 			return m_DynamicOffsetAlignment; 
 		}
     private:
-        void Init(const ResourceData* pInitalData, const BufferDesc& desc);
+        void Init(const SResourceData* pInitalData, const SBufferDesc& desc);
     private:
 		VKNDynamicAllocation m_DynamicMemory;
         VKNAllocation m_Memory;

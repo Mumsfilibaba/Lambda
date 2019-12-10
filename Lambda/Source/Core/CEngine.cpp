@@ -1,19 +1,20 @@
 #include "LambdaPch.h"
 #include "Core/CEngine.h"
 #include "Core/CEnvironment.h"
-#include "Core/LayerStack.h"
-#include "Core/LogManager.h"
+#include "Core/CLayerStack.h"
+#include "Core/CLogManager.h"
 #include "Core/Input/CKeyboard.h"
 #include "Core/Input/CMouse.h"
 #include "Core/Input/CGamepad.h"
-#include "Core/Layer.h"
-#include "Time/Clock.h"
+#include "Core/CLayer.h"
+#include "Core/Event/CQuitEvent.h"
+#include "Time/CClock.h"
 
 //--------------------------------------------------------------------------------------------------------
 //_CreateGameLayer - Function pointer to create the gamelayer - Needed for DLL- and Static-Lib compilation
 //--------------------------------------------------------------------------------------------------------
 
-LAMBDA_API Lambda::Layer* (*_CreateGameLayer)(void) = nullptr;
+LAMBDA_API Lambda::CLayer* (*_CreateGameLayer)(void) = nullptr;
 
 namespace Lambda
 {
@@ -36,18 +37,18 @@ namespace Lambda
 	}
 
 	//-------
-	//LEngine
+	//CEngine
 	//-------
 
 	CEngine::CEngine()
-		: CSingleton<LEngine>(),
+		: CSingleton<CEngine>(),
 		IEventListener(),
 		m_pEnvironment(nullptr),
 		m_pLogManager(nullptr),
 		m_LayerStack(),
 		m_FrameClock(),
 		m_FrameAccumulator(),
-		m_Timestep(Timestep::Seconds(1.0f / 60.0f)),
+		m_Timestep(CTime::Seconds(1.0f / 60.0f)),
 		m_IsRunning(true)
 	{
 	}
@@ -59,7 +60,6 @@ namespace Lambda
 		m_LayerStack.ReleaseLayers();
 
 		//Release subsystems
-		m_pWindowEventDispatcher->Release();
 		m_pLogManager->Release();
 		m_pEnvironment->Release();
 	}
@@ -71,13 +71,13 @@ namespace Lambda
 	}
 
 
-	void CEngine::Initialize(const SEngineParams& params)
+	void CEngine::Initialize(const SEngineParams&)
 	{
 		//Create Host
 		m_pEnvironment = CEnvironment::Create();
 
 		//Init LogManager
-		m_pLogManager = DBG_NEW LogManager();
+		m_pLogManager = DBG_NEW CLogManager();
 				
 		//Init Host
 		m_pEnvironment->Init();
@@ -86,7 +86,7 @@ namespace Lambda
 		//Create Game Layer
 		if (_CreateGameLayer != nullptr)
 		{
-			m_LayerStack->PushLayer(_CreateGameLayer());
+            m_LayerStack.PushLayer(_CreateGameLayer());
 		}
 		else
 		{
@@ -127,7 +127,7 @@ namespace Lambda
 		while (m_FrameAccumulator >= m_Timestep)
 		{
 			//Update all layers
-			for (Layer* pLayer : m_LayerStack)
+			for (CLayer* pLayer : m_LayerStack)
 				pLayer->OnUpdate(m_Timestep);
 
 			m_FrameAccumulator -= m_Timestep;
@@ -144,11 +144,19 @@ namespace Lambda
 	}
 	
 	
-	void CEngine::OnHostQuit(int32 exitCode)
+	bool CEngine::OnEvent(const CEvent& event)
 	{
-		LOG_ENGINE_INFO("Quiting with code %d\n", exitCode);
-
-		m_ExitCode	= exitCode;
-		m_IsRunning = false;
+        //Get exit code and exit the run loop
+        if (event.GetType() == CQuitEvent::GetStaticType())
+        {
+            const CQuitEvent& quit = static_cast<const CQuitEvent&>(event);
+            LOG_ENGINE_INFO("Quiting with code %d\n", quit.GetExitCode());
+            
+            m_ExitCode  = quit.GetExitCode();
+            m_IsRunning = false;
+            return true;
+        }
+        
+        return false;
 	}
 }

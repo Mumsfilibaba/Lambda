@@ -5,9 +5,9 @@ namespace Lambda
 {
     class IDevice;
     
-    //------------
-    //DeviceObject
-    //------------
+    //-------------
+    //IDeviceObject
+    //-------------
 
     class LAMBDA_API IDeviceObject : public IObject
     {

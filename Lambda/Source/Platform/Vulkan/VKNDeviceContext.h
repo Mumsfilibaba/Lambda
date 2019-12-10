@@ -1,5 +1,5 @@
 #pragma once
-#include "Graphics/Core/DeviceContextBase.h"
+#include "Graphics/Core/CDeviceContextBase.h"
 #include "VKNBuffer.h"
 #include "VKNTexture.h"
 #include "VKNPipelineState.h"
@@ -16,7 +16,7 @@ namespace Lambda
 	//DeviceContextState
 	//------------------
 
-	enum DeviceContextState : uint32
+	enum EDeviceContextState : uint32
 	{
 		DEVICE_CONTEXT_STATE_UNKNOWN	= 0,
 		DEVICE_CONTEXT_STATE_WAITING	= (1 << 0),
@@ -28,10 +28,10 @@ namespace Lambda
 	//VKNDeviceContext
 	//----------------
 
-    class VKNDeviceContext final : public DeviceContextBase<VKNDevice, VKNTexture, VKNBuffer, VKNPipelineState, VKNShaderVariableTable>
+    class VKNDeviceContext final : public CDeviceContextBase<VKNDevice, VKNTexture, VKNBuffer, VKNPipelineState, VKNShaderVariableTable>
     {
         friend class VKNDevice;    
-		using TDeviceContext = DeviceContextBase<VKNDevice, VKNTexture, VKNBuffer, VKNPipelineState, VKNShaderVariableTable>;
+		using TDeviceContext = CDeviceContextBase<VKNDevice, VKNTexture, VKNBuffer, VKNPipelineState, VKNShaderVariableTable>;
 
 	private:
 
@@ -50,23 +50,23 @@ namespace Lambda
     public:
         LAMBDA_NO_COPY(VKNDeviceContext);
         
-        VKNDeviceContext(VKNDevice* pVkDevice, DeviceContextType type);
+        VKNDeviceContext(VKNDevice* pVkDevice, EDeviceContextType type);
         ~VKNDeviceContext();
         
         virtual void ClearRenderTarget(ITexture* pRenderTarget, float color[4]) override final;
         virtual void ClearDepthStencil(ITexture* pDepthStencil, float depth, uint8 stencil) override final;
         
 		virtual void SetRendertargets(ITexture* const* ppRenderTargets, uint32 numRenderTargets, ITexture* pDepthStencil) override final;
-        virtual void SetViewports(const Viewport* pViewports, uint32 numViewports) override final;
-        virtual void SetScissorRects(const Rectangle* pScissorRect, uint32 numRects) override final;
+        virtual void SetViewports(const SViewport* pViewports, uint32 numViewports) override final;
+        virtual void SetScissorRects(const SRectangle* pScissorRect, uint32 numRects) override final;
         virtual void SetVertexBuffers(IBuffer* const * pBuffers, uint32 numBuffers, uint32 slot) override final;
-        virtual void SetIndexBuffer(IBuffer* pBuffer, Format format) override final;
+        virtual void SetIndexBuffer(IBuffer* pBuffer, EFormat format) override final;
         virtual void SetPipelineState(IPipelineState* pPipelineState) override final;
         virtual void SetShaderVariableTable(IShaderVariableTable* pVariableTable) override final;
-        virtual void SetConstantBlocks(ShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData) override final;
+        virtual void SetConstantBlocks(EShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData) override final;
 
-        virtual void UpdateBuffer(IBuffer* pResource, const ResourceData& data) override final;
-        virtual void UpdateTexture(ITexture* pResource, const ResourceData& data, uint32 mipLevel) override final;
+        virtual void UpdateBuffer(IBuffer* pResource, const SResourceData& data) override final;
+        virtual void UpdateTexture(ITexture* pResource, const SResourceData& data, uint32 mipLevel) override final;
         
         virtual void CopyBuffer(IBuffer* pDst, IBuffer* pSrc) override final;
 
@@ -77,7 +77,7 @@ namespace Lambda
 
 		virtual void GenerateMipLevels(ITexture* pTexture) override final;
 
-		virtual void TransitionTextureStates(const TextureTransitionBarrier* pBarriers, uint32 numBarriers) override final;
+		virtual void TransitionTextureStates(const STextureTransitionBarrier* pBarriers, uint32 numBarriers) override final;
 
 		virtual void Draw(uint32 vertexCount, uint32 startVertex) override final;
 		virtual void DrawIndexed(uint32 indexCount, uint32 startIndexLocation, uint32 baseVertexLocation) override final;
@@ -120,14 +120,14 @@ namespace Lambda
 			return m_pCurrentFrameResource->CommandBuffer; 
 		}
     private:
-        void Init(DeviceContextType type);
+        void Init(EDeviceContextType type);
 		void QueryCommandBuffer();
 		void EndCommandBuffer();
 		void BeginRenderPass();
         void EndRenderPass();
 		void FlushResourceBarriers();
 		void PrepareForDraw();
-		void TransitionBuffer(const IBuffer* pBuffer, ResourceState state);
+        void TransitionBuffer(const IBuffer* pBuffer, EResourceState state);
 		void TransitionTexture(const VKNTexture* pVkTexture, VkImageLayout layout, uint32 mipLevel);
 
 
@@ -147,7 +147,7 @@ namespace Lambda
         VkFramebuffer m_VkFramebuffer;
 		VkPipeline m_VkPipeline;
 		VkPipelineLayout m_VkPipelineLayout;
-		DeviceContextState m_ContextState;
+		EDeviceContextState m_ContextState;
 		uint32 m_MaxNumCommands;
 		uint32 m_NumCommands;
         uint32 m_NumFrameResources;

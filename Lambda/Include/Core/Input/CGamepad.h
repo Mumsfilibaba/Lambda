@@ -1,5 +1,4 @@
 #pragma once
-#include "LambdaCore.h"
 #include "CGamepadState.h"
 
 namespace Lambda
@@ -8,7 +7,7 @@ namespace Lambda
     //CGamePad
     //--------
 
-    class LAMBDA_API CGamepad : final
+    class LAMBDA_API CGamepad final
     {
         friend class CEngine;
     public:

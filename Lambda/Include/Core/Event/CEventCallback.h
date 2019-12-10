@@ -5,7 +5,7 @@ namespace Lambda
 {
     class CEvent;
 
-	typedef bool(*EventCallbackFunc)(const Event&);
+	typedef bool(*EventCallbackFunc)(const CEvent&);
 
 	//--------------
     //CEventCallback

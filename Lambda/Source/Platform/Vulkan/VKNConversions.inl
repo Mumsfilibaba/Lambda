@@ -3,7 +3,7 @@
 
 namespace Lambda
 {
-    inline VkFormat ConvertFormat(Format format)
+    inline VkFormat ConvertFormat(EFormat format)
     {
         switch (format)
         {
@@ -59,7 +59,7 @@ namespace Lambda
     }
     
     
-    inline Format ConvertVkFormat(VkFormat vkFormat)
+    inline EFormat ConvertVkFormat(VkFormat vkFormat)
     {
         switch (vkFormat)
         {
@@ -114,7 +114,7 @@ namespace Lambda
     }
     
     
-    inline VkPrimitiveTopology ConvertPrimitiveTopology(PrimitiveTopology toplogy)
+    inline VkPrimitiveTopology ConvertPrimitiveTopology(EPrimitiveTopology toplogy)
     {
         switch (toplogy)
         {
@@ -126,7 +126,7 @@ namespace Lambda
     }
     
 
-	inline VkPolygonMode ConvertPolygonMode(PolygonMode mode)
+	inline VkPolygonMode ConvertPolygonMode(EPolygonMode mode)
 	{
 		switch (mode)
 		{
@@ -138,7 +138,7 @@ namespace Lambda
 	}
 
 
-    inline PrimitiveTopology ConvertVkPrimitiveTopology(VkPrimitiveTopology toplogy)
+    inline EPrimitiveTopology ConvertVkPrimitiveTopology(VkPrimitiveTopology toplogy)
     {
         switch (toplogy)
         {
@@ -149,7 +149,7 @@ namespace Lambda
     }
     
     
-    inline VkImageLayout ConvertResourceStateToImageLayout(ResourceState state)
+    inline VkImageLayout ConvertResourceStateToImageLayout(EResourceState state)
     {
         switch (state)
         {
@@ -168,7 +168,7 @@ namespace Lambda
     }
     
     
-    inline VkSamplerAddressMode ConvertSamplerAdressMode(SamplerAddressMode adressMode)
+    inline VkSamplerAddressMode ConvertSamplerAdressMode(ESamplerAddressMode adressMode)
     {
         switch (adressMode) 
 		{
@@ -199,7 +199,7 @@ namespace Lambda
 	}
     
     
-    inline VkPipelineStageFlagBits ConvertPipelineStage(PipelineStage stage)
+    inline VkPipelineStageFlagBits ConvertPipelineStage(EPipelineStage stage)
     {
         switch (stage)
         {
@@ -214,7 +214,7 @@ namespace Lambda
     }
 
 
-	inline VkDescriptorType ConvertResourceToDescriptorType(ResourceType type, Usage usage)
+	inline VkDescriptorType ConvertResourceToDescriptorType(EResourceType type, EUsage usage)
 	{
 		switch (type)
 		{

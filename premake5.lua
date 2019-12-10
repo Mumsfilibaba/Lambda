@@ -128,6 +128,11 @@ workspace "Lambda"
 		filter {}
 		-- Remove files not available for windows builds
 		filter "system:macosx"
+			files
+			{
+				"%{prj.name}/**.m",
+				"%{prj.name}/**.mm",
+			}
 			removefiles
 			{
 				"%{prj.name}/Source/Platform/DX12/**",

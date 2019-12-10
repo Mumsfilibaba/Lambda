@@ -9,61 +9,61 @@ namespace Lambda
 	class IPipelineState;
 	class IShaderVariableTable;
 
-	//------------------
-	//ShaderVariableDesc
-	//------------------
+	//-------------------
+	//SShaderVariableDesc
+	//-------------------
 
-	struct ShaderVariableDesc
+	struct SShaderVariableDesc
 	{
 		const char* pName				= "";
 		const char* pStaticSamplerName	= "";
-		ResourceType Type				= RESOURCE_TYPE_UNKNOWN;
-		ShaderStage	Stage				= SHADER_STAGE_UNKNOWN;
-		Usage Usage						= USAGE_UNKNOWN;
+		EResourceType Type				= RESOURCE_TYPE_UNKNOWN;
+		EShaderStage Stage			    = SHADER_STAGE_UNKNOWN;
+		EUsage Usage					= USAGE_UNKNOWN;
 		uint32 Slot						= 0;
 	};
 
-	//-----------------
-	//ConstantBlockDesc
-	//-----------------
+	//------------------
+	//SConstantBlockDesc
+	//------------------
 
-	struct ConstantBlockDesc
+	struct SConstantBlockDesc
 	{
-		ShaderStage	Stage	= SHADER_STAGE_UNKNOWN;
+		EShaderStage	Stage	= SHADER_STAGE_UNKNOWN;
 		uint32 SizeInBytes	= 0;
 	};
 
-	//----------------------
-	//StaticSamplerStateDesc
-	//----------------------
+	//-----------------------
+	//SStaticSamplerStateDesc
+	//-----------------------
 
-	struct StaticSamplerStateDesc
+	struct SStaticSamplerStateDesc
 	{
 		const char* pName				= "";
-		SamplerAddressMode AdressMode	= SAMPLER_ADDRESS_MODE_REPEAT;
+		ESamplerAddressMode AdressMode	= SAMPLER_ADDRESS_MODE_REPEAT;
 		float MinMipLOD					= 0.0f;
 		float MaxMipLOD					= 0.0f;
 		float MipLODBias				= 0.0f;
 		float Anisotropy				= 1.0f;
 	};
 
-	//-----------------------
-	//ShaderVariableTableDesc
-	//-----------------------
+	//------------------------
+	//SShaderVariableTableDesc
+	//------------------------
 
-	struct ShaderVariableTableDesc
+	struct SShaderVariableTableDesc
 	{
 		uint32 NumVariables									= 0;
-		const ShaderVariableDesc* pVariables				= nullptr;
+		const SShaderVariableDesc* pVariables				= nullptr;
 		uint32 NumConstantBlocks							= 0;
-		const ConstantBlockDesc* pConstantBlocks			= nullptr;
+		const SConstantBlockDesc* pConstantBlocks			= nullptr;
 		uint32 NumStaticSamplerStates						= 0;
-		const StaticSamplerStateDesc* pStaticSamplerStates	= nullptr;
+		const SStaticSamplerStateDesc* pStaticSamplerStates	= nullptr;
 	};
 
-	//--------------
-	//ShaderVariable
-	//--------------
+	//---------------
+	//IShaderVariable
+	//---------------
 
 	class LAMBDA_API IShaderVariable : public IDeviceObject
 	{
@@ -74,20 +74,20 @@ namespace Lambda
 		virtual void SetConstantBuffer(IBuffer* pBuffer) = 0;
 		virtual void SetSamplerState(ISamplerState* pSamplerState) = 0;
 		virtual IShaderVariableTable* GetShaderVariableTable() const = 0;
-		virtual const ShaderVariableDesc& GetDesc() const = 0;
+		virtual const SShaderVariableDesc& GetDesc() const = 0;
 	};
 
-	//-------------------
-	//ShaderVariableTable
-	//-------------------
+	//--------------------
+	//IShaderVariableTable
+	//--------------------
 
-	class LAMBDA_API IShaderVariableTable : public IDeviceObject
+    class LAMBDA_API IShaderVariableTable : public IDeviceObject
 	{
 	public:
 		LAMBDA_IOBJECT_INTERFACE(IShaderVariableTable);
 
-		virtual IShaderVariable* GetVariableByName(ShaderStage shader, const char* pName) = 0;
-		virtual IShaderVariable* GetVariableByIndex(ShaderStage shader, uint32 index) = 0;
+		virtual IShaderVariable* GetVariableByName(EShaderStage shader, const char* pName) = 0;
+		virtual IShaderVariable* GetVariableByIndex(EShaderStage shader, uint32 index) = 0;
 		virtual IPipelineState* GetPipelineState() const = 0;
 		virtual uint32 GetVariableCount() const = 0;
 	};

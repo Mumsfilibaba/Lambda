@@ -10,7 +10,7 @@ namespace Lambda
 	//VKNShaderVariableTable
 	//----------------------
 
-	VKNShaderVariableTable::VKNShaderVariableTable(VKNDevice* pVkDevice, VKNPipelineState* pVkPipelineState, const ShaderVariableTableDesc& desc)
+	VKNShaderVariableTable::VKNShaderVariableTable(VKNDevice* pVkDevice, VKNPipelineState* pVkPipelineState, const SShaderVariableTableDesc& desc)
 		: TShaderVariableTable(pVkDevice, pVkPipelineState),
 		m_VkDescriptorSet(VK_NULL_HANDLE),
 		m_pVkDescriptors(nullptr),
@@ -30,7 +30,7 @@ namespace Lambda
 	}
 
 
-	void VKNShaderVariableTable::Init(const ShaderVariableTableDesc& desc)
+	void VKNShaderVariableTable::Init(const SShaderVariableTableDesc& desc)
 	{
 		//Set size of descriptorwrites
 		m_pVkDescriptors		= DBG_NEW VkWriteDescriptorSet[desc.NumVariables];
@@ -59,7 +59,7 @@ namespace Lambda
 	}
 
 
-	IShaderVariable* VKNShaderVariableTable::GetVariableByName(ShaderStage shader, const char* pName)
+	IShaderVariable* VKNShaderVariableTable::GetVariableByName(EShaderStage shader, const char* pName)
 	{
 		auto var = m_NameTable.find(std::string(pName));
 		if (var == m_NameTable.end())
@@ -72,7 +72,7 @@ namespace Lambda
 	}
 
 
-	IShaderVariable* VKNShaderVariableTable::GetVariableByIndex(ShaderStage shader, uint32 index)
+	IShaderVariable* VKNShaderVariableTable::GetVariableByIndex(EShaderStage shader, uint32 index)
 	{
 		LAMBDA_ASSERT(index < m_ShaderVariables.size());
 		return m_ShaderVariables[index].Get();

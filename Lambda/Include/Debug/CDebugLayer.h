@@ -30,12 +30,12 @@ namespace Lambda
 
         LAMBDA_NO_COPY(CDebugLayer);
 
-        void Begin(Timestep time);
+        void Begin(const CTime& time);
         void End();
         void Draw(IDeviceContext* pContext);
 
         virtual void OnLoad() override final;
-        virtual void OnRenderUI(Timestep dt) override final;
+        virtual void OnRenderUI(const CTime& time) override final;
         virtual void OnRelease() override final;
     private:
         void Init();

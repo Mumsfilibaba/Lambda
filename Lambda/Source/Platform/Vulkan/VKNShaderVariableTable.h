@@ -1,5 +1,5 @@
 #pragma once
-#include "Graphics/Core/ShaderVariableTableBase.h"
+#include "Graphics/Core/CShaderVariableTableBase.h"
 #include "VKNPipelineState.h"
 #include "VKNShaderVariable.h"
 
@@ -12,18 +12,18 @@ namespace Lambda
 	//VKNShaderVariableTable
 	//----------------------
 
-	class VKNShaderVariableTable : public ShaderVariableTableBase<VKNDevice, VKNPipelineState>
+	class VKNShaderVariableTable : public CShaderVariableTableBase<VKNDevice, VKNPipelineState>
 	{
-		using TShaderVariableTable = ShaderVariableTableBase<VKNDevice, VKNPipelineState>;
+		using TShaderVariableTable = CShaderVariableTableBase<VKNDevice, VKNPipelineState>;
 
 	public:
 		LAMBDA_NO_COPY(VKNShaderVariableTable);
 
-		VKNShaderVariableTable(VKNDevice* pVkDevice, VKNPipelineState* pVkPipelineState, const ShaderVariableTableDesc& desc);
+		VKNShaderVariableTable(VKNDevice* pVkDevice, VKNPipelineState* pVkPipelineState, const SShaderVariableTableDesc& desc);
 		~VKNShaderVariableTable();
 
-		virtual IShaderVariable* GetVariableByName(ShaderStage shader, const char* pName) override final;
-		virtual IShaderVariable* GetVariableByIndex(ShaderStage shader, uint32 index) override final;
+		virtual IShaderVariable* GetVariableByName(EShaderStage shader, const char* pName) override final;
+		virtual IShaderVariable* GetVariableByIndex(EShaderStage shader, uint32 index) override final;
 		virtual uint32 GetVariableCount() const override final;
 		void CommitResources();
         
@@ -51,7 +51,7 @@ namespace Lambda
 			return m_PipelineState->GetStaticVkSampler(key);
 		}
 	private:
-		void Init(const ShaderVariableTableDesc& desc);
+		void Init(const SShaderVariableTableDesc& desc);
 	private:
 		std::unordered_map<std::string, VKNShaderVariable*> m_NameTable;
         std::vector<AutoRef<VKNShaderVariable>> m_ShaderVariables;

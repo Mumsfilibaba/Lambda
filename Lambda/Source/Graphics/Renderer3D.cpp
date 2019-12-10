@@ -1,6 +1,6 @@
 #include "LambdaPch.h"
 #include "Graphics/Renderer3D.h"
-#include "Graphics/Camera.h"
+#include "Graphics/CCamera.h"
 #include "Graphics/Core/IDevice.h"
 #include "Graphics/Core/IBuffer.h"
 #include "Graphics/Core/IQuery.h"
@@ -34,13 +34,13 @@ namespace Lambda
 
 	void Renderer3D::Init()
 	{
-		const SwapChainDesc& desc = m_SwapChain->GetDesc();
+		const SSwapChainDesc& desc = m_SwapChain->GetDesc();
 
 		for (uint32 i = 0; i < desc.BufferCount; i++)
 		{
 			//Create queries for timesteps
 			IQuery* pQuery			= nullptr;
-			QueryDesc queryDesc		= {};
+			SQueryDesc queryDesc		= {};
 			queryDesc.Type			= QUERY_TYPE_TIMESTAMP;
 			queryDesc.QueryCount	= 2;
 			m_Device->CreateQuery(&pQuery, queryDesc);
@@ -54,7 +54,7 @@ namespace Lambda
         m_pCurrentQuery = m_Queries[0].Get();
         
 		//Create camerabuffer
-		BufferDesc cameraBufferdesc = {};
+		SBufferDesc cameraBufferdesc = {};
 		cameraBufferdesc.pName			= "CameraBuffer";
 		cameraBufferdesc.Usage			= USAGE_DEFAULT;
 		cameraBufferdesc.Flags			= BUFFER_FLAGS_CONSTANT_BUFFER;
@@ -63,7 +63,7 @@ namespace Lambda
 		m_Device->CreateBuffer(&m_CameraBuffer, nullptr, cameraBufferdesc);
 
 		//Create lightbuffer
-		BufferDesc lightBufferDesc = {};
+		SBufferDesc lightBufferDesc = {};
 		lightBufferDesc.pName			= "LightBuffer";
 		lightBufferDesc.Usage			= USAGE_DEFAULT;
 		lightBufferDesc.Flags			= BUFFER_FLAGS_CONSTANT_BUFFER;
@@ -72,21 +72,21 @@ namespace Lambda
 		m_Device->CreateBuffer(&m_LightBuffer, nullptr, lightBufferDesc);
 
 		//Create TransformBuffer
-		BufferDesc transformBufferdesc = {};
+		SBufferDesc transformBufferdesc = {};
 		transformBufferdesc.pName			= "TransformBuffer";
 		transformBufferdesc.Usage			= USAGE_DYNAMIC;
 		transformBufferdesc.Flags			= BUFFER_FLAGS_CONSTANT_BUFFER;
 		transformBufferdesc.SizeInBytes		= sizeof(TransformBuffer);
 		transformBufferdesc.StrideInBytes	= sizeof(TransformBuffer);
 
-		ResourceData data = {};
+		SResourceData data = {};
 		data.pData			= glm::value_ptr(glm::mat4(1.0f));
 		data.SizeInBytes	= transformBufferdesc.SizeInBytes;
 
 		m_Device->CreateBuffer(&m_TransformBuffer, &data, transformBufferdesc);
 
 		//Create materialbuffer
-		BufferDesc materialBufferDesc = {};
+		SBufferDesc materialBufferDesc = {};
 		materialBufferDesc.pName			= "MaterialBuffer";
 		materialBufferDesc.Usage			= USAGE_DYNAMIC;
 		materialBufferDesc.Flags			= BUFFER_FLAGS_CONSTANT_BUFFER;
@@ -117,7 +117,7 @@ namespace Lambda
 	}
 
 	
-	void Renderer3D::BeginScene(const Camera& camera, const LightBuffer& light)
+	void Renderer3D::BeginScene(const CCamera& camera, const LightBuffer& light)
 	{
 		//Update camerabuffer
 		CameraBuffer cameraBuffer = {};
@@ -125,13 +125,13 @@ namespace Lambda
 		cameraBuffer.Projection	= camera.GetProjection();
 		cameraBuffer.Position	= camera.GetPosition();
 		
-		ResourceData cameraData = {};
+		SResourceData cameraData = {};
 		cameraData.pData		= &cameraBuffer;
 		cameraData.SizeInBytes	= sizeof(CameraBuffer);
 		m_Context->UpdateBuffer(m_CameraBuffer.Get(), cameraData);
 
 		//Update lightbuffer
-		ResourceData lightData = {};
+		SResourceData lightData = {};
 		lightData.pData			= &light;
 		lightData.SizeInBytes	= sizeof(LightBuffer);
 		m_Context->UpdateBuffer(m_LightBuffer.Get(), lightData);
@@ -140,7 +140,7 @@ namespace Lambda
         ITexture* pRenderTarget = m_SwapChain->GetBuffer();
         ITexture* pDepthBuffer = m_SwapChain->GetDepthBuffer();
 		
-		TextureTransitionBarrier barriers[2];
+		STextureTransitionBarrier barriers[2];
 		barriers[0].pTexture	= pRenderTarget;
 		barriers[0].AfterState	= RESOURCE_STATE_RENDERTARGET_CLEAR;
 		barriers[0].MipLevel	= LAMBDA_ALL_MIP_LEVELS;
@@ -212,7 +212,7 @@ namespace Lambda
 		//Get last frame's values from query
 		uint64 values[2] = { 0, 0 };
 		m_pCurrentQuery->GetResults(values, 2, 0);
-		m_FrameInfo.GPUTime = Timestep(values[1] - values[0]);
+		m_FrameInfo.GPUTime = CTime(values[1] - values[0]);
 	}
 
 

@@ -1,5 +1,5 @@
 #pragma once
-#include "Graphics/Core/SwapChainBase.h"
+#include "Graphics/Core/CSwapChainBase.h"
 #include <vector>
 #include "VKNDeviceContext.h"
 #include "VKNUtilities.h"
@@ -14,12 +14,12 @@ namespace Lambda
 	//VKNSwapChain
 	//------------
 
-	class VKNSwapChain final : public SwapChainBase<VKNDevice>
+	class VKNSwapChain final : public CSwapChainBase<VKNDevice>
 	{
 	public:
 		LAMBDA_NO_COPY(VKNSwapChain);
 
-		VKNSwapChain(VKNDevice* pVkDevice, const SwapChainDesc& desc);
+		VKNSwapChain(VKNDevice* pVkDevice, const SSwapChainDesc& desc);
 		~VKNSwapChain();
 
 		virtual void ResizeBuffers(uint32 width, uint32 height) override final;
@@ -44,7 +44,7 @@ namespace Lambda
             return m_VkFormat.format;
         }
 	private:
-		void Init(const SwapChainDesc& desc);
+		void Init(const SSwapChainDesc& desc);
         void InitSwapChain(VkExtent2D extent);
         void ReleaseResources();
 		void RecreateSwapChain();

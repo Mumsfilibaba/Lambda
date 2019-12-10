@@ -1,5 +1,5 @@
 #pragma once
-#include "Graphics/Core/QueryBase.h"
+#include "Graphics/Core/CQueryBase.h"
 #include "Vulkan.h"
 
 namespace Lambda
@@ -10,12 +10,12 @@ namespace Lambda
     //VKNQuery
     //--------
     
-    class VKNQuery final : public QueryBase<VKNDevice>
+    class VKNQuery final : public CQueryBase<VKNDevice>
     {
     public:
         LAMBDA_NO_COPY(VKNQuery);
         
-        VKNQuery(VKNDevice* pVkDevice, const QueryDesc& desc);
+        VKNQuery(VKNDevice* pVkDevice, const SQueryDesc& desc);
         ~VKNQuery();
         
         virtual void GetResults(uint64* pResults, uint32 numResults, uint32 startQuery) override final;
@@ -25,7 +25,7 @@ namespace Lambda
         void NextQuery();
         void Reset();
     private:
-        void Init(const QueryDesc& desc);
+        void Init(const SQueryDesc& desc);
     private:
         VkQueryPool m_VkQueryPool;
 		uint64 m_ValidBitsMask;

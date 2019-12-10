@@ -1,5 +1,6 @@
 #pragma once
 #include "IDevice.h"
+#include "Core/CRefCountBase.h"
 
 namespace Lambda
 {
@@ -7,11 +8,11 @@ namespace Lambda
 	//CDeviceBase
 	//-----------
 
-	class CDeviceBase : public RefCountedObject<IDevice>
+	class CDeviceBase : public CRefCountBase<IDevice>
 	{
 	public:
-        CDeviceBase(const DeviceDesc& desc)
-            : RefCountedObject<IDevice>(),
+        CDeviceBase(const SDeviceDesc& desc)
+            : CRefCountBase<IDevice>(),
             m_Desc(desc),
             m_Features(),
             m_Properties()
@@ -22,36 +23,36 @@ namespace Lambda
         LAMBDA_NO_COPY(CDeviceBase);
 
 		virtual void CreateDefferedContext(IDeviceContext** ppList) override = 0;
-		virtual void CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) override = 0;
-		virtual void CreateTexture(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc) override = 0;
-		virtual void CreateShader(IShader** ppShader, const ShaderDesc& desc) override = 0;
-		virtual void CreateSamplerState(ISamplerState** ppSamplerState, const SamplerStateDesc& desc) override = 0;
-		virtual void CreatePipelineState(IPipelineState** ppPipelineState, const PipelineStateDesc& desc) override = 0;
-		virtual void CreateQuery(IQuery** ppQuery, const QueryDesc& desc) override = 0;
+		virtual void CreateBuffer(IBuffer** ppBuffer, const SResourceData* pInitalData, const SBufferDesc& desc) override = 0;
+		virtual void CreateTexture(ITexture** ppTexture, const SResourceData* pInitalData, const STextureDesc& desc) override = 0;
+		virtual void CreateShader(IShader** ppShader, const SShaderDesc& desc) override = 0;
+		virtual void CreateSamplerState(ISamplerState** ppSamplerState, const SSamplerStateDesc& desc) override = 0;
+		virtual void CreatePipelineState(IPipelineState** ppPipelineState, const SPipelineStateDesc& desc) override = 0;
+		virtual void CreateQuery(IQuery** ppQuery, const SQueryDesc& desc) override = 0;
 
 		virtual IDeviceContext* GetImmediateContext() const override = 0;
 		virtual void* GetNativeHandle() const override = 0;
 
 
-		virtual const DeviceFeatures& GetFeatures() const override
+		virtual const SDeviceFeatures& GetFeatures() const override
 		{
 			return m_Features;
 		}
 
 
-		virtual const DeviceProperties& GetProperties() const override
+		virtual const SDeviceProperties& GetProperties() const override
 		{
 			return m_Properties;
 		}
 
 
-		virtual const DeviceDesc& GetDesc() const override
+		virtual const SDeviceDesc& GetDesc() const override
 		{
 			return m_Desc;
 		}
 	protected:
-		DeviceDesc m_Desc;
-		DeviceFeatures m_Features;
-		DeviceProperties m_Properties;
+		SDeviceDesc m_Desc;
+		SDeviceFeatures m_Features;
+		SDeviceProperties m_Properties;
 	};
 }

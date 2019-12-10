@@ -3,23 +3,23 @@
 
 namespace Lambda
 {
-    //---------
-    //QueryType
-    //---------
+    //----------
+    //EQueryType
+    //----------
     
-    enum QueryType : uint32
+    enum EQueryType : uint32
     {
         QUERY_TYPE_UNKNOWN      = 0,
         QUERY_TYPE_TIMESTAMP    = 1,
     };
     
-    //---------
-    //QueryDesc
-    //---------
+    //----------
+    //SQueryDesc
+    //----------
     
-    struct QueryDesc
+    struct SQueryDesc
     {
-        QueryType Type     = QUERY_TYPE_UNKNOWN;
+        EQueryType Type    = QUERY_TYPE_UNKNOWN;
         uint32 QueryCount  = 0;
     };
     
@@ -34,6 +34,6 @@ namespace Lambda
         
         virtual void GetResults(uint64* pResults, uint32 numResults, uint32 startQuery) = 0;
         virtual void* GetNativeHandle() const = 0;
-        virtual const QueryDesc& GetDesc() const = 0;
+        virtual const SQueryDesc& GetDesc() const = 0;
     };
 }

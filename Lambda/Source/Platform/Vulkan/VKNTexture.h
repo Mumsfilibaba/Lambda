@@ -1,5 +1,5 @@
 #pragma once
-#include "Graphics/Core/TextureBase.h"
+#include "Graphics/Core/CTextureBase.h"
 #include "Memory/VKNDeviceAllocator.h"
 #include "VKNConversions.inl"
 
@@ -11,16 +11,16 @@ namespace Lambda
     //VKNTexture
     //----------
     
-    class VKNTexture final : public TextureBase<VKNDevice>
+    class VKNTexture final : public CTextureBase<VKNDevice>
     {
         friend class VKNDevice;
-		using TTexture = TextureBase<VKNDevice>;
+		using TTexture = CTextureBase<VKNDevice>;
 
     public:
         LAMBDA_NO_COPY(VKNTexture);
 
-        VKNTexture(VKNDevice* pVkDevice, const ResourceData* pInitalData, const TextureDesc& desc);
-        VKNTexture(VKNDevice* pVkDevice, VkImage image, const TextureDesc& desc);
+        VKNTexture(VKNDevice* pVkDevice, const SResourceData* pInitalData, const STextureDesc& desc);
+        VKNTexture(VKNDevice* pVkDevice, VkImage image, const STextureDesc& desc);
         ~VKNTexture();
         
         virtual void* GetNativeHandle() const override final;
@@ -50,8 +50,8 @@ namespace Lambda
 			return m_VkImageView; 
 		}
     private:
-        void Init(const ResourceData* pInitalData, const TextureDesc& desc);
-        void InitFromResource(VkImage image, const TextureDesc& desc);
+        void Init(const SResourceData* pInitalData, const STextureDesc& desc);
+        void InitFromResource(VkImage image, const STextureDesc& desc);
         void CreateImageView(); 
     private:
 		VKNAllocation m_Memory;

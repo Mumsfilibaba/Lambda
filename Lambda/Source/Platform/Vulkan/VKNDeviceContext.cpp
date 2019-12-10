@@ -556,7 +556,7 @@ namespace Lambda
 	}
 
 
-	void VKNDeviceContext::SetViewports(const Viewport* pViewports, uint32 numViewports)
+	void VKNDeviceContext::SetViewports(const SViewport* pViewports, uint32 numViewports)
     {
 		//Check if we should flush the context
 		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > m_MaxNumCommands)
@@ -576,7 +576,7 @@ namespace Lambda
     }
     
     
-    void VKNDeviceContext::SetScissorRects(const Rectangle* pScissorRects, uint32 numRects)
+    void VKNDeviceContext::SetScissorRects(const SRectangle* pScissorRects, uint32 numRects)
     {
 		//Check if we should flush the context
 		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > m_MaxNumCommands)
@@ -676,7 +676,7 @@ namespace Lambda
     }
 
 	
-	void VKNDeviceContext::SetConstantBlocks(ShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData)
+	void VKNDeviceContext::SetConstantBlocks(EShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData)
 	{
 		//Check if we should flush the context
 		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > m_MaxNumCommands)
@@ -951,7 +951,7 @@ namespace Lambda
 	}
 
 
-	void VKNDeviceContext::TransitionTextureStates(const TextureTransitionBarrier* pBarriers, uint32 numBarriers)
+	void VKNDeviceContext::TransitionTextureStates(const STextureTransitionBarrier* pBarriers, uint32 numBarriers)
 	{
 		//Go through barriers
 		VKNTexture* pVkTexture = nullptr;

@@ -10,7 +10,7 @@ namespace Lambda
 	struct SBufferDesc
 	{
         const char* pName      = nullptr;
-		Usage Usage			   = USAGE_UNKNOWN;
+        EUsage Usage		   = USAGE_UNKNOWN;
 		uint32 Flags           = BUFFER_FLAGS_NONE;
 		uint64 SizeInBytes     = 0;
 		uint32 StrideInBytes   = 0;

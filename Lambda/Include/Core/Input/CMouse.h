@@ -1,5 +1,4 @@
 #pragma once
-#include "LambdaCore.h"
 #include "CMouseState.h"
 #include <glm/glm.hpp>
 
@@ -15,11 +14,11 @@ namespace Lambda
     public:
         LAMBDA_STATIC_CLASS(CMouse);
         
-        static bool IsMouseButtonDown();
-        static bool IsMouseButtonUp();
+        static bool IsMouseButtonDown(EMouseButton button);
+        static bool IsMouseButtonUp(EMouseButton button);
         // Difference between mousebutton-down and -pressed is that pressed only checks the current frame's state
-        static bool IsMouseButtonPressed();
-        static const void SetMousePosition(const glm::ivec2& position);
+        static bool IsMouseButtonPressed(EMouseButton button);
+        static void SetMousePosition(const glm::ivec2& position);
         static const glm::ivec2& GetMousePosition();
         static const CMouseState& GetMouseState();
     private:

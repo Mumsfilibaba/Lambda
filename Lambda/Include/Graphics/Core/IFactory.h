@@ -7,8 +7,8 @@ namespace Lambda
     class ISwapChain;
     class IDeviceContext;
 
-    struct DeviceDesc;
-    struct SwapChainDesc;
+    struct SDeviceDesc;
+    struct SSwapChainDesc;
 
     //--------
     //IFactory
@@ -19,8 +19,8 @@ namespace Lambda
     public:
         LAMBDA_IOBJECT_INTERFACE(IFactory);
         
-        virtual void CreateDeviceAndSwapChain(IDevice** ppDevice, const DeviceDesc& deviceDesc, IDeviceContext** pImmediateContext, ISwapChain** ppSwapChain, const SwapChainDesc& swapChainDesc) = 0;   
+        virtual void CreateDeviceAndSwapChain(IDevice** ppDevice, const SDeviceDesc& deviceDesc, IDeviceContext** pImmediateContext, ISwapChain** ppSwapChain, const SSwapChainDesc& swapChainDesc) = 0;
     public:
-        static void CreateFactory(IFactory** ppFactory, GraphicsAPI api);
+        static void CreateFactory(IFactory** ppFactory, EGraphicsAPI api);
     };
 }

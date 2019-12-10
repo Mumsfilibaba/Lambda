@@ -13,7 +13,7 @@ namespace Lambda
 	typedef unsigned long long	uint64;
 
     //Topology to use
-	enum PrimitiveTopology : uint32
+	enum EPrimitiveTopology : uint32
 	{
 		PRIMITIVE_TOPOLOGY_UNKNOWN          = 0,
 		PRIMITIVE_TOPOLOGY_TRIANGLELIST     = 1,
@@ -23,7 +23,7 @@ namespace Lambda
 
 
 	//How polygons will be drawn
-	enum PolygonMode : uint32
+	enum EPolygonMode : uint32
 	{
 		POLYGON_MODE_UNKNOWN = 0,
 		POLYGON_MODE_FILL = 1,
@@ -33,7 +33,7 @@ namespace Lambda
 
 
     //Usage of a resource
-	enum Usage : uint32
+	enum EUsage : uint32
 	{
 		USAGE_UNKNOWN = 0,
 		USAGE_DEFAULT = 1,
@@ -42,7 +42,7 @@ namespace Lambda
 
 
     //Capabilities of a buffer
-	enum BufferFlags : uint32
+	enum EBufferFlags : uint32
 	{
 		BUFFER_FLAGS_NONE               = 0,
 		BUFFER_FLAGS_VERTEX_BUFFER      = (1 << 0),
@@ -52,7 +52,7 @@ namespace Lambda
 
 
     //Capabilities of a texture
-	enum TextureFlags : uint32
+	enum ETextureFlags : uint32
 	{
 		TEXTURE_FLAGS_NONE              = 0,
 		TEXTURE_FLAGS_RENDER_TARGET     = (1 << 0),
@@ -64,7 +64,7 @@ namespace Lambda
 
 
 	//How a resource should be mapped to a context
-	enum MapFlag : uint32
+	enum EMapFlag : uint32
 	{
 		MAP_FLAG_UNKNOWN		= 0,
 		MAP_FLAG_WRITE			= (1 << 0),
@@ -73,7 +73,7 @@ namespace Lambda
 
     
     //Stage of pipeline
-    enum PipelineStage : uint32
+    enum EPipelineStage : uint32
     {
         PIPELINE_STAGE_UNKNOWN   = 0,
         PIPELINE_STAGE_VERTEX    = 1,
@@ -86,7 +86,7 @@ namespace Lambda
     
 
 	//Types of texture
-	enum TextureType : uint32
+	enum ETextureType : uint32
 	{
 		TEXTURE_TYPE_UNKNOWN = 0,
 		TEXTURE_TYPE_1D = 1,
@@ -150,7 +150,7 @@ namespace Lambda
 
 
     //State of a buffer or a texture
-	enum ResourceState
+	enum EResourceState
 	{
 		RESOURCE_STATE_UNKNOWN                      = 0,
 		RESOURCE_STATE_RENDERTARGET                 = 1,
@@ -169,7 +169,7 @@ namespace Lambda
     
     
     //Adress mode for samplers
-    enum SamplerAddressMode : uint32
+    enum ESamplerAddressMode : uint32
     {
         SAMPLER_ADDRESS_MODE_UNKNOWN                = 0,
         SAMPLER_ADDRESS_MODE_REPEAT                 = 1,
@@ -181,7 +181,7 @@ namespace Lambda
     
     
     //The cull mode
-    enum CullMode : uint32
+    enum ECullMode : uint32
     {
         CULL_MODE_UNKNOWN   = 0,
         CULL_MODE_BACK      = 1,
@@ -191,7 +191,7 @@ namespace Lambda
 
     
     //Flags for graphics context
-    enum DeviceFlags : uint32
+    enum EDeviceFlags : uint32
     {
         DEVICE_FLAG_NONE                      = 0,
         DEVICE_FLAG_DEBUG                     = (1 << 0),
@@ -209,7 +209,7 @@ namespace Lambda
     
     
     //Enum describing shaderstages
-    enum ShaderStage
+    enum EShaderStage
     {
         SHADER_STAGE_UNKNOWN  = 0,
         SHADER_STAGE_VERTEX	  = (1 << 0),
@@ -222,7 +222,7 @@ namespace Lambda
     
     
     //Type of resource in a resourcestate
-    enum ResourceType
+    enum EResourceType
     {
         RESOURCE_TYPE_UNKNOWN			= 0,
         RESOURCE_TYPE_TEXTURE			= 1,
@@ -232,7 +232,7 @@ namespace Lambda
 
 
 	//Enum describing a commandlisttype
-	enum DeviceContextType : uint32
+	enum EDeviceContextType : uint32
 	{
 		DEVICE_CONTEXT_TYPE_UNKNOWN	    = 0,
 		DEVICE_CONTEXT_TYPE_GRAPHICS    = 1,
@@ -253,16 +253,16 @@ namespace Lambda
 
 	//Struct for Transition a texture
 	class ITexture;
-	struct TextureTransitionBarrier
+	struct STextureTransitionBarrier
 	{
 		ITexture*		pTexture	= nullptr;
-		ResourceState	AfterState	= RESOURCE_STATE_UNKNOWN;
+		EResourceState	AfterState	= RESOURCE_STATE_UNKNOWN;
 		uint32			MipLevel	= 0;
 	};
     
     
     //Viewport struct
-    struct Viewport
+    struct SViewport
     {
         float TopX;
         float TopY;
@@ -274,7 +274,7 @@ namespace Lambda
     
     
     //Rectangle struct
-    struct Rectangle
+    struct SRectangle
     {
         float X;
         float Y;

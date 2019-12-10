@@ -16,8 +16,8 @@ namespace Lambda
 	//VKNSwapChain
 	//------------
 
-	VKNSwapChain::VKNSwapChain(VKNDevice* pDevice, const SwapChainDesc& desc)
-		: SwapChainBase<VKNDevice>(pDevice, desc),
+	VKNSwapChain::VKNSwapChain(VKNDevice* pDevice, const SSwapChainDesc& desc)
+		: CSwapChainBase<VKNDevice>(pDevice, desc),
 		m_Context(nullptr),
 		m_VkSwapChain(VK_NULL_HANDLE),
         m_VkFormat(),
@@ -61,7 +61,7 @@ namespace Lambda
     }
 
 
-	void VKNSwapChain::Init(const SwapChainDesc& desc)
+	void VKNSwapChain::Init(const SSwapChainDesc& desc)
 	{
         //Create window surface
 #if defined(LAMBDA_PLAT_MACOS)
@@ -310,7 +310,7 @@ namespace Lambda
 		result = vkGetSwapchainImagesKHR(m_pDevice->GetVkDevice(), m_VkSwapChain, &imageCount, textures.data());	
 		for (uint32 i = 0; i < imageCount; i++)
         {
-            TextureDesc desc = {};
+            STextureDesc desc = {};
             desc.Type		 = TEXTURE_TYPE_2D;
             desc.Flags		 = TEXTURE_FLAGS_RENDER_TARGET;
             desc.Format		 = m_Desc.BufferFormat;
@@ -328,7 +328,7 @@ namespace Lambda
 		LOG_RENDER_API_INFO("[Vulkan] Created Backbuffers\n");
         
         //Create depthbuffer
-        TextureDesc depthBufferDesc = {};
+        STextureDesc depthBufferDesc = {};
         depthBufferDesc.Flags       = TEXTURE_FLAGS_DEPTH_STENCIL;
         depthBufferDesc.Type        = TEXTURE_TYPE_2D;
         depthBufferDesc.Usage       = USAGE_DEFAULT;
@@ -344,7 +344,7 @@ namespace Lambda
         //Create MSAA-buffer
         if (m_Desc.BufferSampleCount > 1)
         {
-            TextureDesc msaaBufferDesc = {};
+            STextureDesc msaaBufferDesc = {};
             msaaBufferDesc.Type        = TEXTURE_TYPE_2D;
             msaaBufferDesc.Usage       = USAGE_DEFAULT;
             msaaBufferDesc.Flags       = TEXTURE_FLAGS_RENDER_TARGET;
@@ -411,7 +411,7 @@ namespace Lambda
 		//Transition into resolving
 		if (m_Desc.BufferSampleCount > 1)
 		{
-			TextureTransitionBarrier barriers[2];
+			STextureTransitionBarrier barriers[2];
 			barriers[0].pTexture	= m_Buffers[m_CurrentBufferIndex].Get();
 			barriers[0].AfterState	= RESOURCE_STATE_COPY_DEST;
 			barriers[0].MipLevel	= LAMBDA_ALL_MIP_LEVELS;
@@ -424,7 +424,7 @@ namespace Lambda
 		}
 
 		//Transition into presenting
-		TextureTransitionBarrier barrier = {};
+		STextureTransitionBarrier barrier = {};
 		barrier.pTexture	= m_Buffers[m_CurrentBufferIndex].Get();
 		barrier.AfterState	= RESOURCE_STATE_PRESENT;
 		barrier.MipLevel	= LAMBDA_ALL_MIP_LEVELS;

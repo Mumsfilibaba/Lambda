@@ -11,7 +11,7 @@ namespace Lambda
     //IFactory
     //--------
 
-    void IFactory::CreateFactory(IFactory **ppFactory, GraphicsAPI api)
+    void IFactory::CreateFactory(IFactory **ppFactory, EGraphicsAPI api)
     {
         if (api == GRAPHICS_API_VULKAN)
         {

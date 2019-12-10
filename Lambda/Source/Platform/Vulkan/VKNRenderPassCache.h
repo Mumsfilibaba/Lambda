@@ -23,8 +23,8 @@ namespace Lambda
 		mutable size_t	Hash;
 		uint32 NumRenderTargets;
 		uint32 SampleCount;
-		Format DepthStencilFormat;
-		Format RenderTargetFormats[LAMBDA_MAX_RENDERTARGET_COUNT];
+		EFormat DepthStencilFormat;
+		EFormat RenderTargetFormats[LAMBDA_MAX_RENDERTARGET_COUNT];
 	};
 
 	//-------------------------

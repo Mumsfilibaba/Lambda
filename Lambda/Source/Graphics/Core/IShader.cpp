@@ -9,7 +9,7 @@ namespace Lambda
 	//IShader
 	//-------
 
-	IShader* IShader::CreateShaderFromFile(IDevice* pDevice, const char* pFilename, const char* pEntryPoint, ShaderStage type, ShaderLang languange)
+	IShader* IShader::CreateShaderFromFile(IDevice* pDevice, const char* pFilename, const char* pEntryPoint, EShaderStage type, EShaderLang languange)
 	{
 		LAMBDA_ASSERT(pDevice != nullptr);
 
@@ -36,7 +36,7 @@ namespace Lambda
 			file.close();
             
             //Setup desc
-			ShaderDesc desc = {};
+			SShaderDesc desc = {};
 			desc.pEntryPoint = pEntryPoint;
 			desc.Type = type;
 			desc.Languange = languange;

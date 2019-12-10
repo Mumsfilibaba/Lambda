@@ -1,23 +1,23 @@
 #include "LambdaPch.h"
-#include "Core/Environment.h"
-#include "Core/LogManager.h"
+#include "Core/CEnvironment.h"
+#include "Core/CLogManager.h"
 
 namespace Lambda
 {
-	//----------
-	//LogManager
-	//----------
+	//-----------
+	//CLogManager
+	//-----------
 
 	template<>
-	LogManager* Singleton<LogManager>::s_pInstance = nullptr;
+	CLogManager* CSingleton<CLogManager>::s_pInstance = nullptr;
 
-	LogManager::LogManager()
+	CLogManager::CLogManager()
 		: m_ChannelFilter(LOG_CHANNEL_ALL_CHANNELS)
 	{
 	}
 
 
-	void LogManager::Print(LogChannel channel, LogSeverity severity, const char* pFormat, ...)
+	void CLogManager::Print(ELogChannel channel, ELogSeverity severity, const char* pFormat, ...)
 	{
 		//Filter the channel
 		if ((m_ChannelFilter & channel) == 0)
@@ -40,8 +40,8 @@ namespace Lambda
 		const char* pChannel = nullptr;
 		if (channel == LOG_CHANNEL_ENGINE)
 			pChannel = "LAMBDA ENGINE";
-		else if (channel == LOG_CHANNEL_HOST)
-			pChannel = "HOST";
+		else if (channel == LOG_CHANNEL_ENVIRONMENT)
+			pChannel = "ENVIRONMENT";
 		else if (channel == LOG_CHANNEL_RENDERER)
 			pChannel = "RENDERER";
 		else if (channel == LOG_CHANNEL_RENDER_API)
@@ -59,11 +59,11 @@ namespace Lambda
 		va_end(args);
 
 		//Print to the host
-		Environment::Get().PrintF("[%s]: [%s] - %s", pSeverity, pChannel, s_Buffer);
+		CEnvironment::Get().PrintF("[%s]: [%s] - %s", pSeverity, pChannel, s_Buffer);
 	}
 
 
-	void LogManager::Release()
+	void CLogManager::Release()
 	{
 		delete this;
 	}

@@ -1,65 +1,31 @@
-#include "LambdaPch.h"
+#import "LambdaPch.h"
 #if defined(LAMBDA_PLAT_MACOS)
-    #include "../Vulkan/VKNDevice.h"
-    #include "macOSWindow.h"
-    #include "macOSInput.h"
-    #include "Events/EventDispatcher.h"
-    #include "Events/KeyEvent.h"
-    #include "Events/WindowEvent.h"
-    #include "Events/MouseEvent.h"
-    #include "Graphics/Core/IDevice.h"
-    #include "System/Input.h"
-    #include "System/GamePadManager.h"
-    #include "System/Log.h"
+    #import "CmacOSWindow.h"
+    #import "Core/CLogManager.h"
+    #import "Core/Event/CKeyEvent.h"
+    #import "Core/Event/CWindowEvent.h"
+    #import "Core/Event/CMouseEvent.h"
 
 namespace Lambda
 {
     static void GLFWErrorCallback(int, const char* pErrorString)
     {
-        LOG_DEBUG_ERROR("GLFW: %s\n", pErrorString);
-    }
-
-    //-------
-    //IWindow
-    //-------
-    
-    IWindow* IWindow::Create(const WindowDesc& desc)
-    {
-        return DBG_NEW macOSWindow(desc);
+        LOG_ENVIRONMENT_ERROR("GLFW: %s\n", pErrorString);
     }
     
-    //-----------
-    //macOSWindow
-    //-----------
+    //------------
+    //CmacOSWindow
+    //------------
     
-    bool macOSWindow::s_HasGLFW = false;
+    bool CmacOSWindow::s_HasGLFW = false;
     
-    macOSWindow::macOSWindow(const WindowDesc& desc)
+    CmacOSWindow::CmacOSWindow(const char* pTitle, uint32 width, uint32 height)
         : m_pWindow(nullptr),
         m_pCallback(nullptr),
         m_Width(0.0f),
         m_Height(0.0f),
         m_Fullscreen(false),
         m_HasFocus(false)
-    {
-        Init(desc);
-        LOG_SYSTEM_INFO("Created window. w: %d, h: %d\n", desc.Width, desc.Height);
-    }
-    
-    
-    macOSWindow::~macOSWindow()
-    {
-        //Delete callback
-        SafeDelete(m_pCallback);
-        //Destroy glfw
-        if (s_HasGLFW)
-        {
-            glfwTerminate();
-        }
-    }
-    
-    
-    void macOSWindow::Init(const WindowDesc& desc)
     {
         //Init glfw
         if (!s_HasGLFW)
@@ -71,11 +37,11 @@ namespace Lambda
             if (glfwInit())
             {
                 s_HasGLFW = true;
-                LOG_DEBUG_INFO("macOS: Initialized GLFW\n");
+                LOG_ENVIRONMENT_INFO("macOS: Initialized GLFW\n");
             }
             else
             {
-                LOG_DEBUG_INFO("macOS: Failed to initialize GLFW\n");
+                LOG_ENVIRONMENT_INFO("macOS: Failed to initialize GLFW\n");
             }
         }
         
@@ -84,25 +50,25 @@ namespace Lambda
         glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GL_FALSE);
         
         //Create window
-        m_pWindow = glfwCreateWindow(desc.Width, desc.Height, desc.pTitle, nullptr, nullptr);
+        m_pWindow = glfwCreateWindow(width, height, pTitle, nullptr, nullptr);
         if (m_pWindow)
         {
-            LOG_DEBUG_INFO("macOS: Created window\n");
+            LOG_ENVIRONMENT_INFO("macOS: Created window\n");
             
             //Setup size
-            m_Width = desc.Width;
-            m_Height = desc.Height;
+            m_Width  = width;
+            m_Height = height;
             
             //Setup callbacks
-            glfwSetWindowCloseCallback(m_pWindow, macOSWindow::WindowClosedCallback);
-            glfwSetWindowSizeCallback(m_pWindow, macOSWindow::WindowResizeCallback);
-            glfwSetWindowPosCallback(m_pWindow, macOSWindow::WindowMoveCallback);
-            glfwSetKeyCallback(m_pWindow, macOSWindow::KeyCallback);
-            glfwSetCharCallback(m_pWindow, macOSWindow::TextCallback);
-            glfwSetCursorPosCallback(m_pWindow, macOSWindow::MouseMoveCallback);
-            glfwSetMouseButtonCallback(m_pWindow, macOSWindow::MouseButtonCallback);
-            glfwSetScrollCallback(m_pWindow, macOSWindow::MouseScollCallback);
-            glfwSetWindowFocusCallback(m_pWindow, macOSWindow::WindowFocusCallback);
+            glfwSetWindowCloseCallback(m_pWindow, CmacOSWindow::WindowClosedCallback);
+            glfwSetWindowSizeCallback(m_pWindow, CmacOSWindow::WindowResizeCallback);
+            glfwSetWindowPosCallback(m_pWindow, CmacOSWindow::WindowMoveCallback);
+            glfwSetKeyCallback(m_pWindow, CmacOSWindow::KeyCallback);
+            glfwSetCharCallback(m_pWindow, CmacOSWindow::TextCallback);
+            glfwSetCursorPosCallback(m_pWindow, CmacOSWindow::MouseMoveCallback);
+            glfwSetMouseButtonCallback(m_pWindow, CmacOSWindow::MouseButtonCallback);
+            glfwSetScrollCallback(m_pWindow, CmacOSWindow::MouseScollCallback);
+            glfwSetWindowFocusCallback(m_pWindow, CmacOSWindow::WindowFocusCallback);
             
             //Set userdata
             glfwSetWindowUserPointer(m_pWindow, this);
@@ -111,49 +77,63 @@ namespace Lambda
             //glfwSetInputMode(m_pWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
             //Set fullscreen
-            SetFullscreen(desc.Fullscreen);
+            SetFullscreen(false);
+        }
+        
+        LOG_ENVIRONMENT_INFO("Created window. w: %d, h: %d\n", width, height);
+    }
+    
+    
+    CmacOSWindow::~CmacOSWindow()
+    {
+        //Delete callback
+        SafeDelete(m_pCallback);
+        //Destroy glfw
+        if (s_HasGLFW)
+        {
+            glfwTerminate();
         }
     }
     
     
-    void macOSWindow::SetEventCallback(IEventCallback* pCallback)
+    void CmacOSWindow::SetEventCallback(IEventCallback* pCallback)
     {
         SafeDelete(m_pCallback);
         m_pCallback = pCallback;
     }
     
     
-    void macOSWindow::OnUpdate() const
+    void CmacOSWindow::OnUpdate() const
     {
         glfwPollEvents();
     }
 
 
-    bool macOSWindow::HasFocus() const
+    bool CmacOSWindow::HasFocus() const
     {
         return m_HasFocus;
     }
     
     
-    uint32 macOSWindow::GetHeight() const
+    uint32 CmacOSWindow::GetHeight() const
     {
         return m_Height;
     }
     
     
-    uint32 macOSWindow::GetWidth() const
+    uint32 CmacOSWindow::GetWidth() const
     {
         return m_Width;
     }
     
     
-    void* macOSWindow::GetNativeHandle() const
+    void* CmacOSWindow::GetNativeHandle() const
     {
         return m_pWindow;
     }
     
     
-    void macOSWindow::WindowClosedCallback(GLFWwindow* pWindow)
+    void CmacOSWindow::WindowClosedCallback(GLFWwindow* pWindow)
     {
         macOSWindow* pUserWindow = reinterpret_cast<macOSWindow*>(glfwGetWindowUserPointer(pWindow));
         
@@ -162,7 +142,7 @@ namespace Lambda
     }
     
     
-    void macOSWindow::WindowResizeCallback(GLFWwindow* pWindow, int32 width, int32 height)
+    void CmacOSWindow::WindowResizeCallback(GLFWwindow* pWindow, int32 width, int32 height)
     {
         macOSWindow* pUserWindow = reinterpret_cast<macOSWindow*>(glfwGetWindowUserPointer(pWindow));
         
@@ -171,7 +151,7 @@ namespace Lambda
     }
     
     
-    void macOSWindow::WindowMoveCallback(GLFWwindow* pWindow, int32 x, int32 y)
+    void CmacOSWindow::WindowMoveCallback(GLFWwindow* pWindow, int32 x, int32 y)
     {
         macOSWindow* pUserWindow = reinterpret_cast<macOSWindow*>(glfwGetWindowUserPointer(pWindow));
         
@@ -180,7 +160,7 @@ namespace Lambda
     }
     
     
-    void macOSWindow::KeyCallback(GLFWwindow* pWindow, int32 key, int32 scancode, int32 action, int32 mods)
+    void CmacOSWindow::KeyCallback(GLFWwindow* pWindow, int32 key, int32 scancode, int32 action, int32 mods)
     {
         //Convert modifiers
         uint32 modifiers = 0;
@@ -217,7 +197,7 @@ namespace Lambda
     }
     
     
-    void macOSWindow::TextCallback(GLFWwindow* pWindow, uint32 codepoint)
+    void CmacOSWindow::TextCallback(GLFWwindow* pWindow, uint32 codepoint)
     {
         macOSWindow* pUserWindow = reinterpret_cast<macOSWindow*>(glfwGetWindowUserPointer(pWindow));
         
@@ -226,7 +206,7 @@ namespace Lambda
     }
     
     
-    void macOSWindow::MouseMoveCallback(GLFWwindow* pWindow, double x, double y)
+    void CmacOSWindow::MouseMoveCallback(GLFWwindow* pWindow, double x, double y)
     {
         macOSWindow* pUserWindow = reinterpret_cast<macOSWindow*>(glfwGetWindowUserPointer(pWindow));
         
@@ -235,7 +215,7 @@ namespace Lambda
     }
     
     
-    void macOSWindow::MouseButtonCallback(GLFWwindow* pWindow, int32 button, int32 action, int32 mods)
+    void CmacOSWindow::MouseButtonCallback(GLFWwindow* pWindow, int32 button, int32 action, int32 mods)
     {
         //Convert button
         MouseButton mouseButton = MOUSEBUTTON_UNKNOWN;
@@ -280,7 +260,7 @@ namespace Lambda
     }
     
     
-    void macOSWindow::MouseScollCallback(GLFWwindow* pWindow, double xoffset, double yoffset)
+    void CmacOSWindow::MouseScollCallback(GLFWwindow* pWindow, double xoffset, double yoffset)
     {
         macOSWindow* pUserWindow = reinterpret_cast<macOSWindow*>(glfwGetWindowUserPointer(pWindow));
         
@@ -289,7 +269,7 @@ namespace Lambda
     }
     
     
-    void macOSWindow::WindowFocusCallback(GLFWwindow* pWindow, int32 focused)
+    void CmacOSWindow::WindowFocusCallback(GLFWwindow* pWindow, int32 focused)
     {
         macOSWindow* pUserWindow = reinterpret_cast<macOSWindow*>(glfwGetWindowUserPointer(pWindow));
         
@@ -302,7 +282,7 @@ namespace Lambda
     }
     
     
-    bool macOSWindow::SetFullscreen(bool fullscreen)
+    bool CmacOSWindow::SetFullscreen(bool fullscreen)
     {
         //glfwMaximizeWindow(m_pWindow);
         if (m_Fullscreen == fullscreen)
@@ -329,13 +309,13 @@ namespace Lambda
     }
     
     
-    bool macOSWindow::GetFullscreen() const
+    bool CmacOSWindow::GetFullscreen() const
     {
         return m_Fullscreen;
     }
     
     
-    void macOSWindow::DispatchEvent(const Event &event)
+    void CmacOSWindow::DispatchEvent(const Event &event)
     {
         if (m_pCallback)
         {

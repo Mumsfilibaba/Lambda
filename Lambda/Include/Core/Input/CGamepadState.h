@@ -1,5 +1,5 @@
 #pragma once
-#include "EGamepads.h"
+#include "EGamepad.h"
 
 namespace Lambda
 {

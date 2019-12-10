@@ -8,25 +8,25 @@ namespace Lambda
 	class ITexture;
 	class ISamplerState;
 
-	//------------
-	//PipelineType
-	//------------
+	//-------------
+	//EPipelineType
+	//-------------
 
-	enum PipelineType : uint32
+	enum EPipelineType : uint32
 	{
 		PIPELINE_TYPE_UNKNOWN	= 0,
 		PIPELINE_TYPE_GRAPHICS	= 1,
 		PIPELINE_TYPE_COMPUTE	= 2
 	};
 
-    //----------------
-    //InputElementDesc
-    //----------------
+    //-----------------
+    //SInputElementDesc
+    //-----------------
     
-    struct InputElementDesc
+    struct SInputElementDesc
     {
         const char* pName       = nullptr;
-        Format Format			= FORMAT_UNKNOWN;
+        EFormat Format			= FORMAT_UNKNOWN;
         uint32 BindingSlot      = 0;
         uint32 InputSlot        = 0;
         uint32 Stride           = 0;
@@ -34,87 +34,87 @@ namespace Lambda
         bool IsInstanced        = false;
     };
 
-	//---------------
-	//InputLayoutDesc
-	//---------------
+	//----------------
+	//SInputLayoutDesc
+	//----------------
 
-	struct InputLayoutDesc
+	struct SInputLayoutDesc
 	{
-		InputElementDesc* pElements = nullptr;
+		SInputElementDesc* pElements = nullptr;
 		uint32 ElementCount			= 0;
 	};
 
-	//-------------------
-	//RasterizerStateDesc
-	//-------------------
+	//--------------------
+	//SRasterizerStateDesc
+	//--------------------
 
-	struct RasterizerStateDesc
+	struct SRasterizerStateDesc
 	{
-		CullMode Cull					= CULL_MODE_BACK;
-		PolygonMode	FillMode			= POLYGON_MODE_FILL;
+		ECullMode CullMode  			= CULL_MODE_BACK;
+		EPolygonMode PolygonMode	    = POLYGON_MODE_FILL;
 		bool FrontFaceCounterClockWise	= false;
 	};
 
-	//--------------
-	//BlendStateDesc
-	//--------------
+	//---------------
+	//SBlendStateDesc
+	//---------------
 
-	struct BlendStateDesc
+	struct SBlendStateDesc
 	{
 		bool EnableBlending = false;
 	};
 
-	//---------------------
-	//DepthStencilStateDesc
-	//---------------------
+	//----------------------
+	//SDepthStencilStateDesc
+	//----------------------
 
-	struct DepthStencilStateDesc
+	struct SDepthStencilStateDesc
 	{
 		bool DepthTest = true;
 	};
 
-    //-------------------------
-    //GraphicsPipelineStateDesc
-    //-------------------------
+    //--------------------------
+    //SGraphicsPipelineStateDesc
+    //--------------------------
 
-    struct GraphicsPipelineStateDesc
+    struct SGraphicsPipelineStateDesc
     {
         IShader* pVertexShader      = nullptr;
         IShader* pHullShader        = nullptr;
         IShader* pDomainShader      = nullptr;
         IShader* pGeometryShader    = nullptr;
         IShader* pPixelShader       = nullptr;
-        PrimitiveTopology Topology  = PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+        EPrimitiveTopology Topology  = PRIMITIVE_TOPOLOGY_TRIANGLELIST;
         uint32 SampleCount          = 1;
 		uint32 NumRenderTargets		= 0;
-        Format DepthStencilFormat   = FORMAT_D24_UNORM_S8_UINT;
-        Format RenderTargetFormats[LAMBDA_MAX_RENDERTARGET_COUNT];
-        InputLayoutDesc VertexInput;
-        DepthStencilStateDesc DepthStencilState;
-        BlendStateDesc BlendState;
-        RasterizerStateDesc RasterizerState;
+        EFormat DepthStencilFormat   = FORMAT_D24_UNORM_S8_UINT;
+        EFormat RenderTargetFormats[LAMBDA_MAX_RENDERTARGET_COUNT];
+        SInputLayoutDesc InputLayout;
+        SDepthStencilStateDesc DepthStencilState;
+        SBlendStateDesc BlendState;
+        SRasterizerStateDesc RasterizerState;
     };
 
-    //------------------------
-    //ComputePipelineStateDesc
-    //------------------------
+    //-------------------------
+    //SComputePipelineStateDesc
+    //-------------------------
 
-    struct ComputePipelineStateDesc
+    struct SComputePipelineStateDesc
     {
         IShader* pComputeShader = nullptr;
     };
 
-    //-----------------
-    //PipelineStateDesc
-    //-----------------
+    //------------------
+    //SPipelineStateDesc
+    //------------------
     
-	struct PipelineStateDesc
+	struct SPipelineStateDesc
 	{
         const char* pName = nullptr;
-		PipelineType Type = PIPELINE_TYPE_GRAPHICS;
-		ShaderVariableTableDesc ShaderVariableTable;
-		GraphicsPipelineStateDesc GraphicsPipeline;
-		ComputePipelineStateDesc ComputePipeline;
+		EPipelineType Type = PIPELINE_TYPE_GRAPHICS;
+		SShaderVariableTableDesc ShaderVariableTable;
+		SGraphicsPipelineStateDesc GraphicsPipeline;
+		SComputePipelineStateDesc ComputePipeline;
 	};
 
     //--------------
@@ -128,6 +128,6 @@ namespace Lambda
         
 		virtual void CreateShaderVariableTable(IShaderVariableTable** ppVariableTable) = 0;
         virtual void* GetNativeHandle() const = 0;
-		virtual const PipelineStateDesc& GetDesc() const = 0;
+		virtual const SPipelineStateDesc& GetDesc() const = 0;
 	};
 }

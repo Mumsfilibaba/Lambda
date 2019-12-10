@@ -1,5 +1,5 @@
 #pragma once
-#include "Time/Timestep.h"
+#include "Time/CTime.h"
 
 namespace Lambda
 {
@@ -19,9 +19,9 @@ namespace Lambda
         LAMBDA_NO_COPY(CLayer);
 
         virtual void OnLoad();
-        virtual void OnUpdate(Timestep dt);
-        virtual void OnRender(Renderer3D& renderer, Timestep dt);
-        virtual void OnRenderUI(Timestep dt);
+        virtual void OnUpdate(const CTime& time);
+        virtual void OnRender(Renderer3D& renderer, const CTime& time);
+        virtual void OnRenderUI(const CTime& time);
         virtual void OnRelease();        
         const char* GetName() const;
     private:

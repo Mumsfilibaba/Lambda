@@ -1,5 +1,5 @@
 #pragma once
-#include "Graphics/Core/DeviceBase.h"
+#include "Graphics/Core/CDeviceBase.h"
 #include "Memory/VKNDeviceAllocator.h"
 #include "VKNSafeReleaseManager.h"
 #include "Memory/VKNDynamicMemoryAllocator.h"
@@ -21,21 +21,21 @@ namespace Lambda
 	//VKNDevice
 	//---------
 
-    class VKNDevice final : public DeviceBase
+    class VKNDevice final : public CDeviceBase
     {
     public:
         LAMBDA_NO_COPY(VKNDevice);
         
-        VKNDevice(const DeviceDesc& desc);
+        VKNDevice(const SDeviceDesc& desc);
         ~VKNDevice();
         
         virtual void CreateDefferedContext(IDeviceContext** ppDefferedContext) override final;
-        virtual void CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) override final;
-        virtual void CreateTexture(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc) override final;
-        virtual void CreateShader(IShader** ppShader, const ShaderDesc& desc) override final;
-        virtual void CreateSamplerState(ISamplerState** ppSamplerState, const SamplerStateDesc& desc) override final;
-        virtual void CreatePipelineState(IPipelineState** ppPipelineState, const PipelineStateDesc& desc) override final;
-		virtual void CreateQuery(IQuery** ppQuery, const QueryDesc& desc) override final;
+        virtual void CreateBuffer(IBuffer** ppBuffer, const SResourceData* pInitalData, const SBufferDesc& desc) override final;
+        virtual void CreateTexture(ITexture** ppTexture, const SResourceData* pInitalData, const STextureDesc& desc) override final;
+        virtual void CreateShader(IShader** ppShader, const SShaderDesc& desc) override final;
+        virtual void CreateSamplerState(ISamplerState** ppSamplerState, const SSamplerStateDesc& desc) override final;
+        virtual void CreatePipelineState(IPipelineState** ppPipelineState, const SPipelineStateDesc& desc) override final;
+		virtual void CreateQuery(IQuery** ppQuery, const SQueryDesc& desc) override final;
         
 		virtual IDeviceContext* GetImmediateContext() const override final;     
         virtual void* GetNativeHandle() const override final;
@@ -147,7 +147,7 @@ namespace Lambda
 			m_pVkSafeReleaseManager->ReleaseResource<VkResourceType>(resource);
 		}
 	private:
-		void Init(const DeviceDesc& desc);
+		void Init(const SDeviceDesc& desc);
 		void InitDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo);		
 		VkPhysicalDevice QueryPhyscialDevice();
 		bool PhysicalDeviceIsSuitable(VkPhysicalDevice physcialDevice);        

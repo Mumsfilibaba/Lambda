@@ -12,8 +12,8 @@ namespace Lambda
 	//VKNTexture
 	//----------
 
-    VKNTexture::VKNTexture(VKNDevice* pDevice, const ResourceData* pInitalData, const TextureDesc& desc)
-        : TextureBase<VKNDevice>(pDevice, desc),
+    VKNTexture::VKNTexture(VKNDevice* pDevice, const SResourceData* pInitalData, const STextureDesc& desc)
+        : CTextureBase<VKNDevice>(pDevice, desc),
 		m_Memory(),
         m_IsOwner(false),
 		m_VkImage(VK_NULL_HANDLE),
@@ -26,8 +26,8 @@ namespace Lambda
     }
     
     
-    VKNTexture::VKNTexture(VKNDevice* pDevice, VkImage image, const TextureDesc& desc)
-		: TextureBase<VKNDevice>(pDevice, desc),
+    VKNTexture::VKNTexture(VKNDevice* pDevice, VkImage image, const STextureDesc& desc)
+		: CTextureBase<VKNDevice>(pDevice, desc),
 		m_Memory(),
 		m_IsOwner(false),
 		m_VkImage(VK_NULL_HANDLE),
@@ -74,7 +74,7 @@ namespace Lambda
 	}
 
     
-    void VKNTexture::InitFromResource(VkImage image, const TextureDesc& desc)
+    void VKNTexture::InitFromResource(VkImage image, const STextureDesc& desc)
     {
         //Init data
         m_VkImage	= image;
@@ -97,7 +97,7 @@ namespace Lambda
     }
     
     
-    void VKNTexture::Init(const ResourceData* pInitalData, const TextureDesc& desc)
+    void VKNTexture::Init(const SResourceData* pInitalData, const STextureDesc& desc)
     {
         //Number of samples (MSAA)
         VkSampleCountFlagBits sampleCount = ConvertSampleCount(desc.SampleCount);
@@ -272,7 +272,7 @@ namespace Lambda
 			}
 
 			
-			TextureTransitionBarrier barrier = {};
+			STextureTransitionBarrier barrier = {};
 			barrier.pTexture	= this;
 			barrier.AfterState	= RESOURCE_STATE_COPY_DEST;
 			barrier.MipLevel	= LAMBDA_ALL_MIP_LEVELS;
@@ -287,7 +287,7 @@ namespace Lambda
 		}
 		else
 		{
-			TextureTransitionBarrier barrier = {};
+			STextureTransitionBarrier barrier = {};
 			barrier.pTexture	= this;
 			barrier.AfterState	= RESOURCE_STATE_GENERAL;
 			barrier.MipLevel	= LAMBDA_ALL_MIP_LEVELS;

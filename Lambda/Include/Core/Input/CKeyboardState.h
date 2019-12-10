@@ -1,5 +1,4 @@
 #pragma once
-#include "LambdaCore.h"
 #include "EKey.h"
 
 namespace Lambda
@@ -16,8 +15,8 @@ namespace Lambda
         CKeyboardState(CKeyboardState&& other);
         ~CKeyboardState() = default;
         
-        CKeyboardState& operator=(const CGamepadState& other);
-        CKeyboardState& operator=(CGamepadState&& other);
+        CKeyboardState& operator=(const CKeyboardState& other);
+        CKeyboardState& operator=(CKeyboardState&& other);
         
         bool IsKeyDown(EKey key);
         bool IsKeyUp(EKey key);

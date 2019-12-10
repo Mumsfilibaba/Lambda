@@ -1,5 +1,4 @@
 #pragma once
-#include "LambdaCore.h"
 #include "CKeyboardState.h"
 
 namespace Lambda
@@ -12,17 +11,17 @@ namespace Lambda
 	{
         friend class CEngine;
 	public:
-		LAMBDA_STATIC_CLASS(Keyboard);
+		LAMBDA_STATIC_CLASS(CKeyboard);
 
 		static bool IsKeyDown(EKey key);
 		static bool IsKeyUp(EKey key);
         // Difference between key-down and -pressed is that pressed only checks the current frame's state
 		static bool IsKeyPressed(EKey key);
-		static const KeyboardState& GetState();
+		static const CKeyboardState& GetState();
     private:
         static void Update();
 	private:
-		static KeyboardState s_CurrentState;
-		static KeyboardState s_LastState;
+		static CKeyboardState s_CurrentState;
+		static CKeyboardState s_LastState;
 	};
 }

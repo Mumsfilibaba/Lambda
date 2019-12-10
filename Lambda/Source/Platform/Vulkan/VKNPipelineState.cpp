@@ -17,8 +17,8 @@ namespace Lambda
 	//VKNPipelineState
 	//----------------
 
-    VKNPipelineState::VKNPipelineState(VKNDevice* pVkDevice, const PipelineStateDesc& desc)
-        : PipelineStateBase<VKNDevice>(pVkDevice, desc),
+    VKNPipelineState::VKNPipelineState(VKNDevice* pVkDevice, const SPipelineStateDesc& desc)
+        : CPipelineStateBase<VKNDevice>(pVkDevice, desc),
 		m_pAllocator(nullptr),
         m_VkPipeline(VK_NULL_HANDLE),
         m_VkPipelineLayout(VK_NULL_HANDLE),
@@ -64,7 +64,7 @@ namespace Lambda
 	{
 		LAMBDA_ASSERT(ppVariableTable != nullptr);
 
-		ShaderVariableTableDesc desc = {};
+		SShaderVariableTableDesc desc = {};
 		desc.NumVariables		= uint32(m_ShaderVariableDescs.size());
 		desc.pVariables			= m_ShaderVariableDescs.data();
 		desc.NumConstantBlocks	= uint32(m_ConstantBlockDescs.size());
@@ -74,7 +74,7 @@ namespace Lambda
 	}
 
     
-    void VKNPipelineState::Init(const PipelineStateDesc& desc)
+    void VKNPipelineState::Init(const SPipelineStateDesc& desc)
     {
 		//Get renderpass        
 		VKNRenderPassCache& cache = VKNRenderPassCache::Get();
@@ -88,11 +88,11 @@ namespace Lambda
 		VkRenderPass renderPass = cache.GetRenderPass(key);
 
 		//Copy the resourceslots
-		const ShaderVariableTableDesc& varibleLayout = desc.ShaderVariableTable;
+		const SShaderVariableTableDesc& varibleLayout = desc.ShaderVariableTable;
 		for (uint32 i = 0; i < varibleLayout.NumStaticSamplerStates; i++)
 		{
 			//Get desc
-			const StaticSamplerStateDesc& staticSamplerStateDesc = varibleLayout.pStaticSamplerStates[i];
+			const SStaticSamplerStateDesc& staticSamplerStateDesc = varibleLayout.pStaticSamplerStates[i];
 
 			//Static samplers must have a name
 			if (staticSamplerStateDesc.pName == nullptr)
@@ -154,7 +154,7 @@ namespace Lambda
 		std::vector<VkDescriptorSetLayoutBinding> layoutBindings;
 		for (uint32 i = 0; i < varibleLayout.NumVariables; i++)
 		{
-			const ShaderVariableDesc& variable = varibleLayout.pVariables[i];
+			const SShaderVariableDesc& variable = varibleLayout.pVariables[i];
 			m_ShaderVariableDescs.emplace_back(variable);
 
 			VkDescriptorSetLayoutBinding layoutBinding = {};
@@ -188,7 +188,7 @@ namespace Lambda
 		std::vector<VkPushConstantRange> constantRanges;
 		for (uint32 i = 0; i < varibleLayout.NumConstantBlocks; i++)
 		{
-			const ConstantBlockDesc& block = varibleLayout.pConstantBlocks[i];
+			const SConstantBlockDesc& block = varibleLayout.pConstantBlocks[i];
 			m_ConstantBlockDescs.emplace_back(block);
 
 			VkPushConstantRange range = {};
@@ -255,7 +255,7 @@ namespace Lambda
 			//VertexShader
 			if (desc.GraphicsPipeline.pVertexShader)
 			{
-				const ShaderDesc& vsDesc = desc.GraphicsPipeline.pVertexShader->GetDesc();
+				const SShaderDesc& vsDesc = desc.GraphicsPipeline.pVertexShader->GetDesc();
 				shaderStageInfo.stage  = VK_SHADER_STAGE_VERTEX_BIT;
 				shaderStageInfo.pName  = vsDesc.pEntryPoint;
 				shaderStageInfo.module = reinterpret_cast<VkShaderModule>(desc.GraphicsPipeline.pVertexShader->GetNativeHandle());
@@ -264,7 +264,7 @@ namespace Lambda
 			//HullShader
 			if (desc.GraphicsPipeline.pHullShader)
 			{
-				const ShaderDesc& hsDesc = desc.GraphicsPipeline.pHullShader->GetDesc();
+				const SShaderDesc& hsDesc = desc.GraphicsPipeline.pHullShader->GetDesc();
 				shaderStageInfo.stage  = VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
 				shaderStageInfo.pName  = hsDesc.pEntryPoint;
 				shaderStageInfo.module = reinterpret_cast<VkShaderModule>(desc.GraphicsPipeline.pHullShader->GetNativeHandle());
@@ -273,7 +273,7 @@ namespace Lambda
 			//DomainShader
 			if (desc.GraphicsPipeline.pDomainShader)
 			{
-				const ShaderDesc& dsDesc = desc.GraphicsPipeline.pDomainShader->GetDesc();
+				const SShaderDesc& dsDesc = desc.GraphicsPipeline.pDomainShader->GetDesc();
 				shaderStageInfo.stage  = VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
 				shaderStageInfo.pName  = dsDesc.pEntryPoint;
 				shaderStageInfo.module = reinterpret_cast<VkShaderModule>(desc.GraphicsPipeline.pDomainShader->GetNativeHandle());
@@ -282,7 +282,7 @@ namespace Lambda
 			//GeometryShader
 			if (desc.GraphicsPipeline.pGeometryShader)
 			{
-				const ShaderDesc& gsDesc = desc.GraphicsPipeline.pGeometryShader->GetDesc();
+				const SShaderDesc& gsDesc = desc.GraphicsPipeline.pGeometryShader->GetDesc();
 				shaderStageInfo.stage  = VK_SHADER_STAGE_GEOMETRY_BIT;
 				shaderStageInfo.pName  = gsDesc.pEntryPoint;
 				shaderStageInfo.module = reinterpret_cast<VkShaderModule>(desc.GraphicsPipeline.pGeometryShader->GetNativeHandle());
@@ -291,7 +291,7 @@ namespace Lambda
 			//PixelShader
 			if (desc.GraphicsPipeline.pPixelShader)
 			{
-				const ShaderDesc& psDesc = desc.GraphicsPipeline.pPixelShader->GetDesc();
+				const SShaderDesc& psDesc = desc.GraphicsPipeline.pPixelShader->GetDesc();
 				shaderStageInfo.stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
 				shaderStageInfo.pName  = psDesc.pEntryPoint;
 				shaderStageInfo.module = reinterpret_cast<VkShaderModule>(desc.GraphicsPipeline.pPixelShader->GetNativeHandle());
@@ -302,7 +302,7 @@ namespace Lambda
 			std::vector<VkVertexInputBindingDescription> bindingDescriptions;
 			std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
 
-			const InputLayoutDesc& vertexInputDesc = desc.GraphicsPipeline.VertexInput;
+			const SInputLayoutDesc& vertexInputDesc = desc.GraphicsPipeline.InputLayout;
 			for (uint32 i = 0; i < vertexInputDesc.ElementCount; i++)
 			{
 				//Convert an input element to the corresponding AttributeDescription
@@ -380,14 +380,14 @@ namespace Lambda
         
         
 			//RasterizerState
-			const RasterizerStateDesc& rsDesc = desc.GraphicsPipeline.RasterizerState;
+			const SRasterizerStateDesc& rsDesc = desc.GraphicsPipeline.RasterizerState;
 			VkPipelineRasterizationStateCreateInfo rasterizerState = {};
 			rasterizerState.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 			rasterizerState.pNext                   = nullptr;
 			rasterizerState.flags                   = 0;
 			rasterizerState.depthClampEnable        = VK_FALSE;
 			rasterizerState.rasterizerDiscardEnable = VK_FALSE;
-			rasterizerState.polygonMode             = ConvertPolygonMode(rsDesc.FillMode);
+			rasterizerState.polygonMode             = ConvertPolygonMode(rsDesc.PolygonMode);
 			rasterizerState.lineWidth               = 1.0f;
 			rasterizerState.frontFace               = rsDesc.FrontFaceCounterClockWise ? VK_FRONT_FACE_COUNTER_CLOCKWISE : VK_FRONT_FACE_CLOCKWISE;
 			rasterizerState.depthBiasEnable         = VK_FALSE;
@@ -396,11 +396,11 @@ namespace Lambda
 			rasterizerState.depthBiasSlopeFactor    = 0.0f;
         
 			//Set cullmode
-			if (rsDesc.Cull == CULL_MODE_BACK)
+			if (rsDesc.CullMode == CULL_MODE_BACK)
 				rasterizerState.cullMode = VK_CULL_MODE_BACK_BIT;
-			else if (rsDesc.Cull == CULL_MODE_FRONT)
+			else if (rsDesc.CullMode == CULL_MODE_FRONT)
 				rasterizerState.cullMode = VK_CULL_MODE_FRONT_BIT;
-			else if (rsDesc.Cull == CULL_MODE_NONE)
+			else if (rsDesc.CullMode == CULL_MODE_NONE)
 				rasterizerState.cullMode = VK_CULL_MODE_NONE;
         
         
@@ -416,7 +416,7 @@ namespace Lambda
         
         
 			//Blendstate
-			const BlendStateDesc& blendDesc = desc.GraphicsPipeline.BlendState;
+			const SBlendStateDesc& blendDesc = desc.GraphicsPipeline.BlendState;
 			VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
 			colorBlendAttachment.colorWriteMask         = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 			colorBlendAttachment.blendEnable            = blendDesc.EnableBlending ? VK_TRUE : VK_FALSE;
@@ -440,7 +440,7 @@ namespace Lambda
         
         
 			//DepthStencilState
-			const DepthStencilStateDesc& dsDesc = desc.GraphicsPipeline.DepthStencilState;
+			const SDepthStencilStateDesc& dsDesc = desc.GraphicsPipeline.DepthStencilState;
 			VkPipelineDepthStencilStateCreateInfo depthStencilState = {};
 			depthStencilState.sType                  = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
 			depthStencilState.flags                  = 0;

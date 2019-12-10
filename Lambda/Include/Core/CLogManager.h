@@ -11,10 +11,10 @@
 	#define LOG_ENGINE_WARNING(...) Lambda::CLogManager::Get().Print(Lambda::LOG_CHANNEL_ENGINE, Lambda::LOG_SEVERITY_WARNING, __VA_ARGS__)
 	#define LOG_ENGINE_ERROR(...)	Lambda::CLogManager::Get().Print(Lambda::LOG_CHANNEL_ENGINE, Lambda::LOG_SEVERITY_ERROR, __VA_ARGS__); DEBUG_BREAK
 	
-	#define LOG_HOST_INFO(...)		Lambda::CLogManager::Get().Print(Lambda::LOG_CHANNEL_HOST, Lambda::LOG_SEVERITY_INFO, __VA_ARGS__)
-	#define LOG_HOST_MESSAGE(...)	Lambda::CLogManager::Get().Print(Lambda::LOG_CHANNEL_HOST, Lambda::LOG_SEVERITY_MESSAGE, __VA_ARGS__)
-	#define LOG_HOST_WARNING(...)	Lambda::CLogManager::Get().Print(Lambda::LOG_CHANNEL_HOST, Lambda::LOG_SEVERITY_WARNING, __VA_ARGS__)
-	#define LOG_HOST_ERROR(...)		Lambda::CLogManager::Get().Print(Lambda::LOG_CHANNEL_HOST, Lambda::LOG_SEVERITY_ERROR, __VA_ARGS__); DEBUG_BREAK
+	#define LOG_ENVIRONMENT_INFO(...)		Lambda::CLogManager::Get().Print(Lambda::LOG_CHANNEL_ENVIRONMENT, Lambda::LOG_SEVERITY_INFO, __VA_ARGS__)
+	#define LOG_ENVIRONMENT_MESSAGE(...)	Lambda::CLogManager::Get().Print(Lambda::LOG_CHANNEL_ENVIRONMENT, Lambda::LOG_SEVERITY_MESSAGE, __VA_ARGS__)
+	#define LOG_ENVIRONMENT_WARNING(...)	Lambda::CLogManager::Get().Print(Lambda::LOG_CHANNEL_ENVIRONMENT, Lambda::LOG_SEVERITY_WARNING, __VA_ARGS__)
+	#define LOG_ENVIRONMENT_ERROR(...)		Lambda::CLogManager::Get().Print(Lambda::LOG_CHANNEL_ENVIRONMENT, Lambda::LOG_SEVERITY_ERROR, __VA_ARGS__); DEBUG_BREAK
 	
 	#define LOG_RENDERER_INFO(...)		Lambda::CLogManager::Get().Print(Lambda::LOG_CHANNEL_RENDERER, Lambda::LOG_SEVERITY_INFO, __VA_ARGS__)
 	#define LOG_RENDERER_MESSAGE(...)	Lambda::CLogManager::Get().Print(Lambda::LOG_CHANNEL_RENDERER, Lambda::LOG_SEVERITY_MESSAGE, __VA_ARGS__)
@@ -33,10 +33,10 @@
 	#define LOG_ENGINE_WARNING(...)
 	#define LOG_ENGINE_ERROR(...)
 	
-	#define LOG_HOST_INFO(...)		
-	#define LOG_HOST_MESSAGE(...)	
-	#define LOG_HOST_WARNING(...)	
-	#define LOG_HOST_ERROR(...)		
+	#define LOG_ENVIRONMENT_INFO(...)
+	#define LOG_ENVIRONMENT_MESSAGE(...)
+	#define LOG_ENVIRONMENT_WARNING(...)
+	#define LOG_ENVIRONMENT_ERROR(...)
 	
 	#define LOG_RENDERER_INFO(...)		
 	#define LOG_RENDERER_MESSAGE(...)	
@@ -93,7 +93,7 @@ namespace Lambda
 	{
 		LOG_CHANNEL_UNKNOWN			= 0,
 		LOG_CHANNEL_ENGINE			= (1 << 0),
-		LOG_CHANNEL_HOST			= (1 << 1),
+		LOG_CHANNEL_ENVIRONMENT		= (1 << 1),
 		LOG_CHANNEL_RENDERER		= (1 << 2),
 		LOG_CHANNEL_RENDER_API		= (1 << 3),
 		LOG_CHANNEL_ALL_CHANNELS	= 0xffffffff
@@ -113,7 +113,6 @@ namespace Lambda
         
 		void Print(ELogChannel channel, ELogSeverity severity, const char* pFormat, ...);
 		void Release();
-
 
 		_forceinline void SetChannelFilter(uint32 channelFilter)
 		{

@@ -6,11 +6,11 @@ namespace Lambda
     class ITexture;
 	class IDevice;
 
-    //-------------------
-    //OptimizedClearValue
-    //-------------------
+    //--------------------
+    //SOptimizedClearValue
+    //--------------------
     
-    struct OptimizedClearValue
+    struct SOptimizedClearValue
     {
         union
         {
@@ -23,16 +23,16 @@ namespace Lambda
         };
     };
     
-    //-----------
-    //TextureDesc
-    //-----------
+    //------------
+    //STextureDesc
+    //------------
     
-	struct TextureDesc
+	struct STextureDesc
 	{
 		const char* pName	= nullptr;
-		TextureType Type    = TEXTURE_TYPE_UNKNOWN;
-        Usage Usage			= USAGE_UNKNOWN;
-        Format Format       = FORMAT_UNKNOWN;
+		ETextureType Type   = TEXTURE_TYPE_UNKNOWN;
+        EUsage Usage		= USAGE_UNKNOWN;
+        EFormat Format      = FORMAT_UNKNOWN;
         uint32 Flags        = TEXTURE_FLAGS_NONE;
 		uint32 SampleCount  = 1;
 		uint32 MipLevels    = 0;
@@ -52,8 +52,8 @@ namespace Lambda
 		LAMBDA_IOBJECT_INTERFACE(ITexture);
 
         virtual void* GetNativeHandle() const = 0;
-		virtual const TextureDesc& GetDesc() const = 0;
+		virtual const STextureDesc& GetDesc() const = 0;
 	public:
-		static ITexture* CreateTextureFromFile(IDevice* pDevice, const char* pFileName, uint32 flags, Usage Usage, Format Format);
+		static ITexture* CreateTextureFromFile(IDevice* pDevice, const char* pFileName, uint32 flags, EUsage Usage, EFormat Format);
 	};
 }

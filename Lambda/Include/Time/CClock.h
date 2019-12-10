@@ -1,5 +1,5 @@
 #pragma once
-#include "Timestep.h"
+#include "CTime.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#if !defined(WIN32_LEAN_AND_MEAN)    
 		#define WIN32_LEAN_AND_MEAN 1
@@ -11,14 +11,14 @@
 
 namespace Lambda
 {
-    //-----
-    //Clock
-    //-----
+    //------
+    //CClock
+    //------
     
-	class Clock
+	class CClock
 	{
 	public:
-		_forceinline Clock()
+		_forceinline CClock()
 			: m_Frequency(0),
 			m_LastTime(0),
 			m_TotalTime(0),
@@ -36,7 +36,7 @@ namespace Lambda
 		}
 
 
-		_forceinline Clock(Clock&& other)
+		_forceinline CClock(CClock&& other)
 			: m_Frequency(other.m_Frequency),
 			m_LastTime(other.m_LastTime),
 			m_TotalTime(other.m_TotalTime),
@@ -45,14 +45,14 @@ namespace Lambda
 		}
 
 
-		_forceinline Clock(const Clock& other)
+		_forceinline CClock(const CClock& other)
 			: m_Frequency(other.m_Frequency),
 			m_LastTime(other.m_LastTime),
 			m_TotalTime(other.m_TotalTime),
 			m_DeltaTime(other.m_DeltaTime)
 		{
 		}
-		~Clock() = default;
+		~CClock() = default;
 
 
 		_forceinline void Tick()
@@ -72,39 +72,39 @@ namespace Lambda
 			auto now = std::chrono::high_resolution_clock::now();
 			auto duration = now.time_since_epoch();
 			auto nanos = std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
-			Timestep currentTime = Timestep::NanoSeconds(nanos);
+			CTime currentTime = CTime::NanoSeconds(nanos);
 
 			//Update delta- and totaltime
 			m_DeltaTime = currentTime - m_LastTime;
 			m_LastTime = currentTime;
 			m_TotalTime += m_DeltaTime;
 #else
-#error Clock::Tick not defined
+    #error Clock::Tick not defined
 #endif
 		}
 
 
 		_forceinline void Reset()
 		{
-			m_DeltaTime = Timestep(0);
-			m_TotalTime = Timestep(0);
+			m_DeltaTime = CTime(0);
+			m_TotalTime = CTime(0);
 		}
 
 
-		_forceinline Timestep GetDeltaTime() const
+		_forceinline CTime GetDeltaTime() const
 		{
 			return m_DeltaTime;
 		}
 
 
-		_forceinline Timestep GetTotalTime() const
+		_forceinline CTime GetTotalTime() const
 		{
 			return m_TotalTime;
 		}
 	private:
 		uint64 m_Frequency;
-		Timestep m_LastTime;
-		Timestep m_TotalTime;
-		Timestep m_DeltaTime;
+		CTime m_LastTime;
+		CTime m_TotalTime;
+		CTime m_DeltaTime;
 	};
 }

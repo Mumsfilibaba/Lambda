@@ -1,5 +1,5 @@
 #pragma once
-#include "Graphics/Core/SamplerStateBase.h"
+#include "Graphics/Core/CSamplerStateBase.h"
 #include "Vulkan.h"
 
 namespace Lambda
@@ -10,15 +10,14 @@ namespace Lambda
 	//VKNSamplerState
 	//---------------
 
-    class VKNSamplerState : public SamplerStateBase<VKNDevice>
+    class VKNSamplerState : public CSamplerStateBase<VKNDevice>
     {
-		using TSamplerState = SamplerStateBase<VKNDevice>;
-
-    public:
-        LAMBDA_NO_COPY(VKNSamplerState);
-        
-        VKNSamplerState(VKNDevice* pVkDevice, const SamplerStateDesc& desc);
+		using TSamplerState = CSamplerStateBase<VKNDevice>;
+    public:        
+        VKNSamplerState(VKNDevice* pVkDevice, const SSamplerStateDesc& desc);
         ~VKNSamplerState();
+
+        LAMBDA_NO_COPY(VKNSamplerState);
         
         virtual void* GetNativeHandle() const override final;
 		virtual void SetName(const char* pName) override final;
@@ -28,7 +27,7 @@ namespace Lambda
 			return m_VkSampler; 
 		}
     private:
-        void Init(const SamplerStateDesc& desc);     
+        void Init(const SSamplerStateDesc& desc);
     private:
         VkSampler m_VkSampler;
     };

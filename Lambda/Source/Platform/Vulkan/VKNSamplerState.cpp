@@ -9,7 +9,7 @@ namespace Lambda
 	//VKNSamplerState
 	//---------------
 
-	VKNSamplerState::VKNSamplerState(VKNDevice* pVkDevice, const SamplerStateDesc& desc)
+	VKNSamplerState::VKNSamplerState(VKNDevice* pVkDevice, const SSamplerStateDesc& desc)
 		: TSamplerState(pVkDevice, desc),
 		m_VkSampler(VK_NULL_HANDLE)
 	{
@@ -28,7 +28,7 @@ namespace Lambda
 	}
 
 
-	void VKNSamplerState::Init(const SamplerStateDesc& desc)
+	void VKNSamplerState::Init(const SSamplerStateDesc& desc)
 	{
 		//Get adress mode
 		VkSamplerAddressMode adressMode = ConvertSamplerAdressMode(desc.AdressMode);
