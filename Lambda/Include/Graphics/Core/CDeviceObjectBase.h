@@ -5,25 +5,24 @@
 
 namespace Lambda
 {
-	//----------------
-	//DeviceObjectBase
-	//----------------
+	//-----------------
+	//CDeviceObjectBase
+	//-----------------
 
 	template<typename TDeviceImpl, typename BaseInterface>
-	class DeviceObjectBase : public RefCountedObject<BaseInterface>
+	class CDeviceObjectBase : public RefCountedObject<BaseInterface>
 	{
 	public:
-		LAMBDA_NO_COPY(DeviceObjectBase);
+        CDeviceObjectBase(TDeviceImpl* pDevice)
+            : RefCountedObject<BaseInterface>(),
+            m_pDevice(pDevice),
+            m_Name("")
+        {
+            LAMBDA_ASSERT(pDevice != nullptr);
+        }
+        ~CDeviceObjectBase() = default;
 
-		DeviceObjectBase(TDeviceImpl* pDevice) 
-			: RefCountedObject<BaseInterface>(), 
-			m_pDevice(pDevice), 
-			m_Name("")
-		{ 
-			LAMBDA_ASSERT(pDevice != nullptr); 
-		}
-		~DeviceObjectBase() = default;
-
+        LAMBDA_NO_COPY(CDeviceObjectBase);
 
 		virtual IDevice* GetDevice() const override
 		{

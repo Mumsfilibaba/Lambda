@@ -10,18 +10,18 @@ namespace Lambda
 	class ISamplerState;
 	class IPipelineState;
 
-	struct QueryDesc;
-	struct BufferDesc;
-	struct ShaderDesc;
-	struct TextureDesc;
-	struct SamplerStateDesc;
-	struct PipelineStateDesc;
+	struct SQueryDesc;
+	struct SBufferDesc;
+	struct SShaderDesc;
+	struct STextureDesc;
+	struct SSamplerStateDesc;
+	struct SPipelineStateDesc;
 
-	//--------
-	//VendorID
-	//--------
+	//---------
+	//EVendorID
+	//---------
 
-	enum VendorID : uint32
+	enum EVendorID : uint32
 	{
 		VENDOR_ID_UNKNOWN	= 0,
 		VENDOR_ID_NVIDIA	= 0x10DE,
@@ -32,31 +32,31 @@ namespace Lambda
 		VENDOR_ID_IMGTEC	= 0x1010,
 	};
 
-    //----------
-    //DeviceDesc
-    //----------
+    //-----------
+    //SDeviceDesc
+    //-----------
     
-    struct DeviceDesc
+    struct SDeviceDesc
     {
         uint32 Flags = DEVICE_FLAG_NONE;
     };
 
-	//----------------
-	//DeviceProperties
-	//----------------
+	//-----------------
+	//SDeviceProperties
+	//-----------------
 
-	struct DeviceProperties
+	struct SDeviceProperties
 	{
-        GraphicsAPI Api         = GRAPHICS_API_UNKNOWN;
+        EGraphicsAPI Api        = GRAPHICS_API_UNKNOWN;
 		char VendorString[256]	= { 0 };
 		char AdapterString[256]	= { 0 };
 	};
 
-	//------------------
-	//DeviceCapabilities
-	//------------------
+	//---------------
+	//SDeviceFeatures
+	//---------------
 
-	struct DeviceFeatures
+	struct SDeviceFeatures
 	{
 		bool MeshShaders				= false;
 		bool HardwareRayTracing			= false;
@@ -74,18 +74,18 @@ namespace Lambda
 		LAMBDA_IOBJECT_INTERFACE(IDevice);
 
 		virtual void CreateDefferedContext(IDeviceContext** ppList) = 0;
-		virtual void CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) = 0;
-		virtual void CreateTexture(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc) = 0;
-		virtual void CreateShader(IShader** ppShader, const ShaderDesc& desc) = 0;
-		virtual void CreateSamplerState(ISamplerState** ppSamplerState, const SamplerStateDesc& desc) = 0;
-		virtual void CreatePipelineState(IPipelineState** ppPipelineState, const PipelineStateDesc& desc) = 0;
-        virtual void CreateQuery(IQuery** ppQuery, const QueryDesc& desc) = 0;
+		virtual void CreateBuffer(IBuffer** ppBuffer, const SResourceData* pInitalData, const SBufferDesc& desc) = 0;
+		virtual void CreateTexture(ITexture** ppTexture, const SResourceData* pInitalData, const STextureDesc& desc) = 0;
+		virtual void CreateShader(IShader** ppShader, const SShaderDesc& desc) = 0;
+		virtual void CreateSamplerState(ISamplerState** ppSamplerState, const SSamplerStateDesc& desc) = 0;
+		virtual void CreatePipelineState(IPipelineState** ppPipelineState, const SPipelineStateDesc& desc) = 0;
+        virtual void CreateQuery(IQuery** ppQuery, const SQueryDesc& desc) = 0;
         
         virtual IDeviceContext* GetImmediateContext() const = 0;
         
-        virtual const DeviceDesc& GetDesc() const = 0;
-		virtual const DeviceFeatures& GetFeatures() const = 0;
-        virtual const DeviceProperties& GetProperties() const = 0;
+        virtual const SDeviceDesc& GetDesc() const = 0;
+		virtual const SDeviceFeatures& GetFeatures() const = 0;
+        virtual const SDeviceProperties& GetProperties() const = 0;
         virtual void* GetNativeHandle() const = 0;
 	};
 }

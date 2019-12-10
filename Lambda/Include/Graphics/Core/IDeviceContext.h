@@ -25,8 +25,8 @@ namespace Lambda
         virtual void ClearDepthStencil(ITexture* pDepthStencil, float depth, uint8 stencil) = 0;
         
         virtual void SetRendertargets(ITexture* const* ppRenderTargets, uint32 numRenderTargets, ITexture* pDepthStencil) = 0;
-        virtual void SetViewports(const Viewport* pViewports, uint32 numViewports) = 0;
-        virtual void SetScissorRects(const Rectangle* pScissorRects, uint32 numScissorRects) = 0;
+        virtual void SetViewports(const SViewport* pViewports, uint32 numViewports) = 0;
+        virtual void SetScissorRects(const SRectangle* pScissorRects, uint32 numScissorRects) = 0;
         virtual void SetVertexBuffers(IBuffer* const * pBuffers, uint32 numBuffers, uint32 startSlot) = 0;
         virtual void SetIndexBuffer(IBuffer* pBuffer, Format format) = 0;
         virtual void SetShaderVariableTable(IShaderVariableTable* pVariableTable) = 0;

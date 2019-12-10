@@ -1,18 +1,18 @@
 #pragma once
-#include "Defines.h"
+#include "LambdaCore.h"
 #include <glm/glm.hpp>
 
 namespace Lambda
 {
-    //------
-    //Camera
-    //------
+    //-------
+    //CCamera
+    //-------
     
-    class LAMBDA_API Camera
+    class LAMBDA_API CCamera
     {
     public:
-        Camera();
-        ~Camera() = default;
+        CCamera();
+        ~CCamera() = default;
         
         void CreateView();
         void CreateProjection();

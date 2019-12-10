@@ -3,11 +3,11 @@
 
 namespace Lambda
 {
-    //----------
-    //BufferDesc
-    //----------
+    //-----------
+    //SBufferDesc
+    //-----------
     
-	struct BufferDesc
+	struct SBufferDesc
 	{
         const char* pName      = nullptr;
 		Usage Usage			   = USAGE_UNKNOWN;
@@ -26,6 +26,6 @@ namespace Lambda
 		LAMBDA_IOBJECT_INTERFACE(IBuffer);
 
         virtual void* GetNativeHandle() const = 0;
-        virtual const BufferDesc& GetDesc() const = 0;
+        virtual const SBufferDesc& GetDesc() const = 0;
 	};
 }

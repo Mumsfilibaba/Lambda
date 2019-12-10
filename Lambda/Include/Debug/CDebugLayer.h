@@ -4,7 +4,7 @@
 #include "Graphics/Core/ISamplerState.h"
 #include "Graphics/Core/IPipelineState.h"
 #include "Graphics/Core/IBuffer.h"
-#include "Core/Layer.h"
+#include "Core/CLayer.h"
 #include "Time/Timestep.h"
 #include <imgui.h>
 
@@ -18,17 +18,17 @@ namespace Lambda
 	class IDeviceContext;
 	class IPipelineState;
 
-	//-------
-	//DebugLayer
-	//-------
+	//-----------
+	//CDebugLayer
+	//-----------
 
-	class LAMBDA_API DebugLayer : public Layer
+	class LAMBDA_API CDebugLayer : public CLayer
 	{
 	public:
-		LAMBDA_NO_COPY(DebugLayer);
+        CDebugLayer();
+        ~CDebugLayer() = default;
 
-		DebugLayer();
-		~DebugLayer() = default;
+        LAMBDA_NO_COPY(CDebugLayer);
 
         void Begin(Timestep time);
         void End();

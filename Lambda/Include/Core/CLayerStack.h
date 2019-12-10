@@ -1,23 +1,22 @@
 #pragma once
 #include "LambdaCore.h"
-#include "Utilities/Singleton.h"
 #include <vector>
 
 namespace Lambda
 {
-    class Layer;
+    class CLayer;
 
-    //----------
-    //LayerStack
-    //----------
+    //-----------
+    //CLayerStack
+    //-----------
 
-    class LAMBDA_API LayerStack
+    class LAMBDA_API CLayerStack
     {
     public:
-        LAMBDA_NO_COPY(LayerStack);
-        
-        LayerStack() = default;
-        ~LayerStack() = default;
+        CLayerStack() = default;
+        ~CLayerStack() = default;
+
+        LAMBDA_NO_COPY(CLayerStack);
         
         void ReleaseLayers();
         void PushLayer(Layer* pLayer);

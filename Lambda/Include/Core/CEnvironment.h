@@ -48,7 +48,7 @@ namespace Lambda
 	protected:
         virtual void OnEvent(const CEvent& event);
 	protected:
-		std::vector<IEventListener*> m_pEventListeners;
+		std::vector<IEventListener*> m_EventListeners;
         IKeyboardController* m_pKeyboardController;
         IMouseController* m_pMouseController;
         IGamepadController* m_pGamepadController;

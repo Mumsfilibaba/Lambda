@@ -3,21 +3,20 @@
 
 namespace Lambda
 {
-    class Event;
 	class Renderer3D;
 	class IDeviceContext;
     
-    //-----
-    //Layer
-    //-----
+    //------
+    //CLayer
+    //------
 
-    class LAMBDA_API Layer
+    class LAMBDA_API CLayer
     {
     public:
-        LAMBDA_NO_COPY(Layer);
+        CLayer(const char* pName);
+        virtual ~CLayer() = default;
 
-        Layer(const char* pName);
-        virtual ~Layer() = default;
+        LAMBDA_NO_COPY(CLayer);
 
         virtual void OnLoad();
         virtual void OnUpdate(Timestep dt);

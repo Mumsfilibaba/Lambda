@@ -96,7 +96,7 @@ namespace Lambda
 
 
     //Format
-	enum Format : uint32
+	enum EFormat : uint32
 	{
 		FORMAT_UNKNOWN                  = 0,
 		FORMAT_R32G32B32A32_FLOAT       = 1,
@@ -200,7 +200,7 @@ namespace Lambda
     
     
     //Graphics-APIs defines
-    enum GraphicsAPI : uint32
+    enum EGraphicsAPI : uint32
     {
         GRAPHICS_API_UNKNOWN    = 0,
         GRAPHICS_API_D3D12      = 1,
@@ -244,7 +244,7 @@ namespace Lambda
     
 
     //Struct for updating data in a buffer or texture
-	struct ResourceData
+	struct SResourceData
 	{
 		const void* pData = nullptr;
 		uint64 SizeInBytes = 0;

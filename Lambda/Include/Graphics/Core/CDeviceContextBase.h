@@ -1,29 +1,29 @@
 #pragma once
-#include "DeviceObjectBase.h"
+#include "CDeviceObjectBase.h"
 #include "IDeviceContext.h"
 #include "ITexture.h"
 #include <algorithm>
 
 namespace Lambda
 {
-	//-----------------
-	//DeviceContextBase
-	//-----------------
+	//------------------
+	//CDeviceContextBase
+	//------------------
 
 	template <typename TDeviceImpl, typename TTextureImpl, typename TBufferImpl, typename TPipelineStateImpl, typename TShaderVariableTableImpl>
-	class DeviceContextBase : public DeviceObjectBase<TDeviceImpl, IDeviceContext>
+	class CDeviceContextBase : public CDeviceObjectBase<TDeviceImpl, IDeviceContext>
 	{
 	public:
-		LAMBDA_NO_COPY(DeviceContextBase);
+        CDeviceContextBase.h(TDeviceImpl* pDevice, DeviceContextType type)
+            : CDeviceObjectBase<TDeviceImpl, IDeviceContext>(pDevice),
+            m_Type(type)
+        {
+        }
+        ~CDeviceContextBase.h() = default;
 
-		DeviceContextBase(TDeviceImpl* pDevice, DeviceContextType type)
-			: DeviceObjectBase<TDeviceImpl, IDeviceContext>(pDevice),
-			m_Type(type)
-		{
-		}
-		~DeviceContextBase() = default;
+        LAMBDA_NO_COPY(CDeviceContextBase.h);
 
-		virtual void ClearRenderTarget(ITexture* pRenderTarget, float color[4]) override = 0;
+        virtual void ClearRenderTarget(ITexture* pRenderTarget, float color[4]) override = 0;
 		virtual void ClearDepthStencil(ITexture* pDepthStencil, float depth, uint8 stencil) override = 0;
 
 		virtual void SetConstantBlocks(ShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData) override = 0;

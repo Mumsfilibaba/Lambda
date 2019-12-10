@@ -3,23 +3,23 @@
 
 namespace Lambda
 {
-	//----------
-	//DeviceBase
-	//----------
+	//-----------
+	//CDeviceBase
+	//-----------
 
-	class DeviceBase : public RefCountedObject<IDevice>
+	class CDeviceBase : public RefCountedObject<IDevice>
 	{
 	public:
-		LAMBDA_NO_COPY(DeviceBase);
+        CDeviceBase(const DeviceDesc& desc)
+            : RefCountedObject<IDevice>(),
+            m_Desc(desc),
+            m_Features(),
+            m_Properties()
+        {
+        }
+        ~CDeviceBase() = default;
 
-		DeviceBase(const DeviceDesc& desc)
-			: RefCountedObject<IDevice>(),
-			m_Desc(desc),
-			m_Features(),
-			m_Properties()
-		{
-		}
-		~DeviceBase() = default;
+        LAMBDA_NO_COPY(CDeviceBase);
 
 		virtual void CreateDefferedContext(IDeviceContext** ppList) override = 0;
 		virtual void CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) override = 0;
