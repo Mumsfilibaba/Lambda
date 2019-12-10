@@ -22,10 +22,7 @@ namespace Lambda
             if (event.GetType() == T::GetStaticType())
             {
                 if ((pObjectRef->*objectCallbackFunc)(static_cast<const T&>(event)))
-                {
-                    event.SetIsHandled(true);
                     return true;
-                }
             }
 
             return false;
