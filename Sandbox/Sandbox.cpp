@@ -1,7 +1,7 @@
 #include "SandBox.h"
-#include <LambdaEntryPoint.h>
-#include "Core/LogManager.h"
-#include "Graphics/MeshFactory.h"
+#include "LambdaEntryPoint.h"
+#include "Core/CLogManager.h"
+#include "Graphics/CMeshFactory.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/euler_angles.hpp>
@@ -14,7 +14,7 @@ namespace Lambda
 	//------------------------
 	//Define CreateGameLayer()
 	//------------------------
-	Layer* CreateGameLayer()
+	CLayer* CreateGameLayer()
 	{
 		return new SandBoxLayer();
 	}
@@ -24,7 +24,7 @@ namespace Lambda
 	//------------
 
 	SandBoxLayer::SandBoxLayer()
-         : Layer("SandBoxLayer")
+         : CLayer("SandBoxLayer")
 	{
 	}
 
@@ -34,12 +34,12 @@ namespace Lambda
 	}
 
 
-	void SandBoxLayer::OnUpdate(Timestep dt)
+	void SandBoxLayer::OnUpdate(const CTime& dt)
 	{
 	}
 
 
-	void SandBoxLayer::OnRender(Renderer3D& renderer, Timestep dt)
+	void SandBoxLayer::OnRender(Renderer3D& renderer, const CTime& dt)
 	{
 	}
 
@@ -49,7 +49,7 @@ namespace Lambda
 	}
 
 
-    void SandBoxLayer::OnRenderUI(Timestep dt)
+    void SandBoxLayer::OnRenderUI(const CTime& dt)
     {
     }
 }

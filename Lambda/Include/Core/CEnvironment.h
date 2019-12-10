@@ -46,7 +46,7 @@ namespace Lambda
             return m_pGamepadController;
         }
 	protected:
-        virtual void OnEvent(const CEvent& event);
+        virtual bool OnEvent(const CEvent& event);
 	protected:
 		std::vector<IEventListener*> m_EventListeners;
         IKeyboardController* m_pKeyboardController;

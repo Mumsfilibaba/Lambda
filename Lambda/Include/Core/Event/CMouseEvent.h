@@ -22,7 +22,7 @@ namespace Lambda
 		}
 		
 		
-		_forceinline MouseButton GetButton() const                       
+		_forceinline EMouseButton GetButton() const                       
 		{ 
 			return m_Button; 
 		}

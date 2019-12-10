@@ -1,5 +1,5 @@
 #pragma once
-#include "IObject.h"
+#include "Core/IObject.h"
 
 namespace Lambda
 {

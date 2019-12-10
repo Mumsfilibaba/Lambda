@@ -26,7 +26,7 @@ namespace Lambda
 
     void CLayerStack::PopLayer()
     {
-        Layer* pLayer = m_Layers.back();
+        CLayer* pLayer = m_Layers.back();
         m_Layers.pop_back();
         
 		LOG_ENGINE_INFO("Poped Layer '%s'.\n", pLayer->GetName());
@@ -35,7 +35,7 @@ namespace Lambda
     }
 	
 	
-	void CLayerStack::ReleaseLayer(Layer* pLayer)
+	void CLayerStack::ReleaseLayer(CLayer* pLayer)
 	{
 		pLayer->OnRelease();
 	}

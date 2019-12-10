@@ -4,7 +4,7 @@
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include "../Platform/Windows/WindowsEnvironment.h"
 #elif defined(LAMBDA_PLAT_MACOS)
-    #include "../Platform/macOS/macOSEnvironment.h"
+    #include "../Platform/macOS/CmacOSEnvironment.h"
 #endif
 
 namespace Lambda
@@ -20,6 +20,8 @@ namespace Lambda
 	{
 #if defined(LAMBDA_PLAT_WINDOWS)
 		return DBG_NEW WindowsEnvironment();
+#elif defined(LAMBDA_PLAT_MACOS)
+        return DBG_NEW CmacOSEnvironment();
 #endif
 	}
 
@@ -32,10 +34,15 @@ namespace Lambda
     }
 
 
-    void CEnvironment::OnEvent(const CEvent& event)
+    bool CEnvironment::OnEvent(const CEvent& event)
     {
         for (auto pListener : m_EventListeners)
-            pListener->OnEvent(event);
+        {
+            if (pListener->OnEvent(event))
+                return true;
+        }
+        
+        return false;
     }
 
 

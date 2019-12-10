@@ -40,7 +40,7 @@ namespace Lambda
 
 	struct SMeshData
 	{
-		std::vector<Vertex> Vertices;
+		std::vector<SVertex> Vertices;
 		std::vector<uint32> Indices;
 	};
 

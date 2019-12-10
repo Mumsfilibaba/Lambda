@@ -24,8 +24,6 @@ namespace Lambda
         bool GetFullscreen() const;
         void ProcessEvents() const;
     private:
-        void DispatchEvent(const CEvent& event);
-    private:
         GLFWwindow* m_pWindow;
         IEventCallback* m_pCallback;
         uint32 m_Width;

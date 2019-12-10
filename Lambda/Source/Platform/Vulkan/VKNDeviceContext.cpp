@@ -19,7 +19,7 @@ namespace Lambda
 	//VKNDeviceContext
 	//----------------
 
-	VKNDeviceContext::VKNDeviceContext(VKNDevice* pVkDevice, DeviceContextType type)
+    VKNDeviceContext::VKNDeviceContext(VKNDevice* pVkDevice, EDeviceContextType type)
 		: TDeviceContext(pVkDevice, type),
 		m_VkCommandPool(VK_NULL_HANDLE),
 		m_pFrameResources(nullptr),
@@ -77,7 +77,7 @@ namespace Lambda
     }
     
 
-    void VKNDeviceContext::Init(DeviceContextType type)
+    void VKNDeviceContext::Init(EDeviceContextType type)
     {
         //Get queuefamiliy indices
         QueueFamilyIndices familyIndices = m_pDevice->GetQueueFamilyIndices();
@@ -188,7 +188,7 @@ namespace Lambda
 			//Get pipeline
 			m_VkPipeline = m_PipelineState->GetVkPipeline();
 
-			const PipelineStateDesc& desc = m_PipelineState->GetDesc();
+			const SPipelineStateDesc& desc = m_PipelineState->GetDesc();
 			if (desc.Type == PIPELINE_TYPE_GRAPHICS)
 				vkCmdBindPipeline(m_pCurrentFrameResource->CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_VkPipeline);
 			else if (desc.Type == PIPELINE_TYPE_COMPUTE)
@@ -219,7 +219,7 @@ namespace Lambda
 				VkDescriptorSet descriptorSet	= m_ShaderVariableTable->GetVkDescriptorSet();
 				m_VkPipelineLayout = m_PipelineState->GetVkPipelineLayout();
 
-				const PipelineStateDesc& desc = m_PipelineState->GetDesc();
+				const SPipelineStateDesc& desc = m_PipelineState->GetDesc();
 				if (desc.Type == PIPELINE_TYPE_GRAPHICS)
 					vkCmdBindDescriptorSets(m_pCurrentFrameResource->CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_VkPipelineLayout, 0, 1, &descriptorSet, offsetCount, pOffsets);
 				else if (desc.Type == PIPELINE_TYPE_COMPUTE)
@@ -243,7 +243,7 @@ namespace Lambda
 				if (m_VertexBuffers[i])
 				{
 					//Dynamic buffers always needs to be commited since they can change from drawcall to drawcall without need to be rebound
-					const BufferDesc& desc = m_VertexBuffers[i]->GetDesc();
+					const SBufferDesc& desc = m_VertexBuffers[i]->GetDesc();
 					if (desc.Usage == USAGE_DYNAMIC)
 						m_CommitVertexBuffers = true;
 
@@ -273,7 +273,7 @@ namespace Lambda
 			if (m_IndexBuffer)
 			{
 				//Dynamic buffers needs to be commited every drawcall
-				const BufferDesc& desc = m_IndexBuffer->GetDesc();
+				const SBufferDesc& desc = m_IndexBuffer->GetDesc();
 				if (desc.Usage == USAGE_DYNAMIC)
 					m_CommitIndexBuffer = true;
 
@@ -313,7 +313,7 @@ namespace Lambda
 			framebufferKey.AttachmentViews[i] = m_RenderTargets[i]->GetVkImageView();
 
 			//Get format
-			const TextureDesc& desc = m_RenderTargets[i]->GetDesc();
+			const STextureDesc& desc = m_RenderTargets[i]->GetDesc();
 			renderPasskey.RenderTargetFormats[i] = desc.Format;
 		}
 
@@ -324,7 +324,7 @@ namespace Lambda
 			framebufferKey.AttachmentViews[framebufferKey.NumAttachmentViews++] = m_DepthStencil->GetVkImageView();
 
 			//Get format
-			const TextureDesc& desc = m_DepthStencil->GetDesc();
+			const STextureDesc& desc = m_DepthStencil->GetDesc();
 			renderPasskey.DepthStencilFormat = desc.Format;
 		}
 		else
@@ -656,7 +656,7 @@ namespace Lambda
     }
     
     
-    void VKNDeviceContext::SetIndexBuffer(IBuffer* pBuffer, Format format)
+    void VKNDeviceContext::SetIndexBuffer(IBuffer* pBuffer, EFormat format)
     {
 		//Check if we should flush the context
 		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > m_MaxNumCommands)
@@ -704,7 +704,7 @@ namespace Lambda
     }
     
     
-    void VKNDeviceContext::TransitionBuffer(const IBuffer* pBuffer, ResourceState state)
+    void VKNDeviceContext::TransitionBuffer(const IBuffer* pBuffer, EResourceState state)
     {
 		LAMBDA_ASSERT(pBuffer && state);
     }
@@ -758,14 +758,14 @@ namespace Lambda
 	}
     
     
-    void VKNDeviceContext::UpdateBuffer(IBuffer* pResource, const ResourceData& data)
+    void VKNDeviceContext::UpdateBuffer(IBuffer* pResource, const SResourceData& data)
     {        
         LAMBDA_ASSERT_PRINT(data.pData != nullptr && data.SizeInBytes != 0, "[Vulkan] ResourceData::pData or ResourceData::SizeInBytes cannot be null\n");
 
 		VKNBuffer* pVkBuffer = reinterpret_cast<VKNBuffer*>(pResource);
 		
 		//Update a not dynamic buffer
-		const BufferDesc& bufferDesc = pVkBuffer->GetDesc();
+		const SBufferDesc& bufferDesc = pVkBuffer->GetDesc();
 		if (bufferDesc.Usage == USAGE_DEFAULT)
 		{
             //Allocate memory in the uploadbuffer
@@ -785,7 +785,7 @@ namespace Lambda
     }
     
     
-    void VKNDeviceContext::UpdateTexture(ITexture* pResource, const ResourceData& data, uint32 mipLevel)
+    void VKNDeviceContext::UpdateTexture(ITexture* pResource, const SResourceData& data, uint32 mipLevel)
     {
 		LAMBDA_ASSERT_PRINT(data.pData != nullptr && data.SizeInBytes != 0, "[Vulkan] ResourceData::pData or ResourceData::SizeInBytes cannot be null\n");
 
@@ -801,7 +801,7 @@ namespace Lambda
 
 		//Copy
         VKNTexture* pVkTexture			= reinterpret_cast<VKNTexture*>(pResource);
-		const TextureDesc& textureDesc	= pVkTexture->GetDesc();
+		const STextureDesc& textureDesc	= pVkTexture->GetDesc();
 		CopyBufferToImage(pVkTexture->GetVkImage(), mipLevel, pVkTexture->GetVkAspectFlags(), textureDesc.Width, textureDesc.Height, textureDesc.Depth, mem.pPage->GetVkBuffer(), mem.Offset, data.SizeInBytes);
     }
     
@@ -902,7 +902,7 @@ namespace Lambda
 		LAMBDA_ASSERT(pTexture != nullptr);
 
 		VKNTexture* pVkTexture = reinterpret_cast<VKNTexture*>(pTexture);
-		const TextureDesc& desc = pVkTexture->GetDesc();
+		const STextureDesc& desc = pVkTexture->GetDesc();
 		if (desc.Type == TEXTURE_TYPE_2D)
 		{
 			if (desc.Flags & TEXTURE_FLAGS_GENEATE_MIPS)
@@ -912,7 +912,7 @@ namespace Lambda
 
 				if (formatProperties.linearTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)
 				{
-					const TextureDesc& textureDesc = pVkTexture->GetDesc();
+					const STextureDesc& textureDesc = pVkTexture->GetDesc();
 					int32 mipWidth	 = textureDesc.Width;
 					int32 mipHeight	 = textureDesc.Height;
 					uint32 mipLevels = textureDesc.MipLevels;
@@ -1039,7 +1039,7 @@ namespace Lambda
     
     void VKNDeviceContext::SetName(const char* pName)
     {
-		DeviceObjectBase::SetName(pName);
+		CDeviceObjectBase::SetName(pName);
 		if (pName)
 		{
             for (uint32 i = 0; i < m_NumFrameResources; i++)
@@ -1219,7 +1219,7 @@ namespace Lambda
 
 		//Reset the query
         VKNQuery* pVkQuery = reinterpret_cast<VKNQuery*>(pQuery);
-        const QueryDesc& desc   = pVkQuery->GetDesc();
+        const SQueryDesc& desc   = pVkQuery->GetDesc();
         
         VkQueryPool queryPool   = reinterpret_cast<VkQueryPool>(pVkQuery->GetNativeHandle());
         vkCmdResetQueryPool(m_pCurrentFrameResource->CommandBuffer, queryPool, 0, desc.QueryCount);

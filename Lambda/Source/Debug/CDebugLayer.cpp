@@ -357,7 +357,7 @@ namespace Lambda
 	}
 
 	
-	void CDebugLayer::OnRenderUI(const CTime& time)
+	void CDebugLayer::OnRenderUI(const CTime& dt)
 	{
         //Application& app = Application::Get();
         
@@ -385,7 +385,7 @@ namespace Lambda
 			ImGui::Separator();
 
 			ISwapChain* pSwapChain = nullptr;// app.GetSwapChain();
-			const SwapChainDesc& swapChainDesc = pSwapChain->GetDesc();
+			const SSwapChainDesc& swapChainDesc = pSwapChain->GetDesc();
 			ImGui::Text("Vendor: %s", props.VendorString);
 			ImGui::Text("Adapter: %s", props.AdapterString);
 			ImGui::Text("Resolution: %u x %u", swapChainDesc.BufferWidth, swapChainDesc.BufferHeight);

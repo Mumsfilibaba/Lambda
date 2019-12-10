@@ -1,8 +1,8 @@
 #pragma once
 #if defined(LAMBDA_PLAT_MACOS)
-    #include "Core/LEngine.h"
+    #include "Core/CEngine.h"
 
-extern LAMBDA_API Lambda::Layer* (*_CreateGameLayer)(void);
+extern LAMBDA_API Lambda::CLayer* (*_CreateGameLayer)(void);
 
 int main(int argc, const char* argv[])
 {
@@ -12,7 +12,7 @@ int main(int argc, const char* argv[])
     _CreateGameLayer = Lambda::CreateGameLayer;
     
     //Start and initialize engine
-	Lambda::LEngineParams params = {};
+	Lambda::SEngineParams params = {};
 	params.ppCmdArgs		= nullptr;
 	params.CmdArgsCount		= 0;
 	return Lambda::LambdaMain(params);

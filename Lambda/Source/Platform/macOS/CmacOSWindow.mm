@@ -103,7 +103,7 @@ namespace Lambda
     }
     
     
-    void CmacOSWindow::OnUpdate() const
+    void CmacOSWindow::ProcessEvents() const
     {
         glfwPollEvents();
     }
@@ -127,35 +127,29 @@ namespace Lambda
     }
     
     
-    void* CmacOSWindow::GetNativeHandle() const
-    {
-        return m_pWindow;
-    }
-    
-    
     void CmacOSWindow::WindowClosedCallback(GLFWwindow* pWindow)
     {
-        macOSWindow* pUserWindow = reinterpret_cast<macOSWindow*>(glfwGetWindowUserPointer(pWindow));
+        CmacOSWindow* pUserWindow = reinterpret_cast<CmacOSWindow*>(glfwGetWindowUserPointer(pWindow));
         
-        WindowClosedEvent event = WindowClosedEvent();
+        CWindowClosedEvent event = CWindowClosedEvent();
         pUserWindow->DispatchEvent(event);
     }
     
     
     void CmacOSWindow::WindowResizeCallback(GLFWwindow* pWindow, int32 width, int32 height)
     {
-        macOSWindow* pUserWindow = reinterpret_cast<macOSWindow*>(glfwGetWindowUserPointer(pWindow));
+        CmacOSWindow* pUserWindow = reinterpret_cast<CmacOSWindow*>(glfwGetWindowUserPointer(pWindow));
         
-        WindowResizeEvent event = WindowResizeEvent(uint32(width), uint32(height));
+        CWindowResizeEvent event = CWindowResizeEvent(uint32(width), uint32(height));
         pUserWindow->DispatchEvent(event);
     }
     
     
     void CmacOSWindow::WindowMoveCallback(GLFWwindow* pWindow, int32 x, int32 y)
     {
-        macOSWindow* pUserWindow = reinterpret_cast<macOSWindow*>(glfwGetWindowUserPointer(pWindow));
+        CmacOSWindow* pUserWindow = reinterpret_cast<CmacOSWindow*>(glfwGetWindowUserPointer(pWindow));
         
-        WindowMoveEvent event = WindowMoveEvent(x, y);
+        CWindowMoveEvent event = CWindowMoveEvent(x, y);
         pUserWindow->DispatchEvent(event);
     }
     
@@ -178,20 +172,20 @@ namespace Lambda
             modifiers |= KEY_MODIFIER_NUM_LOCK;
         
         //Dispatch events
-        macOSWindow* pUserWindow = reinterpret_cast<macOSWindow*>(glfwGetWindowUserPointer(pWindow));
+        CmacOSWindow* pUserWindow = reinterpret_cast<CmacOSWindow*>(glfwGetWindowUserPointer(pWindow));
         if (action == GLFW_PRESS)
         {
-            KeyPressedEvent event = KeyPressedEvent(macOSInput::ConvertGLFWKey(key), 0, modifiers);
+            CKeyPressedEvent event = CKeyPressedEvent(KEY_UNKNOWN, 0, modifiers);
             pUserWindow->DispatchEvent(event);
         }
         else if (action == GLFW_REPEAT)
         {
-            KeyPressedEvent event = KeyPressedEvent(macOSInput::ConvertGLFWKey(key), 1, modifiers);
+            CKeyPressedEvent event = CKeyPressedEvent(KEY_UNKNOWN, 1, modifiers);
             pUserWindow->DispatchEvent(event);
         }
         else if (action == GLFW_RELEASE)
         {
-            KeyReleasedEvent event = KeyReleasedEvent(macOSInput::ConvertGLFWKey(key), modifiers);
+            CKeyReleasedEvent event = CKeyReleasedEvent(KEY_UNKNOWN, modifiers);
             pUserWindow->DispatchEvent(event);
         }
     }
@@ -199,18 +193,18 @@ namespace Lambda
     
     void CmacOSWindow::TextCallback(GLFWwindow* pWindow, uint32 codepoint)
     {
-        macOSWindow* pUserWindow = reinterpret_cast<macOSWindow*>(glfwGetWindowUserPointer(pWindow));
+        CmacOSWindow* pUserWindow = reinterpret_cast<CmacOSWindow*>(glfwGetWindowUserPointer(pWindow));
         
-        KeyTypedEvent event = KeyTypedEvent(codepoint);
+        CKeyTypedEvent event = CKeyTypedEvent(codepoint);
         pUserWindow->DispatchEvent(event);
     }
     
     
     void CmacOSWindow::MouseMoveCallback(GLFWwindow* pWindow, double x, double y)
     {
-        macOSWindow* pUserWindow = reinterpret_cast<macOSWindow*>(glfwGetWindowUserPointer(pWindow));
+        CmacOSWindow* pUserWindow = reinterpret_cast<CmacOSWindow*>(glfwGetWindowUserPointer(pWindow));
         
-        MouseMovedEvent event = MouseMovedEvent(int32(x), int32(y));
+        CMouseMovedEvent event = CMouseMovedEvent(int32(x), int32(y));
         pUserWindow->DispatchEvent(event);
     }
     
@@ -218,7 +212,7 @@ namespace Lambda
     void CmacOSWindow::MouseButtonCallback(GLFWwindow* pWindow, int32 button, int32 action, int32 mods)
     {
         //Convert button
-        MouseButton mouseButton = MOUSEBUTTON_UNKNOWN;
+        EMouseButton mouseButton = MOUSEBUTTON_UNKNOWN;
         if (button == GLFW_MOUSE_BUTTON_RIGHT)
             mouseButton = MOUSEBUTTON_RIGHT;
         else if (button == GLFW_MOUSE_BUTTON_MIDDLE)
@@ -246,15 +240,15 @@ namespace Lambda
             modifiers |= KEY_MODIFIER_NUM_LOCK;
     
         //Dispatch event
-        macOSWindow* pUserWindow = reinterpret_cast<macOSWindow*>(glfwGetWindowUserPointer(pWindow));
+        CmacOSWindow* pUserWindow = reinterpret_cast<CmacOSWindow*>(glfwGetWindowUserPointer(pWindow));
         if (action == GLFW_PRESS)
         {
-            MouseButtonPressedEvent event = MouseButtonPressedEvent(mouseButton, modifiers);
+            CMouseButtonPressedEvent event = CMouseButtonPressedEvent(mouseButton, modifiers);
             pUserWindow->DispatchEvent(event);
         }
         else if (action == GLFW_RELEASE)
         {
-            MouseButtonReleasedEvent event = MouseButtonReleasedEvent(mouseButton, modifiers);
+            CMouseButtonReleasedEvent event = CMouseButtonReleasedEvent(mouseButton, modifiers);
             pUserWindow->DispatchEvent(event);
         }
     }
@@ -262,22 +256,22 @@ namespace Lambda
     
     void CmacOSWindow::MouseScollCallback(GLFWwindow* pWindow, double xoffset, double yoffset)
     {
-        macOSWindow* pUserWindow = reinterpret_cast<macOSWindow*>(glfwGetWindowUserPointer(pWindow));
+        CmacOSWindow* pUserWindow = reinterpret_cast<CmacOSWindow*>(glfwGetWindowUserPointer(pWindow));
         
-        MouseScrolledEvent event = MouseScrolledEvent(float(xoffset), float(yoffset));
+        CMouseScrolledEvent event = CMouseScrolledEvent(float(xoffset), float(yoffset));
         pUserWindow->DispatchEvent(event);
     }
     
     
     void CmacOSWindow::WindowFocusCallback(GLFWwindow* pWindow, int32 focused)
     {
-        macOSWindow* pUserWindow = reinterpret_cast<macOSWindow*>(glfwGetWindowUserPointer(pWindow));
+        CmacOSWindow* pUserWindow = reinterpret_cast<CmacOSWindow*>(glfwGetWindowUserPointer(pWindow));
         
         //Set that we have focus
         pUserWindow->m_HasFocus = (focused != 0);
         
         //Tell rest of the system that the focus changed
-        WindowFocusChangedEvent event = WindowFocusChangedEvent(pUserWindow->m_HasFocus);
+        CWindowFocusChangedEvent event = CWindowFocusChangedEvent(pUserWindow->m_HasFocus);
         pUserWindow->DispatchEvent(event);
     }
     
@@ -312,29 +306,6 @@ namespace Lambda
     bool CmacOSWindow::GetFullscreen() const
     {
         return m_Fullscreen;
-    }
-    
-    
-    void CmacOSWindow::DispatchEvent(const Event &event)
-    {
-        if (m_pCallback)
-        {
-            //When a eventhandler is registered, then we handled all the backloged items
-            /*if (m_EventBackLog.size() > 0)
-            {
-                for (auto& e : m_EventBackLog)
-                    m_EventCallback(e);
-                
-                m_EventBackLog.clear();
-            }*/
-            
-            m_pCallback->Callback(event);
-        }
-        else
-        {
-            //If a eventcallback is not registered then we put the event in the backlog
-            //m_EventBackLog.push_back(event);
-        }
     }
 }
 #endif

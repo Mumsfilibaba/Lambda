@@ -26,8 +26,8 @@ namespace Lambda
 	PFN_vkCreateDebugUtilsMessengerEXT	VKNDevice::vkCreateDebugUtilsMessengerEXT	= nullptr;
 	PFN_vkDestroyDebugUtilsMessengerEXT	VKNDevice::vkDestroyDebugUtilsMessengerEXT	= nullptr;
 
-    VKNDevice::VKNDevice(const DeviceDesc& desc)
-        : DeviceBase(desc),
+    VKNDevice::VKNDevice(const SDeviceDesc& desc)
+        : CDeviceBase(desc),
 		m_GraphicsVkQueue(VK_NULL_HANDLE),
         m_PresentationVkQueue(VK_NULL_HANDLE),
 		m_pVkDeviceAllocator(nullptr),
@@ -95,7 +95,7 @@ namespace Lambda
     }
     
     
-    void VKNDevice::Init(const DeviceDesc& desc)
+    void VKNDevice::Init(const SDeviceDesc& desc)
     {
 		VkApplicationInfo applicationInfo = {};
 		applicationInfo.sType               = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -480,7 +480,7 @@ namespace Lambda
 
 		//Create default resources
 		{
-			BufferDesc vertexBufferDesc = {};
+			SBufferDesc vertexBufferDesc = {};
 			vertexBufferDesc.pName			= "Default VertexBuffer";
 			vertexBufferDesc.Flags			= BUFFER_FLAGS_VERTEX_BUFFER;
 			vertexBufferDesc.Usage			= USAGE_DEFAULT;
@@ -494,7 +494,7 @@ namespace Lambda
 				-0.5f, -0.5f, 0.0f,
 			};
 
-			ResourceData vertexData = {};
+			SResourceData vertexData = {};
 			vertexData.pData		= vertices;
 			vertexData.SizeInBytes	= sizeof(vertices);
 			m_pDefaultVertexBuffer = DBG_NEW VKNBuffer(this, &vertexData, vertexBufferDesc);
@@ -502,7 +502,7 @@ namespace Lambda
 
 
 		{
-			BufferDesc indexBufferDesc = {};
+			SBufferDesc indexBufferDesc = {};
 			indexBufferDesc.pName			= "Default IndexBuffer";
 			indexBufferDesc.Flags			= BUFFER_FLAGS_INDEX_BUFFER;
 			indexBufferDesc.Usage			= USAGE_DEFAULT;
@@ -514,7 +514,7 @@ namespace Lambda
 				0, 1, 2,
 			};
 
-			ResourceData indexData = {};
+			SResourceData indexData = {};
 			indexData.pData			= indices;
 			indexData.SizeInBytes	= sizeof(indices);
 			m_pDefaultIndexBuffer = DBG_NEW VKNBuffer(this, &indexData, indexBufferDesc);
@@ -522,7 +522,7 @@ namespace Lambda
 
 
 		{
-			BufferDesc constantBufferDesc = {};
+			SBufferDesc constantBufferDesc = {};
 			constantBufferDesc.pName			= "Default ConstantBuffer";
 			constantBufferDesc.Flags			= BUFFER_FLAGS_CONSTANT_BUFFER;
 			constantBufferDesc.Usage			= USAGE_DEFAULT;
@@ -534,7 +534,7 @@ namespace Lambda
 				1.0f, 1.0f, 1.0f, 1.0f
 			};
 
-			ResourceData constantData = {};
+			SResourceData constantData = {};
 			constantData.pData			= data;
 			constantData.SizeInBytes	= sizeof(data);
 			m_pDefaultConstantBuffer = DBG_NEW VKNBuffer(this, &constantData, constantBufferDesc);
@@ -542,7 +542,7 @@ namespace Lambda
 
 
 		{
-			SamplerStateDesc samplerStateDesc = {};
+			SSamplerStateDesc samplerStateDesc = {};
 			samplerStateDesc.pName		= "Default SamplerState";
 			samplerStateDesc.AdressMode	= SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 			samplerStateDesc.Anisotropy	= 1.0f;
@@ -554,7 +554,7 @@ namespace Lambda
 
 
 		{
-			TextureDesc textureDesc = {};
+			STextureDesc textureDesc = {};
 			textureDesc.pName		= "Default Texture";
 			textureDesc.Type		= TEXTURE_TYPE_2D;
 			textureDesc.Flags		= TEXTURE_FLAGS_SHADER_RESOURCE;
@@ -570,7 +570,7 @@ namespace Lambda
 			uint8 pixels[4 * 4 * 4];
 			memset(pixels, 255, sizeof(pixels));
 
-			ResourceData textureData = {};
+			SResourceData textureData = {};
 			textureData.pData		= pixels;
 			textureData.SizeInBytes = sizeof(pixels);
 			m_pDefaultTexture = DBG_NEW VKNTexture(this, &textureData, textureDesc);
@@ -591,42 +591,42 @@ namespace Lambda
     }
     
     
-    void VKNDevice::CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc)
+    void VKNDevice::CreateBuffer(IBuffer** ppBuffer, const SResourceData* pInitalData, const SBufferDesc& desc)
     {
 		LAMBDA_ASSERT(ppBuffer != nullptr);
 		(*ppBuffer) = DBG_NEW VKNBuffer(this, pInitalData, desc);
     }
     
     
-    void VKNDevice::CreateTexture(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc)
+    void VKNDevice::CreateTexture(ITexture** ppTexture, const SResourceData* pInitalData, const STextureDesc& desc)
     {
 		LAMBDA_ASSERT(ppTexture != nullptr);
 		(*ppTexture) = DBG_NEW VKNTexture(this, pInitalData, desc);
     }
     
     
-    void VKNDevice::CreateShader(IShader** ppShader, const ShaderDesc& desc)
+    void VKNDevice::CreateShader(IShader** ppShader, const SShaderDesc& desc)
     {
 		LAMBDA_ASSERT(ppShader != nullptr);
         (*ppShader) = DBG_NEW VKNShader(this, desc);
     }
     
     
-    void VKNDevice::CreateSamplerState(ISamplerState** ppSamplerState, const SamplerStateDesc& desc)
+    void VKNDevice::CreateSamplerState(ISamplerState** ppSamplerState, const SSamplerStateDesc& desc)
     {
 		LAMBDA_ASSERT(ppSamplerState != nullptr);
         (*ppSamplerState) = DBG_NEW VKNSamplerState(this, desc);
     }
     
     
-    void VKNDevice::CreatePipelineState(IPipelineState** ppPipelineState, const PipelineStateDesc& desc)
+    void VKNDevice::CreatePipelineState(IPipelineState** ppPipelineState, const SPipelineStateDesc& desc)
     {
 		LAMBDA_ASSERT(ppPipelineState != nullptr);
         (*ppPipelineState) = DBG_NEW VKNPipelineState(this, desc);
     }
 
     
-    void VKNDevice::CreateQuery(Lambda::IQuery** ppQuery, const QueryDesc& desc)
+    void VKNDevice::CreateQuery(Lambda::IQuery** ppQuery, const SQueryDesc& desc)
     {
         LAMBDA_ASSERT(ppQuery != nullptr);
         (*ppQuery) = DBG_NEW VKNQuery(this, desc);
@@ -913,7 +913,7 @@ namespace Lambda
 		VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
 	{
 		//Get severity
-		LogSeverity severity = LOG_SEVERITY_UNKNOWN;
+		ELogSeverity severity = LOG_SEVERITY_UNKNOWN;
 		switch (messageSeverity)
 		{
 		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:    severity = LOG_SEVERITY_INFO;    break;

@@ -10,13 +10,13 @@ namespace Lambda
     class LAMBDA_API CGamepadState final
     {
     public:
-        CGamepadState();
-        CGamepadState(const CGamepadState& other);
-        CGamepadState(CGamepadState&& other);
+        CGamepadState() = default;
+        CGamepadState(const CGamepadState& other) = default;
+        CGamepadState(CGamepadState&& other) = default;
         ~CGamepadState() = default;
         
-        CGamepadState& operator=(const CGamepadState& other);
-        CGamepadState& operator=(CGamepadState&& other);
+        CGamepadState& operator=(const CGamepadState& other) = default;
+        CGamepadState& operator=(CGamepadState&& other) = default;
         
         _forceinline EGamepad GetGamepadID() const
         {

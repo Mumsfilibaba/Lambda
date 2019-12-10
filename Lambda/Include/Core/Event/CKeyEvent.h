@@ -43,7 +43,7 @@ namespace Lambda
     class CKeyReleasedEvent : public CKeyEvent
     {
     public:
-		_forceinline CKeyReleasedEvent(Key key, uint32 modifiers)
+		_forceinline CKeyReleasedEvent(EKey key, uint32 modifiers)
             : CKeyEvent(key, modifiers) {}
         ~CKeyReleasedEvent() = default;
         
@@ -57,7 +57,7 @@ namespace Lambda
     class CKeyPressedEvent : public CKeyEvent
     {
     public:
-		_forceinline CKeyPressedEvent(Key key, uint32 modifiers, uint32 repeatCount)
+		_forceinline CKeyPressedEvent(EKey key, uint32 modifiers, uint32 repeatCount)
             : CKeyEvent(key, modifiers), m_RepeatCount(repeatCount) {}
         ~CKeyPressedEvent() = default;
         

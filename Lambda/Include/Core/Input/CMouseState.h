@@ -10,13 +10,13 @@ namespace Lambda
     class LAMBDA_API CMouseState final
     {
     public:
-        CMouseState();
-        CMouseState(const CKeyboardState& other);
-        CMouseState(CKeyboardState&& other);
+        CMouseState()= default;
+        CMouseState(const CMouseState& other)= default;
+        CMouseState(CMouseState&& other)= default;
         ~CMouseState() = default;
         
-        CMouseState& operator=(const CMouseState& other);
-        CMouseState& operator=(CMouseState&& other);
+        CMouseState& operator=(const CMouseState& other) = default;
+        CMouseState& operator=(CMouseState&& other) = default;
     private:
     };
 }
