@@ -8,8 +8,8 @@ namespace Lambda
 	//DX12Shader
 	//----------
 
-	DX12Shader::DX12Shader(DX12Device* pDevice, const ShaderDesc& desc)
-		: DeviceObjectBase<DX12Device, IShader>(pDevice),
+	DX12Shader::DX12Shader(DX12Device* pDevice, const SShaderDesc& desc)
+		: CDeviceObjectBase<DX12Device, IShader>(pDevice),
 		m_ShaderBlob(),
 		m_Type(SHADER_STAGE_UNKNOWN)
 	{
@@ -23,13 +23,13 @@ namespace Lambda
 	}
 
 
-	const ShaderDesc& DX12Shader::GetDesc() const
+	const SShaderDesc& DX12Shader::GetDesc() const
 	{
-		return ShaderDesc();
+		return SShaderDesc();
 	}
 
 
-	void DX12Shader::Init(const ShaderDesc& desc)
+	void DX12Shader::Init(const SShaderDesc& desc)
 	{
 		using namespace Microsoft::WRL;
 
@@ -77,7 +77,7 @@ namespace Lambda
 	}
 
 
-	const char* DX12Shader::GetTarget(ShaderStage type)
+	const char* DX12Shader::GetTarget(EShaderStage type)
 	{
 		switch (type)
 		{

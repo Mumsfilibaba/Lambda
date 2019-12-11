@@ -6,29 +6,27 @@
 	#endif
 	#include <Windows.h>
 	#include <vector>
+	#include "../Desktop/CBaseWindow.h"
 
 namespace Lambda
 {
-	//-------------
-	//WindowsWindow
-	//-------------
+	//--------------
+	//CWindowsWindow
+	//--------------
 
-	class WindowsWindow
+	class CWindowsWindow final : public CBaseWindow
 	{
 		friend LRESULT CALLBACK WindowEventCallback(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
 	public:
-		LAMBDA_NO_COPY(WindowsWindow);
+		CWindowsWindow(const char* pTitle, uint32 width, uint32 height);
+		~CWindowsWindow();
 
-		WindowsWindow(const char* pTitle, uint32 width, uint32 height);
-		~WindowsWindow();
+		virtual bool HasFocus() const override;
+        virtual uint32 GetHeight() const override;
+        virtual uint32 GetWidth() const override;
 
-		virtual bool HasFocus() const;
-        virtual bool SetFullscreen(bool fullscreen);
-        virtual bool GetFullscreen() const;
-        virtual void* GetNativeHandle() const;
-        virtual uint32 GetHeight() const;
-        virtual uint32 GetWidth() const;
+        bool GetFullscreen() const;
+        bool SetFullscreen(bool fullscreen);
 	private:
 		void Init(const char* pTitle, uint32 width, uint32 height);
 		LRESULT OnEvent(uint32 msg, WPARAM wParam, LPARAM lParam);

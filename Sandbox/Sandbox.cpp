@@ -14,6 +14,7 @@ namespace Lambda
 	//------------------------
 	//Define CreateGameLayer()
 	//------------------------
+
 	CLayer* CreateGameLayer()
 	{
 		return new SandBoxLayer();
@@ -34,12 +35,12 @@ namespace Lambda
 	}
 
 
-	void SandBoxLayer::OnUpdate(const CTime& dt)
+	void SandBoxLayer::OnUpdate(const CTime&)
 	{
 	}
 
 
-	void SandBoxLayer::OnRender(Renderer3D& renderer, const CTime& dt)
+	void SandBoxLayer::OnRender(Renderer3D&, const CTime&)
 	{
 	}
 
@@ -49,7 +50,7 @@ namespace Lambda
 	}
 
 
-    void SandBoxLayer::OnRenderUI(const CTime& dt)
+    void SandBoxLayer::OnRenderUI(const CTime&)
     {
     }
 }

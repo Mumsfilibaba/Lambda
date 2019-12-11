@@ -15,26 +15,26 @@ namespace Lambda
 	//DX12Device
 	//----------
 
-	class DX12Device final : public RefCountedObject<IDevice>
+	class DX12Device final : public CRefCountBase<IDevice>
 	{
 	public:
 		LAMBDA_NO_COPY(DX12Device);
 
-		DX12Device(const DeviceDesc& desc);
+		DX12Device(const SDeviceDesc& desc);
 		~DX12Device();
 
 		virtual void CreateDefferedContext(IDeviceContext** ppDefferedContext) override final;
-		virtual void CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc) override final;
-		virtual void CreateTexture(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc) override final;
-		virtual void CreateShader(IShader** ppShader, const ShaderDesc& desc) override final;
-		virtual void CreateSamplerState(ISamplerState** ppSamplerState, const SamplerStateDesc& desc) override final;
-		virtual void CreatePipelineState(IPipelineState** ppPipelineState, const PipelineStateDesc& desc) override final;
-		virtual void CreateQuery(IQuery** ppQuery, const QueryDesc& desc) override final;
+		virtual void CreateBuffer(IBuffer** ppBuffer, const SResourceData* pInitalData, const SBufferDesc& desc) override final;
+		virtual void CreateTexture(ITexture** ppTexture, const SResourceData* pInitalData, const STextureDesc& desc) override final;
+		virtual void CreateShader(IShader** ppShader, const SShaderDesc& desc) override final;
+		virtual void CreateSamplerState(ISamplerState** ppSamplerState, const SSamplerStateDesc& desc) override final;
+		virtual void CreatePipelineState(IPipelineState** ppPipelineState, const SPipelineStateDesc& desc) override final;
+		virtual void CreateQuery(IQuery** ppQuery, const SQueryDesc& desc) override final;
 
 		virtual void ExecuteCommandList(IDeviceContext* const * ppLists, uint32 numLists) const;
 
-		virtual const DeviceProperties& GetProperties() const override final;
-		virtual const DeviceDesc& GetDesc() const override final;
+		virtual const SDeviceProperties& GetProperties() const override final;
+		virtual const SDeviceDesc& GetDesc() const override final;
 		virtual void* GetNativeHandle() const override final;
 		
 		void GPUWaitForFrame() const;
@@ -42,7 +42,7 @@ namespace Lambda
 		
 		ID3D12Device* GetDevice() const;
 	private:
-		void Init(const DeviceDesc& desc);
+		void Init(const SDeviceDesc& desc);
 		bool InitBackBuffers();
 
 		void ReleaseBackBuffers();
@@ -77,7 +77,7 @@ namespace Lambda
 		mutable uint32	m_CurrentBackBuffer;
 		uint32			m_NumBackbuffers;
 		bool			m_DXRSupported;
-		DeviceDesc		m_Desc;
+		SDeviceDesc		m_Desc;
 	private:
 		static DX12Device* s_pInstance;
 	public:

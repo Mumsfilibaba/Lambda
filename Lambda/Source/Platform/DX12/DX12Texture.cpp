@@ -6,7 +6,7 @@
 namespace Lambda
 {
 	DX12Texture::DX12Texture(DX12Device* pDevice, ID3D12Resource* pResource)
-		: DeviceObjectBase<DX12Device, ITexture>(pDevice),
+		: CDeviceObjectBase<DX12Device, ITexture>(pDevice),
 		m_Texture(nullptr),
 		m_hDescriptor(),
 		m_Desc()
@@ -16,8 +16,8 @@ namespace Lambda
 	}
 
 
-	DX12Texture::DX12Texture(DX12Device* pDevice, const TextureDesc& desc)
-		: DeviceObjectBase<DX12Device, ITexture>(pDevice),
+	DX12Texture::DX12Texture(DX12Device* pDevice, const STextureDesc& desc)
+		: CDeviceObjectBase<DX12Device, ITexture>(pDevice),
 		m_Texture(nullptr),
 		m_hDescriptor(),
 		m_Desc()
@@ -27,7 +27,7 @@ namespace Lambda
 	}
 
 
-	const TextureDesc& DX12Texture::GetDesc() const
+	const STextureDesc& DX12Texture::GetDesc() const
 	{
 		return m_Desc;
 	}
@@ -39,7 +39,7 @@ namespace Lambda
 	}
 
 
-	void DX12Texture::Init(const TextureDesc& desc)
+	void DX12Texture::Init(const STextureDesc& desc)
 	{
 		//Create texture2d resource
 		{

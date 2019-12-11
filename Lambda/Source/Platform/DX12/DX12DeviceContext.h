@@ -1,7 +1,7 @@
 #pragma once
 #include "Graphics/Core/IDeviceContext.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
-	#include "Graphics/Core/DeviceObjectBase.h"
+	#include "Graphics/Core/CDeviceObjectBase.h"
 	#include "DX12LinearAllocator.h"
 	#include "DX12LinearDescriptorAllocator.h"
 	#include "DX12ResourceStateTracker.h"
@@ -13,31 +13,30 @@ namespace Lambda
 	//DX12DeviceContext
 	//-----------------
 
-	class DX12DeviceContext final : public DeviceObjectBase<DX12Device, IDeviceContext>
+	class DX12DeviceContext final : public CDeviceObjectBase<DX12Device, IDeviceContext>
 	{
 		friend class DX12Device;
 		friend class DX12CommandQueue;
-
 	public:
 		LAMBDA_NO_COPY(DX12DeviceContext);
 
-		DX12DeviceContext(DX12Device* pDevice, DeviceContextType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV);
+		DX12DeviceContext(DX12Device* pDevice, EDeviceContextType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV);
 		~DX12DeviceContext() = default;
 	
 		virtual void ClearRenderTarget(ITexture* pRenderTarget, float color[4]) override final;
 		virtual void ClearDepthStencil(ITexture* pDepthStencil, float depth, uint8 stencil) override final;
 
 		virtual void SetRendertargets(ITexture* const* ppRenderTargets, uint32 numRendertargets, ITexture* pDepthStencil) override final;
-		virtual void SetViewports(const Viewport* pViewports, uint32 numViewports) override final;
-		virtual void SetScissorRects(const Rectangle* pScissorRect, uint32 numRects) override final;
+		virtual void SetViewports(const SViewport* pViewports, uint32 numViewports) override final;
+		virtual void SetScissorRects(const SRectangle* pScissorRect, uint32 numRects) override final;
 		virtual void SetVertexBuffers(IBuffer* const* pBuffers, uint32 numBuffers, uint32 slot) override final;
-		virtual void SetIndexBuffer(IBuffer* pBuffer, Format format) override final;
+		virtual void SetIndexBuffer(IBuffer* pBuffer, EFormat format) override final;
 		virtual void SetPipelineState(IPipelineState* pPipelineState) override final;
 		virtual void SetShaderVariableTable(IShaderVariableTable* pVariableTable) override final;
-		virtual void SetConstantBlocks(ShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData) override final;
+		virtual void SetConstantBlocks(EShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData) override final;
 
-		virtual void UpdateBuffer(IBuffer* pResource, const ResourceData& data) override final;
-		virtual void UpdateTexture(ITexture* pResource, const ResourceData& data, uint32 mipLevel) override final;
+		virtual void UpdateBuffer(IBuffer* pResource, const SResourceData& data) override final;
+		virtual void UpdateTexture(ITexture* pResource, const SResourceData& data, uint32 mipLevel) override final;
 
 		virtual void CopyBuffer(IBuffer* pDst, IBuffer* pSrc) override final;
 
@@ -48,7 +47,7 @@ namespace Lambda
 
 		virtual void GenerateMipLevels(ITexture* pTexture) override final;
 
-		virtual void TransitionTextureStates(const TextureTransitionBarrier* pBarriers, uint32 numBarriers) override final;
+		virtual void TransitionTextureStates(const STextureTransitionBarrier* pBarriers, uint32 numBarriers) override final;
 
 		virtual void Draw(uint32 vertexCount, uint32 startVertex) override final;
 		virtual void DrawIndexed(uint32 indexCount, uint32 startIndexLocation, uint32 baseVertexLocation) override final;
@@ -65,16 +64,16 @@ namespace Lambda
 
 		virtual void SetName(const char* pName) override final;
 
-		virtual DeviceContextType GetType() const override final;
+		virtual EDeviceContextType GetType() const override final;
 		virtual void* GetNativeHandle() const override final;
 
 		void Begin();
 		void End();
 		
-		void TransitionBuffer(const IBuffer* pResource, ResourceState resourceState);
-		void TransitionTexture(const ITexture* pResource, ResourceState resourceState, uint32 startMipLevel, uint32 numMipLevels);
+		void TransitionBuffer(const IBuffer* pResource, EResourceState resourceState);
+		void TransitionTexture(const ITexture* pResource, EResourceState resourceState, uint32 startMipLevel, uint32 numMipLevels);
 	private:
-		void Init(DeviceContextType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV);
+		void Init(EDeviceContextType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV);
 		void AllocateDescriptors();
 		void InternalCopyAndSetDescriptors();
 		void InternalSetResourceDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE hDest, D3D12_CPU_DESCRIPTOR_HANDLE hSrc, uint32 slot, uint32 range);
@@ -96,7 +95,7 @@ namespace Lambda
 		DX12DescriptorCache	m_SamplerCache;
 		uint32				m_SamplerDescriptorSize;
 		uint32				m_ResourceDescriptorSize;
-		DeviceContextType	m_Type;
+		EDeviceContextType	m_Type;
 	};
 
 

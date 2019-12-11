@@ -8,14 +8,14 @@
 
 namespace Lambda
 {
-	//-----------
-	//WindowClass
-	//-----------
+	//------------
+	//CWindowClass
+	//------------
 
-	class WindowClass final
+	class CWindowClass final
 	{
 	public:
-		LAMBDA_STATIC_CLASS(WindowClass);
+		LAMBDA_STATIC_CLASS(CWindowClass);
 
 		static void Register(WNDCLASSEX& wc);
 		static void Unregister(LPCTSTR className);

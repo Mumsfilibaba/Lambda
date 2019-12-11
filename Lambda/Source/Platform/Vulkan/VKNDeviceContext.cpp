@@ -417,7 +417,7 @@ namespace Lambda
 	}
 
 	
-	void VKNDeviceContext::CopyBufferToImage(VkImage image, VkDeviceSize mipLevel, VkImageAspectFlags aspectFlags, uint32 width, uint32 height, uint32 depth, VkBuffer buffer, VkDeviceSize offset, VkDeviceSize sizeInBytes)
+	void VKNDeviceContext::CopyBufferToImage(VkImage image, VkDeviceSize mipLevel, VkImageAspectFlags aspectFlags, uint32 width, uint32 height, uint32 depth, VkBuffer buffer, VkDeviceSize offset, VkDeviceSize)
 	{
 		//Check if we should flush the context
 		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > m_MaxNumCommands)
@@ -852,13 +852,13 @@ namespace Lambda
 	}
 
 
-	void VKNDeviceContext::UnmapBuffer(IBuffer* pBuffer)
+	void VKNDeviceContext::UnmapBuffer(IBuffer*)
 	{
 		//TODO: More for resources with default usage?
 	}
 
 
-	void VKNDeviceContext::ResolveTexture(ITexture* pDst, uint32 dstMipLevel, ITexture* pSrc, uint32 srcMipLevel)
+	void VKNDeviceContext::ResolveTexture(ITexture* pDst, uint32, ITexture* pSrc, uint32)
 	{
 		//LOG_DEBUG_INFO("ResolveTexture()\n");
 
@@ -1018,7 +1018,7 @@ namespace Lambda
     }
 
 	
-	void VKNDeviceContext::ExecuteDefferedContext(IDeviceContext* pContext)
+	void VKNDeviceContext::ExecuteDefferedContext(IDeviceContext*)
 	{
 		/*		
 		//Check if we should flush the context

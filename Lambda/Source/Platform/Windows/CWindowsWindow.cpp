@@ -1,32 +1,35 @@
 #include "LambdaPch.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
-	#include "Core/LogManager.h"
-	#include "Core/WindowEventDispatcher.h"
+	#include "Core/CLogManager.h"
 	#include "Utilities/StringHelper.h"
 	#include "WindowsHelper.h"
-	#include "WindowsWindow.h"
-	#include "WindowClass.h"
+	#include "CWindowsWindow.h"
+	#include "CWindowClass.h"
+	#include "Core/Event/CWindowEvent.h"
+	#include "Core/Event/CKeyEvent.h"
+	#include "Core/Event/CMouseEvent.h"
+
 	#define	NAME_APPWINDOW L"AppWindow"
 
 namespace Lambda
 {
-	//-------------
-	//WindowsWindow
-	//-------------
+	//--------------
+	//CWindowsWindow
+	//--------------
 
 	LRESULT CALLBACK WindowEventCallback(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-	WindowsWindow::WindowsWindow(const char* pTitle, uint32 width, uint32 height)
+	CWindowsWindow::CWindowsWindow(const char* pTitle, uint32 width, uint32 height)
 		: m_hWindow(0),
 		m_Fullscreen(false),
 		m_HasFocus(false)
 	{
 		Init(pTitle, width, height);
-		LOG_HOST_INFO("[LAMBDA ENGINE] Created window. w: %d, h: %d\n", width, height);
+		LOG_ENVIRONMENT_INFO("[LAMBDA ENGINE] Created window. w: %d, h: %d\n", width, height);
 	}
 	
 
-	WindowsWindow::~WindowsWindow()
+	CWindowsWindow::~CWindowsWindow()
 	{
 		SetFullscreen(false);
 
@@ -36,36 +39,30 @@ namespace Lambda
 			DestroyWindow(m_hWindow);
 			m_hWindow = 0;
 
-			WindowClass::Unregister(NAME_APPWINDOW);
+			CWindowClass::Unregister(NAME_APPWINDOW);
 		}
 	}
 
 
-	bool WindowsWindow::HasFocus() const
+	bool CWindowsWindow::HasFocus() const
 	{
 		return m_HasFocus;
 	}
 
 
-	void* WindowsWindow::GetNativeHandle() const
-	{
-		return reinterpret_cast<void*>(m_hWindow);
-	}
-
-
-	uint32 WindowsWindow::GetHeight() const
+	uint32 CWindowsWindow::GetHeight() const
 	{
 		return m_Height;
 	}
 
 
-	uint32 WindowsWindow::GetWidth() const
+	uint32 CWindowsWindow::GetWidth() const
 	{
 		return m_Width;
 	}
 
 
-	bool WindowsWindow::SetFullscreen(bool fullscreen)
+	bool CWindowsWindow::SetFullscreen(bool fullscreen)
 	{
 		if (m_Fullscreen == fullscreen)
 		{
@@ -99,11 +96,11 @@ namespace Lambda
                 
                 m_Fullscreen = true;
 
-				LOG_HOST_WARNING("[LAMBDA ENGINE] Switched into fullscreen\n");
+				LOG_ENVIRONMENT_WARNING("[LAMBDA ENGINE] Switched into fullscreen\n");
 			}
 			else 
 			{
-				LOG_HOST_ERROR("[LAMBDA ENGINE] Failed to switch into fullscreen\n");
+				LOG_ENVIRONMENT_ERROR("[LAMBDA ENGINE] Failed to switch into fullscreen\n");
 				return false;
 			}
 		}
@@ -118,11 +115,11 @@ namespace Lambda
 
                 m_Fullscreen = false;
 
-				LOG_HOST_INFO("[LAMBDA ENGINE] Switched into windowed mode\n");
+				LOG_ENVIRONMENT_INFO("[LAMBDA ENGINE] Switched into windowed mode\n");
 			}
             else
             {
-				LOG_HOST_ERROR("[LAMBDA ENGINE] Failed to switch from fullscreen\n");
+				LOG_ENVIRONMENT_ERROR("[LAMBDA ENGINE] Failed to switch from fullscreen\n");
                 return false;
             }
 		}
@@ -131,13 +128,13 @@ namespace Lambda
 	}
 
 
-	bool WindowsWindow::GetFullscreen() const
+	bool CWindowsWindow::GetFullscreen() const
 	{
 		return m_Fullscreen;
 	}
 
 
-	void WindowsWindow::Init(const char* pTitle, uint32 width, uint32 height)
+	void CWindowsWindow::Init(const char* pTitle, uint32 width, uint32 height)
 	{
 		//Should only be called once
 		LAMBDA_ASSERT(m_hWindow == 0);
@@ -158,7 +155,7 @@ namespace Lambda
 			wc.lpszClassName = NAME_APPWINDOW;
 			wc.hIconSm		 = 0;
 
-			WindowClass::Register(wc);
+			CWindowClass::Register(wc);
 
 			//Set client area size
 			m_Style		= WS_OVERLAPPEDWINDOW;
@@ -195,52 +192,55 @@ namespace Lambda
 	}
 
 
-	LRESULT WindowsWindow::OnEvent(uint32 msg, WPARAM wParam, LPARAM lParam)
+	LRESULT CWindowsWindow::OnEvent(uint32 msg, WPARAM wParam, LPARAM lParam)
 	{
 		switch (msg)
 		{
 		case WM_DESTROY:
 		{
-			WindowEventDispatcher::Get().OnWindowClose();
+			CWindowClosedEvent event = CWindowClosedEvent();
+			DispatchEvent(event);
 			break;
 		}
 		
 		case WM_SIZE:
 		{
-			WindowEventDispatcher::Get().OnWindowResize(uint32(LOWORD(lParam)), uint32(HIWORD(lParam)));
+			CWindowResizeEvent event = CWindowResizeEvent(uint32(LOWORD(lParam)), uint32(HIWORD(lParam)));
+			DispatchEvent(event);
 			break;
 		}
 
 		case WM_MOVE:
 		{
-			WindowEventDispatcher::Get().OnWindowMove(uint32(LOWORD(lParam)), uint32(HIWORD(lParam)));
+			CWindowMoveEvent event = CWindowMoveEvent(uint32(LOWORD(lParam)), uint32(HIWORD(lParam)));
+			DispatchEvent(event);
 			break;
 		}
 		
 		case WM_KEYDOWN:
 		{
-			//KeyPressedEvent event = KeyPressedEvent(WindowsInput::ConvertWindowsKey(uint32(wParam)), GetKeyModifers(), uint32(LOWORD(lParam)));
-			//DispatchEvent(event);
+			CKeyPressedEvent event = CKeyPressedEvent(KEY_UNKNOWN, GetKeyModifers(), uint32(LOWORD(lParam)));
+			DispatchEvent(event);
 			break;
 		}
 		case WM_KEYUP:
 		{
-			//KeyReleasedEvent event = KeyReleasedEvent(WindowsInput::ConvertWindowsKey(uint32(wParam)), Lambda::GetKeyModifers());
-			//DispatchEvent(event);
+			CKeyReleasedEvent event = CKeyReleasedEvent(KEY_UNKNOWN, Lambda::GetKeyModifers());
+			DispatchEvent(event);
 			break;
 		}
 
 		case WM_CHAR:
 		{
-			//KeyTypedEvent event = KeyTypedEvent(uint32(wParam));
-			//DispatchEvent(event);
+			CKeyTypedEvent event = CKeyTypedEvent(uint32(wParam));
+			DispatchEvent(event);
 			break;
 		}
 
 		case WM_MOUSEMOVE:
 		{
-			//MouseMovedEvent event = MouseMovedEvent(uint32(GET_X_LPARAM(lParam)), uint32(GET_Y_LPARAM(lParam)));
-			//DispatchEvent(event);
+			CMouseMovedEvent event = CMouseMovedEvent(uint32(GET_X_LPARAM(lParam)), uint32(GET_Y_LPARAM(lParam)));
+			DispatchEvent(event);
 			break;
 		}
 
@@ -249,8 +249,8 @@ namespace Lambda
 		case WM_RBUTTONDOWN:
 		case WM_XBUTTONDOWN:
 		{
-			//MouseButtonPressedEvent event = MouseButtonPressedEvent(WindowsInput::ConvertWindowsButton(uint32(wParam)), Lambda::GetKeyModifers());
-			//DispatchEvent(event);
+			CMouseButtonPressedEvent event = CMouseButtonPressedEvent(MOUSEBUTTON_UNKNOWN, Lambda::GetKeyModifers());
+			DispatchEvent(event);
 			break;
 		}
 
@@ -259,8 +259,8 @@ namespace Lambda
 		case WM_RBUTTONUP:
 		case WM_XBUTTONUP:
 		{
-			//MouseButtonReleasedEvent event = MouseButtonReleasedEvent(WindowsInput::ConvertWindowsButton(uint32(wParam)), Lambda::GetKeyModifers());
-			//DispatchEvent(event);
+			CMouseButtonReleasedEvent event = CMouseButtonReleasedEvent(MOUSEBUTTON_UNKNOWN, Lambda::GetKeyModifers());
+			DispatchEvent(event);
 			break;
 		}
 		
@@ -275,8 +275,8 @@ namespace Lambda
 			else
 				verticalValue = value;
 
-			//MouseScrolledEvent event = MouseScrolledEvent(horizontalValue, verticalValue);
-			//DispatchEvent(event);
+			CMouseScrolledEvent event = CMouseScrolledEvent(horizontalValue, verticalValue);
+			DispatchEvent(event);
 			break;
 		}
 
@@ -286,8 +286,8 @@ namespace Lambda
 			//Update has focus
 			m_HasFocus = msg == WM_SETFOCUS;
 
-			//Send event to rest of the system
-			WindowEventDispatcher::Get().OnWindowFocusChanges(m_HasFocus);
+			CWindowFocusChangedEvent event = CWindowFocusChangedEvent(m_HasFocus);
+			DispatchEvent(event);
 			break;
 		}
 
@@ -302,7 +302,7 @@ namespace Lambda
 	LRESULT CALLBACK WindowEventCallback(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 		//Retrive userdata to get the pointer to the windows
-		WindowsWindow* pWindow = reinterpret_cast<WindowsWindow*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+		CWindowsWindow* pWindow = reinterpret_cast<CWindowsWindow*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
 		if (pWindow)
 			return pWindow->OnEvent(msg, wParam, lParam);
 		else

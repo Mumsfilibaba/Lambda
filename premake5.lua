@@ -82,6 +82,12 @@ workspace "Lambda"
 		{
 			"LAMBDA_PLAT_WINDOWS",
 		}
+	-- Shared lib build
+	filter "platforms:x64_SharedLib"
+		defines
+		{
+			"LAMBDA_SHARED_LIB",
+		}
 	filter {}
 	
 	-- ENGINE PROJECT
@@ -94,16 +100,17 @@ workspace "Lambda"
 		-- SharedLib builds
 		filter "platforms:x64_SharedLib"
 			kind "SharedLib"
-
-			defines 
-			{ 
-				"LAMBDA_SHARED_LIB",
-			}
 		filter {}
 		-- StaticLib builds
 		filter "platforms:x64_StaticLib"
 			kind "StaticLib"
 		filter {}
+
+		-- Engine specific defines
+		defines 
+		{ 
+			"LAMBDA_EXPORT",
+		}
 
 		-- Targets
 		targetdir 	("Build/bin/" .. outputdir .. "/%{prj.name}")
@@ -154,11 +161,6 @@ workspace "Lambda"
 			"Dependencies/stb",
 			"Dependencies/glm",
 			"Dependencies/ImGui",
-		}
-		-- Define that we are exporting the engine and not a application
-		defines
-		{
-			"LAMBDA_EXPORT",
 		}
 		--	macOS
 		filter "system:macosx"

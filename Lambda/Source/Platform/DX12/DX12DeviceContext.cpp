@@ -20,8 +20,8 @@ namespace Lambda
 	//DX12DeviceContext
 	//-----------------
 
-	DX12DeviceContext::DX12DeviceContext(DX12Device* pDevice, DeviceContextType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV)
-		: DeviceObjectBase<DX12Device, IDeviceContext>(pDevice),
+	DX12DeviceContext::DX12DeviceContext(DX12Device* pDevice, EDeviceContextType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV)
+		: CDeviceObjectBase<DX12Device, IDeviceContext>(pDevice),
 		m_Allocator(nullptr),
 		m_List(nullptr),
 		m_BufferAllocator(),
@@ -41,7 +41,7 @@ namespace Lambda
 	}
 
 
-	void DX12DeviceContext::Init(DeviceContextType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV)
+	void DX12DeviceContext::Init(EDeviceContextType type, const DX12DescriptorHandle& nullSampler, const DX12DescriptorHandle& nullSRV, const DX12DescriptorHandle& nullUAV, const DX12DescriptorHandle& nullCBV)
 	{
 		using namespace Microsoft::WRL;
 
@@ -169,14 +169,14 @@ namespace Lambda
 	}
 
 
-	void DX12DeviceContext::SetViewports(const Viewport* pViewports, uint32 numViewports)
+	void DX12DeviceContext::SetViewports(const SViewport* pViewports, uint32 numViewports)
 	{
 		//D3D12_VIEWPORT port = { viewport.TopX, viewport.TopY, viewport.Width, viewport.Height, viewport.MinDepth, viewport.MaxDepth };
 		//m_List->RSSetViewports( 1, &port );
 	}
 
 
-	void DX12DeviceContext::SetScissorRects(const Rectangle* pScissorRect, uint32 numScissorRects)
+	void DX12DeviceContext::SetScissorRects(const SRectangle* pScissorRect, uint32 numScissorRects)
 	{
 		//D3D12_RECT rect = { (LONG)scissorRect.X, (LONG)scissorRect.Y, (LONG)scissorRect.X + (LONG)scissorRect.Width, (LONG)scissorRect.Y + (LONG)scissorRect.Height };
 		//m_List->RSSetScissorRects(1, &rect);
@@ -215,32 +215,32 @@ namespace Lambda
 	}
 
 
-	void DX12DeviceContext::SetIndexBuffer(IBuffer* pIndexBuffer, Format format)
+	void DX12DeviceContext::SetIndexBuffer(IBuffer* pIndexBuffer, EFormat format)
 	{
 		D3D12_INDEX_BUFFER_VIEW view = reinterpret_cast<DX12Buffer*>(pIndexBuffer)->GetIndexBufferView();
 		m_List->IASetIndexBuffer(&view);
 	}
 
 	
-	void DX12DeviceContext::SetConstantBlocks(ShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData)
+	void DX12DeviceContext::SetConstantBlocks(EShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData)
 	{
 	}
 
 
-	DeviceContextType DX12DeviceContext::GetType() const
+	EDeviceContextType DX12DeviceContext::GetType() const
 	{
 		return m_Type;
 	}
 
 
-	void DX12DeviceContext::TransitionBuffer(const IBuffer* pResource, ResourceState resourceState)
+	void DX12DeviceContext::TransitionBuffer(const IBuffer* pResource, EResourceState resourceState)
 	{
 		const DX12Buffer* pBuffer = reinterpret_cast<const DX12Buffer*>(pResource);
 		m_ResourceTracker.TransitionResource(pBuffer->GetResource(), D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, ConvertResourceState(resourceState));
 	}
 
 
-	void DX12DeviceContext::TransitionTexture(const ITexture* pResource, ResourceState resourceState, uint32 startMipLevel, uint32 numMipLevels)
+	void DX12DeviceContext::TransitionTexture(const ITexture* pResource, EResourceState resourceState, uint32 startMipLevel, uint32 numMipLevels)
 	{
 		const DX12Texture* pTexture = reinterpret_cast<const DX12Texture*>(pResource);
 		m_ResourceTracker.TransitionResource(pTexture->GetResource(), D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, ConvertResourceState(resourceState));
@@ -382,7 +382,7 @@ namespace Lambda
 	}*/
 
 
-	void DX12DeviceContext::UpdateBuffer(IBuffer* pResource, const ResourceData& data)
+	void DX12DeviceContext::UpdateBuffer(IBuffer* pResource, const SResourceData& data)
 	{
 		m_ResourceTracker.FlushBarriers(m_List.Get());
 
@@ -395,7 +395,7 @@ namespace Lambda
 	}
 
 
-	void DX12DeviceContext::UpdateTexture(ITexture* pResource, const ResourceData& data, uint32 subresource)
+	void DX12DeviceContext::UpdateTexture(ITexture* pResource, const SResourceData& data, uint32 subresource)
 	{
 		m_ResourceTracker.FlushBarriers(m_List.Get());
 
@@ -405,7 +405,7 @@ namespace Lambda
 		
 		//Setup texture copy info
 		DX12Texture* pDXTexture	= reinterpret_cast<DX12Texture*>(pResource);
-		const TextureDesc& desc	= pDXTexture->GetDesc();
+		const STextureDesc& desc	= pDXTexture->GetDesc();
 
 		//Setup dst
 		D3D12_TEXTURE_COPY_LOCATION dst = {};
@@ -461,7 +461,7 @@ namespace Lambda
 	}
 
 	
-	void DX12DeviceContext::TransitionTextureStates(const TextureTransitionBarrier* pBarriers, uint32 numBarriers)
+	void DX12DeviceContext::TransitionTextureStates(const STextureTransitionBarrier* pBarriers, uint32 numBarriers)
 	{
 	}
 

@@ -5,8 +5,8 @@
 
 namespace Lambda
 {
-	DX12SamplerState::DX12SamplerState(DX12Device* pDevice, DX12DescriptorHandle hDescriptor, const SamplerStateDesc& desc)
-		: DeviceObjectBase<DX12Device, ISamplerState>(pDevice),
+	DX12SamplerState::DX12SamplerState(DX12Device* pDevice, DX12DescriptorHandle hDescriptor, const SSamplerStateDesc& desc)
+		: CDeviceObjectBase<DX12Device, ISamplerState>(pDevice),
 		m_Desc(),
 		m_Descriptor()
 	{
@@ -14,7 +14,7 @@ namespace Lambda
 	}
 
 
-	const SamplerStateDesc& DX12SamplerState::GetDesc() const
+	const SSamplerStateDesc& DX12SamplerState::GetDesc() const
 	{
 		return m_Desc;
 	}
@@ -26,7 +26,7 @@ namespace Lambda
 	}
 
 
-	void DX12SamplerState::Init(DX12DescriptorHandle hDescriptor, const SamplerStateDesc& desc)
+	void DX12SamplerState::Init(DX12DescriptorHandle hDescriptor, const SSamplerStateDesc& desc)
 	{
 		//Create sampler
 		D3D12_SAMPLER_DESC sDesc = {};

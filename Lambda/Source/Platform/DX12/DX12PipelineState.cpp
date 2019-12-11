@@ -6,8 +6,8 @@
 
 namespace Lambda
 {
-	DX12PipelineState::DX12PipelineState(DX12Device* pDevice, const PipelineStateDesc& desc)
-		: DeviceObjectBase<DX12Device, IPipelineState>(pDevice),
+	DX12PipelineState::DX12PipelineState(DX12Device* pDevice, const SPipelineStateDesc& desc)
+		: CDeviceObjectBase<DX12Device, IPipelineState>(pDevice),
 		m_State(nullptr),
 		m_RootSignature(nullptr)
 	{
@@ -33,13 +33,13 @@ namespace Lambda
 	}
 
 	
-	const PipelineStateDesc& DX12PipelineState::GetDesc() const
+	const SPipelineStateDesc& DX12PipelineState::GetDesc() const
 	{
-		return PipelineStateDesc();
+		return SPipelineStateDesc();
 	}
 
 
-	void DX12PipelineState::Init(const PipelineStateDesc& desc)
+	void DX12PipelineState::Init(const SPipelineStateDesc& desc)
 	{
 		using namespace Microsoft::WRL;
 

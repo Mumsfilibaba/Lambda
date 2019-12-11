@@ -20,7 +20,7 @@ namespace Lambda
 
 	DX12Device* DX12Device::s_pInstance = nullptr;
 
-	DX12Device::DX12Device(const DeviceDesc& desc)
+	DX12Device::DX12Device(const SDeviceDesc& desc)
 		: m_Device(nullptr),
 		m_DXRDevice(nullptr),
 		m_Debug(nullptr),
@@ -82,7 +82,7 @@ namespace Lambda
 	}
 
 
-	void DX12Device::Init(const DeviceDesc& desc)
+	void DX12Device::Init(const SDeviceDesc& desc)
 	{
 		using namespace Microsoft::WRL;
 
@@ -323,7 +323,7 @@ namespace Lambda
 	}
 
 
-	void DX12Device::CreateBuffer(IBuffer** ppBuffer, const ResourceData* pInitalData, const BufferDesc& desc)
+	void DX12Device::CreateBuffer(IBuffer** ppBuffer, const SResourceData* pInitalData, const SBufferDesc& desc)
 	{
 		//Create resource
 		DX12Buffer* pBuffer = DBG_NEW DX12Buffer(this, desc);
@@ -375,7 +375,7 @@ namespace Lambda
 	}
 
 
-	void DX12Device::CreateTexture(ITexture** ppTexture, const ResourceData* pInitalData, const TextureDesc& desc)
+	void DX12Device::CreateTexture(ITexture** ppTexture, const SResourceData* pInitalData, const STextureDesc& desc)
 	{
 		//Return early if errors
 		if (desc.Usage == USAGE_DYNAMIC)
@@ -450,26 +450,26 @@ namespace Lambda
 	}
 
 
-	void DX12Device::CreateShader(IShader** ppShader, const ShaderDesc& desc)
+	void DX12Device::CreateShader(IShader** ppShader, const SShaderDesc& desc)
 	{
 		(*ppShader) = DBG_NEW DX12Shader(this, desc);
 	}
 
 
-	void DX12Device::CreateSamplerState(ISamplerState** ppSamplerState, const SamplerStateDesc& desc)
+	void DX12Device::CreateSamplerState(ISamplerState** ppSamplerState, const SSamplerStateDesc& desc)
 	{
 		DX12DescriptorHandle hDescriptor = m_SamplerAllocator.Allocate();
 		(*ppSamplerState) = DBG_NEW DX12SamplerState(this, hDescriptor, desc);
 	}
 
 
-	void DX12Device::CreatePipelineState(IPipelineState** ppPSO, const PipelineStateDesc& desc)
+	void DX12Device::CreatePipelineState(IPipelineState** ppPSO, const SPipelineStateDesc& desc)
 	{
 		//(*ppPSO) = DBG_NEW DX12PipelineState(m_Device.Get(), desc);
 	}
 
 
-	void DX12Device::CreateQuery(IQuery** ppQuery, const QueryDesc& desc)
+	void DX12Device::CreateQuery(IQuery** ppQuery, const SQueryDesc& desc)
 	{
 	}
 
@@ -675,13 +675,13 @@ namespace Lambda
 	}*/
 
 
-	const DeviceProperties& DX12Device::GetProperties() const
+	const SDeviceProperties& DX12Device::GetProperties() const
 	{
-		return DeviceProperties();
+		return SDeviceProperties();
 	}
 
 
-	const DeviceDesc& DX12Device::GetDesc() const
+	const SDeviceDesc& DX12Device::GetDesc() const
 	{
 		return m_Desc;
 	}

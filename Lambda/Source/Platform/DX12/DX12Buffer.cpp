@@ -9,8 +9,8 @@ namespace Lambda
 	//DX12Buffer
 	//----------
 
-	DX12Buffer::DX12Buffer(DX12Device* pDevice, const BufferDesc& desc)
-		: DeviceObjectBase<DX12Device, IBuffer>(pDevice),
+	DX12Buffer::DX12Buffer(DX12Device* pDevice, const SBufferDesc& desc)
+		: CDeviceObjectBase<DX12Device, IBuffer>(pDevice),
 		m_Buffer(nullptr),
 		m_hDescriptor(),
 		m_IBV(),
@@ -44,13 +44,13 @@ namespace Lambda
 	}
 
 
-	const BufferDesc& DX12Buffer::GetDesc() const
+	const SBufferDesc& DX12Buffer::GetDesc() const
 	{
 		return m_Desc;
 	}
 
 
-	void DX12Buffer::Init(const BufferDesc& desc)
+	void DX12Buffer::Init(const SBufferDesc& desc)
 	{
 		//Create buffer resource
 		{

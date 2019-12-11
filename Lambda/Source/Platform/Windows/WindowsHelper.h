@@ -1,6 +1,6 @@
 #pragma once
-#include "Defines.h"
-#include "Types.h"
+#include "LambdaCore.h"
+#include "Core/Input/EKey.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#if !defined(WIN32_LEAN_AND_MEAN)
 		#define WIN32_LEAN_AND_MEAN 1

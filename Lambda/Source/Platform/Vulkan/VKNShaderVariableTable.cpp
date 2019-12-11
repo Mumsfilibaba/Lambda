@@ -59,7 +59,7 @@ namespace Lambda
 	}
 
 
-	IShaderVariable* VKNShaderVariableTable::GetVariableByName(EShaderStage shader, const char* pName)
+	IShaderVariable* VKNShaderVariableTable::GetVariableByName(EShaderStage, const char* pName)
 	{
 		auto var = m_NameTable.find(std::string(pName));
 		if (var == m_NameTable.end())
@@ -72,7 +72,7 @@ namespace Lambda
 	}
 
 
-	IShaderVariable* VKNShaderVariableTable::GetVariableByIndex(EShaderStage shader, uint32 index)
+	IShaderVariable* VKNShaderVariableTable::GetVariableByIndex(EShaderStage, uint32 index)
 	{
 		LAMBDA_ASSERT(index < m_ShaderVariables.size());
 		return m_ShaderVariables[index].Get();

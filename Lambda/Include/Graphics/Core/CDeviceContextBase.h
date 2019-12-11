@@ -2,7 +2,7 @@
 #include "CDeviceObjectBase.h"
 #include "IDeviceContext.h"
 #include "ITexture.h"
-#include "AutoRef.h"
+#include "Core/AutoRef.h"
 #include <algorithm>
 
 namespace Lambda

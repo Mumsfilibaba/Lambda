@@ -30,19 +30,19 @@ namespace Lambda
         
         _forceinline IKeyboardController* GetKeyboardController() const
         {
-            LAMBDA_ASSERT(m_pKeyboardController != nullptr);
+            LAMBDA_ASSERT_PRINT(m_pKeyboardController != nullptr, "Environment has not created a KeyboardController\n");
             return m_pKeyboardController;
         }
         
         _forceinline IMouseController* GetMouseController() const
         {
-            LAMBDA_ASSERT(m_pMouseController != nullptr);
+			LAMBDA_ASSERT_PRINT(m_pMouseController != nullptr, "Environment has not created a MouseController\n");
             return m_pMouseController;
         }
         
         _forceinline IGamepadController* GetGamepadController() const
         {
-            LAMBDA_ASSERT(m_pGamepadController != nullptr);
+			LAMBDA_ASSERT_PRINT(m_pGamepadController != nullptr, "Environment has not created a GamepadController\n");
             return m_pGamepadController;
         }
 	protected:

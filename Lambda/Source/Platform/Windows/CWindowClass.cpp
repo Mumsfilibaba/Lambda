@@ -1,16 +1,16 @@
 #include "LambdaPch.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
-    #include "WindowClass.h"
+    #include "CWindowClass.h"
 namespace Lambda
 {
-	//-----------
-	//WindowClass
-	//-----------
+	//------------
+	//CWindowClass
+	//------------
 
-	std::unordered_map<std::wstring, uint32> WindowClass::s_ClassTable;
+	std::unordered_map<std::wstring, uint32> CWindowClass::s_ClassTable;
 
 	
-    void WindowClass::Register(WNDCLASSEX& wc)
+    void CWindowClass::Register(WNDCLASSEX& wc)
 	{
 		auto entry = s_ClassTable.find(wc.lpszClassName);
 		if (entry != s_ClassTable.end())
@@ -25,7 +25,7 @@ namespace Lambda
 	}
     
 
-	void WindowClass::Unregister(LPCTSTR name)
+	void CWindowClass::Unregister(LPCTSTR name)
 	{
 		auto entry = s_ClassTable.find(name);
 		if (entry != s_ClassTable.end())

@@ -3,9 +3,9 @@
 
 namespace Lambda
 {
-    //-----
+    //------
     //CLayer
-    //-----
+    //------
 
     CLayer::CLayer(const char* pName)
         : m_pName(pName)
@@ -18,17 +18,17 @@ namespace Lambda
     }
 
 
-    void CLayer::OnUpdate(const CTime& dt)
+    void CLayer::OnUpdate(const CTime&)
     {
     }
 
 
-    void CLayer::OnRender(Renderer3D& renderer, const CTime& dt)
+    void CLayer::OnRender(Renderer3D&, const CTime&)
     {
     }
 
 
-    void CLayer::OnRenderUI(const CTime& dt)
+    void CLayer::OnRenderUI(const CTime&)
     {
     }
 

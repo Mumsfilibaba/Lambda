@@ -1,7 +1,7 @@
 #pragma once
 namespace Lambda
 {
-	inline DXGI_FORMAT ConvertFormat(Format format)
+	inline DXGI_FORMAT ConvertFormat(EFormat format)
 	{
 		switch (format)
 		{
@@ -56,7 +56,7 @@ namespace Lambda
 	}
 
 
-	inline Format ConvertDXGIFormat(DXGI_FORMAT format)
+	inline EFormat ConvertDXGIFormat(DXGI_FORMAT format)
 	{
 		switch (format)
 		{
@@ -111,7 +111,7 @@ namespace Lambda
 	}
 
 
-	inline D3D12_RESOURCE_STATES ConvertResourceState(ResourceState state)
+	inline D3D12_RESOURCE_STATES ConvertResourceState(EResourceState state)
 	{
 		switch (state)
 		{
@@ -130,7 +130,7 @@ namespace Lambda
 	}
 
 
-	inline ResourceState ConvertD3D12ResourceState(D3D12_RESOURCE_STATES state)
+	inline EResourceState ConvertD3D12ResourceState(D3D12_RESOURCE_STATES state)
 	{
 		switch (state)
 		{
@@ -147,7 +147,7 @@ namespace Lambda
 	}
 
 
-	inline D3D12_COMMAND_LIST_TYPE ConvertCommandListType(DeviceContextType type)
+	inline D3D12_COMMAND_LIST_TYPE ConvertCommandListType(EDeviceContextType type)
 	{
 		switch (type)
 		{

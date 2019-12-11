@@ -505,7 +505,7 @@ namespace Lambda
 	}
 
 
-	bool VKNSwapChain::SetFullscreenState(bool fullscreenState)
+	bool VKNSwapChain::SetFullscreenState(bool)
 	{
 		return false;
 	}

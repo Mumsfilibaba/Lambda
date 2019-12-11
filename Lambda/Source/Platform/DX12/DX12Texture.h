@@ -2,28 +2,27 @@
 #include "Graphics/Core/ITexture.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include <wrl/client.h>
-	#include "Graphics/Core/DeviceObjectBase.h"
+	#include "Graphics/Core/CDeviceObjectBase.h"
 	#include "DX12DescriptorHandle.h"
 	#include "DX12Conversions.inl"
 
 namespace Lambda
 {
-	class DX12Texture final : public DeviceObjectBase<DX12Device, ITexture>
+	class DX12Texture final : public CDeviceObjectBase<DX12Device, ITexture>
 	{
-		friend class DX12DeviceContext;
 		friend class DX12Device;
-
+		friend class DX12DeviceContext;
 	public:
 		LAMBDA_NO_COPY(DX12Texture);
 
 		DX12Texture(DX12Device* pDevice, ID3D12Resource* pResource);
-		DX12Texture(DX12Device* pDevice, const TextureDesc& desc);
+		DX12Texture(DX12Device* pDevice, const STextureDesc& desc);
 		~DX12Texture() = default;
 
 		virtual void* GetNativeHandle() const override final;
-		virtual const TextureDesc& GetDesc() const override final;
+		virtual const STextureDesc& GetDesc() const override final;
 	private:
-		void Init(const TextureDesc& desc);
+		void Init(const STextureDesc& desc);
 		void InitFromResource(ID3D12Resource* pResource);
 
 		void SetResource(ID3D12Resource* pResource);
@@ -34,7 +33,7 @@ namespace Lambda
 	private:
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_Texture;
 		DX12DescriptorHandle m_hDescriptor;
-		TextureDesc m_Desc;
+		STextureDesc m_Desc;
 	};
 
 

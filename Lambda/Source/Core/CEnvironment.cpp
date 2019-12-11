@@ -2,7 +2,7 @@
 #include "Core/CEnvironment.h"
 #include "Core/Event/IEventListener.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
-	#include "../Platform/Windows/WindowsEnvironment.h"
+	#include "../Platform/Windows/CWindowsEnvironment.h"
 #elif defined(LAMBDA_PLAT_MACOS)
     #include "../Platform/macOS/CmacOSEnvironment.h"
 #endif
@@ -19,7 +19,7 @@ namespace Lambda
 	CEnvironment* CEnvironment::Create()
 	{
 #if defined(LAMBDA_PLAT_WINDOWS)
-		return DBG_NEW WindowsEnvironment();
+		return DBG_NEW CWindowsEnvironment();
 #elif defined(LAMBDA_PLAT_MACOS)
         return DBG_NEW CmacOSEnvironment();
 #endif

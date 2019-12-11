@@ -2,7 +2,7 @@
 #include "Graphics/Core/IBuffer.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include <wrl/client.h>
-	#include "Graphics/Core/DeviceObjectBase.h"
+	#include "Graphics/Core/CDeviceObjectBase.h"
 	#include "DX12DescriptorHandle.h"
 
 namespace Lambda
@@ -13,24 +13,23 @@ namespace Lambda
 	//DX12Buffer
 	//----------
 
-	class DX12Buffer final : public DeviceObjectBase<DX12Device, IBuffer>
+	class DX12Buffer final : public CDeviceObjectBase<DX12Device, IBuffer>
 	{
 		friend class DX12Device;
 		friend class DX12DeviceContext;
-
 	public:
+		DX12Buffer(DX12Device* pDevice, const SBufferDesc& desc);
+		~DX12Buffer() = default;
+		
 		LAMBDA_NO_COPY(DX12Buffer);
 
-		DX12Buffer(DX12Device* pDevice, const BufferDesc& desc);
-		~DX12Buffer() = default;
-
 		virtual void* GetNativeHandle() const override final;
-		virtual const BufferDesc& GetDesc() const override final;
+		virtual const SBufferDesc& GetDesc() const override final;
 		
 		void Map(void** ppMem);
 		void Unmap();
 	private:
-		void Init(const BufferDesc& desc);
+		void Init(const SBufferDesc& desc);
 		
 		void SetDescriporHandle(const DX12DescriptorHandle& hDescriptor);
 
@@ -45,7 +44,7 @@ namespace Lambda
 		D3D12_INDEX_BUFFER_VIEW m_IBV;
 		D3D12_GPU_VIRTUAL_ADDRESS m_Adress;
 		DX12DescriptorHandle m_hDescriptor;
-		BufferDesc m_Desc;
+		SBufferDesc m_Desc;
 	};
 
 

@@ -901,7 +901,7 @@ namespace Lambda
 	}
 
 	
-	std::vector<const char*> VKNDevice::GetOptionalInstanceExtensions(bool debug)
+	std::vector<const char*> VKNDevice::GetOptionalInstanceExtensions(bool)
 	{
 		std::vector<const char*> optionalExtensions;
 		optionalExtensions.push_back(VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME);
@@ -910,7 +910,7 @@ namespace Lambda
 
 
 	VKAPI_ATTR VkBool32 VKAPI_CALL VKNDevice::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-		VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
+		VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void*)
 	{
 		//Get severity
 		ELogSeverity severity = LOG_SEVERITY_UNKNOWN;
