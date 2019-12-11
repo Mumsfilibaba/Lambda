@@ -1,6 +1,9 @@
 #include "LambdaPch.h"
 #include "Core/CEnvironment.h"
 #include "Core/Event/IEventListener.h"
+#include "Core/Input/CDefaultMouseController.h"
+#include "Core/Input/CDefaultGamepadController.h"
+#include "Core/Input/CDefaultKeyboardController.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include "../Platform/Windows/CWindowsEnvironment.h"
 #elif defined(LAMBDA_PLAT_MACOS)
@@ -46,7 +49,22 @@ namespace Lambda
     }
 
 
-    void CEnvironment::AddEventListener(IEventListener* pListener)
+	void CEnvironment::Init()
+	{
+		//Create default input controllers
+		CDefaultMouseController* pMouseController = DBG_NEW CDefaultMouseController();
+		m_pMouseController = pMouseController;
+		AddEventListener(pMouseController);
+
+		CDefaultKeyboardController* pKeyboardController = DBG_NEW CDefaultKeyboardController();
+		m_pKeyboardController	= pKeyboardController;
+		AddEventListener(pKeyboardController);
+
+		m_pGamepadController	= DBG_NEW CDefaultGamepadController();
+	}
+
+
+	void CEnvironment::AddEventListener(IEventListener* pListener)
     {
         LAMBDA_ASSERT_PRINT(pListener != nullptr, "[LAMBDA ENGINE] pListener cannot be nullptr");
         m_EventListeners.emplace_back(pListener);

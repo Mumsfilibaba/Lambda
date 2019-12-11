@@ -22,10 +22,10 @@ namespace Lambda
 
         LAMBDA_NO_COPY(CEnvironment);
         
-		virtual void Init() = 0;
 		virtual void ProcessEvents() = 0;
 		virtual void Release() = 0;
         virtual void PrintF(const char* pFormat, ...) = 0;
+		virtual void Init();
         virtual void AddEventListener(IEventListener* pListener);
         
         _forceinline IKeyboardController* GetKeyboardController() const

@@ -22,6 +22,5 @@ namespace Lambda
             s_LastState[i]      = s_CurrentState[i];
             s_CurrentState[i]   = pGamepadController->GetGamepadState(EGamepad(i));
         }
-        
     }
 }

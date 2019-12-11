@@ -44,13 +44,13 @@ namespace Lambda
         
 		LAMBDA_DECLARE_EVENT_TYPE(CWindowMoveEvent);
 		
-		_forceinline uint32 GetWidth() const  
+		_forceinline uint32 GetX() const  
 		{ 
 			return m_X; 
 		}
 		
 		
-		_forceinline uint32 GetHeight() const 
+		_forceinline uint32 GetY() const 
 		{ 
 			return m_Y; 
 		}

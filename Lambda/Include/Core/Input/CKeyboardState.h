@@ -10,17 +10,27 @@ namespace Lambda
 	class LAMBDA_API CKeyboardState final
 	{
     public:
-        CKeyboardState() = default;
-        CKeyboardState(const CKeyboardState& other) = default;
-        CKeyboardState(CKeyboardState&& other) = default;
+        CKeyboardState();
+        CKeyboardState(const CKeyboardState& other) noexcept;
+        CKeyboardState(CKeyboardState&& other) noexcept;
         ~CKeyboardState() = default;
         
-        CKeyboardState& operator=(const CKeyboardState& other) = default;
-        CKeyboardState& operator=(CKeyboardState&& other) = default;
+        CKeyboardState& operator=(const CKeyboardState& other) noexcept;
+        CKeyboardState& operator=(CKeyboardState&& other) noexcept;
         
-        bool IsKeyDown(EKey key) {return false;}
-        bool IsKeyUp(EKey key) {return false;}
-        // Difference between key-down and -pressed is that pressed only checks the current frame's state
-        bool IsKeyPressed(EKey key) {return false;}
+		void SetKeyStateDown(EKey key);
+		void SetKeyStateUp(EKey key);
+
+        _forceinline bool IsKeyDown(EKey key) 
+		{
+			return m_Keys[key] == true;
+		}
+			
+		_forceinline bool IsKeyUp(EKey key) 
+		{
+			return m_Keys[key] == false;
+		}
+	private:
+		bool m_Keys[KEY_LAST];
 	};
 }

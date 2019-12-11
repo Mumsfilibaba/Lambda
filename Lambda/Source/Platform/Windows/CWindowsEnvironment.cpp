@@ -28,6 +28,8 @@ namespace Lambda
 
 	void CWindowsEnvironment::Init()
 	{
+		CEnvironment::Init();
+
 		//Create window
 		m_pWindow = DBG_NEW CWindowsWindow("Lambda Engine", 1280, 720);
 
@@ -94,7 +96,7 @@ namespace Lambda
 	
 	bool CWindowsEnvironment::OnWindowMove(const CWindowMoveEvent& event)
 	{
-		LOG_ENVIRONMENT_INFO("Window Moved x: %d, y: %d\n", event.GetWidth(), event.GetHeight());
+		LOG_ENVIRONMENT_INFO("Window Moved x: %d, y: %d\n", event.GetX(), event.GetY());
 		return false;
 	}
 

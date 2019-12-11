@@ -9,10 +9,34 @@ namespace Lambda
     //CKeyboard
     //---------
 
-    CKeyboardState CKeyboard::s_LastState = CKeyboardState();
-    CKeyboardState CKeyboard::s_CurrentState = CKeyboardState();
+    CKeyboardState CKeyboard::s_LastState		= CKeyboardState();
+    CKeyboardState CKeyboard::s_CurrentState	= CKeyboardState();
 
-    void CKeyboard::Update()
+	bool CKeyboard::IsKeyPressed(EKey key)
+	{
+		return s_LastState.IsKeyUp(key) && s_CurrentState.IsKeyDown(key);
+	}
+
+
+	bool CKeyboard::IsKeyUp(EKey key)
+	{
+		return s_LastState.IsKeyUp(key);
+	}
+
+
+	bool CKeyboard::IsKeyDown(EKey key)
+	{
+		return s_CurrentState.IsKeyDown(key);
+	}
+
+
+	const CKeyboardState& CKeyboard::GetState()
+	{
+		return s_CurrentState;
+	}
+
+
+	void CKeyboard::Update()
     {
         CEnvironment& environment = CEnvironment::Get();
         IKeyboardController* pKeyboardController = environment.GetKeyboardController();

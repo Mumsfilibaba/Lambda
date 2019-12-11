@@ -15,5 +15,6 @@ namespace Lambda
         MOUSEBUTTON_RIGHT       = 3,
         MOUSEBUTTON_FORWARD     = 4,
         MOUSEBUTTON_BACKWARD    = 5,
+		MOUSEBUTTON_LAST		= MOUSEBUTTON_BACKWARD,
     };
 }
