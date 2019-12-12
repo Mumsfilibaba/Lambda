@@ -15,7 +15,7 @@ namespace Lambda
 	{
 	public:
 		CEventKeyboardController();
-		~CEventKeyboardController() = default;
+		~CEventKeyboardController();
 
 		virtual bool OnEvent(const CEvent& event) override final;
 		virtual bool IsKeyUp(EKey key) const override final;

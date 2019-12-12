@@ -3,8 +3,9 @@
 	#include "Core/CLogManager.h"
 	#include "Utilities/StringHelper.h"
 	#include "WindowsHelper.h"
-	#include "CWindowsWindow.h"
 	#include "CWindowClass.h"
+	#include "CWindowsWindow.h"
+	#include "CWindowsEnvironment.h"
 	#include "Core/Event/CWindowEvent.h"
 	#include "Core/Event/CKeyEvent.h"
 	#include "Core/Event/CMouseEvent.h"
@@ -84,8 +85,8 @@ namespace Lambda
 
 			if (ChangeDisplaySettingsW(&settings, CDS_FULLSCREEN) == DISP_CHANGE_SUCCESSFUL)
 			{
-				m_Style		= GetWindowLongW(m_hWindow, GWL_STYLE);
-				m_ExStyle	= GetWindowLongW(m_hWindow, GWL_EXSTYLE);
+				m_Style	  = GetWindowLongW(m_hWindow, GWL_STYLE);
+				m_ExStyle = GetWindowLongW(m_hWindow, GWL_EXSTYLE);
 
 				SetWindowLongW(m_hWindow, GWL_STYLE, WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS);
 				SetWindowLongW(m_hWindow, GWL_EXSTYLE, WS_EX_APPWINDOW);
@@ -219,13 +220,19 @@ namespace Lambda
 		
 		case WM_KEYDOWN:
 		{
-			CKeyPressedEvent event = CKeyPressedEvent(KEY_UNKNOWN, GetKeyModifers(), uint32(LOWORD(lParam)));
+			CWindowsEnvironment& environment = GET_WINDOWS_ENVIRONMENT();
+			EKey key = environment.ConvertKeyFromWindows(uint32(wParam));
+
+			CKeyPressedEvent event = CKeyPressedEvent(key, GetKeyModifers(), uint32(LOWORD(lParam)));
 			DispatchEvent(event);
 			break;
 		}
 		case WM_KEYUP:
 		{
-			CKeyReleasedEvent event = CKeyReleasedEvent(KEY_UNKNOWN, Lambda::GetKeyModifers());
+			CWindowsEnvironment& environment = GET_WINDOWS_ENVIRONMENT();
+			EKey key = environment.ConvertKeyFromWindows(uint32(wParam));
+
+			CKeyReleasedEvent event = CKeyReleasedEvent(key, GetKeyModifers());
 			DispatchEvent(event);
 			break;
 		}

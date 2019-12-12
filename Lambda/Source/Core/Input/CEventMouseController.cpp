@@ -2,6 +2,7 @@
 #include "Core/Input/CEventMouseController.h"
 #include "Core/Event/CEventDispatcher.h"
 #include "Core/Event/CMouseEvent.h"
+#include "Core/CEnvironment.h"
 
 namespace Lambda
 {
@@ -12,6 +13,13 @@ namespace Lambda
 	CEventMouseController::CEventMouseController()
 		: m_MouseState()
 	{
+	}
+
+	
+	CEventMouseController::~CEventMouseController()
+	{
+		CEnvironment& environment = CEnvironment::Get();
+		environment.RemoveEventListener(this);
 	}
 	
 	

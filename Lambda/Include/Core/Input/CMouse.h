@@ -22,7 +22,7 @@ namespace Lambda
         static Point GetPosition();
         static const CMouseState& GetState();
     private:
-        static void Update();
+        static void UpdateState();
     private:
         static CMouseState s_CurrentState;
         static CMouseState s_LastState;

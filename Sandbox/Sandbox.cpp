@@ -39,8 +39,8 @@ namespace Lambda
 
 	void SandBoxLayer::OnUpdate(const CTime&)
 	{
-		if (CKeyboard::IsKeyDown(KEY_A))
-			LOG_DEBUG(LOG_CHANNEL_ALL_CHANNELS, LOG_SEVERITY_INFO, "A Key is down\n");
+		if (CKeyboard::IsKeyPressed(KEY_A))
+			LOG_DEBUG(LOG_CHANNEL_ALL_CHANNELS, LOG_SEVERITY_INFO, "IsKeyPressed(key=%d)\n", KEY_A);
 
 		if (CMouse::IsButtonDown(MOUSEBUTTON_LEFT))
 			LOG_DEBUG(LOG_CHANNEL_ALL_CHANNELS, LOG_SEVERITY_INFO, "Left Button is down\n");

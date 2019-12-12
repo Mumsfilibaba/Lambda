@@ -14,7 +14,7 @@ namespace Lambda
         LAMBDA_STATIC_CLASS(CGamepad);
         static const CGamepadState& GetState(EGamepad gamepadID);
     private:
-        static void Update();
+        static void UpdateState();
     private:
         static CGamepadState s_CurrentState[GAMEPAD_LAST];
         static CGamepadState s_LastState[GAMEPAD_LAST];

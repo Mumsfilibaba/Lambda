@@ -26,7 +26,7 @@ namespace Lambda
 		virtual void Release() = 0;
         virtual void PrintF(const char* pFormat, ...) = 0;
 
-		virtual void Init();
+		virtual void Initialize();
         virtual void AddEventListener(IEventListener* pListener);
 		virtual void RemoveEventListener(IEventListener* pListener);
         
@@ -49,6 +49,10 @@ namespace Lambda
         }
 	protected:
         virtual bool OnEvent(const CEvent& event);
+
+		void SetMouseController(IMouseController* pMouseController);
+		void SetKeyboardController(IKeyboardController* pKeyboardController);
+		void SetGamepadController(IGamepadController* pGamepadController);
 	protected:
 		std::vector<IEventListener*> m_EventListeners;
         IMouseController* m_pMouseController;

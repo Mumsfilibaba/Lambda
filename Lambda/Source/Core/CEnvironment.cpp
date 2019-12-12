@@ -57,18 +57,55 @@ namespace Lambda
     }
 
 
-	void CEnvironment::Init()
+	void CEnvironment::SetMouseController(IMouseController* pMouseController)
+	{
+		LAMBDA_ASSERT_PRINT(pMouseController != nullptr, "pMouseController cannot be nullptr");
+		
+		SafeDelete(m_pMouseController);
+		m_pMouseController = pMouseController;
+	}
+
+
+	void CEnvironment::SetKeyboardController(IKeyboardController* pKeyboardController)
+	{
+		LAMBDA_ASSERT_PRINT(pKeyboardController != nullptr, "pKeyboardController cannot be nullptr");
+
+		SafeDelete(m_pKeyboardController);
+		m_pKeyboardController = pKeyboardController;
+	}
+
+
+	void CEnvironment::SetGamepadController(IGamepadController* pGamepadController)
+	{
+		LAMBDA_ASSERT_PRINT(pGamepadController != nullptr, "pGamepadController cannot be nullptr");
+
+		SafeDelete(m_pGamepadController);
+		m_pGamepadController = pGamepadController;
+	}
+
+
+	void CEnvironment::Initialize()
 	{
 		//Create default input controllers
-		CEventMouseController* pMouseController = DBG_NEW CEventMouseController();
-		m_pMouseController = pMouseController;
-		AddEventListener(pMouseController);
+		if (m_pMouseController == nullptr)
+		{
+			CEventMouseController* pMouseController = DBG_NEW CEventMouseController();
+			SetMouseController(pMouseController);
+			AddEventListener(pMouseController);
+		}
 
-		CEventKeyboardController* pKeyboardController = DBG_NEW CEventKeyboardController();
-		m_pKeyboardController	= pKeyboardController;
-		AddEventListener(pKeyboardController);
+		if (m_pKeyboardController == nullptr)
+		{
+			CEventKeyboardController* pKeyboardController = DBG_NEW CEventKeyboardController();
+			SetKeyboardController(pKeyboardController);
+			AddEventListener(pKeyboardController);
+		}
 
-		m_pGamepadController = DBG_NEW CDummyGamepadController();
+		if (m_pGamepadController == nullptr)
+		{
+			CDummyGamepadController* pGamepadController = DBG_NEW CDummyGamepadController();
+			SetGamepadController(pGamepadController);
+		}
 	}
 
 
@@ -88,7 +125,7 @@ namespace Lambda
 		{
 			if (m_EventListeners[i] == pListener)
 			{
-				LOG_ENVIRONMENT_INFO("Removed EventListener\n");
+				//LOG_ENVIRONMENT_INFO("Removed EventListener\n");
 
 				m_EventListeners.erase(m_EventListeners.begin() + i);
 				return;

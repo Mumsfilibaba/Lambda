@@ -17,7 +17,7 @@ namespace Lambda
 	{
 	public:
 		CEventMouseController();
-		~CEventMouseController() = default;
+		~CEventMouseController();
 
 		virtual bool OnEvent(const CEvent& event) override final;
 		virtual bool IsButtonup(EMouseButton button) const override final;

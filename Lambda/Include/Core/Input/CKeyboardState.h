@@ -31,6 +31,6 @@ namespace Lambda
 			return m_Keys[key] == true;
 		}	
 	private:
-		bool m_Keys[KEY_LAST];
+		bool m_Keys[KEY_LAST+1];
 	};
 }

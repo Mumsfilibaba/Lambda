@@ -1,5 +1,8 @@
 #pragma once
 #include "Core/CEnvironment.h"
+#include "Core/Input/EKey.h"
+
+#define GET_WINDOWS_ENVIRONMENT (Lambda::CWindowsEnvironment&)Lambda::CEnvironment::Get
 
 namespace Lambda
 {
@@ -19,17 +22,25 @@ namespace Lambda
 		CWindowsEnvironment() = default;
 		~CWindowsEnvironment() = default;
 
-		virtual void Init() override final;
+		EKey ConvertKeyFromWindows(uint32 key);
+		uint32 ConvertKeyFromEngine(EKey key);
+
+		virtual void Initialize() override final;
 		virtual void ProcessEvents() override final;
 		virtual void Release() override final;
 		virtual void PrintF(const char* pFormat, ...) override final;
 	private:
-		virtual bool OnEvent(const CEvent& event) override final;
+		void InitializeLookUpTables();
+
 		bool OnWindowClose(const CWindowClosedEvent&);
 		bool OnWindowMove(const CWindowMoveEvent& event);
 		bool OnWindowResize(const CWindowResizeEvent& event);
 		bool OnWindowFocusChanges(const CWindowFocusChangedEvent& event);
+		
+		virtual bool OnEvent(const CEvent& event) override final;
 	private:
 		CWindowsWindow* m_pWindow;
+		EKey m_WindowsToLambdaKeyTable[256];
+		uint32 m_LambdaToWindowsKeyTable[KEY_LAST+1];
 	};
 }

@@ -11,8 +11,8 @@ namespace Lambda
     //CKeyboard
     //---------
 
-    CKeyboardState CKeyboard::s_LastState		= CKeyboardState();
-    CKeyboardState CKeyboard::s_CurrentState	= CKeyboardState();
+    CKeyboardState CKeyboard::s_LastState	 = CKeyboardState();
+    CKeyboardState CKeyboard::s_CurrentState = CKeyboardState();
 
 	bool CKeyboard::IsKeyPressed(EKey key)
 	{

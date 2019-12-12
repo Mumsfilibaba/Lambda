@@ -40,7 +40,7 @@ namespace Lambda
 	{
 	public:
 		CEngine();
-		~CEngine();
+		~CEngine() = default;
 
         LAMBDA_NO_COPY(CEngine);
         
@@ -48,8 +48,9 @@ namespace Lambda
 
         void Initialize(const SEngineParams& params);
         void Run();
-        void DoFrame();
         void Release();
+	private:
+        void DoFrame();
 	private:
 		CEnvironment* m_pEnvironment;
 		CLogManager* m_pLogManager;

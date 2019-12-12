@@ -19,7 +19,7 @@ namespace Lambda
 		static bool IsKeyDown(EKey key);
 		static const CKeyboardState& GetState();
     private:
-        static void Update();
+        static void UpdateState();
 	private:
 		static CKeyboardState s_CurrentState;
 		static CKeyboardState s_LastState;

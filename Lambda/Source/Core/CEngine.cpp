@@ -54,7 +54,7 @@ namespace Lambda
 	}
 
 
-	CEngine::~CEngine()
+	void CEngine::Release()
 	{
 		//Release layers
 		m_LayerStack.ReleaseLayers();
@@ -62,15 +62,11 @@ namespace Lambda
 		//Release subsystems
 		m_pLogManager->Release();
 		m_pEnvironment->Release();
-	}
 
-
-	void CEngine::Release()
-	{
 		delete this;
 	}
 
-
+	
 	void CEngine::Initialize(const SEngineParams&)
 	{
 		//Create Host
@@ -80,7 +76,7 @@ namespace Lambda
 		m_pLogManager = DBG_NEW CLogManager();
 				
 		//Init Host
-		m_pEnvironment->Init();
+		m_pEnvironment->Initialize();
 		m_pEnvironment->AddEventListener(this);
 
 		//Create Game Layer
@@ -105,13 +101,7 @@ namespace Lambda
 		//Start loop
 		while (m_IsRunning)
 		{
-			m_pEnvironment->ProcessEvents();
-            
-            //Update input
-            CKeyboard::Update();
-            CMouse::Update();
-            CGamepad::Update();
-            
+			m_pEnvironment->ProcessEvents();         
 			DoFrame();
 		}
 	}
@@ -126,8 +116,13 @@ namespace Lambda
 		m_FrameAccumulator += m_FrameClock.GetDeltaTime();
 		while (m_FrameAccumulator >= m_Timestep)
 		{
+			//Update input at the same rate as update
+			CMouse::Update();
+			CGamepad::Update();
+			CKeyboard::Update();
+
 			//Update all layers
-			for (CLayer* pLayer : m_LayerStack)
+			for (auto pLayer : m_LayerStack)
 				pLayer->OnUpdate(m_Timestep);
 
 			m_FrameAccumulator -= m_Timestep;
