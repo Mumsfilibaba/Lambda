@@ -15,15 +15,6 @@ namespace Lambda
     CMouseState CMouse::s_LastState		= CMouseState();
     CMouseState CMouse::s_CurrentState	= CMouseState();
 
-    void CMouse::UpdateState()
-    {
-        s_LastState	= s_CurrentState;
-        
-        IMouseController* pMouseController = GET_MOUSECONTROLLER();
-        s_CurrentState	= pMouseController->GetState();
-    }
-	
-	
 	bool CMouse::IsButtonDown(EMouseButton button)
 	{
 		IMouseController* pMouseController = GET_MOUSECONTROLLER();
@@ -64,5 +55,14 @@ namespace Lambda
 		IMouseController* pMouseController = GET_MOUSECONTROLLER();
 		s_CurrentState = pMouseController->GetState();
 		return s_CurrentState;
+	}
+
+
+	void CMouse::UpdateState()
+	{
+		s_LastState = s_CurrentState;
+
+		IMouseController* pMouseController = GET_MOUSECONTROLLER();
+		s_CurrentState = pMouseController->GetState();
 	}
 }
