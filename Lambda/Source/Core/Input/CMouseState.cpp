@@ -16,9 +16,7 @@ namespace Lambda
 		m_ScrollWheel(0.0f, 0.0f),
 		m_Buttons()
 	{
-		m_Position		= other.m_Position;
-		m_ScrollWheel	= other.m_ScrollWheel;
-		memcpy(m_Buttons, other.m_Buttons, sizeof(m_Buttons));
+		memcpy(this, &other, sizeof(CMouseState));
 	}
 
 
@@ -27,20 +25,14 @@ namespace Lambda
 		m_ScrollWheel(0.0f, 0.0f),
 		m_Buttons()
 	{
-		m_Position		= other.m_Position;
-		m_ScrollWheel	= other.m_ScrollWheel;
-		memcpy(m_Buttons, other.m_Buttons, sizeof(m_Buttons));
+		memcpy(this, &other, sizeof(CMouseState));
 	}
 
 
 	CMouseState& CMouseState::operator=(const CMouseState& other) noexcept
 	{
 		if (this != &other)
-		{
-			m_Position = other.m_Position;
-			m_ScrollWheel = other.m_ScrollWheel;
 			memcpy(this, &other, sizeof(CMouseState));
-		}
 
 		return *this;
 	}
@@ -49,11 +41,7 @@ namespace Lambda
 	CMouseState& CMouseState::operator=(CMouseState&& other) noexcept
 	{
 		if (this != &other)
-		{
-			m_Position		= other.m_Position;
-			m_ScrollWheel	= other.m_ScrollWheel;
 			memcpy(this, &other, sizeof(CMouseState));
-		}
 
 		return *this;
 	}

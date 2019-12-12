@@ -3,6 +3,8 @@
 #include "Core/Input/IGamepadController.h"
 #include "Core/CEnvironment.h"
 
+#define GET_GAMEPADCONTROLLER Lambda::CEnvironment::Get().GetGamepadController
+
 namespace Lambda
 {
     //--------
@@ -12,15 +14,21 @@ namespace Lambda
     CGamepadState CGamepad::s_LastState[4];
     CGamepadState CGamepad::s_CurrentState[4];
 
-    void CGamepad::Update()
-    {
-        CEnvironment& environment = CEnvironment::Get();
-        IGamepadController* pGamepadController = environment.GetGamepadController();
+	const CGamepadState& CGamepad::GetState(EGamepad gamepadID)
+	{
+		IGamepadController* pGamepadController = GET_GAMEPADCONTROLLER();
+		s_CurrentState[gamepadID] = pGamepadController->GetGamepadState(gamepadID);
+		return s_CurrentState[gamepadID];
+	}
 
+
+	void CGamepad::Update()
+    {
+        IGamepadController* pGamepadController = GET_GAMEPADCONTROLLER();
         for (uint32 i = 0; i < GAMEPAD_LAST; i++)
         {
-            s_LastState[i]      = s_CurrentState[i];
-            s_CurrentState[i]   = pGamepadController->GetGamepadState(EGamepad(i));
+            s_LastState[i]    = s_CurrentState[i];
+            s_CurrentState[i] = pGamepadController->GetGamepadState(EGamepad(i));
         }
     }
 }

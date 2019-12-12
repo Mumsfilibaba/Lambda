@@ -13,14 +13,14 @@ namespace Lambda
 	CKeyboardState::CKeyboardState(const CKeyboardState& other) noexcept
 		: m_Keys()
 	{
-		memcpy(m_Keys, other.m_Keys, sizeof(m_Keys));
+		memcpy(this, &other, sizeof(CKeyboardState));
 	}
 	
 	
 	CKeyboardState::CKeyboardState(CKeyboardState&& other) noexcept
 		: m_Keys()
 	{
-		memcpy(m_Keys, other.m_Keys, sizeof(m_Keys));
+		memcpy(this, &other, sizeof(CKeyboardState));
 	}
 	
 	

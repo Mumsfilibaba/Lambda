@@ -3,6 +3,8 @@
 #include "Core/Input/IKeyboardController.h"
 #include "Core/CEnvironment.h"
 
+#define GET_KEYBOARDCONTROLLER Lambda::CEnvironment::Get().GetKeyboardController
+
 namespace Lambda
 {
     //---------
@@ -14,34 +16,38 @@ namespace Lambda
 
 	bool CKeyboard::IsKeyPressed(EKey key)
 	{
-		return s_LastState.IsKeyUp(key) && s_CurrentState.IsKeyDown(key);
+		IKeyboardController* pKeyboardController = GET_KEYBOARDCONTROLLER();
+		return s_LastState.IsKeyUp(key) && pKeyboardController->IsKeyDown(key);
 	}
 
 
 	bool CKeyboard::IsKeyUp(EKey key)
 	{
-		return s_LastState.IsKeyUp(key);
+		IKeyboardController* pKeyboardController = GET_KEYBOARDCONTROLLER();
+		return pKeyboardController->IsKeyUp(key);
 	}
 
 
 	bool CKeyboard::IsKeyDown(EKey key)
 	{
-		return s_CurrentState.IsKeyDown(key);
+		IKeyboardController* pKeyboardController = GET_KEYBOARDCONTROLLER();
+		return pKeyboardController->IsKeyDown(key);
 	}
 
 
 	const CKeyboardState& CKeyboard::GetState()
 	{
+		IKeyboardController* pKeyboardController = GET_KEYBOARDCONTROLLER();
+		s_CurrentState = pKeyboardController->GetKeyboardState();
 		return s_CurrentState;
 	}
 
 
 	void CKeyboard::Update()
     {
-        CEnvironment& environment = CEnvironment::Get();
-        IKeyboardController* pKeyboardController = environment.GetKeyboardController();
-
         s_LastState = s_CurrentState;
+
+        IKeyboardController* pKeyboardController = GET_KEYBOARDCONTROLLER();
         s_CurrentState = pKeyboardController->GetKeyboardState();
     }
 }

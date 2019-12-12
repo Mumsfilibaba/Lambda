@@ -9,20 +9,22 @@ namespace Lambda
 	class CMouseButtonPressedEvent;
 	class CMouseButtonReleasedEvent;
 
-	//-----------------------
-	//CDefaultMouseController 
-	//-----------------------
+	//---------------------
+	//CEventMouseController 
+	//---------------------
 
-	class CDefaultMouseController final : public IMouseController, public IEventListener
+	class CEventMouseController final : public IMouseController, public IEventListener
 	{
 	public:
-		CDefaultMouseController();
-		~CDefaultMouseController() = default;
+		CEventMouseController();
+		~CEventMouseController() = default;
 
-		virtual void SetPosition(const glm::ivec2& position) override final;
-		virtual glm::ivec2 GetPosition() const override final;
-		virtual CMouseState GetMouseState() const override final;
 		virtual bool OnEvent(const CEvent& event) override final;
+		virtual bool IsButtonup(EMouseButton button) const override final;
+		virtual bool IsButtonDown(EMouseButton button) const override final;
+		virtual void SetPosition(const Point& position) override final;
+		virtual Point GetPosition() const override final;
+		virtual CMouseState GetState() const override final;
 	private:
 		bool OnMouseMove(const CMouseMovedEvent& event);
 		bool OnMouseScroll(const CMouseScrolledEvent& event);

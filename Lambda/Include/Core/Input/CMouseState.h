@@ -4,6 +4,8 @@
 
 namespace Lambda
 {
+	using Point = glm::ivec2;
+
     //-----------
     //CMouseState
     //-----------
@@ -19,13 +21,13 @@ namespace Lambda
         CMouseState& operator=(const CMouseState& other) noexcept;
         CMouseState& operator=(CMouseState&& other) noexcept;
 
-		void SetPosition(const glm::ivec2& position);
+		void SetPosition(const Point& position);
 		void SetVerticalScollValue(float value);
 		void SetHorizontalScollValue(float value);
 		void SetButtonUp(EMouseButton button);
 		void SetButtonDown(EMouseButton button);
 
-		_forceinline const glm::ivec2& GetPosition() const
+		_forceinline const Point& GetPosition() const
 		{
 			return m_Position;
 		}

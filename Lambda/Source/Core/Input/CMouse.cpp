@@ -3,61 +3,66 @@
 #include "Core/Input/IMouseController.h"
 #include "Core/CEnvironment.h"
 
+#define GET_MOUSECONTROLLER Lambda::CEnvironment::Get().GetMouseController
+
 namespace Lambda
 {
+
     //------
     //CMouse
     //------
 
-    CMouseState CMouse::s_LastState = CMouseState();
-    CMouseState CMouse::s_CurrentState = CMouseState();
+    CMouseState CMouse::s_LastState		= CMouseState();
+    CMouseState CMouse::s_CurrentState	= CMouseState();
 
     void CMouse::Update()
     {
-        CEnvironment& environment = CEnvironment::Get();
-        IMouseController* pMouseController = environment.GetMouseController();
+        s_LastState	= s_CurrentState;
         
-        s_LastState		= s_CurrentState;
-        s_CurrentState	= pMouseController->GetMouseState();
+        IMouseController* pMouseController = GET_MOUSECONTROLLER();
+        s_CurrentState	= pMouseController->GetState();
     }
 	
 	
-	bool CMouse::IsMouseButtonDown(EMouseButton button)
+	bool CMouse::IsButtonDown(EMouseButton button)
 	{
-		return s_CurrentState.IsButtonDown(button);
+		IMouseController* pMouseController = GET_MOUSECONTROLLER();
+		return pMouseController->IsButtonDown(button);
 	}
 	
 	
-	bool CMouse::IsMouseButtonUp(EMouseButton button)
+	bool CMouse::IsButtonUp(EMouseButton button)
 	{
-		return s_CurrentState.IsButtonUp(button);;
+		IMouseController* pMouseController = GET_MOUSECONTROLLER();
+		return s_CurrentState.IsButtonUp(button);
 	}
 	
 	
-	bool CMouse::IsMouseButtonPressed(EMouseButton button)
+	bool CMouse::IsButtonPressed(EMouseButton button)
 	{
-		return s_LastState.IsButtonUp(button) && s_CurrentState.IsButtonDown(button);
+		IMouseController* pMouseController = GET_MOUSECONTROLLER();
+		return s_LastState.IsButtonUp(button) && pMouseController->IsButtonDown(button);
 	}
 	
 	
-	void CMouse::SetMousePosition(const glm::ivec2& position)
+	void CMouse::SetPosition(const Point& position)
 	{
-		CEnvironment& environment = CEnvironment::Get();
-		IMouseController* pMouseController = environment.GetMouseController();
+		IMouseController* pMouseController = GET_MOUSECONTROLLER();
 		pMouseController->SetPosition(position);
 	}
 	
 	
-	glm::ivec2 CMouse::GetMousePosition()
+	Point CMouse::GetPosition()
 	{
-		CEnvironment& environment = CEnvironment::Get();
-		IMouseController* pMouseController = environment.GetMouseController();
+		IMouseController* pMouseController = GET_MOUSECONTROLLER();
 		return pMouseController->GetPosition();
 	}
 	
 	
-	const CMouseState& CMouse::GetMouseState()
+	const CMouseState& CMouse::GetState()
 	{
+		IMouseController* pMouseController = GET_MOUSECONTROLLER();
+		s_CurrentState = pMouseController->GetState();
 		return s_CurrentState;
 	}
 }

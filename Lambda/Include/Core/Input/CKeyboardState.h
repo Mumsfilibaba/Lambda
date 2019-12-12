@@ -21,15 +21,15 @@ namespace Lambda
 		void SetKeyStateDown(EKey key);
 		void SetKeyStateUp(EKey key);
 
-        _forceinline bool IsKeyDown(EKey key) 
-		{
-			return m_Keys[key] == true;
-		}
-			
-		_forceinline bool IsKeyUp(EKey key) 
+		_forceinline bool IsKeyUp(EKey key) const
 		{
 			return m_Keys[key] == false;
 		}
+
+        _forceinline bool IsKeyDown(EKey key) const 
+		{
+			return m_Keys[key] == true;
+		}	
 	private:
 		bool m_Keys[KEY_LAST];
 	};

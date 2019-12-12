@@ -244,23 +244,39 @@ namespace Lambda
 			break;
 		}
 
+		case WM_LBUTTONUP:
+		case WM_MBUTTONUP:
+		case WM_RBUTTONUP:
+		case WM_XBUTTONUP:
 		case WM_LBUTTONDOWN:
 		case WM_MBUTTONDOWN:
 		case WM_RBUTTONDOWN:
 		case WM_XBUTTONDOWN:
 		{
-			CMouseButtonPressedEvent event = CMouseButtonPressedEvent(MOUSEBUTTON_UNKNOWN, Lambda::GetKeyModifers());
-			DispatchEvent(event);
-			break;
-		}
+			EMouseButton button = MOUSEBUTTON_UNKNOWN;
+			if (msg == WM_LBUTTONDOWN || msg == WM_LBUTTONUP)
+				button = MOUSEBUTTON_LEFT;
+			else if (msg == WM_MBUTTONDOWN || msg == WM_MBUTTONUP)
+				button = MOUSEBUTTON_MIDDLE;
+			else if (msg == WM_RBUTTONDOWN || msg == WM_RBUTTONUP)
+				button = MOUSEBUTTON_RIGHT;
+			else if (GET_XBUTTON_WPARAM(wParam) == XBUTTON1)
+				button = MOUSEBUTTON_BACKWARD;
+			else
+				button = MOUSEBUTTON_FORWARD;
 
-		case WM_LBUTTONUP:
-		case WM_MBUTTONUP:
-		case WM_RBUTTONUP:
-		case WM_XBUTTONUP:
-		{
-			CMouseButtonReleasedEvent event = CMouseButtonReleasedEvent(MOUSEBUTTON_UNKNOWN, Lambda::GetKeyModifers());
-			DispatchEvent(event);
+			uint32 modifiers = GetKeyModifers();
+			if (msg == WM_LBUTTONUP || msg == WM_MBUTTONUP || msg == WM_RBUTTONUP || msg == WM_XBUTTONUP)
+			{
+				CMouseButtonReleasedEvent event = CMouseButtonReleasedEvent(button, modifiers);
+				DispatchEvent(event);
+			}
+			else
+			{
+				CMouseButtonPressedEvent event = CMouseButtonPressedEvent(button, modifiers);
+				DispatchEvent(event);
+			}
+
 			break;
 		}
 		

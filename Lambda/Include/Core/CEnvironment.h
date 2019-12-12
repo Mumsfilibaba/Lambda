@@ -18,15 +18,17 @@ namespace Lambda
 	{
 	public:
         CEnvironment();
-        virtual ~CEnvironment() = default;
+        virtual ~CEnvironment();
 
         LAMBDA_NO_COPY(CEnvironment);
         
 		virtual void ProcessEvents() = 0;
 		virtual void Release() = 0;
         virtual void PrintF(const char* pFormat, ...) = 0;
+
 		virtual void Init();
         virtual void AddEventListener(IEventListener* pListener);
+		virtual void RemoveEventListener(IEventListener* pListener);
         
         _forceinline IKeyboardController* GetKeyboardController() const
         {
@@ -49,9 +51,9 @@ namespace Lambda
         virtual bool OnEvent(const CEvent& event);
 	protected:
 		std::vector<IEventListener*> m_EventListeners;
-        IKeyboardController* m_pKeyboardController;
         IMouseController* m_pMouseController;
         IGamepadController* m_pGamepadController;
+        IKeyboardController* m_pKeyboardController;
 	public:
 		static CEnvironment* Create();
 	};

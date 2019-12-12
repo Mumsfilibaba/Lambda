@@ -26,7 +26,7 @@ namespace Lambda
 	}
 	
 
-	bool CBaseWindow::DispatchEvent(const CEvent & event)
+	bool CBaseWindow::DispatchEvent(const CEvent& event)
 	{
 		if (m_pEventCallback)
 			return m_pEventCallback->Call(event);

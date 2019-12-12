@@ -59,7 +59,11 @@ namespace Lambda
 		va_end(args);
 
 		//Print to the host
-		CEnvironment::Get().PrintF("[%s]: [%s] - %s", pSeverity, pChannel, s_Buffer);
+		CEnvironment& environment = CEnvironment::Get();
+		if (channel == LOG_CHANNEL_ALL_CHANNELS)
+			environment.PrintF("[%s]: %s", pSeverity, s_Buffer);
+		else
+			environment.PrintF("[%s]: [%s] - %s", pSeverity, pChannel, s_Buffer);
 	}
 
 

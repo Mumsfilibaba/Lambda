@@ -35,6 +35,7 @@ namespace Lambda
 
     void CLayer::OnRelease()
     {
+		delete this;
     }
 
 

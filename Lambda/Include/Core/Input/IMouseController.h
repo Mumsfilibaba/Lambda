@@ -1,6 +1,5 @@
 #pragma once
 #include "CMouseState.h"
-#include <glm/glm.hpp>
 
 namespace Lambda
 {
@@ -8,13 +7,15 @@ namespace Lambda
     //IMouseController
     //----------------
 
-    class IMouseController
+	class IMouseController
     {
     public:
         LAMBDA_INTERFACE(IMouseController);
         
-        virtual void SetPosition(const glm::ivec2& position) = 0;
-        virtual glm::ivec2 GetPosition() const = 0;
-        virtual CMouseState GetMouseState() const = 0;
+		virtual bool IsButtonup(EMouseButton button) const = 0;
+		virtual bool IsButtonDown(EMouseButton button) const = 0;
+        virtual void SetPosition(const Point& position) = 0;
+        virtual Point GetPosition() const = 0;
+        virtual CMouseState GetState() const = 0;
     };
 }

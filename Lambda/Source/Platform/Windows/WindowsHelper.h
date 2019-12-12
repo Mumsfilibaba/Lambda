@@ -1,6 +1,7 @@
 #pragma once
 #include "LambdaCore.h"
 #include "Core/Input/EKey.h"
+#include "Core/Input/EMouseButton.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#if !defined(WIN32_LEAN_AND_MEAN)
 		#define WIN32_LEAN_AND_MEAN 1
@@ -13,7 +14,7 @@ namespace Lambda
 	//Windows HelperFunctions
 	//-----------------------
 
-	static uint32 GetKeyModifers()
+	inline uint32 GetKeyModifers()
 	{
 		uint32 mods = 0;
 		if (GetKeyState(VK_SHIFT) & 0x8000)
@@ -30,6 +31,34 @@ namespace Lambda
 			mods |= KEY_MODIFIER_NUM_LOCK;
 
 		return mods;
+	}
+
+
+	EMouseButton WindowsButtonToLambda(uint32 keycode)
+	{
+		switch (keycode)
+		{
+		case MK_LBUTTON:	return MOUSEBUTTON_LEFT;
+		case MK_MBUTTON:	return MOUSEBUTTON_MIDDLE;
+		case MK_RBUTTON:	return MOUSEBUTTON_RIGHT;
+		case MK_XBUTTON1:	return MOUSEBUTTON_FORWARD;
+		case MK_XBUTTON2:	return MOUSEBUTTON_BACKWARD;
+		default: return MOUSEBUTTON_UNKNOWN;
+		}
+	}
+
+
+	uint32 LambdaButtonToWindows(EMouseButton keycode)
+	{
+		switch (keycode)
+		{
+		case MOUSEBUTTON_LEFT:		return MK_LBUTTON;
+		case MOUSEBUTTON_MIDDLE:	return MK_MBUTTON;
+		case MOUSEBUTTON_RIGHT:		return MK_RBUTTON;
+		case MOUSEBUTTON_FORWARD:	return MK_XBUTTON1;
+		case MOUSEBUTTON_BACKWARD:	return MK_XBUTTON2;
+		default: return 0;
+		}
 	}
 }
 #endif

@@ -103,7 +103,7 @@ namespace Lambda
 
 	bool CWindowsEnvironment::OnWindowFocusChanges(const CWindowFocusChangedEvent& event)
 	{
-		LOG_ENVIRONMENT_INFO("Window Focus %s\n", event.HasFocus() ? "Has Focus" : "Does not have focus");
+		LOG_ENVIRONMENT_INFO("Window Focus: '%s'\n", event.HasFocus() ? "Has Focus" : "Does not have focus");
 		return false;
 	}
 

@@ -150,7 +150,8 @@ namespace Lambda
         if (event.GetType() == CQuitEvent::GetStaticType())
         {
             const CQuitEvent& quit = static_cast<const CQuitEvent&>(event);
-            LOG_ENGINE_INFO("Quiting with code %d\n", quit.GetExitCode());
+            
+			LOG_ENGINE_INFO("Quiting with code %d\n", quit.GetExitCode());
             
             m_ExitCode  = quit.GetExitCode();
             m_IsRunning = false;

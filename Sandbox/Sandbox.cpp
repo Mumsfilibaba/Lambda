@@ -1,5 +1,7 @@
 #include "SandBox.h"
 #include "LambdaEntryPoint.h"
+#include "Core/Input/CKeyboard.h"
+#include "Core/Input/CMouse.h"
 #include "Core/CLogManager.h"
 #include "Graphics/CMeshFactory.h"
 #include <glm/gtc/matrix_transform.hpp>
@@ -17,7 +19,7 @@ namespace Lambda
 
 	CLayer* CreateGameLayer()
 	{
-		return new SandBoxLayer();
+		return DBG_NEW SandBoxLayer();
 	}
 
 	//------------
@@ -37,6 +39,11 @@ namespace Lambda
 
 	void SandBoxLayer::OnUpdate(const CTime&)
 	{
+		if (CKeyboard::IsKeyDown(KEY_A))
+			LOG_DEBUG(LOG_CHANNEL_ALL_CHANNELS, LOG_SEVERITY_INFO, "A Key is down\n");
+
+		if (CMouse::IsButtonDown(MOUSEBUTTON_LEFT))
+			LOG_DEBUG(LOG_CHANNEL_ALL_CHANNELS, LOG_SEVERITY_INFO, "Left Button is down\n");
 	}
 
 
@@ -47,6 +54,7 @@ namespace Lambda
 
 	void SandBoxLayer::OnRelease()
 	{
+		CLayer::OnRelease();
 	}
 
 
