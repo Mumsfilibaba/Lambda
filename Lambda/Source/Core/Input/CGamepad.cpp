@@ -22,7 +22,7 @@ namespace Lambda
 	}
 
 
-	void CGamepad::Update()
+	void CGamepad::UpdateState()
     {
         IGamepadController* pGamepadController = GET_GAMEPADCONTROLLER();
         for (uint32 i = 0; i < GAMEPAD_LAST; i++)

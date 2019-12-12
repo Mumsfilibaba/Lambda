@@ -117,9 +117,9 @@ namespace Lambda
 		while (m_FrameAccumulator >= m_Timestep)
 		{
 			//Update input at the same rate as update
-			CMouse::Update();
-			CGamepad::Update();
-			CKeyboard::Update();
+			CMouse::UpdateState();
+			CGamepad::UpdateState();
+			CKeyboard::UpdateState();
 
 			//Update all layers
 			for (auto pLayer : m_LayerStack)

@@ -15,7 +15,7 @@ namespace Lambda
     CMouseState CMouse::s_LastState		= CMouseState();
     CMouseState CMouse::s_CurrentState	= CMouseState();
 
-    void CMouse::Update()
+    void CMouse::UpdateState()
     {
         s_LastState	= s_CurrentState;
         

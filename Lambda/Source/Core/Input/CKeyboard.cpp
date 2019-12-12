@@ -43,7 +43,7 @@ namespace Lambda
 	}
 
 
-	void CKeyboard::Update()
+	void CKeyboard::UpdateState()
     {
         s_LastState = s_CurrentState;
 
