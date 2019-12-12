@@ -276,7 +276,6 @@ namespace Lambda
 				CMouseButtonPressedEvent event = CMouseButtonPressedEvent(button, modifiers);
 				DispatchEvent(event);
 			}
-
 			break;
 		}
 		
