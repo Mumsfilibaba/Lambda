@@ -2,6 +2,7 @@
 #include "LambdaEntryPoint.h"
 #include "Core/Input/CKeyboard.h"
 #include "Core/Input/CMouse.h"
+#include "Core/Input/CGamepad.h"
 #include "Core/CLogManager.h"
 #include "Graphics/CMeshFactory.h"
 #include <glm/gtc/matrix_transform.hpp>
@@ -44,6 +45,9 @@ namespace Lambda
 
 		if (CMouse::IsButtonDown(MOUSEBUTTON_LEFT))
 			LOG_DEBUG(LOG_CHANNEL_ALL_CHANNELS, LOG_SEVERITY_INFO, "Left Button is down\n");
+
+
+		CGamepadState gamepad = CGamepad::GetState(GAMEPAD_1);
 	}
 
 

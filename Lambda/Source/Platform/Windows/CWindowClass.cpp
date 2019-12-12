@@ -1,6 +1,7 @@
 #include "LambdaPch.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
-    #include "CWindowClass.h"
+#include "CWindowClass.h"
+
 namespace Lambda
 {
 	//------------

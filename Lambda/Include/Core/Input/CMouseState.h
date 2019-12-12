@@ -52,7 +52,7 @@ namespace Lambda
 			return m_Buttons[button] == true;
 		}
     private:
-		glm::ivec2 m_Position;
+		Point m_Position;
 		glm::vec2 m_ScrollWheel;
 		bool m_Buttons[MOUSEBUTTON_LAST];
     };

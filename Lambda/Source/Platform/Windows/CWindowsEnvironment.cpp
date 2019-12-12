@@ -2,7 +2,8 @@
 #if defined(LAMBDA_PLAT_WINDOWS)
 #include "CWindowsEnvironment.h"
 #include "CWindowsWindow.h"
-#include "CWindowsKeyboardController.h"
+#include "CWindowsMouseController.h"
+#include "CXinputGamepadController.h"
 #include "Core/Event/CEventDispatcher.h"
 #include "Core/Event/CWindowEvent.h"
 #include "Core/Event/CQuitEvent.h"
@@ -31,9 +32,13 @@ namespace Lambda
 	{
 		InitializeLookUpTables();
 
-		//Create a new keyboardcontroller
-		IKeyboardController* pKeyboardController = DBG_NEW CWindowsKeyboardController();
-		SetKeyboardController(pKeyboardController);
+		//Create new input controllers
+		CWindowsMouseController* pMouseController = DBG_NEW CWindowsMouseController();
+		SetMouseController(pMouseController);
+		AddEventListener(pMouseController);
+
+		CXInputGamepadController* pGamepadController = DBG_NEW CXInputGamepadController();
+		SetGamepadController(pGamepadController);
 
 		//Init parent
 		CEnvironment::Initialize();
@@ -90,16 +95,13 @@ namespace Lambda
 	bool CWindowsEnvironment::OnEvent(const CEvent& event)
 	{
 		CEventDispatcher dispatcher;
-		if (dispatcher.Dispatch(this, &CWindowsEnvironment::OnWindowMove, event))
+		if (dispatcher.Dispatch(this, &CWindowsEnvironment::OnWindowClose, event))
 			return true;
-		else if (dispatcher.Dispatch(this, &CWindowsEnvironment::OnWindowClose, event))
-			return true;
-		else if (dispatcher.Dispatch(this, &CWindowsEnvironment::OnWindowResize, event))
-			return true;
-		else if (dispatcher.Dispatch(this, &CWindowsEnvironment::OnWindowFocusChanges, event))
-			return true;
-		else
-			return CEnvironment::OnEvent(event);
+		
+		dispatcher.Dispatch(this, &CWindowsEnvironment::OnWindowMove, event);
+		dispatcher.Dispatch(this, &CWindowsEnvironment::OnWindowResize, event);
+		dispatcher.Dispatch(this, &CWindowsEnvironment::OnWindowFocusChanges, event);
+		CEnvironment::OnEvent(event);
 	}
 	
 	

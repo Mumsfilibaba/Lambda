@@ -47,7 +47,7 @@ namespace Lambda
 	}
 
 
-	void CMouseState::SetPosition(const glm::ivec2& position)
+	void CMouseState::SetPosition(const Point& position)
 	{
 		m_Position = position;
 	}

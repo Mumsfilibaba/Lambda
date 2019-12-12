@@ -11,7 +11,8 @@ namespace Lambda
 	//---------------------
 
 	CEventMouseController::CEventMouseController()
-		: m_MouseState()
+		: IMouseController(),
+		m_MouseState()
 	{
 	}
 
@@ -22,35 +23,6 @@ namespace Lambda
 		environment.RemoveEventListener(this);
 	}
 	
-	
-	void CEventMouseController::SetPosition(const Point& position)
-	{
-		m_MouseState.SetPosition(position);
-	}
-
-
-	Point CEventMouseController::GetPosition() const
-	{
-		return m_MouseState.GetPosition();
-	}
-
-
-	CMouseState CEventMouseController::GetState() const
-	{
-		return m_MouseState;
-	}
-
-
-	bool CEventMouseController::OnEvent(const CEvent& event)
-	{
-		CEventDispatcher dispatcher;
-		dispatcher.Dispatch(this, &CEventMouseController::OnMouseMove, event);
-		dispatcher.Dispatch(this, &CEventMouseController::OnMouseScroll, event);
-		dispatcher.Dispatch(this, &CEventMouseController::OnMouseButtonPressed, event);
-		dispatcher.Dispatch(this, &CEventMouseController::OnMouseButtonReleased, event);
-		return false;
-	}
-
 
 	bool CEventMouseController::IsButtonup(EMouseButton button) const
 	{
@@ -64,11 +36,20 @@ namespace Lambda
 	}
 
 
-	bool CEventMouseController::OnMouseMove(const CMouseMovedEvent& event)
+	CMouseState CEventMouseController::GetState() const
 	{
-		//LOG_DEBUG(LOG_CHANNEL_ALL_CHANNELS, LOG_SEVERITY_INFO, "Mouse Moved (x:%d, y:%d)\n", event.GetX(), event.GetY());
+		CMouseState mouseState = m_MouseState;
+		mouseState.SetPosition(this->GetPosition());
+		return mouseState;
+	}
 
-		m_MouseState.SetPosition(glm::ivec2(event.GetX(), event.GetY()));
+
+	bool CEventMouseController::OnEvent(const CEvent& event)
+	{
+		CEventDispatcher dispatcher;
+		dispatcher.Dispatch(this, &CEventMouseController::OnMouseScroll, event);
+		dispatcher.Dispatch(this, &CEventMouseController::OnMouseButtonPressed, event);
+		dispatcher.Dispatch(this, &CEventMouseController::OnMouseButtonReleased, event);
 		return false;
 	}
 

@@ -11,7 +11,8 @@ namespace Lambda
 	//------------------------
 
 	CEventKeyboardController::CEventKeyboardController()
-		: m_KeyboardState()
+		: IKeyboardController(),
+		m_KeyboardState()
 	{
 	}
 

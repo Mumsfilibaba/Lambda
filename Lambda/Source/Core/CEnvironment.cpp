@@ -3,7 +3,7 @@
 #include "Core/Event/IEventListener.h"
 #include "Core/Input/CEventMouseController.h"
 #include "Core/Input/CEventKeyboardController.h"
-#include "Core/Input/CDummyGamepadController.h"
+#include "Core/Input/IGamepadController.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include "../Platform/Windows/CWindowsEnvironment.h"
 #elif defined(LAMBDA_PLAT_MACOS)
@@ -87,18 +87,17 @@ namespace Lambda
 	void CEnvironment::Initialize()
 	{
 		//Create default input controllers
-		if (m_pMouseController == nullptr)
-		{
-			CEventMouseController* pMouseController = DBG_NEW CEventMouseController();
-			SetMouseController(pMouseController);
-			AddEventListener(pMouseController);
-		}
-
 		if (m_pKeyboardController == nullptr)
 		{
 			CEventKeyboardController* pKeyboardController = DBG_NEW CEventKeyboardController();
 			SetKeyboardController(pKeyboardController);
 			AddEventListener(pKeyboardController);
+		}
+
+		if (m_pMouseController == nullptr)
+		{
+			CDummyMouseController* pMouseController = DBG_NEW CDummyMouseController();
+			SetMouseController(pMouseController);
 		}
 
 		if (m_pGamepadController == nullptr)
