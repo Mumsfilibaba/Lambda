@@ -18,6 +18,8 @@ namespace Lambda
         static bool IsButtonPressed(EMouseButton button);
         static bool IsButtonUp(EMouseButton button);
         static bool IsButtonDown(EMouseButton button);
+		static bool IsMouseVisible();
+		static void SetMouseVisisble(bool bVisible);
         static void SetPosition(const Point& position);
         static Point GetPosition();
         static const CMouseState& GetState();

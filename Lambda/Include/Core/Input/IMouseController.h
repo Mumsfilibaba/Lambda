@@ -14,6 +14,8 @@ namespace Lambda
         
 		virtual bool IsButtonUp(EMouseButton button) const = 0;
 		virtual bool IsButtonDown(EMouseButton button) const = 0;
+		virtual bool IsMouseVisible() const = 0;
+		virtual void SetMouseVisisble(bool bVisible) = 0;
         virtual void SetPosition(const Point& position) = 0;
         virtual Point GetPosition() const = 0;
         virtual CMouseState GetState() const = 0;
@@ -37,6 +39,15 @@ namespace Lambda
 		virtual bool IsButtonDown(EMouseButton) const override final
 		{
 			return false;
+		}
+
+		virtual bool IsMouseVisible() const override final
+		{
+			return false;
+		}
+
+		virtual void SetMouseVisisble(bool) override final
+		{
 		}
 
 		virtual void SetPosition(const Point&) override final

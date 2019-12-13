@@ -1,32 +1,32 @@
 #include "LambdaPch.h"
-#include "CBaseWindow.h"
+#include "CWindowBase.h"
 
 namespace Lambda
 {
 	//-----------
-	//CBaseWindow
+	//CWindowBase
 	//-----------
 
-	CBaseWindow::CBaseWindow()
+	CWindowBase::CWindowBase()
 		: m_pEventCallback(nullptr)
 	{
 	}
 
 
-	CBaseWindow::~CBaseWindow()
+	CWindowBase::~CWindowBase()
 	{
 		SafeDelete(m_pEventCallback);
 	}
 
 
-	void CBaseWindow::SetEventCallback(IEventCallback* pEventCallback)
+	void CWindowBase::SetEventCallback(IEventCallback* pEventCallback)
 	{
 		SafeDelete(m_pEventCallback);
 		m_pEventCallback = pEventCallback;
 	}
 	
 
-	bool CBaseWindow::DispatchEvent(const CEvent& event)
+	bool CWindowBase::DispatchEvent(const CEvent& event)
 	{
 		if (m_pEventCallback)
 			return m_pEventCallback->Call(event);

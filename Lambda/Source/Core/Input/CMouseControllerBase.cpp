@@ -56,7 +56,7 @@ namespace Lambda
 
 	bool CMouseControllerBase::OnMouseScroll(const CMouseScrolledEvent& event)
 	{
-		//LOG_DEBUG(LOG_CHANNEL_ALL_CHANNELS, LOG_SEVERITY_INFO, "Mouse Scrolled (Hor:%.6f, Vert:%.6f)\n", event.GetHorizontalValue(), event.GetVerticalValue());
+		LOG_DEBUG(LOG_CHANNEL_ALL_CHANNELS, LOG_SEVERITY_INFO, "Mouse Scrolled (Hor:%.6f, Vert:%.6f)\n", event.GetHorizontalValue(), event.GetVerticalValue());
 
 		m_MouseState.SetVerticalScollValue(event.GetVerticalValue());
 		m_MouseState.SetHorizontalScollValue(event.GetHorizontalValue());

@@ -4,6 +4,9 @@
 #include "Core/Input/CMouse.h"
 #include "Core/Input/CGamepad.h"
 #include "Core/CLogManager.h"
+#include "Core/CEnvironment.h"
+#include "Core/Event/CMouseEvent.h"
+#include "Core/Event/CEventDispatcher.h"
 #include "Graphics/CMeshFactory.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -18,7 +21,7 @@ namespace Lambda
 	//Define CreateGameLayer()
 	//------------------------
 
-	CLayer* CreateGameLayer()
+	CLayer* CreateGameLayer(CEnvironment* pEnvironment)
 	{
 		return DBG_NEW SandBoxLayer();
 	}
@@ -30,6 +33,23 @@ namespace Lambda
 	SandBoxLayer::SandBoxLayer()
          : CLayer("SandBoxLayer")
 	{
+		CEnvironment& environment = CEnvironment::Get();
+		environment.AddEventListener(this);
+	}
+
+
+	bool SandBoxLayer::OnMouseMove(const CMouseMovedEvent& event)
+	{
+		LOG_DEBUG(LOG_CHANNEL_ALL_CHANNELS, LOG_SEVERITY_INFO, "Mouse moved: x=%d, y=%d\n", event.GetX(), event.GetY());
+		return false;
+	}
+
+
+	bool SandBoxLayer::OnEvent(const CEvent& event)
+	{
+		CEventDispatcher dispatcher;
+		dispatcher.Dispatch(this, &SandBoxLayer::OnMouseMove, event);
+		return false;
 	}
 
 
@@ -41,7 +61,7 @@ namespace Lambda
 	void SandBoxLayer::OnUpdate(const CTime&)
 	{
 		if (CKeyboard::IsKeyPressed(KEY_A))
-			LOG_DEBUG(LOG_CHANNEL_ALL_CHANNELS, LOG_SEVERITY_INFO, "IsKeyPressed(key=%d)\n", KEY_A);
+			CMouse::SetMouseVisisble(!CMouse::IsMouseVisible());
 
 		if (CMouse::IsButtonDown(MOUSEBUTTON_LEFT))
 			LOG_DEBUG(LOG_CHANNEL_ALL_CHANNELS, LOG_SEVERITY_INFO, "Left Button is down\n");
@@ -50,7 +70,7 @@ namespace Lambda
 		CGamepadState gamepad = CGamepad::GetState(GAMEPAD_1);
 		if (gamepad.IsConnected())
 		{
-			LOG_DEBUG(LOG_CHANNEL_ALL_CHANNELS, LOG_SEVERITY_INFO, "Left trigger %.4f, Right trigger %.4f\n", gamepad.GetTrigger(GAMEPAD_TRIGGER_LEFT), gamepad.GetTrigger(GAMEPAD_TRIGGER_RIGHT));
+			//LOG_DEBUG(LOG_CHANNEL_ALL_CHANNELS, LOG_SEVERITY_INFO, "Left trigger %.4f, Right trigger %.4f\n", gamepad.GetTrigger(GAMEPAD_TRIGGER_LEFT), gamepad.GetTrigger(GAMEPAD_TRIGGER_RIGHT));
 		}
 	}
 
@@ -63,6 +83,9 @@ namespace Lambda
 	void SandBoxLayer::OnRelease()
 	{
 		CLayer::OnRelease();
+
+		CEnvironment& environment = CEnvironment::Get();
+		environment.RemoveEventListener(this);
 	}
 
 

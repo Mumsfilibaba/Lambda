@@ -21,6 +21,8 @@ namespace Lambda
 
 		virtual bool OnEvent(const CEvent& event) override final;
 		
+		virtual bool IsMouseVisible() const override = 0;
+		virtual void SetMouseVisisble(bool) override = 0;
 		virtual void SetPosition(const Point& position) override = 0;
 		virtual Point GetPosition() const override = 0;
 

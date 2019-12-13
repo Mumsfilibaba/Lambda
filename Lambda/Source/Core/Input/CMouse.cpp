@@ -20,6 +20,20 @@ namespace Lambda
 		IMouseController* pMouseController = GET_MOUSECONTROLLER();
 		return pMouseController->IsButtonDown(button);
 	}
+
+	
+	bool CMouse::IsMouseVisible()
+	{
+		IMouseController* pMouseController = GET_MOUSECONTROLLER();
+		return pMouseController->IsMouseVisible();
+	}
+
+
+	void CMouse::SetMouseVisisble(bool bVisible)
+	{
+		IMouseController* pMouseController = GET_MOUSECONTROLLER();
+		return pMouseController->SetMouseVisisble(bVisible);
+	}
 	
 	
 	bool CMouse::IsButtonUp(EMouseButton button)

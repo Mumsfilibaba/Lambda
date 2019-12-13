@@ -4,14 +4,14 @@
 namespace Lambda
 {
     //-----------
-    //CBaseWindow
+    //CWindowBase
     //-----------
 
-    class CBaseWindow : public IWindow
+    class CWindowBase : public IWindow
     {
     public:
-        CBaseWindow();
-        virtual ~CBaseWindow();
+        CWindowBase();
+        virtual ~CWindowBase();
         
         virtual bool HasFocus() const override = 0;
         virtual uint32 GetHeight() const override = 0;

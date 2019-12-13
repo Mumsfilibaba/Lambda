@@ -21,9 +21,11 @@ namespace Lambda
 	LRESULT CALLBACK WindowEventCallback(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 	CWindowsWindow::CWindowsWindow(const char* pTitle, uint32 width, uint32 height)
-		: m_hWindow(0),
+		: CWindowBase(),
+		m_hWindow(0),
 		m_Fullscreen(false),
-		m_HasFocus(false)
+		m_HasFocus(false),
+		m_HasMouseCapture(false)
 	{
 		Init(pTitle, width, height);
 		LOG_ENVIRONMENT_INFO("[LAMBDA ENGINE] Created window. w: %d, h: %d\n", width, height);
@@ -126,6 +128,12 @@ namespace Lambda
 		}
 
 		return true;
+	}
+
+
+	bool CWindowsWindow::HasMouseCapture() const
+	{
+		return m_HasMouseCapture;
 	}
 
 
@@ -275,11 +283,21 @@ namespace Lambda
 			uint32 modifiers = GetKeyModifers();
 			if (msg == WM_LBUTTONUP || msg == WM_MBUTTONUP || msg == WM_RBUTTONUP || msg == WM_XBUTTONUP)
 			{
+				//When the mousebutton is released we also release the mousecapture
+				ReleaseCapture();
+				m_HasMouseCapture = false;
+
+				//Send event
 				CMouseButtonReleasedEvent event = CMouseButtonReleasedEvent(button, modifiers);
 				DispatchEvent(event);
 			}
 			else
 			{
+				//Mouse is down so we capture the mouse
+				SetCapture(m_hWindow);
+				m_HasMouseCapture = true;
+
+				//Set event
 				CMouseButtonPressedEvent event = CMouseButtonPressedEvent(button, modifiers);
 				DispatchEvent(event);
 			}

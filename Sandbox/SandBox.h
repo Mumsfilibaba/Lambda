@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/CLayer.h"
+#include "Core/Event/IEventListener.h"
 #include "Graphics/Core/IDeviceContext.h"
 #include "Graphics/Core/IShader.h"
 #include "Graphics/Core/IPipelineState.h"
@@ -10,18 +11,23 @@
 #include "Graphics/CCamera.h"
 
 namespace Lambda
-{    
+{  
+	class CMouseMovedEvent;
+
     //------------
     //SandBoxLayer
     //------------
 
-    class SandBoxLayer : public CLayer
+    class SandBoxLayer : public CLayer, public IEventListener
     {
     public:
         LAMBDA_NO_COPY(SandBoxLayer);
 
         SandBoxLayer();
         ~SandBoxLayer() = default;
+
+		bool OnMouseMove(const CMouseMovedEvent& event);
+		virtual bool OnEvent(const CEvent& event) override final;
 
         virtual void OnLoad() override final;
         virtual void OnUpdate(const CTime& dt) override final;

@@ -14,7 +14,7 @@
 //_CreateGameLayer - Function pointer to create the gamelayer - Needed for DLL- and Static-Lib compilation
 //--------------------------------------------------------------------------------------------------------
 
-LAMBDA_API Lambda::CLayer* (*_CreateGameLayer)(void) = nullptr;
+LAMBDA_API Lambda::CLayer* (*_CreateGameLayer)(Lambda::CEnvironment*) = nullptr;
 
 namespace Lambda
 {
@@ -82,7 +82,7 @@ namespace Lambda
 		//Create Game Layer
 		if (_CreateGameLayer != nullptr)
 		{
-            m_LayerStack.PushLayer(_CreateGameLayer());
+            m_LayerStack.PushLayer(_CreateGameLayer(m_pEnvironment));
 		}
 		else
 		{

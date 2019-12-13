@@ -30,7 +30,7 @@ namespace Lambda
 	//-----------------------------------------------
 	//CreateGameLayer - NEEDS TO BE DEFINED BY CLIENT
 	//-----------------------------------------------
-	CLayer* CreateGameLayer();
+	CLayer* CreateGameLayer(CEnvironment* pEnvironment);
 
 	//-------
 	//CEngine

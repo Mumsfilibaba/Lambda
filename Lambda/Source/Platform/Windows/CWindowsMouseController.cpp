@@ -1,6 +1,10 @@
 #include "LambdaPch.h"
-#include "CWindowsMouseController.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
+#include "CWindowsMouseController.h"
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN 1
+#endif
+#include <Windows.h>
 
 namespace Lambda
 {
@@ -9,8 +13,34 @@ namespace Lambda
 	//----------------------
 
 	CWindowsMouseController::CWindowsMouseController()
-		: CMouseControllerBase()
+		: CMouseControllerBase(),
+		m_bIsMouseVisible(true)
 	{
+	}
+
+
+	bool CWindowsMouseController::IsMouseVisible() const
+	{
+		return m_bIsMouseVisible;
+	}
+
+
+	void CWindowsMouseController::SetMouseVisisble(bool bVisible)
+	{
+		if (m_bIsMouseVisible != bVisible)
+		{
+			m_bIsMouseVisible = bVisible;
+			if (bVisible)
+				ShowCursor(TRUE);
+			else
+				ShowCursor(false);
+		}
+	}
+
+	
+	void CWindowsMouseController::SetPosition(const Point& position)
+	{
+		SetCursorPos(int(position.x), int(position.y));
 	}
 
 	
@@ -20,12 +50,6 @@ namespace Lambda
 		GetCursorPos(&p);
 
 		return Point(p.x, p.y);
-	}
-
-
-	void CWindowsMouseController::SetPosition(const Point& position)
-	{
-		SetCursorPos(int(position.x), int(position.y));
 	}
 }
 
