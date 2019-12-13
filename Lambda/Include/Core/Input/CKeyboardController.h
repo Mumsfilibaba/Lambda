@@ -7,15 +7,15 @@ namespace Lambda
 	class CKeyPressedEvent;
 	class CKeyReleasedEvent;
 
-	//------------------------
-	//CEventKeyboardController 
-	//------------------------
+	//-------------------
+	//CKeyboardController 
+	//-------------------
 
-	class CEventKeyboardController : public IKeyboardController, public IEventListener
+	class CKeyboardController : public IKeyboardController, public IEventListener
 	{
 	public:
-		CEventKeyboardController();
-		~CEventKeyboardController();
+		CKeyboardController();
+		~CKeyboardController();
 
 		virtual bool OnEvent(const CEvent& event) override final;
 		virtual bool IsKeyUp(EKey key) const override final;

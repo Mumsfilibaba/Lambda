@@ -1,9 +1,9 @@
 #include "LambdaPch.h"
 #include "Core/CEnvironment.h"
 #include "Core/Event/IEventListener.h"
-#include "Core/Input/CEventMouseController.h"
-#include "Core/Input/CEventKeyboardController.h"
+#include "Core/Input/IMouseController.h"
 #include "Core/Input/IGamepadController.h"
+#include "Core/Input/CKeyboardController.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include "../Platform/Windows/CWindowsEnvironment.h"
 #elif defined(LAMBDA_PLAT_MACOS)
@@ -89,7 +89,7 @@ namespace Lambda
 		//Create default input controllers
 		if (m_pKeyboardController == nullptr)
 		{
-			CEventKeyboardController* pKeyboardController = DBG_NEW CEventKeyboardController();
+			CKeyboardController* pKeyboardController = DBG_NEW CKeyboardController();
 			SetKeyboardController(pKeyboardController);
 			AddEventListener(pKeyboardController);
 		}

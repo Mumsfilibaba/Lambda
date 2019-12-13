@@ -25,6 +25,12 @@ namespace Lambda
 		void SetTrigger(EGamepadTrigger trigger, float value);
 		void SetThumbStick(EGamepadStick stick, Vec2 value);
 		void SetGamepadID(EGamepad gamepadID);
+		void SetIsConnected(bool isConnected);
+
+		_forceinline bool IsConnected() const
+		{
+			return m_IsConnected;
+		}
 
 		_forceinline float GetTrigger(EGamepadTrigger trigger) const
 		{
@@ -44,6 +50,7 @@ namespace Lambda
         }
     private:
         EGamepad m_Gamepad;
+		bool m_IsConnected;
 		float m_Triggers[GAMEPAD_TRIGGER_LAST+1];
 		Vec2 m_Sticks[GAMEPAD_STICK_LAST+1];
     };

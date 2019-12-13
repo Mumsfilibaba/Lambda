@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Input/CEventMouseController.h"
+#include "Core/Input/CMouseControllerBase.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
 
 namespace Lambda
@@ -8,7 +8,7 @@ namespace Lambda
 	//CWindowsMouseController
 	//-----------------------
 
-	class CWindowsMouseController final : public CEventMouseController
+	class CWindowsMouseController final : public CMouseControllerBase
 	{
 	public:
 		CWindowsMouseController();

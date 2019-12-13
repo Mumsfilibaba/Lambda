@@ -14,6 +14,20 @@ namespace Lambda
     CGamepadState CGamepad::s_LastState[4];
     CGamepadState CGamepad::s_CurrentState[4];
 
+	float CGamepad::GetTrigger(EGamepad gamepadID, EGamepadTrigger trigger)
+	{
+		IGamepadController* pGamepadController = GET_GAMEPADCONTROLLER();
+		return pGamepadController->GetTrigger(gamepadID, trigger);
+	}
+
+
+	const Vec2& CGamepad::GetThumbStick(EGamepad gamepadID, EGamepadStick stick)
+	{
+		IGamepadController* pGamepadController = GET_GAMEPADCONTROLLER();
+		return pGamepadController->GetThumbStick(gamepadID, stick);
+	}
+
+
 	const CGamepadState& CGamepad::GetState(EGamepad gamepadID)
 	{
 		IGamepadController* pGamepadController = GET_GAMEPADCONTROLLER();

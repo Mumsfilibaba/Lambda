@@ -9,7 +9,7 @@ namespace Lambda
 	//----------------------
 
 	CWindowsMouseController::CWindowsMouseController()
-		: CEventMouseController()
+		: CMouseControllerBase()
 	{
 	}
 

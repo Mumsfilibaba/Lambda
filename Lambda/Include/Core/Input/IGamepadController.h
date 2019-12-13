@@ -13,6 +13,8 @@ namespace Lambda
         LAMBDA_INTERFACE(IGamepadController);
 
 		virtual bool IsConnected(EGamepad gamepadID) const = 0;
+		virtual float GetTrigger(EGamepad gamepadID, EGamepadTrigger trigger) const = 0;
+		virtual const Vec2& GetThumbStick(EGamepad gamepadID, EGamepadStick stick) const = 0;
         virtual CGamepadState GetGamepadState(EGamepad gamepadID) const = 0;
     };
 
@@ -31,9 +33,21 @@ namespace Lambda
 			return false;
 		}
 
+		virtual float GetTrigger(EGamepad, EGamepadTrigger) const 
+		{
+			return 0.0f;
+		}
+		
+		virtual const Vec2& GetThumbStick(EGamepad, EGamepadStick) const
+		{
+			return m_ThumbStick;
+		}
+
 		virtual CGamepadState GetGamepadState(EGamepad) const override final
 		{
 			return CGamepadState();
 		}
+	private:
+		Vec2 m_ThumbStick;
 	};
 }

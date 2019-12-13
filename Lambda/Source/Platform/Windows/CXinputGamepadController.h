@@ -17,10 +17,15 @@ namespace Lambda
 		~CXInputGamepadController() = default;
 
 		virtual bool IsConnected(EGamepad gamepadID) const override final;
+		virtual float GetTrigger(EGamepad gamepadID, EGamepadTrigger trigger) const override final;
+		virtual const Vec2& GetThumbStick(EGamepad gamepadID, EGamepadStick stick) const override final;
 		virtual CGamepadState GetGamepadState(EGamepad gamepadID) const override final;
 	private:
-		XINPUT_STATE m_ControllerState[XUSER_MAX_COUNT];
+		mutable XINPUT_STATE m_ControllerState[XUSER_MAX_COUNT];
 		mutable CGamepadState m_GamepadStates[GAMEPAD_LAST+1];
+		mutable CClock m_PollingTimer;
+		mutable CTime m_CurrentPollRate;
+		CTime m_PollRate;
 	};
 }
 #endif

@@ -1,5 +1,5 @@
 #include "LambdaPch.h"
-#include "Core/Input/CEventMouseController.h"
+#include "Core/Input/CMouseControllerBase.h"
 #include "Core/Event/CEventDispatcher.h"
 #include "Core/Event/CMouseEvent.h"
 #include "Core/CEnvironment.h"
@@ -7,36 +7,36 @@
 namespace Lambda
 {
 	//---------------------
-	//CEventMouseController 
+	//CMouseControllerBase 
 	//---------------------
 
-	CEventMouseController::CEventMouseController()
+	CMouseControllerBase::CMouseControllerBase()
 		: IMouseController(),
 		m_MouseState()
 	{
 	}
 
 	
-	CEventMouseController::~CEventMouseController()
+	CMouseControllerBase::~CMouseControllerBase()
 	{
 		CEnvironment& environment = CEnvironment::Get();
 		environment.RemoveEventListener(this);
 	}
 	
 
-	bool CEventMouseController::IsButtonup(EMouseButton button) const
+	bool CMouseControllerBase::IsButtonUp(EMouseButton button) const
 	{
 		return m_MouseState.IsButtonUp(button);
 	}
 
 	
-	bool CEventMouseController::IsButtonDown(EMouseButton button) const
+	bool CMouseControllerBase::IsButtonDown(EMouseButton button) const
 	{
 		return m_MouseState.IsButtonDown(button);
 	}
 
 
-	CMouseState CEventMouseController::GetState() const
+	CMouseState CMouseControllerBase::GetState() const
 	{
 		CMouseState mouseState = m_MouseState;
 		mouseState.SetPosition(this->GetPosition());
@@ -44,17 +44,17 @@ namespace Lambda
 	}
 
 
-	bool CEventMouseController::OnEvent(const CEvent& event)
+	bool CMouseControllerBase::OnEvent(const CEvent& event)
 	{
 		CEventDispatcher dispatcher;
-		dispatcher.Dispatch(this, &CEventMouseController::OnMouseScroll, event);
-		dispatcher.Dispatch(this, &CEventMouseController::OnMouseButtonPressed, event);
-		dispatcher.Dispatch(this, &CEventMouseController::OnMouseButtonReleased, event);
+		dispatcher.Dispatch(this, &CMouseControllerBase::OnMouseScroll, event);
+		dispatcher.Dispatch(this, &CMouseControllerBase::OnMouseButtonPressed, event);
+		dispatcher.Dispatch(this, &CMouseControllerBase::OnMouseButtonReleased, event);
 		return false;
 	}
 
 
-	bool CEventMouseController::OnMouseScroll(const CMouseScrolledEvent& event)
+	bool CMouseControllerBase::OnMouseScroll(const CMouseScrolledEvent& event)
 	{
 		//LOG_DEBUG(LOG_CHANNEL_ALL_CHANNELS, LOG_SEVERITY_INFO, "Mouse Scrolled (Hor:%.6f, Vert:%.6f)\n", event.GetHorizontalValue(), event.GetVerticalValue());
 
@@ -64,7 +64,7 @@ namespace Lambda
 	}
 
 
-	bool CEventMouseController::OnMouseButtonPressed(const CMouseButtonPressedEvent& event)
+	bool CMouseControllerBase::OnMouseButtonPressed(const CMouseButtonPressedEvent& event)
 	{
 		//LOG_DEBUG(LOG_CHANNEL_ALL_CHANNELS, LOG_SEVERITY_INFO, "Mouse Button Pressed\n");
 
@@ -73,7 +73,7 @@ namespace Lambda
 	}
 
 
-	bool CEventMouseController::OnMouseButtonReleased(const CMouseButtonReleasedEvent& event)
+	bool CMouseControllerBase::OnMouseButtonReleased(const CMouseButtonReleasedEvent& event)
 	{
 		//LOG_DEBUG(LOG_CHANNEL_ALL_CHANNELS, LOG_SEVERITY_INFO, "Mouse Button Released\n");
 

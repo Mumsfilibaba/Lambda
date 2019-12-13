@@ -8,17 +8,29 @@ namespace Lambda
 	//-------------
 
 	CGamepadState::CGamepadState()
+		: m_Gamepad(GAMEPAD_UNKNOWN),
+		m_IsConnected(false),
+		m_Triggers(),
+		m_Sticks()
 	{
 	}
 
 
 	CGamepadState::CGamepadState(const CGamepadState& other)
+		: m_Gamepad(GAMEPAD_UNKNOWN),
+		m_IsConnected(false),
+		m_Triggers(),
+		m_Sticks()
 	{
 		memcpy(this, &other, sizeof(CGamepadState));
 	}
 
 
 	CGamepadState::CGamepadState(CGamepadState&& other)
+		: m_Gamepad(GAMEPAD_UNKNOWN),
+		m_IsConnected(false),
+		m_Triggers(),
+		m_Sticks()
 	{
 		memcpy(this, &other, sizeof(CGamepadState));
 	}
@@ -59,5 +71,11 @@ namespace Lambda
 	void CGamepadState::SetGamepadID(EGamepad gamepadID)
 	{
 		m_Gamepad = gamepadID;
+	}
+
+
+	void CGamepadState::SetIsConnected(bool isConnected)
+	{
+		m_IsConnected = isConnected;
 	}
 }

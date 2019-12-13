@@ -9,21 +9,22 @@ namespace Lambda
 	class CMouseButtonPressedEvent;
 	class CMouseButtonReleasedEvent;
 
-	//---------------------
-	//CEventMouseController 
-	//---------------------
+	//--------------------
+	//CMouseControllerBase 
+	//--------------------
 
-	class CEventMouseController : public IMouseController, public IEventListener
+	class CMouseControllerBase : public IMouseController, public IEventListener
 	{
 	public:
-		CEventMouseController();
-		virtual ~CEventMouseController();
+		CMouseControllerBase();
+		virtual ~CMouseControllerBase();
 
+		virtual bool OnEvent(const CEvent& event) override final;
+		
 		virtual void SetPosition(const Point& position) override = 0;
 		virtual Point GetPosition() const override = 0;
 
-		virtual bool OnEvent(const CEvent& event) override final;
-		virtual bool IsButtonup(EMouseButton button) const override final;
+		virtual bool IsButtonUp(EMouseButton button) const override final;
 		virtual bool IsButtonDown(EMouseButton button) const override final;
 		virtual CMouseState GetState() const override final;
 	private:

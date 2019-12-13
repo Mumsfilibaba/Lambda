@@ -12,7 +12,7 @@ namespace Lambda
     public:
         LAMBDA_INTERFACE(IMouseController);
         
-		virtual bool IsButtonup(EMouseButton button) const = 0;
+		virtual bool IsButtonUp(EMouseButton button) const = 0;
 		virtual bool IsButtonDown(EMouseButton button) const = 0;
         virtual void SetPosition(const Point& position) = 0;
         virtual Point GetPosition() const = 0;
@@ -29,7 +29,7 @@ namespace Lambda
 		CDummyMouseController() = default;
 		~CDummyMouseController() = default;
 
-		virtual bool IsButtonup(EMouseButton) const override final
+		virtual bool IsButtonUp(EMouseButton) const override final
 		{
 			return false;
 		}

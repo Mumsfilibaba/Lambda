@@ -17,7 +17,6 @@ namespace Lambda
         virtual CKeyboardState GetKeyboardState() const = 0;
     };
 
-
 	//--------------------------------------------------------------------
 	//CDummyKeyboardController - Used when no real controller is available
 	//--------------------------------------------------------------------
@@ -28,12 +27,12 @@ namespace Lambda
 		CDummyKeyboardController() = default;
 		~CDummyKeyboardController() = default;
 
-		virtual bool IsKeyUp(EKey key) const override final
+		virtual bool IsKeyUp(EKey) const override final
 		{
 			return false;
 		}
 
-		virtual bool IsKeyDown(EKey key) const override final
+		virtual bool IsKeyDown(EKey) const override final
 		{
 			return false;
 		}

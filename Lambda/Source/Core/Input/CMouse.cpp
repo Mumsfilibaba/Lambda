@@ -25,7 +25,7 @@ namespace Lambda
 	bool CMouse::IsButtonUp(EMouseButton button)
 	{
 		IMouseController* pMouseController = GET_MOUSECONTROLLER();
-		return s_CurrentState.IsButtonUp(button);
+		return pMouseController->IsButtonUp(button);
 	}
 	
 	

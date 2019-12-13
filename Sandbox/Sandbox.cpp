@@ -48,6 +48,10 @@ namespace Lambda
 
 
 		CGamepadState gamepad = CGamepad::GetState(GAMEPAD_1);
+		if (gamepad.IsConnected())
+		{
+			LOG_DEBUG(LOG_CHANNEL_ALL_CHANNELS, LOG_SEVERITY_INFO, "Left trigger %.4f, Right trigger %.4f\n", gamepad.GetTrigger(GAMEPAD_TRIGGER_LEFT), gamepad.GetTrigger(GAMEPAD_TRIGGER_RIGHT));
+		}
 	}
 
 
