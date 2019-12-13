@@ -89,7 +89,7 @@ namespace Lambda
 		//Create default input controllers
 		if (m_pKeyboardController == nullptr)
 		{
-			CKeyboardController* pKeyboardController = DBG_NEW CKeyboardController();
+			CKeyboardController* pKeyboardController = DBG_NEW CKeyboardController(this);
 			SetKeyboardController(pKeyboardController);
 			AddEventListener(pKeyboardController);
 		}

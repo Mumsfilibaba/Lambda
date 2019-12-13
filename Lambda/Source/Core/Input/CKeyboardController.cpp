@@ -10,8 +10,9 @@ namespace Lambda
 	//CKeyboardController 
 	//-------------------
 
-	CKeyboardController::CKeyboardController()
+	CKeyboardController::CKeyboardController(CEnvironment* pEnvironment)
 		: IKeyboardController(),
+		m_pEnvironment(pEnvironment),
 		m_KeyboardState()
 	{
 	}
@@ -19,8 +20,7 @@ namespace Lambda
 
 	CKeyboardController::~CKeyboardController()
 	{
-		CEnvironment& environment = CEnvironment::Get();
-		environment.RemoveEventListener(this);
+		m_pEnvironment->RemoveEventListener(this);
 	}
 
 

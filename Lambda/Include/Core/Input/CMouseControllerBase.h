@@ -4,6 +4,7 @@
 
 namespace Lambda
 {
+	class CEnvironment;
 	class CMouseMovedEvent;
 	class CMouseScrolledEvent;
 	class CMouseButtonPressedEvent;
@@ -16,7 +17,7 @@ namespace Lambda
 	class CMouseControllerBase : public IMouseController, public IEventListener
 	{
 	public:
-		CMouseControllerBase();
+		CMouseControllerBase(CEnvironment* pEnvironment);
 		virtual ~CMouseControllerBase();
 
 		virtual bool OnEvent(const CEvent& event) override final;
@@ -33,7 +34,8 @@ namespace Lambda
 		bool OnMouseScroll(const CMouseScrolledEvent& event);
 		bool OnMouseButtonPressed(const CMouseButtonPressedEvent& event);
 		bool OnMouseButtonReleased(const CMouseButtonReleasedEvent& event);
-	private:
+	protected:
+		CEnvironment* m_pEnvironment;
 		CMouseState m_MouseState;
 	};
 }

@@ -12,8 +12,8 @@ namespace Lambda
 	//CWindowMouseController
 	//----------------------
 
-	CWindowsMouseController::CWindowsMouseController()
-		: CMouseControllerBase(),
+	CWindowsMouseController::CWindowsMouseController(CEnvironment* pEnvironment)
+		: CMouseControllerBase(pEnvironment),
 		m_bIsMouseVisible(true)
 	{
 	}

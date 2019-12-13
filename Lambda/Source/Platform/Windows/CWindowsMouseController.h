@@ -4,6 +4,8 @@
 
 namespace Lambda
 {
+	class CEnvironment;
+
 	//-----------------------
 	//CWindowsMouseController
 	//-----------------------
@@ -11,7 +13,7 @@ namespace Lambda
 	class CWindowsMouseController final : public CMouseControllerBase
 	{
 	public:
-		CWindowsMouseController();
+		CWindowsMouseController(CEnvironment* pEnvironment);
 		~CWindowsMouseController() = default;
 
 		virtual bool IsMouseVisible() const override final;

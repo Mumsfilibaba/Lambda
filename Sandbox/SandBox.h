@@ -12,6 +12,7 @@
 
 namespace Lambda
 {  
+	class CEnvironment;
 	class CMouseMovedEvent;
 
     //------------
@@ -21,10 +22,10 @@ namespace Lambda
     class SandBoxLayer : public CLayer, public IEventListener
     {
     public:
-        LAMBDA_NO_COPY(SandBoxLayer);
-
-        SandBoxLayer();
+        SandBoxLayer(CEnvironment* pEnvironment);
         ~SandBoxLayer() = default;
+        
+		LAMBDA_NO_COPY(SandBoxLayer);
 
 		bool OnMouseMove(const CMouseMovedEvent& event);
 		virtual bool OnEvent(const CEvent& event) override final;

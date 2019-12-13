@@ -28,12 +28,21 @@ namespace Lambda
 	//CWindowsEnvironment
 	//-------------------
 
+	CWindowsEnvironment::CWindowsEnvironment()
+		: CEnvironment(),
+		m_pWindow(nullptr),
+		m_WindowsToLambdaKeyTable(),
+		m_LambdaToWindowsKeyTable()
+	{
+	}
+
+
 	void CWindowsEnvironment::Initialize()
 	{
 		InitializeLookUpTables();
 
 		//Create new input controllers
-		CWindowsMouseController* pMouseController = DBG_NEW CWindowsMouseController();
+		CWindowsMouseController* pMouseController = DBG_NEW CWindowsMouseController(this);
 		SetMouseController(pMouseController);
 		AddEventListener(pMouseController);
 

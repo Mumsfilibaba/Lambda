@@ -19,7 +19,7 @@ namespace Lambda
 	class CWindowsEnvironment final : public CEnvironment
 	{
 	public:
-		CWindowsEnvironment() = default;
+		CWindowsEnvironment();
 		~CWindowsEnvironment() = default;
 
 		EKey ConvertKeyFromWindows(uint32 key);

@@ -10,8 +10,9 @@ namespace Lambda
 	//CMouseControllerBase 
 	//---------------------
 
-	CMouseControllerBase::CMouseControllerBase()
+	CMouseControllerBase::CMouseControllerBase(CEnvironment* pEnvironment)
 		: IMouseController(),
+		m_pEnvironment(pEnvironment),
 		m_MouseState()
 	{
 	}
@@ -19,8 +20,7 @@ namespace Lambda
 	
 	CMouseControllerBase::~CMouseControllerBase()
 	{
-		CEnvironment& environment = CEnvironment::Get();
-		environment.RemoveEventListener(this);
+		m_pEnvironment->RemoveEventListener(this);
 	}
 	
 

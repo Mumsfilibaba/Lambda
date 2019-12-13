@@ -23,18 +23,17 @@ namespace Lambda
 
 	CLayer* CreateGameLayer(CEnvironment* pEnvironment)
 	{
-		return DBG_NEW SandBoxLayer();
+		return DBG_NEW SandBoxLayer(pEnvironment);
 	}
 
 	//------------
 	//SandBoxLayer
 	//------------
 
-	SandBoxLayer::SandBoxLayer()
+	SandBoxLayer::SandBoxLayer(CEnvironment* pEnvironment)
          : CLayer("SandBoxLayer")
 	{
-		CEnvironment& environment = CEnvironment::Get();
-		environment.AddEventListener(this);
+		pEnvironment->AddEventListener(this);
 	}
 
 
