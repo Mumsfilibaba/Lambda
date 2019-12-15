@@ -1,7 +1,7 @@
 #pragma once
 #if defined(LAMBDA_PLAT_MACOS)
-    #include "../Desktop/BaseWindow.h"
-    #include <GLFW/glfw3.h>
+#include "../Desktop/CWindowBase.h"
+#include <GLFW/glfw3.h>
 
 namespace Lambda
 {
@@ -9,14 +9,13 @@ namespace Lambda
     //CmacOSWindow
     //------------
     
-    class CmacOSWindow final : public CBaseWindow
+    class CmacOSWindow final : public CWindowBase
     {
     public:
         CmacOSWindow(const char* pTitle, uint32 width, uint32 height);
         ~CmacOSWindow();
         
         virtual bool HasFocus() const override final;
-        virtual void SetEventCallback(IEventCallback* pCallback) override final;
         virtual uint32 GetHeight() const override final;
         virtual uint32 GetWidth() const override final;
         

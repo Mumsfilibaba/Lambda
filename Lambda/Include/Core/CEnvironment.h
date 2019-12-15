@@ -50,10 +50,12 @@ namespace Lambda
 	protected:
         virtual bool OnEvent(const CEvent& event);
 
+        void CreateDefaultInputControllers();
+        
 		void SetMouseController(IMouseController* pMouseController);
 		void SetKeyboardController(IKeyboardController* pKeyboardController);
 		void SetGamepadController(IGamepadController* pGamepadController);
-	protected:
+	private:
 		std::vector<IEventListener*> m_EventListeners;
         IMouseController* m_pMouseController;
         IGamepadController* m_pGamepadController;

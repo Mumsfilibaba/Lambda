@@ -86,25 +86,6 @@ namespace Lambda
 
 	void CEnvironment::Initialize()
 	{
-		//Create default input controllers
-		if (m_pKeyboardController == nullptr)
-		{
-			CKeyboardController* pKeyboardController = DBG_NEW CKeyboardController(this);
-			SetKeyboardController(pKeyboardController);
-			AddEventListener(pKeyboardController);
-		}
-
-		if (m_pMouseController == nullptr)
-		{
-			CDummyMouseController* pMouseController = DBG_NEW CDummyMouseController();
-			SetMouseController(pMouseController);
-		}
-
-		if (m_pGamepadController == nullptr)
-		{
-			CDummyGamepadController* pGamepadController = DBG_NEW CDummyGamepadController();
-			SetGamepadController(pGamepadController);
-		}
 	}
 
 
@@ -130,5 +111,27 @@ namespace Lambda
 				return;
 			}
 		}
-	}
+    }
+
+    void CEnvironment::CreateDefaultInputControllers()
+    {
+        //Create dummy controllers
+        if (m_pKeyboardController == nullptr)
+        {
+            CDummyKeyboardController* pKeyboardController = DBG_NEW CDummyKeyboardController();
+            SetKeyboardController(pKeyboardController);
+        }
+
+        if (m_pMouseController == nullptr)
+        {
+            CDummyMouseController* pMouseController = DBG_NEW CDummyMouseController();
+            SetMouseController(pMouseController);
+        }
+
+        if (m_pGamepadController == nullptr)
+        {
+            CDummyGamepadController* pGamepadController = DBG_NEW CDummyGamepadController();
+            SetGamepadController(pGamepadController);
+        }
+    }
 }

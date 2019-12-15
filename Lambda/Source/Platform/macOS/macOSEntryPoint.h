@@ -2,9 +2,9 @@
 #if defined(LAMBDA_PLAT_MACOS)
     #include "Core/CEngine.h"
 
-extern LAMBDA_API Lambda::CLayer* (*_CreateGameLayer)(void);
+extern LAMBDA_API Lambda::CLayer* (*_CreateGameLayer)(Lambda::CEnvironment*);
 
-int main(int argc, const char* argv[])
+int main(int, const char**)
 {
     using namespace Lambda;
     

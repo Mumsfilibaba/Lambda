@@ -63,7 +63,7 @@ namespace Lambda
 
 	void CGamepadState::SetThumbStick(EGamepadStick stick, Vec2 value)
 	{
-		LAMBDA_ASSERT(stick <= GAMEPAD_LAST);
+		LAMBDA_ASSERT(stick <= GAMEPAD_STICK_LAST);
 		m_Sticks[stick] = value;
 	}
 

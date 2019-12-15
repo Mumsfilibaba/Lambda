@@ -20,7 +20,8 @@ namespace Lambda
     bool CmacOSWindow::s_HasGLFW = false;
     
     CmacOSWindow::CmacOSWindow(const char* pTitle, uint32 width, uint32 height)
-        : m_pWindow(nullptr),
+        : CWindowBase(),
+        m_pWindow(nullptr),
         m_pCallback(nullptr),
         m_Width(0.0f),
         m_Height(0.0f),
@@ -93,13 +94,6 @@ namespace Lambda
         {
             glfwTerminate();
         }
-    }
-    
-    
-    void CmacOSWindow::SetEventCallback(IEventCallback* pCallback)
-    {
-        SafeDelete(m_pCallback);
-        m_pCallback = pCallback;
     }
     
     

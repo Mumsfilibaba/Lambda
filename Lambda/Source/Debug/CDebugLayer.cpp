@@ -421,7 +421,7 @@ namespace Lambda
 				static float gpuMax = 1.0f;
                 float averageCPU = 0.0f;
 				float averageGPU = 0.0f;
-				for (int n = 0; n < valueCount; n++)
+				for (int32 n = 0; n < valueCount; n++)
 				{
 					averageCPU += cpuValues[n];
 					averageGPU += gpuValues[n];

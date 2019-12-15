@@ -19,7 +19,7 @@ namespace Lambda
 		virtual void SetEventCallback(IEventCallback* pEventCallback) override;
     protected:
 		virtual bool DispatchEvent(const CEvent& event);
-    protected:
+    private:
         IEventCallback* m_pEventCallback;
     };
 }
