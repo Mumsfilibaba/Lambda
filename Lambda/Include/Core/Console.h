@@ -21,7 +21,7 @@ namespace Lambda
     //Interface for console
     //---------------------
 
-    void InitializeConsole();
+    bool InitializeConsole();
     void SetConsoleColor(EConsoleColor color);
     void PrintConsole(const char* pFormat, ...);
     void ReleaseConsole();

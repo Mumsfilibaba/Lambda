@@ -25,44 +25,52 @@ namespace Lambda
 			return;
 		}
 
+
 		//Get severity as string
 		const char* pSeverity = nullptr;
-        EConsoleColor color = CONSOLE_COLOR_UNKNOWN;
+		EConsoleColor color = CONSOLE_COLOR_GREEN;
 		if (severity == LOG_SEVERITY_INFO)
-        {
-            pSeverity = "INFO";
-        }
+		{
+			pSeverity = "INFO";
+		}
 		else if (severity == LOG_SEVERITY_MESSAGE)
-        {
-            pSeverity = "MESSAGE";
-        }
+		{
+			pSeverity = "MESSAGE";
+		}
 		else if (severity == LOG_SEVERITY_WARNING)
-        {
-            pSeverity = "WARNING";
-            color = CONSOLE_COLOR_YELLOW;
-        }
+		{
+			pSeverity = "WARNING";
+			color = CONSOLE_COLOR_YELLOW;
+		}
 		else if (severity == LOG_SEVERITY_ERROR)
-        {
-            pSeverity = "ERROR";
-            color = CONSOLE_COLOR_RED;
-        }
-        else
-        {
-            color = CONSOLE_COLOR_GREEN;
-        }
+		{
+			pSeverity = "ERROR";
+			color = CONSOLE_COLOR_RED;
+		}
+
 
 		//Get channel as string
 		const char* pChannel = nullptr;
 		if (channel == LOG_CHANNEL_ENGINE)
+		{
 			pChannel = "LAMBDA ENGINE";
+		}
 		else if (channel == LOG_CHANNEL_ENVIRONMENT)
+		{
 			pChannel = "ENVIRONMENT";
+		}
 		else if (channel == LOG_CHANNEL_RENDERER)
+		{
 			pChannel = "RENDERER";
+		}
 		else if (channel == LOG_CHANNEL_RENDER_API)
+		{
 			pChannel = "RENDER API";
+		}
 		else
+		{
 			pChannel = "";
+		}
 
 		//Print message into buffer
 		constexpr uint32 MAX_LOG_BUFFER = 1024;
@@ -76,9 +84,14 @@ namespace Lambda
 		//Print to the host
         SetConsoleColor(color);
 		if (channel == LOG_CHANNEL_ALL_CHANNELS)
+		{
 			PrintConsole("[%s]: %s", pSeverity, s_Buffer);
+		}
 		else
+		{
 			PrintConsole("[%s]: [%s] - %s", pSeverity, pChannel, s_Buffer);
+		}
+		SetConsoleColor(CONSOLE_COLOR_WHITE);
 	}
 
 

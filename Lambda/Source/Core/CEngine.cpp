@@ -31,7 +31,10 @@ namespace Lambda
 		DBG_MEMLEAK_CHECK();
 
 #if defined(LAMBDA_DEVELOP)
-        InitializeConsole();
+		if (InitializeConsole() == false)
+		{
+			return -1;
+		}
 #endif
         
 		CEngine* pLEngine = DBG_NEW CEngine();

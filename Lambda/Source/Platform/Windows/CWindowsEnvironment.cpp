@@ -2,6 +2,7 @@
 #if defined(LAMBDA_PLAT_WINDOWS)
 #include "CWindowsEnvironment.h"
 #include "CWindowsWindow.h"
+#include "Core/Input/CKeyboardController.h"
 #include "CWindowsMouseController.h"
 #include "CXinputGamepadController.h"
 #include "Core/Event/CEventDispatcher.h"
@@ -40,6 +41,11 @@ namespace Lambda
 	void CWindowsEnvironment::Initialize()
 	{
 		InitializeLookUpTables();
+
+		//Create keyboardcontroller
+		CKeyboardController* pKeyboardController = DBG_NEW CKeyboardController(this);
+		SetKeyboardController(pKeyboardController);
+		AddEventListener(pKeyboardController);
 
 		//Create new input controllers
 		CWindowsMouseController* pMouseController = DBG_NEW CWindowsMouseController(this);
@@ -86,21 +92,6 @@ namespace Lambda
 	}
 
 	
-	void CWindowsEnvironment::PrintF(const char* pFormat, ...)
-	{
-		constexpr uint32 MAX_BUFFER_COUNT = 1024;
-		static char s_Buffer[MAX_BUFFER_COUNT];
-	
-		va_list args;
-		va_start(args, pFormat);
-		vsnprintf(s_Buffer, MAX_BUFFER_COUNT, pFormat, args);
-		va_end(args);
-
-		printf(s_Buffer);
-		OutputDebugStringA(s_Buffer);
-	}
-
-
 	bool CWindowsEnvironment::OnEvent(const CEvent& event)
 	{
 		CEventDispatcher dispatcher;
