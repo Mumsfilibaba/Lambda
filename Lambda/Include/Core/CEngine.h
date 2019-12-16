@@ -47,7 +47,7 @@ namespace Lambda
         virtual bool OnEvent(const CEvent& event) override final;
 
         void Initialize(const SEngineParams& params);
-        void Run();
+        void RunMainLoop();
         void Release();
 	private:
         void DoFrame();

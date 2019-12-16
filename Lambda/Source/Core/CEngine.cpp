@@ -9,6 +9,7 @@
 #include "Core/CLayer.h"
 #include "Core/Event/CQuitEvent.h"
 #include "Time/CClock.h"
+#include "Core/Console.h"
 
 //--------------------------------------------------------------------------------------------------------
 //_CreateGameLayer - Function pointer to create the gamelayer - Needed for DLL- and Static-Lib compilation
@@ -29,10 +30,19 @@ namespace Lambda
 	{
 		DBG_MEMLEAK_CHECK();
 
+#if defined(LAMBDA_DEVELOP)
+        InitializeConsole();
+#endif
+        
 		CEngine* pLEngine = DBG_NEW CEngine();
 		pLEngine->Initialize(params);
-		pLEngine->Run();
+		pLEngine->RunMainLoop();
 		pLEngine->Release();
+        
+        
+#if defined(LAMBDA_DEVELOP)
+        ReleaseConsole();
+#endif
 		return 0;
 	}
 
@@ -91,7 +101,7 @@ namespace Lambda
 	}
 
 
-	void CEngine::Run()
+	void CEngine::RunMainLoop()
 	{
 		LOG_ENGINE_INFO("STARTING\n");
 

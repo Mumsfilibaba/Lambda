@@ -20,7 +20,6 @@ namespace Lambda
         virtual void Initialize() override final;
         virtual void ProcessEvents() override final;
         virtual void Release() override final;
-        virtual void PrintF(const char* pFormat, ...) override final;
     private:
         virtual bool OnEvent(const CEvent& event) override final;
         

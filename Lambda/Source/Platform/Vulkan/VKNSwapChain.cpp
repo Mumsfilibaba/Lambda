@@ -26,8 +26,7 @@ namespace Lambda
         m_DepthStencilBuffer(nullptr),
 		m_CurrentBufferIndex(0),
 		m_SemaphoreIndex(0),
-		m_Buffers(),
-		m_FullscreenState(false)
+		m_Buffers()
 	{
 		//Add ref to context
 		m_Context = m_pDevice->GetVKNImmediateContext();

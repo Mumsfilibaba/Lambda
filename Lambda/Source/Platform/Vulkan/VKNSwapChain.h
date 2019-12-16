@@ -61,6 +61,5 @@ namespace Lambda
         VkPresentModeKHR m_VkPresentMode;
 		mutable uint32 m_CurrentBufferIndex;
         mutable uint32 m_SemaphoreIndex;
-		bool m_FullscreenState;
 	};
 }

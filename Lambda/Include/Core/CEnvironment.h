@@ -24,7 +24,6 @@ namespace Lambda
         
 		virtual void ProcessEvents() = 0;
 		virtual void Release() = 0;
-        virtual void PrintF(const char* pFormat, ...) = 0;
 
 		virtual void Initialize();
         virtual void AddEventListener(IEventListener* pListener);

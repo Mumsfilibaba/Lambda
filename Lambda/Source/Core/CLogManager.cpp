@@ -1,6 +1,6 @@
 #include "LambdaPch.h"
-#include "Core/CEnvironment.h"
 #include "Core/CLogManager.h"
+#include "Core/Console.h"
 
 namespace Lambda
 {
@@ -27,14 +27,29 @@ namespace Lambda
 
 		//Get severity as string
 		const char* pSeverity = nullptr;
+        EConsoleColor color = CONSOLE_COLOR_UNKNOWN;
 		if (severity == LOG_SEVERITY_INFO)
-			pSeverity = "INFO";
+        {
+            pSeverity = "INFO";
+        }
 		else if (severity == LOG_SEVERITY_MESSAGE)
-			pSeverity = "MESSAGE";
+        {
+            pSeverity = "MESSAGE";
+        }
 		else if (severity == LOG_SEVERITY_WARNING)
-			pSeverity = "WARNING";
+        {
+            pSeverity = "WARNING";
+            color = CONSOLE_COLOR_YELLOW;
+        }
 		else if (severity == LOG_SEVERITY_ERROR)
-			pSeverity = "ERROR";
+        {
+            pSeverity = "ERROR";
+            color = CONSOLE_COLOR_RED;
+        }
+        else
+        {
+            color = CONSOLE_COLOR_GREEN;
+        }
 
 		//Get channel as string
 		const char* pChannel = nullptr;
@@ -59,11 +74,11 @@ namespace Lambda
 		va_end(args);
 
 		//Print to the host
-		CEnvironment& environment = CEnvironment::Get();
+        SetConsoleColor(color);
 		if (channel == LOG_CHANNEL_ALL_CHANNELS)
-			environment.PrintF("[%s]: %s", pSeverity, s_Buffer);
+			PrintConsole("[%s]: %s", pSeverity, s_Buffer);
 		else
-			environment.PrintF("[%s]: [%s] - %s", pSeverity, pChannel, s_Buffer);
+			PrintConsole("[%s]: [%s] - %s", pSeverity, pChannel, s_Buffer);
 	}
 
 

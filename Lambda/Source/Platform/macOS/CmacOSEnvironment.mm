@@ -43,15 +43,6 @@ namespace Lambda
     }
 
 
-    void CmacOSEnvironment::PrintF(const char* pFormat, ...)
-    {
-        va_list args;
-        va_start(args, pFormat);
-        vprintf(pFormat, args);
-        va_end(args);
-    }
-
-
     void CmacOSEnvironment::CreateControllers()
     {
         //Create keyboardcontroller
