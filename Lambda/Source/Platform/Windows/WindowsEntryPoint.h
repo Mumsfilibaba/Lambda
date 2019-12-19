@@ -2,12 +2,10 @@
 #if defined(LAMBDA_PLAT_WINDOWS)
 #include "Core/CEngine.h"
 
-#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN 1
-#endif
 #include <Windows.h>
 
-extern LAMBDA_API Lambda::CLayer* (*_CreateGameLayer)(Lambda::CEnvironment*);
+extern LAMBDA_API Lambda::CLayer* (*_CreateGameLayer)(void);
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
@@ -18,8 +16,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 	//Start and initialize engine
 	SEngineParams params = {};
-	params.ppCmdArgs		= nullptr;
-	params.CmdArgsCount		= 0;
+	params.ppCmdArgs	= nullptr;
+	params.CmdArgsCount	= 0;
 	return LambdaMain(params);
 }
 

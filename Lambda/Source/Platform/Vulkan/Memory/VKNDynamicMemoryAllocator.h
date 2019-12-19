@@ -58,13 +58,13 @@ namespace Lambda
 		class VKNBlockPool
 		{
 		public:
-			VKNBlockPool(uint32 numBlocks);
+			VKNBlockPool(VkDeviceSize numBlocks);
 			~VKNBlockPool();
 
 			VKNDynamicMemoryBlock* Get();
 			void Return(VKNDynamicMemoryBlock* pBlock);
 		private:
-			VKNDynamicMemoryBlock* AllocateBlocks(uint32 numBlocks);
+			VKNDynamicMemoryBlock* AllocateBlocks(VkDeviceSize numBlocks);
 		private:
 			std::vector<VKNDynamicMemoryBlock*> m_Chains;
 			VKNDynamicMemoryBlock* m_pHead;

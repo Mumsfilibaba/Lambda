@@ -1,9 +1,9 @@
 #include "LambdaPch.h"
 #include "Core/Input/CMouse.h"
 #include "Core/Input/IMouseController.h"
-#include "Core/CEnvironment.h"
+#include "Core/CEngine.h"
 
-#define GET_MOUSECONTROLLER Lambda::CEnvironment::Get().GetMouseController
+#define GET_MOUSECONTROLLER Lambda::CEngine::Get().GetMouseController
 
 namespace Lambda
 {

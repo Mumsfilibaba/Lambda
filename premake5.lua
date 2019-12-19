@@ -82,6 +82,12 @@ workspace "Lambda"
 		{
 			"LAMBDA_PLAT_WINDOWS",
 		}
+	-- Desktop
+	filter "system:macosx or windows"
+		defines
+		{
+			"LAMBDA_DESKTOP"
+		}
 	-- Shared lib build
 	filter "platforms:x64_SharedLib"
 		defines

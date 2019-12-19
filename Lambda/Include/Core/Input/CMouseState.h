@@ -4,6 +4,7 @@
 
 namespace Lambda
 {
+	using Vec2  = glm::vec2;
 	using Point = glm::ivec2;
 
     //-----------
@@ -14,6 +15,7 @@ namespace Lambda
     {
     public:
         CMouseState() noexcept;
+		CMouseState(const Vec2& ScrollWheel, const Point& position, const bool bButtonStates[static_cast<int32>(EMouseButton::MOUSEBUTTON_LAST) + 1]) noexcept;
         CMouseState(const CMouseState& other) noexcept;
         CMouseState(CMouseState&& other) noexcept;
         ~CMouseState() = default;
@@ -21,39 +23,28 @@ namespace Lambda
         CMouseState& operator=(const CMouseState& other) noexcept;
         CMouseState& operator=(CMouseState&& other) noexcept;
 
-		void SetPosition(const Point& position);
-		void SetVerticalScollValue(float value);
-		void SetHorizontalScollValue(float value);
-		void SetButtonUp(EMouseButton button);
-		void SetButtonDown(EMouseButton button);
-
 		_forceinline const Point& GetPosition() const
 		{
 			return m_Position;
 		}
 
-		_forceinline float GetVerticalScollValue() const
+		_forceinline const Vec2& GetScollValue() const
 		{
-			return m_ScrollWheel.y;
-		}
-
-		_forceinline float GetHorizontalScollValue() const
-		{
-			return m_ScrollWheel.x;
+			return m_ScrollWheel;
 		}
 
 		_forceinline bool IsButtonUp(EMouseButton button) const
 		{
-			return m_Buttons[button] == false;
+			return m_bButtonStates[static_cast<int32>(button)] == false;
 		}
 
 		_forceinline bool IsButtonDown(EMouseButton button) const
 		{
-			return m_Buttons[button] == true;
+			return m_bButtonStates[static_cast<int32>(button)] == true;
 		}
     private:
 		Point m_Position;
-		glm::vec2 m_ScrollWheel;
-		bool m_Buttons[MOUSEBUTTON_LAST];
+		Vec2 m_ScrollWheel;
+		bool m_bButtonStates[static_cast<int32>(EMouseButton::MOUSEBUTTON_LAST)+1];
     };
 }

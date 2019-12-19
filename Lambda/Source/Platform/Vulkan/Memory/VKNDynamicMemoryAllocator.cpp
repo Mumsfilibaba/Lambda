@@ -454,10 +454,10 @@ namespace Lambda
 		if (m_EmptyPages.size() > limit)
 		{
             //Calculate pages to remove
-            uint32 numToRemove = m_EmptyPages.size() - limit;
+			size_t numToRemove = m_EmptyPages.size() - limit;
 			
             //Remove empty pages
-            for (uint32 i = 0; i < numToRemove; i++)
+            for (size_t i = 0; i < numToRemove; i++)
 			{
                 //Destroy the last page and then pop it. We repeat this numToRemove number of times
                 m_EmptyPages.back()->Destroy(m_pVkDevice);
@@ -470,7 +470,7 @@ namespace Lambda
 	//VKNDynamicMemoryPage::BlockPool
 	//-------------------------------
 
-	VKNDynamicMemoryPage::VKNBlockPool::VKNBlockPool(uint32 numBlocks)
+	VKNDynamicMemoryPage::VKNBlockPool::VKNBlockPool(VkDeviceSize numBlocks)
 		: m_pHead(nullptr),
 		m_Chains()
 	{
@@ -514,7 +514,7 @@ namespace Lambda
 	}
 	
 	
-	VKNDynamicMemoryBlock* VKNDynamicMemoryPage::VKNBlockPool::AllocateBlocks(uint32 numBlocks)
+	VKNDynamicMemoryBlock* VKNDynamicMemoryPage::VKNBlockPool::AllocateBlocks(VkDeviceSize numBlocks)
 	{
 		//Allocate array of blocks
 		VKNDynamicMemoryBlock* pBlocks = DBG_NEW VKNDynamicMemoryBlock[numBlocks];

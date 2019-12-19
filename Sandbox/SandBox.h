@@ -22,7 +22,7 @@ namespace Lambda
     class SandBoxLayer : public CLayer, public IEventListener
     {
     public:
-        SandBoxLayer(CEnvironment* pEnvironment);
+        SandBoxLayer();
         ~SandBoxLayer() = default;
         
 		LAMBDA_NO_COPY(SandBoxLayer);

@@ -1,9 +1,9 @@
 #include "LambdaPch.h"
 #include "Core/Input/CGamepad.h"
 #include "Core/Input/IGamepadController.h"
-#include "Core/CEnvironment.h"
+#include "Core/CEngine.h"
 
-#define GET_GAMEPADCONTROLLER Lambda::CEnvironment::Get().GetGamepadController
+#define GET_GAMEPADCONTROLLER Lambda::CEngine::Get().GetGamepadController
 
 namespace Lambda
 {

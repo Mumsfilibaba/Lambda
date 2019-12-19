@@ -1,31 +1,28 @@
 #pragma once
-#include "CEvent.h"
+#include "SEvent.h"
+#include "Core/CSingleton.h"
 
 namespace Lambda
 {
+    class IEventListener;
+
     //----------------
     //CEventDispatcher
     //----------------
 
-    class LAMBDA_API CEventDispatcher
+    class LAMBDA_API CEventDispatcher : public CSingleton<CEventDispatcher>
     {
     public:
-        CEventDispatcher() = default;
+        CEventDispatcher();
         ~CEventDispatcher() = default;
         
         LAMBDA_NO_COPY(CEventDispatcher);
         
-        //Dispatch event to another function
-        template <typename O, typename T>
-        _forceinline bool Dispatch(O* pObjectRef, bool(O::*objectCallbackFunc)(const T&), const CEvent& event)
-        {
-            if (event.GetType() == T::GetStaticType())
-            {
-                if ((pObjectRef->*objectCallbackFunc)(static_cast<const T&>(event)))
-                    return true;
-            }
-
-            return false;
-        }
+        bool DispatchEvent(const SEvent& event);
+        void AddEventListener(IEventListener* pListener);
+        void RemoveEventListener(IEventListener* pListener);
+        void Release();
+    private:
+        std::vector<IEventListener*> m_EventListeners;
     };
 }

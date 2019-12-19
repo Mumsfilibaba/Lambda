@@ -26,7 +26,7 @@ namespace Lambda
 	}
 
 
-	void DX12SamplerState::Init(DX12DescriptorHandle hDescriptor, const SSamplerStateDesc& desc)
+	void DX12SamplerState::Init(DX12DescriptorHandle hDescriptor, const SSamplerStateDesc&)
 	{
 		//Create sampler
 		D3D12_SAMPLER_DESC sDesc = {};

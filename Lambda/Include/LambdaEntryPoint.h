@@ -1,8 +1,7 @@
 #pragma once
-#include "LambdaCore.h"
 #include "Core/CEngine.h"
 
-extern Lambda::CLayer* Lambda::CreateGameLayer(Lambda::CEnvironment*);
+extern Lambda::CLayer* Lambda::CreateGameLayer(void);
 
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include "../Source/Platform/Windows/WindowsEntryPoint.h"

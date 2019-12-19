@@ -1,6 +1,5 @@
 #include "LambdaPch.h"
 #include "Core/CLogManager.h"
-#include "Core/Console.h"
 
 namespace Lambda
 {
@@ -28,7 +27,7 @@ namespace Lambda
 
 		//Get severity as string
 		const char* pSeverity = nullptr;
-		EConsoleColor color = CONSOLE_COLOR_GREEN;
+		EConsoleColor color = EConsoleColor::CONSOLE_COLOR_GREEN;
 		if (severity == LOG_SEVERITY_INFO)
 		{
 			pSeverity = "INFO";
@@ -40,12 +39,12 @@ namespace Lambda
 		else if (severity == LOG_SEVERITY_WARNING)
 		{
 			pSeverity = "WARNING";
-			color = CONSOLE_COLOR_YELLOW;
+			color = EConsoleColor::CONSOLE_COLOR_YELLOW;
 		}
 		else if (severity == LOG_SEVERITY_ERROR)
 		{
 			pSeverity = "ERROR";
-			color = CONSOLE_COLOR_RED;
+			color = EConsoleColor::CONSOLE_COLOR_RED;
 		}
 
 
@@ -82,16 +81,16 @@ namespace Lambda
 		va_end(args);
 
 		//Print to the host
-        SetConsoleColor(color);
+        LSetConsoleColor(color);
 		if (channel == LOG_CHANNEL_ALL_CHANNELS)
 		{
-			PrintConsole("[%s]: %s", pSeverity, s_Buffer);
+			LPrintConsole("[%s]: %s", pSeverity, s_Buffer);
 		}
 		else
 		{
-			PrintConsole("[%s]: [%s] - %s", pSeverity, pChannel, s_Buffer);
+			LPrintConsole("[%s]: [%s] - %s", pSeverity, pChannel, s_Buffer);
 		}
-		SetConsoleColor(CONSOLE_COLOR_WHITE);
+		LSetConsoleColor(EConsoleColor::CONSOLE_COLOR_WHITE);
 	}
 
 

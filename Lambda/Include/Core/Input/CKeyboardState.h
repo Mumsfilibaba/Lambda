@@ -11,6 +11,7 @@ namespace Lambda
 	{
     public:
         CKeyboardState();
+        CKeyboardState(const bool bKeyStates[static_cast<int32>(EKey::KEY_LAST) + 1]);
         CKeyboardState(const CKeyboardState& other) noexcept;
         CKeyboardState(CKeyboardState&& other) noexcept;
         ~CKeyboardState() = default;
@@ -18,19 +19,16 @@ namespace Lambda
         CKeyboardState& operator=(const CKeyboardState& other) noexcept;
         CKeyboardState& operator=(CKeyboardState&& other) noexcept;
         
-		void SetKeyStateDown(EKey key);
-		void SetKeyStateUp(EKey key);
-
 		_forceinline bool IsKeyUp(EKey key) const
 		{
-			return m_Keys[key] == false;
+			return m_bKeyStates[static_cast<int32>(key)] == false;
 		}
 
         _forceinline bool IsKeyDown(EKey key) const 
 		{
-			return m_Keys[key] == true;
+			return m_bKeyStates[static_cast<int32>(key)] == true;
 		}	
 	private:
-		bool m_Keys[KEY_LAST+1];
+		bool m_bKeyStates[static_cast<int32>(EKey::KEY_LAST)+1];
 	};
 }

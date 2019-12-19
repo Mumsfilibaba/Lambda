@@ -4,7 +4,6 @@
 #include "Core/Input/CMouse.h"
 #include "Core/Input/CGamepad.h"
 #include "Core/CLogManager.h"
-#include "Core/CEnvironment.h"
 #include "Core/Event/CMouseEvent.h"
 #include "Core/Event/CEventDispatcher.h"
 #include "Graphics/CMeshFactory.h"
@@ -21,33 +20,32 @@ namespace Lambda
 	//Define CreateGameLayer()
 	//------------------------
 
-	CLayer* CreateGameLayer(CEnvironment* pEnvironment)
+	CLayer* CreateGameLayer()
 	{
-		return DBG_NEW SandBoxLayer(pEnvironment);
+		return DBG_NEW SandBoxLayer();
 	}
 
 	//------------
 	//SandBoxLayer
 	//------------
 
-	SandBoxLayer::SandBoxLayer(CEnvironment* pEnvironment)
+	SandBoxLayer::SandBoxLayer()
          : CLayer("SandBoxLayer")
 	{
-		pEnvironment->AddEventListener(this);
+		CEventDispatcher::GetPtr()->AddEventListener(this);
 	}
 
 
 	bool SandBoxLayer::OnMouseMove(const CMouseMovedEvent& event)
 	{
-		LOG_DEBUG(LOG_CHANNEL_ALL_CHANNELS, LOG_SEVERITY_INFO, "Mouse moved: x=%d, y=%d\n", event.GetX(), event.GetY());
+		//LOG_DEBUG(LOG_CHANNEL_ALL_CHANNELS, LOG_SEVERITY_INFO, "Mouse moved: x=%d, y=%d\n", event.GetX(), event.GetY());
 		return false;
 	}
 
 
 	bool SandBoxLayer::OnEvent(const CEvent& event)
 	{
-		CEventDispatcher dispatcher;
-		dispatcher.Dispatch(this, &SandBoxLayer::OnMouseMove, event);
+		LForwardEvent(this, &SandBoxLayer::OnMouseMove, event);
 		return false;
 	}
 
@@ -82,9 +80,7 @@ namespace Lambda
 	void SandBoxLayer::OnRelease()
 	{
 		CLayer::OnRelease();
-
-		CEnvironment& environment = CEnvironment::Get();
-		environment.RemoveEventListener(this);
+		CEventDispatcher::GetPtr()->RemoveEventListener(this);
 	}
 
 

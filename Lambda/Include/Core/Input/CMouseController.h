@@ -10,22 +10,22 @@ namespace Lambda
 	class CMouseButtonPressedEvent;
 	class CMouseButtonReleasedEvent;
 
-	//--------------------
-	//CMouseControllerBase 
-	//--------------------
+	//----------------
+	//CMouseController 
+	//----------------
 
-	class CMouseControllerBase : public IMouseController, public IEventListener
+	class CMouseController : public IMouseController, public IEventListener
 	{
 	public:
-		CMouseControllerBase(CEnvironment* pEnvironment);
-		virtual ~CMouseControllerBase();
+		CMouseController();
+		~CMouseController();
 
-		virtual bool OnEvent(const CEvent& event) override final;
+		virtual bool OnEvent(const SEvent& event) override final;
 		
-		virtual bool IsMouseVisible() const override = 0;
-		virtual void SetMouseVisisble(bool) override = 0;
-		virtual void SetPosition(const Point& position) override = 0;
-		virtual Point GetPosition() const override = 0;
+		virtual bool IsMouseVisible() const override final;
+		virtual void SetMouseVisisble(bool bVisible) override final;
+		virtual void SetPosition(const Point& position) override final;
+		virtual Point GetPosition() const override final;
 
 		virtual bool IsButtonUp(EMouseButton button) const override final;
 		virtual bool IsButtonDown(EMouseButton button) const override final;
@@ -35,7 +35,7 @@ namespace Lambda
 		bool OnMouseButtonPressed(const CMouseButtonPressedEvent& event);
 		bool OnMouseButtonReleased(const CMouseButtonReleasedEvent& event);
 	protected:
-		CEnvironment* m_pEnvironment;
 		CMouseState m_MouseState;
+		bool m_bIsMouseVisible;
 	};
 }

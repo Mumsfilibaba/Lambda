@@ -16,7 +16,7 @@ namespace Lambda
 	}
 
 
-	void DX12PipelineState::CreateShaderVariableTable(IShaderVariableTable** ppVariableTable)
+	void DX12PipelineState::CreateShaderVariableTable(IShaderVariableTable**)
 	{
 	}
 

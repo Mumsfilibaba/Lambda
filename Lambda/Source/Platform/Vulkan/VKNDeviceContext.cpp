@@ -417,7 +417,7 @@ namespace Lambda
 	}
 
 	
-	void VKNDeviceContext::CopyBufferToImage(VkImage image, VkDeviceSize mipLevel, VkImageAspectFlags aspectFlags, uint32 width, uint32 height, uint32 depth, VkBuffer buffer, VkDeviceSize offset, VkDeviceSize)
+	void VKNDeviceContext::CopyBufferToImage(VkImage image, uint32_t mipLevel, VkImageAspectFlags aspectFlags, uint32 width, uint32 height, uint32 depth, VkBuffer buffer, VkDeviceSize offset, VkDeviceSize)
 	{
 		//Check if we should flush the context
 		if (m_Type == DEVICE_CONTEXT_TYPE_IMMEDIATE && m_NumCommands > m_MaxNumCommands)

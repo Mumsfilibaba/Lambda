@@ -130,12 +130,12 @@ namespace Lambda
 	}
 
 
-	void DX12DeviceContext::ResetQuery(IQuery* pQuery)
+	void DX12DeviceContext::ResetQuery(IQuery*)
 	{
 	}
 
 
-	void DX12DeviceContext::WriteTimeStamp(IQuery* pQuery)
+	void DX12DeviceContext::WriteTimeStamp(IQuery*)
 	{
 	}
 
@@ -164,19 +164,19 @@ namespace Lambda
 	}*/
 
 
-	void DX12DeviceContext::SetRendertargets(ITexture* const* ppRenderTargets, uint32 numRendertargets, ITexture* pDepthStencil)
+	void DX12DeviceContext::SetRendertargets(ITexture* const*, uint32, ITexture*)
 	{
 	}
 
 
-	void DX12DeviceContext::SetViewports(const SViewport* pViewports, uint32 numViewports)
+	void DX12DeviceContext::SetViewports(const SViewport*, uint32)
 	{
 		//D3D12_VIEWPORT port = { viewport.TopX, viewport.TopY, viewport.Width, viewport.Height, viewport.MinDepth, viewport.MaxDepth };
 		//m_List->RSSetViewports( 1, &port );
 	}
 
 
-	void DX12DeviceContext::SetScissorRects(const SRectangle* pScissorRect, uint32 numScissorRects)
+	void DX12DeviceContext::SetScissorRects(const SRectangle*, uint32)
 	{
 		//D3D12_RECT rect = { (LONG)scissorRect.X, (LONG)scissorRect.Y, (LONG)scissorRect.X + (LONG)scissorRect.Width, (LONG)scissorRect.Y + (LONG)scissorRect.Height };
 		//m_List->RSSetScissorRects(1, &rect);
@@ -203,26 +203,26 @@ namespace Lambda
 	}
 
 	
-	void DX12DeviceContext::SetShaderVariableTable(IShaderVariableTable* pVariableTable)
+	void DX12DeviceContext::SetShaderVariableTable(IShaderVariableTable*)
 	{
 	}
 
 
-	void DX12DeviceContext::SetVertexBuffers(IBuffer* const * ppBuffers, uint32 numBuffers, uint32 slot)
+	void DX12DeviceContext::SetVertexBuffers(IBuffer* const *, uint32, uint32)
 	{
 		//D3D12_VERTEX_BUFFER_VIEW view = reinterpret_cast<DX12Buffer*>(pBuffer)->GetVertexBufferView();
 		//m_List->IASetVertexBuffers(slot, 1, &view);
 	}
 
 
-	void DX12DeviceContext::SetIndexBuffer(IBuffer* pIndexBuffer, EFormat format)
+	void DX12DeviceContext::SetIndexBuffer(IBuffer* pIndexBuffer, EFormat)
 	{
 		D3D12_INDEX_BUFFER_VIEW view = reinterpret_cast<DX12Buffer*>(pIndexBuffer)->GetIndexBufferView();
 		m_List->IASetIndexBuffer(&view);
 	}
 
 	
-	void DX12DeviceContext::SetConstantBlocks(EShaderStage stage, uint32 offset, uint32 sizeInBytes, void* pData)
+	void DX12DeviceContext::SetConstantBlocks(EShaderStage, uint32, uint32, void*)
 	{
 	}
 
@@ -240,7 +240,7 @@ namespace Lambda
 	}
 
 
-	void DX12DeviceContext::TransitionTexture(const ITexture* pResource, EResourceState resourceState, uint32 startMipLevel, uint32 numMipLevels)
+	void DX12DeviceContext::TransitionTexture(const ITexture* pResource, EResourceState resourceState, uint32, uint32)
 	{
 		const DX12Texture* pTexture = reinterpret_cast<const DX12Texture*>(pResource);
 		m_ResourceTracker.TransitionResource(pTexture->GetResource(), D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, ConvertResourceState(resourceState));
@@ -441,37 +441,37 @@ namespace Lambda
 	}
 
 
-	void DX12DeviceContext::MapBuffer(IBuffer* pBuffer, uint32 mapFlags, void** ppData)
+	void DX12DeviceContext::MapBuffer(IBuffer*, uint32, void**)
 	{
 	}
 
 
-	void DX12DeviceContext::UnmapBuffer(IBuffer* pBuffer)
+	void DX12DeviceContext::UnmapBuffer(IBuffer*)
 	{
 	}
 
 
-	void DX12DeviceContext::ResolveTexture(ITexture* pDst, uint32 dstMipLevel, ITexture* pSrc, uint32 srcMipLevel)
-	{
-	}
-
-	
-	void DX12DeviceContext::GenerateMipLevels(ITexture* pTexture)
+	void DX12DeviceContext::ResolveTexture(ITexture*, uint32, ITexture*, uint32)
 	{
 	}
 
 	
-	void DX12DeviceContext::TransitionTextureStates(const STextureTransitionBarrier* pBarriers, uint32 numBarriers)
+	void DX12DeviceContext::GenerateMipLevels(ITexture*)
+	{
+	}
+
+	
+	void DX12DeviceContext::TransitionTextureStates(const STextureTransitionBarrier*, uint32)
 	{
 	}
 
 
-	void DX12DeviceContext::Draw(uint32 vertexCount, uint32 startVertex)
+	void DX12DeviceContext::Draw(uint32, uint32)
 	{
 	}
 
 
-	void DX12DeviceContext::DrawIndexed(uint32 indexCount, uint32 startIndexLocation, uint32 baseVertexLocation)
+	void DX12DeviceContext::DrawIndexed(uint32, uint32, uint32)
 	{
 	}
 
@@ -494,7 +494,7 @@ namespace Lambda
 	}
 
 
-	void DX12DeviceContext::ExecuteDefferedContext(IDeviceContext* pContext)
+	void DX12DeviceContext::ExecuteDefferedContext(IDeviceContext*)
 	{
 	}
 

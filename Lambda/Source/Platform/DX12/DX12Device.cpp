@@ -64,7 +64,7 @@ namespace Lambda
 			m_SwapChain->SetFullscreenState(false, nullptr);
 		}
 
-		IDeviceContext* pList = m_pImmediateContext;
+		//IDeviceContext* pList = m_pImmediateContext;
 		m_pImmediateContext->Release();
 
 		for (uint32 i = 0; i < m_NumBackbuffers; i++)
@@ -367,7 +367,7 @@ namespace Lambda
 			//Create view
 			D3D12_CONSTANT_BUFFER_VIEW_DESC vDesc = {};
 			vDesc.BufferLocation = pBuffer->GetGPUVirtualAdress();
-			vDesc.SizeInBytes = desc.SizeInBytes;
+			vDesc.SizeInBytes = (UINT)desc.SizeInBytes;
 			m_Device->CreateConstantBufferView(&vDesc, hDescriptor.CPU);
 		}
 
@@ -463,13 +463,13 @@ namespace Lambda
 	}
 
 
-	void DX12Device::CreatePipelineState(IPipelineState** ppPSO, const SPipelineStateDesc& desc)
+	void DX12Device::CreatePipelineState(IPipelineState**, const SPipelineStateDesc&)
 	{
 		//(*ppPSO) = DBG_NEW DX12PipelineState(m_Device.Get(), desc);
 	}
 
 
-	void DX12Device::CreateQuery(IQuery** ppQuery, const SQueryDesc& desc)
+	void DX12Device::CreateQuery(IQuery**, const SQueryDesc&)
 	{
 	}
 

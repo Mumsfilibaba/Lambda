@@ -1,9 +1,9 @@
 #include "LambdaPch.h"
 #include "Core/Input/CKeyboard.h"
 #include "Core/Input/IKeyboardController.h"
-#include "Core/CEnvironment.h"
+#include "Core/CEngine.h"
 
-#define GET_KEYBOARDCONTROLLER Lambda::CEnvironment::Get().GetKeyboardController
+#define GET_KEYBOARDCONTROLLER Lambda::CEngine::Get().GetKeyboardController
 
 namespace Lambda
 {
@@ -39,6 +39,7 @@ namespace Lambda
 	{
 		IKeyboardController* pKeyboardController = GET_KEYBOARDCONTROLLER();
 		s_CurrentState = pKeyboardController->GetKeyboardState();
+
 		return s_CurrentState;
 	}
 

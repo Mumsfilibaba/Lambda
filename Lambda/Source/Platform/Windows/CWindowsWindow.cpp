@@ -5,7 +5,7 @@
 	#include "WindowsHelper.h"
 	#include "CWindowClass.h"
 	#include "CWindowsWindow.h"
-	#include "CWindowsEnvironment.h"
+	#include "Core/CEngine.h"
 	#include "Core/Event/CWindowEvent.h"
 	#include "Core/Event/CKeyEvent.h"
 	#include "Core/Event/CMouseEvent.h"
@@ -14,18 +14,27 @@
 
 namespace Lambda
 {
+	//--------------------------
+	//CWindowClass::CreateWindow
+	//--------------------------
+
+	IWindow* IWindow::CreateWindow(const char* pTitle, uint32 uWidth, uint32 uHieght)
+	{
+		return DBG_NEW CWindowsWindow(pTitle, uWidth, uHieght);
+	}
+
 	//--------------
 	//CWindowsWindow
 	//--------------
 
-	LRESULT CALLBACK WindowEventCallback(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+	LRESULT CALLBACK MessageCallback(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 	CWindowsWindow::CWindowsWindow(const char* pTitle, uint32 width, uint32 height)
-		: CWindowBase(),
+		: IWindow(),
 		m_hWindow(0),
 		m_Fullscreen(false),
 		m_HasFocus(false),
-		m_HasMouseCapture(false)
+		m_IsAlive(false)
 	{
 		Init(pTitle, width, height);
 		LOG_ENVIRONMENT_INFO("[LAMBDA ENGINE] Created window. w: %d, h: %d\n", width, height);
@@ -131,12 +140,6 @@ namespace Lambda
 	}
 
 
-	bool CWindowsWindow::HasMouseCapture() const
-	{
-		return m_HasMouseCapture;
-	}
-
-
 	bool CWindowsWindow::GetFullscreen() const
 	{
 		return m_Fullscreen;
@@ -153,7 +156,7 @@ namespace Lambda
 			WNDCLASSEX wc = {};
 			wc.cbSize		 = sizeof(WNDCLASSEX);
 			wc.style		 = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-			wc.lpfnWndProc	 = WindowEventCallback;
+			wc.lpfnWndProc	 = MessageCallback;
 			wc.cbClsExtra	 = 0;
 			wc.cbWndExtra	 = 0;
 			wc.hInstance	 = static_cast<HINSTANCE>(GetModuleHandle(NULL));
@@ -187,8 +190,9 @@ namespace Lambda
 			}
 			else
 			{
-				m_Width	 = width;
-				m_Height = height;
+				m_Width	  = width;
+				m_Height  = height;
+				m_IsAlive = true;
 
 				//Set userdata so we can retrive this-pointer when handling events
 				SetWindowLongPtr(m_hWindow, GWLP_USERDATA, reinterpret_cast<uintptr_t>(this));
@@ -201,152 +205,40 @@ namespace Lambda
 	}
 
 
-	LRESULT CWindowsWindow::OnEvent(uint32 msg, WPARAM wParam, LPARAM lParam)
+	LRESULT CWindowsWindow::OnEvent(uint32 msg, WPARAM, LPARAM lParam)
 	{
 		switch (msg)
 		{
 		case WM_DESTROY:
 		{
-			CWindowClosedEvent event = CWindowClosedEvent();
-			DispatchEvent(event);
-			break;
+			m_IsAlive = false;
+			return 0;
 		}
 		
 		case WM_SIZE:
 		{
-			CWindowResizeEvent event = CWindowResizeEvent(uint32(LOWORD(lParam)), uint32(HIWORD(lParam)));
-			DispatchEvent(event);
-			break;
+			m_Width  = uint32(LOWORD(lParam));
+			m_Height = uint32(HIWORD(lParam));
+			return 0;
 		}
 
 		case WM_MOVE:
 		{
-			CWindowMoveEvent event = CWindowMoveEvent(uint32(LOWORD(lParam)), uint32(HIWORD(lParam)));
-			DispatchEvent(event);
-			break;
-		}
-		
-		case WM_KEYDOWN:
-		{
-			CWindowsEnvironment& environment = GET_WINDOWS_ENVIRONMENT();
-			EKey key = environment.ConvertKeyFromWindows(uint32(wParam));
-
-			CKeyPressedEvent event = CKeyPressedEvent(key, GetKeyModifers(), uint32(LOWORD(lParam)));
-			DispatchEvent(event);
-			break;
-		}
-		case WM_KEYUP:
-		{
-			CWindowsEnvironment& environment = GET_WINDOWS_ENVIRONMENT();
-			EKey key = environment.ConvertKeyFromWindows(uint32(wParam));
-
-			CKeyReleasedEvent event = CKeyReleasedEvent(key, GetKeyModifers());
-			DispatchEvent(event);
-			break;
-		}
-
-		case WM_CHAR:
-		{
-			CKeyTypedEvent event = CKeyTypedEvent(uint32(wParam));
-			DispatchEvent(event);
-			break;
-		}
-
-		case WM_MOUSEMOVE:
-		{
-			CMouseMovedEvent event = CMouseMovedEvent(uint32(GET_X_LPARAM(lParam)), uint32(GET_Y_LPARAM(lParam)));
-			DispatchEvent(event);
-			break;
-		}
-
-		case WM_LBUTTONUP:
-		case WM_MBUTTONUP:
-		case WM_RBUTTONUP:
-		case WM_XBUTTONUP:
-		case WM_LBUTTONDOWN:
-		case WM_MBUTTONDOWN:
-		case WM_RBUTTONDOWN:
-		case WM_XBUTTONDOWN:
-		{
-			EMouseButton button = MOUSEBUTTON_UNKNOWN;
-			if (msg == WM_LBUTTONDOWN || msg == WM_LBUTTONUP)
-				button = MOUSEBUTTON_LEFT;
-			else if (msg == WM_MBUTTONDOWN || msg == WM_MBUTTONUP)
-				button = MOUSEBUTTON_MIDDLE;
-			else if (msg == WM_RBUTTONDOWN || msg == WM_RBUTTONUP)
-				button = MOUSEBUTTON_RIGHT;
-			else if (GET_XBUTTON_WPARAM(wParam) == XBUTTON1)
-				button = MOUSEBUTTON_BACKWARD;
-			else
-				button = MOUSEBUTTON_FORWARD;
-
-			uint32 modifiers = GetKeyModifers();
-			if (msg == WM_LBUTTONUP || msg == WM_MBUTTONUP || msg == WM_RBUTTONUP || msg == WM_XBUTTONUP)
-			{
-				//When the mousebutton is released we also release the mousecapture
-				ReleaseCapture();
-				m_HasMouseCapture = false;
-
-				//Send event
-				CMouseButtonReleasedEvent event = CMouseButtonReleasedEvent(button, modifiers);
-				DispatchEvent(event);
-			}
-			else
-			{
-				//Mouse is down so we capture the mouse
-				SetCapture(m_hWindow);
-				m_HasMouseCapture = true;
-
-				//Set event
-				CMouseButtonPressedEvent event = CMouseButtonPressedEvent(button, modifiers);
-				DispatchEvent(event);
-			}
-			break;
-		}
-		
-		case WM_MOUSEWHEEL:
-		case WM_MOUSEHWHEEL:
-		{
-			float value				= float(GET_WHEEL_DELTA_WPARAM(wParam)) / float(WHEEL_DELTA);
-			float horizontalValue	= 0.0f;
-			float verticalValue		= 0.0f;
-			if (msg == WM_MOUSEHWHEEL)
-				horizontalValue = value;
-			else
-				verticalValue = value;
-
-			CMouseScrolledEvent event = CMouseScrolledEvent(horizontalValue, verticalValue);
-			DispatchEvent(event);
-			break;
+			m_PosX = uint32(LOWORD(lParam));
+			m_PosY = uint32(HIWORD(lParam));
+			return 0;
 		}
 
 		case WM_SETFOCUS:
 		case WM_KILLFOCUS:
 		{
-			//Update has focus
-			m_HasFocus = msg == WM_SETFOCUS;
-
-			CWindowFocusChangedEvent event = CWindowFocusChangedEvent(m_HasFocus);
-			DispatchEvent(event);
-			break;
+			m_HasFocus = (msg == WM_SETFOCUS);
+			return 0;
 		}
 
 		default:
-			return DefWindowProc(m_hWindow, msg, wParam, lParam);
+			return 0;
 		}
-
-		return LRESULT(0);
-	}
-
-
-	LRESULT CALLBACK WindowEventCallback(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-	{
-		//Retrive userdata to get the pointer to the windows
-		CWindowsWindow* pWindow = reinterpret_cast<CWindowsWindow*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
-		if (pWindow)
-			return pWindow->OnEvent(msg, wParam, lParam);
-		else
-			return DefWindowProc(hWnd, msg, wParam, lParam);
 	}
 }
 #endif

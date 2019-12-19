@@ -3,22 +3,33 @@
 
 namespace Lambda
 {
+	//--------------
+	//CKeyboardState
+	//--------------
+
 	CKeyboardState::CKeyboardState()
-		: m_Keys()
+		: m_bKeyStates()
 	{
-		memset(m_Keys, 0, sizeof(m_Keys));
+		memset(m_bKeyStates, 0, sizeof(m_bKeyStates));
+	}
+
+
+	CKeyboardState::CKeyboardState(const bool bKeyStates[static_cast<int32>(EKey::KEY_LAST)+1])
+		: m_bKeyStates()
+	{
+		memcpy(m_bKeyStates, bKeyStates, sizeof(m_bKeyStates));
 	}
 	
 	
 	CKeyboardState::CKeyboardState(const CKeyboardState& other) noexcept
-		: m_Keys()
+		: m_bKeyStates()
 	{
 		memcpy(this, &other, sizeof(CKeyboardState));
 	}
 	
 	
 	CKeyboardState::CKeyboardState(CKeyboardState&& other) noexcept
-		: m_Keys()
+		: m_bKeyStates()
 	{
 		memcpy(this, &other, sizeof(CKeyboardState));
 	}
@@ -39,17 +50,5 @@ namespace Lambda
 			memcpy(this, &other, sizeof(CKeyboardState));
 
 		return *this;
-	}
-	
-	
-	void CKeyboardState::SetKeyStateDown(EKey key)
-	{
-		m_Keys[key] = true;
-	}
-	
-	
-	void CKeyboardState::SetKeyStateUp(EKey key)
-	{
-		m_Keys[key] = false;
 	}
 }

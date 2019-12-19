@@ -55,21 +55,6 @@
 	#define LOG(...)
 #endif
 
-
-//Asserts
-#ifdef LAMBDA_DEBUG
-	#define LAMBDA_ENABLE_ASSERTS
-#endif
-
-#ifdef LAMBDA_ENABLE_ASSERTS
-	#define LAMBDA_ASSERT(x)			{ if(!(x)) { LOG_ENGINE_ERROR("Assertion Failed\n"); DEBUG_BREAK; } }
-	#define LAMBDA_ASSERT_PRINT(x, ...) { if(!(x)) { LOG_ENGINE_ERROR(__VA_ARGS__); DEBUG_BREAK; } }
-#else
-	#define LAMBDA_ASSERT(x)		
-	#define LAMBDA_ASSERT_PRINT(x, ...)
-#endif
-
-
 namespace Lambda
 {
     //------------

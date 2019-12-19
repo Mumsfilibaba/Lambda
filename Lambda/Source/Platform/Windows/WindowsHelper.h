@@ -1,12 +1,10 @@
 #pragma once
 #include "LambdaCore.h"
+#if defined(LAMBDA_PLAT_WINDOWS)
 #include "Core/Input/EKey.h"
 #include "Core/Input/EMouseButton.h"
-#if defined(LAMBDA_PLAT_WINDOWS)
-	#if !defined(WIN32_LEAN_AND_MEAN)
-		#define WIN32_LEAN_AND_MEAN 1
-	#endif
-	#include <Windows.h>
+#define WIN32_LEAN_AND_MEAN 1
+#include <Windows.h>
 
 namespace Lambda
 {
@@ -34,7 +32,7 @@ namespace Lambda
 	}
 
 
-	EMouseButton WindowsButtonToLambda(uint32 keycode)
+	inline EMouseButton WindowsButtonToLambda(uint32 keycode)
 	{
 		switch (keycode)
 		{
@@ -48,7 +46,7 @@ namespace Lambda
 	}
 
 
-	uint32 LambdaButtonToWindows(EMouseButton keycode)
+	inline uint32 LambdaButtonToWindows(EMouseButton keycode)
 	{
 		switch (keycode)
 		{
