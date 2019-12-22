@@ -1,7 +1,6 @@
 #pragma once
 #include "CSingleton.h"
 #include "CLayerStack.h"
-#include "CEnvironment.h"
 
 #include "Event/IEventListener.h"
 #include "Event/CEventDispatcher.h"
@@ -91,7 +90,6 @@ namespace Lambda
         void DoFrame();
 		void Exit(int32 exitCode);
 	private:
-		CEnvironment* m_pEnvironment;
 		//--------
 		//Managers
 		//--------

@@ -12,6 +12,29 @@ namespace Lambda
 	typedef unsigned int		uint32;
 	typedef unsigned long long	uint64;
 
+	//-------------
+	//EConsoleColor
+	//-------------
+
+	enum class EConsoleColor : uint32
+	{
+		CONSOLE_COLOR_UNKNOWN	= 0,
+		CONSOLE_COLOR_WHITE		= 1,
+		CONSOLE_COLOR_RED		= 2,
+		CONSOLE_COLOR_GREEN		= 3,
+		CONSOLE_COLOR_YELLOW	= 4,
+	};
+
+	//---------------
+	//EMessageBoxType
+	//---------------
+
+	enum class EMessageBoxType : uint8
+	{
+		MESSAGE_BOX_TYPE_NONE	= 0,
+		MESSAGE_BOX_TYPE_ERROR	= 1,
+	};
+
     //Topology to use
 	enum EPrimitiveTopology : uint32
 	{
