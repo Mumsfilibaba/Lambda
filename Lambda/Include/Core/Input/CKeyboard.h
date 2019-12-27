@@ -6,10 +6,9 @@ namespace Lambda
     //---------
     //CKeyboard
     //---------
-
 	class LAMBDA_API CKeyboard final
 	{
-        friend class CEngine;
+		friend Input::Update();
 	public:
 		LAMBDA_STATIC_CLASS(CKeyboard);
 
@@ -17,7 +16,7 @@ namespace Lambda
 		static bool IsKeyPressed(EKey key);
 		static bool IsKeyUp(EKey key);
 		static bool IsKeyDown(EKey key);
-		static const CKeyboardState& GetState();
+		static void GetState();
     private:
         static void UpdateState();
 	private:

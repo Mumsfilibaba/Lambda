@@ -8,7 +8,6 @@ namespace Lambda
     //--------------
     //IEventListener
     //--------------
-
 	class LAMBDA_API IEventListener
 	{
 	public:

@@ -9,7 +9,6 @@ namespace Lambda
     //-----------
     //CLayerStack
     //-----------
-
     class LAMBDA_API CLayerStack
     {
     public:

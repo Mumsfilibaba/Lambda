@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/CConsole.h"
+#include "Core/Console.h"
 
 //Asserts
 #ifdef LAMBDA_DEBUG
@@ -12,9 +12,9 @@
 			if (!(x)) \
 			{ \
 				Lambda::CPlatform::MessageBox("FATAL ERROR", "Assertion Failed", Lambda::EMessageBoxType::MESSAGE_BOX_TYPE_ERROR); \
-				Lambda::CConsole::SetTextColor(Lambda::EConsoleColor::CONSOLE_COLOR_RED); \
-				Lambda::CConsole::Print(__VA_ARGS__); \
-				Lambda::CConsole::SetTextColor(Lambda::EConsoleColor::CONSOLE_COLOR_WHITE); \
+				Lambda::NConsole::SetTextColor(Lambda::EConsoleColor::CONSOLE_COLOR_RED); \
+				Lambda::NConsole::Print(__VA_ARGS__); \
+				Lambda::NConsole::Reset(); \
 				DEBUG_BREAK; \
 			} \
 		}

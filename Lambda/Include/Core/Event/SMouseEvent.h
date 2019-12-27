@@ -1,13 +1,12 @@
 #pragma once
-#include "../Input/EKey.h"
-#include "../Input/EMouseButton.h"
+#include "Core/Event/EKey.h"
+#include "Core/Event/EMouseButton.h"
 
 namespace Lambda
 {
     //-----------------
     //SMouseButtonEvent
     //-----------------
-
     struct SMouseButtonEvent
     {
         EMouseButton Button;
@@ -17,7 +16,6 @@ namespace Lambda
     //----------------
     //SMouseMovedEvent
     //----------------
-
     struct SMouseMovedEvent
     {
         int32 x;
@@ -27,7 +25,6 @@ namespace Lambda
     //-------------------
     //SMouseScrolledEvent
     //-------------------
-
     struct SMouseScrolledEvent 
     {
         float Horizontal;

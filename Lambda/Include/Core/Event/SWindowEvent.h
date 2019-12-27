@@ -6,7 +6,6 @@ namespace Lambda
     //------------------
     //SWindowResizeEvent
     //------------------
-
     struct SWindowResizeEvent
     {
         uint32 Width;
@@ -16,7 +15,6 @@ namespace Lambda
     //----------------
     //SWindowMoveEvent
     //----------------
-
     struct SWindowMoveEvent
     {
         uint32 x;
@@ -26,7 +24,6 @@ namespace Lambda
     //------------------------
     //SWindowFocusChangedEvent
     //------------------------
-
     struct SWindowFocusChangedEvent
     {
         bool bHasFocus = false;

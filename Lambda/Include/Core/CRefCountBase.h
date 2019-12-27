@@ -27,7 +27,6 @@ namespace Lambda
             return counter;
         }
 
-
         virtual RefCountValue AddRef() override
         {
             return ++m_StrongReferences;

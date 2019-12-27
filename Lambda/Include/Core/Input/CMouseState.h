@@ -10,7 +10,6 @@ namespace Lambda
     //-----------
     //CMouseState
     //-----------
-
     class LAMBDA_API CMouseState final
     {
     public:

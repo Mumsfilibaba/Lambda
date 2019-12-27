@@ -90,6 +90,7 @@
 
 	#define DEBUG_BREAK __debugbreak()
 #else
+    #include <assert.h>
 	#define DEBUG_BREAK assert(false)
 #endif
 

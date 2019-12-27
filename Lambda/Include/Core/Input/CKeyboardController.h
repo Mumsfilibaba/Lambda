@@ -1,13 +1,12 @@
 #pragma once
 #include "IKeyboardController.h"
-#include "../Event/IEventListener.h"
+#include "Core/Event/IEventListener.h"
 
 namespace Lambda
 {
 	//-------------------
 	//CKeyboardController
 	//-------------------
-
 	class CKeyboardController : public IKeyboardController, public IEventListener
 	{
 	public:

@@ -136,7 +136,7 @@ workspace "Lambda"
 		filter "system:windows"
 			removefiles
 			{
-				"%{prj.name}/Source/Platform/macOS/**",
+				"%{prj.name}/Include/Platform/macOS/**",
 			}
 		filter {}
 		-- Remove files not available for windows builds
@@ -149,7 +149,7 @@ workspace "Lambda"
 			removefiles
 			{
 				"%{prj.name}/Source/Platform/DX12/**",
-				"%{prj.name}/Source/Platform/Windows/**",
+				"%{prj.name}/Include/Platform/Windows/**",
 			}
 		filter {}
 		-- We do not want to compile HLSL files
@@ -158,8 +158,8 @@ workspace "Lambda"
 			"**.hlsl",
 		}
 		-- Includes
-		includedirs 
-		{ 
+		includedirs
+		{
 			"%{prj.name}/Include",
 		}
 		sysincludedirs
@@ -261,7 +261,7 @@ workspace "Lambda"
 		
 		--Includes
 		includedirs
-		{ 
+		{
 			"Lambda/Include",
 		}
 		sysincludedirs

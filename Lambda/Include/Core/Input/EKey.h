@@ -6,7 +6,6 @@ namespace Lambda
     //----
     //EKey
     //----
-
     enum class EKey : uint8
     {
         KEY_UNKNOWN         = 0,
@@ -136,7 +135,6 @@ namespace Lambda
     //------------
     //EKeyModifier
     //------------
-
     enum class EKeyModifier : uint32
     {
         KEY_MODIFIER_UNKNOWN    = 0,

@@ -6,7 +6,6 @@ namespace Lambda
     //--------------
     //CKeyboardState
     //--------------
-
 	class LAMBDA_API CKeyboardState final
 	{
     public:

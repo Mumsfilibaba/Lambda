@@ -6,7 +6,6 @@ namespace Lambda
     //--------
     //EGamepad
     //--------
-
     enum EGamepad : uint8
     {
         GAMEPAD_UNKNOWN = 0,
@@ -20,7 +19,6 @@ namespace Lambda
 	//-------------
 	//EGamepadStick
 	//-------------
-
 	enum EGamepadStick : uint8
 	{
 		GAMEPAD_STICK_UNKNOWN = 0,
@@ -32,7 +30,6 @@ namespace Lambda
 	//---------------
 	//EGamepadTrigger
 	//---------------
-
 	enum EGamepadTrigger : uint8
 	{
 		GAMEPAD_TRIGGER_UNKNOWN = 0,

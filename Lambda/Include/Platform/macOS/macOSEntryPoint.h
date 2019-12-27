@@ -6,8 +6,6 @@ extern LAMBDA_API Lambda::CLayer* (*_CreateGameLayer)(Lambda::CEnvironment*);
 
 int main(int, const char**)
 {
-    using namespace Lambda;
-    
     //Initialize CreateGameLayerFunc
     _CreateGameLayer = Lambda::CreateGameLayer;
     

@@ -6,7 +6,6 @@ namespace Lambda
     //----------------
     //IMouseController
     //----------------
-
 	class IMouseController
     {
     public:
@@ -15,8 +14,10 @@ namespace Lambda
 		virtual bool IsButtonUp(EMouseButton button) const = 0;
 		virtual bool IsButtonDown(EMouseButton button) const = 0;
 		virtual bool IsMouseVisible() const = 0;
+		
 		virtual void SetMouseVisisble(bool bVisible) = 0;
         virtual void SetPosition(const Point& position) = 0;
+
         virtual Point GetPosition() const = 0;
         virtual CMouseState GetState() const = 0;
     };
@@ -24,7 +25,6 @@ namespace Lambda
 	//-----------------------------------------------------------------
 	//CDummyMouseController - Used when no real controller is available
 	//-----------------------------------------------------------------
-
 	class CDummyMouseController final : public IMouseController
 	{
 	public:

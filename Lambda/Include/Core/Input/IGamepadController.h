@@ -6,7 +6,6 @@ namespace Lambda
     //------------------
     //IGamepadController
     //------------------
-
     class IGamepadController
     {
     public:
@@ -21,7 +20,6 @@ namespace Lambda
 	//-------------------------------------------------------------------
 	//CDummyGamepadController - Used when no real controller is available
 	//-------------------------------------------------------------------
-
 	class CDummyGamepadController final : public IGamepadController
 	{
 	public:

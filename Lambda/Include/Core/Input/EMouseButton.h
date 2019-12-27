@@ -6,7 +6,6 @@ namespace Lambda
     //------------
     //EMouseButton
     //------------
-
     enum class EMouseButton : uint8
     {
         MOUSEBUTTON_UNKNOWN     = 0,

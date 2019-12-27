@@ -6,13 +6,10 @@ namespace Lambda
 	//----------
 	//CSingleton
 	//----------
-
 	template <typename T>
 	class LAMBDA_API CSingleton
 	{
-	protected:       
-		LAMBDA_NO_COPY(CSingleton);
-
+	protected:
 		_forceinline CSingleton()
 		{
 			LAMBDA_ASSERT(s_pInstance == nullptr);
@@ -24,6 +21,8 @@ namespace Lambda
 			LAMBDA_ASSERT(s_pInstance != nullptr);
 			s_pInstance = nullptr;
 		}
+
+		LAMBDA_NO_COPY(CSingleton);
 	public:
 		_forceinline static T& Get()
 		{

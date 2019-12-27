@@ -1,12 +1,11 @@
 #pragma once
-#include "../Input/EKey.h"
+#include "EKey.h"
 
 namespace Lambda
 {
     //---------
     //SKeyEvent 
     //---------
-  
     struct SKeyEvent
     {
         EKey Key;
@@ -17,7 +16,6 @@ namespace Lambda
     //-------------
     //SKeyTextEvent
     //-------------
-
     struct SKeyTextEvent 
     {
         uint32 Character;

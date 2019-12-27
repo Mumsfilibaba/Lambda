@@ -1,6 +1,6 @@
 #pragma once
 #include "IMouseController.h"
-#include "../Event/IEventListener.h"
+#include "Core/Event/IEventListener.h"
 
 namespace Lambda
 {
@@ -13,7 +13,6 @@ namespace Lambda
 	//----------------
 	//CMouseController 
 	//----------------
-
 	class CMouseController : public IMouseController, public IEventListener
 	{
 	public:

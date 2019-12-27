@@ -3,8 +3,6 @@
 #include "Core/Input/IKeyboardController.h"
 #include "Core/CEngine.h"
 
-#define GET_KEYBOARDCONTROLLER Lambda::CEngine::Get().GetKeyboardController
-
 namespace Lambda
 {
     //---------
@@ -16,28 +14,28 @@ namespace Lambda
 
 	bool CKeyboard::IsKeyPressed(EKey key)
 	{
-		IKeyboardController* pKeyboardController = GET_KEYBOARDCONTROLLER();
+		IKeyboardController* pKeyboardController = CEngine::Get().GetKeyboardController();
 		return s_LastState.IsKeyUp(key) && pKeyboardController->IsKeyDown(key);
 	}
 
 
 	bool CKeyboard::IsKeyUp(EKey key)
 	{
-		IKeyboardController* pKeyboardController = GET_KEYBOARDCONTROLLER();
+		IKeyboardController* pKeyboardController = CEngine::Get().GetKeyboardController();
 		return pKeyboardController->IsKeyUp(key);
 	}
 
 
 	bool CKeyboard::IsKeyDown(EKey key)
 	{
-		IKeyboardController* pKeyboardController = GET_KEYBOARDCONTROLLER();
+		IKeyboardController* pKeyboardController = CEngine::Get().GetKeyboardController();
 		return pKeyboardController->IsKeyDown(key);
 	}
 
 
 	const CKeyboardState& CKeyboard::GetState()
 	{
-		IKeyboardController* pKeyboardController = GET_KEYBOARDCONTROLLER();
+		IKeyboardController* pKeyboardController = CEngine::Get().GetKeyboardController();
 		s_CurrentState = pKeyboardController->GetKeyboardState();
 
 		return s_CurrentState;
@@ -48,7 +46,7 @@ namespace Lambda
     {
         s_LastState = s_CurrentState;
 
-        IKeyboardController* pKeyboardController = GET_KEYBOARDCONTROLLER();
+        IKeyboardController* pKeyboardController = CEngine::Get().GetKeyboardController();
         s_CurrentState = pKeyboardController->GetKeyboardState();
     }
 }

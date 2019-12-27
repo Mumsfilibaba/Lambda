@@ -6,7 +6,6 @@ namespace Lambda
     //-------------------
     //IKeyboardController
     //-------------------
-
     class IKeyboardController
     {
     public:
@@ -20,7 +19,6 @@ namespace Lambda
 	//--------------------------------------------------------------------
 	//CDummyKeyboardController - Used when no real controller is available
 	//--------------------------------------------------------------------
-
 	class CDummyKeyboardController final : public IKeyboardController
 	{
 	public:

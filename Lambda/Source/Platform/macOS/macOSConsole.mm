@@ -1,28 +1,39 @@
 #import "LambdaPch.h"
-#import "Core/Console.h"
+#if defined(LAMBDA_PLAT_MACOS)
+    #import "Platform/macOS/Console.h"
+    #import <stdio.h>
 
 namespace Lambda
 {
-    void InitializeConsole()
+    bool Initialize()
     {
+        //On macos we do not have to initialize anything
+        return true;
     }
-    
-    
-    void SetConsoleColor(EConsoleColor)
+
+
+    bool HasConsole()
     {
+        //We always return false for now, since we do not open a console, and rely on if the application was started from the terminal
+        return false;
     }
-    
-    
-    void PrintConsole(const char* pFormat, ...)
+
+
+    void Print(const char* pFormat, va_list args)
     {
-        va_list args;
-        va_start(args, pFormat);
         vprintf(pFormat, args);
-        va_end(args);
     }
-    
-    
-    void ReleaseConsole()
+
+
+    void Release()
     {
+        //Nothing to release for now
+    }
+
+
+    void SetTextColor(EConsoleColor color)
+    {
+        //We do not set color for now
     }
 }
+#endif

@@ -9,7 +9,6 @@ namespace Lambda
 	//------------
 	//ESystemEvent
 	//------------
-
 	enum class ESystemEvent : uint32
 	{
 		SYSTEM_EVENT_UNKNOWN = 0,
@@ -31,7 +30,6 @@ namespace Lambda
     //------
     //SEvent
     //------
-
     struct SEvent
     {
 		ESystemEvent EventType = ESystemEvent::SYSTEM_EVENT_UNKNOWN;

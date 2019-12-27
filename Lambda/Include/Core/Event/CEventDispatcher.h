@@ -9,7 +9,6 @@ namespace Lambda
     //----------------
     //CEventDispatcher
     //----------------
-
     class LAMBDA_API CEventDispatcher : public CSingleton<CEventDispatcher>
     {
     public:

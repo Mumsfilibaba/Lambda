@@ -3,11 +3,8 @@
 #include "Core/Input/IMouseController.h"
 #include "Core/CEngine.h"
 
-#define GET_MOUSECONTROLLER Lambda::CEngine::Get().GetMouseController
-
 namespace Lambda
 {
-
     //------
     //CMouse
     //------
@@ -17,56 +14,56 @@ namespace Lambda
 
 	bool CMouse::IsButtonDown(EMouseButton button)
 	{
-		IMouseController* pMouseController = GET_MOUSECONTROLLER();
+		IMouseController* pMouseController = CEngine::Get().GetMouseController();
 		return pMouseController->IsButtonDown(button);
 	}
 
 	
 	bool CMouse::IsMouseVisible()
 	{
-		IMouseController* pMouseController = GET_MOUSECONTROLLER();
+		IMouseController* pMouseController = CEngine::Get().GetMouseController();
 		return pMouseController->IsMouseVisible();
 	}
 
 
 	void CMouse::SetMouseVisisble(bool bVisible)
 	{
-		IMouseController* pMouseController = GET_MOUSECONTROLLER();
+		IMouseController* pMouseController = CEngine::Get().GetMouseController();
 		return pMouseController->SetMouseVisisble(bVisible);
 	}
 	
 	
 	bool CMouse::IsButtonUp(EMouseButton button)
 	{
-		IMouseController* pMouseController = GET_MOUSECONTROLLER();
+		IMouseController* pMouseController = CEngine::Get().GetMouseController();
 		return pMouseController->IsButtonUp(button);
 	}
 	
 	
 	bool CMouse::IsButtonPressed(EMouseButton button)
 	{
-		IMouseController* pMouseController = GET_MOUSECONTROLLER();
+		IMouseController* pMouseController = CEngine::Get().GetMouseController();
 		return s_LastState.IsButtonUp(button) && pMouseController->IsButtonDown(button);
 	}
 	
 	
 	void CMouse::SetPosition(const Point& position)
 	{
-		IMouseController* pMouseController = GET_MOUSECONTROLLER();
+		IMouseController* pMouseController = CEngine::Get().GetMouseController();
 		pMouseController->SetPosition(position);
 	}
 	
 	
 	Point CMouse::GetPosition()
 	{
-		IMouseController* pMouseController = GET_MOUSECONTROLLER();
+		IMouseController* pMouseController = CEngine::Get().GetMouseController();
 		return pMouseController->GetPosition();
 	}
 	
 	
 	const CMouseState& CMouse::GetState()
 	{
-		IMouseController* pMouseController = GET_MOUSECONTROLLER();
+		IMouseController* pMouseController = CEngine::Get().GetMouseController();
 		s_CurrentState = pMouseController->GetState();
 		return s_CurrentState;
 	}
@@ -76,7 +73,7 @@ namespace Lambda
 	{
 		s_LastState = s_CurrentState;
 
-		IMouseController* pMouseController = GET_MOUSECONTROLLER();
+		IMouseController* pMouseController = CEngine::Get().GetMouseController();
 		s_CurrentState = pMouseController->GetState();
 	}
 }

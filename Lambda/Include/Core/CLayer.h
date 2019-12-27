@@ -9,7 +9,6 @@ namespace Lambda
     //------
     //CLayer
     //------
-
     class LAMBDA_API CLayer
     {
     public:

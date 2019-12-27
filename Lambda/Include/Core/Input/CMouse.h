@@ -7,7 +7,6 @@ namespace Lambda
     //------
     //CMouse
     //------
-
     class LAMBDA_API CMouse final
     {
         friend class CEngine;

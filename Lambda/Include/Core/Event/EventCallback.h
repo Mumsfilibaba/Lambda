@@ -8,7 +8,6 @@ namespace Lambda
 	//--------------
 	//IEventCallback
 	//--------------
-
 	class IEventCallback
 	{
 	public:
@@ -21,7 +20,6 @@ namespace Lambda
 	//--------------------
 	//CStaticEventCallback
 	//--------------------
-
 	class CStaticEventCallback final : public IEventCallback
 	{
 	public:
@@ -50,7 +48,6 @@ namespace Lambda
 	//--------------------
 	//CObjectEventCallback
 	//--------------------
-
 	template<typename O>
 	class CObjectEventCallback final : public IEventCallback
 	{
@@ -82,7 +79,6 @@ namespace Lambda
 	//--------------
 	//CEventCallback
 	//--------------
-
 	class CEventCallback
 	{
 	public:
@@ -91,7 +87,6 @@ namespace Lambda
 		{
 			m_pCallback = DBG_NEW CStaticEventCallback(func);
 		}
-
 
 		template<typename T>
 		using ObjectEventCallbackFunc = typename CObjectEventCallback<T>::ObjectEventCallbackFunc;

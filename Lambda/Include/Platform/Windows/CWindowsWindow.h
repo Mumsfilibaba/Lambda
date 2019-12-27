@@ -1,18 +1,17 @@
 #pragma once
 #include "LambdaCore.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
-#include <vector>
-#include "../Desktop/IWindow.h"
+	#include <vector>
+	#include "../Desktop/IWindow.h"
 
-#define WIN32_LEAN_AND_MEAN 1
-#include <Windows.h>
+	#define WIN32_LEAN_AND_MEAN 1
+	#include <Windows.h>
 
 namespace Lambda
 {
 	//--------------
 	//CWindowsWindow
 	//--------------
-
 	class CWindowsWindow final : public IWindow
 	{
 	public:

@@ -60,7 +60,6 @@ namespace Lambda
     //------------
     //ELogSeverity
     //------------
-    
 	enum ELogSeverity : uint8
 	{
 		LOG_SEVERITY_UNKNOWN    = 0,
@@ -73,7 +72,6 @@ namespace Lambda
 	//-----------
 	//ELogChannel
 	//-----------
-
 	enum ELogChannel : uint32
 	{
 		LOG_CHANNEL_UNKNOWN			= 0,
@@ -87,7 +85,6 @@ namespace Lambda
     //-----------
     //CLogManager
     //-----------
-
 	class LAMBDA_API CLogManager : public CSingleton<CLogManager>
 	{
 	public:
@@ -103,7 +100,6 @@ namespace Lambda
 		{
 			m_ChannelFilter = channelFilter;
 		}
-
 
 		_forceinline uint32 GetChannelFilter() const
 		{

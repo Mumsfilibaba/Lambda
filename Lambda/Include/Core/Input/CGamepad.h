@@ -6,7 +6,6 @@ namespace Lambda
     //--------
     //CGamePad
     //--------
-
     class LAMBDA_API CGamepad final
     {
         friend class CEngine;

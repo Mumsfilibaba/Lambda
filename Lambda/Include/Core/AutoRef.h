@@ -18,13 +18,11 @@ namespace Lambda
         {
         }
 
-
         _forceinline AutoRef(const AutoRef& other)
             : m_pObject(nullptr)
         {
             *this = other;
         }
-
 
         _forceinline AutoRef(AutoRef&& other)
             : m_pObject(nullptr)
@@ -32,18 +30,15 @@ namespace Lambda
             *this = other;
         }
 
-
         _forceinline ~AutoRef()
         {
             SafeRelease(m_pObject);
         }
 
-
         _forceinline T* Get() const
         {
             return m_pObject;
         }
-        
         
         template<typename U>
         _forceinline U* GetAs() const
@@ -51,18 +46,15 @@ namespace Lambda
             return static_cast<U*>(m_pObject);
         }
 
-
         _forceinline T** GetAdressOf()
         {
             return &m_pObject;
         }
 
-
         _forceinline T* const * GetAdressOf() const
         {
             return &m_pObject;
         }
-
 
         _forceinline RefCountValue Release()
         {
@@ -75,12 +67,10 @@ namespace Lambda
             return counter;
         }
 
-
         _forceinline T* operator->() const
         {
             return m_pObject;
         }
-
 
         _forceinline T& operator*()
         {
@@ -88,32 +78,27 @@ namespace Lambda
             return *m_pObject;
         }
 
-
         _forceinline const T& operator*() const
         {
             LAMBDA_ASSERT(m_pObject != nullptr);
             return *m_pObject;
         }
 
-
         _forceinline T** operator&()
         {
             return &m_pObject;
         }
-
 
         _forceinline T* const * operator&() const
         {
             return &m_pObject;
         }
 
-
         _forceinline AutoRef& operator=(T* pObject)
         {
             AutoRef other(pObject);
             return *this = other;
         }
-
 
         _forceinline AutoRef& operator=(const AutoRef& other)
         {
@@ -126,7 +111,6 @@ namespace Lambda
             return *this;
         }
 
-
         _forceinline AutoRef& operator=(AutoRef&& other)
         {
             if (m_pObject)
@@ -137,7 +121,6 @@ namespace Lambda
 
             return *this;
         }
-
 
         _forceinline operator bool()
         {
