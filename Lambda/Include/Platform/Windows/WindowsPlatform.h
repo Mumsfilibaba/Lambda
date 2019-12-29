@@ -10,12 +10,15 @@
 
 namespace Lambda
 {
-	//----------------
-	//CWindowsPlatform
-	//----------------
+	class CApplication;
+
+	//---------------
+	//WindowsPlatform
+	//---------------
 	namespace WindowsPlatform
 	{
 		void MessageBox(const char* pCaption, const char* pText, EMessageBoxType type);
+		CApplication* CreateApplication();
 
 		void InitializeKeycodeLookupTable();
 

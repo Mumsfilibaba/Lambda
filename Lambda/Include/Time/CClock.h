@@ -1,10 +1,8 @@
 #pragma once
 #include "CTime.h"
 #if defined(LAMBDA_PLAT_WINDOWS)
-	#if !defined(WIN32_LEAN_AND_MEAN)    
-		#define WIN32_LEAN_AND_MEAN 1
-	#endif
-	#include <windows.h>
+	#define WIN32_LEAN_AND_MEAN 1
+	#include <Windows.h>
 #else
     #include <chrono>
 #endif
@@ -13,8 +11,7 @@ namespace Lambda
 {
     //------
     //CClock
-    //------
-    
+    //------ 
 	class CClock
 	{
 	public:

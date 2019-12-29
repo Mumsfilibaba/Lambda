@@ -8,7 +8,7 @@ namespace Lambda
     //---------
 	class LAMBDA_API CKeyboard final
 	{
-		friend Input::Update();
+		friend void Input::Update();
 	public:
 		LAMBDA_STATIC_CLASS(CKeyboard);
 

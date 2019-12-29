@@ -19,7 +19,7 @@ namespace Lambda
     }
 
 
-    bool CEventDispatcher::DispatchEvent(const SEvent& event)
+    bool CEventDispatcher::DispatchEvent(const SSystemEvent& event)
     {
         for (auto pListener : m_EventListeners)
         {

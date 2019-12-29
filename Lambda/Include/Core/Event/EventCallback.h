@@ -3,7 +3,7 @@
 
 namespace Lambda
 {
-    struct SEvent;
+    struct SSystemEvent;
 
 	//--------------
 	//IEventCallback
@@ -13,7 +13,7 @@ namespace Lambda
 	public:
 		LAMBDA_INTERFACE(IEventCallback);
 
-		virtual bool Call(const SEvent& event) = 0;
+		virtual bool Call(const SSystemEvent& event) = 0;
 		virtual IEventCallback* Copy() = 0;
 	};
 
@@ -23,7 +23,7 @@ namespace Lambda
 	class CStaticEventCallback final : public IEventCallback
 	{
 	public:
-		typedef bool(*EventCallbackFunc)(const SEvent&);
+		typedef bool(*EventCallbackFunc)(const SSystemEvent&);
 
 		_forceinline   CStaticEventCallback(EventCallbackFunc func)
 			: IEventCallback(),
@@ -32,7 +32,7 @@ namespace Lambda
 		}
 		~CStaticEventCallback() = default;
 
-		_forceinline  virtual bool Call(const SEvent& event) override final
+		_forceinline  virtual bool Call(const SSystemEvent& event) override final
 		{
 			return m_Func(event);
 		}
@@ -52,7 +52,7 @@ namespace Lambda
 	class CObjectEventCallback final : public IEventCallback
 	{
 	public:
-		typedef bool(O::* ObjectEventCallbackFunc)(const SEvent&);
+		typedef bool(O::* ObjectEventCallbackFunc)(const SSystemEvent&);
 
 		_forceinline  CObjectEventCallback(O* pObjectRef, ObjectEventCallbackFunc func)
 			: IEventCallback(),
@@ -62,7 +62,7 @@ namespace Lambda
 		}
 		~CObjectEventCallback() = default;
 
-		_forceinline  virtual bool Call(const SEvent& event) override final
+		_forceinline  virtual bool Call(const SSystemEvent& event) override final
 		{
 			return (m_pObjectRef->*m_Func)(event);
 		}
@@ -157,7 +157,7 @@ namespace Lambda
 		}
 
 
-		_forceinline bool operator()(const SEvent& event)
+		_forceinline bool operator()(const SSystemEvent& event)
 		{
 			return m_pCallback->Call(event);
 		}

@@ -27,10 +27,10 @@ namespace Lambda
 		SYSTEM_EVENT_WINDOW_MOVED		  = 10,
 	};
 
-    //------
-    //SEvent
-    //------
-    struct SEvent
+    //------------
+    //SSystemEvent
+    //------------
+    struct SSystemEvent
     {
 		ESystemEvent EventType = ESystemEvent::SYSTEM_EVENT_UNKNOWN;
 		union

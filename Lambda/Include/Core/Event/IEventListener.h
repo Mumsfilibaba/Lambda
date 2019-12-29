@@ -3,7 +3,7 @@
 
 namespace Lambda
 {
-    struct SEvent;
+    struct SSystemEvent;
     
     //--------------
     //IEventListener
@@ -12,6 +12,6 @@ namespace Lambda
 	{
 	public:
 		LAMBDA_INTERFACE(IEventListener);
-		virtual bool OnEvent(const SEvent& event) = 0;
+		virtual bool OnEvent(const SSystemEvent& event) = 0;
 	};
 }

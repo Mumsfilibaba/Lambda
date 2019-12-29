@@ -29,7 +29,7 @@ namespace Lambda
 	}
 	
 	
-	bool CKeyboardController::OnEvent(const SEvent& event)
+	bool CKeyboardController::OnEvent(const SSystemEvent& event)
 	{
 		if (event.EventType == ESystemEvent::SYSTEM_EVENT_KEY_PRESSED)
 		{

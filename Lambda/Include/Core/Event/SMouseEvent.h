@@ -1,6 +1,6 @@
 #pragma once
-#include "Core/Event/EKey.h"
-#include "Core/Event/EMouseButton.h"
+#include "Core/Input/EKey.h"
+#include "Core/Input/EMouseButton.h"
 
 namespace Lambda
 {

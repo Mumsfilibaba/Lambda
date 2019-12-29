@@ -6,7 +6,6 @@ namespace Lambda
     //-----
     //CTime
     //-----
-    
 	class CTime
 	{
 	public:

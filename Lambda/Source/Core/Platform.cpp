@@ -23,6 +23,17 @@ namespace Lambda
 #endif
         }
 
+        CApplication* CreateApplication(CEngine* pEngine)
+        {
+#if defined(LAMBDA_PLAT_WINDOWS)
+            return WindowsPlatform::CreateApplication(pEngine);
+#elif defined(LAMBDA_PLAT_MACOS)
+            return macOSPlatform::CreateApplication(pEngine);
+#else
+            return nullptr;
+#endif
+        }
+
 
 		void SetCursorPosition(int32 x, int32 y)
         {

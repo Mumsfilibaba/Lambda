@@ -19,7 +19,7 @@ namespace Lambda
 		CMouseController();
 		~CMouseController();
 
-		virtual bool OnEvent(const SEvent& event) override final;
+		virtual bool OnEvent(const SSystemEvent& event) override final;
 		
 		virtual bool IsMouseVisible() const override final;
 		virtual void SetMouseVisisble(bool bVisible) override final;

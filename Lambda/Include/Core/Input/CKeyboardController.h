@@ -13,7 +13,7 @@ namespace Lambda
 		CKeyboardController();
 		~CKeyboardController();
 
-		virtual bool OnEvent(const SEvent& event) override final;
+		virtual bool OnEvent(const SSystemEvent& event) override final;
 
 		virtual bool IsKeyUp(EKey key) const override final;
 		virtual bool IsKeyDown(EKey key) const override final;

@@ -1,8 +1,10 @@
 #pragma once
 #include "LambdaCore.h"
+
+#include <vector>
+
 #if defined(LAMBDA_PLAT_WINDOWS)
-	#include <vector>
-	#include "../Desktop/IWindow.h"
+	#include "Core/IWindow.h"
 
 	#define WIN32_LEAN_AND_MEAN 1
 	#include <Windows.h>

@@ -1,14 +1,16 @@
 #include "LambdaPch.h"
-#if defined(LAMBDA_PLAT_WINDOWS)
 #include "Core/Input/EKey.h"
-#include "CWindowsPlatform.h"
+
+#if defined(LAMBDA_PLAT_WINDOWS)
+	#include "Platform/Windows/WindowsPlatform.h"
+	#include "Platform/Windows/CWindowsApplication.h"
 
 namespace Lambda
 {
-	//---------------
+	//--------------
 	//WindowPlatform
-	//---------------
-	namespace WindowPlatform
+	//--------------
+	namespace WindowsPlatform
 	{
 		void MessageBox(const char* pCaption, const char* pText, EMessageBoxType type)
 		{
@@ -19,6 +21,12 @@ namespace Lambda
 			}
 
 			::MessageBoxA(0, pText, pCaption, uType);
+		}
+
+
+		CApplication* CreateApplication(CEngine* pEngine)
+		{
+			return DBG_NEW CWindowsApplication(pEngine);
 		}
 
 

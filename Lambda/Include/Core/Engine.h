@@ -8,6 +8,8 @@ namespace Lambda
 {
 	class CTime;
 	class CLayer;
+	class CLogManager;
+	class CApplication;
 
 	//-------------
 	//SEngineParams
@@ -28,18 +30,58 @@ namespace Lambda
 	//----------
 	int32 LAMBDA_API LambdaMain(const SEngineParams& params);
 
-	//------
-	//Engine
-	//------
-	namespace Engine
+	//-------
+	//CEngine
+	//-------
+	class LAMBDA_API CEngine final : public CSingleton<CEngine>
 	{
-		bool LAMBDA_API Initialize(const SEngineParams& params);
-        void LAMBDA_API RunMainLoop();
-        void LAMBDA_API Release();
-		void LAMBDA_API Exit(int32 exitCode = 0);
+	private:
+		//----------
+		//SFrameTime
+		//----------
+		struct SFrameTime
+		{
+			CTime Timestep;
+			CTime Accumulator;
+			CClock Clock;
+			uint32 UPS;
+		};
+	public:
+		CEngine();
+		CEngine::~CEngine();
 
-		//Update rate of mainloop
-		void LAMBDA_API SetUpdateTimeStep(const CTime& timestep);
-		void LAMBDA_API const CTime& GetUpdateTimestep();
-	}
+		void RunMainLoop();
+		void Release();
+		void Exit(int32 exitCode = 0);
+		
+		//Deltatime between logic-updates
+		_forceinline void SetUpdateTimeStep(const CTime& timestep)
+		{
+			LAMBDA_ASSERT_PRINT(timestep.AsNanoSeconds() > 0, "Timestep must be more than zero\n");
+			m_FrameTime.Timestep = timestep;
+		}
+
+		_forceinline const CTime& GetUpdateTimeStep() const
+		{
+			return m_FrameTime.Timestep;
+		}
+
+		_forceinline int32 GetExitCode() const
+		{
+			return m_ExitCode;
+		}
+	private:
+		bool InternalInitialize(const SEngineParams& params);
+		void DoFrame();
+	public:
+		CApplication* m_pApplication;
+		CLogManager* m_pLogManager;
+		CEventDispatcher* m_pEventDispatcher;
+		CLayerStack m_LayerStack;
+		SFrameTime m_FrameTime;
+		int32 m_ExitCode;
+		bool m_bIsRunning;
+	public:
+		static bool Initialize(const SEngineParams& params);
+	};
 }

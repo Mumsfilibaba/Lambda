@@ -1,9 +1,16 @@
 #pragma once
 #include "Defines.h"
 #include "Types.h"
+#ifdef MessageBox
+	#undef MessageBox
+#endif
+
 
 namespace Lambda
 {
+	class CEngine;
+	class CApplication;
+
 	//---------------
 	//EMessageBoxType
 	//---------------
@@ -19,6 +26,7 @@ namespace Lambda
 	namespace Platform
 	{
 		void LAMBDA_API MessageBox(const char* pCaption, const char* pText, EMessageBoxType type);
+		CApplication* CreateApplication(CEngine* pEngine);
 
 		void LAMBDA_API ShowCursor(bool bVisible);
 		void LAMBDA_API SetCursorPosition(int32 x, int32 y);

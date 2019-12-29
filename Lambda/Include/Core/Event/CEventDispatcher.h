@@ -17,7 +17,7 @@ namespace Lambda
         
         LAMBDA_NO_COPY(CEventDispatcher);
         
-        bool DispatchEvent(const SEvent& event);
+        bool DispatchEvent(const SSystemEvent& event);
         void AddEventListener(IEventListener* pListener);
         void RemoveEventListener(IEventListener* pListener);
         void Release();

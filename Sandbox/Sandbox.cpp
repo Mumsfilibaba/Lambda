@@ -43,7 +43,7 @@ namespace Lambda
 	}
 
 
-	bool SandBoxLayer::OnEvent(const CEvent& event)
+	bool SandBoxLayer::OnEvent(const SSystemEvent& event)
 	{
 		LForwardEvent(this, &SandBoxLayer::OnMouseMove, event);
 		return false;

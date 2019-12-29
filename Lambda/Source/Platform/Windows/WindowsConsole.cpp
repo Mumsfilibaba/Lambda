@@ -1,8 +1,9 @@
 #include "LambdaPch.h"
-#include ""
+#include "Core/Console.h"
+
 #if defined(LAMBDA_PLAT_WINDOWS)
-#include "Platform/Windows/WindowsPlatform.h"
-#include "Platform/Windows/WindowsConsole.h"
+	#include "Platform/Windows/WindowsPlatform.h"
+
 	#define WIN32_LEAN_AND_MEAN 1
 	#include <Windows.h>
 
@@ -11,19 +12,21 @@ namespace Lambda
 	//---------------
 	//SWindowsConsole
 	//---------------
-	struct SWindowsConsole
+	struct SWindowsConsoleState
 	{
 		bool bHasConsole = false;
-	} g_WindowsConsole;
+	} g_WindowsConsoleState;
 
-    //---------------
-    //NWindowsConsole
-    //---------------
-    namespace NWindowsConsole
+
+    //-------
+    //Console
+    //-------
+    namespace Console
     {
         bool Initialize()
 		{
-			if (g_WindowsConsole.bHasConsole)
+			//If we already have called initialize, return
+			if (g_WindowsConsoleState.bHasConsole)
 			{
 				return true;
 			}
@@ -46,12 +49,12 @@ namespace Lambda
 
 				//TODO: A message should probably be sent to the main application so that it can exit
 
-				g_WindowsConsole.bHasConsole = true;
+				g_WindowsConsoleState.bHasConsole = true;
 				return true;
 			}
 			else
 			{
-				NWindowsPlatform::MessageBox("AllocConsole failed", "FATAL ERROR", EMessageBoxType::MESSAGE_BOX_TYPE_ERROR);
+				WindowsPlatform::MessageBox("AllocConsole failed", "FATAL ERROR", EMessageBoxType::MESSAGE_BOX_TYPE_ERROR);
 				return false;
 			}
 		}
@@ -59,16 +62,19 @@ namespace Lambda
 
 		bool HasConsole()
 		{
-			return g_WindowsConsole.bHasConsole;
+			return g_WindowsConsoleState.bHasConsole;
 		}
 
 
-        void Print(const char* pFormat, va_list args)
+        void Print(const char* pFormat, ...)
 		{
 			constexpr uint32 MAX_BUFFER_COUNT = 1024;
 			static char s_Buffer[MAX_BUFFER_COUNT];
 
+			va_list args;
+			va_start(args, pFormat);
 			vsnprintf(s_Buffer, MAX_BUFFER_COUNT, pFormat, args);
+			va_end(args, pFormat);
 
 			printf(s_Buffer);
 			::OutputDebugStringA(s_Buffer);
@@ -77,10 +83,10 @@ namespace Lambda
 
         void Release()
 		{
-			if (g_WindowsConsole.bHasConsole)
+			if (g_WindowsConsoleState.bHasConsole)
 			{
 				::FreeConsole();
-				g_WindowsConsole.bHasConsole = false;
+				g_WindowsConsoleState.bHasConsole = false;
 			}
 		}
 
