@@ -77,17 +77,11 @@
 
 //Disable warnings
 #if defined(LAMBDA_VISUAL_STUDIO)
-	#pragma warning(disable : 4251)		//Disable DLL-linkage warning
-	#pragma warning(error : 4456)		//Redefinition is an error
-	#pragma warning(error : 4005)		//Redefinition is an error
-	#pragma warning(disable : 4201)		//Anonomys unions and structs are allowed
-	#pragma warning(disable : 4307)		//Disable constant overflow warning
-
-	#define DEBUG_BREAK __debugbreak()
-#else
-	#define DEBUG_BREAK assert(false)
+	#pragma warning(error : 4456)		//"Declaration of 'identifier' hides previous local declaration"	- error
+	#pragma warning(error : 4005)		//"The macro identifier is defined twice"							- error
+	#pragma warning(error : 4002)		//"Too manu arguments for function-like macro"						- error
+	
+	#pragma warning(disable : 4251)		//Disable DLL-linkage warning				- Disabled 
+	#pragma warning(disable : 4201)		//Anonomys unions and structs are allowed	- Disabled
+	#pragma warning(disable : 4307)		//Disable constant overflow warning			- Disabled
 #endif
-
-
-//Sizes
-#define MB(num) num * (1024 * 1024)

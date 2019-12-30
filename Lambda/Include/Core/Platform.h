@@ -1,6 +1,10 @@
 #pragma once
-#include "Defines.h"
-#include "Types.h"
+#include "LambdaCore.h"
+
+//Undefine the Win32 MessageBox macro
+#ifdef MessageBox
+    #undef MessageBox
+#endif
 
 namespace Lambda
 {
@@ -22,5 +26,8 @@ namespace Lambda
         LAMBDA_STATIC_CLASS(CPlatform);
 
         static void MessageBox(const char* pCaption, const char* pText, EMessageBoxType type);
+        
+        static uint64 QueryPerformanceFrequency();
+        static uint64 QueryPerformanceCounter();
     };
 }
