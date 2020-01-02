@@ -12,7 +12,7 @@ namespace Lambda
 	//CWindowsConsole
 	//---------------
 
-	//////////////////////////////////
+	/*//////////////////////////////*/
 	CWindowsConsole::CWindowsConsole()
 		: IConsole(),
 		m_hOutput(0),
@@ -20,7 +20,7 @@ namespace Lambda
 	{
 	}
 
-	///////////////////////////////////
+	/*///////////////////////////////*/
 	CWindowsConsole::~CWindowsConsole()
 	{
 		if (m_hOutput)
@@ -29,8 +29,8 @@ namespace Lambda
 		}
 	}
 
-	//////////////////////////////////
-    bool CWindowsConsole::InternalInit()
+	/*////////////////////////////////*/
+    bool CWindowsConsole::Initialize()
     {
     	//Get the current consolewindow, if this is null we have no console
 		HWND hWnd = ::GetConsoleWindow();
@@ -56,7 +56,7 @@ namespace Lambda
 		return false;
     }
 
-	//////////////////////////////////////////////////
+	/*//////////////////////////////////////////////*/
 	void CWindowsConsole::SetTitle(const char* pTitle)
 	{
 		if (m_hOutput)
@@ -65,7 +65,7 @@ namespace Lambda
 		}
 	}
 
-	///////////////////////////////////////////////////////
+	/*///////////////////////////////////////////////////*/
 	void CWindowsConsole::SetTextColor(EConsoleColor color)
 	{
 		if (m_hOutput)
@@ -90,7 +90,7 @@ namespace Lambda
 		}
 	}
 
-	/////////////////////////////////////////////////////
+	/*/////////////////////////////////////////////////*/
 	void CWindowsConsole::Print(const char* pFormat, ...)
 	{
 		va_list args;
@@ -99,7 +99,7 @@ namespace Lambda
 		va_end(args);
 	}
 
-	//////////////////////////////////////////////////////////////
+	/*//////////////////////////////////////////////////////////*/
 	void CWindowsConsole::Print(const char* pFormat, va_list args)
 	{
 		if (m_hOutput)
@@ -112,7 +112,7 @@ namespace Lambda
 		}
 	}
 
-	/////////////////////////////////////////////////////////
+	/*/////////////////////////////////////////////////////*/
 	void CWindowsConsole::PrintLine(const char* pFormat, ...) 
 	{
 		va_list args;
@@ -121,7 +121,7 @@ namespace Lambda
 		va_end(args);
 	}
 
-	//////////////////////////////////////////////////////////////////
+	/*//////////////////////////////////////////////////////////////*/
 	void CWindowsConsole::PrintLine(const char* pFormat, va_list args)
 	{
 		if (m_hOutput)
@@ -141,7 +141,7 @@ namespace Lambda
 		CWindowsConsole::SetTextColor(EConsoleColor::CONSOLE_COLOR_WHITE);
 	}
 
-	/////////////////////////////
+	/*/////////////////////////*/
 	void CWindowsConsole::Clear()
 	{
 		if (m_hOutput)
@@ -180,7 +180,7 @@ namespace Lambda
 		}
 	}
 
-	///////////////////////////////
+	/*///////////////////////////*/
 	void CWindowsConsole::Release()
 	{
 		delete this;

@@ -2,14 +2,38 @@
 
 #include "Core/Input/Input.h"
 
+
+
 namespace Lambda
 {
 	//------
-	//IInput
+	//CInput
 	//------
 
-	IInput* IInput::Create()
+	IInputController* CInput::s_pController = nullptr;
+
+	/*///////////////////////////////*/
+	bool CInput::Initialize(EInputType)
 	{
-		return nullptr;
+		IInputController* pController = nullptr;
+
+
+		s_pController = pController;
+		if (s_pController)
+		{
+			return s_pController->Initialize();
+		}
+
+		return true;
+	}
+
+	/*//////////////////*/
+	void CInput::Release()
+	{
+		if (s_pController)
+		{
+			s_pController->Release();
+			s_pController = nullptr;
+		}
 	}
 }

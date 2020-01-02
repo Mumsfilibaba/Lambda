@@ -8,9 +8,6 @@
 
 #include "Core/Input/Input.h"
 
-#include <chrono>
-#include <thread>
-
 //----------------
 //_CreateGameLayer
 //----------------
@@ -22,22 +19,22 @@ namespace Lambda
 	//IEngine
 	//-------
 
-	IEngine* IEngine::s_pEngineInstance = nullptr;
+	IEngine* IEngine::s_pInstance = nullptr;
 	
 	/*///////////////////*/
 	IEngine* IEngine::Get()
 	{
-		LAMBDA_ASSERT_PRINT(s_pEngineInstance != nullptr, "Engine has not been initialized");
-		return s_pEngineInstance;
+		LAMBDA_ASSERT_PRINT(s_pInstance != nullptr, "Engine has not been initialized");
+		return s_pInstance;
 	}
 
 	/*///////////////////////////////////////////////////////*/
-	bool IEngine::Initialize(const SEngineParams& engineParams)
+	bool IEngine::Create(const SEngineParams& engineParams)
 	{
-		s_pEngineInstance = DBG_NEW CEngine();
-		if (s_pEngineInstance)
+		s_pInstance = DBG_NEW CEngine();
+		if (s_pInstance)
 		{
-			return s_pEngineInstance->InternalInit(engineParams);
+			return s_pInstance->Initialize(engineParams);
 		}
 
 		return false;
@@ -54,7 +51,6 @@ namespace Lambda
 	{
 		//Init all pointers to nullptr
 		m_pSystem	= nullptr;
-		m_pInput	= nullptr;
 
 		//Setup default frametime
 		m_Frametime.Timestep	  = CTime::Seconds(1.0f / 60.0f);
@@ -68,13 +64,13 @@ namespace Lambda
 	/*///////////////*/
 	CEngine::~CEngine()
 	{
-		m_pInput->Release();
+		CInput::Release();
 		m_pSystem->Release();
 		CConsole::Release();
 	}
 
-	/*////////////////////////////////////////////*/
-	bool CEngine::InternalInit(const SEngineParams&)
+	/*//////////////////////////////////////////*/
+	bool CEngine::Initialize(const SEngineParams&)
 	{
 		//Create console
 		if (!CConsole::Initialize())
@@ -82,20 +78,30 @@ namespace Lambda
 			return false;
 		}
         
-        CClock clock;
-        clock.Tick();
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
-        clock.Tick();
-        
-        CConsole::PrintLine("Time: %.12f ns", clock.GetDeltaTime().AsMilliSeconds());
-        
 		//Create system
-		ISystem* pSystem = ISystem::Create();
-		m_pSystem = pSystem;
+		ISystem* pSystem = ISystem::Create(this);
+		if (pSystem)
+		{
+			m_pSystem = pSystem;
+			if (!m_pSystem->Initialize())
+			{
+				return false;
+			}
+
+			if (!m_pSystem->CreateWindow("Lambda Engine", 1440, 900))
+			{
+				return false;
+			}
+
+			//Add this to the system event listeners
+			m_pSystem->AddEventListener(this);
+		}
 
 		//Create inputcontroller
-		IInput* pInput = IInput::Create();
-		m_pInput = pInput;
+		if (!CInput::Initialize(EInputType::INPUT_TYPE_DEFAULT))
+		{
+			return false;
+		}
 
 		//Create gamelayer
 		if (_CreateGameLayer)
@@ -119,7 +125,20 @@ namespace Lambda
 		//MainLoop
 		while (m_State.bIsRunning)
 		{
+			m_pSystem->ProcessSystemEvents();
+			DoFrame();
 		}
+	}
+
+	/*///////////////////*/
+	void CEngine::DoFrame()
+	{
+	}
+
+	/*//////////////////////////////////////////////////*/
+	bool CEngine::OnSystemEvent(const SSystemEvent&)
+	{
+		return false;
 	}
 
 	/*//////////////////////////////*/
@@ -132,6 +151,10 @@ namespace Lambda
 	/*///////////////////*/
 	void CEngine::Release()
 	{
+		//Remove as listener
+		m_pSystem->RemoveEventListener(this);
+		
+		//Delete
 		delete this;
 	}
 }

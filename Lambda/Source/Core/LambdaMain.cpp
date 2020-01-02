@@ -16,7 +16,7 @@ namespace Lambda
 
 	int32 LambdaMain(const SEngineParams& params)
 	{
-		if (IEngine::Initialize(params))
+		if (IEngine::Create(params))
 		{
 			IEngine* pEngine = IEngine::Get();
 			if (pEngine)

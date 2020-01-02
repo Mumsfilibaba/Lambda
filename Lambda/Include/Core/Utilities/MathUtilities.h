@@ -1,12 +1,11 @@
 #pragma once
-#include "Defines.h"
-#include "Types.h"
+#include "LambdaCore.h"
 
 namespace Lambda 
 {
-	namespace Math
+	namespace MathUtilities
 	{
-		/////////////////////////////////////////////////
+		/*/////////////////////////////////////////////*/
 		template<typename T>
 		_forceinline T AlignUp(T value, size_t alignment)
 		{
@@ -14,7 +13,7 @@ namespace Lambda
 			return (T)(((size_t)value + mask) & ~mask);
 		}
 
-		///////////////////////////////////////////////////
+		/*///////////////////////////////////////////////*/
 		template<typename T>
 		_forceinline T AlignDown(T value, size_t alignment)
 		{

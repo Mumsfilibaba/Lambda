@@ -33,7 +33,7 @@ namespace Lambda
 		s_pConsole = pConsole;
 		if (s_pConsole)
 		{
-			return s_pConsole->InternalInit();
+			return s_pConsole->Initialize();
 		}
 
 		return false;

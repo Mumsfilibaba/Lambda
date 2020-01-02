@@ -20,7 +20,7 @@ namespace Lambda
 	//--------
 	//IConsole
 	//--------
-	class LAMBDA_API IConsole
+	class IConsole
 	{
 		friend class CConsole;
 	public:
@@ -40,13 +40,13 @@ namespace Lambda
 		
 		virtual void Release() = 0;
 	private:
-		virtual bool InternalInit() = 0;
+		virtual bool Initialize() = 0;
 	};
 
 	//--------
 	//CConsole
 	//--------
-	class CConsole
+	class LAMBDA_API CConsole
 	{
 	public:
 		LAMBDA_STATIC_CLASS(CConsole);
@@ -54,19 +54,19 @@ namespace Lambda
 		static bool Initialize();
 		static void Release();
 
-		////////////////////////////////////////
+		/*////////////////////////////////////*/
 		static void SetTitle(const char* pTitle)
 		{
 			s_pConsole->SetTitle(pTitle);
 		}
 
-		/////////////////////////////////////////////
+		/*/////////////////////////////////////////*/
 		static void SetTextColor(EConsoleColor color)
 		{
 			s_pConsole->SetTextColor(color);
 		}
 
-		///////////////////////////////////////////
+		/*///////////////////////////////////////*/
 		static void Print(const char* pFormat, ...)
 		{
 			va_list args;
@@ -75,13 +75,13 @@ namespace Lambda
 			va_end(args);
 		}
 
-		////////////////////////////////////////////////////
+		/*////////////////////////////////////////////////*/
 		static void Print(const char* pFormat, va_list args)
 		{
 			s_pConsole->Print(pFormat, args);
 		}
 
-		///////////////////////////////////////////////
+		/*///////////////////////////////////////////*/
 		static void PrintLine(const char* pFormat, ...)
 		{
 			va_list args;
@@ -90,25 +90,25 @@ namespace Lambda
 			va_end(args);
 		}
 
-		////////////////////////////////////////////////////////
+		/*////////////////////////////////////////////////////*/
 		static void PrintLine(const char* pFormat, va_list args)
 		{
 			s_pConsole->PrintLine(pFormat, args);
 		}
 
-		///////////////////
+		/*///////////////*/
 		static void Reset()
 		{
 			s_pConsole->Reset();
 		}
 
-		///////////////////
+		/*///////////////*/
 		static void Clear()
 		{
 			s_pConsole->Clear();
 		}
 
-		//////////////////////
+		/*//////////////////*/
 		static IConsole* Get()
 		{
 			return s_pConsole;
