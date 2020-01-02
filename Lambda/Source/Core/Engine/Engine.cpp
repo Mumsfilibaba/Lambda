@@ -84,10 +84,10 @@ namespace Lambda
         
         CClock clock;
         clock.Tick();
-        std::this_thread::sleep_for(std::chrono::nanoseconds(500));
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
         clock.Tick();
         
-        CConsole::PrintLine("Time: %lu ns", clock.GetDeltaTime().AsNanoSeconds());
+        CConsole::PrintLine("Time: %.12f ns", clock.GetDeltaTime().AsMilliSeconds());
         
 		//Create system
 		ISystem* pSystem = ISystem::Create();

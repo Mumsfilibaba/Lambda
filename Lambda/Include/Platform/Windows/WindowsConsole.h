@@ -29,6 +29,8 @@ namespace Lambda
 
 		virtual void Release() override final;
 	private:
+		virtual bool InternalInit() override final;
+	private:
 		HANDLE m_hOutput;
 		EConsoleColor m_CurrentColor;
 	};

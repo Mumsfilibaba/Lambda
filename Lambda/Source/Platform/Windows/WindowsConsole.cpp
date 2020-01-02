@@ -1,7 +1,7 @@
 #include "LambdaPch.h"
 
 #if defined(LAMBDA_PLAT_WINDOWS)
-	#include "Platform/Windows/CWindowsConsole.h"
+	#include "Platform/Windows/WindowsConsole.h"
 	
 	#define WIN32_LEAN_AND_MEAN 1
 	#include <Windows.h>
