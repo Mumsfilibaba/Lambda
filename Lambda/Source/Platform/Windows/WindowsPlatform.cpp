@@ -40,7 +40,7 @@ namespace Lambda
             LARGE_INTEGER counter = {};
             ::QueryPerformanceCounter(&counter);
 
-            return uint64(counter.QuadPart);
+            return 1000000000UL * uint64(counter.QuadPart);
         }
 
 	}

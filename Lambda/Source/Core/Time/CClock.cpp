@@ -75,7 +75,7 @@ namespace Lambda
 	{
 		//Get current time
 		uint64 now = Platform::QueryPerformanceCounter();
-		CTime currentTime = CTime((now * 1000000000) / m_Frequency);
+		CTime currentTime = CTime(now / m_Frequency);
 
 		//Update delta- and totaltime
 		m_DeltaTime = currentTime - m_LastTime;
