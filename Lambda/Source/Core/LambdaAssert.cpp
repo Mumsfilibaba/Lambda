@@ -21,26 +21,29 @@ namespace Lambda
 
 		void AssertWithMessage(const char* pFormat, ...)
 		{
-			char message[MAX_MESSAGE_LENGTH];
+			//Clear messagebuffer
+			static char message[MAX_MESSAGE_LENGTH];
 			memset(message, 0, sizeof(message));
 			
+			//Print message to buffer
 			va_list args;
 			va_start(args, pFormat);
 			vsnprintf(message, MAX_MESSAGE_LENGTH, pFormat, args);
 			va_end(args);
 
-			IEngine* pEngine = IEngine::Get();
-			if (pEngine)
+			//Print to console
+			IConsole* pConsole = CConsole::Get();
+			if (pConsole)
 			{
-				IConsole* pConsole = pEngine->GetConsole();
-				if (pConsole)
-				{
-					pConsole->PrintLine("Assertion Failed: %s", message);
-				}
+				pConsole->SetTextColor(EConsoleColor::CONSOLE_COLOR_RED);
+				pConsole->PrintLine("Assertion Failed: %s", message);
+				pConsole->Reset();
 			}
 
-			CPlatform::MessageBox("ASSERTION FAILED", message, EMessageBoxType::MESSAGE_BOX_TYPE_ERROR);
+			//Print messagebox
+            Platform::MessageBox("ASSERTION FAILED", message, EMessageBoxType::MESSAGE_BOX_TYPE_ERROR);
 
+			//Break in debugger
 #if defined(LAMBDA_VISUAL_STUDIO)
 			__debugbreak();
 #else

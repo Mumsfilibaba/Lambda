@@ -9,7 +9,6 @@ namespace Lambda
 
     class IInput;
     class ISystem;
-    class IConsole;
 
     //-------------
     //SEngineParams
@@ -34,8 +33,8 @@ namespace Lambda
 
         virtual void SetUpdateTimestep(const CTime& timestep) = 0;
 
-        virtual IInput*   GetInput()   const = 0;
-        virtual IConsole* GetConsole() const = 0;
+        virtual IInput* GetInput() const = 0;
+        virtual ISystem* GetSystem() const = 0;
 
         virtual const CTime& GetUpdateTimestep() const = 0;
     private:
@@ -79,14 +78,13 @@ namespace Lambda
             m_Frametime.Timestep = timestep;
         }
 
-        virtual IInput*   GetInput()   const override final { return m_pInput; }
-        virtual IConsole* GetConsole() const override final { return m_pConsole; }
+        virtual IInput*   GetInput()    const override final { return m_pInput; }
+        virtual ISystem*  GetSystem()   const override final { return m_pSystem; }
         
         virtual const CTime& GetUpdateTimestep() const override final { return m_Frametime.Timestep; };
     private:
         virtual bool InternalInit(const SEngineParams& engineParams) override final;
     private:
-        IConsole* m_pConsole;
         ISystem* m_pSystem;
         IInput* m_pInput;
 

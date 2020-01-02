@@ -8,11 +8,12 @@ namespace Lambda
 	//CLayer
 	//------
 
+	///////////////////////////
 	CLayer::CLayer(const char*)
 	{
 	}
 
-
+	///////////////////////////////////////////////
 	bool CLayer::OnSystemEvent(const SSystemEvent&)
 	{
 		return false;

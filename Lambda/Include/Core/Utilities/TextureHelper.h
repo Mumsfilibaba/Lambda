@@ -3,6 +3,7 @@
 
 namespace Lambda
 {
+	/////////////////////////////////////////////////////////////
 	inline uint32 ComponentCountFromResourceFormat(Format format)
 	{
 		switch (format)
@@ -71,7 +72,7 @@ namespace Lambda
 		}
 	}
 
-
+	////////////////////////////////////////////////////////////
 	inline uint32 StrideInBytesFromResourceFormat(Format format)
 	{
 		switch (format)

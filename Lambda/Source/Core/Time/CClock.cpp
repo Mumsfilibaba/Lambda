@@ -8,17 +8,19 @@ namespace Lambda
 	//------
 	//CClock
 	//------
+
+	/*///////////////*/
 	CClock::CClock()
 		: m_Frequency(0),
 		m_DeltaTime(0),
 		m_TotalTime(0),
 		m_LastTime(0)
 	{
-		m_Frequency = CPlatform::QueryPerformanceFrequency();
+		m_Frequency = Platform::QueryPerformanceFrequency();
 		Tick();
 	}
 
-
+	/*//////////////////////////*/
 	CClock::CClock(CClock&& other)
 		: m_Frequency(other.m_Frequency),
 		m_LastTime(other.m_LastTime),
@@ -27,7 +29,7 @@ namespace Lambda
 	{
 	}
 
-
+	/*///////////////////////////////*/
 	CClock::CClock(const CClock& other)
 		: m_Frequency(other.m_Frequency),
 		m_LastTime(other.m_LastTime),
@@ -36,7 +38,7 @@ namespace Lambda
 	{
 	}
 
-
+	/*/////////////////////////////////////*/
 	CClock& CClock::operator=(CClock&& other)
 	{
 		if (this != &other)
@@ -54,7 +56,7 @@ namespace Lambda
 		return *this;
 	}
 
-
+	/*//////////////////////////////////////////*/
 	CClock& CClock::operator=(const CClock& other)
 	{
 		if (this != &other)
@@ -68,11 +70,11 @@ namespace Lambda
 		return *this;
 	}
 
-
+	/*///////////////*/
 	void CClock::Tick()
 	{
 		//Get current time
-		uint64 now = CPlatform::QueryPerformanceCounter();
+		uint64 now = Platform::QueryPerformanceCounter();
 		CTime currentTime = CTime((now * 1000000000) / m_Frequency);
 
 		//Update delta- and totaltime

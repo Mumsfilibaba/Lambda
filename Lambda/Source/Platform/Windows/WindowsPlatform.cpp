@@ -7,37 +7,42 @@
 
 namespace Lambda
 {
-	//----------------
-	//CWindowsPlatform
-	//----------------
+	//---------------
+	//WindowsPlatform
+	//---------------
 
-	void CWindowsPlatform::MessageBox(const char* pCaption, const char* pText, EMessageBoxType type)
+	namespace WindowsPlatform
 	{
-		UINT uType = 0;
-		if (type == EMessageBoxType::MESSAGE_BOX_TYPE_ERROR)
+		/*//////////////////////////////////////////////////////////////////////////*/
+		void MessageBox(const char* pCaption, const char* pText, EMessageBoxType type)
 		{
-			uType = MB_OK | MB_ICONERROR;
+			UINT uType = 0;
+			if (type == EMessageBoxType::MESSAGE_BOX_TYPE_ERROR)
+			{
+				uType = MB_OK | MB_ICONERROR;
+			}
+
+			::MessageBoxA(0, pText, pCaption, uType);
 		}
 
-		::MessageBoxA(0, pText, pCaption, uType);
-	}
+        /*//////////////////////////////*/
+        uint64 QueryPerformanceFrequency()
+        {
+            LARGE_INTEGER frequency = {};
+            ::QueryPerformanceFrequency(&frequency);
+            
+            return uint64(frequency.QuadPart);
+        }
 
+        /*////////////////////////////*/
+        uint64 QueryPerformanceCounter()
+        {
+            LARGE_INTEGER counter = {};
+            ::QueryPerformanceCounter(&counter);
 
-	uint64 CWindowsPlatform::QueryPerformanceCounter()
-	{
-		LARGE_INTEGER counter = {};
-		::QueryPerformanceCounter(&counter);
+            return uint64(counter.QuadPart);
+        }
 
-		return uint64(counter.QuadPart);
-	}
-
-
-	uint64 CWindowsPlatform::QueryPerformanceFrequency()
-	{
-		LARGE_INTEGER frequency = {};
-		::QueryPerformanceFrequency(&frequency);
-
-		return uint64(frequency.QuadPart);
 	}
 }
 #endif

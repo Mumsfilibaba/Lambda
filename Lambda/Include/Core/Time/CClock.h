@@ -19,17 +19,20 @@ namespace Lambda
 
 		void Tick();
 
+		/////////////////////////
 		_forceinline void Reset()
 		{
 			m_DeltaTime = CTime(0);
 			m_TotalTime = CTime(0);
 		}
 
+		///////////////////////////////////////
 		_forceinline CTime GetDeltaTime() const
 		{
 			return m_DeltaTime;
 		}
 
+		///////////////////////////////////////
 		_forceinline CTime GetTotalTime() const
 		{
 			return m_TotalTime;

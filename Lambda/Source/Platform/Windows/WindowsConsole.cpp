@@ -18,7 +18,21 @@ namespace Lambda
 		m_hOutput(0),
 		m_CurrentColor(EConsoleColor::CONSOLE_COLOR_WHITE)
 	{
-		//Get the current consolewindow, if this is null we have no console
+	}
+
+	///////////////////////////////////
+	CWindowsConsole::~CWindowsConsole()
+	{
+		if (m_hOutput)
+		{
+			::FreeConsole();
+		}
+	}
+
+	//////////////////////////////////
+    bool CWindowsConsole::InternalInit()
+    {
+    	//Get the current consolewindow, if this is null we have no console
 		HWND hWnd = ::GetConsoleWindow();
 		if (hWnd == NULL)
 		{
@@ -34,18 +48,13 @@ namespace Lambda
 				//Set default values
 				CWindowsConsole::SetTitle("Lambda Engine Debug Output");
 				CWindowsConsole::Reset();
+
+				return true;
 			}
 		}
-	}
 
-	///////////////////////////////////
-	CWindowsConsole::~CWindowsConsole()
-	{
-		if (m_hOutput)
-		{
-			::FreeConsole();
-		}
-	}
+		return false;
+    }
 
 	//////////////////////////////////////////////////
 	void CWindowsConsole::SetTitle(const char* pTitle)

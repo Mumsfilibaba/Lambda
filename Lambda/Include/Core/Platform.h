@@ -17,17 +17,14 @@ namespace Lambda
         MESSAGE_BOX_TYPE_ERROR      = 1,
     };
 
-    //---------
-    //CPlatform
-    //---------
-    class CPlatform
+    //--------
+    //Platform
+    //--------
+    namespace Platform
     {
-    public:
-        LAMBDA_STATIC_CLASS(CPlatform);
-
-        static void MessageBox(const char* pCaption, const char* pText, EMessageBoxType type);
+        void MessageBox(const char* pCaption, const char* pText, EMessageBoxType type);
         
-        static uint64 QueryPerformanceFrequency();
-        static uint64 QueryPerformanceCounter();
-    };
+        uint64 QueryPerformanceFrequency();
+        uint64 QueryPerformanceCounter();
+    }
 }

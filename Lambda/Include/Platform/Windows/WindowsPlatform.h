@@ -4,18 +4,15 @@
 
 namespace Lambda
 {
-	//----------------
-	//CWindowsPlatform
-	//----------------
-	class CWindowsPlatform
+	//---------------
+	//WindowsPlatform
+	//---------------
+	namespace WindowsPlatform
 	{
-	public:
-		LAMBDA_STATIC_CLASS(CWindowsPlatform);
+		void MessageBox(const char* pCaption, const char* pText, EMessageBoxType type);
 
-		static void MessageBox(const char* pCaption, const char* pText, EMessageBoxType type);
-
-		static uint64 QueryPerformanceCounter();
-		static uint64 QueryPerformanceFrequency();
-	};
+		uint64 QueryPerformanceCounter();
+		uint64 QueryPerformanceFrequency();
+	}
 }
 #endif

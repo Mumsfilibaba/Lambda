@@ -22,6 +22,7 @@ namespace Lambda
 	//--------
 	class LAMBDA_API IConsole
 	{
+		friend class CConsole;
 	public:
 		LAMBDA_INTERFACE(IConsole);
 
@@ -38,7 +39,81 @@ namespace Lambda
 		virtual void Clear() = 0;
 		
 		virtual void Release() = 0;
+	private:
+		virtual bool InternalInit() = 0;
+	};
+
+	//--------
+	//CConsole
+	//--------
+	class CConsole
+	{
 	public:
-		static IConsole* Create();
+		LAMBDA_STATIC_CLASS(CConsole);
+
+		static bool Initialize();
+		static void Release();
+
+		////////////////////////////////////////
+		static void SetTitle(const char* pTitle)
+		{
+			s_pConsole->SetTitle(pTitle);
+		}
+
+		/////////////////////////////////////////////
+		static void SetTextColor(EConsoleColor color)
+		{
+			s_pConsole->SetTextColor(color);
+		}
+
+		///////////////////////////////////////////
+		static void Print(const char* pFormat, ...)
+		{
+			va_list args;
+			va_start(args, pFormat);
+			s_pConsole->Print(pFormat, args);
+			va_end(args);
+		}
+
+		////////////////////////////////////////////////////
+		static void Print(const char* pFormat, va_list args)
+		{
+			s_pConsole->Print(pFormat, args);
+		}
+
+		///////////////////////////////////////////////
+		static void PrintLine(const char* pFormat, ...)
+		{
+			va_list args;
+			va_start(args, pFormat);
+			s_pConsole->PrintLine(pFormat, args);
+			va_end(args);
+		}
+
+		////////////////////////////////////////////////////////
+		static void PrintLine(const char* pFormat, va_list args)
+		{
+			s_pConsole->PrintLine(pFormat, args);
+		}
+
+		///////////////////
+		static void Reset()
+		{
+			s_pConsole->Reset();
+		}
+
+		///////////////////
+		static void Clear()
+		{
+			s_pConsole->Clear();
+		}
+
+		//////////////////////
+		static IConsole* Get()
+		{
+			return s_pConsole;
+		}
+	private:
+		static IConsole* s_pConsole;
 	};
 }
