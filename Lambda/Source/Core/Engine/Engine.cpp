@@ -31,6 +31,8 @@ namespace Lambda
 	/*///////////////////////////////////////////////////////*/
 	bool IEngine::Create(const SEngineParams& engineParams)
 	{
+		LAMBDA_ASSERT_PRINT(s_pInstance == nullptr, "Engine can only be created once");
+
 		s_pInstance = DBG_NEW CEngine();
 		if (s_pInstance)
 		{
