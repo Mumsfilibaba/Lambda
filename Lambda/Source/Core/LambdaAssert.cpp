@@ -30,7 +30,7 @@ namespace Lambda
 			va_start(args, pFormat);
 			vsnprintf(message, MAX_MESSAGE_LENGTH, pFormat, args);
 			va_end(args);
-
+            
 			//Print to console
 			IConsole* pConsole = CConsole::Get();
 			if (pConsole)
@@ -41,7 +41,7 @@ namespace Lambda
 			}
 
 			//Print messagebox
-            Platform::MessageBox("ASSERTION FAILED", message, EMessageBoxType::MESSAGE_BOX_TYPE_ERROR);
+            Platform::MessageBox("Assertion Failed", message, EMessageBoxType::MESSAGE_BOX_TYPE_ERROR);
 
 			//Break in debugger
 #if defined(LAMBDA_VISUAL_STUDIO)

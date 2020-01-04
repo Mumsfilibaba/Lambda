@@ -12,11 +12,10 @@ namespace Lambda
 
 	IInputController* CInput::s_pController = nullptr;
 
-	/*///////////////////////////////*/
+	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
 	bool CInput::Initialize(EInputType)
 	{
 		IInputController* pController = nullptr;
-
 
 		s_pController = pController;
 		if (s_pController)
@@ -27,7 +26,7 @@ namespace Lambda
 		return true;
 	}
 
-	/*//////////////////*/
+	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
 	void CInput::Release()
 	{
 		if (s_pController)

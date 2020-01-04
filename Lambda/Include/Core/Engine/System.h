@@ -26,8 +26,6 @@ namespace Lambda
 		virtual bool CreateWindow(const char* pTitle, uint32 width, uint32 height) = 0;
 
 		virtual void ProcessSystemEvents() = 0;
-		virtual void OnSystemEvent(const SSystemEvent& event) = 0;
-		
 		virtual void AddEventListener(ISystemEventListener* pListener) = 0;
 		virtual void RemoveEventListener(ISystemEventListener* pListener) = 0;
 

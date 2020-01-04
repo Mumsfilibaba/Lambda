@@ -16,7 +16,7 @@ namespace Lambda
     
     namespace MacPlatform
     {
-        /*//////////////////////////////////////////////////////////////////////////*/
+        /*////////////////////////////////////////////////////////////////////////////////////////////////*/
         void MessageBox(const char* pCaption, const char* pText, EMessageBoxType type)
         {
             CFStringRef text    = CFStringCreateWithCString(0, pText, strlen(pText));
@@ -29,13 +29,13 @@ namespace Lambda
                 uType = kCFUserNotificationStopAlertLevel;
             }
             
-            CFUserNotificationDisplayAlert(0, uType, 0, 0, 0, text, caption, 0, 0, 0, &result);
+            CFUserNotificationDisplayAlert(0, uType, 0, 0, 0, caption, text, 0, 0, 0, &result);
 
             CFRelease(caption);
             CFRelease(text);
         }
         
-        /*/////////////////////////////*/
+        /*////////////////////////////////////////////////////////////////////////////////////////////////*/
         uint64 QueryPerformanceFrequency()
         {
             mach_timebase_info_data_t timeData = {};
@@ -43,7 +43,7 @@ namespace Lambda
             return timeData.denom / timeData.numer;
         }
 
-        /*////////////////////////////*/
+        /*////////////////////////////////////////////////////////////////////////////////////////////////*/
         uint64 QueryPerformanceCounter()
         {
             return mach_absolute_time();

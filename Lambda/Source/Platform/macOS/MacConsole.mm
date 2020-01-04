@@ -8,81 +8,81 @@
 
 namespace Lambda
 {
-    //----------
-    //MacConsole
-    //----------
+    //-----------
+    //CMacConsole
+    //-----------
 
-    /*//////////////////////////*/
-    CmacOSConsole::CmacOSConsole()
+    /*////////////////////////////////////////////////////////////////////////////////////////////////*/
+    CMacConsole::CMacConsole()
         : IConsole()
     {
     }
 
-    /*//////////////////////////////*/
-    bool CmacOSConsole::InternalInit()
+    /*////////////////////////////////////////////////////////////////////////////////////////////////*/
+    bool CMacConsole::Initialize()
     {
         return true;
     }
 
-    /*////////////////////////////////////////////*/
-    void CmacOSConsole::SetTitle(const char*)
+    /*////////////////////////////////////////////////////////////////////////////////////////////////*/
+    void CMacConsole::SetTitle(const char*)
     {
         //Nothing for now
     }
 
-    /*/////////////////////////////////////////////////*/
-    void CmacOSConsole::SetTextColor(EConsoleColor)
+    /*////////////////////////////////////////////////////////////////////////////////////////////////*/
+    void CMacConsole::SetTextColor(EConsoleColor)
     {
         //Nothing for now
     }
 
-    /*///////////////////////////////////////////////*/
-    void CmacOSConsole::Print(const char* pFormat, ...)
+    /*////////////////////////////////////////////////////////////////////////////////////////////////*/
+    void CMacConsole::Print(const char* pFormat, ...)
     {
         va_list args;
         va_start(args, pFormat);
-        CmacOSConsole::Print(pFormat, args);
+        CMacConsole::Print(pFormat, args);
         va_end(args);
     }
 
-    /*////////////////////////////////////////////////////////*/
-    void CmacOSConsole::Print(const char* pFormat, va_list args)
+    /*////////////////////////////////////////////////////////////////////////////////////////////////*/
+    void CMacConsole::Print(const char* pFormat, va_list args)
     {
         NSString* pNSFormat = [NSString stringWithUTF8String:pFormat];
         NSLogv(pNSFormat, args);
     }
 
-    /*///////////////////////////////////////////////////*/
-    void CmacOSConsole::PrintLine(const char* pFormat, ...)
+    /*////////////////////////////////////////////////////////////////////////////////////////////////*/
+    void CMacConsole::PrintLine(const char* pFormat, ...)
     {
         va_list args;
         va_start(args, pFormat);
-        CmacOSConsole::PrintLine(pFormat, args);
+        CMacConsole::PrintLine(pFormat, args);
         va_end(args);
     }
 
-    /*////////////////////////////////////////////////////////////*/
-    void CmacOSConsole::PrintLine(const char* pFormat, va_list args)
+    /*////////////////////////////////////////////////////////////////////////////////////////////////*/
+    void CMacConsole::PrintLine(const char* pFormat, va_list args)
     {
         NSString* pNSFormat = [NSString stringWithUTF8String:pFormat];
         NSLogv(pNSFormat, args);
         NSLog(@"\n");
     }
 
-    /*////////////////////////*/
-    void CmacOSConsole::Reset()
+    /*////////////////////////////////////////////////////////////////////////////////////////////////*/
+    void CMacConsole::Reset()
     {
         //Nothing for now
     }
     
-    /*///////////////////////*/
-    void CmacOSConsole::Clear()
+    /*////////////////////////////////////////////////////////////////////////////////////////////////*/
+    void CMacConsole::Clear()
     {
         //Nothing for now
     }
     
-    /*/////////////////////////*/
-    void CmacOSConsole::Release()
+    /*////////////////////////////////////////////////////////////////////////////////////////////////*/
+    void CMacConsole::Release()
     {
         delete this;
     }

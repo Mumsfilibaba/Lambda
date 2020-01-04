@@ -4,6 +4,8 @@
 
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include "Platform/Windows/WindowsSystem.h"
+#elif defined(LAMBDA_PLAT_MACOS)
+    #include "Platform/macOS/MacSystem.h"
 #endif
 
 namespace Lambda
@@ -16,6 +18,8 @@ namespace Lambda
 	{
 #if defined(LAMBDA_PLAT_WINDOWS)
 		return DBG_NEW CWindowsSystem(pEngine);
+#elif defined(LAMBDA_PLAT_MACOS)
+        return DBG_NEW CMacSystem(pEngine);
 #else
 	#error No platform defined
 		return nullptr;

@@ -3,14 +3,14 @@
 
 namespace Lambda
 {
-    //----------
-    //MacConsole
-    //----------
-    class CmacOSConsole final : public IConsole
+    //-----------
+    //CMacConsole
+    //-----------
+    class CMacConsole final : public IConsole
     {
     public:
-        CmacOSConsole();
-        ~CmacOSConsole() = default;
+        CMacConsole();
+        ~CMacConsole() = default;
 
         virtual void SetTitle(const char* pTitle) override final;
 		virtual void SetTextColor(EConsoleColor color) override final;
@@ -26,6 +26,6 @@ namespace Lambda
 		
 		virtual void Release() override final;
     private:
-        virtual bool InternalInit() override final;
+        virtual bool Initialize() override final;
     };
 }

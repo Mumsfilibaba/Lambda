@@ -16,7 +16,7 @@ namespace Lambda
 
 	IConsole* CConsole::s_pConsole = nullptr;
 
-	/*///////////////////////*/
+	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
 	bool CConsole::Initialize()
 	{
 		LAMBDA_ASSERT_PRINT(s_pConsole == nullptr, "CConsole::Initialize should only be called once");
@@ -26,7 +26,7 @@ namespace Lambda
 #if defined(LAMBDA_PLAT_WINDOWS)
 		pConsole = DBG_NEW CWindowsConsole();
 #elif defined(LAMBDA_PLAT_MACOS)
-		pConsole = DBG_NEW CmacOSConsole();
+		pConsole = DBG_NEW CMacConsole();
 #endif
 
 		//Initialize console
@@ -39,7 +39,7 @@ namespace Lambda
 		return false;
 	}
 
-    /*////////////////////*/
+    /*////////////////////////////////////////////////////////////////////////////////////////////////*/
 	void CConsole::Release()
 	{
 		LAMBDA_ASSERT_PRINT(s_pConsole != nullptr, "CConsole is not initialized");
