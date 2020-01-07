@@ -6,9 +6,23 @@ namespace Lambda
 	namespace Assert
 	{
 		//Enables a debugbreak if a debugger is attached and prints a message to the console and a messagebox
-		void AssertWithMessage(const char* pFormat, ...);
+		void AssertWithMessage(int nLine, const char* pFile, const char* pFormat, ...);
+    
+        void SetShowDialogOnAssert(bool bShowDialogOnAssert);
+        void SetWriteConsoleOnAssert(bool bWriteConsoleOnAssert);
+        
+        bool ShowDialogOnAssert();
+        bool WriteConsoleOnAssert();
 	}
 }
+
+//DebugBreak (Compiler based)
+#if defined(LAMBDA_VISUAL_STUDIO)
+    #define DebugBreak(...) __debugbreak()
+#else
+    #include <stdlib.h>
+    #define DebugBreak(...) abort()
+#endif
 
 //Asserts
 #ifdef LAMBDA_DEBUG
@@ -20,7 +34,8 @@ namespace Lambda
 		{ \
 			if (!(bCondition)) \
 			{ \
-				Lambda::Assert::AssertWithMessage(__VA_ARGS__); \
+                Lambda::Assert::AssertWithMessage(__LINE__, __FILE__, __VA_ARGS__); \
+                DebugBreak(); \
 			} \
 		}
 	#define LAMBDA_ASSERT(bCondition) LAMBDA_ASSERT_PRINT(bCondition, "Assertion Failed")

@@ -1,9 +1,9 @@
 #pragma once
 #include "LambdaCore.h"
 
-#include "SWindowEvent.h"
 #include "SKeyEvent.h"
 #include "SMouseEvent.h"
+#include "SWindowEvent.h"
 
 namespace Lambda
 {

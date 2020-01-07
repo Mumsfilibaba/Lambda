@@ -18,8 +18,10 @@ namespace Lambda
         LAMBDA_NO_COPY(CSystemEventDispatcher);
         
         bool DispatchEvent(const SSystemEvent& event);
+        
         void AddEventListener(ISystemEventListener* pListener);
         void RemoveEventListener(ISystemEventListener* pListener);
+        
         void Release();
     private:
         std::vector<ISystemEventListener*> m_EventListeners;

@@ -2,6 +2,8 @@
 #include "LambdaCore.h"
 
 #include "Core/Platform.h"
+#include "Core/Input/EMouse.h"
+#include "Core/Input/EKeyboard.h"
 
 namespace Lambda
 {
@@ -15,5 +17,11 @@ namespace Lambda
     
         uint64 QueryPerformanceFrequency();
         uint64 QueryPerformanceCounter();
+    
+        void CreateKeyLookupTable();
+        EKey ConvertFromVirtualKey(uint32 keycode);
+        uint32 ConvertToVirtualKey(EKey keycode);
+        uint32 ConvertModifierKeyFlags(uint32 flags);
+        EMouseButton ConvertMouseButton(uint32 button);
     }
 }

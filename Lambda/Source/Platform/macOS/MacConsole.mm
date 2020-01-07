@@ -27,22 +27,13 @@ namespace Lambda
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
     void CMacConsole::SetTitle(const char*)
     {
-        //Nothing for now
+        //Nothing for now since titles are not supported
     }
 
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
     void CMacConsole::SetTextColor(EConsoleColor)
     {
-        //Nothing for now
-    }
-
-    /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    void CMacConsole::Print(const char* pFormat, ...)
-    {
-        va_list args;
-        va_start(args, pFormat);
-        CMacConsole::Print(pFormat, args);
-        va_end(args);
+        //Nothing for now since colors are not supported
     }
 
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -53,32 +44,22 @@ namespace Lambda
     }
 
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    void CMacConsole::PrintLine(const char* pFormat, ...)
-    {
-        va_list args;
-        va_start(args, pFormat);
-        CMacConsole::PrintLine(pFormat, args);
-        va_end(args);
-    }
-
-    /*////////////////////////////////////////////////////////////////////////////////////////////////*/
     void CMacConsole::PrintLine(const char* pFormat, va_list args)
     {
-        NSString* pNSFormat = [NSString stringWithUTF8String:pFormat];
-        NSLogv(pNSFormat, args);
-        NSLog(@"\n");
+        //NSLog already writes a new line so just use print for now
+        CMacConsole::Print(pFormat, args);
     }
 
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
     void CMacConsole::Reset()
     {
-        //Nothing for now
+        //Nothing for now since colors are not supported
     }
     
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
     void CMacConsole::Clear()
     {
-        //Nothing for now
+        //Nothing for now since NSLog does not seem to be cleared
     }
     
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/

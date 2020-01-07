@@ -1,5 +1,4 @@
 #pragma once
-#include "Core/Input/EKey.h"
 #include "Core/Input/EMouse.h"
 
 namespace Lambda

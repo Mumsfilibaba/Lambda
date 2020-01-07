@@ -23,7 +23,7 @@ namespace Lambda
 
 		virtual bool Initialize() = 0;
 
-		virtual bool CreateWindow(const char* pTitle, uint32 width, uint32 height) = 0;
+		virtual bool CreateWindow(const char* pTitle, uint32 nWidth, uint32 nHeight) = 0;
 
 		virtual void ProcessSystemEvents() = 0;
 		virtual void AddEventListener(ISystemEventListener* pListener) = 0;

@@ -11,6 +11,7 @@ namespace Lambda
         RESIZE_TYPE_UNKNOWN     = 0,
         RESIZE_TYPE_MAXIMIZED   = 1,
         RESIZE_TYPE_MINIMIZED   = 2,
+        RESIZE_TYPE_STANDARD    = 3
     };
 
     //------------------

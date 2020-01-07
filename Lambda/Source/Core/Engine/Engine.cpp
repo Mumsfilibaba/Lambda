@@ -84,7 +84,7 @@ namespace Lambda
 		ISystem* pSystem = ISystem::Create(this);
 		if (pSystem)
 		{
-            LAMBDA_ASSERT_PRINT(false, "Assert");
+            //LAMBDA_ASSERT_PRINT(false, "Assertion Test");
             
 			m_pSystem = pSystem;
 			if (!m_pSystem->Initialize())
@@ -126,6 +126,8 @@ namespace Lambda
 		//Startup engine
 		m_State.bIsRunning = true;
 
+        CConsole::PrintLine("Starting up engine");
+        
 		//MainLoop
 		while (m_State.bIsRunning)
 		{

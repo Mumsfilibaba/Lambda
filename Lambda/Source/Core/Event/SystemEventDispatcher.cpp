@@ -32,7 +32,7 @@ namespace Lambda
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
     void CSystemEventDispatcher::AddEventListener(ISystemEventListener* pListener)
     {
-        LAMBDA_ASSERT_PRINT(pListener != nullptr, "pListener cannot be nullptr\n");
+        LAMBDA_ASSERT_PRINT(pListener, "pListener cannot be nullptr\n");
 
         //LOG(LOG_CHANNEL_ALL_CHANNELS, LOG_SEVERITY_INFO, "Added EventListener\n");
         m_EventListeners.emplace_back(pListener);
@@ -41,7 +41,7 @@ namespace Lambda
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
     void CSystemEventDispatcher::RemoveEventListener(ISystemEventListener* pListener)
     {
-        LAMBDA_ASSERT_PRINT(pListener != nullptr, "pListener cannot be nullptr\n");
+        LAMBDA_ASSERT_PRINT(pListener, "pListener cannot be nullptr\n");
 
         for (size_t i = 0; i < m_EventListeners.size(); i++)
         {

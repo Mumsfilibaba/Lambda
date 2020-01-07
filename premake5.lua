@@ -136,6 +136,7 @@ workspace "Lambda"
 		filter "system:windows"
 			removefiles
 			{
+				"%{prj.name}/Source/Platform/macOS/**",
 				"%{prj.name}/Include/Platform/macOS/**",
 			}
 		filter {}
@@ -148,7 +149,7 @@ workspace "Lambda"
 			}
 			removefiles
 			{
-				"%{prj.name}/Source/Platform/DX12/**",
+				"%{prj.name}/Source/Platform/Windows/**",
 				"%{prj.name}/Include/Platform/Windows/**",
 			}
 		filter {}
@@ -172,11 +173,13 @@ workspace "Lambda"
 		filter "system:macosx"
 			links
 			{
-				"glfw.3.4",
+				-- Libraries
 				"vulkan.1",
 				"vulkan.1.1.121",
 				"assimp",
 				"ImGui",
+				-- Frameworks
+				"Cocoa.framework"
 			}
 			libdirs
 			{

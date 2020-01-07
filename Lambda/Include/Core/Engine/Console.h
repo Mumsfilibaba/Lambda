@@ -29,10 +29,22 @@ namespace Lambda
 		virtual void SetTitle(const char* pTitle) = 0;
 		virtual void SetTextColor(EConsoleColor color) = 0;
 
-		virtual void Print(const char* pFormat, ...) = 0;
+		void Print(const char* pFormat, ...)
+        {
+            va_list args;
+            va_start(args, pFormat);
+            Print(pFormat, args);
+            va_end(args);
+        }
 		virtual void Print(const char* pFormat, va_list args) = 0;
 		
-		virtual void PrintLine(const char* pFormat, ...) = 0;
+		void PrintLine(const char* pFormat, ...)
+        {
+            va_list args;
+            va_start(args, pFormat);
+            PrintLine(pFormat, args);
+            va_end(args);
+        }
 		virtual void PrintLine(const char* pFormat, va_list args) = 0;
 
 		virtual void Reset() = 0;

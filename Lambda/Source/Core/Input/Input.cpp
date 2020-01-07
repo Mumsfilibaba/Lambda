@@ -2,8 +2,6 @@
 
 #include "Core/Input/Input.h"
 
-
-
 namespace Lambda
 {
 	//------

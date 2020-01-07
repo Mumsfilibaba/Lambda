@@ -1,8 +1,8 @@
 #pragma once
 #include "LambdaCore.h"
 
-#include "EKey.h"
 #include "EMouse.h"
+#include "EKeyboard.h"
 
 namespace Lambda
 {
