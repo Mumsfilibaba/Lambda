@@ -1,12 +1,12 @@
 #import "LambdaPch.h"
 
 #if defined(LAMBDA_PLAT_MACOS)
-    #import "Core/Engine/Console.h"
+    #include "Core/Engine/Console.h"
     
-    #import "Platform/macOS/MacWindow.h"
-    #import "Platform/macOS/MacSystem.h"
+    #include "Platform/macOS/MacWindow.h"
+    #include "Platform/macOS/MacSystem.h"
 
-    #import <Foundation/Foundation.h>
+    #include <Foundation/Foundation.h>
 
 namespace Lambda
 {

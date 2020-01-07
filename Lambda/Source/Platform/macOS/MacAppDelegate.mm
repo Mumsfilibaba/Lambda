@@ -1,10 +1,10 @@
 #include "LambdaPch.h"
 
 #if defined(LAMBDA_PLAT_MACOS)
-    #import "Core/Engine/Console.h"
+    #include "Core/Engine/Console.h"
 
-    #import "Platform/macOS/MacSystem.h"
-    #import "Platform/macOS/MacAppDelegate.h"
+    #include "Platform/macOS/MacSystem.h"
+    #include "Platform/macOS/MacAppDelegate.h"
 
     //---------------
     //CMacAppDelegate

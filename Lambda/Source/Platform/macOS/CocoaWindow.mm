@@ -1,9 +1,9 @@
 #include "LambdaPch.h"
 
 #if defined(LAMBDA_PLAT_MACOS)
-    #import "Platform/macOS/MacWindow.h"
-    #import "Platform/macOS/MacPlatform.h"
-    #import "Platform/macOS/CocoaWindow.h"
+    #include "Platform/macOS/MacWindow.h"
+    #include "Platform/macOS/MacPlatform.h"
+    #include "Platform/macOS/CocoaWindow.h"
 
 //----------
 //CCocoaView
