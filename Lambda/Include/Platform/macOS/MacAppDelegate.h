@@ -19,7 +19,7 @@ namespace Lambda
             Lambda::CMacSystem* m_pSystem;
         }
 
-        - (id) init:(Lambda::CMacSystem* ) pSystem;
+        - (id) initWithSystem:(Lambda::CMacSystem* ) pSystem;
         @end
     #else
         typedef void CMacAppDelegate;

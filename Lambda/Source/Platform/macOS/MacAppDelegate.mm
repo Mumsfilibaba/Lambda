@@ -13,7 +13,7 @@
     @implementation CMacAppDelegate
 
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    - (id)init:(Lambda::CMacSystem*) pSystem
+    - (id)initWithSystem:(Lambda::CMacSystem*) pSystem
     {
         LAMBDA_ASSERT_PRINT(pSystem != nullptr, "pSystem cannot be nullptr");
         

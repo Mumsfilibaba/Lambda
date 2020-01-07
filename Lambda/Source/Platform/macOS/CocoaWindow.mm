@@ -14,6 +14,8 @@
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
     - (id) initWithWindow:(Lambda::CMacWindow*) pWindow
     {
+        LAMBDA_ASSERT_PRINT(pWindow != nullptr, "pWindow cannot be nullptr");
+        
         self = [super init];
         if (self)
         {
@@ -203,6 +205,8 @@
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
     - (id) initWithContentRect:(Lambda::CMacWindow*) pWindow :(NSRect) contentRect styleMask:(NSWindowStyleMask) style backing:(NSBackingStoreType) backingStoreType defer:(BOOL) flag
     {
+        LAMBDA_ASSERT_PRINT(pWindow != nullptr, "pWindow cannot be nullptr");
+        
         //Call super and init window pointer
         self = [super initWithContentRect:contentRect styleMask:style backing:backingStoreType defer:flag];
         if (self)

@@ -51,7 +51,7 @@ namespace Lambda
         [NSApplication sharedApplication];
         
         //Create application delegate
-        CMacAppDelegate* pAppDelegate = [[CMacAppDelegate alloc] init:this];
+        CMacAppDelegate* pAppDelegate = [[CMacAppDelegate alloc] initWithSystem:this];
         if (pAppDelegate == nil)
         {
             CConsole::PrintLine("Failed to create AppDelegate");
