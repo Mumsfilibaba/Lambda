@@ -22,6 +22,6 @@ namespace Lambda
         - (id) initWithSystem:(Lambda::CMacSystem* ) pSystem;
         @end
     #else
-        typedef void CMacAppDelegate;
+        class CMacAppDelegate;
     #endif
 #endif

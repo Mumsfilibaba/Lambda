@@ -32,7 +32,7 @@
         - (id) initWithContentRect:(Lambda::CMacWindow*) pWindow :(NSRect)contentRect styleMask:(NSWindowStyleMask)style backing:(NSBackingStoreType)backingStoreType defer:(BOOL)flag;
         @end
     #else
-        typedef void CCocoaView;
-        typedef void CCocoaWindow;
+        class CCocoaView;
+        class CCocoaWindow;
     #endif
 #endif
