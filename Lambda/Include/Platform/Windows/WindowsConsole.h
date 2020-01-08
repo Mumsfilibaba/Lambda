@@ -12,27 +12,27 @@ namespace Lambda
 	class CWindowsConsole final : public IConsole
 	{
 	public:
-		CWindowsConsole();
-		~CWindowsConsole();
-
 		virtual void SetTitle(const char* pTitle) override final;
 		virtual void SetTextColor(EConsoleColor color) override final;
 
 		virtual void Print(const char* pFormat, ...) override final;
-		virtual void Print(const char* pFormat, va_list args) override final;
+		virtual void PrintV(const char* pFormat, va_list args) override final;
 
 		virtual void PrintLine(const char* pFormat, ...) override final;
-		virtual void PrintLine(const char* pFormat, va_list args) override final;
+		virtual void PrintLineV(const char* pFormat, va_list args) override final;
 
 		virtual void Reset() override final;
 		virtual void Clear() override final;
 
 		virtual void Release() override final;
 	private:
-		virtual bool Initialize() override final;
+		CWindowsConsole();
+		~CWindowsConsole();
 	private:
 		HANDLE m_hOutput;
 		EConsoleColor m_CurrentColor;
+	public:
+		static IConsole* CreateWindowsConsole();
 	};
 }
 #endif

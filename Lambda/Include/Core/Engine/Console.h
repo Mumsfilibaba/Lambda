@@ -29,30 +29,16 @@ namespace Lambda
 		virtual void SetTitle(const char* pTitle) = 0;
 		virtual void SetTextColor(EConsoleColor color) = 0;
 
-		void Print(const char* pFormat, ...)
-        {
-            va_list args;
-            va_start(args, pFormat);
-            Print(pFormat, args);
-            va_end(args);
-        }
-		virtual void Print(const char* pFormat, va_list args) = 0;
+		virtual void Print(const char* pFormat, ...) = 0;
+		virtual void PrintV(const char* pFormat, va_list args) = 0;
 		
-		void PrintLine(const char* pFormat, ...)
-        {
-            va_list args;
-            va_start(args, pFormat);
-            PrintLine(pFormat, args);
-            va_end(args);
-        }
-		virtual void PrintLine(const char* pFormat, va_list args) = 0;
+		virtual void PrintLine(const char* pFormat, ...) = 0;
+		virtual void PrintLineV(const char* pFormat, va_list args) = 0;
 
 		virtual void Reset() = 0;
 		virtual void Clear() = 0;
 		
 		virtual void Release() = 0;
-	private:
-		virtual bool Initialize() = 0;
 	};
 
 	//--------
@@ -63,7 +49,7 @@ namespace Lambda
 	public:
 		LAMBDA_STATIC_CLASS(CConsole);
 
-		static bool Initialize();
+		static void Initialize();
 		static void Release();
 
 		/*////////////////////////////////////*/
@@ -83,14 +69,14 @@ namespace Lambda
 		{
 			va_list args;
 			va_start(args, pFormat);
-			s_pConsole->Print(pFormat, args);
+			s_pConsole->PrintV(pFormat, args);
 			va_end(args);
 		}
 
 		/*////////////////////////////////////////////////*/
 		static void Print(const char* pFormat, va_list args)
 		{
-			s_pConsole->Print(pFormat, args);
+			s_pConsole->PrintV(pFormat, args);
 		}
 
 		/*///////////////////////////////////////////*/
@@ -98,14 +84,14 @@ namespace Lambda
 		{
 			va_list args;
 			va_start(args, pFormat);
-			s_pConsole->PrintLine(pFormat, args);
+			s_pConsole->PrintLineV(pFormat, args);
 			va_end(args);
 		}
 
 		/*////////////////////////////////////////////////////*/
 		static void PrintLine(const char* pFormat, va_list args)
 		{
-			s_pConsole->PrintLine(pFormat, args);
+			s_pConsole->PrintLineV(pFormat, args);
 		}
 
 		/*///////////////*/

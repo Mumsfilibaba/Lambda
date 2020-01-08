@@ -7,7 +7,7 @@
 
 namespace Lambda
 {
-	class CWindowsSystem;
+	class CWindowsApplication;
 
 	//--------------
 	//CWindowsWindow
@@ -15,23 +15,29 @@ namespace Lambda
 	class CWindowsWindow : public IWindow
 	{
 	public:
-		CWindowsWindow(CWindowsSystem* pSystem);
+		CWindowsWindow(CWindowsApplication* pApplication);
 		~CWindowsWindow();
 
 		/*IWindow Interface*/
 		virtual bool HasFocus() const override final { return m_bHasFocus; }
-		
-		virtual uint32	GetWidth()  const override final { return m_Width; }
-		virtual uint32	GetHeight() const override final { return m_Height; }
-		virtual void*	GetNativeHandle() const override final { return (void*)m_hWindow; }
+		virtual bool IsMiniaturized() const override final { return m_bIsMiniaturized; };
+		virtual bool IsFullscreen() const override final { return m_bIsFullscreen; }
+
+		virtual void SetFullscreen(bool bFullscreen) override final;
+
+		virtual uint32 GetWidth()  const override final { return m_Width; }
+		virtual uint32 GetHeight() const override final { return m_Height; }
+		virtual void*  GetNativeHandle() const override final { return (void*)m_hWindow; }
 		
 		/*CWindowsWindow*/
-		bool Initialize(const char* pTitle, uint32 width, uint32 height);
+		bool Init(const char* pTitle, uint32 width, uint32 height);
+		LRESULT HandleMessage(uint32 message, WPARAM wParam, LPARAM lParam);
 
-		LRESULT OnMessage(uint32 message, WPARAM wParam, LPARAM lParam);
+		HWND GetHandle() const { return m_hWindow; }
 	private:
-		CWindowsSystem* m_pSystem;
+		CWindowsApplication* m_pApplication;
 		HWND m_hWindow;
+		
 		uint32 m_Width;
 		uint32 m_Height;
 		uint32 m_Style;
@@ -41,7 +47,15 @@ namespace Lambda
 			uint32 x;
 			uint32 y;
 		} m_Position;
+
 		bool m_bHasFocus;
+		bool m_bIsFullscreen;
+		bool m_bIsMiniaturized;
+	public:
+		static LPCWSTR WindowClass()
+		{
+			return L"AppWindow";
+		}
 	};
 }
 #endif

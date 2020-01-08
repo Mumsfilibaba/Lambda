@@ -2,14 +2,11 @@
 #include "LambdaCore.h"
 
 #include "Core/Time/CClock.h"
-#include "Core/Event/SystemEventDispatcher.h"
+
+#include "Core/Event/ISystemEventListener.h"
 
 namespace Lambda
 {
-    class ISystem;
-
-    class CLayer;
-
     //-------------
     //SEngineParams
     //-------------
@@ -20,35 +17,9 @@ namespace Lambda
     };
 
     //-------
-    //IEngine
-    //-------
-    class LAMBDA_API IEngine
-    {
-    public:
-        LAMBDA_INTERFACE(IEngine);
-
-        virtual void Release() = 0;
-        virtual void RunMainLoop() = 0;
-        virtual void Exit(int32 exitCode) = 0;
-
-        virtual void SetUpdateTimestep(const CTime& timestep) = 0;
-
-        virtual ISystem*     GetSystem()         const = 0;
-        virtual const CTime& GetUpdateTimestep() const = 0;
-    private:
-        virtual bool Initialize(const SEngineParams& engineParams) = 0;
-    public:
-        static bool Create(const SEngineParams& engineParams);
-        static IEngine* Get();
-    private:
-        static IEngine* s_pInstance;
-    };
-
-
-    //-------
     //CEngine
     //-------
-    class CEngine final : public IEngine, public ISystemEventListener
+    class CEngine final : public ISystemEventListener
     {
     private:
         struct SFrametime
@@ -61,35 +32,42 @@ namespace Lambda
         struct SEngineState
         {
             bool bIsRunning;
-            int32 ExitCode;
+            int32 nExitCode;
         };
     public:
-        CEngine();
-        ~CEngine();
-
         /*ISystemEventListener Interface*/
         virtual bool OnSystemEvent(const SSystemEvent& event) override final;
 
-        /*IEngine Interface*/
-        virtual void Release() override final;
-        virtual void RunMainLoop() override final;
-        virtual void Exit(int32 exitCode) override final;
+        /*CEngine Interface*/
+        bool Init(const SEngineParams& engineParams);
+        
+        void RunMainLoop();
+        void Terminate(int32 nExitCode);
 
-        virtual void SetUpdateTimestep(const CTime& timestep) override final
+        /*////////////////////////////////////////////////////////////////////////////////////////////////*/
+        void SetUpdateTimestep(const CTime& timestep)
         {
             m_Frametime.Timestep = timestep;
         }
 
-        virtual ISystem*     GetSystem() const override final         { return m_pSystem; }
-        virtual const CTime& GetUpdateTimestep() const override final { return m_Frametime.Timestep; }
+        /*////////////////////////////////////////////////////////////////////////////////////////////////*/
+        const CTime& GetUpdateTimestep() const
+        { 
+            return m_Frametime.Timestep; 
+        }
     private:
-        virtual bool Initialize(const SEngineParams& engineParams) override final;
-      
+        CEngine();
+        ~CEngine();
+
         void DoFrame();
     private:
-        ISystem* m_pSystem;
-
-        SFrametime m_Frametime;
+        SFrametime   m_Frametime;
         SEngineState m_State;
+    public:
+        static bool Initialize(const SEngineParams& engineParams);
+        static void Release();
+        static CEngine& Get();
+    private:
+        static CEngine* s_pInstance;
     };
 }

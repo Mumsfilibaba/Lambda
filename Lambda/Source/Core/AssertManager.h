@@ -1,40 +1,44 @@
 #pragma once
-#include "LambdaDefines.h"
-#include "LambdaTypes.h"
+#include "Core/LambdaDefines.h"
+#include "Core/LambdaTypes.h"
 
 namespace Lambda
 {
-    //-----------------
-    //CAssertionManager
-    //-----------------
-    class CAssertionManager
+    //--------------
+    //CAssertManager
+    //--------------
+    class CAssertManager
     {
     public:
-        inline CAssertionManager()
+        /*////////////////////////////////////////////////////////////////////////////////////////////////*/
+        inline CAssertManager()
             : m_bShowDialogOnAssert(true),
             m_bWriteConsoleOnAssert(true)
         {
         }
         
-        ~CAssertionManager() = default;
+        ~CAssertManager() = default;
+        LAMBDA_NO_COPY(CAssertManager);
         
-        LAMBDA_NO_COPY(CAssertionManager);
-        
+        /*////////////////////////////////////////////////////////////////////////////////////////////////*/
         inline void SetShowDialogOnAssert(bool bShowDialogOnAssert)
         {
             m_bShowDialogOnAssert = bShowDialogOnAssert;
         }
         
+        /*////////////////////////////////////////////////////////////////////////////////////////////////*/
         inline void SetWriteConsoleOnAssert(bool bWriteConsoleOnAssert)
         {
             m_bWriteConsoleOnAssert = bWriteConsoleOnAssert;
         }
         
+        /*////////////////////////////////////////////////////////////////////////////////////////////////*/
         inline bool ShowDialogOnAssert() const
         {
             return m_bShowDialogOnAssert;
         }
         
+        /*////////////////////////////////////////////////////////////////////////////////////////////////*/
         inline bool WriteConsoleOnAssert() const
         {
             return m_bWriteConsoleOnAssert;

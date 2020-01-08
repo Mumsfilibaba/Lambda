@@ -16,12 +16,12 @@ namespace Lambda
 		m_TotalTime(0),
 		m_LastTime(0)
 	{
-		m_Frequency = Platform::QueryPerformanceFrequency();
+		m_Frequency = Platform::Time::QueryPerformanceFrequency();
 		Tick();
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	CClock::CClock(CClock&& other)
+	CClock::CClock(CClock&& other) noexcept
 		: m_Frequency(other.m_Frequency),
 		m_LastTime(other.m_LastTime),
 		m_TotalTime(other.m_TotalTime),
@@ -30,7 +30,7 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	CClock::CClock(const CClock& other)
+	CClock::CClock(const CClock& other) noexcept
 		: m_Frequency(other.m_Frequency),
 		m_LastTime(other.m_LastTime),
 		m_TotalTime(other.m_TotalTime),
@@ -39,7 +39,7 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	CClock& CClock::operator=(CClock&& other)
+	CClock& CClock::operator=(CClock&& other) noexcept
 	{
 		if (this != &other)
 		{
@@ -57,7 +57,7 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	CClock& CClock::operator=(const CClock& other)
+	CClock& CClock::operator=(const CClock& other) noexcept
 	{
 		if (this != &other)
 		{
@@ -74,7 +74,7 @@ namespace Lambda
 	void CClock::Tick()
 	{
 		//Get current time
-		uint64 now = Platform::QueryPerformanceCounter();
+		uint64 now = Platform::Time::QueryPerformanceCounter();
 		CTime currentTime = CTime(now / m_Frequency);
 
 		//Update delta- and totaltime

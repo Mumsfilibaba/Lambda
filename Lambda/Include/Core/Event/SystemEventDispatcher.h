@@ -6,9 +6,9 @@
 
 namespace Lambda
 {
-    //----------------
+    //----------------------
     //CSystemEventDispatcher
-    //----------------
+    //----------------------
     class LAMBDA_API CSystemEventDispatcher
     {
     public:
@@ -19,10 +19,8 @@ namespace Lambda
         
         bool DispatchEvent(const SSystemEvent& event);
         
-        void AddEventListener(ISystemEventListener* pListener);
-        void RemoveEventListener(ISystemEventListener* pListener);
-        
-        void Release();
+        void AddListener(ISystemEventListener* pListener);
+        void RemoveListener(ISystemEventListener* pListener);
     private:
         std::vector<ISystemEventListener*> m_EventListeners;
     };

@@ -43,7 +43,7 @@ namespace Lambda
 
 		virtual void Release() = 0;
 	private:
-		virtual bool Initialize() = 0;
+		virtual bool Init() = 0;
 	};
 
 	//------
@@ -54,7 +54,7 @@ namespace Lambda
 	public:
 		LAMBDA_STATIC_CLASS(CInput);
 
-		static bool Initialize(EInputType type);
+		static void Initialize(EInputType type);
 		static void Release();
 
 		/*///////////////////////////*/

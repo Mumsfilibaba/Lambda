@@ -15,22 +15,24 @@ namespace Lambda
 	//Define CreateGameLayer()
 	//------------------------
 
-	CLayer* CreateGameLayer(IEngine* pEngine)
+	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
+	CLayer* CreateGameLayer()
 	{
-		return DBG_NEW CSandBoxLayer(pEngine);
+		return DBG_NEW CSandBoxLayer();
 	}
 
 	//-------------
 	//CSandBoxLayer
 	//-------------
 
-	CSandBoxLayer::CSandBoxLayer(IEngine* pEngine)
+	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
+	CSandBoxLayer::CSandBoxLayer()
 		: CLayer("SandBoxLayer")
 	{
 	}
 
-
-	bool CSandBoxLayer::OnSystemEvent(const SSystemEvent& event)
+	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
+	bool CSandBoxLayer::DispatchEvent(const SSystemEvent& event)
 	{
 		return false;
 	}

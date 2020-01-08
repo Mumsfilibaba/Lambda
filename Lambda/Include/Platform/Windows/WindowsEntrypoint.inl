@@ -7,7 +7,7 @@
 	#endif
 	#include <Windows.h>
 
-extern LAMBDA_API Lambda::CLayer* (*_CreateGameLayer)(Lambda::IEngine*);
+extern LAMBDA_API Lambda::CLayer* (*_CreateGameLayer)();
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {

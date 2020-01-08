@@ -3,114 +3,106 @@
 #include "Core//Platform.h"
 
 #include "Core/Engine/Engine.h"
-#include "Core/Engine/System.h"
 #include "Core/Engine/Console.h"
+#include "Core/Engine/Application.h"
 
 #include "Core/Input/Input.h"
 
 //----------------
 //_CreateGameLayer
 //----------------
-extern Lambda::CLayer* (*_CreateGameLayer)(Lambda::IEngine*);
+namespace Lambda
+{
+	class CLayer;
+}
+
+extern Lambda::CLayer* (*_CreateGameLayer)();
 
 namespace Lambda
 {
 	//-------
-	//IEngine
+	//CEngine
 	//-------
 
-	IEngine* IEngine::s_pInstance = nullptr;
+	CEngine* CEngine::s_pInstance = nullptr;
 	
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	IEngine* IEngine::Get()
+	CEngine& CEngine::Get()
 	{
 		LAMBDA_ASSERT_PRINT(s_pInstance != nullptr, "Engine has not been initialized");
-		return s_pInstance;
+		return *s_pInstance;
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	bool IEngine::Create(const SEngineParams& engineParams)
+	bool CEngine::Initialize(const SEngineParams& engineParams)
 	{
 		LAMBDA_ASSERT_PRINT(s_pInstance == nullptr, "Engine can only be created once");
 
 		s_pInstance = DBG_NEW CEngine();
-		if (s_pInstance)
-		{
-			return s_pInstance->Initialize(engineParams);
-		}
-
-		return false;
+		return s_pInstance->Init(engineParams);
 	}
 
-
-	//-------
-	//CEngine
-	//-------
+	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
+	void CEngine::Release()
+	{
+		//Delete
+		SafeDelete(s_pInstance);
+	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
 	CEngine::CEngine()
-		: IEngine()
+		: ISystemEventListener()
 	{
-		//Init all pointers to nullptr
-		m_pSystem	= nullptr;
-
 		//Setup default frametime
 		m_Frametime.Timestep	  = CTime::Seconds(1.0f / 60.0f);
 		m_Frametime.UpdateBacklog = CTime(0);
 
 		//Setup enginestate
 		m_State.bIsRunning = false;
-		m_State.ExitCode = 0;
+		m_State.nExitCode = 0;
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
 	CEngine::~CEngine()
 	{
+		//Remove as listener
+		CApplication::RemoveListener(this);
+
+		//Release subsystems
 		CInput::Release();
-		m_pSystem->Release();
+
+#if defined(LAMBDA_DEVELOP)
+		//Release console
 		CConsole::Release();
+#endif
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	bool CEngine::Initialize(const SEngineParams&)
+	bool CEngine::Init(const SEngineParams&)
 	{
+		//Create application
+		CApplication::Initialize();
+#if defined(LAMBDA_DEVELOP)
 		//Create console
-		if (!CConsole::Initialize())
+		CConsole::Initialize();
+#endif
+  
+		//Create window
+		if (!CApplication::CreateWindow("Lambda Engine", 1440, 900))
 		{
 			return false;
 		}
-        
-		//Create system
-		ISystem* pSystem = ISystem::Create(this);
-		if (pSystem)
-		{
-            //LAMBDA_ASSERT_PRINT(false, "Assertion Test");
-            
-			m_pSystem = pSystem;
-			if (!m_pSystem->Initialize())
-			{
-				return false;
-			}
 
-			if (!m_pSystem->CreateWindow("Lambda Engine", 1440, 900))
-			{
-				return false;
-			}
-
-			//Add this to the system event listeners
-			m_pSystem->AddEventListener(this);
-		}
+		//Add this to the system event listeners
+		CApplication::AddListener(this);
 
 		//Create inputcontroller
-		if (!CInput::Initialize(EInputType::INPUT_TYPE_DEFAULT))
-		{
-			return false;
-		}
+		CInput::Initialize(EInputType::INPUT_TYPE_DEFAULT);
 
 		//Create gamelayer
 		if (_CreateGameLayer)
 		{
-			_CreateGameLayer(this);
+			_CreateGameLayer();
 		}
 		else
 		{
@@ -131,7 +123,7 @@ namespace Lambda
 		//MainLoop
 		while (m_State.bIsRunning)
 		{
-			m_pSystem->ProcessSystemEvents();
+			CApplication::ProcessEvents();
 			DoFrame();
 		}
 	}
@@ -148,19 +140,9 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void CEngine::Exit(int32 exitCode)
+	void CEngine::Terminate(int32 nExitCode)
 	{
-		m_State.bIsRunning	= false;
-		m_State.ExitCode	= exitCode;
-	}
-
-	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void CEngine::Release()
-	{
-		//Remove as listener
-		m_pSystem->RemoveEventListener(this);
-		
-		//Delete
-		delete this;
+		m_State.bIsRunning = false;
+		m_State.nExitCode  = nExitCode;
 	}
 }

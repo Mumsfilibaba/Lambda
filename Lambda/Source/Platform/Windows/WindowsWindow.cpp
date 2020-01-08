@@ -6,9 +6,8 @@
 	#include "Core/Utilities/StringUtilities.h"
 
 	#include "Platform/Windows/WindowsWindow.h"
-	#include "Platform/Windows/WindowsSystem.h"
-	
-	#define	NAME_APPWINDOW L"AppWindow"
+    #include "Platform/Windows/WindowsKeyboard.h"
+	#include "Platform/Windows/WindowsApplication.h"
 
 namespace Lambda
 {
@@ -17,13 +16,18 @@ namespace Lambda
 	//--------------
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	CWindowsWindow::CWindowsWindow(CWindowsSystem* pSystem)
+	CWindowsWindow::CWindowsWindow(CWindowsApplication* pApplication)
 		: IWindow(),
-		m_pSystem(pSystem),
+        m_pApplication(pApplication),
 		m_hWindow(0),
 		m_Height(0),
 		m_Width(0),
-		m_bHasFocus(false)
+		m_ExStyle(0),
+		m_Style(0),
+		m_Position(),
+		m_bHasFocus(false),
+		m_bIsFullscreen(false),
+		m_bIsMiniaturized(false)
 	{
 		//Init position
 		m_Position = { 0, 0 };
@@ -40,27 +44,20 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	bool CWindowsWindow::Initialize(const char* pTitle, uint32 width, uint32 height)
+	void CWindowsWindow::SetFullscreen(bool bFullscreen)
+	{
+		if (m_bIsFullscreen != bFullscreen)
+		{
+
+		}
+	}
+
+	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
+	bool CWindowsWindow::Init(const char* pTitle, uint32 width, uint32 height)
 	{
 		//Create window
 		int32 error = 0;
 		{
-			WNDCLASSEX wc = {};
-			wc.cbSize = sizeof(WNDCLASSEX);
-			wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-			wc.lpfnWndProc = CWindowsSystem::MessageProc;
-			wc.cbClsExtra = 0;
-			wc.cbWndExtra = 0;
-			wc.hInstance = m_pSystem->GetHINSTANCE();
-			wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
-			wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-			wc.hbrBackground = reinterpret_cast<HBRUSH>(GetStockObject(BLACK_BRUSH));
-			wc.lpszMenuName = NULL;
-			wc.lpszClassName = NAME_APPWINDOW;
-			wc.hIconSm = 0;
-
-			::RegisterClassEx(&wc);
-
 			//Set client area size
 			m_Style = WS_OVERLAPPEDWINDOW;
 			m_ExStyle = 0;
@@ -76,7 +73,7 @@ namespace Lambda
 
 			//Create window
 			SetLastError(0);
-			m_hWindow = CreateWindowEx(m_ExStyle, NAME_APPWINDOW, StringUtilities::ConvertFromString(pName).c_str(), m_Style, 0, 0, rect.right - rect.left, rect.bottom - rect.top, 0, 0, wc.hInstance, 0);
+			m_hWindow = CreateWindowEx(m_ExStyle, CWindowsWindow::WindowClass(), StringUtilities::ConvertFromString(pName).c_str(), m_Style, 0, 0, rect.right - rect.left, rect.bottom - rect.top, 0, 0, m_pApplication->GetHINSTANCE(), 0);
 			if (m_hWindow == 0)
 			{
 				error = GetLastError();
@@ -84,47 +81,58 @@ namespace Lambda
 			}
 			else
 			{
-				m_Width = width;
+				m_Width  = width;
 				m_Height = height;
 
+                //Set userdata so we can retrive this-pointer when handling events
+                SetWindowLongPtr(m_hWindow, GWLP_USERDATA, reinterpret_cast<uintptr_t>(this));
 				ShowWindow(m_hWindow, SW_NORMAL);
 				return true;
 			}
 		}
-
-		return false;
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	LRESULT CWindowsWindow::OnMessage(uint32 message, WPARAM wParam, LPARAM lParam)
+	LRESULT CWindowsWindow::HandleMessage(uint32 message, WPARAM wParam, LPARAM lParam)
 	{
-		switch (message)
-		{
-		case WM_CREATE:
-			CConsole::PrintLine("Window Created");
-			break;
+        switch (message)
+        {
+        case WM_CREATE:
+        {
+            CConsole::PrintLine("Window Created");
+            break;
+        }
 
-		case WM_DESTROY:
-			CConsole::PrintLine("Window Destroyed");
-			break;
+        case WM_DESTROY:
+        {
+            CConsole::PrintLine("Window Destroyed");
+            break;
+        }
 
-		case WM_SIZE:
-			m_Width		= LOWORD(lParam);
-			m_Height	= HIWORD(lParam);
-			break;
+        case WM_SIZE:
+        {
+            //Set members
+            m_Width = LOWORD(lParam);
+            m_Height = HIWORD(lParam);
+            return 0;
+        }
 
-		case WM_MOVE:
-			m_Position.x = (int32)(int16)LOWORD(lParam);
-			m_Position.y = (int32)(int16)HIWORD(lParam);
-			break;
+        case WM_MOVE:
+        {
+            //Set members
+            m_Position.x = (int32)(int16)LOWORD(lParam);
+            m_Position.y = (int32)(int16)HIWORD(lParam);
+            return 0;
+        }
 
-		case WM_SETFOCUS:
-		case WM_KILLFOCUS:
-			m_bHasFocus = (message == WM_SETFOCUS);
-			break;
-		}
-
-		return 0;
+        case WM_SETFOCUS:
+        case WM_KILLFOCUS:
+        {
+            //Set members
+            m_bHasFocus = (message == WM_SETFOCUS);
+            return 0;
+        }
+        }
 	}
 }
 #endif

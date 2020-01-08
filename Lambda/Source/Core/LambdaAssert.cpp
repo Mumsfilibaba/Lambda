@@ -6,7 +6,7 @@
 #include "Core/Engine/Engine.h"
 #include "Core/Engine/Console.h"
 
-#include "AssertionManager.h"
+#include "AssertManager.h"
 
 //For other platforms we just use assert(false) for now
 #if !defined(LAMBDA_VISUAL_STUDIO)
@@ -23,10 +23,10 @@ namespace Lambda
 		//------
 
         /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-        static CAssertionManager& GetManager()
+        static CAssertManager& GetManager()
         {
-            static CAssertionManager instance;
-            return instance;
+            static CAssertManager s_Instance;
+            return s_Instance;
         }
     
         /*////////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -69,7 +69,7 @@ namespace Lambda
             //Get assertion message
             static char assertionMessage[MAX_MESSAGE_LENGTH];
             memset(assertionMessage, 0, sizeof(assertionMessage));
-            snprintf(assertionMessage, MAX_MESSAGE_LENGTH, "Assertion Failed\nLine: %d\nFile: %s\nMessage: %s\n", nLine, pFile, message);
+            snprintf(assertionMessage, MAX_MESSAGE_LENGTH, "Assert Failed\nLine: %d\nFile: %s\n%s\n", nLine, pFile, message);
             
 			//Print to console
             if (WriteConsoleOnAssert())
@@ -86,7 +86,7 @@ namespace Lambda
 			//Print messagebox
             if (ShowDialogOnAssert())
             {
-                Platform::MessageBox("Assertion Failed", assertionMessage, EMessageBoxType::MESSAGE_BOX_TYPE_ERROR);
+                Platform::Misc::MessageBox("Assertion Failed", assertionMessage, EMessageBoxType::MESSAGE_BOX_TYPE_ERROR);
             }
 		}
 	}

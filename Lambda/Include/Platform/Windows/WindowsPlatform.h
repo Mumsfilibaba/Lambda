@@ -9,10 +9,22 @@ namespace Lambda
 	//---------------
 	namespace WindowsPlatform
 	{
-		void MessageBox(const char* pCaption, const char* pText, EMessageBoxType type);
+		//----
+		//Misc
+		//----
+		namespace Misc
+		{
+			void MessageBox(const char* pCaption, const char* pText, EMessageBoxType type);
+		}
 
-		uint64 QueryPerformanceCounter();
-		uint64 QueryPerformanceFrequency();
+		//----
+		//Time
+		//----
+		namespace Time
+		{
+			uint64 QueryPerformanceCounter();
+			uint64 QueryPerformanceFrequency();
+		}
 	}
 }
 #endif

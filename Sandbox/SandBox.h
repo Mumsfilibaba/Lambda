@@ -3,19 +3,17 @@
 
 namespace Lambda
 {
-    class IEngine;
-
     //------------
     //CSandBoxLayer 
     //------------
     class CSandBoxLayer final : public CLayer
     {
     public:
-        CSandBoxLayer(IEngine* pEngine);
+        CSandBoxLayer();
         ~CSandBoxLayer() = default;
 
         LAMBDA_NO_COPY(CSandBoxLayer);
 
-        virtual bool OnSystemEvent(const SSystemEvent& event) override final;
+        virtual bool DispatchEvent(const SSystemEvent& event) override final;
     };
 }

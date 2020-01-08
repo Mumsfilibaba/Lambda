@@ -30,7 +30,7 @@ namespace Lambda
     }
 
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    void CSystemEventDispatcher::AddEventListener(ISystemEventListener* pListener)
+    void CSystemEventDispatcher::AddListener(ISystemEventListener* pListener)
     {
         LAMBDA_ASSERT_PRINT(pListener, "pListener cannot be nullptr\n");
 
@@ -39,7 +39,7 @@ namespace Lambda
     }
 
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    void CSystemEventDispatcher::RemoveEventListener(ISystemEventListener* pListener)
+    void CSystemEventDispatcher::RemoveListener(ISystemEventListener* pListener)
     {
         LAMBDA_ASSERT_PRINT(pListener, "pListener cannot be nullptr\n");
 
@@ -53,11 +53,5 @@ namespace Lambda
                 return;
             }
         }
-    }
-    
-    /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    void CSystemEventDispatcher::Release()
-    {
-        delete this;
     }
 }

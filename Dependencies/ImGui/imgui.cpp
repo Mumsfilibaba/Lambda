@@ -3297,7 +3297,7 @@ ImGuiContext* ImGui::CreateContext(ImFontAtlas* shared_font_atlas)
     ImGuiContext* ctx = IM_NEW(ImGuiContext)(shared_font_atlas);
     if (GImGui == NULL)
         SetCurrentContext(ctx);
-    Initialize(ctx);
+    Init(ctx);
     return ctx;
 }
 
@@ -3937,7 +3937,7 @@ void ImGui::UpdateDebugToolItemPicker()
     }
 }
 
-void ImGui::Initialize(ImGuiContext* context)
+void ImGui::Init(ImGuiContext* context)
 {
     ImGuiContext& g = *context;
     IM_ASSERT(!g.Initialized && !g.SettingsLoaded);

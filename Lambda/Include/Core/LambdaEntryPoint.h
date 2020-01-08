@@ -5,7 +5,7 @@
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include "Platform/Windows/WindowsEntrypoint.inl"
 #else
-	extern Lambda::CLayer* (*_CreateGameLayer)(Lambda::IEngine*);
+	extern Lambda::CLayer* (*_CreateGameLayer)();
 
 	int main(int, const char*[])
 	{

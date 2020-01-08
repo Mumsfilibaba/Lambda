@@ -13,26 +13,19 @@ namespace Lambda
 	//---------------
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
+	IConsole* CWindowsConsole::CreateWindowsConsole()
+	{
+		IConsole* pWindowsConsole = DBG_NEW CWindowsConsole();
+		return pWindowsConsole;
+	}
+
+	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
 	CWindowsConsole::CWindowsConsole()
 		: IConsole(),
 		m_hOutput(0),
 		m_CurrentColor(EConsoleColor::CONSOLE_COLOR_WHITE)
 	{
-	}
-
-	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	CWindowsConsole::~CWindowsConsole()
-	{
-		if (m_hOutput)
-		{
-			::FreeConsole();
-		}
-	}
-
-	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    bool CWindowsConsole::Initialize()
-    {
-    	//Get the current consolewindow, if this is null we have no console
+		//Get the current consolewindow, if this is null we have no console
 		HWND hWnd = ::GetConsoleWindow();
 		if (hWnd == NULL)
 		{
@@ -44,17 +37,22 @@ namespace Lambda
 
 				//Get output handle after attaching a console
 				m_hOutput = ::GetStdHandle(STD_OUTPUT_HANDLE);
-				
+
 				//Set default values
 				CWindowsConsole::SetTitle("Lambda Engine Debug Output");
 				CWindowsConsole::Reset();
-
-				return true;
 			}
 		}
+	}
 
-		return false;
-    }
+	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
+	CWindowsConsole::~CWindowsConsole()
+	{
+		if (m_hOutput)
+		{
+			::FreeConsole();
+		}
+	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
 	void CWindowsConsole::SetTitle(const char* pTitle)
@@ -73,17 +71,11 @@ namespace Lambda
 			//Inital color is white
 			WORD nColor = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
 			if (color == EConsoleColor::CONSOLE_COLOR_RED)
-			{
 				nColor = FOREGROUND_RED | FOREGROUND_INTENSITY;
-			}
 			else if (color == EConsoleColor::CONSOLE_COLOR_GREEN)
-			{
 				nColor = FOREGROUND_GREEN | FOREGROUND_INTENSITY;
-			}
 			else if (color == EConsoleColor::CONSOLE_COLOR_YELLOW)
-			{
 				nColor = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY;
-			}
 
 			::SetConsoleTextAttribute(m_hOutput, nColor);
 			m_CurrentColor = color;
@@ -95,16 +87,18 @@ namespace Lambda
 	{
 		va_list args;
 		va_start(args, pFormat);
-		Print(pFormat, args);
+		CWindowsConsole::PrintV(pFormat, args);
 		va_end(args);
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void CWindowsConsole::Print(const char* pFormat, va_list args)
+	void CWindowsConsole::PrintV(const char* pFormat, va_list args)
 	{
 		if (m_hOutput)
 		{
 			static char buffer[MAX_OUTPUT_CHARS];
+			memset(buffer, 0, sizeof(buffer));
+
 			DWORD nLength = vsnprintf(buffer, MAX_OUTPUT_CHARS, pFormat, args);
 
 			DWORD nWritten = 0;
@@ -113,16 +107,16 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void CWindowsConsole::PrintLine(const char* pFormat, ...) 
+	void CWindowsConsole::PrintLine(const char* pFormat, ...)
 	{
 		va_list args;
 		va_start(args, pFormat);
-		CWindowsConsole::PrintLine(pFormat, args);
+		CWindowsConsole::PrintLineV(pFormat, args);
 		va_end(args);
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void CWindowsConsole::PrintLine(const char* pFormat, va_list args)
+	void CWindowsConsole::PrintLineV(const char* pFormat, va_list args)
 	{
 		if (m_hOutput)
 		{

@@ -29,20 +29,13 @@ namespace Lambda
 	//----
 	//ILog
 	//----
-	class ILog
+	class LAMBDA_API ILog
 	{
 	public:
 		LAMBDA_INTERFACE(ILog);
 
-		inline void Log(ELogVerbosity verbosity, const char* pFormat, ...)
-		{
-			va_list args;
-			va_start(args, pFormat);
-			ILog::Log(verbosity, pFormat, args);
-			va_end(args);
-		}
-
-		virtual void Log(ELogVerbosity verbosity, const char* pFormat, va_list args) = 0;
+		virtual void Log(ELogVerbosity verbosity, const char* pFormat, ...) = 0;
+		virtual void LogV(ELogVerbosity verbosity, const char* pFormat, va_list args) = 0;
 		
 		virtual void SetVerbosityFilter(ELogVerbosity verbosity) = 0;
 		virtual void SetConsoleOutputEnabled(bool bConsoleOutput) = 0;
@@ -64,7 +57,8 @@ namespace Lambda
 		~CLog();
 
 		/*ILog interface*/
-		virtual void Log(ELogVerbosity verbosity, const char* pFormat, va_list args) override;
+		virtual void Log(ELogVerbosity verbosity, const char* pFormat, ...) override;
+		virtual void LogV(ELogVerbosity verbosity, const char* pFormat, va_list args) override;
 
 		virtual void SetVerbosityFilter(ELogVerbosity filter) override;
 		virtual void SetConsoleOutputEnabled(bool bConsoleOutput) override;

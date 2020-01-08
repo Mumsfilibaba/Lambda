@@ -33,7 +33,16 @@ namespace Lambda
 	}
 	
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void CLog::Log(ELogVerbosity verbosity, const char* pFormat, va_list args)
+	void CLog::Log(ELogVerbosity verbosity, const char* pFormat, ...)
+	{
+		va_list args;
+		va_start(args, pFormat);
+		CLog::LogV(verbosity, pFormat, args);
+		va_end(args);
+	}
+
+	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
+	void CLog::LogV(ELogVerbosity verbosity, const char* pFormat, va_list args)
 	{
 		if (verbosity >= m_Filter)
 		{

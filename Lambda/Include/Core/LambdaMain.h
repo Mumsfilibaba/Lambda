@@ -15,5 +15,5 @@ namespace Lambda
 	//---------------
 	//CreateGameLayer
 	//---------------
-	CLayer* CreateGameLayer(IEngine* pEngine);
+	CLayer* CreateGameLayer();
 }

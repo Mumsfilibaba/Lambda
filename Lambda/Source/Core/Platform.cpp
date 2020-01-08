@@ -16,35 +16,48 @@ namespace Lambda
 
     namespace Platform
     {
-        /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-        void MessageBox(const char* pCaption, const char* pText, EMessageBoxType type)
+        //----
+        //Misc
+        //----
+
+        namespace Misc
         {
+            /*////////////////////////////////////////////////////////////////////////////////////////////////*/
+            void MessageBox(const char* pCaption, const char* pText, EMessageBoxType type)
+            {
 #if defined(LAMBDA_PLAT_WINDOWS)
-            WindowsPlatform::MessageBox(pCaption, pText, type);
+                WindowsPlatform::Misc::MessageBox(pCaption, pText, type);
 #elif defined(LAMBDA_PLAT_MACOS)
-            MacPlatform::MessageBox(pCaption, pText, type);
+                MacPlatform::MessageBox(pCaption, pText, type);
 #endif
+            }
         }
 
-        /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-        uint64 QueryPerformanceFrequency()
+        //----
+        //Time
+        //----
+
+        namespace Time
         {
+            /*////////////////////////////////////////////////////////////////////////////////////////////////*/
+            uint64 QueryPerformanceFrequency()
+            {
 #if defined(LAMBDA_PLAT_WINDOWS)
-            return WindowsPlatform::QueryPerformanceFrequency();
+                return WindowsPlatform::Time::QueryPerformanceFrequency();
 #elif defined(LAMBDA_PLAT_MACOS)
-            return MacPlatform::QueryPerformanceFrequency();
+                return MacPlatform::QueryPerformanceFrequency();
 #endif
-        }
+            }
     
-        /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-        uint64 QueryPerformanceCounter()
-        {
+            /*////////////////////////////////////////////////////////////////////////////////////////////////*/
+            uint64 QueryPerformanceCounter()
+            {
 #if defined(LAMBDA_PLAT_WINDOWS)
-            return WindowsPlatform::QueryPerformanceCounter();
+                return WindowsPlatform::Time::QueryPerformanceCounter();
 #elif defined(LAMBDA_PLAT_MACOS)
-            return MacPlatform::QueryPerformanceCounter();
+                return MacPlatform::QueryPerformanceCounter();
 #endif
+            }
         }
-
     }
 }

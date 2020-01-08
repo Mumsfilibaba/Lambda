@@ -2,11 +2,13 @@
 
 #include "Core/LambdaMain.h"
 
+#include "Core/Engine/Console.h"
+
 //----------------
 //_CreateGameLayer
 //----------------
 
-LAMBDA_API Lambda::CLayer* (*_CreateGameLayer)(Lambda::IEngine*) = nullptr;
+LAMBDA_API Lambda::CLayer* (*_CreateGameLayer)() = nullptr;
 
 namespace Lambda
 {
@@ -16,20 +18,13 @@ namespace Lambda
 
 	int32 LambdaMain(const SEngineParams& params)
 	{
-		if (IEngine::Create(params))
+		if (!CEngine::Initialize(params))
 		{
-			IEngine* pEngine = IEngine::Get();
-			if (pEngine)
-			{
-				pEngine->RunMainLoop();
-				pEngine->Release();
-
-				return 0;
-			}
-
 			return -1;
 		}
 
-		return -1;
+		CEngine::Get().RunMainLoop();
+		CEngine::Release();
+		return 0;
 	}
 }

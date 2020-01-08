@@ -16,6 +16,6 @@ namespace Lambda
 
 		LAMBDA_NO_COPY(CLayer);
 
-		virtual bool OnSystemEvent(const SSystemEvent& event);
+		virtual bool DispatchEvent(const SSystemEvent& event);
 	};
 }

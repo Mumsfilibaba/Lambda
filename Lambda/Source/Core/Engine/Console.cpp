@@ -17,26 +17,16 @@ namespace Lambda
 	IConsole* CConsole::s_pConsole = nullptr;
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	bool CConsole::Initialize()
+	void CConsole::Initialize()
 	{
 		LAMBDA_ASSERT_PRINT(s_pConsole == nullptr, "CConsole::Initialize should only be called once");
 
 		//Create console interface
-		IConsole* pConsole = nullptr;
 #if defined(LAMBDA_PLAT_WINDOWS)
-		pConsole = DBG_NEW CWindowsConsole();
+		s_pConsole = CWindowsConsole::CreateWindowsConsole();
 #elif defined(LAMBDA_PLAT_MACOS)
-		pConsole = DBG_NEW CMacConsole();
+		s_pConsole = DBG_NEW CMacConsole();
 #endif
-
-		//Initialize console
-		s_pConsole = pConsole;
-		if (s_pConsole)
-		{
-			return s_pConsole->Initialize();
-		}
-
-		return false;
 	}
 
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/

@@ -14,7 +14,7 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	bool CLayer::OnSystemEvent(const SSystemEvent&)
+	bool CLayer::DispatchEvent(const SSystemEvent&)
 	{
 		return false;
 	}

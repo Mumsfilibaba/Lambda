@@ -10,12 +10,12 @@ namespace Lambda
 	{
 	public:
 		CClock();
-		CClock(CClock&& other);
-		CClock(const CClock& other);
+		CClock(CClock&& other) noexcept;
+		CClock(const CClock& other) noexcept;
 		~CClock() = default;
 
-		CClock& operator=(CClock&& other);
-		CClock& operator=(const CClock& other);
+		CClock& operator=(CClock&& other) noexcept;
+		CClock& operator=(const CClock& other) noexcept;
 
 		void Tick();
 
