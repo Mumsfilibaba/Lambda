@@ -52,20 +52,22 @@ namespace Lambda
 		static void Initialize();
 		static void Release();
 
-		inline static void SetTitle(const char* pTitle)		 { s_pConsole->SetTitle(pTitle); }
-		inline static void SetTextColor(EConsoleColor color) { s_pConsole->SetTextColor(color); }
+		inline static bool IsAttached() { return s_pInstance != nullptr; }
 
-		inline static void Print(const char* pFormat, va_list args)		{ s_pConsole->PrintV(pFormat, args); }
-		inline static void PrintLine(const char* pFormat, va_list args) { s_pConsole->PrintLineV(pFormat, args); }
+		inline static void SetTitle(const char* pTitle)		 { s_pInstance->SetTitle(pTitle); }
+		inline static void SetTextColor(EConsoleColor color) { s_pInstance->SetTextColor(color); }
 
-		inline static void Reset() { s_pConsole->Reset(); }
-		inline static void Clear() { s_pConsole->Clear(); }
+		inline static void PrintV(const char* pFormat, va_list args)		{ s_pInstance->PrintV(pFormat, args); }
+		inline static void PrintLineV(const char* pFormat, va_list args)	{ s_pInstance->PrintLineV(pFormat, args); }
+
+		inline static void Reset() { s_pInstance->Reset(); }
+		inline static void Clear() { s_pInstance->Clear(); }
 
 		inline static void Print(const char* pFormat, ...)
 		{
 			va_list args;
 			va_start(args, pFormat);
-			s_pConsole->PrintV(pFormat, args);
+			s_pInstance->PrintV(pFormat, args);
 			va_end(args);
 		}
 
@@ -73,10 +75,10 @@ namespace Lambda
 		{
 			va_list args;
 			va_start(args, pFormat);
-			s_pConsole->PrintLineV(pFormat, args);
+			s_pInstance->PrintLineV(pFormat, args);
 			va_end(args);
 		}
 	private:
-		static IConsole* s_pConsole;
+		static IConsole* s_pInstance;
 	};
 }

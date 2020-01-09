@@ -94,7 +94,8 @@ namespace Lambda
 			//When we recive a quit message we exit the engine
 			if (message.message == WM_QUIT)
 			{
-                Engine::RequestExit(int32(message.wParam));
+                Engine& engine = Engine::Get();
+                engine.Exit(int32(message.wParam));
 			}
 		}
 	}

@@ -71,6 +71,5 @@ namespace Lambda
         EngineState m_State;
     public:
         static Engine& Get();
-        static void RequestExit(int32 exitCode);
     };
 }

@@ -72,7 +72,7 @@ namespace Lambda
             snprintf(assertionMessage, MAX_MESSAGE_LENGTH, "Assert Failed\nLine: %d\nFile: %s\n%s\n", nLine, pFile, message);
             
 			//Print to console
-            if (WriteConsoleOnAssert())
+            if (WriteConsoleOnAssert() && Console::IsAttached())
             {
                 Console::SetTextColor(EConsoleColor::CONSOLE_COLOR_RED);
                 Console::Print("%s", assertionMessage);
