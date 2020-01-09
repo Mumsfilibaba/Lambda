@@ -23,6 +23,7 @@ namespace Lambda
     MacConsole::MacConsole()
         : IConsole(),
         m_pTextView(nullptr),
+        m_pScrollView(nullptr),
         m_pTextViewTextColor(nullptr),
         m_pConsoleWindow(nullptr)
     {
@@ -36,12 +37,13 @@ namespace Lambda
         [m_pConsoleWindow setDelegate:m_pConsoleWindow];
         
         NSScrollView* pScrollView = [[NSScrollView alloc] initWithFrame:[[m_pConsoleWindow contentView] frame]];
-        NSSize contentSize = [pScrollView contentSize];
+        m_pScrollView = pScrollView;
         
-        [pScrollView setBorderType:NSNoBorder];
-        [pScrollView setHasVerticalScroller:YES];
-        [pScrollView setHasHorizontalScroller:NO];
-        [pScrollView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
+        NSSize contentSize = [m_pScrollView contentSize];
+        [m_pScrollView setBorderType:NSNoBorder];
+        [m_pScrollView setHasVerticalScroller:YES];
+        [m_pScrollView setHasHorizontalScroller:NO];
+        [m_pScrollView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         
         NSTextView* pTextView = [[NSTextView alloc] initWithFrame:NSMakeRect( 0, 0, contentSize.width, contentSize.height )];
         m_pTextView = pTextView;
@@ -56,8 +58,8 @@ namespace Lambda
         [[m_pTextView textContainer] setContainerSize:NSMakeSize( contentSize.width, FLT_MAX )];
         [[m_pTextView textContainer] setWidthTracksTextView:YES];
         
-        [pScrollView setDocumentView:m_pTextView];
-        [m_pConsoleWindow setContentView:pScrollView];
+        [m_pScrollView setDocumentView:m_pTextView];
+        [m_pConsoleWindow setContentView:m_pScrollView];
 
         [m_pConsoleWindow setOpaque:YES];
         [m_pConsoleWindow makeKeyAndOrderFront:nil];
@@ -70,6 +72,7 @@ namespace Lambda
     MacConsole::~MacConsole()
     {
         [m_pTextViewTextColor release];
+        [m_pScrollView release];
         [m_pTextView release];
         [m_pConsoleWindow release];
     }

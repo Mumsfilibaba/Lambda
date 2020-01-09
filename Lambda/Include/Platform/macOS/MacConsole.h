@@ -16,6 +16,7 @@
 #else
     class NSTextView;
     class NSDictionary;
+    class NSScrollView;
     class CocoaConsoleWindow;
 #endif
 
@@ -44,6 +45,7 @@ namespace Lambda
 		virtual void Clear() override final;
     private:
         NSTextView* m_pTextView;
+        NSScrollView* m_pScrollView;
         NSDictionary* m_pTextViewTextColor;
         CocoaConsoleWindow* m_pConsoleWindow;
     };
