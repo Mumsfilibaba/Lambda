@@ -20,8 +20,8 @@ namespace Lambda
 
 		/*IWindow Interface*/
 		virtual bool HasFocus() const override final { return m_bHasFocus; }
-		virtual bool IsMiniaturized() const override final { return m_bIsMiniaturized; };
 		virtual bool IsFullscreen() const override final { return m_bIsFullscreen; }
+		virtual bool IsMiniaturized() const override final { return m_bIsMiniaturized; };
 
 		virtual void SetFullscreen(bool bFullscreen) override final;
 
@@ -31,9 +31,13 @@ namespace Lambda
 		
 		/*CWindowsWindow*/
 		bool Init(const char* pTitle, uint32 width, uint32 height);
-		LRESULT HandleMessage(uint32 message, WPARAM wParam, LPARAM lParam);
+		LRESULT OnMessage(uint32 message, WPARAM wParam, LPARAM lParam);
 
-		HWND GetHandle() const { return m_hWindow; }
+		/*////////////////////////////////////////////////////////////////////////////////////////////////*/
+		HWND GetHandle() const 
+		{ 
+			return m_hWindow; 
+		}
 	private:
 		CWindowsApplication* m_pApplication;
 		HWND m_hWindow;
@@ -52,6 +56,9 @@ namespace Lambda
 		bool m_bIsFullscreen;
 		bool m_bIsMiniaturized;
 	public:
+		static LRESULT CALLBACK MessageProc(HWND hWnd, uint32 message, WPARAM wParam, LPARAM lParam);
+
+		/*////////////////////////////////////////////////////////////////////////////////////////////////*/
 		static LPCWSTR WindowClass()
 		{
 			return L"AppWindow";

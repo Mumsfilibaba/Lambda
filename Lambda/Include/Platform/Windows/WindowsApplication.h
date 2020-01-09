@@ -30,23 +30,28 @@ namespace Lambda
 		virtual const IWindow* GetWindow() const override final { return m_pWindow; }	
 
 		/*CWindowsApplication interface*/
-		HINSTANCE GetHINSTANCE() const { return m_hInstance; }
-
 		void DispatchEvent(const SSystemEvent& event) { m_EventDispatcher.DispatchEvent(event); }
-		LRESULT HandleMessage(HWND hWnd, uint32 message, WPARAM wParam, LPARAM lParam);
+		
+		void OnWindowClose(CWindowsWindow* pWindow);
+		LRESULT OnMessage(HWND hWnd, uint32 message, WPARAM wParam, LPARAM lParam);
+		
+		/*////////////////////////////////////////////////////////////////////////////////////////////////*/
+		HINSTANCE GetHINSTANCE() const 
+		{ 
+			return m_hInstance; 
+		}
 	private:
 		CWindowsApplication();
 		~CWindowsApplication();
 
-		void RegisterWindowClass();
 	private:
 		CWindowsWindow* m_pWindow;
 		CSystemEventDispatcher m_EventDispatcher;
 
 		HINSTANCE m_hInstance;
 	public:
-		static LRESULT CALLBACK MessageProc(HWND hWnd, uint32 message, WPARAM wParam, LPARAM lParam);
 		static IApplication* CreateWindowsApplication();
+		static void RegisterWindowClass(HINSTANCE hInstance);
 	};
 }
 #endif

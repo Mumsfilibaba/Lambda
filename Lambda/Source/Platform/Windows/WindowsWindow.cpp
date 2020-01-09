@@ -84,8 +84,8 @@ namespace Lambda
 				m_Width  = width;
 				m_Height = height;
 
-                //Set userdata so we can retrive this-pointer when handling events
-                SetWindowLongPtr(m_hWindow, GWLP_USERDATA, reinterpret_cast<uintptr_t>(this));
+				//Set userdata so we can retrive this-pointer when handling events
+				SetWindowLongPtr(m_hWindow, GWLP_USERDATA, reinterpret_cast<uintptr_t>(this));
 				ShowWindow(m_hWindow, SW_NORMAL);
 				return true;
 			}
@@ -93,46 +93,67 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	LRESULT CWindowsWindow::HandleMessage(uint32 message, WPARAM wParam, LPARAM lParam)
+	LRESULT CWindowsWindow::MessageProc(HWND hWnd, uint32 message, WPARAM wParam, LPARAM lParam)
+	{
+		//Retrive userdata to get the pointer to the windows
+		CWindowsWindow* pWindowsWindow = reinterpret_cast<CWindowsWindow*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+		if (pWindowsWindow)
+			return pWindowsWindow->OnMessage(message, wParam, lParam);
+
+		return DefWindowProc(hWnd, message, wParam, lParam);
+	}
+
+	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
+	LRESULT CWindowsWindow::OnMessage(uint32 message, WPARAM wParam, LPARAM lParam)
 	{
         switch (message)
         {
-        case WM_CREATE:
-        {
-            CConsole::PrintLine("Window Created");
-            break;
+			case WM_CREATE:
+			{
+				CConsole::PrintLine("Window Created");
+				return 0;
+			}
+
+			case WM_DESTROY:
+			{
+				CConsole::PrintLine("Window Destroyed");
+				m_pApplication->OnWindowClose(this);
+				return 0;
+			}
+
+			case WM_SIZE:
+			{
+				//Set members
+				if (wParam == SIZE_MAXIMIZED)
+					m_bIsMiniaturized = false;
+				else if (wParam == SIZE_MINIMIZED)
+					m_bIsMiniaturized = true;
+
+				m_Width  = LOWORD(lParam);
+				m_Height = HIWORD(lParam);
+
+				break;
+			}
+
+			case WM_MOVE:
+			{
+				//Set members
+				m_Position.x = (int32)(int16)LOWORD(lParam);
+				m_Position.y = (int32)(int16)HIWORD(lParam);
+				break;
+			}
+
+			case WM_SETFOCUS:
+			case WM_KILLFOCUS:
+			{
+				//Set members
+				m_bHasFocus = (message == WM_SETFOCUS);
+				break;
+			}
         }
 
-        case WM_DESTROY:
-        {
-            CConsole::PrintLine("Window Destroyed");
-            break;
-        }
-
-        case WM_SIZE:
-        {
-            //Set members
-            m_Width = LOWORD(lParam);
-            m_Height = HIWORD(lParam);
-            return 0;
-        }
-
-        case WM_MOVE:
-        {
-            //Set members
-            m_Position.x = (int32)(int16)LOWORD(lParam);
-            m_Position.y = (int32)(int16)HIWORD(lParam);
-            return 0;
-        }
-
-        case WM_SETFOCUS:
-        case WM_KILLFOCUS:
-        {
-            //Set members
-            m_bHasFocus = (message == WM_SETFOCUS);
-            return 0;
-        }
-        }
+		//Send message to application
+		return m_pApplication->OnMessage(m_hWindow, message, wParam, lParam);
 	}
 }
 #endif
