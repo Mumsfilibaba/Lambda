@@ -43,7 +43,6 @@ namespace Lambda
 	private:
 		CWindowsApplication();
 		~CWindowsApplication();
-
 	private:
 		CWindowsWindow* m_pWindow;
 		CSystemEventDispatcher m_EventDispatcher;

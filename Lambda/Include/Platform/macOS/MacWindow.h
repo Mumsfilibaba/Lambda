@@ -23,11 +23,11 @@ namespace Lambda
         ~CMacWindow();
         
         /*IWindow Interface*/
-        virtual bool HasFocus() const override final { return m_bHasFocus; }
-        virtual bool IsMiniaturized() const override final { return m_bIsMiniaturized; }
-        virtual bool IsFullscreen() const override final { return m_bIsFullscreen; };
-        
         virtual void SetFullscreen(bool bFullscreen);
+        
+        virtual bool HasFocus() const override final { return m_bHasFocus; }
+        virtual bool IsFullscreen() const override final { return m_bIsFullscreen; };
+        virtual bool IsMiniaturized() const override final { return m_bIsMiniaturized; }
         
         virtual uint32 GetWidth() const override final { return m_nWidth; }
         virtual uint32 GetHeight() const override final { return m_nHeight; }

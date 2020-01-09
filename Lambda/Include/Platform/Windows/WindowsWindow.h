@@ -19,11 +19,11 @@ namespace Lambda
 		~CWindowsWindow();
 
 		/*IWindow Interface*/
+		virtual void SetFullscreen(bool bFullscreen) override final;
+		
 		virtual bool HasFocus() const override final { return m_bHasFocus; }
 		virtual bool IsFullscreen() const override final { return m_bIsFullscreen; }
 		virtual bool IsMiniaturized() const override final { return m_bIsMiniaturized; };
-
-		virtual void SetFullscreen(bool bFullscreen) override final;
 
 		virtual uint32 GetWidth()  const override final { return m_Width; }
 		virtual uint32 GetHeight() const override final { return m_Height; }
