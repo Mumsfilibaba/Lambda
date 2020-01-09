@@ -10,10 +10,10 @@
     //CMacAppDelegate
     //---------------
 
-    @implementation CMacAppDelegate
+    @implementation MacAppDelegate
 
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    - (id)initWithSystem:(Lambda::CMacSystem*) pSystem
+    - (id)initWithSystem:(Lambda::MacSystem*) pSystem
     {
         LAMBDA_ASSERT_PRINT(pSystem != nullptr, "pSystem cannot be nullptr");
         
@@ -28,7 +28,7 @@
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
     - (void)applicationDidFinishLaunching:(NSNotification*)notification
     {
-        Lambda::CConsole::PrintLine("Did finish launching");
+        Lambda::Console::PrintLine("Did finish launching");
         
         m_pSystem->SetHasFinishedLaunching(true);
         [NSApp stop:nil];

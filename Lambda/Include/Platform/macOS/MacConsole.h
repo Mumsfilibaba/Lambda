@@ -3,6 +3,22 @@
 
 #if defined(LAMBDA_PLAT_MACOS)
 
+#if defined(__OBJC__)
+    #include <Cocoa/Cocoa.h>
+
+    //------------------
+    //CocoaConsoleWindow
+    //------------------
+    @interface CocoaConsoleWindow : NSWindow<NSWindowDelegate>
+    {
+    }
+    @end
+#else
+    class NSTextView;
+    class NSDictionary;
+    class CocoaConsoleWindow;
+#endif
+
 namespace Lambda
 {
     //----------
@@ -13,7 +29,7 @@ namespace Lambda
     {
     public:
         MacConsole();
-        ~MacConsole() = default;
+        ~MacConsole();
 
         virtual void SetTitle(const char* pTitle) override final;
 		virtual void SetTextColor(EConsoleColor color) override final;
@@ -26,6 +42,10 @@ namespace Lambda
 
 		virtual void Reset() override final;
 		virtual void Clear() override final;
+    private:
+        NSTextView* m_pTextView;
+        NSDictionary* m_pTextViewTextColor;
+        CocoaConsoleWindow* m_pConsoleWindow;
     };
 }
 #endif

@@ -5,57 +5,44 @@
     #include "Core/Engine/Engine.h"
     
     #include "Platform/macOS/MacSystem.h"
+    #include "Platform/macOS/MacKeyboard.h"
     #include "Platform/macOS/MacPlatform.h"
 
 namespace Lambda
 {
-    //----------
-    //CMacSystem
-    //----------
+    //---------
+    //MacSystem
+    //---------
     
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    CMacSystem::CMacSystem(IEngine* pEngine)
-        : ISystem(),
-        m_pEngine(pEngine)
+    ISystem* MacSystem::Create()
+    {
+        ISystem* pSystem = DBG_NEW MacSystem();
+        return pSystem;
+    }
+
+    /*////////////////////////////////////////////////////////////////////////////////////////////////*/
+    MacSystem::MacSystem()
+        : ISystem()
     {
         //Initialize pointers to nullptr
         m_pAppDelegate = nullptr;
-        m_pWindow = nullptr;
-        m_pEventDispatcher = nullptr;
         
         //Init rest of the members
         m_bHasFinishedLaunching = false;
         m_bShouldExit = false;
-    }
-    
-    /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    CMacSystem::~CMacSystem()
-    {
-        [m_pAppDelegate dealloc];
-        SafeDelete(m_pWindow);
-    }
-
-    /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    void CMacSystem::Release()
-    {
-        delete this;
-    }
-    
-    /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    bool CMacSystem::Initialize()
-    {
+        
         //Init platform
-        MacPlatform::CreateKeyLookupTable();
+        MacKeyboard::Initialize();
         
         //Create static application instance
         [NSApplication sharedApplication];
         
         //Create application delegate
-        CMacAppDelegate* pAppDelegate = [[CMacAppDelegate alloc] initWithSystem:this];
+        MacAppDelegate* pAppDelegate = [[MacAppDelegate alloc] initWithSystem:this];
         if (pAppDelegate == nil)
         {
-            CConsole::PrintLine("Failed to create AppDelegate");
-            return false;
+            Console::PrintLine("Failed to create AppDelegate");
         }
         else
         {
@@ -69,32 +56,32 @@ namespace Lambda
             //Run the application, the application will be stopped when it has finished launching
             [NSApp run];
             
-            CConsole::PrintLine("Created AppDelegate");
+            Console::PrintLine("Created AppDelegate");
         }
-        
-        //Create eventdispatcher
-        CSystemEventDispatcher* pDispatcher = DBG_NEW CSystemEventDispatcher();
-        m_pEventDispatcher = pDispatcher;
-        return true;
     }
     
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    bool CMacSystem::CreateWindow(const char* pTitle, uint32 nWidth, uint32 nHeight)
+    MacSystem::~MacSystem()
+    {
+        [m_pAppDelegate release];
+    }
+    
+    /*////////////////////////////////////////////////////////////////////////////////////////////////*/
+    IWindow* MacSystem::CreateWindow(const char* pTitle, uint32 nWidth, uint32 nHeight)
     {
         //Check if the applicatio has finished launching and then create window
         if (HasFinishedLaunching())
         {
-            CMacWindow* pWindow = DBG_NEW CMacWindow(this, pTitle, nWidth, nHeight);
-            m_pWindow = pWindow;
-            return true;
+            MacWindow* pWindow = DBG_NEW MacWindow(this, pTitle, nWidth, nHeight);
+            return pWindow;
         }
         
         //TODO: Print error
-        return false;
+        return nullptr;
     }
 
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    void CMacSystem::ProcessSystemEvents()
+    void MacSystem::ProcessEvents()
     {
         LAMBDA_ASSERT_PRINT(HasFinishedLaunching(), "Application did not finish launching before proccessing events");
         
@@ -112,39 +99,19 @@ namespace Lambda
         
         if (ShouldExit())
         {
-            m_pEngine->Exit(0);
-        }
-    }
-    
-    /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    void CMacSystem::AddEventListener(ISystemEventListener* pListener)
-    {
-        m_pEventDispatcher->AddEventListener(pListener);
-    }
-    
-    /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    void CMacSystem::RemoveEventListener(ISystemEventListener* pListener)
-    {
-        m_pEventDispatcher->RemoveEventListener(pListener);
-    }
-
-    /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    void CMacSystem::OnSystemEvent(const SSystemEvent& event)
-    {
-        m_pEventDispatcher->DispatchEvent(event);
-    }
-
-    /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    void CMacSystem::OnWindowClose(CMacWindow* pWindow)
-    {
-        if (m_pWindow == pWindow)
-        {
-            m_bShouldExit = true;
+            Engine& engine = Engine::Get();
+            engine.Exit(0);
         }
     }
 
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    void CMacSystem::CreateMenuBar()
+    void MacSystem::OnWindowClose(MacWindow*)
+    {
+        m_bShouldExit = true;
+    }
+
+    /*////////////////////////////////////////////////////////////////////////////////////////////////*/
+    void MacSystem::CreateMenuBar()
     {
         size_t i;
         NSString* appName = nil;

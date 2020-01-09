@@ -2,6 +2,7 @@
 
 #if defined(LAMBDA_PLAT_MACOS)
     #include "Platform/macOS/MacWindow.h"
+    #include "Platform/macOS/MacKeyboard.h"
     #include "Platform/macOS/MacPlatform.h"
     #include "Platform/macOS/CocoaWindow.h"
 
@@ -9,10 +10,10 @@
 //CCocoaView
 //----------
 
-@implementation CCocoaView
+@implementation CocoaView
 
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    - (id) initWithWindow:(Lambda::CMacWindow*) pWindow
+    - (id) initWithWindow:(Lambda::MacWindow*) pWindow
     {
         LAMBDA_ASSERT_PRINT(pWindow != nullptr, "pWindow cannot be nullptr");
         
@@ -54,8 +55,8 @@
     {
         uint32 keycode   = [event keyCode];
         uint32 flags     = [event modifierFlags];
-        uint32 modifiers = Lambda::MacPlatform::ConvertModifierKeyFlags(flags);
-        m_pWindow->OnKeydown(Lambda::MacPlatform::ConvertFromVirtualKey(keycode), modifiers);
+        uint32 modifiers = Lambda::MacKeyboard::GetModifierKeys(flags);
+        m_pWindow->OnKeydown(Lambda::MacKeyboard::ConvertVirtualKey(keycode), modifiers);
         
         [self interpretKeyEvents:@[event]];
     }
@@ -65,15 +66,15 @@
    {
        uint32 keycode   = [event keyCode];
        uint32 flags     = [event modifierFlags];
-       uint32 modifiers = Lambda::MacPlatform::ConvertModifierKeyFlags(flags);
-       m_pWindow->OnKeyup(Lambda::MacPlatform::ConvertFromVirtualKey(keycode), modifiers);
+       uint32 modifiers = Lambda::MacKeyboard::GetModifierKeys(flags);
+       m_pWindow->OnKeyup(Lambda::MacKeyboard::ConvertVirtualKey(keycode), modifiers);
    }
 
    /*////////////////////////////////////////////////////////////////////////////////////////////////*/
    - (void)mouseDown:(NSEvent*) event
    {
        uint32 flags     = [event modifierFlags];
-       uint32 modifiers = Lambda::MacPlatform::ConvertModifierKeyFlags(flags);
+       uint32 modifiers = Lambda::MacKeyboard::GetModifierKeys(flags);
        m_pWindow->OnMouseButtonDown(Lambda::EMouseButton::MOUSEBUTTON_LEFT, modifiers);
    }
 
@@ -87,15 +88,15 @@
    - (void)mouseUp:(NSEvent*) event
    {
        uint32 flags     = [event modifierFlags];
-       uint32 modifiers = Lambda::MacPlatform::ConvertModifierKeyFlags(flags);
+       uint32 modifiers = Lambda::MacKeyboard::GetModifierKeys(flags);
        m_pWindow->OnMouseButtonUp(Lambda::EMouseButton::MOUSEBUTTON_LEFT, modifiers);
    }
 
    /*////////////////////////////////////////////////////////////////////////////////////////////////*/
    - (void)mouseMoved:(NSEvent*) event
    {
-       const NSPoint position   = [event locationInWindow];
-       const NSRect contentRect = [self frame];
+       const NSPoint position    = [event locationInWindow];
+       const NSRect  contentRect = [self frame];
        m_pWindow->OnMouseMove(position.x, contentRect.size.height - position.y);
    }
 
@@ -103,7 +104,7 @@
    - (void)rightMouseDown:(NSEvent*) event
    {
        uint32 flags     = [event modifierFlags];
-       uint32 modifiers = Lambda::MacPlatform::ConvertModifierKeyFlags(flags);
+       uint32 modifiers = Lambda::MacKeyboard::GetModifierKeys(flags);
        m_pWindow->OnMouseButtonDown(Lambda::EMouseButton::MOUSEBUTTON_RIGHT, modifiers);
    }
 
@@ -117,7 +118,7 @@
    - (void)rightMouseUp:(NSEvent*) event
    {
        uint32 flags     = [event modifierFlags];
-       uint32 modifiers = Lambda::MacPlatform::ConvertModifierKeyFlags(flags);
+       uint32 modifiers = Lambda::MacKeyboard::GetModifierKeys(flags);
        m_pWindow->OnMouseButtonUp(Lambda::EMouseButton::MOUSEBUTTON_RIGHT, modifiers);
    }
 
@@ -128,7 +129,7 @@
        if (eButton != Lambda::EMouseButton::MOUSEBUTTON_UNKNOWN)
        {
            uint32 flags     = [event modifierFlags];
-           uint32 modifiers = Lambda::MacPlatform::ConvertModifierKeyFlags(flags);
+           uint32 modifiers = Lambda::MacKeyboard::GetModifierKeys(flags);
            m_pWindow->OnMouseButtonDown(eButton, modifiers);
        }
    }
@@ -146,7 +147,7 @@
        if (eButton != Lambda::EMouseButton::MOUSEBUTTON_UNKNOWN)
        {
            uint32 flags     = [event modifierFlags];
-           uint32 modifiers = Lambda::MacPlatform::ConvertModifierKeyFlags(flags);
+           uint32 modifiers = Lambda::MacKeyboard::GetModifierKeys(flags);
            m_pWindow->OnMouseButtonDown(eButton, modifiers);
        }
    }
@@ -200,10 +201,10 @@
 //CCocoaWindow
 //------------
 
-@implementation CCocoaWindow
+@implementation CocoaWindow
 
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    - (id) initWithContentRect:(Lambda::CMacWindow*) pWindow :(NSRect) contentRect styleMask:(NSWindowStyleMask) style backing:(NSBackingStoreType) backingStoreType defer:(BOOL) flag
+    - (id) initWithContentRect:(Lambda::MacWindow*) pWindow :(NSRect) contentRect styleMask:(NSWindowStyleMask) style backing:(NSBackingStoreType) backingStoreType defer:(BOOL) flag
     {
         LAMBDA_ASSERT_PRINT(pWindow != nullptr, "pWindow cannot be nullptr");
         

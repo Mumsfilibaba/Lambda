@@ -24,7 +24,7 @@ namespace Lambda
 #if defined(LAMBDA_PLAT_WINDOWS)
 		s_pInstance = WindowsSystem::Create();
 #elif defined(LAMBDA_PLAT_MACOS)
-		s_pInstance = DBG_NEW MacSystem(pEngine);
+		s_pInstance = MacSystem::Create();
 #else
 	#error No platform defined
 #endif

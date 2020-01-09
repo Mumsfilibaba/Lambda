@@ -28,7 +28,7 @@ namespace Lambda
 #if defined(LAMBDA_PLAT_WINDOWS)
                 WindowsPlatform::Misc::MessageBox(pCaption, pText, type);
 #elif defined(LAMBDA_PLAT_MACOS)
-                MacPlatform::MessageBox(pCaption, pText, type);
+                MacPlatform::Misc::MessageBox(pCaption, pText, type);
 #endif
             }
         }
@@ -45,7 +45,7 @@ namespace Lambda
 #if defined(LAMBDA_PLAT_WINDOWS)
                 return WindowsPlatform::Time::QueryPerformanceFrequency();
 #elif defined(LAMBDA_PLAT_MACOS)
-                return MacPlatform::QueryPerformanceFrequency();
+                return MacPlatform::Time::QueryPerformanceFrequency();
 #endif
             }
     
@@ -55,7 +55,7 @@ namespace Lambda
 #if defined(LAMBDA_PLAT_WINDOWS)
                 return WindowsPlatform::Time::QueryPerformanceCounter();
 #elif defined(LAMBDA_PLAT_MACOS)
-                return MacPlatform::QueryPerformanceCounter();
+                return MacPlatform::Time::QueryPerformanceCounter();
 #endif
             }
         }

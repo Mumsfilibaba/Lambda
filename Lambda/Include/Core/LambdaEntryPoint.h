@@ -4,15 +4,17 @@
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include "Platform/Windows/WindowsEntrypoint.inl"
 #else
+    extern Lambda::Layer* (*_CreateGameLayer)();
+
 	int main(int, const char*[])
 	{
         using namespace Lambda;
         
 		_CreateGameLayer = CreateGameLayer;
 
-		SEngineParams params = {};
-		params.ppCmdLineArgs 	 = nullptr;
-		params.nCmdLineArgsCount = 0;
+		EngineParams params = {};
+		params.ppCmdLineArgs 	= nullptr;
+		params.CmdLineArgsCount = 0;
 		LambdaMain(params);
 		return 0;
 	}

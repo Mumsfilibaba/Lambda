@@ -1,4 +1,4 @@
-#import "LambdaPch.h"
+#include "LambdaPch.h"
 
 #if defined(LAMBDA_PLAT_MACOS)
     #include "Core/Engine/Console.h"
@@ -10,12 +10,12 @@
 
 namespace Lambda
 {
-    //----------
-    //CMacWindow
-    //----------
+    //---------
+    //MacWindow
+    //---------
     
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    CMacWindow::CMacWindow(CMacSystem* pSystem, const char* pTitle, uint32 nWidth, uint32 nHeight)
+    MacWindow::MacWindow(MacSystem* pSystem, const char* pTitle, uint32 nWidth, uint32 nHeight)
         : IWindow(),
         m_pSystem(pSystem),
         m_pView(nullptr),
@@ -25,12 +25,12 @@ namespace Lambda
         m_bHasFocus(false),
         m_bIsMiniaturized(false)
     {
-        CConsole::PrintLine("Created window");
+        Console::PrintLine("Created window");
         
         //Create a native cocoa window
         NSRect contentRect = NSMakeRect(0, 0, nWidth, nHeight);
         NSUInteger styleMask = NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskResizable;
-        CCocoaWindow* pCocoaWindow = [[CCocoaWindow alloc] initWithContentRect:this :contentRect styleMask:styleMask backing:NSBackingStoreBuffered defer:NO];
+        CocoaWindow* pCocoaWindow = [[CocoaWindow alloc] initWithContentRect:this :contentRect styleMask:styleMask backing:NSBackingStoreBuffered defer:NO];
         m_pCocoaWindow = pCocoaWindow;
         
         //Finish window
@@ -44,7 +44,7 @@ namespace Lambda
         [m_pCocoaWindow setRestorable:NO];
 
         //Create view
-        CCocoaView* pView = [[CCocoaView alloc] initWithWindow:this];
+        CocoaView* pView = [[CocoaView alloc] initWithWindow:this];
         m_pView = pView;
         
         [m_pCocoaWindow setContentView:m_pView];
@@ -56,7 +56,7 @@ namespace Lambda
     }
     
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    CMacWindow::~CMacWindow()
+    MacWindow::~MacWindow()
     {
         if (m_pCocoaWindow)
         {
@@ -72,22 +72,22 @@ namespace Lambda
     }
     
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    void CMacWindow::SetFullscreen(bool bIsFullscreen)
+    void MacWindow::SetFullscreen(bool bIsFullscreen)
     {
-        if (CMacWindow::IsFullscreen() != bIsFullscreen)
+        if (MacWindow::IsFullscreen() != bIsFullscreen)
         {
             [m_pCocoaWindow toggleFullScreen:nil];
         }
     }
     
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    void CMacWindow::OnClose()
+    void MacWindow::OnClose()
     {
         m_pSystem->OnWindowClose(this);
     }
     
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    void CMacWindow::OnResize(uint32 nWidth, uint32 nHeight)
+    void MacWindow::OnResize(uint32 nWidth, uint32 nHeight)
     {
         if (nWidth != m_nWidth && nHeight != m_nHeight)
         {
@@ -96,19 +96,19 @@ namespace Lambda
             m_nWidth  = nWidth;
             
             //Send event
-            SSystemEvent event = {};
+            SystemEvent event = {};
             event.EventType = ESystemEvent::SYSTEM_EVENT_WINDOW_RESIZED;
             event.WindowResizedEvent.ResizeType = EResizeType::RESIZE_TYPE_STANDARD;
             event.WindowResizedEvent.Width      = nWidth;
             event.WindowResizedEvent.Height     = nHeight;
             m_pSystem->OnSystemEvent(event);
             
-            CConsole::PrintLine("width=%d, height=%d", nWidth, nHeight);
+            Console::PrintLine("width=%d, height=%d", nWidth, nHeight);
         }
     }
     
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    void CMacWindow::OnMiniaturized(uint32 nWidth, uint32 nHeight, bool bMiniturized)
+    void MacWindow::OnMiniaturized(uint32 nWidth, uint32 nHeight, bool bMiniturized)
     {
         if (m_bIsMiniaturized != bMiniturized)
         {
@@ -118,29 +118,29 @@ namespace Lambda
             m_nHeight = nHeight;
             
             //Send event
-            SSystemEvent event = {};
+            SystemEvent event = {};
             event.EventType = ESystemEvent::SYSTEM_EVENT_WINDOW_RESIZED;
             event.WindowResizedEvent.ResizeType = bMiniturized ? EResizeType::RESIZE_TYPE_MINIMIZED : EResizeType::RESIZE_TYPE_MAXIMIZED;
             event.WindowResizedEvent.Width      = m_nWidth;
             event.WindowResizedEvent.Height     = m_nHeight;
             m_pSystem->OnSystemEvent(event);
             
-            CConsole::PrintLine("bMiniturized=%s width=%d height=%d", bMiniturized ? "true" : "false", nWidth, nHeight);
+            Console::PrintLine("bMiniturized=%s width=%d height=%d", bMiniturized ? "true" : "false", nWidth, nHeight);
         }
     }
     
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    void CMacWindow::OnToggleFullscreen(bool bFullscreen)
+    void MacWindow::OnToggleFullscreen(bool bFullscreen)
     {
         if (m_bIsFullscreen != bFullscreen)
         {
             m_bIsFullscreen = bFullscreen;
-            CConsole::PrintLine("fullscreen=%s", bFullscreen ? "true" : "false");
+            Console::PrintLine("fullscreen=%s", bFullscreen ? "true" : "false");
         }
     }
 
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    void CMacWindow::OnMove(uint32 x, uint32 y)
+    void MacWindow::OnMove(uint32 x, uint32 y)
     {
         if (m_Position.x != x && m_Position.y != y)
         {
@@ -149,7 +149,7 @@ namespace Lambda
             m_Position.y = y;
             
             //Send event
-            SSystemEvent event = {};
+            SystemEvent event = {};
             event.EventType = ESystemEvent::SYSTEM_EVENT_WINDOW_MOVED;
             event.WindowMovedEvent.x = x;
             event.WindowMovedEvent.y = y;
@@ -158,7 +158,7 @@ namespace Lambda
     }
     
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    void CMacWindow::OnFocusChanged(bool bHasFocus)
+    void MacWindow::OnFocusChanged(bool bHasFocus)
     {
         if (m_bHasFocus != bHasFocus)
         {
@@ -166,7 +166,7 @@ namespace Lambda
             m_bHasFocus = bHasFocus;
             
             //Send event
-            SSystemEvent event = {};
+            SystemEvent event = {};
             event.EventType = ESystemEvent::SYSTEM_EVENT_WINDOW_FOCUS_CHANGED;
             event.WindowFocusChangedEvent.bHasFocus = bHasFocus;
             m_pSystem->OnSystemEvent(event);
@@ -174,10 +174,10 @@ namespace Lambda
     }
     
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    void CMacWindow::OnKeydown(EKey keycode, uint32 modifiers)
+    void MacWindow::OnKeydown(EKey keycode, uint32 modifiers)
     {
         //Send event
-        SSystemEvent event = {};
+        SystemEvent event = {};
         event.EventType = ESystemEvent::SYSTEM_EVENT_KEY_PRESSED;
         event.KeyEvent.Key         = keycode;
         event.KeyEvent.Modifiers   = modifiers;
@@ -186,10 +186,10 @@ namespace Lambda
     }
     
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    void CMacWindow::OnKeyup(EKey keycode, uint32 modifiers)
+    void MacWindow::OnKeyup(EKey keycode, uint32 modifiers)
     {
         //Send event
-        SSystemEvent event = {};
+        SystemEvent event = {};
         event.EventType = ESystemEvent::SYSTEM_EVENT_KEY_RELEASED;
         event.KeyEvent.Key         = keycode;
         event.KeyEvent.Modifiers   = modifiers;
@@ -198,22 +198,22 @@ namespace Lambda
     }
     
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    void CMacWindow::OnKeyTyped(uint32 character)
+    void MacWindow::OnKeyTyped(uint32 character)
     {
         //Send event
-        SSystemEvent event = {};
+        SystemEvent event = {};
         event.EventType = ESystemEvent::SYSTEM_EVENT_KEY_TEXT;
         event.KeyTextEvent.Character = character;
         m_pSystem->OnSystemEvent(event);
         
-        CConsole::PrintLine("Key typed %c", char(character));
+        Console::PrintLine("Key typed %c", char(character));
     }
     
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    void CMacWindow::OnMouseButtonDown(EMouseButton button, uint32 modifiers)
+    void MacWindow::OnMouseButtonDown(EMouseButton button, uint32 modifiers)
     {
         //Send event
-        SSystemEvent event = {};
+        SystemEvent event = {};
         event.EventType = ESystemEvent::SYSTEM_EVENT_MOUSE_BUTTON_PRESSED;
         event.MouseButtonEvent.Button    = button;
         event.MouseButtonEvent.Modifiers = modifiers;
@@ -221,10 +221,10 @@ namespace Lambda
     }
 
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    void CMacWindow::OnMouseButtonUp(EMouseButton button, uint32 modifiers)
+    void MacWindow::OnMouseButtonUp(EMouseButton button, uint32 modifiers)
     {
         //Send event
-        SSystemEvent event = {};
+        SystemEvent event = {};
         event.EventType = ESystemEvent::SYSTEM_EVENT_MOUSE_BUTTON_RELEASED;
         event.MouseButtonEvent.Button    = button;
         event.MouseButtonEvent.Modifiers = modifiers;
@@ -232,10 +232,10 @@ namespace Lambda
     }
 
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    void CMacWindow::OnMouseMove(uint32 x, uint32 y)
+    void MacWindow::OnMouseMove(uint32 x, uint32 y)
     {
         //Send event
-        SSystemEvent event = {};
+        SystemEvent event = {};
         event.EventType = ESystemEvent::SYSTEM_EVENT_MOUSE_MOVED;
         event.MouseMovedEvent.x = x;
         event.MouseMovedEvent.y = y;
@@ -243,10 +243,10 @@ namespace Lambda
     }
 
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    void CMacWindow::OnMouseScroll(float horizontalValue, float verticalValue)
+    void MacWindow::OnMouseScroll(float horizontalValue, float verticalValue)
     {
         //Send event
-        SSystemEvent event = {};
+        SystemEvent event = {};
         event.EventType = ESystemEvent::SYSTEM_EVENT_MOUSE_SCROLLED;
         event.MouseScrolledEvent.Horizontal = horizontalValue;
         event.MouseScrolledEvent.Vertical   = verticalValue;

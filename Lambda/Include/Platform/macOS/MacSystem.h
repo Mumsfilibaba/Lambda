@@ -18,8 +18,8 @@ namespace Lambda
     {
     public:       
         /*ISystem Interface*/
-        virtual IWindow CreateWindow(const char* pTitle, uint32 nWidth, uint32 nHeight) override final;
-        virtual void ProcessSystemEvents() override final;
+        virtual IWindow* CreateWindow(const char* pTitle, uint32 nWidth, uint32 nHeight) override final;
+        virtual void ProcessEvents() override final;
 
         virtual void AddListener(ISystemEventListener* pListener) override final
         {
@@ -32,7 +32,8 @@ namespace Lambda
         }
         
         /*MacSystem Interface*/
-        void OnSystemEvent(const SystemEvent& event);
+        void OnWindowClose(MacWindow* pWindow);
+        void OnSystemEvent(const SystemEvent& event) { m_EventDispatcher.DispatchEvent(event); }
 
         void SetHasFinishedLaunching(bool bHasFinishedLaunching) { m_bHasFinishedLaunching = bHasFinishedLaunching; }
         
@@ -44,11 +45,13 @@ namespace Lambda
 
         void CreateMenuBar();
     private:
-        CMacAppDelegate* m_pAppDelegate;
+        MacAppDelegate* m_pAppDelegate;
         
         SystemEventDispatcher m_EventDispatcher;
         bool m_bHasFinishedLaunching;
         bool m_bShouldExit;
+    public:
+        static ISystem* Create();
     };
 }
 #endif
