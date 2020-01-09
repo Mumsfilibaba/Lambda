@@ -5,23 +5,25 @@
 
 namespace Lambda
 {
-    class CMacSystem;
+    class MacSystem;
 }
 
     #if defined(__OBJC__)
         #include <Cocoa/Cocoa.h>
 
-        //---------------
-        //CMacAppDelegate
-        //---------------
-        @interface CMacAppDelegate : NSObject<NSApplicationDelegate>
+        //--------------
+        //MacAppDelegate
+        //--------------
+
+        @interface MacAppDelegate : NSObject<NSApplicationDelegate>
         {
-            Lambda::CMacSystem* m_pSystem;
+            Lambda::MacSystem* m_pSystem;
         }
 
-        - (id) initWithSystem:(Lambda::CMacSystem* ) pSystem;
+        - (id) initWithSystem:(Lambda::MacSystem* ) pSystem;
         @end
+
     #else
-        class CMacAppDelegate;
+        class MacAppDelegate;
     #endif
 #endif

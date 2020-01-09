@@ -3,26 +3,27 @@
 
 namespace Lambda
 {
-    //-----
-    //CTime
-    //-----
-	class CTime
+    //----
+    //Time
+    //----
+
+	class Time
 	{
 	public:
 		/////////////////////////////////
-		_forceinline CTime(uint64 ns = 0)
+		_forceinline Time(uint64 ns = 0)
 			: m_Ns(ns)
 		{
 		}
 
 		/////////////////////////////////
-		_forceinline CTime(CTime&& other)
+		_forceinline Time(Time&& other)
 			: m_Ns(other.m_Ns)
 		{
 		}
 
 		//////////////////////////////////////
-		_forceinline CTime(const CTime& other)
+		_forceinline Time(const Time& other)
 			: m_Ns(other.m_Ns)
 		{
 		}
@@ -55,135 +56,135 @@ namespace Lambda
 		}
 
 		/////////////////////////////////////////////////
-		_forceinline CTime& operator=(const CTime& other)
+		_forceinline Time& operator=(const Time& other)
 		{
 			m_Ns = other.m_Ns;
 			return *this;
 		}
 
 		//////////////////////////////////////////////////////
-		_forceinline bool operator==(const CTime& other) const
+		_forceinline bool operator==(const Time& other) const
 		{
 			return m_Ns == other.m_Ns;
 		}
 
 		//////////////////////////////////////////////////////
-		_forceinline bool operator!=(const CTime& other) const
+		_forceinline bool operator!=(const Time& other) const
 		{
 			return m_Ns != other.m_Ns;
 		}
 
 		//////////////////////////////////////////////////
-		_forceinline CTime& operator+=(const CTime& right)
+		_forceinline Time& operator+=(const Time& right)
 		{
 			m_Ns += right.m_Ns;
 			return *this;
 		}
 
 		//////////////////////////////////////////////////
-		_forceinline CTime& operator-=(const CTime& right)
+		_forceinline Time& operator-=(const Time& right)
 		{
 			m_Ns -= right.m_Ns;
 			return *this;
 		}
 
 		//////////////////////////////////////////////////
-		_forceinline CTime& operator*=(const CTime& right)
+		_forceinline Time& operator*=(const Time& right)
 		{
 			m_Ns *= right.m_Ns;
 			return *this;
 		}
 
 		//////////////////////////////////////////////////
-		_forceinline CTime& operator/=(const CTime& right)
+		_forceinline Time& operator/=(const Time& right)
 		{
 			m_Ns /= right.m_Ns;
 			return *this;
 		}
 
-		friend CTime operator+(const CTime& left, const CTime& right);
-		friend CTime operator-(const CTime& left, const CTime& right);
-		friend CTime operator*(const CTime& left, const CTime& right);
-		friend CTime operator/(const CTime& left, const CTime& right);
-		friend bool operator>(const CTime& left, const CTime& right);
-		friend bool operator<(const CTime& left, const CTime& right);
-		friend bool operator>=(const CTime& left, const CTime& right);
-		friend bool operator<=(const CTime& left, const CTime& right);
+		friend Time operator+(const Time& left, const Time& right);
+		friend Time operator-(const Time& left, const Time& right);
+		friend Time operator*(const Time& left, const Time& right);
+		friend Time operator/(const Time& left, const Time& right);
+		friend bool operator>(const Time& left, const Time& right);
+		friend bool operator<(const Time& left, const Time& right);
+		friend bool operator>=(const Time& left, const Time& right);
+		friend bool operator<=(const Time& left, const Time& right);
 	private:
 		uint64 m_Ns;
 	public:
 		//////////////////////////////////////////
-		_forceinline static CTime Seconds(float s)
+		_forceinline static Time Seconds(float s)
 		{
 			constexpr float second = 1000.0f * 1000.0f * 1000.0f;
-			return CTime(uint64(s * second));
+			return Time(uint64(s * second));
 		}
 
 		////////////////////////////////////////////////
-		_forceinline static CTime MilliSeconds(float ms)
+		_forceinline static Time MilliSeconds(float ms)
 		{
 			constexpr float millisecond = 1000.0f * 1000.0f;
-			return CTime(uint64(ms * millisecond));
+			return Time(uint64(ms * millisecond));
 		}
 
 		////////////////////////////////////////////////
-		_forceinline static CTime MicroSeconds(float us)
+		_forceinline static Time MicroSeconds(float us)
 		{
 			constexpr float microsecond = 1000.0f;
-			return CTime(uint64(us * microsecond));
+			return Time(uint64(us * microsecond));
 		}
 
 		////////////////////////////////////////////////
-		_forceinline static CTime NanoSeconds(uint64 ns)
+		_forceinline static Time NanoSeconds(uint64 ns)
 		{
-			return CTime(ns);
+			return Time(ns);
 		}
 	};
 
 	///////////////////////////////////////////////////////////////////
-	_forceinline CTime operator+(const CTime& left, const CTime& right)
+	_forceinline Time operator+(const Time& left, const Time& right)
 	{
-		return CTime(left.m_Ns + right.m_Ns);
+		return Time(left.m_Ns + right.m_Ns);
 	}
 
 	///////////////////////////////////////////////////////////////////
-	_forceinline CTime operator-(const CTime& left, const CTime& right)
+	_forceinline Time operator-(const Time& left, const Time& right)
 	{
-		return CTime(left.m_Ns - right.m_Ns);
+		return Time(left.m_Ns - right.m_Ns);
 	}
 
 	///////////////////////////////////////////////////////////////////
-	_forceinline CTime operator*(const CTime& left, const CTime& right)
+	_forceinline Time operator*(const Time& left, const Time& right)
 	{
-		return CTime(left.m_Ns * right.m_Ns);
+		return Time(left.m_Ns * right.m_Ns);
 	}
 
 	///////////////////////////////////////////////////////////////////
-	_forceinline CTime operator/(const CTime& left, const CTime& right)
+	_forceinline Time operator/(const Time& left, const Time& right)
 	{
-		return CTime(left.m_Ns / right.m_Ns);
+		return Time(left.m_Ns / right.m_Ns);
 	}
 
 	///////////////////////////////////////////////////////////////////
-	_forceinline bool operator>(const CTime& left, const CTime& right)
+	_forceinline bool operator>(const Time& left, const Time& right)
 	{
 		return left.m_Ns > right.m_Ns;
 	}
 
 	///////////////////////////////////////////////////////////////////
-	_forceinline bool operator<(const CTime& left, const CTime& right)
+	_forceinline bool operator<(const Time& left, const Time& right)
 	{
 		return left.m_Ns < right.m_Ns;
 	}
 
 	///////////////////////////////////////////////////////////////////
-	_forceinline bool operator>=(const CTime& left, const CTime& right)
+	_forceinline bool operator>=(const Time& left, const Time& right)
 	{
 		return (left.m_Ns >= right.m_Ns);
 	}
 
 	///////////////////////////////////////////////////////////////////
-	_forceinline bool operator<=(const CTime& left, const CTime& right)
+	_forceinline bool operator<=(const Time& left, const Time& right)
 	{
 		return (left.m_Ns <= right.m_Ns);
 	}

@@ -9,6 +9,7 @@ namespace Lambda
 	//-------------
 	//ELogVerbosity
 	//-------------
+
 	enum class ELogVerbosity : uint32
 	{
 		LOG_VERBOSITY_MESSAGE	= 1,
@@ -20,6 +21,7 @@ namespace Lambda
 	//--------
 	//ELogMode
 	//--------
+	
 	enum class ELogMode
 	{
 		LOG_MODE_APPEND		= 1,
@@ -29,13 +31,14 @@ namespace Lambda
 	//----
 	//ILog
 	//----
+	
 	class LAMBDA_API ILog
 	{
 	public:
 		LAMBDA_INTERFACE(ILog);
 
-		virtual void Log(ELogVerbosity verbosity, const char* pFormat, ...) = 0;
-		virtual void LogV(ELogVerbosity verbosity, const char* pFormat, va_list args) = 0;
+		virtual void Write(ELogVerbosity verbosity, const char* pFormat, ...) = 0;
+		virtual void WriteV(ELogVerbosity verbosity, const char* pFormat, va_list args) = 0;
 		
 		virtual void SetVerbosityFilter(ELogVerbosity verbosity) = 0;
 		virtual void SetConsoleOutputEnabled(bool bConsoleOutput) = 0;
@@ -48,17 +51,18 @@ namespace Lambda
 	};
 
 	//----
-	//CLog
+	//Log
 	//----
-	class CLog : public ILog
+
+	class Log : public ILog
 	{
 	public:
-		CLog(const char* pName, ELogMode mode, ELogVerbosity filter);
-		~CLog();
+		Log(const char* pName, ELogMode mode, ELogVerbosity filter);
+		~Log();
 
 		/*ILog interface*/
-		virtual void Log(ELogVerbosity verbosity, const char* pFormat, ...) override;
-		virtual void LogV(ELogVerbosity verbosity, const char* pFormat, va_list args) override;
+		virtual void Write(ELogVerbosity verbosity, const char* pFormat, ...) override;
+		virtual void WriteV(ELogVerbosity verbosity, const char* pFormat, va_list args) override;
 
 		virtual void SetVerbosityFilter(ELogVerbosity filter) override;
 		virtual void SetConsoleOutputEnabled(bool bConsoleOutput) override;
@@ -66,19 +70,16 @@ namespace Lambda
 
 		virtual void Flush() override;
 		
-		/*////////////////////////////////////////*/
 		virtual const char* GetName() const override
 		{
 			return m_Name.c_str();
 		}
 
-		/*/////////////////////////////////////////////////////*/
 		virtual ELogVerbosity GetVerbosityFilter() const override
 		{
 			return m_Filter;
 		}
 	private:
-		/*CLog Interface*/
 		bool OpenFile();
 		bool CloseFile();
 	private:

@@ -1,23 +1,24 @@
 #pragma once
-#include "SSystemEvent.h"
+#include "SystemEvent.h"
 #include "ISystemEventListener.h"
 
 #include <vector>
 
 namespace Lambda
 {
-    //----------------------
-    //CSystemEventDispatcher
-    //----------------------
-    class LAMBDA_API CSystemEventDispatcher
+    //---------------------
+    //SystemEventDispatcher
+    //---------------------
+
+    class LAMBDA_API SystemEventDispatcher
     {
     public:
-        CSystemEventDispatcher();
-        ~CSystemEventDispatcher() = default;
+        SystemEventDispatcher();
+        ~SystemEventDispatcher() = default;
         
-        LAMBDA_NO_COPY(CSystemEventDispatcher);
+        LAMBDA_NO_COPY(SystemEventDispatcher);
         
-        bool DispatchEvent(const SSystemEvent& event);
+        bool DispatchEvent(const SystemEvent& event);
         
         void AddListener(ISystemEventListener* pListener);
         void RemoveListener(ISystemEventListener* pListener);

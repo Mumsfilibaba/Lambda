@@ -10,32 +10,31 @@
 
 namespace Lambda
 {
-	//--------
-	//CConsole
-	//--------
+	//-------
+	//Console
+	//-------
 
-	IConsole* CConsole::s_pConsole = nullptr;
+	IConsole* Console::s_pConsole = nullptr;
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void CConsole::Initialize()
+	void Console::Initialize()
 	{
-		LAMBDA_ASSERT_PRINT(s_pConsole == nullptr, "CConsole::Initialize should only be called once");
+		LAMBDA_ASSERT_PRINT(s_pConsole == nullptr, "Console::Initialize should only be called once");
 
 		//Create console interface
 #if defined(LAMBDA_PLAT_WINDOWS)
-		s_pConsole = CWindowsConsole::CreateWindowsConsole();
+		s_pConsole = WindowsConsole::CreateWindowsConsole();
 #elif defined(LAMBDA_PLAT_MACOS)
-		s_pConsole = DBG_NEW CMacConsole();
+		s_pConsole = DBG_NEW MacConsole();
 #endif
 	}
 
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void CConsole::Release()
+	void Console::Release()
 	{
-		LAMBDA_ASSERT_PRINT(s_pConsole != nullptr, "CConsole is not initialized");
+		LAMBDA_ASSERT_PRINT(s_pConsole != nullptr, "Console is not initialized");
 		
 		//Release and set to nullptr, this means that initialize can safley be called after a call to release
-		s_pConsole->Release();
-		s_pConsole = nullptr;
+		SafeDelete(s_pConsole);
 	}
 }

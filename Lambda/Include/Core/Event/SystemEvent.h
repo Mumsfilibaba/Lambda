@@ -1,15 +1,16 @@
 #pragma once
 #include "LambdaCore.h"
 
-#include "SKeyEvent.h"
-#include "SMouseEvent.h"
-#include "SWindowEvent.h"
+#include "KeyEvent.h"
+#include "MouseEvent.h"
+#include "WindowEvent.h"
 
 namespace Lambda
 {
 	//------------
 	//ESystemEvent
 	//------------
+
 	enum class ESystemEvent : uint32
 	{
 		SYSTEM_EVENT_UNKNOWN = 0,
@@ -28,24 +29,25 @@ namespace Lambda
 		SYSTEM_EVENT_WINDOW_MOVED		  = 10,
 	};
 
-    //------------
-    //SSystemEvent
-    //------------
-    struct SSystemEvent
+    //-----------
+    //SystemEvent
+    //-----------
+
+    struct SystemEvent
     {
 		ESystemEvent EventType = ESystemEvent::SYSTEM_EVENT_UNKNOWN;
 		union
 		{
-			SKeyEvent KeyEvent;
-			SKeyTextEvent KeyTextEvent;
+			KeyEvent KeyEvent;
+			KeyTextEvent KeyTextEvent;
 
-			SMouseMovedEvent MouseMovedEvent;
-			SMouseScrolledEvent MouseScrolledEvent;
-			SMouseButtonEvent MouseButtonEvent;
+			MouseMovedEvent MouseMovedEvent;
+			MouseScrolledEvent MouseScrolledEvent;
+			MouseButtonEvent MouseButtonEvent;
 
-			SWindowFocusChangedEvent WindowFocusChangedEvent;
-			SWindowResizeEvent WindowResizedEvent;
-			SWindowMoveEvent WindowMovedEvent;
+			WindowFocusChangedEvent WindowFocusChangedEvent;
+			WindowResizeEvent WindowResizedEvent;
+			WindowMoveEvent WindowMovedEvent;
 		};
     };
 }

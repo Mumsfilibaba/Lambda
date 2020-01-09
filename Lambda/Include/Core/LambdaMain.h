@@ -3,17 +3,17 @@
 
 namespace Lambda
 {
-	class CLayer;
+	class Layer;
 	class IEngine;
-	struct SEngineParams;
-
-	//----------
-	//LambdaMain
-	//----------
-	int32 LAMBDA_API LambdaMain(const SEngineParams& engineParams);
+	struct EngineParams;
 
 	//---------------
 	//CreateGameLayer
 	//---------------
-	CLayer* CreateGameLayer();
+	Layer* CreateGameLayer();
+
+	//----------
+	//LambdaMain
+	//----------
+	int32 LAMBDA_API LambdaMain(const EngineParams& engineParams);
 }

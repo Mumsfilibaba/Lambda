@@ -6,10 +6,11 @@
 
 namespace Lambda
 {
-	//---------------
-	//CWindowsConsole
-	//---------------
-	class CWindowsConsole final : public IConsole
+	//--------------
+	//WindowsConsole
+	//--------------
+
+	class WindowsConsole final : public IConsole
 	{
 	public:
 		virtual void SetTitle(const char* pTitle) override final;
@@ -23,11 +24,9 @@ namespace Lambda
 
 		virtual void Reset() override final;
 		virtual void Clear() override final;
-
-		virtual void Release() override final;
 	private:
-		CWindowsConsole();
-		~CWindowsConsole();
+		WindowsConsole();
+		~WindowsConsole();
 	private:
 		HANDLE m_hOutput;
 		EConsoleColor m_CurrentColor;

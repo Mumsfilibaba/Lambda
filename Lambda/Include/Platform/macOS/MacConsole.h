@@ -1,16 +1,19 @@
 #pragma once
 #include "Core/Engine/Console.h"
 
+#if defined(LAMBDA_PLAT_MACOS)
+
 namespace Lambda
 {
-    //-----------
-    //CMacConsole
-    //-----------
-    class CMacConsole final : public IConsole
+    //----------
+    //MacConsole
+    //----------
+
+    class MacConsole final : public IConsole
     {
     public:
-        CMacConsole();
-        ~CMacConsole() = default;
+        MacConsole();
+        ~MacConsole() = default;
 
         virtual void SetTitle(const char* pTitle) override final;
 		virtual void SetTextColor(EConsoleColor color) override final;
@@ -23,7 +26,6 @@ namespace Lambda
 
 		virtual void Reset() override final;
 		virtual void Clear() override final;
-		
-		virtual void Release() override final;
     };
 }
+#endif

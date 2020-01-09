@@ -1,0 +1,58 @@
+#include "LambdaPch.h"
+
+#include "Core/Engine/LayerStack.h"
+
+namespace Lambda
+{
+	//----------
+	//LayerStack
+	//----------
+
+	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
+	LayerStack::LayerStack()
+		: ISystemEventListener()
+	{
+	}
+
+	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
+	bool LayerStack::OnSystemEvent(const SystemEvent& event)
+	{
+		for (Layer* pLayer : m_Layers)
+		{
+			if (pLayer->OnSystemEvent(event))
+				return true;
+		}
+
+		return false;
+	}
+
+	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
+	void LayerStack::PushLayer(Layer* pLayer)
+	{
+		m_Layers.emplace_back(pLayer);
+	}
+
+	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
+	void LayerStack::PopLayer()
+	{
+		Layer* pLayer = m_Layers.back();
+		SafeDelete(pLayer);
+
+		m_Layers.pop_back();
+	}
+
+	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
+	void LayerStack::ReleaseLayers()
+	{
+		size_t count = m_Layers.size();
+		for (size_t i = 0; i < count; i++)
+			PopLayer();
+	}
+
+	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
+	void LayerStack::OnUpdate(const Time& time)
+	{
+		for (Layer* pLayer : m_Layers)
+			pLayer->OnUpdate(time);
+	}
+}

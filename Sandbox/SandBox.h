@@ -4,16 +4,17 @@
 namespace Lambda
 {
     //------------
-    //CSandBoxLayer 
+    //SandBoxLayer 
     //------------
-    class CSandBoxLayer final : public CLayer
+    class SandBoxLayer final : public Layer
     {
     public:
-        CSandBoxLayer();
-        ~CSandBoxLayer() = default;
+        SandBoxLayer();
+        ~SandBoxLayer() = default;
 
-        LAMBDA_NO_COPY(CSandBoxLayer);
+        LAMBDA_NO_COPY(SandBoxLayer);
 
-        virtual bool DispatchEvent(const SSystemEvent& event) override final;
+        virtual void OnUpdate(const Time& deltaTime) override final;
+        virtual bool OnSystemEvent(const SystemEvent& event) override final;
     };
 }

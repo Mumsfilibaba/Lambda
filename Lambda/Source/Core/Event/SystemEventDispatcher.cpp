@@ -6,17 +6,17 @@
 namespace Lambda
 {
     //----------------------
-    //CSystemEventDispatcher
+    //SystemEventDispatcher
     //----------------------
 
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    CSystemEventDispatcher::CSystemEventDispatcher()
+    SystemEventDispatcher::SystemEventDispatcher()
         : m_EventListeners()
     {
     }
 
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    bool CSystemEventDispatcher::DispatchEvent(const SSystemEvent& event)
+    bool SystemEventDispatcher::DispatchEvent(const SystemEvent& event)
     {
         for (auto pListener : m_EventListeners)
         {
@@ -30,7 +30,7 @@ namespace Lambda
     }
 
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    void CSystemEventDispatcher::AddListener(ISystemEventListener* pListener)
+    void SystemEventDispatcher::AddListener(ISystemEventListener* pListener)
     {
         LAMBDA_ASSERT_PRINT(pListener, "pListener cannot be nullptr\n");
 
@@ -39,7 +39,7 @@ namespace Lambda
     }
 
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    void CSystemEventDispatcher::RemoveListener(ISystemEventListener* pListener)
+    void SystemEventDispatcher::RemoveListener(ISystemEventListener* pListener)
     {
         LAMBDA_ASSERT_PRINT(pListener, "pListener cannot be nullptr\n");
 

@@ -6,6 +6,7 @@ namespace Lambda
     //-----------
     //EResizeType
     //-----------
+
     enum class EResizeType : uint32
     {
         RESIZE_TYPE_UNKNOWN     = 0,
@@ -14,29 +15,32 @@ namespace Lambda
         RESIZE_TYPE_STANDARD    = 3
     };
 
-    //------------------
-    //SWindowResizeEvent
-    //------------------
-    struct SWindowResizeEvent
+    //-----------------
+    //WindowResizeEvent
+    //-----------------
+    
+    struct WindowResizeEvent
     {
         EResizeType ResizeType;
         uint32 Width;
         uint32 Height;
     };
 
-    //----------------
-    //SWindowMoveEvent
-    //----------------
-    struct SWindowMoveEvent
+    //---------------
+    //WindowMoveEvent
+    //---------------
+    
+    struct WindowMoveEvent
     {
         uint32 x;
         uint32 y;
     };
 
-    //------------------------
-    //SWindowFocusChangedEvent
-    //------------------------
-    struct SWindowFocusChangedEvent
+    //-----------------------
+    //WindowFocusChangedEvent
+    //-----------------------
+
+    struct WindowFocusChangedEvent
     {
         bool bHasFocus = false;
     };

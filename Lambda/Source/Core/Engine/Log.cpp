@@ -6,11 +6,11 @@
 namespace Lambda
 {
 	//----
-	//CLog
+	//Log
 	//----
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	CLog::CLog(const char* pName, ELogMode mode, ELogVerbosity filter)
+	Log::Log(const char* pName, ELogMode mode, ELogVerbosity filter)
 		: ILog(),
 		m_pLogFile(nullptr),
 		m_Mode(mode),
@@ -27,32 +27,28 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	CLog::~CLog()
+	Log::~Log()
 	{
 		CloseFile();
 	}
 	
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void CLog::Log(ELogVerbosity verbosity, const char* pFormat, ...)
+	void Log::Write(ELogVerbosity verbosity, const char* pFormat, ...)
 	{
 		va_list args;
 		va_start(args, pFormat);
-		CLog::LogV(verbosity, pFormat, args);
+		Log::WriteV(verbosity, pFormat, args);
 		va_end(args);
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void CLog::LogV(ELogVerbosity verbosity, const char* pFormat, va_list args)
+	void Log::WriteV(ELogVerbosity verbosity, const char* pFormat, va_list args)
 	{
 		if (verbosity >= m_Filter)
 		{
 			if (m_bConsoleOutput)
 			{
-				IConsole* pConsole = CConsole::Get();
-				if (pConsole)
-				{
-					pConsole->PrintLine(pFormat, args);
-				}
+				Console::PrintLine(pFormat, args);
 			}
 
 			if (m_bFileOutput)
@@ -66,19 +62,19 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void CLog::SetVerbosityFilter(ELogVerbosity filter)
+	void Log::SetVerbosityFilter(ELogVerbosity filter)
 	{
 		m_Filter= filter;
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void CLog::SetConsoleOutputEnabled(bool bConsoleOutput)
+	void Log::SetConsoleOutputEnabled(bool bConsoleOutput)
 	{
 		m_bConsoleOutput = bConsoleOutput;
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void CLog::SetFileOutputEnabled(bool bFileOutput)
+	void Log::SetFileOutputEnabled(bool bFileOutput)
 	{
 		if (!bFileOutput && m_pLogFile)
 		{
@@ -93,12 +89,12 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void CLog::Flush()
+	void Log::Flush()
 	{
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	bool CLog::OpenFile()
+	bool Log::OpenFile()
 	{
 		//If file already is opened with this mode, we return true
 		if (m_pLogFile)
@@ -127,7 +123,7 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	bool CLog::CloseFile()
+	bool Log::CloseFile()
 	{
 		//If the file is not open we return false
 		if (!m_pLogFile)
@@ -136,7 +132,7 @@ namespace Lambda
 		}
 
 		//Flush and close
-		CLog::Flush();
+		Log::Flush();
 		if (fclose(m_pLogFile) == 0)
 		{
 			return true;

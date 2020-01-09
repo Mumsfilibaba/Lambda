@@ -1,73 +1,76 @@
 #pragma once
 #include "LambdaCore.h"
 
-#include "Core/Time/CClock.h"
+#include "IWindow.h"
+#include "LayerStack.h"
 
+#include "Core/Time/Clock.h"
 #include "Core/Event/ISystemEventListener.h"
 
 namespace Lambda
 {
-    //-------------
-    //SEngineParams
-    //-------------
-    struct SEngineParams
+    class Layer;
+
+    //------------
+    //EngineParams
+    //------------
+
+    struct EngineParams
     {
         const char** ppCmdLineArgs = nullptr;
-        uint32 nCmdLineArgsCount = 0;
+        uint32 CmdLineArgsCount = 0;
     };
 
-    //-------
-    //CEngine
-    //-------
-    class CEngine final : public ISystemEventListener
+    //------
+    //Engine
+    //------
+    
+    class LAMBDA_API Engine final : public ISystemEventListener
     {
     private:
-        struct SFrametime
+        struct Frametime
         {
-            CClock FrameClock;
-            CTime Timestep;
-            CTime UpdateBacklog;
+            Clock FrameClock;
+            Time Timestep;
+            Time UpdateBacklog;
         };
 
-        struct SEngineState
+        struct EngineState
         {
-            bool bIsRunning;
-            int32 nExitCode;
+            bool IsRunning;
+            int32 ExitCode;
         };
     public:
+        Engine();
+        ~Engine();
+
         /*ISystemEventListener Interface*/
-        virtual bool OnSystemEvent(const SSystemEvent& event) override final;
+        virtual bool OnSystemEvent(const SystemEvent& event) override final;
 
-        /*CEngine Interface*/
-        bool Init(const SEngineParams& engineParams);
-        
+        /*Engine Interface*/
+        bool Init(const EngineParams& engineParams);
+        void Release();
+
         void RunMainLoop();
-        void Terminate(int32 nExitCode);
+        void Exit(int32 exitCode);
 
-        /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-        void SetUpdateTimestep(const CTime& timestep)
-        {
-            m_Frametime.Timestep = timestep;
-        }
+        bool IsRunning() const { return m_State.IsRunning; }
 
-        /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-        const CTime& GetUpdateTimestep() const
-        { 
-            return m_Frametime.Timestep; 
-        }
+        void PushLayer(Layer* pLayer) { m_pLayerStack->PushLayer(pLayer); }
+        void PopLayer() { m_pLayerStack->PopLayer(); }
+
+        void SetUpdateTimestep(const Time& timestep) { m_Frametime.Timestep = timestep; }
+        
+        int32 GetExitCode() const { return m_State.ExitCode; }
+        const Time& GetUpdateTimestep() const { return m_Frametime.Timestep; }
     private:
-        CEngine();
-        ~CEngine();
+        IWindow* m_pWindow;
+        LayerStack* m_pLayerStack;
 
-        void DoFrame();
-    private:
-        SFrametime   m_Frametime;
-        SEngineState m_State;
+        Frametime   m_Frametime;
+        EngineState m_State;
     public:
-        static bool Initialize(const SEngineParams& engineParams);
-        static void Release();
-        static CEngine& Get();
-    private:
-        static CEngine* s_pInstance;
+        static Engine& Get();
+        static void RequestExit(int32 exitCode);
     };
 }

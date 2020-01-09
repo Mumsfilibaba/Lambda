@@ -6,13 +6,13 @@
 
 namespace Lambda
 {
-	//----------------
-	//CWindowsKeyboard
-	//----------------
-	class CWindowsKeyboard
+	//---------------
+	//WindowsKeyboard
+	//---------------
+	class WindowsKeyboard
 	{
 	public:
-		LAMBDA_STATIC_CLASS(CWindowsKeyboard);
+		LAMBDA_STATIC_CLASS(WindowsKeyboard);
 
 		static void Initialize();
 		

@@ -1,21 +1,25 @@
 #pragma once
 #include "LambdaCore.h"
 
+#include "Core/Time/Time.h"
+
 namespace Lambda
 {
-	struct SSystemEvent;
+	struct SystemEvent;
 
-	//------
-	//CLayer
-	//------
-	class LAMBDA_API CLayer
+	//-----
+	//Layer
+	//-----
+
+	class LAMBDA_API Layer
 	{
 	public:
-		CLayer(const char* pName);
-		~CLayer() = default;
+		Layer(const char* pName);
+		~Layer() = default;
 
-		LAMBDA_NO_COPY(CLayer);
+		LAMBDA_NO_COPY(Layer);
 
-		virtual bool DispatchEvent(const SSystemEvent& event);
+		virtual void OnUpdate(const Time& deltaTime);
+		virtual bool OnSystemEvent(const SystemEvent& event);
 	};
 }

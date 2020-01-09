@@ -10,46 +10,43 @@
 
 namespace Lambda
 {
-    class IEngine;
+    //---------
+    //MacSystem
+    //---------
 
-    //----------
-    //CMacSystem
-    //----------
-    class CMacSystem final : public ISystem
+    class MacSystem final : public ISystem
     {
-    public:
-        CMacSystem(IEngine* pEngine);
-        ~CMacSystem();
-        
+    public:       
         /*ISystem Interface*/
-        virtual bool Initialize() override final;
-        
-        virtual bool CreateWindow(const char* pTitle, uint32 nWidth, uint32 nHeight) override final;
-
+        virtual IWindow CreateWindow(const char* pTitle, uint32 nWidth, uint32 nHeight) override final;
         virtual void ProcessSystemEvents() override final;
-        virtual void AddEventListener(ISystemEventListener* pListener) override final;
-        virtual void RemoveEventListener(ISystemEventListener* pListener) override final;
 
-        virtual void Release() override final;
+        virtual void AddListener(ISystemEventListener* pListener) override final
+        {
+            m_EventDispatcher.AddListener(pListener);
+        }
 
-        virtual const IWindow* GetWindow() const override final { return m_pWindow; }
+        virtual void RemoveListener(ISystemEventListener* pListener) override final
+        {
+            m_EventDispatcher.RemoveListener(pListener);
+        }
         
-        /*CMacSystem Interface*/
-        void OnSystemEvent(const SSystemEvent& event);
-        void OnWindowClose(CMacWindow* pWindow);
+        /*MacSystem Interface*/
+        void OnSystemEvent(const SystemEvent& event);
 
         void SetHasFinishedLaunching(bool bHasFinishedLaunching) { m_bHasFinishedLaunching = bHasFinishedLaunching; }
         
         bool ShouldExit() const { return m_bShouldExit; }
         bool HasFinishedLaunching() const { return m_bHasFinishedLaunching; }
     private:
+        MacSystem();
+        ~MacSystem();
+
         void CreateMenuBar();
     private:
-        IEngine* m_pEngine;
-        CMacWindow* m_pWindow;
         CMacAppDelegate* m_pAppDelegate;
-        CSystemEventDispatcher* m_pEventDispatcher;
         
+        SystemEventDispatcher m_EventDispatcher;
         bool m_bHasFinishedLaunching;
         bool m_bShouldExit;
     };

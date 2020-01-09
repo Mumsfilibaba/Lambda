@@ -3,20 +3,22 @@
 
 namespace Lambda
 {
-    //---------
-    //SKeyEvent 
-    //---------
-    struct SKeyEvent
+    //--------
+    //KeyEvent 
+    //--------
+    
+    struct KeyEvent
     {
         EKey Key;
         uint32 RepeatCount;
         uint32 Modifiers;
     };
 
-    //-------------
-    //SKeyTextEvent
-    //-------------
-    struct SKeyTextEvent 
+    //------------
+    //KeyTextEvent
+    //------------
+    
+    struct KeyTextEvent 
     {
         uint32 Character;
     };

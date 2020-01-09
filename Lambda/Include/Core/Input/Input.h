@@ -6,9 +6,9 @@
 
 namespace Lambda
 {
-	class CMouseState;
-	class CGamepadState;
-	class CKeyboardState;
+	class MouseState;
+	class GamepadState;
+	class KeyboardState;
 
 	//----------
 	//EInputType
@@ -24,7 +24,7 @@ namespace Lambda
 	//----------------
 	class IInputController
 	{
-		friend class CInput;
+		friend class Input;
 	public:
 		LAMBDA_INTERFACE(IInputController);
 
@@ -37,79 +37,33 @@ namespace Lambda
 		virtual void SetMousePosition(uint32 x, uint32 y) = 0;
 		virtual void GetMousePosition(uint32& outX, uint32& outY) = 0;
 
-		virtual void GetMouseState(CMouseState& outMouseState) const = 0;
-		virtual void GetGamepadState(CGamepadState& outGamepadState) const = 0;
-		virtual void GetKeyboardState(CKeyboardState& outKeyboardState) const = 0;
-
-		virtual void Release() = 0;
-	private:
-		virtual bool Init() = 0;
+		virtual void GetMouseState(MouseState& outMouseState) const = 0;
+		virtual void GetGamepadState(GamepadState& outGamepadState) const = 0;
+		virtual void GetKeyboardState(KeyboardState& outKeyboardState) const = 0;
 	};
 
-	//------
-	//CInput
-	//------
-	class LAMBDA_API CInput
+	//-----
+	//Input
+	//-----
+	class LAMBDA_API Input
 	{
 	public:
-		LAMBDA_STATIC_CLASS(CInput);
+		LAMBDA_STATIC_CLASS(Input);
 
 		static void Initialize(EInputType type);
 		static void Release();
 
-		/*///////////////////////////*/
-		static bool IsKeyDown(EKey key)
-		{
-			return s_pController->IsKeyDown(key);
-		}
+		inline static bool IsKeyDown(EKey key)	{ return s_pController->IsKeyDown(key); }
+		inline static bool IsKeyUp(EKey key)	{ return s_pController->IsKeyUp(key); }
+		inline static bool IsMouseButtonDown(EMouseButton button)	{ return s_pController->IsMouseButtonDown(button); }
+		inline static bool IsMouseButtonUp(EMouseButton button)		{ return s_pController->IsMouseButtonUp(button); }
+		
+		inline static void SetMousePosition(uint32 x, uint32 y)		{ s_pController->SetMousePosition(x, y); }
+		inline static void GetMousePosition(uint32& x, uint32& y)	{ s_pController->GetMousePosition(x, y); }
 
-		/*/////////////////////////*/
-		static bool IsKeyUp(EKey key)
-		{
-			return s_pController->IsKeyUp(key);
-		}
-
-		/*//////////////////////////////////////////////*/
-		static bool IsMouseButtonDown(EMouseButton button)
-		{
-			return s_pController->IsMouseButtonDown(button);
-		}
-
-		/*////////////////////////////////////////////*/
-		static bool IsMouseButtonUp(EMouseButton button)
-		{
-			return s_pController->IsMouseButtonUp(button);
-		}
-
-		/*////////////////////////////////////////////*/
-		static void SetMousePosition(uint32 x, uint32 y)
-		{
-			s_pController->SetMousePosition(x, y);
-		}
-
-		/*////////////////////////////////////////////////////*/
-		static void GetMousePosition(uint32& outX, uint32& outY)
-		{
-			s_pController->GetMousePosition(outX, outY);
-		}
-
-		/*/////////////////////////////////////////////////*/
-		static void GetMouseState(CMouseState& outMouseState)
-		{
-			s_pController->GetMouseState(outMouseState);
-		}
-
-		/*///////////////////////////////////////////////////////*/
-		static void GetGamepadState(CGamepadState& outGamepadState)
-		{
-			s_pController->GetGamepadState(outGamepadState);
-		}
-
-		/*//////////////////////////////////////////////////////////*/
-		static void GetKeyboardState(CKeyboardState& outKeyboardState)
-		{
-			s_pController->GetKeyboardState(outKeyboardState);
-		}
+		inline static void GetMouseState(MouseState& mouseState)			{ s_pController->GetMouseState(mouseState); }
+		inline static void GetGamepadState(GamepadState& gamepadState)		{ s_pController->GetGamepadState(gamepadState); }
+		inline static void GetKeyboardState(KeyboardState& keyboardState)	{ s_pController->GetKeyboardState(keyboardState); }
 	private:
 		static IInputController* s_pController;
 	};

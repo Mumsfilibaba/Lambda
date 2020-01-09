@@ -5,20 +5,20 @@
 
 	#include "Core/Utilities/StringUtilities.h"
 
+	#include "Platform/Windows/WindowsSystem.h"
 	#include "Platform/Windows/WindowsWindow.h"
     #include "Platform/Windows/WindowsKeyboard.h"
-	#include "Platform/Windows/WindowsApplication.h"
 
 namespace Lambda
 {
-	//--------------
-	//CWindowsWindow
-	//--------------
+	//-------------
+	//WindowsWindow
+	//-------------
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	CWindowsWindow::CWindowsWindow(CWindowsApplication* pApplication)
+	WindowsWindow::WindowsWindow(WindowsSystem* pSystem)
 		: IWindow(),
-        m_pApplication(pApplication),
+        m_pSystem(pSystem),
 		m_hWindow(0),
 		m_Height(0),
 		m_Width(0),
@@ -34,7 +34,7 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	CWindowsWindow::~CWindowsWindow()
+	WindowsWindow::~WindowsWindow()
 	{
 		if (::IsWindow(m_hWindow))
 		{
@@ -44,7 +44,7 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void CWindowsWindow::SetFullscreen(bool bFullscreen)
+	void WindowsWindow::SetFullscreen(bool bFullscreen)
 	{
 		if (m_bIsFullscreen != bFullscreen)
 		{
@@ -53,7 +53,7 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	bool CWindowsWindow::Init(const char* pTitle, uint32 width, uint32 height)
+	bool WindowsWindow::Init(const char* pTitle, uint32 width, uint32 height)
 	{
 		//Create window
 		int32 error = 0;
@@ -73,7 +73,7 @@ namespace Lambda
 
 			//Create window
 			SetLastError(0);
-			m_hWindow = CreateWindowEx(m_ExStyle, CWindowsWindow::WindowClass(), StringUtilities::ConvertFromString(pName).c_str(), m_Style, 0, 0, rect.right - rect.left, rect.bottom - rect.top, 0, 0, m_pApplication->GetHINSTANCE(), 0);
+			m_hWindow = CreateWindowEx(m_ExStyle, WindowsWindow::WindowClass(), StringUtilities::ConvertFromString(pName).c_str(), m_Style, 0, 0, rect.right - rect.left, rect.bottom - rect.top, 0, 0, m_pSystem->GetHINSTANCE(), 0);
 			if (m_hWindow == 0)
 			{
 				error = GetLastError();
@@ -93,10 +93,10 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	LRESULT CWindowsWindow::MessageProc(HWND hWnd, uint32 message, WPARAM wParam, LPARAM lParam)
+	LRESULT WindowsWindow::MessageProc(HWND hWnd, uint32 message, WPARAM wParam, LPARAM lParam)
 	{
 		//Retrive userdata to get the pointer to the windows
-		CWindowsWindow* pWindowsWindow = reinterpret_cast<CWindowsWindow*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+		WindowsWindow* pWindowsWindow = reinterpret_cast<WindowsWindow*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
 		if (pWindowsWindow)
 			return pWindowsWindow->OnMessage(message, wParam, lParam);
 
@@ -104,21 +104,20 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	LRESULT CWindowsWindow::OnMessage(uint32 message, WPARAM wParam, LPARAM lParam)
+	LRESULT WindowsWindow::OnMessage(uint32 message, WPARAM wParam, LPARAM lParam)
 	{
         switch (message)
         {
 			case WM_CREATE:
 			{
-				CConsole::PrintLine("Window Created");
+				Console::PrintLine("Window Created");
 				return 0;
 			}
 
 			case WM_DESTROY:
 			{
-				CConsole::PrintLine("Window Destroyed");
-				m_pApplication->OnWindowClose(this);
-				return 0;
+				Console::PrintLine("Window Destroyed");
+				break;
 			}
 
 			case WM_SIZE:
@@ -153,7 +152,7 @@ namespace Lambda
         }
 
 		//Send message to application
-		return m_pApplication->OnMessage(m_hWindow, message, wParam, lParam);
+		return m_pSystem->OnMessage(m_hWindow, message, wParam, lParam);
 	}
 }
 #endif

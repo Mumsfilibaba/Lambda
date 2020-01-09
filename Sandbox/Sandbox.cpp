@@ -2,6 +2,9 @@
 
 #include "Core/LambdaEntryPoint.h"
 
+#include "Core/Event/SystemEvent.h"
+#include "Core/Engine/Console.h"
+
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/euler_angles.hpp>
@@ -16,24 +19,39 @@ namespace Lambda
 	//------------------------
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	CLayer* CreateGameLayer()
+	Layer* CreateGameLayer()
 	{
-		return DBG_NEW CSandBoxLayer();
+		return DBG_NEW SandBoxLayer();
 	}
 
 	//-------------
-	//CSandBoxLayer
+	//SandBoxLayer
 	//-------------
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	CSandBoxLayer::CSandBoxLayer()
-		: CLayer("SandBoxLayer")
+	SandBoxLayer::SandBoxLayer()
+		: Layer("SandBoxLayer")
 	{
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	bool CSandBoxLayer::DispatchEvent(const SSystemEvent& event)
+	void SandBoxLayer::OnUpdate(const Time& deltaTime)
 	{
+		Console::PrintLine("Time: %.6f", deltaTime.AsMilliSeconds());
+	}
+
+	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
+	bool SandBoxLayer::OnSystemEvent(const SystemEvent& event)
+	{
+		if (event.EventType == ESystemEvent::SYSTEM_EVENT_KEY_PRESSED)
+		{
+			if (event.KeyEvent.Key == EKey::KEY_ESCAPE)
+			{
+				Engine::RequestExit(0);
+				return true;
+			}
+		}
+
 		return false;
 	}
 }

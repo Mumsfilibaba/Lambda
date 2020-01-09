@@ -11,16 +11,16 @@
 
 namespace Lambda
 {
-    class CMacSystem;
+    class MacSystem;
 
     //----------
-    //CMacWindow
+    //MacWindow
     //----------
-    class CMacWindow : public IWindow
+    class MacWindow : public IWindow
     {
     public:
-        CMacWindow(CMacSystem* pSystem, const char* pTitle, uint32 nWidth, uint32 nHeight);
-        ~CMacWindow();
+        MacWindow(MacSystem* pSystem, const char* pTitle, uint32 nWidth, uint32 nHeight);
+        ~MacWindow();
         
         /*IWindow Interface*/
         virtual void SetFullscreen(bool bFullscreen);
@@ -33,7 +33,7 @@ namespace Lambda
         virtual uint32 GetHeight() const override final { return m_nHeight; }
         virtual void*  GetNativeHandle() const override final { return m_pCocoaWindow; }
         
-        /*CMacWindow Interface*/
+        /*MacWindow Interface*/
         void OnMove(uint32 x, uint32 y);
         void OnFocusChanged(bool bHasFocus);
         void OnResize(uint32 nWidth, uint32 nHeight);
@@ -51,9 +51,9 @@ namespace Lambda
         
         void OnClose();
     private:
-        CMacSystem* m_pSystem;
-        CCocoaView* m_pView;
-        CCocoaWindow* m_pCocoaWindow;
+        MacSystem* m_pSystem;
+        CocoaView* m_pView;
+        CocoaWindow* m_pCocoaWindow;
         
         uint32 m_nWidth;
         uint32 m_nHeight;

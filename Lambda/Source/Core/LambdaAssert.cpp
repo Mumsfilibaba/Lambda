@@ -23,9 +23,9 @@ namespace Lambda
 		//------
 
         /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-        static CAssertManager& GetManager()
+        static AssertManager& GetManager()
         {
-            static CAssertManager s_Instance;
+            static AssertManager s_Instance;
             return s_Instance;
         }
     
@@ -74,13 +74,9 @@ namespace Lambda
 			//Print to console
             if (WriteConsoleOnAssert())
             {
-                IConsole* pConsole = CConsole::Get();
-                if (pConsole)
-                {
-                    pConsole->SetTextColor(EConsoleColor::CONSOLE_COLOR_RED);
-                    pConsole->Print("%s", assertionMessage);
-                    pConsole->Reset();
-                }
+                Console::SetTextColor(EConsoleColor::CONSOLE_COLOR_RED);
+                Console::Print("%s", assertionMessage);
+                Console::Reset();
             }
 
 			//Print messagebox

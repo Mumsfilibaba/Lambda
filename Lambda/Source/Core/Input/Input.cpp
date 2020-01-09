@@ -4,27 +4,23 @@
 
 namespace Lambda
 {
-	//------
-	//CInput
-	//------
+	//-----
+	//Input
+	//-----
 
-	IInputController* CInput::s_pController = nullptr;
+	IInputController* Input::s_pController = nullptr;
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void CInput::Initialize(EInputType)
+	void Input::Initialize(EInputType)
 	{
 		//LAMBDA_ASSERT_PRINT(s_pController == nullptr, "Input can only be initialized once");
 
 		IInputController* pController = nullptr;
 		s_pController = pController;
-		if (s_pController)
-		{
-			s_pController->Init();
-		}
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void CInput::Release()
+	void Input::Release()
 	{
 		//LAMBDA_ASSERT_PRINT(s_pController != nullptr, "Input not initialized");
 

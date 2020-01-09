@@ -8,6 +8,7 @@ namespace Lambda
 	//-------------
 	//EConsoleColor
 	//-------------
+
 	enum class EConsoleColor : uint32
 	{
 		CONSOLE_COLOR_UNKNOWN	= 0,
@@ -20,9 +21,9 @@ namespace Lambda
 	//--------
 	//IConsole
 	//--------
+
 	class IConsole
 	{
-		friend class CConsole;
 	public:
 		LAMBDA_INTERFACE(IConsole);
 
@@ -37,35 +38,30 @@ namespace Lambda
 
 		virtual void Reset() = 0;
 		virtual void Clear() = 0;
-		
-		virtual void Release() = 0;
 	};
 
-	//--------
-	//CConsole
-	//--------
-	class LAMBDA_API CConsole
+	//-------
+	//Console
+	//-------
+
+	class LAMBDA_API Console
 	{
 	public:
-		LAMBDA_STATIC_CLASS(CConsole);
+		LAMBDA_STATIC_CLASS(Console);
 
 		static void Initialize();
 		static void Release();
 
-		/*////////////////////////////////////*/
-		static void SetTitle(const char* pTitle)
-		{
-			s_pConsole->SetTitle(pTitle);
-		}
+		inline static void SetTitle(const char* pTitle)		 { s_pConsole->SetTitle(pTitle); }
+		inline static void SetTextColor(EConsoleColor color) { s_pConsole->SetTextColor(color); }
 
-		/*/////////////////////////////////////////*/
-		static void SetTextColor(EConsoleColor color)
-		{
-			s_pConsole->SetTextColor(color);
-		}
+		inline static void Print(const char* pFormat, va_list args)		{ s_pConsole->PrintV(pFormat, args); }
+		inline static void PrintLine(const char* pFormat, va_list args) { s_pConsole->PrintLineV(pFormat, args); }
 
-		/*///////////////////////////////////////*/
-		static void Print(const char* pFormat, ...)
+		inline static void Reset() { s_pConsole->Reset(); }
+		inline static void Clear() { s_pConsole->Clear(); }
+
+		inline static void Print(const char* pFormat, ...)
 		{
 			va_list args;
 			va_start(args, pFormat);
@@ -73,43 +69,12 @@ namespace Lambda
 			va_end(args);
 		}
 
-		/*////////////////////////////////////////////////*/
-		static void Print(const char* pFormat, va_list args)
-		{
-			s_pConsole->PrintV(pFormat, args);
-		}
-
-		/*///////////////////////////////////////////*/
-		static void PrintLine(const char* pFormat, ...)
+		inline static void PrintLine(const char* pFormat, ...)
 		{
 			va_list args;
 			va_start(args, pFormat);
 			s_pConsole->PrintLineV(pFormat, args);
 			va_end(args);
-		}
-
-		/*////////////////////////////////////////////////////*/
-		static void PrintLine(const char* pFormat, va_list args)
-		{
-			s_pConsole->PrintLineV(pFormat, args);
-		}
-
-		/*///////////////*/
-		static void Reset()
-		{
-			s_pConsole->Reset();
-		}
-
-		/*///////////////*/
-		static void Clear()
-		{
-			s_pConsole->Clear();
-		}
-
-		/*//////////////////*/
-		static IConsole* Get()
-		{
-			return s_pConsole;
 		}
 	private:
 		static IConsole* s_pConsole;

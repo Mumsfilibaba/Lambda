@@ -2,147 +2,179 @@
 
 #include "Core//Platform.h"
 
-#include "Core/Engine/Engine.h"
-#include "Core/Engine/Console.h"
-#include "Core/Engine/Application.h"
-
 #include "Core/Input/Input.h"
+
+#include "Core/Event/SystemEvent.h"
+
+#include "Core/Engine/Engine.h"
+#include "Core/Engine/System.h"
+#include "Core/Engine/Console.h"
+#include "Core/Engine/IWindow.h"
+
 
 //----------------
 //_CreateGameLayer
 //----------------
 namespace Lambda
 {
-	class CLayer;
+	class Layer;
 }
 
-extern Lambda::CLayer* (*_CreateGameLayer)();
+extern Lambda::Layer* (*_CreateGameLayer)();
 
 namespace Lambda
 {
-	//-------
-	//CEngine
-	//-------
+	//------
+	//Engine
+	//------
 
-	CEngine* CEngine::s_pInstance = nullptr;
-	
+	//Global engine instance
+	Engine g_Engine;
+
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	CEngine& CEngine::Get()
+	Engine& Engine::Get()
 	{
-		LAMBDA_ASSERT_PRINT(s_pInstance != nullptr, "Engine has not been initialized");
-		return *s_pInstance;
+		return g_Engine;
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	bool CEngine::Initialize(const SEngineParams& engineParams)
+	void Engine::RequestExit(int32 exitCode)
 	{
-		LAMBDA_ASSERT_PRINT(s_pInstance == nullptr, "Engine can only be created once");
-
-		s_pInstance = DBG_NEW CEngine();
-		return s_pInstance->Init(engineParams);
+		g_Engine.Exit(exitCode);
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void CEngine::Release()
-	{
-		//Delete
-		SafeDelete(s_pInstance);
-	}
-
-	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	CEngine::CEngine()
+	Engine::Engine()
 		: ISystemEventListener()
 	{
+		//Init pointer
+		m_pWindow = nullptr;
+		m_pLayerStack = nullptr;
+
 		//Setup default frametime
-		m_Frametime.Timestep	  = CTime::Seconds(1.0f / 60.0f);
-		m_Frametime.UpdateBacklog = CTime(0);
+		m_Frametime.Timestep	  = Time::Seconds(1.0f / 60.0f);
+		m_Frametime.UpdateBacklog = Time(0);
 
 		//Setup enginestate
-		m_State.bIsRunning = false;
-		m_State.nExitCode = 0;
+		m_State.IsRunning = false;
+		m_State.ExitCode = 0;
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	CEngine::~CEngine()
+	Engine::~Engine()
 	{
-		//Remove as listener
-		CApplication::RemoveListener(this);
-
-		//Release subsystems
-		CInput::Release();
-
-#if defined(LAMBDA_DEVELOP)
-		//Release console
-		CConsole::Release();
-#endif
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	bool CEngine::Init(const SEngineParams&)
+	bool Engine::Init(const EngineParams&)
 	{
-		//Create application
-		CApplication::Initialize();
-#if defined(LAMBDA_DEVELOP)
 		//Create console
-		CConsole::Initialize();
-#endif
-  
+		Console::Initialize();
+
+		//Create application
+		System::Initialize();
+		//Add this to the system event listeners
+		System::AddListener(this);
+
+		//Create LayerStack
+		m_pLayerStack = DBG_NEW LayerStack();
+		System::AddListener(m_pLayerStack);
+
 		//Create window
-		if (!CApplication::CreateWindow("Lambda Engine", 1440, 900))
+		IWindow* pWindow = System::CreateWindow("Lambda Engine", 1440, 900);
+		if (!pWindow)
 		{
 			return false;
-		}
-
-		//Add this to the system event listeners
-		CApplication::AddListener(this);
-
-		//Create inputcontroller
-		CInput::Initialize(EInputType::INPUT_TYPE_DEFAULT);
-
-		//Create gamelayer
-		if (_CreateGameLayer)
-		{
-			_CreateGameLayer();
 		}
 		else
 		{
-			return false;
+			m_pWindow = pWindow;
 		}
+
+		//Create inputcontroller
+		Input::Initialize(EInputType::INPUT_TYPE_DEFAULT);
+
+		//Create gamelayer
+		LAMBDA_ASSERT_PRINT(_CreateGameLayer != nullptr, "_CreateGameLayer was nullptr");
+		
+		Layer* pGameLayer = _CreateGameLayer();
+		PushLayer(pGameLayer);
         
 		return true;
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void CEngine::RunMainLoop() 
+	void Engine::Release()
 	{
-		//Startup engine
-		m_State.bIsRunning = true;
+		//Delete Layers
+		System::RemoveListener(m_pLayerStack);
 
-        CConsole::PrintLine("Starting up engine");
-        
+		m_pLayerStack->ReleaseLayers();
+		SafeDelete(m_pLayerStack);
+
+		//Release subsystems
+		Input::Release();
+
+		//Delete window
+		SafeDelete(m_pWindow);
+
+		//Remove as listener
+		System::RemoveListener(this);
+		System::Release();
+		
+		//Release console
+		Console::Release();
+	}
+
+	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
+	void Engine::RunMainLoop() 
+	{
+        Console::PrintLine("Starting up engine");
+		
+		//Startup engine
+		m_State.IsRunning = true;
+
 		//MainLoop
-		while (m_State.bIsRunning)
+		m_Frametime.FrameClock.Reset();
+		while (m_State.IsRunning)
 		{
-			CApplication::ProcessEvents();
-			DoFrame();
+			//Get deltatime
+			m_Frametime.FrameClock.Tick();
+
+			//Handle all system events
+			System::ProcessEvents();
+
+			//Update
+			if (m_Frametime.UpdateBacklog >= m_Frametime.Timestep)
+			{
+				m_pLayerStack->OnUpdate(m_Frametime.Timestep);
+				m_Frametime.UpdateBacklog = Time(0);
+			}
+			else
+			{
+				m_Frametime.UpdateBacklog += m_Frametime.FrameClock.GetDeltaTime();
+			}
 		}
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void CEngine::DoFrame()
+	bool Engine::OnSystemEvent(const SystemEvent& event)
 	{
-	}
+		if (event.EventType == ESystemEvent::SYSTEM_EVENT_KEY_PRESSED)
+		{
+			if (event.KeyEvent.Key == EKey::KEY_SPACE)
+			{
+				m_pWindow->SetFullscreen(true);
+			}
+		}
 
-	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	bool CEngine::OnSystemEvent(const SSystemEvent&)
-	{
 		return false;
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void CEngine::Terminate(int32 nExitCode)
+	void Engine::Exit(int32 nExitCode)
 	{
-		m_State.bIsRunning = false;
-		m_State.nExitCode  = nExitCode;
+		m_State.IsRunning = false;
+		m_State.ExitCode  = nExitCode;
 	}
 }

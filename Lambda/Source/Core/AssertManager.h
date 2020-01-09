@@ -5,20 +5,21 @@
 namespace Lambda
 {
     //--------------
-    //CAssertManager
+    //AssertManager
     //--------------
-    class CAssertManager
+
+    class AssertManager
     {
     public:
         /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-        inline CAssertManager()
+        inline AssertManager()
             : m_bShowDialogOnAssert(true),
             m_bWriteConsoleOnAssert(true)
         {
         }
         
-        ~CAssertManager() = default;
-        LAMBDA_NO_COPY(CAssertManager);
+        ~AssertManager() = default;
+        LAMBDA_NO_COPY(AssertManager);
         
         /*////////////////////////////////////////////////////////////////////////////////////////////////*/
         inline void SetShowDialogOnAssert(bool bShowDialogOnAssert)

@@ -2,69 +2,60 @@
 
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include "Core/Engine/Engine.h"
-	#include "Core/Event/SSystemEvent.h"
+	#include "Core/Event/SystemEvent.h"
 
+	#include "Platform/Windows/WindowsSystem.h"
 	#include "Platform/Windows/WindowsWindow.h"
     #include "Platform/Windows/WindowsKeyboard.h"
-	#include "Platform/Windows/WindowsApplication.h"
 
 	#define WIN32_LEAN_AND_MEAN 1
 	#include <Windows.h>
 
 namespace Lambda
 {
-	//-------------------
-	//CWindowsApplication
-	//-------------------
+	//-------------
+	//WindowsSystem
+	//-------------
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    IApplication* CWindowsApplication::CreateWindowsApplication()
+    ISystem* WindowsSystem::Create()
     {
-        IApplication* pWindowsApplication = DBG_NEW CWindowsApplication();
-        return pWindowsApplication;
+        //Setup debugflags
+#if defined(LAMBDA_DEBUG)
+        _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+#endif
+        ISystem* pSystem = DBG_NEW WindowsSystem();
+        return pSystem;
     }
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    CWindowsApplication::CWindowsApplication()
-		: IApplication()
+    WindowsSystem::WindowsSystem()
+		: ISystem()
 	{
-		//Set pointers to null
-		m_pWindow = nullptr;
-
 		//Init other members
-		m_hInstance = 0;
-
-        //Init HINSTANCE
-        m_hInstance = static_cast<HINSTANCE>(GetModuleHandle(0));
+		m_hInstance = static_cast<HINSTANCE>(GetModuleHandle(0));
 
         //Initialize lookuptable for keycodes
-        CWindowsKeyboard::Initialize();
+        WindowsKeyboard::Initialize();
 
 		//Register WindowClass
 		RegisterWindowClass(m_hInstance);
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    CWindowsApplication::~CWindowsApplication()
+    WindowsSystem::~WindowsSystem()
 	{
-		SafeDelete(m_pWindow);
 		m_hInstance = 0;
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void CWindowsApplication::Release()
-	{
-		delete this;
-	}
-
-	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void CWindowsApplication::RegisterWindowClass(HINSTANCE hInstance)
+	void WindowsSystem::RegisterWindowClass(HINSTANCE hInstance)
 	{
 		//Register window class
 		WNDCLASSEX wc = {};
 		wc.cbSize = sizeof(WNDCLASSEX);
 		wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-		wc.lpfnWndProc = CWindowsWindow::MessageProc;
+		wc.lpfnWndProc = WindowsWindow::MessageProc;
 		wc.cbClsExtra = 0;
 		wc.cbWndExtra = 0;
 		wc.hInstance = hInstance;
@@ -72,28 +63,27 @@ namespace Lambda
 		wc.hCursor = LoadCursor(NULL, IDC_ARROW);
 		wc.hbrBackground = reinterpret_cast<HBRUSH>(GetStockObject(BLACK_BRUSH));
 		wc.lpszMenuName = NULL;
-		wc.lpszClassName = CWindowsWindow::WindowClass();
+		wc.lpszClassName = WindowsWindow::WindowClass();
 		wc.hIconSm = 0;
 
 		::RegisterClassEx(&wc);
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	bool CWindowsApplication::CreateWindow(const char* pTitle, uint32 width, uint32 height)
+	IWindow* WindowsSystem::CreateWindow(const char* pTitle, uint32 width, uint32 height)
 	{
 		//Create window
-		CWindowsWindow* pWindow = DBG_NEW CWindowsWindow(this);
+		WindowsWindow* pWindow = DBG_NEW WindowsWindow(this);
 		if (!pWindow->Init(pTitle, width, height))
 		{
-			return false;
+			return nullptr;
 		}
 
-		m_pWindow = pWindow;
-		return true;
+		return pWindow;
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void CWindowsApplication::ProcessEvents()
+    void WindowsSystem::ProcessEvents()
 	{
 		MSG message = {};
 		while (PeekMessage(&message, 0, 0, 0, PM_REMOVE))
@@ -104,19 +94,25 @@ namespace Lambda
 			//When we recive a quit message we exit the engine
 			if (message.message == WM_QUIT)
 			{
-				CEngine::Get().Terminate(int32(message.wParam));
+                Engine::RequestExit(int32(message.wParam));
 			}
 		}
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	LRESULT CWindowsApplication::OnMessage(HWND hWnd, uint32 message, WPARAM wParam, LPARAM lParam)
+	LRESULT WindowsSystem::OnMessage(HWND hWnd, uint32 message, WPARAM wParam, LPARAM lParam)
 	{
         switch (message)
         {
+            case WM_DESTROY:
+            {
+                PostQuitMessage(0);
+                return 0;
+            }
+
             case WM_SIZE:
             {
-                SSystemEvent event = {};
+                SystemEvent event = {};
                 event.EventType = ESystemEvent::SYSTEM_EVENT_WINDOW_RESIZED;
                 event.WindowResizedEvent.Width  = uint32(LOWORD(lParam));
                 event.WindowResizedEvent.Height = uint32(HIWORD(lParam));
@@ -135,7 +131,7 @@ namespace Lambda
             case WM_MOVE:
             {
                 //Send event
-                SSystemEvent event = {};
+                SystemEvent event = {};
                 event.EventType = ESystemEvent::SYSTEM_EVENT_WINDOW_MOVED;
                 event.WindowMovedEvent.x = uint32(LOWORD(lParam));
                 event.WindowMovedEvent.y = uint32(HIWORD(lParam));
@@ -147,10 +143,10 @@ namespace Lambda
             case WM_KEYUP:
             case WM_KEYDOWN:
             {
-                SSystemEvent event = {};
+                SystemEvent event = {};
                 event.EventType = (message == WM_KEYUP) ? ESystemEvent::SYSTEM_EVENT_KEY_RELEASED : ESystemEvent::SYSTEM_EVENT_KEY_PRESSED;
-                event.KeyEvent.Key          = CWindowsKeyboard::ConvertVirtualKey(uint32(wParam));
-                event.KeyEvent.Modifiers    = CWindowsKeyboard::GetModifierKeys();
+                event.KeyEvent.Key          = WindowsKeyboard::ConvertVirtualKey(uint32(wParam));
+                event.KeyEvent.Modifiers    = WindowsKeyboard::GetModifierKeys();
                 event.KeyEvent.RepeatCount  = uint32(LOWORD(lParam));
 
                 DispatchEvent(event);
@@ -159,7 +155,7 @@ namespace Lambda
 
             case WM_CHAR:
             {
-                SSystemEvent event = {};
+                SystemEvent event = {};
                 event.EventType = ESystemEvent::SYSTEM_EVENT_KEY_TEXT;
                 event.KeyTextEvent.Character = uint32(wParam);
 
@@ -169,7 +165,7 @@ namespace Lambda
 
             case WM_MOUSEMOVE:
             {
-                SSystemEvent event = {};
+                SystemEvent event = {};
                 event.EventType = ESystemEvent::SYSTEM_EVENT_MOUSE_MOVED;
                 event.MouseMovedEvent.x = uint32(GET_X_LPARAM(lParam));
                 event.MouseMovedEvent.y = uint32(GET_Y_LPARAM(lParam));
@@ -199,9 +195,9 @@ namespace Lambda
                 else
                     button = EMouseButton::MOUSEBUTTON_FORWARD;
 
-                SSystemEvent event = {};
+                SystemEvent event = {};
                 event.MouseButtonEvent.Button    = button;
-                event.MouseButtonEvent.Modifiers = CWindowsKeyboard::GetModifierKeys();
+                event.MouseButtonEvent.Modifiers = WindowsKeyboard::GetModifierKeys();
                 if (message == WM_LBUTTONUP || message == WM_MBUTTONUP || message == WM_RBUTTONUP || message == WM_XBUTTONUP)
                 {
                     //When the mousebutton is released we also release the mousecapture
@@ -234,7 +230,7 @@ namespace Lambda
                     verticalValue = value;
                 }
 
-                SSystemEvent event = {};
+                SystemEvent event = {};
                 event.EventType = ESystemEvent::SYSTEM_EVENT_MOUSE_SCROLLED;
                 event.MouseScrolledEvent.Horizontal = horizontalValue;
                 event.MouseScrolledEvent.Vertical   = verticalValue;
@@ -247,7 +243,7 @@ namespace Lambda
             case WM_KILLFOCUS:
             {
                 //Send event
-                SSystemEvent event = {};
+                SystemEvent event = {};
                 event.EventType = ESystemEvent::SYSTEM_EVENT_WINDOW_FOCUS_CHANGED;
                 event.WindowFocusChangedEvent.bHasFocus = message == WM_SETFOCUS;
 
@@ -259,14 +255,5 @@ namespace Lambda
         //Handle messages not handled
         return DefWindowProc(hWnd, message, wParam, lParam);
 	}
-    
-    /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    void CWindowsApplication::OnWindowClose(CWindowsWindow* pWindow)
-    {
-        if (m_pWindow == pWindow)
-        {
-            PostQuitMessage(0);
-        }
-    }
 }
 #endif

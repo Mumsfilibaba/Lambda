@@ -7,16 +7,16 @@
 
 namespace Lambda
 {
-	class CWindowsApplication;
+	class WindowsSystem;
 
 	//--------------
-	//CWindowsWindow
+	//WindowsWindow
 	//--------------
-	class CWindowsWindow : public IWindow
+	class WindowsWindow : public IWindow
 	{
 	public:
-		CWindowsWindow(CWindowsApplication* pApplication);
-		~CWindowsWindow();
+		WindowsWindow(WindowsSystem* pSystem);
+		~WindowsWindow();
 
 		/*IWindow Interface*/
 		virtual void SetFullscreen(bool bFullscreen) override final;
@@ -29,7 +29,7 @@ namespace Lambda
 		virtual uint32 GetHeight() const override final { return m_Height; }
 		virtual void*  GetNativeHandle() const override final { return (void*)m_hWindow; }
 		
-		/*CWindowsWindow*/
+		/*WindowsWindow*/
 		bool Init(const char* pTitle, uint32 width, uint32 height);
 		LRESULT OnMessage(uint32 message, WPARAM wParam, LPARAM lParam);
 
@@ -39,7 +39,7 @@ namespace Lambda
 			return m_hWindow; 
 		}
 	private:
-		CWindowsApplication* m_pApplication;
+		WindowsSystem* m_pSystem;
 		HWND m_hWindow;
 		
 		uint32 m_Width;

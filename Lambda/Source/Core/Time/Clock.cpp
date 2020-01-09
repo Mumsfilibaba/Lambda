@@ -1,16 +1,16 @@
 #include "LambdaPch.h"
 
-#include "Core/Time/CClock.h"
+#include "Core/Time/Clock.h"
 #include "Core/Platform.h"
 
 namespace Lambda
 {
 	//------
-	//CClock
+	//Clock
 	//------
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	CClock::CClock()
+	Clock::Clock()
 		: m_Frequency(0),
 		m_DeltaTime(0),
 		m_TotalTime(0),
@@ -21,7 +21,7 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	CClock::CClock(CClock&& other) noexcept
+	Clock::Clock(Clock&& other) noexcept
 		: m_Frequency(other.m_Frequency),
 		m_LastTime(other.m_LastTime),
 		m_TotalTime(other.m_TotalTime),
@@ -30,7 +30,7 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	CClock::CClock(const CClock& other) noexcept
+	Clock::Clock(const Clock& other) noexcept
 		: m_Frequency(other.m_Frequency),
 		m_LastTime(other.m_LastTime),
 		m_TotalTime(other.m_TotalTime),
@@ -39,7 +39,7 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	CClock& CClock::operator=(CClock&& other) noexcept
+	Clock& Clock::operator=(Clock&& other) noexcept
 	{
 		if (this != &other)
 		{
@@ -57,7 +57,7 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	CClock& CClock::operator=(const CClock& other) noexcept
+	Clock& Clock::operator=(const Clock& other) noexcept
 	{
 		if (this != &other)
 		{
@@ -71,11 +71,11 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void CClock::Tick()
+	void Clock::Tick()
 	{
 		//Get current time
 		uint64 now = Platform::Time::QueryPerformanceCounter();
-		CTime currentTime = CTime(now / m_Frequency);
+		Time currentTime = Time(now / m_Frequency);
 
 		//Update delta- and totaltime
 		m_DeltaTime = currentTime - m_LastTime;

@@ -9,18 +9,18 @@
 namespace Lambda
 {
 	//---------------
-	//CWindowsConsole
+	//WindowsConsole
 	//---------------
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	IConsole* CWindowsConsole::CreateWindowsConsole()
+	IConsole* WindowsConsole::CreateWindowsConsole()
 	{
-		IConsole* pWindowsConsole = DBG_NEW CWindowsConsole();
+		IConsole* pWindowsConsole = DBG_NEW WindowsConsole();
 		return pWindowsConsole;
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	CWindowsConsole::CWindowsConsole()
+	WindowsConsole::WindowsConsole()
 		: IConsole(),
 		m_hOutput(0),
 		m_CurrentColor(EConsoleColor::CONSOLE_COLOR_WHITE)
@@ -39,14 +39,14 @@ namespace Lambda
 				m_hOutput = ::GetStdHandle(STD_OUTPUT_HANDLE);
 
 				//Set default values
-				CWindowsConsole::SetTitle("Lambda Engine Debug Output");
-				CWindowsConsole::Reset();
+				WindowsConsole::SetTitle("Lambda Engine Debug Output");
+				WindowsConsole::Reset();
 			}
 		}
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	CWindowsConsole::~CWindowsConsole()
+	WindowsConsole::~WindowsConsole()
 	{
 		if (m_hOutput)
 		{
@@ -55,7 +55,7 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void CWindowsConsole::SetTitle(const char* pTitle)
+	void WindowsConsole::SetTitle(const char* pTitle)
 	{
 		if (m_hOutput)
 		{
@@ -64,7 +64,7 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void CWindowsConsole::SetTextColor(EConsoleColor color)
+	void WindowsConsole::SetTextColor(EConsoleColor color)
 	{
 		if (m_hOutput)
 		{
@@ -83,16 +83,16 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void CWindowsConsole::Print(const char* pFormat, ...)
+	void WindowsConsole::Print(const char* pFormat, ...)
 	{
 		va_list args;
 		va_start(args, pFormat);
-		CWindowsConsole::PrintV(pFormat, args);
+		WindowsConsole::PrintV(pFormat, args);
 		va_end(args);
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void CWindowsConsole::PrintV(const char* pFormat, va_list args)
+	void WindowsConsole::PrintV(const char* pFormat, va_list args)
 	{
 		if (m_hOutput)
 		{
@@ -107,16 +107,16 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void CWindowsConsole::PrintLine(const char* pFormat, ...)
+	void WindowsConsole::PrintLine(const char* pFormat, ...)
 	{
 		va_list args;
 		va_start(args, pFormat);
-		CWindowsConsole::PrintLineV(pFormat, args);
+		WindowsConsole::PrintLineV(pFormat, args);
 		va_end(args);
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void CWindowsConsole::PrintLineV(const char* pFormat, va_list args)
+	void WindowsConsole::PrintLineV(const char* pFormat, va_list args)
 	{
 		if (m_hOutput)
 		{
@@ -130,13 +130,13 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void CWindowsConsole::Reset()
+	void WindowsConsole::Reset()
 	{
-		CWindowsConsole::SetTextColor(EConsoleColor::CONSOLE_COLOR_WHITE);
+		WindowsConsole::SetTextColor(EConsoleColor::CONSOLE_COLOR_WHITE);
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void CWindowsConsole::Clear()
+	void WindowsConsole::Clear()
 	{
 		if (m_hOutput)
 		{
@@ -172,12 +172,6 @@ namespace Lambda
 			// Put the cursor at its home coordinates.
 			SetConsoleCursorPosition(m_hOutput, coordScreen);
 		}
-	}
-
-	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void CWindowsConsole::Release()
-	{
-		delete this;
 	}
 }
 #endif
