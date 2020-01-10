@@ -13,11 +13,15 @@
     #define LAMBDA_BUILD "Release"
 #elif defined(LAMBDA_PRODUCTION)
     #define LAMBDA_BUILD "Production"
+#else
+    #error No build defined
 #endif
 
 //Define architecture string
 #if defined(LAMBDA_X64)
     #define LAMBDA_ARCHITECTURE "x64"
+#else
+    #error No Architecture defined
 #endif
 
 //Define platform string
@@ -25,6 +29,8 @@
     #define LAMBDA_PLATFORM "Windows"
 #elif defined(LAMBDA_PLAT_MACOS)
     #define LAMBDA_PLATFORM "macOS"
+#else
+    #error No platform defined
 #endif
 
 namespace Lambda
