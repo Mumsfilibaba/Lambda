@@ -1,7 +1,7 @@
 #pragma once
 
 //DLL declaration
-#if defined(LAMBDA_PLAT_WINDOWS)
+#if defined(LAMBDA_SHARED_LIB) && defined(LAMBDA_PLAT_WINDOWS)
 	#if defined(LAMBDA_EXPORT)
 		#define LAMBDA_API __declspec(dllexport)
 	#else

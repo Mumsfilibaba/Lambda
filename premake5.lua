@@ -4,7 +4,7 @@ workspace "Lambda"
 	warnings "Extra"
 
 	-- Were to output files
-	outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
+	outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.platform}"
 	-- Confingurations
 	configurations 
 	{
@@ -18,6 +18,12 @@ workspace "Lambda"
 		"x64_SharedLib",
 		"x64_StaticLib",
 	}
+	-- Architecture
+	filter "architecture:x64"
+		defines 
+		{ 
+			"LAMBDA_X64",
+		}
 	-- Debug builds
 	filter "configurations:Debug"
 		symbols "On"

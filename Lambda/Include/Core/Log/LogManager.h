@@ -10,10 +10,10 @@
 
 //Default log
 #define LOG(verbosity, format, ...) Lambda::LogManager::Get().GetDefaultLog()->Write(verbosity, format, __VA_ARGS__) 
-#define LOG_INFO(format, ...)		LOG(log, Lambda::ELogVerbosity::LOG_VERBOSITY_INFO, format, __VA_ARGS__)
-#define LOG_MESSAGE(format, ...)	LOG(log, Lambda::ELogVerbosity::LOG_VERBOSITY_MESSAGE, format, __VA_ARGS__)
-#define LOG_WARNING(format, ...)	LOG(log, Lambda::ELogVerbosity::LOG_VERBOSITY_WARNING, format, __VA_ARGS__)
-#define LOG_ERROR(format, ...)		LOG(log, Lambda::ELogVerbosity::LOG_VERBOSITY_ERROR, format, __VA_ARGS__)
+#define LOG_INFO(format, ...)		LOG(Lambda::ELogVerbosity::LOG_VERBOSITY_INFO, format, __VA_ARGS__)
+#define LOG_MESSAGE(format, ...)	LOG(Lambda::ELogVerbosity::LOG_VERBOSITY_MESSAGE, format, __VA_ARGS__)
+#define LOG_WARNING(format, ...)	LOG(Lambda::ELogVerbosity::LOG_VERBOSITY_WARNING, format, __VA_ARGS__)
+#define LOG_ERROR(format, ...)		LOG(Lambda::ELogVerbosity::LOG_VERBOSITY_ERROR, format, __VA_ARGS__)
 
 //Named log
 #define N_LOG(log, verbosity, format, ...) Lambda::LogManager::Get().GetLog(log)->Write(verbosity, format, __VA_ARGS__) 

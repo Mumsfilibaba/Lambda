@@ -86,6 +86,9 @@ namespace Lambda
 		//Create inputcontroller
 		Input::Attach(EInputType::INPUT_TYPE_DEFAULT);
 
+		//Print Engine info
+		LOG_MESSAGE("Engine Initialized: Build=%s, Platform=%s, Architecture=%s", LAMBDA_BUILD, LAMBDA_PLATFORM, LAMBDA_ARCHITECTURE);
+
 		//Create gamelayer		
 		if (_CreateGameLayer)
 		{

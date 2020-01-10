@@ -6,6 +6,27 @@
     #undef MessageBox
 #endif
 
+//Define build string
+#if defined(LAMBDA_DEBUG)
+    #define LAMBDA_BUILD "Debug"
+#elif defined(LAMBDA_RELEASE)
+    #define LAMBDA_BUILD "Release"
+#elif defined(LAMBDA_PRODUCTION)
+    #define LAMBDA_BUILD "Production"
+#endif
+
+//Define architecture string
+#if defined(LAMBDA_X64)
+    #define LAMBDA_ARCHITECTURE "x64"
+#endif
+
+//Define platform string
+#if defined(LAMBDA_PLAT_WINDOWS)
+    #define LAMBDA_PLATFORM "Windows"
+#elif defined(LAMBDA_PLAT_MACOS)
+    #define LAMBDA_PLATFORM "macOS"
+#endif
+
 namespace Lambda
 {
     //---------------
