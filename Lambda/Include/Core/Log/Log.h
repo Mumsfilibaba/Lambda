@@ -46,8 +46,6 @@ namespace Lambda
 
 		virtual const char* GetName() const = 0;
 		virtual ELogVerbosity GetVerbosityFilter() const = 0;
-
-		virtual void Flush() = 0;
 	};
 
 	//----
@@ -56,10 +54,8 @@ namespace Lambda
 
 	class Log : public ILog
 	{
+		friend class LogManager;
 	public:
-		Log(const char* pName, ELogMode mode, ELogVerbosity filter);
-		~Log();
-
 		/*ILog interface*/
 		virtual void Write(ELogVerbosity verbosity, const char* pFormat, ...) override;
 		virtual void WriteV(ELogVerbosity verbosity, const char* pFormat, va_list args) override;
@@ -67,8 +63,6 @@ namespace Lambda
 		virtual void SetVerbosityFilter(ELogVerbosity filter) override;
 		virtual void SetConsoleOutputEnabled(bool bConsoleOutput) override;
 		virtual void SetFileOutputEnabled(bool bFileOutput) override;
-
-		virtual void Flush() override;
 		
 		virtual const char* GetName() const override
 		{
@@ -80,6 +74,9 @@ namespace Lambda
 			return m_Filter;
 		}
 	private:
+		Log(const char* pName, ELogMode mode, ELogVerbosity filter, bool bWriteConsole, bool bWriteFile);
+		~Log();
+
 		bool OpenFile();
 		bool CloseFile();
 	private:
@@ -89,7 +86,7 @@ namespace Lambda
 		ELogVerbosity m_Filter;
 		
 		std::string m_Name;
-		std::string m_Buffer;
+		std::string m_Filename;
 
 		bool m_bConsoleOutput;
 		bool m_bFileOutput;

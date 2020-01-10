@@ -24,7 +24,7 @@ namespace Lambda
 		}
 
 		g_Engine.RunMainLoop();
-		g_Engine.Release();
+		g_Engine.Detach();
 		return g_Engine.GetExitCode();
 	}
 }

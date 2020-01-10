@@ -45,7 +45,7 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void WindowsKeyboard::Initialize()
+	void WindowsKeyboard::Attach()
 	{
 		//Set to zero
 		memset(s_WindowsKeyTable, 0, sizeof(s_WindowsKeyTable));

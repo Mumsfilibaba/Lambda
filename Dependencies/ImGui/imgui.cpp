@@ -8778,7 +8778,7 @@ static void ImGui::NavUpdateWindowing()
             apply_focus_window = g.NavWindowingTarget;
     }
 
-    // Keyboard: Press and Release ALT to toggle menu layer
+    // Keyboard: Press and Detach ALT to toggle menu layer
     // FIXME: We lack an explicit IO variable for "is the imgui window focused", so compare mouse validity to detect the common case of back-end clearing releases all keys on ALT-TAB
     if (IsNavInputPressed(ImGuiNavInput_KeyMenu_, ImGuiInputReadMode_Pressed))
         g.NavWindowingToggleLayer = true;

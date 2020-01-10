@@ -35,7 +35,7 @@ namespace Lambda
 	{
 	public:
 		static void Initialize();
-		static void Release();
+		static void Detach();
 
 		inline static IWindow* CreateWindow(const char* pTitle, uint32 width, uint32 height) { return s_pInstance->CreateWindow(pTitle, width, height); }
 

@@ -49,34 +49,40 @@ namespace Lambda
 	public:
 		LAMBDA_STATIC_CLASS(Console);
 
-		static void Initialize();
-		static void Release();
+		static void Attach();
+		static void Detach();
 
 		inline static bool IsAttached() { return s_pInstance != nullptr; }
 
-		inline static void SetTitle(const char* pTitle)		 { s_pInstance->SetTitle(pTitle); }
-		inline static void SetTextColor(EConsoleColor color) { s_pInstance->SetTextColor(color); }
+		inline static void SetTitle(const char* pTitle)		 { if (s_pInstance) { s_pInstance->SetTitle(pTitle); }}
+		inline static void SetTextColor(EConsoleColor color) { if (s_pInstance) { s_pInstance->SetTextColor(color); }}
 
-		inline static void PrintV(const char* pFormat, va_list args)		{ s_pInstance->PrintV(pFormat, args); }
-		inline static void PrintLineV(const char* pFormat, va_list args)	{ s_pInstance->PrintLineV(pFormat, args); }
+		inline static void PrintV(const char* pFormat, va_list args)		{ if (s_pInstance) { s_pInstance->PrintV(pFormat, args); }}
+		inline static void PrintLineV(const char* pFormat, va_list args)	{ if (s_pInstance) { s_pInstance->PrintLineV(pFormat, args); }}
 
-		inline static void Reset() { s_pInstance->Reset(); }
-		inline static void Clear() { s_pInstance->Clear(); }
+		inline static void Reset() { if (s_pInstance) { s_pInstance->Reset(); }}
+		inline static void Clear() { if (s_pInstance) { s_pInstance->Clear(); }}
 
 		inline static void Print(const char* pFormat, ...)
 		{
-			va_list args;
-			va_start(args, pFormat);
-			s_pInstance->PrintV(pFormat, args);
-			va_end(args);
+			if (s_pInstance)
+			{
+				va_list args;
+				va_start(args, pFormat);
+				s_pInstance->PrintV(pFormat, args);
+				va_end(args);
+			}
 		}
 
 		inline static void PrintLine(const char* pFormat, ...)
 		{
-			va_list args;
-			va_start(args, pFormat);
-			s_pInstance->PrintLineV(pFormat, args);
-			va_end(args);
+			if (s_pInstance)
+			{
+				va_list args;
+				va_start(args, pFormat);
+				s_pInstance->PrintLineV(pFormat, args);
+				va_end(args);
+			}
 		}
 	private:
 		static IConsole* s_pInstance;

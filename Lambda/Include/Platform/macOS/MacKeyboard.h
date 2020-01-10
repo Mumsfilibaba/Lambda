@@ -14,7 +14,7 @@ namespace Lambda
 	public:
 		LAMBDA_STATIC_CLASS(MacKeyboard);
 
-		static void Initialize();
+		static void Attach();
 		
 		static EKey   ConvertVirtualKey(uint32 keycode);
 		static uint32 ConvertVirtualKey(EKey keycode);

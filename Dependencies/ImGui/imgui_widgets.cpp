@@ -3517,7 +3517,7 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
     if (g.ActiveId == id && state == NULL)
         ClearActiveID();
 
-    // Release focus when we click outside
+    // Detach focus when we click outside
     if (g.ActiveId == id && io.MouseClicked[0] && !init_state && !init_make_active) //-V560
         clear_active_id = true;
 
@@ -3898,7 +3898,7 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
         state->UserCallbackData = NULL;
     }
 
-    // Release active ID at the end of the function (so e.g. pressing Return still does a final application of the value)
+    // Detach active ID at the end of the function (so e.g. pressing Return still does a final application of the value)
     if (clear_active_id && g.ActiveId == id)
         ClearActiveID();
 

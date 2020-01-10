@@ -17,9 +17,9 @@ namespace Lambda
 	IConsole* Console::s_pInstance = nullptr;
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void Console::Initialize()
+	void Console::Attach()
 	{
-		LAMBDA_ASSERT_PRINT(s_pInstance == nullptr, "Console::Initialize should only be called once");
+		LAMBDA_ASSERT_PRINT(s_pInstance == nullptr, "Console::Attach should only be called once");
 
 		//Create console interface
 #if defined(LAMBDA_PLAT_WINDOWS)
@@ -30,11 +30,11 @@ namespace Lambda
 	}
 
     /*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void Console::Release()
+	void Console::Detach()
 	{
 		LAMBDA_ASSERT_PRINT(s_pInstance != nullptr, "Console is not initialized");
 		
-		//Release and set to nullptr, this means that initialize can safley be called after a call to release
+		//Detach and set to nullptr, this means that initialize can safley be called after a call to release
 		SafeDelete(s_pInstance);
 	}
 }

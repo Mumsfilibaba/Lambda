@@ -1,9 +1,8 @@
 #include "LambdaPch.h"
 
-#include "Core//Platform.h"
-
+#include "Core/Platform.h"
 #include "Core/Input/Input.h"
-
+#include "Core/Log/LogManager.h"
 #include "Core/Event/SystemEvent.h"
 
 #include "Core/Engine/Engine.h"
@@ -11,14 +10,9 @@
 #include "Core/Engine/Console.h"
 #include "Core/Engine/IWindow.h"
 
-
 //----------------
 //_CreateGameLayer
 //----------------
-namespace Lambda
-{
-	class Layer;
-}
 
 extern Lambda::Layer* (*_CreateGameLayer)();
 
@@ -62,7 +56,12 @@ namespace Lambda
 	bool Engine::Init(const EngineParams&)
 	{
 		//Create console
-		Console::Initialize();
+		Console::Attach();
+
+		//Create logManager and log
+		m_pLogManager = LogManager::Create();
+		m_pLogManager->CreateDefaultLog(ELogMode::LOG_MODE_TRUNCATE, ELogVerbosity::LOG_VERBOSITY_ERROR, true, false);
+		m_pLogManager->CreateLog("Debug", ELogMode::LOG_MODE_TRUNCATE, ELogVerbosity::LOG_VERBOSITY_ERROR, true, false);
 
 		//Create application
 		System::Initialize();
@@ -85,46 +84,53 @@ namespace Lambda
 		}
 
 		//Create inputcontroller
-		Input::Initialize(EInputType::INPUT_TYPE_DEFAULT);
+		Input::Attach(EInputType::INPUT_TYPE_DEFAULT);
 
-		//Create gamelayer
-		LAMBDA_ASSERT_PRINT(_CreateGameLayer != nullptr, "_CreateGameLayer was nullptr");
-		
-		Layer* pGameLayer = _CreateGameLayer();
-		PushLayer(pGameLayer);
+		//Create gamelayer		
+		if (_CreateGameLayer)
+		{
+			D_LOG_INFO("Creating gamelayer");
+			Layer* pGameLayer = _CreateGameLayer();
+			PushLayer(pGameLayer);
+		}
+		else
+		{
+			D_LOG_INFO("_CreateGameLayer not defined");
+		}
         
 		return true;
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void Engine::Release()
+	void Engine::Detach()
 	{
-		//Delete Layers
-		System::RemoveListener(m_pLayerStack);
-
-		m_pLayerStack->ReleaseLayers();
-		SafeDelete(m_pLayerStack);
-
-		//Release subsystems
-		Input::Release();
+		//Detach input
+		Input::Detach();
 
 		//Delete window
 		SafeDelete(m_pWindow);
 
+		//Delete Layers
+		System::RemoveListener(m_pLayerStack);
+		m_pLayerStack->ReleaseLayers();
+		SafeDelete(m_pLayerStack);
+
 		//Remove as listener
 		System::RemoveListener(this);
-		System::Release();
+		System::Detach();
+
+		//Delete logmanager
+		SafeDelete(m_pLogManager);
 		
-		//Release console
-		Console::Release();
+		//Detach console
+		Console::Detach();
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
 	void Engine::RunMainLoop() 
 	{
-        Console::PrintLine("Starting up engine");
-		
 		//Startup engine
+		D_LOG_INFO("Starting up engine");
 		m_State.IsRunning = true;
 
 		//MainLoop
@@ -148,6 +154,9 @@ namespace Lambda
 				m_Frametime.UpdateBacklog += m_Frametime.FrameClock.GetDeltaTime();
 			}
 		}
+
+		//Terminating engine
+		D_LOG_INFO("Terminating engine");
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -165,9 +174,11 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void Engine::Exit(int32 nExitCode)
+	void Engine::Exit(int32 exitCode)
 	{
 		m_State.IsRunning = false;
-		m_State.ExitCode  = nExitCode;
+		m_State.ExitCode  = exitCode;
+
+		D_LOG_INFO("Engine::Exit called, exitCode=%d", exitCode);
 	}
 }

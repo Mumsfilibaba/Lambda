@@ -36,7 +36,7 @@ namespace Lambda
 		m_hInstance = static_cast<HINSTANCE>(GetModuleHandle(0));
 
         //Initialize lookuptable for keycodes
-        WindowsKeyboard::Initialize();
+        WindowsKeyboard::Attach();
 
 		//Register WindowClass
 		RegisterWindowClass(m_hInstance);

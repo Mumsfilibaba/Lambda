@@ -19,3 +19,4 @@ Dependencies/ImGui/bin-int/
 *.pbxproj
 *.ini
 *.diagsession
+*.LLog

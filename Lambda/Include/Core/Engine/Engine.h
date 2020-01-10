@@ -1,7 +1,6 @@
 #pragma once
 #include "LambdaCore.h"
 
-#include "IWindow.h"
 #include "LayerStack.h"
 
 #include "Core/Time/Clock.h"
@@ -9,7 +8,10 @@
 
 namespace Lambda
 {
+    class ILog;
+    class IWindow;
     class Layer;
+    class LogManager;
 
     //------------
     //EngineParams
@@ -49,7 +51,7 @@ namespace Lambda
 
         /*Engine Interface*/
         bool Init(const EngineParams& engineParams);
-        void Release();
+        void Detach();
 
         void RunMainLoop();
         void Exit(int32 exitCode);
@@ -66,6 +68,7 @@ namespace Lambda
     private:
         IWindow* m_pWindow;
         LayerStack* m_pLayerStack;
+        LogManager* m_pLogManager;
 
         Frametime   m_Frametime;
         EngineState m_State;

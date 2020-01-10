@@ -10,13 +10,13 @@ namespace Lambda
     //-------
     
 	//Interface for referencecounted objects. Classes that inherits from IObject should not
-	//have a virtual constructor since they should be deleted with the Release-function
+	//have a virtual constructor since they should be deleted with the Detach-function
 	class LAMBDA_API IObject
 	{
 	public:
 		LAMBDA_INTERFACE(IObject);
 
-		virtual RefCountValue Release() = 0;
+		virtual RefCountValue Detach() = 0;
 		virtual RefCountValue AddRef()  = 0;
 	};
 
@@ -42,7 +42,7 @@ namespace Lambda
 		LAMBDA_NO_COPY(CRefCountedObject);
 
 		////////////////////////////////////////
-		virtual RefCountValue Release() override
+		virtual RefCountValue Detach() override
 		{
 			RefCountValue counter = --m_StrongReferences;
 			if (counter < 1)
@@ -122,12 +122,12 @@ namespace Lambda
 		}
 
 		////////////////////////////////////
-		_forceinline RefCountValue Release()
+		_forceinline RefCountValue Detach()
 		{
 			RefCountValue counter = 0;
 			if (m_pObject)
 			{
-				counter = m_pObject->Release();
+				counter = m_pObject->Detach();
 				m_pObject = nullptr;
 			}
 			return counter;
@@ -176,7 +176,7 @@ namespace Lambda
 		_forceinline AutoRef& operator=(const AutoRef& other)
 		{
 			if (m_pObject)
-				m_pObject->Release();
+				m_pObject->Detach();
 
 			m_pObject = other.m_pObject;
 			m_pObject->AddRef();
@@ -188,7 +188,7 @@ namespace Lambda
 		_forceinline AutoRef& operator=(AutoRef&& other)
 		{
 			if (m_pObject)
-				m_pObject->Release();
+				m_pObject->Detach();
 				 
 			m_pObject = other.m_pObject;
 			other.m_pObject = nullptr;

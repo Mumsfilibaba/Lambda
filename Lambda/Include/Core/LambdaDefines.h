@@ -53,7 +53,7 @@
 
 //Saferelease and delete
 #if !defined(SafeRelease)
-	#define SafeRelease(x) if (x != nullptr) { x->Release(); x = nullptr; }
+	#define SafeRelease(x) if (x != nullptr) { x->Detach(); x = nullptr; }
 #endif
 
 #if !defined(SafeDelete)

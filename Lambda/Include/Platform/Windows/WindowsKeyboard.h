@@ -14,7 +14,7 @@ namespace Lambda
 	public:
 		LAMBDA_STATIC_CLASS(WindowsKeyboard);
 
-		static void Initialize();
+		static void Attach();
 		
 		static uint32 ConvertVirtualKey(EKey keycode);
 		static EKey   ConvertVirtualKey(uint32 keycode);

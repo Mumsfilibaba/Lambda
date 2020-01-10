@@ -1,6 +1,7 @@
 #include "LambdaPch.h"
 
 #include "Core/Engine/System.h"
+#include "Core/Log/LogManager.h"
 
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include "Platform/Windows/WindowsSystem.h"
@@ -21,6 +22,10 @@ namespace Lambda
 	{
 		LAMBDA_ASSERT_PRINT(s_pInstance == nullptr, "Application can only be initialized once");
 
+		//Create log for system
+		LogManager::Get().CreateLog("System", ELogMode::LOG_MODE_TRUNCATE, ELogVerbosity::LOG_VERBOSITY_ERROR, true, false);
+
+		//Create instance
 #if defined(LAMBDA_PLAT_WINDOWS)
 		s_pInstance = WindowsSystem::Create();
 #elif defined(LAMBDA_PLAT_MACOS)
@@ -31,7 +36,7 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void System::Release()
+	void System::Detach()
 	{
 		LAMBDA_ASSERT_PRINT(s_pInstance != nullptr, "Application not initialized");
 		SafeDelete(s_pInstance);

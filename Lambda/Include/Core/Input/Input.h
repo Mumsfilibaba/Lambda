@@ -50,8 +50,8 @@ namespace Lambda
 	public:
 		LAMBDA_STATIC_CLASS(Input);
 
-		static void Initialize(EInputType type);
-		static void Release();
+		static void Attach(EInputType type);
+		static void Detach();
 
 		inline static bool IsKeyDown(EKey key)	{ return s_pController->IsKeyDown(key); }
 		inline static bool IsKeyUp(EKey key)	{ return s_pController->IsKeyUp(key); }
