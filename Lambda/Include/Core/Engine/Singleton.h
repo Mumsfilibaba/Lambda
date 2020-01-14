@@ -3,26 +3,26 @@
 
 namespace Lambda
 {
-	//---------
-	//Singleton
-	//---------
+	//----------
+	//CSingleton
+	//----------
 
 	template <typename T>
-	class Singleton
+	class CSingleton
 	{
-	public:
-		inline Singleton()
+	protected:
+		LAMBDA_NO_COPY(CSingleton);
+
+		inline CSingleton()
 		{
 			LAMBDA_ASSERT_PRINT(s_pInstance == nullptr, "Instance already created");
 			s_pInstance = static_cast<T*>(this);
 		}
 
-		inline ~Singleton()
+		inline ~CSingleton()
 		{
 			s_pInstance = nullptr;
 		}
-
-		LAMBDA_NO_COPY(Singleton);
 	public:
 		inline static T* GetPtr()
 		{

@@ -1,8 +1,9 @@
 #pragma once
 #include "LambdaCore.h"
 
-#include "KeyEvent.h"
-#include "MouseEvent.h"
+#include "Core/Input/EMouse.h"
+#include "Core/Input/EKeyboard.h"
+
 #include "WindowEvent.h"
 
 namespace Lambda
@@ -29,17 +30,67 @@ namespace Lambda
 		SYSTEM_EVENT_WINDOW_MOVED		  = 10,
 	};
 
-    //-----------
-    //SystemEvent
-    //-----------
+	//---------
+	//SKeyEvent 
+	//---------
 
-    struct SystemEvent
+	struct SKeyEvent
+	{
+		EKey Key;
+		uint32 RepeatCount;
+		uint32 Modifiers;
+	};
+
+	//-------------
+	//SKeyTextEvent
+	//-------------
+
+	struct SKeyTextEvent
+	{
+		uint32 Character;
+	};
+
+	//----------------
+	//MouseButtonEvent
+	//----------------
+
+	struct MouseButtonEvent
+	{
+		EMouseButton Button;
+		uint32 Modifiers;
+	};
+
+	//---------------
+	//MouseMovedEvent
+	//---------------
+
+	struct MouseMovedEvent
+	{
+		int32 x;
+		int32 y;
+	};
+
+	//------------------
+	//MouseScrolledEvent
+	//------------------
+
+	struct MouseScrolledEvent
+	{
+		float Horizontal;
+		float Vertical;
+	};
+
+    //------------
+    //SSystemEvent
+    //------------
+
+    struct SSystemEvent
     {
 		ESystemEvent EventType = ESystemEvent::SYSTEM_EVENT_UNKNOWN;
 		union
 		{
-			KeyEvent KeyEvent;
-			KeyTextEvent KeyTextEvent;
+			SKeyEvent KeyEvent;
+			SKeyTextEvent KeyTextEvent;
 
 			MouseMovedEvent MouseMovedEvent;
 			MouseScrolledEvent MouseScrolledEvent;

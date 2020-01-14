@@ -36,8 +36,8 @@
 			LAMBDA_NO_COPY(Type)				
 #endif
 
-#if !defined(LAMBDA_IOBJECT_INTERFACE)
-#define LAMBDA_IOBJECT_INTERFACE(Type)				\
+#if !defined(LAMBDA_ISHAREDOBJECT_INTERFACE)
+#define LAMBDA_ISHAREDOBJECT_INTERFACE(Type)				\
 			Type() = default;						\
 			~Type() = default;						\
 			LAMBDA_NO_COPY(Type)				

@@ -20,5 +20,8 @@ namespace Lambda
 		virtual uint32 GetWidth() const = 0;
 		virtual uint32 GetHeight() const = 0;
 		virtual void*  GetNativeHandle() const = 0;
+	private:
+		bool m_bHasFocus;
+		bool m_bIsFullscreen;
 	};
 }
