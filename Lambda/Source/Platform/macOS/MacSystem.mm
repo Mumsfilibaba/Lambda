@@ -99,7 +99,7 @@ namespace Lambda
         
         if (ShouldExit())
         {
-            Engine& engine = Engine::Get();
+            CEngine& engine = CEngine::Get();
             engine.Exit(0);
         }
     }

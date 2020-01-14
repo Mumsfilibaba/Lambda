@@ -1,33 +1,37 @@
 #pragma once
 #include "LambdaCore.h"
-
+#include "Singleton.h"
 #include "LayerStack.h"
 
 #include "Core/Time/Clock.h"
+
 #include "Core/Event/ISystemEventListener.h"
 
 namespace Lambda
 {
     class ILog;
-    class IWindow;
     class Layer;
-    class LogManager;
+    class CLogManager;
+    class CWindow;
+    class CApplication;
 
-    //------------
-    //EngineParams
-    //------------
+    //-------------
+    //SEngineParams
+    //-------------
 
-    struct EngineParams
+    struct SEngineParams
     {
         const char** ppCmdLineArgs = nullptr;
         uint32 CmdLineArgsCount = 0;
     };
 
-    //------
-    //Engine
-    //------
+    //-------
+    //CEngine
+    //-------
     
-    class LAMBDA_API Engine final : public ISystemEventListener
+    class LAMBDA_API CEngine final :
+        public CSingleton<CEngine>,
+        public ISystemEventListener
     {
     private:
         struct Frametime
@@ -43,17 +47,17 @@ namespace Lambda
             int32 ExitCode;
         };
     public:
-        Engine();
-        ~Engine();
+        CEngine();
+        ~CEngine();
 
         /*ISystemEventListener Interface*/
         virtual bool OnSystemEvent(const SystemEvent& event) override final;
 
         /*Engine Interface*/
-        bool Init(const EngineParams& engineParams);
-        void Detach();
+        bool Init(const SEngineParams& engineParams);
+        void Release();
 
-        void RunMainLoop();
+        void Tick();
         void Exit(int32 exitCode);
 
         bool IsRunning() const { return m_State.IsRunning; }
@@ -66,13 +70,12 @@ namespace Lambda
         int32 GetExitCode() const { return m_State.ExitCode; }
         const Time& GetUpdateTimestep() const { return m_Frametime.Timestep; }
     private:
-        IWindow* m_pWindow;
+        CWindow* m_pWindow;
+        CApplication* m_pApplication;
         LayerStack* m_pLayerStack;
-        LogManager* m_pLogManager;
+        CLogManager* m_pLogManager;
 
         Frametime   m_Frametime;
         EngineState m_State;
-    public:
-        static Engine& Get();
     };
 }

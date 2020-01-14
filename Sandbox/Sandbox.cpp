@@ -46,7 +46,7 @@ namespace Lambda
 		{
 			if (event.KeyEvent.Key == EKey::KEY_ESCAPE)
 			{
-				Engine& engine = Engine::Get();
+				CEngine& engine = CEngine::Get();
 				engine.Exit(0);
 
 				return true;

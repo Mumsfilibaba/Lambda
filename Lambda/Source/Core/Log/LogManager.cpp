@@ -4,19 +4,19 @@
 
 namespace Lambda
 {
-	//----------
-	//LogManager
-	//----------
+	//-----------
+	//CLogManager
+	//-----------
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	LogManager::LogManager()
-		: Singleton<LogManager>(),
+	CLogManager::CLogManager()
+		: CSingleton<CLogManager>(),
 		m_Logs()
 	{
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	LogManager::~LogManager()
+	CLogManager::~CLogManager()
 	{
 		//Delete all logs
 		for (auto& log : m_Logs)
@@ -27,7 +27,7 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	ILog* LogManager::CreateLog(const char* pName, ELogMode mode, ELogVerbosity verbosity, bool bWriteConsole, bool bWriteFile)
+	ILog* CLogManager::CreateLog(const char* pName, ELogMode mode, ELogVerbosity verbosity, bool bWriteConsole, bool bWriteFile)
 	{
 		if (pName)
 		{
@@ -45,7 +45,7 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void LogManager::CreateDefaultLog(ELogMode mode, ELogVerbosity verbosity, bool bWriteConsole, bool bWriteFile)
+	void CLogManager::CreateDefaultLog(ELogMode mode, ELogVerbosity verbosity, bool bWriteConsole, bool bWriteFile)
 	{
 		std::string name = "Engine";
 		if (m_Logs.count(name) != 0)
@@ -58,7 +58,7 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void LogManager::ReleaseLog(const char* pName)
+	void CLogManager::ReleaseLog(const char* pName)
 	{
 		if (!pName)
 			return;
@@ -72,7 +72,7 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void LogManager::ReleaseLog(ILog* pLog)
+	void CLogManager::ReleaseLog(ILog* pLog)
 	{
 		if (!pLog)
 			return;
@@ -82,7 +82,7 @@ namespace Lambda
 	}
 	
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	ILog* LogManager::GetLog(const char* pName) const
+	ILog* CLogManager::GetLog(const char* pName) const
 	{
 		if (pName)
 		{
@@ -99,8 +99,8 @@ namespace Lambda
 	}
 	
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	LogManager* LogManager::Create()
+	CLogManager* CLogManager::Create()
 	{
-		return DBG_NEW LogManager();
+		return DBG_NEW CLogManager();
 	}
 }

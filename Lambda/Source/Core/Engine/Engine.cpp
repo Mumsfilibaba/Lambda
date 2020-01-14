@@ -8,7 +8,7 @@
 #include "Core/Engine/Engine.h"
 #include "Core/Engine/System.h"
 #include "Core/Engine/Console.h"
-#include "Core/Engine/IWindow.h"
+#include "Core/Engine/Window.h"
 
 //----------------
 //_CreateGameLayer
@@ -18,21 +18,10 @@ extern Lambda::Layer* (*_CreateGameLayer)();
 
 namespace Lambda
 {
-	//------
-	//Engine
-	//------
-
-	Engine g_Engine;
-
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	Engine& Engine::Get()
-	{
-		return g_Engine;
-	}
-
-	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	Engine::Engine()
-		: ISystemEventListener()
+	CEngine::CEngine()
+		: CSingleton<CEngine>(),
+        ISystemEventListener()
 	{
 		//Init pointer
 		m_pWindow = nullptr;
@@ -48,18 +37,18 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	Engine::~Engine()
+	CEngine::~CEngine()
 	{
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	bool Engine::Init(const EngineParams&)
+	bool CEngine::Init(const SEngineParams&)
 	{
 		//Create console
 		Console::Attach();
 
 		//Create logManager and log
-		m_pLogManager = LogManager::Create();
+		m_pLogManager = CLogManager::Create();
 		m_pLogManager->CreateDefaultLog(ELogMode::LOG_MODE_TRUNCATE, ELogVerbosity::LOG_VERBOSITY_ERROR, true, false);
 		m_pLogManager->CreateLog("Debug", ELogMode::LOG_MODE_TRUNCATE, ELogVerbosity::LOG_VERBOSITY_ERROR, true, false);
 
@@ -73,7 +62,7 @@ namespace Lambda
 		System::AddListener(m_pLayerStack);
 
 		//Create window
-		IWindow* pWindow = System::CreateWindow("Lambda Engine", 1440, 900);
+		CWindow* pWindow = System::CreateWindow("Lambda Engine", 1440, 900);
 		if (!pWindow)
 		{
 			return false;
@@ -105,13 +94,10 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void Engine::Detach()
+	void CEngine::Release()
 	{
 		//Detach input
-		Input::Detach();
-
-		//Delete window
-		SafeDelete(m_pWindow);
+		Input::Release();
 
 		//Delete Layers
 		System::RemoveListener(m_pLayerStack);
@@ -130,7 +116,7 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void Engine::RunMainLoop() 
+	void CEngine::RunMainLoop() 
 	{
 		//Startup engine
 		D_LOG_INFO("Starting up engine");
@@ -163,7 +149,7 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	bool Engine::OnSystemEvent(const SystemEvent& event)
+	bool CEngine::OnSystemEvent(const SystemEvent& event)
 	{
 		if (event.EventType == ESystemEvent::SYSTEM_EVENT_KEY_PRESSED)
 		{
@@ -177,7 +163,7 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void Engine::Exit(int32 exitCode)
+	void CEngine::Exit(int32 exitCode)
 	{
 		m_State.IsRunning = false;
 		m_State.ExitCode  = exitCode;

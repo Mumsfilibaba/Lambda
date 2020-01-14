@@ -54,7 +54,7 @@ namespace Lambda
 
 	class Log : public ILog
 	{
-		friend class LogManager;
+		friend class CLogManager;
 	public:
 		/*ILog interface*/
 		virtual void Write(ELogVerbosity verbosity, const char* pFormat, ...) override;

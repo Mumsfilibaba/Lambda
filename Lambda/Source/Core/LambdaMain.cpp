@@ -14,17 +14,19 @@ namespace Lambda
 	//LambdaMain
 	//----------
 
-	extern Engine g_Engine;
+	extern CEngine g_Engine;
 
-	int32 LambdaMain(const EngineParams& params)
+	int32 LambdaMain(const SEngineParams& params)
 	{
 		if (!g_Engine.Init(params))
 		{
 			return -1;
 		}
 
-		g_Engine.RunMainLoop();
-		g_Engine.Detach();
+        while (g_Engine.IsRunning())
+            g_Engine.Tick();
+        
+		g_Engine.Release();
 		return g_Engine.GetExitCode();
 	}
 }

@@ -1,7 +1,7 @@
 #include "LambdaPch.h"
 
 #include "Core/Engine/System.h"
-#include "Core/Log/LogManager.h"
+#include "Core/Log/CLogManager.h"
 
 #if defined(LAMBDA_PLAT_WINDOWS)
 	#include "Platform/Windows/WindowsSystem.h"
@@ -23,7 +23,7 @@ namespace Lambda
 		LAMBDA_ASSERT_PRINT(s_pInstance == nullptr, "Application can only be initialized once");
 
 		//Create log for system
-		LogManager::Get().CreateLog("System", ELogMode::LOG_MODE_TRUNCATE, ELogVerbosity::LOG_VERBOSITY_ERROR, true, false);
+		CLogManager::Get().CreateLog("System", ELogMode::LOG_MODE_TRUNCATE, ELogVerbosity::LOG_VERBOSITY_ERROR, true, false);
 
 		//Create instance
 #if defined(LAMBDA_PLAT_WINDOWS)

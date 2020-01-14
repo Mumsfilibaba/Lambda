@@ -46,15 +46,15 @@
 namespace Lambda
 {
 	//----------
-	//LogManager
+	//CLogManager
 	//----------
 
-	class LAMBDA_API LogManager final : public Singleton<LogManager>
+    class LAMBDA_API CLogManager final : public CSingleton<CLogManager>
 	{
 	private:
-		LogManager();
+		CLogManager();
 	public:
-		~LogManager();
+		~CLogManager();
 
 		ILog* CreateLog(const char* pName, ELogMode mode, ELogVerbosity verbosity, bool bWriteConsole, bool bWriteFile);
 		void CreateDefaultLog(ELogMode mode, ELogVerbosity verbosity, bool bWriteConsole, bool bWriteFile);
@@ -76,6 +76,6 @@ namespace Lambda
 		ILog* m_pDefaultLog;
 		std::unordered_map<std::string, ILog*> m_Logs;
 	public:
-		static LogManager* Create();
+		static CLogManager* Create();
 	};
 }

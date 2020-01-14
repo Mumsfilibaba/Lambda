@@ -15,17 +15,6 @@ namespace Lambda
 	class CWindow;
 
 	//------------
-	//EDisplayMode
-	//------------
-
-	enum class EDisplayMode
-	{
-		DISPLAY_MODE_WINDOWED				= 0,
-		DISPLAY_MODE_FULLSCREEN				= 1,
-		DISPLAY_MODE_BORDERLESS_FULLSCREEN	= 2
-	};
-
-	//------------
 	//CApplication
 	//------------
 
@@ -37,7 +26,13 @@ namespace Lambda
 
 		virtual void AddEventListener(ISystemEventListener* pListener);
 		virtual void RemoveEventListener(ISystemEventListener* pListener);
-
+        
+        virtual void SetDisplayMode(EDisplayMode mode);
+        virtual void SetDisplayMetrics(uint32 width, uint32 height);
+        virtual void GetDisplayMetrics(uint32& width, uint32& height) const;
+        
+        virtual CWindow* GetForegroundWindow() const;
+        
 		static CWindow* CreateWindow() { return nullptr; }
 		static CApplication* CreateApplication() { return nullptr; }
 		static void Initialize() {}
