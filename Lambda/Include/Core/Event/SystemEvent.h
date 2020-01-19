@@ -4,8 +4,6 @@
 #include "Core/Input/EMouse.h"
 #include "Core/Input/EKeyboard.h"
 
-#include "WindowEvent.h"
-
 namespace Lambda
 {
 	//------------
@@ -25,9 +23,12 @@ namespace Lambda
 		SYSTEM_EVENT_MOUSE_BUTTON_RELEASED = 6,
 		SYSTEM_EVENT_MOUSE_BUTTON_PRESSED  = 7,
 
-        SYSTEM_EVENT_WINDOW_FOCUS_CHANGED = 8,
-		SYSTEM_EVENT_WINDOW_RESIZED		  = 9,
-		SYSTEM_EVENT_WINDOW_MOVED		  = 10,
+		SYSTEM_EVENT_APP_EXIT			= 8,
+        SYSTEM_EVENT_APP_FOCUS_CHANGED	= 9,
+
+		SYSTEM_EVENT_DISPLAY_RESIZED = 10,
+
+		SYSTEM_EVENT_WINDOW_MOVE = 11,
 	};
 
 	//---------
@@ -51,33 +52,86 @@ namespace Lambda
 	};
 
 	//----------------
-	//MouseButtonEvent
+	//SMouseMovedEvent
 	//----------------
 
-	struct MouseButtonEvent
-	{
-		EMouseButton Button;
-		uint32 Modifiers;
-	};
-
-	//---------------
-	//MouseMovedEvent
-	//---------------
-
-	struct MouseMovedEvent
+	struct SMouseMovedEvent
 	{
 		int32 x;
 		int32 y;
 	};
 
-	//------------------
-	//MouseScrolledEvent
-	//------------------
+	//-----------------
+	//SMouseButtonEvent
+	//-----------------
 
-	struct MouseScrolledEvent
+	struct SMouseButtonEvent
+	{
+		EMouseButton Button;
+		uint32 Modifiers;
+		int32 x;
+		int32 y;
+	};
+
+	//-------------------
+	//SMouseScrolledEvent
+	//-------------------
+
+	struct SMouseScrolledEvent
 	{
 		float Horizontal;
 		float Vertical;
+	};
+
+	//-----------
+	//EResizeType
+	//-----------
+
+	enum class EResizeType : uint32
+	{
+		RESIZE_TYPE_UNKNOWN		= 0,
+		RESIZE_TYPE_MAXIMIZED	= 1,
+		RESIZE_TYPE_MINIMIZED	= 2,
+		RESIZE_TYPE_STANDARD	= 3
+	};
+
+	//-------------------
+	//SDisplayResizeEvent
+	//-------------------
+
+	struct SDisplayResizeEvent
+	{
+		EResizeType ResizeType;
+		uint32 Width;
+		uint32 Height;
+	};
+
+	//----------------
+	//SWindowMoveEvent
+	//----------------
+
+	struct SWindowMoveEvent
+	{
+		uint32 x;
+		uint32 y;
+	};
+
+	//---------------------
+	//SAppFocusChangedEvent
+	//---------------------
+
+	struct SAppFocusChangedEvent
+	{
+		bool bHasFocus;
+	};
+
+	//-------------
+	//SAppExitEvent
+	//-------------
+
+	struct SAppExitEvent
+	{
+		int32 ExitCode;
 	};
 
     //------------
@@ -92,13 +146,16 @@ namespace Lambda
 			SKeyEvent KeyEvent;
 			SKeyTextEvent KeyTextEvent;
 
-			MouseMovedEvent MouseMovedEvent;
-			MouseScrolledEvent MouseScrolledEvent;
-			MouseButtonEvent MouseButtonEvent;
+			SMouseMovedEvent MouseMovedEvent;
+			SMouseScrolledEvent MouseScrolledEvent;
+			SMouseButtonEvent MouseButtonEvent;
 
-			WindowFocusChangedEvent WindowFocusChangedEvent;
-			WindowResizeEvent WindowResizedEvent;
-			WindowMoveEvent WindowMovedEvent;
+			SDisplayResizeEvent DisplayResizeEvent;
+			
+			SAppExitEvent AppExitEvent;
+			SAppFocusChangedEvent AppFocusChangedEvent;
+			
+			SWindowMoveEvent WindowMovedEvent;
 		};
     };
 }

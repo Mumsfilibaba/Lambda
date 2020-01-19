@@ -9,17 +9,17 @@ namespace Lambda
 	//WindowKeyboard
 	//--------------
 
-	uint32 WindowsKeyboard::s_KeyTable[EKey::KEY_LAST + 1];
-	EKey   WindowsKeyboard::s_WindowsKeyTable[256];
+	uint32 CWindowsKeyboard::s_KeyTable[EKey::KEY_LAST + 1];
+	EKey   CWindowsKeyboard::s_WindowsKeyTable[256];
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	EKey WindowsKeyboard::ConvertVirtualKey(uint32 keycode)
+	EKey CWindowsKeyboard::ConvertVirtualKey(uint32 keycode)
 	{
 		return s_WindowsKeyTable[keycode];
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	uint32 WindowsKeyboard::GetModifierKeys()
+	uint32 CWindowsKeyboard::GetModifierKeys()
 	{
 		uint32 modifiers = 0;
 		if (GetKeyState(VK_SHIFT) & 0x8000)
@@ -39,13 +39,13 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	uint32 WindowsKeyboard::ConvertVirtualKey(EKey keycode)
+	uint32 CWindowsKeyboard::ConvertVirtualKey(EKey keycode)
 	{
 		return s_KeyTable[keycode];
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void WindowsKeyboard::Attach()
+	void CWindowsKeyboard::Init()
 	{
 		//Set to zero
 		memset(s_WindowsKeyTable, 0, sizeof(s_WindowsKeyTable));

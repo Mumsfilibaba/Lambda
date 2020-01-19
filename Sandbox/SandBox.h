@@ -6,7 +6,7 @@ namespace Lambda
     //------------
     //SandBoxLayer 
     //------------
-    class SandBoxLayer final : public Layer
+    class SandBoxLayer final : public CLayer
     {
     public:
         SandBoxLayer();
@@ -14,7 +14,7 @@ namespace Lambda
 
         LAMBDA_NO_COPY(SandBoxLayer);
 
-        virtual void OnUpdate(const Time& deltaTime) override final;
-        virtual bool OnSystemEvent(const SystemEvent& event) override final;
+        virtual void OnUpdate(const CTime& deltaTime) override final;
+        virtual bool OnSystemEvent(const SSystemEvent& event) override final;
     };
 }

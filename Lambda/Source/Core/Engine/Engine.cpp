@@ -6,39 +6,46 @@
 #include "Core/Event/SystemEvent.h"
 
 #include "Core/Engine/Engine.h"
-#include "Core/Engine/System.h"
 #include "Core/Engine/Console.h"
-#include "Core/Engine/Window.h"
+
+#include "Platform/Window.h"
 
 //----------------
 //_CreateGameLayer
 //----------------
 
-extern Lambda::Layer* (*_CreateGameLayer)();
+extern Lambda::CLayer* (*_CreateGameLayer)();
 
 namespace Lambda
 {
+	//-------
+	//CEngine
+	//-------
+
+	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
+	CEngine* CEngine::Create()
+	{
+		return DBG_NEW CEngine();
+	}
+
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
 	CEngine::CEngine()
 		: CSingleton<CEngine>(),
         ISystemEventListener()
 	{
 		//Init pointer
-		m_pWindow = nullptr;
-		m_pLayerStack = nullptr;
+		m_pWindow		= nullptr;
+		m_pApplication	= nullptr;
+		m_pLogManager	= nullptr;
+		m_pLayerStack	= nullptr;
 
 		//Setup default frametime
-		m_Frametime.Timestep	  = Time::Seconds(1.0f / 60.0f);
-		m_Frametime.UpdateBacklog = Time(0);
+		m_Timestep		= CTime::Seconds(1.0f / 60.0f);
+		m_UpdateBacklog = CTime(0);
 
 		//Setup enginestate
-		m_State.IsRunning = false;
-		m_State.ExitCode = 0;
-	}
-
-	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	CEngine::~CEngine()
-	{
+		m_bIsRunning = false;
+		m_ExitCode = 0;
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -50,19 +57,23 @@ namespace Lambda
 		//Create logManager and log
 		m_pLogManager = CLogManager::Create();
 		m_pLogManager->CreateDefaultLog(ELogMode::LOG_MODE_TRUNCATE, ELogVerbosity::LOG_VERBOSITY_ERROR, true, false);
-		m_pLogManager->CreateLog("Debug", ELogMode::LOG_MODE_TRUNCATE, ELogVerbosity::LOG_VERBOSITY_ERROR, true, false);
 
 		//Create application
-		System::Initialize();
-		//Add this to the system event listeners
-		System::AddListener(this);
+		CPlatformApplication::Init();
+		m_pApplication = CPlatformApplication::CreateApplication();
+		m_pApplication->AddEventListener(this);
 
-		//Create LayerStack
-		m_pLayerStack = DBG_NEW LayerStack();
-		System::AddListener(m_pLayerStack);
+		//Create CLayerStack
+		m_pLayerStack = CLayerStack::Create();
+		m_pApplication->AddEventListener(m_pLayerStack);
 
 		//Create window
-		CWindow* pWindow = System::CreateWindow("Lambda Engine", 1440, 900);
+		SWindowProps windowProps = {};
+		windowProps.pTitle	= "Lambda Engine";
+		windowProps.Width	= 1440;
+		windowProps.Height	= 900;
+
+		CWindow* pWindow = m_pApplication->CreateWindow(windowProps);
 		if (!pWindow)
 		{
 			return false;
@@ -73,7 +84,7 @@ namespace Lambda
 		}
 
 		//Create inputcontroller
-		Input::Attach(EInputType::INPUT_TYPE_DEFAULT);
+		Input::Init(EInputType::INPUT_TYPE_DEFAULT);
 
 		//Print Engine info
 		LOG_MESSAGE("Engine Initialized: Build=%s, Platform=%s, Architecture=%s", LAMBDA_BUILD, LAMBDA_PLATFORM, LAMBDA_ARCHITECTURE);
@@ -82,14 +93,17 @@ namespace Lambda
 		if (_CreateGameLayer)
 		{
 			D_LOG_INFO("Creating gamelayer");
-			Layer* pGameLayer = _CreateGameLayer();
-			PushLayer(pGameLayer);
+			
+			CLayer* pGameLayer = _CreateGameLayer();
+			m_pLayerStack->PushLayer(pGameLayer);
 		}
 		else
 		{
 			D_LOG_INFO("_CreateGameLayer not defined");
 		}
         
+		//Show window and return
+		m_pWindow->Show();
 		return true;
 	}
 
@@ -100,13 +114,12 @@ namespace Lambda
 		Input::Release();
 
 		//Delete Layers
-		System::RemoveListener(m_pLayerStack);
-		m_pLayerStack->ReleaseLayers();
+		m_pApplication->RemoveEventListener(m_pLayerStack);
 		SafeDelete(m_pLayerStack);
 
-		//Remove as listener
-		System::RemoveListener(this);
-		System::Detach();
+		//Delete application
+		SafeDelete(m_pApplication);
+		CPlatformApplication::Release();
 
 		//Delete logmanager
 		SafeDelete(m_pLogManager);
@@ -116,58 +129,61 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void CEngine::RunMainLoop() 
+	void CEngine::Startup()
 	{
 		//Startup engine
 		D_LOG_INFO("Starting up engine");
-		m_State.IsRunning = true;
-
-		//MainLoop
-		m_Frametime.FrameClock.Reset();
-		while (m_State.IsRunning)
-		{
-			//Get deltatime
-			m_Frametime.FrameClock.Tick();
-
-			//Handle all system events
-			System::ProcessEvents();
-
-			//Update
-			if (m_Frametime.UpdateBacklog >= m_Frametime.Timestep)
-			{
-				m_pLayerStack->OnUpdate(m_Frametime.Timestep);
-				m_Frametime.UpdateBacklog = Time(0);
-			}
-			else
-			{
-				m_Frametime.UpdateBacklog += m_Frametime.FrameClock.GetDeltaTime();
-			}
-		}
-
-		//Terminating engine
-		D_LOG_INFO("Terminating engine");
+		
+		m_bIsRunning = true;
+		m_FrameClock.Reset();
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	bool CEngine::OnSystemEvent(const SystemEvent& event)
+	void CEngine::Tick() 
+	{
+		//Handle all system events
+		CPlatformApplication::ProcessEvents();
+
+		//Get deltatime
+		m_FrameClock.Tick();
+		CTime deltatime = m_FrameClock.GetDeltaTime();
+
+		//Update
+		if (m_UpdateBacklog >= m_Timestep)
+		{
+			m_pLayerStack->OnUpdate(deltatime);
+			m_UpdateBacklog -= deltatime;
+		}
+		else
+		{
+			m_UpdateBacklog += deltatime;
+		}
+	}
+
+	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
+	bool CEngine::OnSystemEvent(const SSystemEvent& event)
 	{
 		if (event.EventType == ESystemEvent::SYSTEM_EVENT_KEY_PRESSED)
 		{
 			if (event.KeyEvent.Key == EKey::KEY_SPACE)
-			{
-				m_pWindow->SetFullscreen(true);
-			}
+				m_pWindow->SetDisplayMode(EDisplayMode::DISPLAY_MODE_FULLSCREEN);
+		}
+		else if (event.EventType == ESystemEvent::SYSTEM_EVENT_APP_EXIT)
+		{
+			Terminate(event.AppExitEvent.ExitCode);
+			return true;
 		}
 
 		return false;
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void CEngine::Exit(int32 exitCode)
+	void CEngine::Terminate(int32 exitCode)
 	{
-		m_State.IsRunning = false;
-		m_State.ExitCode  = exitCode;
+		//Terminating engine
+		D_LOG_INFO("Terminating engine - ExitCode=%d", exitCode);
 
-		D_LOG_INFO("Engine::Exit called, exitCode=%d", exitCode);
+		m_bIsRunning = false;
+		m_ExitCode   = exitCode;
 	}
 }

@@ -3,45 +3,42 @@
 
 namespace Lambda
 {
-    //-----
-    //Clock
-    //-----
+    //------
+    //CClock
+    //------
 
-	class Clock
+	class CClock
 	{
 	public:
-		Clock();
-		Clock(Clock&& other) noexcept;
-		Clock(const Clock& other) noexcept;
-		~Clock() = default;
+		CClock();
+		CClock(CClock&& other) noexcept;
+		CClock(const CClock& other) noexcept;
+		~CClock() = default;
 
-		Clock& operator=(Clock&& other) noexcept;
-		Clock& operator=(const Clock& other) noexcept;
+		CClock& operator=(CClock&& other) noexcept;
+		CClock& operator=(const CClock& other) noexcept;
 
 		void Tick();
 
-		/////////////////////////
 		_forceinline void Reset()
 		{
-			m_DeltaTime = Time(0);
-			m_TotalTime = Time(0);
+			m_DeltaTime = CTime(0);
+			m_TotalTime = CTime(0);
 		}
 
-		///////////////////////////////////////
-		_forceinline Time GetDeltaTime() const
+		_forceinline CTime GetDeltaTime() const
 		{
 			return m_DeltaTime;
 		}
 
-		///////////////////////////////////////
-		_forceinline Time GetTotalTime() const
+		_forceinline CTime GetTotalTime() const
 		{
 			return m_TotalTime;
 		}
 	private:
 		uint64 m_Frequency;
-		Time m_LastTime;
-		Time m_TotalTime;
-		Time m_DeltaTime;
+		CTime m_LastTime;
+		CTime m_TotalTime;
+		CTime m_DeltaTime;
 	};
 }

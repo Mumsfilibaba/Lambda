@@ -3,15 +3,16 @@
 
 namespace Lambda
 {
-    struct SystemEvent;
+    struct SSystemEvent;
     
-    //--------------------
-    //ISystemEventListener
-    //--------------------
+    //--------------
+    //CEventListener
+    //--------------
+
 	class LAMBDA_API ISystemEventListener
 	{
 	public:
 		LAMBDA_INTERFACE(ISystemEventListener);
-		virtual bool OnSystemEvent(const SystemEvent& event) = 0;
+		virtual bool OnSystemEvent(const SSystemEvent& event) = 0;
 	};
 }

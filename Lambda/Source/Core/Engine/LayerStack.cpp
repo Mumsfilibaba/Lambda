@@ -4,20 +4,26 @@
 
 namespace Lambda
 {
-	//----------
-	//LayerStack
-	//----------
+	//-----------
+	//CLayerStack
+	//-----------
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	LayerStack::LayerStack()
+	CLayerStack::CLayerStack()
 		: ISystemEventListener()
 	{
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	bool LayerStack::OnSystemEvent(const SystemEvent& event)
+	CLayerStack::~CLayerStack()
 	{
-		for (Layer* pLayer : m_Layers)
+		ReleaseLayers();
+	}
+
+	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
+	bool CLayerStack::OnSystemEvent(const SSystemEvent& event)
+	{
+		for (CLayer* pLayer : m_Layers)
 		{
 			if (pLayer->OnSystemEvent(event))
 				return true;
@@ -27,22 +33,27 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void LayerStack::PushLayer(Layer* pLayer)
+	void CLayerStack::PushLayer(CLayer* pLayer)
 	{
-		m_Layers.emplace_back(pLayer);
+		if (pLayer)
+		{
+			pLayer->OnAttach();
+			m_Layers.emplace_back(pLayer);
+		}
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void LayerStack::PopLayer()
+	void CLayerStack::PopLayer()
 	{
-		Layer* pLayer = m_Layers.back();
+		CLayer* pLayer = m_Layers.back();
+		pLayer->OnDetach();	
 		SafeDelete(pLayer);
 
 		m_Layers.pop_back();
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void LayerStack::ReleaseLayers()
+	void CLayerStack::ReleaseLayers()
 	{
 		size_t count = m_Layers.size();
 		for (size_t i = 0; i < count; i++)
@@ -50,9 +61,15 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void LayerStack::OnUpdate(const Time& time)
+	void CLayerStack::OnUpdate(const CTime& time)
 	{
-		for (Layer* pLayer : m_Layers)
+		for (CLayer* pLayer : m_Layers)
 			pLayer->OnUpdate(time);
+	}
+	
+	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
+	CLayerStack* CLayerStack::Create()
+	{
+		return DBG_NEW CLayerStack();
 	}
 }

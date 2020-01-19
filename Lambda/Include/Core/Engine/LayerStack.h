@@ -1,30 +1,35 @@
 #pragma once
 #include "LambdaCore.h"
-
 #include "Layer.h"
+
 #include "Core/Event/ISystemEventListener.h"
 
 #include <vector>
 
 namespace Lambda
 {
-	//LayerStack
-	class LayerStack final : public ISystemEventListener
+	//-----------
+	//CLayerStack
+	//-----------
+
+	class CLayerStack final : public ISystemEventListener
 	{
+	private:
+		CLayerStack();
 	public:
-		LayerStack();
-		~LayerStack() = default;
+		~CLayerStack();
 
-		/*ISysemEventListener Interface*/
-		virtual bool OnSystemEvent(const SystemEvent& event) override final;
-
-		/*LayerStack Interface*/
-		void PushLayer(Layer* player);
+		void PushLayer(CLayer* player);
 		void PopLayer();
 		void ReleaseLayers();
 		
-		void OnUpdate(const Time& time);
+		void OnUpdate(const CTime& time);
+
+		static CLayerStack* Create();
+
+		/*ISysemEventListener Interface*/
+		virtual bool OnSystemEvent(const SSystemEvent& event) override final;
 	private:
-		std::vector<Layer*> m_Layers;
+		std::vector<CLayer*> m_Layers;
 	};
 }

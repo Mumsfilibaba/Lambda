@@ -19,7 +19,7 @@ namespace Lambda
 	//------------------------
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	Layer* CreateGameLayer()
+	CLayer* CreateGameLayer()
 	{
 		return DBG_NEW SandBoxLayer();
 	}
@@ -30,24 +30,24 @@ namespace Lambda
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
 	SandBoxLayer::SandBoxLayer()
-		: Layer("SandBoxLayer")
+		: CLayer("SandBoxLayer")
 	{
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void SandBoxLayer::OnUpdate(const Time& deltaTime)
+	void SandBoxLayer::OnUpdate(const CTime& deltaTime)
 	{
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	bool SandBoxLayer::OnSystemEvent(const SystemEvent& event)
+	bool SandBoxLayer::OnSystemEvent(const SSystemEvent& event)
 	{
 		if (event.EventType == ESystemEvent::SYSTEM_EVENT_KEY_PRESSED)
 		{
 			if (event.KeyEvent.Key == EKey::KEY_ESCAPE)
 			{
 				CEngine& engine = CEngine::Get();
-				engine.Exit(0);
+				engine.Terminate(0);
 
 				return true;
 			}

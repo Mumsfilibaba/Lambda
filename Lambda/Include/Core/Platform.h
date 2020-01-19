@@ -33,6 +33,15 @@
     #error No platform defined
 #endif
 
+//Include platform specifics
+#if defined(LAMBDA_PLAT_WINDOWS)
+    #include "Platform/Windows/WindowsApplication.h"
+#elif defined(LAMBDA_PLAT_MACOS)
+    //#include "Platform/macOS/MacApplication.h"
+#else
+    #error No platform defined
+#endif
+
 namespace Lambda
 {
     //---------------

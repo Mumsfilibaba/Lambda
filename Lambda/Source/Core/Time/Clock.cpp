@@ -6,11 +6,11 @@
 namespace Lambda
 {
 	//------
-	//Clock
+	//CClock
 	//------
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	Clock::Clock()
+	CClock::CClock()
 		: m_Frequency(0),
 		m_DeltaTime(0),
 		m_TotalTime(0),
@@ -21,7 +21,7 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	Clock::Clock(Clock&& other) noexcept
+	CClock::CClock(CClock&& other) noexcept
 		: m_Frequency(other.m_Frequency),
 		m_LastTime(other.m_LastTime),
 		m_TotalTime(other.m_TotalTime),
@@ -30,7 +30,7 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	Clock::Clock(const Clock& other) noexcept
+	CClock::CClock(const CClock& other) noexcept
 		: m_Frequency(other.m_Frequency),
 		m_LastTime(other.m_LastTime),
 		m_TotalTime(other.m_TotalTime),
@@ -39,7 +39,7 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	Clock& Clock::operator=(Clock&& other) noexcept
+	CClock& CClock::operator=(CClock&& other) noexcept
 	{
 		if (this != &other)
 		{
@@ -57,7 +57,7 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	Clock& Clock::operator=(const Clock& other) noexcept
+	CClock& CClock::operator=(const CClock& other) noexcept
 	{
 		if (this != &other)
 		{
@@ -71,11 +71,11 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void Clock::Tick()
+	void CClock::Tick()
 	{
 		//Get current time
 		uint64 now = Platform::Time::QueryPerformanceCounter();
-		Time currentTime = Time(now / m_Frequency);
+		CTime currentTime = CTime(now / m_Frequency);
 
 		//Update delta- and totaltime
 		m_DeltaTime = currentTime - m_LastTime;

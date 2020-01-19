@@ -13,6 +13,7 @@ namespace Lambda
 	//----------
 	//EInputType
 	//----------
+	
 	enum class EInputType
 	{
 		INPUT_TYPE_UNKNOWN = 0,
@@ -22,6 +23,7 @@ namespace Lambda
 	//----------------
 	//IInputController
 	//----------------
+
 	class IInputController
 	{
 		friend class Input;
@@ -45,13 +47,14 @@ namespace Lambda
 	//-----
 	//Input
 	//-----
+
 	class LAMBDA_API Input
 	{
 	public:
 		LAMBDA_STATIC_CLASS(Input);
 
-		static void Attach(EInputType type);
-		static void Detach();
+		static void Init(EInputType type);
+		static void Release();
 
 		inline static bool IsKeyDown(EKey key)	{ return s_pController->IsKeyDown(key); }
 		inline static bool IsKeyUp(EKey key)	{ return s_pController->IsKeyUp(key); }

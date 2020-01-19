@@ -9,10 +9,9 @@
 
 namespace Lambda
 {
-    class ILog;
-    class Layer;
-    class CLogManager;
+    class CLayer;
     class CWindow;
+    class CLogManager;
     class CApplication;
 
     //-------------
@@ -29,53 +28,42 @@ namespace Lambda
     //CEngine
     //-------
     
-    class LAMBDA_API CEngine final :
-        public CSingleton<CEngine>,
+    class LAMBDA_API CEngine final : public CSingleton<CEngine>, 
         public ISystemEventListener
     {
     private:
-        struct Frametime
-        {
-            Clock FrameClock;
-            Time Timestep;
-            Time UpdateBacklog;
-        };
-
-        struct EngineState
-        {
-            bool IsRunning;
-            int32 ExitCode;
-        };
-    public:
         CEngine();
-        ~CEngine();
+    public:
+        ~CEngine() = default;
+
+        bool Init(const SEngineParams& engineParams);
+        void Startup();
+        void Tick();
+        void Terminate(int32 exitCode);
+        void Release();
+        
+        bool IsRunning() const { return m_bIsRunning; }    
+        
+        void SetTimestep(const CTime& timestep) { m_Timestep = timestep; }
+        
+        int32 GetExitCode() const { return m_ExitCode; }
+        const CTime& GetTimestep() const { return m_Timestep; }
+        CLayerStack* GetLayerStack() { return m_pLayerStack; }
+        
+        static CEngine* Create();
 
         /*ISystemEventListener Interface*/
-        virtual bool OnSystemEvent(const SystemEvent& event) override final;
-
-        /*Engine Interface*/
-        bool Init(const SEngineParams& engineParams);
-        void Release();
-
-        void Tick();
-        void Exit(int32 exitCode);
-
-        bool IsRunning() const { return m_State.IsRunning; }
-
-        void PushLayer(Layer* pLayer) { m_pLayerStack->PushLayer(pLayer); }
-        void PopLayer() { m_pLayerStack->PopLayer(); }
-
-        void SetUpdateTimestep(const Time& timestep) { m_Frametime.Timestep = timestep; }
-        
-        int32 GetExitCode() const { return m_State.ExitCode; }
-        const Time& GetUpdateTimestep() const { return m_Frametime.Timestep; }
+        virtual bool OnSystemEvent(const SSystemEvent& event) override final;
     private:
         CWindow* m_pWindow;
         CApplication* m_pApplication;
-        LayerStack* m_pLayerStack;
+        CLayerStack* m_pLayerStack;
         CLogManager* m_pLogManager;
 
-        Frametime   m_Frametime;
-        EngineState m_State;
+        CClock m_FrameClock;
+        CTime m_Timestep;
+        CTime m_UpdateBacklog;
+        int32 m_ExitCode;
+        bool  m_bIsRunning;
     };
 }

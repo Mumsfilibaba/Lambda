@@ -49,10 +49,10 @@ namespace Lambda
 	};
 
 	//----
-	//Log
+	//CLog
 	//----
 
-	class Log : public ILog
+	class CLog : public ILog
 	{
 		friend class CLogManager;
 	public:
@@ -74,8 +74,8 @@ namespace Lambda
 			return m_Filter;
 		}
 	private:
-		Log(const char* pName, ELogMode mode, ELogVerbosity filter, bool bWriteConsole, bool bWriteFile);
-		~Log();
+		CLog(const char* pName, ELogMode mode, ELogVerbosity filter, bool bWriteConsole, bool bWriteFile);
+		~CLog();
 
 		bool OpenFile();
 		bool CloseFile();

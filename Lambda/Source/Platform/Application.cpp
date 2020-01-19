@@ -1,6 +1,6 @@
 #include "LambdaPch.h"
 
-#include "Core/Engine/Application.h"
+#include "Platform/Application.h"
 
 namespace Lambda
 {
@@ -10,7 +10,8 @@ namespace Lambda
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
 	CApplication::CApplication()
-		:  m_EventListeners()
+		: CSingleton<CApplication>(),
+		m_EventListeners()
 	{
 	}
 
@@ -32,9 +33,22 @@ namespace Lambda
 		{
 			if (pListener == *it)
 			{
-				m_EventListeners.erase(it);
+				it = m_EventListeners.erase(it);
 				return;
 			}
 		}
+	}
+	
+	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
+	bool CApplication::DispatchEvent(const SSystemEvent& event) const
+	{
+		bool bHandled = false;
+		for (auto listener : m_EventListeners)
+		{
+			if (listener->OnSystemEvent(event))
+				bHandled = true;
+		}
+
+		return bHandled;
 	}
 }

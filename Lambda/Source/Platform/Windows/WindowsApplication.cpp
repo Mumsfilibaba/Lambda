@@ -1,89 +1,126 @@
 #include "LambdaPch.h"
 
 #if defined(LAMBDA_PLAT_WINDOWS)
-	#include "Core/Engine/Engine.h"
-	#include "Core/Event/SystemEvent.h"
+	#include "Core/Event/SystemEvent.h"	
 
-	#include "Platform/Windows/WindowsSystem.h"
+	#include "Platform/Windows/WindowsApplication.h"
+	#include "Platform/Windows/WindowsKeyboard.h"
 	#include "Platform/Windows/WindowsWindow.h"
-    #include "Platform/Windows/WindowsKeyboard.h"
-
-	#define WIN32_LEAN_AND_MEAN 1
-	#include <Windows.h>
 
 namespace Lambda
 {
-	//-------------
-	//WindowsSystem
-	//-------------
+	//-------------------
+	//CWindowsApplication
+	//-------------------
 
-	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    ISystem* WindowsSystem::Create()
+	HINSTANCE CWindowsApplication::s_hInstance = 0;
+	CWindowsApplication* CWindowsApplication::s_pWindowsApplication = nullptr;
+
+    /*////////////////////////////////////////////////////////////////////////////////////////////////*/
+    CApplication* CWindowsApplication::CreateApplication()
     {
-        //Setup debugflags
-#if defined(LAMBDA_DEBUG)
-        _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-#endif
-        ISystem* pSystem = DBG_NEW WindowsSystem();
-        return pSystem;
+        s_pWindowsApplication = DBG_NEW CWindowsApplication();
+        return s_pWindowsApplication;
     }
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    WindowsSystem::WindowsSystem()
-		: ISystem()
+	CWindowsApplication::CWindowsApplication()
+		: CApplication(),
+        m_Windows()
 	{
-		//Init other members
-		m_hInstance = static_cast<HINSTANCE>(GetModuleHandle(0));
-
-        //Initialize lookuptable for keycodes
-        WindowsKeyboard::Attach();
-
-		//Register WindowClass
-		RegisterWindowClass(m_hInstance);
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    WindowsSystem::~WindowsSystem()
+	CWindowsApplication::~CWindowsApplication()
 	{
-		m_hInstance = 0;
+        //Release all windows
+        for (auto window : m_Windows)
+            window.second->Release();
+
+        m_Windows.clear();
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void WindowsSystem::RegisterWindowClass(HINSTANCE hInstance)
+	void CWindowsApplication::RegisterWindowClass(HINSTANCE hInstance)
 	{
 		//Register window class
 		WNDCLASSEX wc = {};
-		wc.cbSize = sizeof(WNDCLASSEX);
-		wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-		wc.lpfnWndProc = WindowsWindow::MessageProc;
-		wc.cbClsExtra = 0;
-		wc.cbWndExtra = 0;
-		wc.hInstance = hInstance;
-		wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
-		wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-		wc.hbrBackground = reinterpret_cast<HBRUSH>(GetStockObject(BLACK_BRUSH));
-		wc.lpszMenuName = NULL;
-		wc.lpszClassName = WindowsWindow::WindowClass();
+		wc.cbSize			= sizeof(WNDCLASSEX);
+		wc.style			= CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+		wc.lpfnWndProc		= CWindowsApplication::WndProc;
+		wc.cbClsExtra		= 0;
+		wc.cbWndExtra		= 0;
+		wc.hInstance		= hInstance;
+		wc.hIcon			= LoadIcon(NULL, IDI_APPLICATION);
+		wc.hCursor			= LoadCursor(NULL, IDC_ARROW);
+		wc.hbrBackground	= reinterpret_cast<HBRUSH>(GetStockObject(BLACK_BRUSH));
+		wc.lpszMenuName		= NULL;
+		wc.lpszClassName	= CWindowsWindow::WindowClass();
 		wc.hIconSm = 0;
 
 		::RegisterClassEx(&wc);
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	IWindow* WindowsSystem::CreateWindow(const char* pTitle, uint32 width, uint32 height)
+	CWindow* CWindowsApplication::GetCurrentWindow() const
 	{
-		//Create window
-		WindowsWindow* pWindow = DBG_NEW WindowsWindow(this);
-		if (!pWindow->Init(pTitle, width, height))
-		{
-			return nullptr;
-		}
+        HWND hWnd = ::GetForegroundWindow();
+		return FindWindowFromHWND(hWnd);
+	}
 
-		return pWindow;
+    /*////////////////////////////////////////////////////////////////////////////////////////////////*/
+    void CWindowsApplication::Terminate(int32 exitCode) const
+    {
+        ::PostQuitMessage(exitCode);
+    }
+
+    /*////////////////////////////////////////////////////////////////////////////////////////////////*/
+	CWindow* CWindowsApplication::CreateWindow(const SWindowProps& props)
+	{
+		LAMBDA_ASSERT_PRINT(s_pWindowsApplication, "CWindowsApplication not initialized");
+
+        CWindowsWindow* pWindowsWindow = DBG_NEW CWindowsWindow(s_pWindowsApplication);
+        if (pWindowsWindow->Init(props))
+        {
+            HWND hWnd = pWindowsWindow->GetHandle();
+            m_Windows.insert({ hWnd, pWindowsWindow });
+		    return pWindowsWindow;
+        }
+
+        return nullptr;
+	}
+
+    /*////////////////////////////////////////////////////////////////////////////////////////////////*/
+    CWindowsWindow* CWindowsApplication::FindWindowFromHWND(HWND hWnd) const
+    {
+        auto window = m_Windows.find(hWnd);
+        if (window != m_Windows.end())
+            return window->second;
+
+        return nullptr;
+    }
+
+	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
+	void CWindowsApplication::PreInit(HINSTANCE hInstance)
+	{
+		s_hInstance = hInstance;
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-    void WindowsSystem::ProcessEvents()
+	void CWindowsApplication::Init()
+	{
+		CWindowsKeyboard::Init();
+		RegisterWindowClass(s_hInstance);
+	}
+
+    /*////////////////////////////////////////////////////////////////////////////////////////////////*/
+    void CWindowsApplication::Release()
+    {
+        s_pWindowsApplication = nullptr;
+    }
+
+	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
+	void CWindowsApplication::ProcessEvents()
 	{
 		MSG message = {};
 		while (PeekMessage(&message, 0, 0, 0, PM_REMOVE))
@@ -94,36 +131,53 @@ namespace Lambda
 			//When we recive a quit message we exit the engine
 			if (message.message == WM_QUIT)
 			{
-                Engine& engine = Engine::Get();
-                engine.Exit(int32(message.wParam));
+				SSystemEvent event = {};
+                event.EventType = ESystemEvent::SYSTEM_EVENT_APP_EXIT;
+				event.AppExitEvent.ExitCode = 0;
+
+				s_pWindowsApplication->DispatchEvent(event);
 			}
 		}
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	LRESULT WindowsSystem::OnMessage(HWND hWnd, uint32 message, WPARAM wParam, LPARAM lParam)
+	LRESULT CWindowsApplication::WndProc(HWND hWnd, uint32 message, WPARAM wParam, LPARAM lParam)
 	{
+        if (s_pWindowsApplication)
+            return s_pWindowsApplication->HandleMessage(hWnd, message, wParam, lParam);
+        else
+            return DefWindowProc(hWnd, message, wParam, lParam);
+	}
+
+    /*////////////////////////////////////////////////////////////////////////////////////////////////*/
+	LRESULT CWindowsApplication::HandleMessage(HWND hWnd, uint32 message, WPARAM wParam, LPARAM lParam)
+	{
+        //Let window process message
+        CWindowsWindow* pWindow = FindWindowFromHWND(hWnd);
+        pWindow->ProcessMessage(message, wParam, lParam);
+
+        //Process event
+        SSystemEvent event = {};
         switch (message)
         {
             case WM_DESTROY:
             {
-                PostQuitMessage(0);
+                Terminate(0);
                 return 0;
             }
 
             case WM_SIZE:
             {
-                SystemEvent event = {};
-                event.EventType = ESystemEvent::SYSTEM_EVENT_WINDOW_RESIZED;
-                event.WindowResizedEvent.Width  = uint32(LOWORD(lParam));
-                event.WindowResizedEvent.Height = uint32(HIWORD(lParam));
+                event.EventType = ESystemEvent::SYSTEM_EVENT_DISPLAY_RESIZED;
+                event.DisplayResizeEvent.Width  = uint32(LOWORD(lParam));
+                event.DisplayResizeEvent.Height = uint32(HIWORD(lParam));
 
                 if (wParam == SIZE_MAXIMIZED)
-                    event.WindowResizedEvent.ResizeType = EResizeType::RESIZE_TYPE_MAXIMIZED;
+                    event.DisplayResizeEvent.ResizeType = EResizeType::RESIZE_TYPE_MAXIMIZED;
                 else if (wParam == SIZE_MINIMIZED)
-                    event.WindowResizedEvent.ResizeType = EResizeType::RESIZE_TYPE_MINIMIZED;
+                    event.DisplayResizeEvent.ResizeType = EResizeType::RESIZE_TYPE_MINIMIZED;
                 else
-                    event.WindowResizedEvent.ResizeType = EResizeType::RESIZE_TYPE_UNKNOWN;
+                    event.DisplayResizeEvent.ResizeType = EResizeType::RESIZE_TYPE_UNKNOWN;
 
                 DispatchEvent(event);
                 return 0;
@@ -131,9 +185,7 @@ namespace Lambda
 
             case WM_MOVE:
             {
-                //Send event
-                SystemEvent event = {};
-                event.EventType = ESystemEvent::SYSTEM_EVENT_WINDOW_MOVED;
+                event.EventType = ESystemEvent::SYSTEM_EVENT_WINDOW_MOVE;
                 event.WindowMovedEvent.x = uint32(LOWORD(lParam));
                 event.WindowMovedEvent.y = uint32(HIWORD(lParam));
 
@@ -144,10 +196,9 @@ namespace Lambda
             case WM_KEYUP:
             case WM_KEYDOWN:
             {
-                SystemEvent event = {};
                 event.EventType = (message == WM_KEYUP) ? ESystemEvent::SYSTEM_EVENT_KEY_RELEASED : ESystemEvent::SYSTEM_EVENT_KEY_PRESSED;
-                event.KeyEvent.Key          = WindowsKeyboard::ConvertVirtualKey(uint32(wParam));
-                event.KeyEvent.Modifiers    = WindowsKeyboard::GetModifierKeys();
+                event.KeyEvent.Key          = CWindowsKeyboard::ConvertVirtualKey(uint32(wParam));
+                event.KeyEvent.Modifiers    = CWindowsKeyboard::GetModifierKeys();
                 event.KeyEvent.RepeatCount  = uint32(LOWORD(lParam));
 
                 DispatchEvent(event);
@@ -156,7 +207,6 @@ namespace Lambda
 
             case WM_CHAR:
             {
-                SystemEvent event = {};
                 event.EventType = ESystemEvent::SYSTEM_EVENT_KEY_TEXT;
                 event.KeyTextEvent.Character = uint32(wParam);
 
@@ -166,7 +216,6 @@ namespace Lambda
 
             case WM_MOUSEMOVE:
             {
-                SystemEvent event = {};
                 event.EventType = ESystemEvent::SYSTEM_EVENT_MOUSE_MOVED;
                 event.MouseMovedEvent.x = uint32(GET_X_LPARAM(lParam));
                 event.MouseMovedEvent.y = uint32(GET_Y_LPARAM(lParam));
@@ -196,9 +245,8 @@ namespace Lambda
                 else
                     button = EMouseButton::MOUSEBUTTON_FORWARD;
 
-                SystemEvent event = {};
                 event.MouseButtonEvent.Button    = button;
-                event.MouseButtonEvent.Modifiers = WindowsKeyboard::GetModifierKeys();
+                event.MouseButtonEvent.Modifiers = CWindowsKeyboard::GetModifierKeys();
                 if (message == WM_LBUTTONUP || message == WM_MBUTTONUP || message == WM_RBUTTONUP || message == WM_XBUTTONUP)
                 {
                     //When the mousebutton is released we also release the mousecapture
@@ -231,7 +279,6 @@ namespace Lambda
                     verticalValue = value;
                 }
 
-                SystemEvent event = {};
                 event.EventType = ESystemEvent::SYSTEM_EVENT_MOUSE_SCROLLED;
                 event.MouseScrolledEvent.Horizontal = horizontalValue;
                 event.MouseScrolledEvent.Vertical   = verticalValue;
@@ -243,10 +290,8 @@ namespace Lambda
             case WM_SETFOCUS:
             case WM_KILLFOCUS:
             {
-                //Send event
-                SystemEvent event = {};
-                event.EventType = ESystemEvent::SYSTEM_EVENT_WINDOW_FOCUS_CHANGED;
-                event.WindowFocusChangedEvent.bHasFocus = message == WM_SETFOCUS;
+                event.EventType = ESystemEvent::SYSTEM_EVENT_APP_FOCUS_CHANGED;
+                event.AppFocusChangedEvent.bHasFocus = (message == WM_SETFOCUS);
 
                 DispatchEvent(event);
                 return 0;

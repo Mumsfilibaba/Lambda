@@ -6,7 +6,7 @@
 //_CreateGameLayer
 //----------------
 
-LAMBDA_API Lambda::Layer* (*_CreateGameLayer)() = nullptr;
+LAMBDA_API Lambda::CLayer* (*_CreateGameLayer)() = nullptr;
 
 namespace Lambda
 {
@@ -14,19 +14,22 @@ namespace Lambda
 	//LambdaMain
 	//----------
 
-	extern CEngine g_Engine;
-
 	int32 LambdaMain(const SEngineParams& params)
 	{
-		if (!g_Engine.Init(params))
+		CEngine* pEngine = CEngine::Create();
+		if (!pEngine->Init(params))
 		{
 			return -1;
 		}
 
-        while (g_Engine.IsRunning())
-            g_Engine.Tick();
+		pEngine->Startup();
+        while (pEngine->IsRunning())
+			pEngine->Tick();
         
-		g_Engine.Release();
-		return g_Engine.GetExitCode();
+		pEngine->Release();
+
+		int32 result = pEngine->GetExitCode();
+		SafeDelete(pEngine);
+		return result;
 	}
 }

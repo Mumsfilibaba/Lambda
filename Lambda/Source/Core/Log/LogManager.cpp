@@ -11,6 +11,7 @@ namespace Lambda
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
 	CLogManager::CLogManager()
 		: CSingleton<CLogManager>(),
+		m_pDefaultLog(nullptr),
 		m_Logs()
 	{
 	}
@@ -32,7 +33,7 @@ namespace Lambda
 		if (pName)
 		{
 			//Create log
-			Log* pLog = DBG_NEW Log(pName, mode, verbosity, bWriteConsole, bWriteFile);
+			CLog* pLog = DBG_NEW CLog(pName, mode, verbosity, bWriteConsole, bWriteFile);
 			
 			//Insert log in table
 			std::string name = std::string(pName);

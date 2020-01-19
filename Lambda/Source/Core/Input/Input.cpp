@@ -11,7 +11,7 @@ namespace Lambda
 	IInputController* Input::s_pController = nullptr;
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void Input::Attach(EInputType)
+	void Input::Init(EInputType)
 	{
 		//LAMBDA_ASSERT_PRINT(s_pController == nullptr, "Input can only be initialized once");
 
@@ -20,7 +20,7 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void Input::Detach()
+	void Input::Release()
 	{
 		//LAMBDA_ASSERT_PRINT(s_pController != nullptr, "Input not initialized");
 

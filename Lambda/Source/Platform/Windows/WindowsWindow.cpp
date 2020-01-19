@@ -5,20 +5,20 @@
 
 	#include "Core/Utilities/StringUtilities.h"
 
-	#include "Platform/Windows/WindowsSystem.h"
 	#include "Platform/Windows/WindowsWindow.h"
     #include "Platform/Windows/WindowsKeyboard.h"
+	#include "Platform/Windows/WindowsApplication.h"
 
 namespace Lambda
 {
-	//-------------
-	//WindowsWindow
-	//-------------
+	//--------------
+	//CWindowsWindow
+	//--------------
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	WindowsWindow::WindowsWindow(WindowsSystem* pSystem)
-		: IWindow(),
-        m_pSystem(pSystem),
+	CWindowsWindow::CWindowsWindow(CWindowsApplication* pApplication)
+		: CWindow(),
+        m_pApplication(pApplication),
 		m_hWindow(0),
 		m_Height(0),
 		m_Width(0),
@@ -34,7 +34,7 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	WindowsWindow::~WindowsWindow()
+	CWindowsWindow::~CWindowsWindow()
 	{
 		if (::IsWindow(m_hWindow))
 		{
@@ -44,39 +44,30 @@ namespace Lambda
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	void WindowsWindow::SetFullscreen(bool bFullscreen)
-	{
-		if (m_bIsFullscreen != bFullscreen)
-		{
-
-		}
-	}
-
-	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	bool WindowsWindow::Init(const char* pTitle, uint32 width, uint32 height)
+	bool CWindowsWindow::Init(const SWindowProps& props)
 	{
 		//Create window
 		int32 error = 0;
 		{
 			//Set client area size
-			m_Style = WS_OVERLAPPEDWINDOW;
+			m_Style   = WS_OVERLAPPEDWINDOW;
 			m_ExStyle = 0;
-			RECT rect = { 0, 0, static_cast<LONG>(width), static_cast<LONG>(height) };
-			AdjustWindowRect(&rect, m_Style, false);
+			RECT rect = { 0, 0, LONG(props.Width), LONG(props.Height) };
 
-			//Make sure name is not nullptr
-			const char* pName = pTitle;
-			if (pName == nullptr)
-			{
-				pName = "";
-			}
+			::AdjustWindowRect(&rect, m_Style, false);
 
 			//Create window
-			SetLastError(0);
-			m_hWindow = CreateWindowEx(m_ExStyle, WindowsWindow::WindowClass(), StringUtilities::ConvertFromString(pName).c_str(), m_Style, 0, 0, rect.right - rect.left, rect.bottom - rect.top, 0, 0, m_pSystem->GetHINSTANCE(), 0);
+			const char* pTitle = (props.pTitle != nullptr) ? props.pTitle : "";
+			std::wstring convertedTitle = StringUtilities::ConvertFromString(pTitle);
+			uint32 width  = rect.right - rect.left;
+			uint32 height = rect.bottom - rect.top;
+			HINSTANCE hInstance = CWindowsApplication::GetApplicationInstance();
+
+			::SetLastError(0);
+			m_hWindow = ::CreateWindowEx(m_ExStyle, CWindowsWindow::WindowClass(), convertedTitle.c_str(), m_Style, 0, 0, width, height, 0, 0, hInstance, 0);
 			if (m_hWindow == 0)
 			{
-				error = GetLastError();
+				error = ::GetLastError();
 				return false;
 			}
 			else
@@ -85,41 +76,17 @@ namespace Lambda
 				m_Height = height;
 
 				//Set userdata so we can retrive this-pointer when handling events
-				SetWindowLongPtr(m_hWindow, GWLP_USERDATA, reinterpret_cast<uintptr_t>(this));
-				ShowWindow(m_hWindow, SW_NORMAL);
+				::SetWindowLongPtr(m_hWindow, GWLP_USERDATA, reinterpret_cast<uintptr_t>(this));
 				return true;
 			}
 		}
 	}
 
 	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	LRESULT WindowsWindow::MessageProc(HWND hWnd, uint32 message, WPARAM wParam, LPARAM lParam)
+	LRESULT CWindowsWindow::ProcessMessage(uint32 message, WPARAM wParam, LPARAM lParam)
 	{
-		//Retrive userdata to get the pointer to the windows
-		WindowsWindow* pWindowsWindow = reinterpret_cast<WindowsWindow*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
-		if (pWindowsWindow)
-			return pWindowsWindow->OnMessage(message, wParam, lParam);
-
-		return DefWindowProc(hWnd, message, wParam, lParam);
-	}
-
-	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-	LRESULT WindowsWindow::OnMessage(uint32 message, WPARAM wParam, LPARAM lParam)
-	{
-        switch (message)
-        {
-			case WM_CREATE:
-			{
-				Console::PrintLine("Window Created");
-				return 0;
-			}
-
-			case WM_DESTROY:
-			{
-				Console::PrintLine("Window Destroyed");
-				break;
-			}
-
+		switch (message)
+		{
 			case WM_SIZE:
 			{
 				//Set members
@@ -149,10 +116,51 @@ namespace Lambda
 				m_bHasFocus = (message == WM_SETFOCUS);
 				break;
 			}
-        }
+		}
 
-		//Send message to application
-		return m_pSystem->OnMessage(m_hWindow, message, wParam, lParam);
+		return 0;
+	}
+
+	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
+	void CWindowsWindow::SetDisplayMode(EDisplayMode displayMode)
+	{
+	}
+
+	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
+	void CWindowsWindow::Show()
+	{
+		::ShowWindow(m_hWindow, SW_NORMAL);
+	}
+
+	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
+	void CWindowsWindow::Hide()
+	{
+		::ShowWindow(m_hWindow, SW_HIDE);
+	}
+
+	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
+	void CWindowsWindow::Maximize()
+	{
+	}
+
+	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
+	void CWindowsWindow::Minimize()
+	{
+	}
+
+	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
+	void CWindowsWindow::SetFocus()
+	{
+	}
+
+	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
+	void CWindowsWindow::SetSize(uint32 width, uint32 height)
+	{
+	}
+
+	/*////////////////////////////////////////////////////////////////////////////////////////////////*/
+	void CWindowsWindow::SetPosition(uint32 x, uint32 y)
+	{
 	}
 }
 #endif

@@ -7,14 +7,14 @@
 namespace Lambda
 {
 	//---------------
-	//WindowsKeyboard
+	//CWindowsKeyboard
 	//---------------
-	class WindowsKeyboard
+	class CWindowsKeyboard
 	{
 	public:
-		LAMBDA_STATIC_CLASS(WindowsKeyboard);
+		LAMBDA_STATIC_CLASS(CWindowsKeyboard);
 
-		static void Attach();
+		static void Init();
 		
 		static uint32 ConvertVirtualKey(EKey keycode);
 		static EKey   ConvertVirtualKey(uint32 keycode);

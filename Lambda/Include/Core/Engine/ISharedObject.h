@@ -90,7 +90,7 @@ namespace Lambda
 			*this = other;
 		}
 
-		_forceinline ~CAutoRef()
+		_forceinline ~CSharedRef()
 		{
             SafeRelease(m_pObject);
 		}

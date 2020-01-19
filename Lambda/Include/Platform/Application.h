@@ -1,7 +1,8 @@
 #pragma once
 #include "LambdaCore.h"
-#include "Singleton.h"
+#include "Window.h"
 
+#include "Core/Engine/Singleton.h"
 #include "Core/Event/ISystemEventListener.h"
 
 #include <vector>
@@ -12,32 +13,32 @@
 
 namespace Lambda
 {
-	class CWindow;
-
 	//------------
 	//CApplication
 	//------------
 
 	class LAMBDA_API CApplication : public CSingleton<CApplication>
 	{
-	public:
+	protected:
 		CApplication();
+	public:
 		~CApplication();
+
+		virtual CWindow* CreateWindow(const SWindowProps&) { return nullptr; }
+		virtual CWindow* GetCurrentWindow() const {	return nullptr; }
 
 		virtual void AddEventListener(ISystemEventListener* pListener);
 		virtual void RemoveEventListener(ISystemEventListener* pListener);
         
-        virtual void SetDisplayMode(EDisplayMode mode);
-        virtual void SetDisplayMetrics(uint32 width, uint32 height);
-        virtual void GetDisplayMetrics(uint32& width, uint32& height) const;
+		virtual bool DispatchEvent(const SSystemEvent& event) const;
+		virtual void Terminate(int32) const {}
         
-        virtual CWindow* GetForegroundWindow() const;
-        
-		static CWindow* CreateWindow() { return nullptr; }
+		static void PreInit()		{}
+		static void Init()			{}
+		static void ProcessEvents() {}
+		static void Release()		{}
+
 		static CApplication* CreateApplication() { return nullptr; }
-		static void Initialize() {}
-		static void PollEvents() {}
-		static void Release() {}
 	private:
 		std::vector<ISystemEventListener*> m_EventListeners;
 	};

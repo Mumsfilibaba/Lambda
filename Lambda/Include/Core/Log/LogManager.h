@@ -1,6 +1,5 @@
 #pragma once
 #include "LambdaCore.h"
-
 #include "Log.h"
 
 #include "Core/Engine/Singleton.h"
@@ -9,14 +8,14 @@
 #include <unordered_map>
 
 //Default log
-#define LOG(verbosity, ...) Lambda::LogManager::Get().GetDefaultLog()->Write(verbosity, __VA_ARGS__)
+#define LOG(verbosity, ...) Lambda::CLogManager::Get().GetDefaultLog()->Write(verbosity, __VA_ARGS__)
 #define LOG_INFO(...)		LOG(Lambda::ELogVerbosity::LOG_VERBOSITY_INFO, __VA_ARGS__)
 #define LOG_MESSAGE(...)	LOG(Lambda::ELogVerbosity::LOG_VERBOSITY_MESSAGE, __VA_ARGS__)
 #define LOG_WARNING(...)	LOG(Lambda::ELogVerbosity::LOG_VERBOSITY_WARNING, __VA_ARGS__)
 #define LOG_ERROR(...)		LOG(Lambda::ELogVerbosity::LOG_VERBOSITY_ERROR, __VA_ARGS__)
 
 //Named log
-#define N_LOG(log, verbosity, ...) Lambda::LogManager::Get().GetLog(log)->Write(verbosity, __VA_ARGS__)
+#define N_LOG(log, verbosity, ...) Lambda::CLogManager::Get().GetLog(log)->Write(verbosity, __VA_ARGS__)
 #define N_LOG_INFO(log, ...)	   N_LOG(log, Lambda::ELogVerbosity::LOG_VERBOSITY_INFO, __VA_ARGS__)
 #define N_LOG_MESSAGE(log, ...)	   N_LOG(log, Lambda::ELogVerbosity::LOG_VERBOSITY_MESSAGE, __VA_ARGS__)
 #define N_LOG_WARNING(log, ...)	   N_LOG(log, Lambda::ELogVerbosity::LOG_VERBOSITY_WARNING, __VA_ARGS__)
@@ -64,8 +63,8 @@ namespace Lambda
 
 		ILog* GetLog(const char* pName) const;
 
-		ILog* GetDefaultLog() const { return m_pDefaultLog; }
-		void SetDefaultLog(ILog* pLog) 
+		inline ILog* GetDefaultLog() const { return m_pDefaultLog; }
+		inline void SetDefaultLog(ILog* pLog) 
 		{ 
 			if (pLog) 
 			{ 
