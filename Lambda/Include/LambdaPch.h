@@ -1,18 +1,20 @@
-#include "Defines.h"
-#include "Types.h"
+#include "LambdaCore.h"
 
 #if defined(LAMBDA_EXPORT)
 	//All headers specific for windows
 	#if defined(LAMBDA_PLAT_WINDOWS)
-		//Remove unneccesary stuff
-		#define WIN32_LEAN_AND_MEAN 
+		//Remove unneccesary WIN32 apis
+		#if !defined(WIN32_LEAN_AND_MEAN )
+			#define WIN32_LEAN_AND_MEAN 1
+		#endif
+
 		//Remove min max macros
-        #define NOMINMAX
-        #include <Windows.h>
+		#define NOMINMAX
+		#include <Windows.h>
 		#include <Windowsx.h>
 		#include <crtdbg.h>
 
-		#include "..\Source\Platform\DX12\d3dx12.h"
+		//#include "../Source/Platform/DX12/d3dx12.h"
 		#include <wrl/client.h>
 		#include <dxgi1_6.h>
 		#include <d3dcompiler.h>
@@ -20,7 +22,7 @@
 	#endif
 #endif
 
-#include "System/Log.h"
+//#include "Core/CLogManager.h"
 
 #include <cassert>
 #include <cfloat>
