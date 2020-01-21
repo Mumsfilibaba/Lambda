@@ -207,9 +207,6 @@ workspace "Lambda"
 			sysincludedirs
 			{
 				"C:/VulkanSDK/1.1.121.2/Include",
-			}
-			sysincludedirs
-			{
 				"Dependencies/Assimp/include",
 			}
 		filter { "system:windows", "platforms:x64_SharedLib" }
@@ -246,6 +243,7 @@ workspace "Lambda"
 				"IrrXML",
 				"zlibstatic",
 			}
+		filter {}
 	project "*"
 	
 	-- EXAMPLE PROJECTS
