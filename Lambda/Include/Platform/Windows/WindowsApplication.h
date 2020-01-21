@@ -1,6 +1,8 @@
 #pragma once
 #include "LambdaCore.h"
 
+#include "Platform/Generic/GenericApplication.h"
+
 #ifdef LAMBDA_PLAT_WINDOWS
 	#ifndef WIN32_LEAN_AND_MEAN 
 		#define WIN32_LEAN_AND_MEAN 1
@@ -9,17 +11,19 @@
 
 namespace Lambda
 {
-	namespace Windows
+	class LAMBDA_API CWindowsApplication : public CGenericApplication
 	{
-		namespace Application
-		{
-			LAMBDA_API void Init(HINSTANCE hInstance);
-			LAMBDA_API void PollMessages();
+	public:
+		LAMBDA_STATIC_CLASS(CWindowsApplication);
 
-			LAMBDA_API HINSTANCE GetApplicationInstance();
-		}
-	}
+		static void Init(HINSTANCE hInstance);
+		static void PollEvents();
 
-	namespace Platform = Windows;
+		static HINSTANCE GetApplicationInstance() { return s_hInstance; }
+	private:
+		static HINSTANCE s_hInstance;
+	};
+
+	typedef CWindowsApplication PlatformApplication;
 }
 #endif

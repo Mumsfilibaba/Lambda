@@ -2,9 +2,9 @@
 #include "LambdaCore.h"
 
 #include "Core/EngineLoop.h"
+#include "Core/Log/LogManager.h"
 
 #include "Platform/PlatformApplication.h"
-#include "Platform/PlatformTime.h"
 
 #ifdef LAMBDA_PLAT_WINDOWS
 	#ifndef WIN32_LEAN_AND_MEAN
@@ -22,12 +22,12 @@ int main(int, const char**)
 	using namespace Lambda;
 
 #ifdef LAMBDA_PLAT_WINDOWS
-	Platform::Application::Init(hInstance);
+	PlatformApplication::Init(hInstance);
 #else
-	Platform::Application::Init();
+	PlatformApplication::Init();
 #endif
 
-	Platform::Time::Nanoseconds();
+	CLogManager::Init();
 
 	CEngineLoop* pEngineLoop = CEngineLoop::Create();	
 	pEngineLoop->Init();
@@ -37,5 +37,7 @@ int main(int, const char**)
 		pEngineLoop->Tick();
 
 	pEngineLoop->Release();
+
+	CLogManager::Release();
 	return 0;
 }

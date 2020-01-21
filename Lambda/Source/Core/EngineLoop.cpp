@@ -6,7 +6,11 @@
 
 namespace Lambda
 {
-	CEngineLoop* CEngineLoop::s_EngineLoop = nullptr;
+	CEngineLoop::CEngineLoop()
+		: m_bIsRunning(false),
+		m_Frameclock()
+	{
+	}
 
 	void CEngineLoop::Init()
 	{
@@ -20,7 +24,7 @@ namespace Lambda
 
 	void CEngineLoop::Tick()
 	{
-		Platform::Application::PollMessages();
+		PlatformApplication::PollEvents();
 		m_Frameclock.Tick();
 	}
 

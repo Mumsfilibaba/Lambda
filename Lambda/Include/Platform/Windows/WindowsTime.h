@@ -1,19 +1,25 @@
 #pragma once
 #include "LambdaCore.h"
 
+#include "Platform/Generic/GenericTime.h"
+
 #ifdef LAMBDA_PLAT_WINDOWS
 
 namespace Lambda
 {
-	namespace Windows
+	class LAMBDA_API CWindowsTime : public CGenericTime
 	{
-		namespace Time
-		{
-			LAMBDA_API void Init();
-			LAMBDA_API uint64 Nanoseconds();
-		}
-	}
+	public:
+		LAMBDA_STATIC_CLASS(CWindowsTime);
 
-	namespace Platform = Windows;
+		static void Init();
+		static uint64 Nanoseconds();
+		static uint64 Ticks();
+		static uint64 TicksPerSecond();
+	private:
+		static LARGE_INTEGER s_Frequency;
+	};
+
+	typedef CWindowsTime PlatformTime;
 }
 #endif

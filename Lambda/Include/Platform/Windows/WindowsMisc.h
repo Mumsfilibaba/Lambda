@@ -1,22 +1,21 @@
 #pragma once
 #include "LambdaCore.h"
 
+#include "Platform/Generic/GenericMisc.h"
+
 #ifdef LAMBDA_PLAT_WINDOWS
-	#ifdef MessageBox
-		#undef MessageBox
-	#endif
 
 namespace Lambda
 {
-	namespace Windows
+	class LAMBDA_API CWindowsMisc : public CGenericMisc
 	{
-		namespace Misc
-		{
-			LAMBDA_API void MessageBox(const char* pCaption, const char* pText, uint32 type);
-			LAMBDA_API void DebuggerOutput(const char* pMessage);
-		}
-	}
+	public:
+		LAMBDA_STATIC_CLASS(CWindowsMisc);
 
-	namespace Platform = Windows;
+		static void MessageBox(const char* pCaption, const char* pText, uint32 type);
+		static void DebuggerOutput(const char* pMessage);
+	};
+
+	typedef CWindowsMisc PlatformMisc;
 }
 #endif

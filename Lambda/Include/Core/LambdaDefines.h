@@ -70,7 +70,6 @@
 	#include <crtdbg.h>
 
 	#define DBG_NEW new (_NORMAL_BLOCK, __FILE__, __LINE__)
-	#define DBG_MEMLEAK_CHECK() _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #else
 	#define DBG_NEW new
 	#define DBG_MEMLEAK_CHECK()

@@ -6,35 +6,27 @@
 
 namespace Lambda
 {
-	namespace Windows
+	HINSTANCE CWindowsApplication::s_hInstance = 0;
+
+	void CWindowsApplication::Init(HINSTANCE hInstance)
 	{
-		namespace Application
+		//Activate debug memory check
+		_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+
+		//Set global instance
+		s_hInstance = hInstance;
+
+		//Init other modules
+		CWindowsTime::Init();
+	}
+
+	void CWindowsApplication::PollEvents()
+	{
+		MSG message = {};
+		while (PeekMessage(&message, 0, 0, 0, PM_REMOVE))
 		{
-			HINSTANCE g_hInstance = 0;
-
-			void Init(HINSTANCE hInstance)
-			{
-				//Set global instance
-				g_hInstance = hInstance;
-				
-				//Init other modules
-				Time::Init();
-			}
-
-			void PollMessages()
-			{
-				MSG message = {};
-				while (PeekMessage(&message, 0, 0, 0, PM_REMOVE))
-				{
-					TranslateMessage(&message);
-					DispatchMessage(&message);
-				}
-			}
-
-			HINSTANCE GetApplicationInstance()
-			{
-				return g_hInstance;
-			}
+			TranslateMessage(&message);
+			DispatchMessage(&message);
 		}
 	}
 }

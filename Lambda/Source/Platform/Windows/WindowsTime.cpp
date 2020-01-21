@@ -5,26 +5,32 @@
 
 namespace Lambda
 {
-	namespace Windows
+	LARGE_INTEGER CWindowsTime::s_Frequency = { 0 };
+	
+	void CWindowsTime::Init()
 	{
-		namespace Time
-		{
-			LARGE_INTEGER g_Frequency = { 0 };
+		::QueryPerformanceFrequency(&s_Frequency);
+	}
 
-			void Init()
-			{
-				::QueryPerformanceFrequency(&g_Frequency);
-			}
+	uint64 CWindowsTime::Nanoseconds()
+	{
+		LARGE_INTEGER counter = {};
+		::QueryPerformanceCounter(&counter);
 
-			uint64 Nanoseconds()
-			{
-				LARGE_INTEGER counter = {};
-				::QueryPerformanceCounter(&counter);
-
-				counter.QuadPart *= 1000000000UL;
-				return uint64(counter.QuadPart / g_Frequency.QuadPart);
-			}
-		}
+		counter.QuadPart *= 1000000000UL;
+		return uint64(counter.QuadPart / s_Frequency.QuadPart);
+	}
+	
+	uint64 CWindowsTime::Ticks()
+	{
+		LARGE_INTEGER counter = {};
+		::QueryPerformanceCounter(&counter);
+		return uint64(counter.QuadPart / s_Frequency.QuadPart);
+	}
+	
+	uint64 CWindowsTime::TicksPerSecond()
+	{
+		return uint64(s_Frequency.QuadPart);
 	}
 }
 #endif

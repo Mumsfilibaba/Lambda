@@ -62,13 +62,13 @@ namespace Lambda
 
 			if (IsDiablogEnabled())
 			{
-				Platform::Misc::MessageBox("Assert Failed", assertMessage, MESSAGE_BOX_OK | MESSAGE_BOX_ERRORICON);
+				PlatformMisc::MessageBox("Assert Failed", assertMessage, MESSAGE_BOX_OK | MESSAGE_BOX_ERRORICON);
 			}
 
 			if (IsDebuggerPrintEnabled())
 			{
-				Platform::Misc::DebuggerOutput(assertMessage);
-				Platform::Misc::DebuggerOutput("\n");
+				PlatformMisc::DebuggerOutput(assertMessage);
+				PlatformMisc::DebuggerOutput("\n");
 			}
 		}
 	}

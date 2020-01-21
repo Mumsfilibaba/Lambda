@@ -58,7 +58,7 @@ namespace Lambda
 	void CClock::Tick()
 	{
 		//Get current time
-		uint64 ns = Platform::Time::Nanoseconds();
+		uint64 ns = PlatformTime::Nanoseconds();
 		CTimestep now = CTimestep(ns);
 
 		//Update delta- and totaltime
