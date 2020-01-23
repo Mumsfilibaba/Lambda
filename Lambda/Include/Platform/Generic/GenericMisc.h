@@ -7,7 +7,7 @@
 
 namespace Lambda
 {
-	class CGenericMisc
+	class LAMBDA_API CGenericMisc
 	{
 	public:
 		LAMBDA_STATIC_CLASS(CGenericMisc);

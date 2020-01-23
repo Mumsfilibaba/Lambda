@@ -3,7 +3,7 @@
 
 namespace Lambda
 {
-	class CGenericTime
+	class LAMBDA_API CGenericTime
 	{
 	public:
 		LAMBDA_STATIC_CLASS(CGenericTime);
