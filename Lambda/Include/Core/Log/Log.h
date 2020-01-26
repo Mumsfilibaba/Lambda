@@ -1,6 +1,8 @@
 #pragma once
 #include "LambdaCore.h"
 
+#include <stdarg.h>
+
 namespace Lambda
 {
 	enum class ELogVerbosity
@@ -28,7 +30,7 @@ namespace Lambda
 	{
 	public:
 		CLog();
-		~CLog();
+		~CLog() = default;
 
 		LAMBDA_NO_COPY(CLog);
 
@@ -39,6 +41,6 @@ namespace Lambda
 		virtual void Print(ELogVerbosity verbosity, const char* pFormat, ...) override final;
 		virtual void PrintV(ELogVerbosity verbosity, const char* pFormat, va_list args) override final;
 	private:
-		bool m_Enabled;
+		bool m_bEnabled;
 	};
 }

@@ -1,7 +1,7 @@
 #include "LambdaPch.h"
 
 #include "Core/Assert.h"
-#include "Platform/PlatformMisc.h"
+#include "Platform/Platform.h"
 
 #ifdef ERROR
 	#undef ERROR
@@ -62,13 +62,13 @@ namespace Lambda
 
 			if (IsDiablogEnabled())
 			{
-				PlatformMisc::MessageBox("Assert Failed", assertMessage, MESSAGE_BOX_OK | MESSAGE_BOX_ERRORICON);
+                Platform::MessageBox("Assert Failed", assertMessage, MESSAGE_BOX_OK | MESSAGE_BOX_ERRORICON);
 			}
 
 			if (IsDebuggerPrintEnabled())
 			{
-				PlatformMisc::DebuggerOutput(assertMessage);
-				PlatformMisc::DebuggerOutput("\n");
+                Platform::OutputDebugString(assertMessage);
+                Platform::OutputDebugString("\n");
 			}
 		}
 	}

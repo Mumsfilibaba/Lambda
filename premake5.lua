@@ -175,11 +175,13 @@ workspace "Lambda"
 		filter "system:macosx"
 			links
 			{
-				"glfw.3.4",
+				-- Libraries
 				"vulkan.1",
 				"vulkan.1.1.121",
 				"assimp",
 				"ImGui",
+				-- Frameworks
+				"Cocoa.framework",
 			}
 			libdirs
 			{
@@ -261,12 +263,10 @@ workspace "Lambda"
 		objdir ("Build/bin-int/" .. outputdir .. "/%{prj.name}")
 		
 		--Includes
-		includedirs
-		{
-			"Lambda/Include",
-		}
 		sysincludedirs
 		{
+			"Lambda/Include",
+			
 			"Dependencies/glm",
 			"Dependencies/ImGui",
 		}

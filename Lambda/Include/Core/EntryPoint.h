@@ -2,9 +2,9 @@
 #include "LambdaCore.h"
 
 #include "Core/EngineLoop.h"
-#include "Core/Log/LogManager.h"
+#include "Core/Log/EngineLog.h"
 
-#include "Platform/PlatformApplication.h"
+#include "Platform/Platform.h"
 
 #ifdef LAMBDA_PLAT_WINDOWS
 	#ifndef WIN32_LEAN_AND_MEAN
@@ -22,22 +22,21 @@ int main(int, const char**)
 	using namespace Lambda;
 
 #ifdef LAMBDA_PLAT_WINDOWS
-	PlatformApplication::Init(hInstance);
+	Platform::Init(hInstance);
 #else
-	PlatformApplication::Init();
+	Platform::Init();
 #endif
 
-	CLogManager::Init();
+	CEngineLog::Init();
 
-	CEngineLoop* pEngineLoop = CEngineLoop::Create();	
-	pEngineLoop->Init();
+	g_EngineLoop.Init();
 
-	pEngineLoop->Start();
-	while (pEngineLoop->IsRunning())
-		pEngineLoop->Tick();
+	g_EngineLoop.Start();
+	while (g_EngineLoop.IsRunning())
+		g_EngineLoop.Tick();
 
-	pEngineLoop->Release();
+	g_EngineLoop.Release();
 
-	CLogManager::Release();
+	CEngineLog::Release();
 	return 0;
 }

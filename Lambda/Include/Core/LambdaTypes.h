@@ -14,11 +14,4 @@ namespace Lambda
 	typedef unsigned short		uint16;
 	typedef unsigned int		uint32;
 	typedef unsigned long long	uint64;
-
-	enum EMessageBox
-	{
-		MESSAGE_BOX_UNKNOWN		= 0,
-		MESSAGE_BOX_OK			= (1 << 1),
-		MESSAGE_BOX_ERRORICON	= (1 << 2),
-	};
 }

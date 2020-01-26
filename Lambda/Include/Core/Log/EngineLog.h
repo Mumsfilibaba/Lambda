@@ -2,21 +2,16 @@
 #include "LambdaCore.h"
 #include "Log.h"
 
-#include "Core/Singleton.h"
-
 namespace Lambda
 {
-	class CLogManager final
+	class LAMBDA_API CEngineLog final
 	{
 	public:
-		LAMBDA_STATIC_CLASS(CLogManager);
+		LAMBDA_STATIC_CLASS(CEngineLog);
 
 		static void Init();
 		static void Release();
 		static ILog* GetLog() { return s_pLog; }
-	private:
-		CLogManager();
-		~CLogManager() = default;
 	private:
 		static ILog* s_pLog;
 	};

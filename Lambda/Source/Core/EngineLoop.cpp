@@ -1,11 +1,14 @@
 #include "LambdaPch.h"
 
 #include "Core/EngineLoop.h"
+#include "Platform/Platform.h"
 
-#include "Platform/PlatformApplication.h"
+#include <chrono>
 
 namespace Lambda
 {
+    CEngineLoop g_EngineLoop;
+
 	CEngineLoop::CEngineLoop()
 		: m_bIsRunning(false),
 		m_Frameclock()
@@ -24,12 +27,11 @@ namespace Lambda
 
 	void CEngineLoop::Tick()
 	{
-		PlatformApplication::PollEvents();
+		Platform::PollEvents();
 		m_Frameclock.Tick();
 	}
 
 	void CEngineLoop::Release()
 	{
-		delete this;
 	}
 }

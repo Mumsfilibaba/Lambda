@@ -1,6 +1,6 @@
 #pragma once
 #ifdef LAMBDA_PLAT_WINDOWS
-	#include "Windows/WindowsApplication.h"
+	#include "Windows/WindowsPlatform.h"
 #elif defined(LAMBDA_PLAT_MACOS)
-    #include "macOS/MacApplication.h"
+    #include "macOS/MacPlatform.h"
 #endif
