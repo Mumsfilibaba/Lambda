@@ -9,8 +9,6 @@
 
 #include "Platform/Platform.h"
 
-#include <chrono>
-
 namespace Lambda
 {
     LAMBDA_API CEngineLoop g_EngineLoop;
@@ -34,8 +32,10 @@ namespace Lambda
         
         //Init log
         CEngineLog::Init();
+#ifndef LAMBDA_PRODUCTION
         CEngineLog::GetLog().Enable(true);
         CEngineLog::GetCoreLog().Enable(true);
+#endif
 
         LOG_CORE_INFO("Finished Pre-Init");
     }
@@ -55,17 +55,24 @@ namespace Lambda
         //Start engine
 		m_bIsRunning = true;
         
-        //Show window when engine is completly initialized
-        g_Engine.GetWindow().Show();
-
         //Make first tick on frameclock - To prevent that the first frame gets huge values in dt
         m_Frameclock.Tick();
+
+        //Show window when engine is completly initialized
+        g_Engine.GetWindow().Show();
 	}
 
 	void CEngineLoop::Tick()
 	{
 		Platform::PollEvents();
 		m_Frameclock.Tick();
+
+        CTimestep deltatime = m_Frameclock.GetDeltaTime();
+        g_Engine.FixedUpdate(deltatime);
+
+        g_Engine.Update(deltatime);
+
+        g_Engine.Render(deltatime);
 	}
 
     void CEngineLoop::Terminate()
@@ -83,6 +90,8 @@ namespace Lambda
     void CEngineLoop::PostRelease()
     {
         LOG_CORE_INFO("Engine Post-Release");
+        
         CEngineLog::Release();
+        SafeDelete(g_pConsoleOutput);
     }
 }

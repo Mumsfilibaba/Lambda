@@ -6,7 +6,7 @@
 
 namespace Lambda
 {
-    class LAMBDA_API CMacPlatform final : public CGenericPlatform
+    class LAMBDA_API CMacPlatform final : public CCommonPlatform
     {
     public:
         LAMBDA_STATIC_CLASS(CMacPlatform);

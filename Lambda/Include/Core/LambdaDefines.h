@@ -29,8 +29,8 @@
 	Type& operator=(const Type&) = delete
 #endif
 
-#if !defined(LAMBDA_INTERFACE)
-#define LAMBDA_INTERFACE(Type) \
+#if !defined(LAMBDA_DECL_INTERFACE)
+#define LAMBDA_DECL_INTERFACE(Type) \
 	Type() = default; \
 	virtual ~Type() = default; \
 	LAMBDA_DECL_NO_COPY(Type)				

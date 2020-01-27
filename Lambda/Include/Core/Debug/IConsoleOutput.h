@@ -15,10 +15,10 @@ namespace Lambda
         CONSOLE_COLOR_WHITE     = 5,
     };
 
-    class IConsoleOutput
+    class LAMBDA_API IConsoleOutput
     {
     public:
-        LAMBDA_INTERFACE(IConsoleOutput);
+        LAMBDA_DECL_INTERFACE(IConsoleOutput);
         
         virtual void Show() = 0;
         virtual void Hide() = 0;

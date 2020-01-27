@@ -1,17 +1,23 @@
 #pragma once
-#include "Platform/Generic/GenericWindow.h"
+#include "Platform/Common/CommonWindow.h"
 
 #ifdef LAMBDA_PLAT_WINDOWS
+	#include <vector>
 
 namespace Lambda
 {
-	class CWindowsWindow : public CGenericWindow
+	struct SEvent;
+
+	class LAMBDA_API CWindowsWindow : public CCommonWindow
 	{
 	public:
 		CWindowsWindow(const SWindowDesc& desc);
 		~CWindowsWindow();
 
 		virtual void Show() override;
+
+		virtual void AddEventListener(IEventHandler* pEventListener) override;
+		virtual void RemoveEventListener(IEventHandler* pEventListener) override;
 
 		virtual uint32 GetHeight() const override	{ return 0; }
 		virtual uint32 GetWidth() const override	{ return 0; }
@@ -27,12 +33,15 @@ namespace Lambda
 #endif
 	private:
 		void Init(const SWindowDesc& desc);
+		void DispatchEvent(const SEvent& event);
 	private:
+		std::vector<IEventHandler*> m_EventListeners;
 		HWND m_hWindow;
 		uint32 m_Width;
 		uint32 m_Height;
 		uint32 m_Style;
 		uint32 m_ExStyle;
+		bool m_bIsMiniaturized;
 	};
 }
 #endif

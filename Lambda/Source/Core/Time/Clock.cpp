@@ -2,7 +2,7 @@
 
 #include "Core/Time/Clock.h"
 
-#include "Platform/Platform.h"
+#include "Platform/PlatformTime.h"
 
 namespace Lambda
 {
@@ -57,7 +57,7 @@ namespace Lambda
 	void CClock::Tick()
 	{
 		//Get current time
-		uint64 ns = Platform::Nanoseconds();
+		uint64 ns = PlatformTime::Nanoseconds();
 		CTimestep now = CTimestep(ns);
 
 		//Update delta- and totaltime

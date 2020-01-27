@@ -1,9 +1,16 @@
 #pragma once
 #include "LambdaCore.h"
 
+#include "Core/Game.h"
 #include "Core/EngineLoop.h"
 
 #include "Platform/Platform.h"
+
+namespace Lambda
+{
+    //Needs to be implemented by client
+    extern CGame* CreateGame();
+}
 
 #ifdef LAMBDA_PLAT_WINDOWS
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
@@ -19,6 +26,9 @@ int main(int, const char**)
 	Platform::Init();
 #endif
     
+    //Set CreateGameFunc - This is to make both static and dynamic linking work
+    _CreateGame = CreateGame;
+
     //Init systems that is needed during init
     g_EngineLoop.PreInit();
     

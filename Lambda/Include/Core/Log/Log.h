@@ -16,7 +16,7 @@ namespace Lambda
 	class ILog
 	{
 	public:
-		LAMBDA_INTERFACE(ILog);
+		LAMBDA_DECL_INTERFACE(ILog);
 
 		virtual void Enable(bool bEnable) = 0;
 

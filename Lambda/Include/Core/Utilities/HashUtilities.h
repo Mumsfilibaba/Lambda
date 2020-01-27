@@ -8,7 +8,7 @@ namespace Lambda
     namespace HashUtilities
     {
         template<typename T>
-        inline void Combine(size_t& hash, const T& value)
+        _forceinline void Combine(size_t& hash, const T& value)
         {
             std::hash<T> hasher;
             hash ^= hasher(value) + 0x9e3779b9 + (hash << 6) + (hash >> 2);

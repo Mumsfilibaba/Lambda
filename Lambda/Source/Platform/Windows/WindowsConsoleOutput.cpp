@@ -33,7 +33,7 @@ namespace Lambda
 		if (m_hOutput)
 		{
 			DWORD nProcessID = ::GetCurrentProcessId();
-			BOOL bResult = ::AttachConsole(nProcessID);
+			/*BOOL bResult = */::AttachConsole(nProcessID);
 		}
 	}
 

@@ -18,7 +18,7 @@ namespace Lambda
     struct SWindowDesc;
 
     class IConsoleOutput;
-    class CGenericWindow;
+    class CCommonWindow;
 
     enum EMessageBox
     {
@@ -27,13 +27,13 @@ namespace Lambda
         MESSAGE_BOX_ERRORICON   = (1 << 2),
     };
 
-	class LAMBDA_API CGenericPlatform
+	class LAMBDA_API CCommonPlatform
 	{
 	public:
-		LAMBDA_DECL_STATIC_CLASS(CGenericPlatform);
+		LAMBDA_DECL_STATIC_CLASS(CCommonPlatform);
 
         static IConsoleOutput* CreateConsoleOutput()            { return nullptr; }
-        static CGenericWindow* CreateWindow(const SWindowDesc&) { return nullptr; }
+        static CCommonWindow* CreateWindow(const SWindowDesc&) { return nullptr; }
 		
         static void Init() {}
         static void Release() {}
@@ -42,9 +42,5 @@ namespace Lambda
         
         static void MessageBox(const char*, const char*, uint32) {}
         static void OutputDebugString(const char*) {}
-        
-        static uint64 NanoSeconds()     { return 0; }
-        static uint64 Ticks()           { return 0; }
-        static uint64 TicksPerSecond()  { return 0; }
 	};
 }

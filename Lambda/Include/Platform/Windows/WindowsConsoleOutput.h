@@ -11,7 +11,7 @@
 
 namespace Lambda
 {
-	class CWindowsConsoleOutput final : public IConsoleOutput
+	class LAMBDA_API CWindowsConsoleOutput final : public IConsoleOutput
 	{
 	public:
 		CWindowsConsoleOutput();
