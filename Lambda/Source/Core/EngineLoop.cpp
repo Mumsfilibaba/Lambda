@@ -13,8 +13,8 @@
 
 namespace Lambda
 {
-    CEngineLoop g_EngineLoop;
-    IConsoleOutput* g_pConsoleOutput = nullptr;
+    LAMBDA_API CEngineLoop g_EngineLoop;
+    LAMBDA_API IConsoleOutput* g_pConsoleOutput = nullptr;
 
 	CEngineLoop::CEngineLoop()
 		: m_bIsRunning(false),
@@ -30,15 +30,13 @@ namespace Lambda
         {
             g_pConsoleOutput->SetTitle("Lambda Engine Debug Console");
             g_pConsoleOutput->Show();
-            g_pConsoleOutput->SetTextColor(EConsoleColor::CONSOLE_COLOR_WHITE);
-            g_pConsoleOutput->Hide();
         }
         
         //Init log
         CEngineLog::Init();
         CEngineLog::GetLog().Enable(true);
         CEngineLog::GetCoreLog().Enable(true);
-        
+
         LOG_CORE_INFO("Finished Pre-Init");
     }
 
@@ -53,7 +51,15 @@ namespace Lambda
 	void CEngineLoop::Start()
 	{
         LOG_CORE_INFO("Starting Engine");
+
+        //Start engine
 		m_bIsRunning = true;
+        
+        //Show window when engine is completly initialized
+        g_Engine.GetWindow().Show();
+
+        //Make first tick on frameclock - To prevent that the first frame gets huge values in dt
+        m_Frameclock.Tick();
 	}
 
 	void CEngineLoop::Tick()

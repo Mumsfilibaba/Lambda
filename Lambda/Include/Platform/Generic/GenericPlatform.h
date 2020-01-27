@@ -1,9 +1,24 @@
 #pragma once
 #include "LambdaCore.h"
 
+#ifdef MessageBox
+    #undef MessageBox
+#endif
+
+#ifdef OutputDebugString
+    #undef OutputDebugString
+#endif
+
+#ifdef CreateWindow
+    #undef CreateWindow
+#endif
+
 namespace Lambda
 {
+    struct SWindowDesc;
+
     class IConsoleOutput;
+    class CGenericWindow;
 
     enum EMessageBox
     {
@@ -15,12 +30,13 @@ namespace Lambda
 	class LAMBDA_API CGenericPlatform
 	{
 	public:
-		LAMBDA_STATIC_CLASS(CGenericPlatform);
+		LAMBDA_DECL_STATIC_CLASS(CGenericPlatform);
 
-		static void Init() {}
+        static IConsoleOutput* CreateConsoleOutput()            { return nullptr; }
+        static CGenericWindow* CreateWindow(const SWindowDesc&) { return nullptr; }
+		
+        static void Init() {}
         static void Release() {}
-        
-        static IConsoleOutput* CreateConsoleOutput() { return nullptr; }
         
 		static void PollEvents() {}
         

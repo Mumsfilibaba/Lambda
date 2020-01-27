@@ -32,7 +32,7 @@ namespace Lambda
 		CLog();
 		~CLog() = default;
 
-		LAMBDA_NO_COPY(CLog);
+		LAMBDA_DECL_NO_COPY(CLog);
 
 		virtual void Enable(bool bEnable) override final;
 

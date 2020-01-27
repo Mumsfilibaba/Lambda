@@ -21,8 +21,8 @@
 
 
 //Remove default functions
-#if !defined(LAMBDA_NO_COPY)
-#define LAMBDA_NO_COPY(Type) \
+#if !defined(LAMBDA_DECL_NO_COPY)
+#define LAMBDA_DECL_NO_COPY(Type) \
 	Type(Type&&) = delete; \
 	Type(const Type&) = delete;	\
 	Type& operator=(Type&&) = delete; \
@@ -33,21 +33,21 @@
 #define LAMBDA_INTERFACE(Type) \
 	Type() = default; \
 	virtual ~Type() = default; \
-	LAMBDA_NO_COPY(Type)				
+	LAMBDA_DECL_NO_COPY(Type)				
 #endif
 
 #if !defined(LAMBDA_ISHAREDOBJECT_INTERFACE)
 #define LAMBDA_ISHAREDOBJECT_INTERFACE(Type) \
 	Type() = default; \
 	~Type() = default; \
-	LAMBDA_NO_COPY(Type)				
+	LAMBDA_DECL_NO_COPY(Type)				
 #endif
 
-#if !defined(LAMBDA_STATIC_CLASS)
-#define LAMBDA_STATIC_CLASS(name) \
+#if !defined(LAMBDA_DECL_STATIC_CLASS)
+#define LAMBDA_DECL_STATIC_CLASS(name) \
 	name() = delete; \
 	~name() = delete; \
-	LAMBDA_NO_COPY(name)
+	LAMBDA_DECL_NO_COPY(name)
 #endif
 
 

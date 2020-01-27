@@ -11,7 +11,6 @@ namespace Lambda
 		m_TotalTime(0),
 		m_LastTime(0)
 	{
-		Tick();
 	}
 
 	CClock::CClock(CClock&& other) noexcept

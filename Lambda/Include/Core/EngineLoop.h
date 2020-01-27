@@ -11,6 +11,8 @@ namespace Lambda
         CEngineLoop();
         ~CEngineLoop() = default;
 
+        LAMBDA_DECL_NO_COPY(CEngineLoop);
+
         void PreInit();
         void Init();
         void Start();
@@ -24,5 +26,5 @@ namespace Lambda
 		CClock m_Frameclock;
 	};
 
-    extern CEngineLoop g_EngineLoop;
+    LAMBDA_API extern CEngineLoop g_EngineLoop;
 }

@@ -6,7 +6,7 @@ namespace Lambda
 	class LAMBDA_API CEngineLog final
 	{
 	public:
-		LAMBDA_STATIC_CLASS(CEngineLog);
+		LAMBDA_DECL_STATIC_CLASS(CEngineLog);
 
 		static void Init();
 		static void Release();
