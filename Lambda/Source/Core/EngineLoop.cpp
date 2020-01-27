@@ -67,9 +67,11 @@ namespace Lambda
 		Platform::PollEvents();
 		m_Frameclock.Tick();
 
+        //Perform the fixed update
         CTimestep deltatime = m_Frameclock.GetDeltaTime();
         g_Engine.FixedUpdate(deltatime);
 
+        //Perform the variable update
         g_Engine.Update(deltatime);
 
         g_Engine.Render(deltatime);
