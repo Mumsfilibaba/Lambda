@@ -2,6 +2,7 @@
 #include "Platform/Generic/GenericPlatform.h"
 
 #ifdef LAMBDA_PLAT_MACOS
+    #include "MacAppDelegate.h"
 
 namespace Lambda
 {
@@ -12,6 +13,9 @@ namespace Lambda
 
         static void Init();
         static void CreateMenuBar();
+        static void Release();
+        
+        static IConsoleOutput* CreateConsoleOutput();
         
         static void PollEvents();
         
@@ -22,6 +26,7 @@ namespace Lambda
         static uint64 Ticks();
         static uint64 TicksPerSecond();
     private:
+        static MacAppDelegate* s_pAppDelegate;
         static uint64 s_NanoSecTickFactor;
     };
 

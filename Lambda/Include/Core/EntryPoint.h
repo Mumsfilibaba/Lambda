@@ -2,7 +2,6 @@
 #include "LambdaCore.h"
 
 #include "Core/EngineLoop.h"
-#include "Core/Log/EngineLog.h"
 
 #include "Platform/Platform.h"
 
@@ -26,17 +25,24 @@ int main(int, const char**)
 #else
 	Platform::Init();
 #endif
-
-	CEngineLog::Init();
-
+    
+    //Init systems that is needed during init
+    g_EngineLoop.PreInit();
+    
+    //Init engine systems
 	g_EngineLoop.Init();
 
+    //Run engine
 	g_EngineLoop.Start();
 	while (g_EngineLoop.IsRunning())
 		g_EngineLoop.Tick();
 
+    //Release systems initialized in init
 	g_EngineLoop.Release();
-
-	CEngineLog::Release();
+    
+    //Release systems initialized during preint
+    g_EngineLoop.PostRelease();
+    
+    Platform::Release();
 	return 0;
 }

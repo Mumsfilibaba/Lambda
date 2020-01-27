@@ -3,6 +3,8 @@
 
 namespace Lambda
 {
+    class IConsoleOutput;
+
     enum EMessageBox
     {
         MESSAGE_BOX_UNKNOWN     = 0,
@@ -16,6 +18,9 @@ namespace Lambda
 		LAMBDA_STATIC_CLASS(CGenericPlatform);
 
 		static void Init() {}
+        static void Release() {}
+        
+        static IConsoleOutput* CreateConsoleOutput() { return nullptr; }
         
 		static void PollEvents() {}
         

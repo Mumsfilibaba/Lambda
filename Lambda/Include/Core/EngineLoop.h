@@ -5,16 +5,19 @@
 
 namespace Lambda
 {
-	class LAMBDA_API CEngineLoop
+	class LAMBDA_API CEngineLoop final
 	{
 	public:
         CEngineLoop();
         ~CEngineLoop() = default;
 
+        void PreInit();
         void Init();
         void Start();
         void Tick();
+        void Terminate();
         void Release();
+        void PostRelease();
         bool IsRunning() const { return m_bIsRunning; }
 	private:
 		bool m_bIsRunning;

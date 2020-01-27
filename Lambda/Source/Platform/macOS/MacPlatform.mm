@@ -2,7 +2,8 @@
 
 #ifdef LAMBDA_PLAT_MACOS
     #include "Platform/macOS/MacPlatform.h"
-
+    #include "Platform/macOS/MacConsoleOutput.h"
+    
     #include <mach/mach_time.h>
     #include <Cocoa/Cocoa.h>
     #include <Foundation/Foundation.h>
@@ -10,6 +11,7 @@
 
 namespace Lambda
 {
+    MacAppDelegate* CMacPlatform::s_pAppDelegate = nullptr;
     uint64 CMacPlatform::s_NanoSecTickFactor = 0;
 
     void CMacPlatform::Init()
@@ -17,7 +19,14 @@ namespace Lambda
         //Create static application instance
         [NSApplication sharedApplication];
         
+        //Set delegate
+        MacAppDelegate* pAppDelegate = [[MacAppDelegate alloc] init];
+        s_pAppDelegate = pAppDelegate;
+        [NSApp setDelegate:s_pAppDelegate];
+        
         CreateMenuBar();
+
+        [NSApp run];
         
         //Init frequency
         mach_timebase_info_data_t timeData = {};
@@ -92,6 +101,16 @@ namespace Lambda
         // to get the application menu working properly.
         SEL setAppleMenuSelector = NSSelectorFromString(@"setAppleMenu:");
         [NSApp performSelector:setAppleMenuSelector withObject:pAppMenu];
+    }
+
+    void CMacPlatform::Release()
+    {
+        [s_pAppDelegate release];
+    }
+
+    IConsoleOutput* CMacPlatform::CreateConsoleOutput()
+    {
+        return DBG_NEW MacConsoleOutput();
     }
 
     void CMacPlatform::PollEvents()
