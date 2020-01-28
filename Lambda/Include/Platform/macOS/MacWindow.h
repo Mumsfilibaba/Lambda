@@ -26,8 +26,8 @@ namespace Lambda
         virtual void AddEventListener(IEventListener*) override final;
         virtual void RemoveEventListener(IEventListener*) override final;
         
-        virtual uint32 GetWidth() const override final { return m_nWidth; }
-        virtual uint32 GetHeight() const override final { return m_nHeight; }
+        virtual uint32 GetWidth() const override final { return m_Width; }
+        virtual uint32 GetHeight() const override final { return m_Height; }
         virtual void*  GetNativeHandle() const override final { return m_pCocoaWindow; }
     public:
         void OnMove(uint32 x, uint32 y);
@@ -48,11 +48,11 @@ namespace Lambda
         void OnClose();
     private:
         void Init(const SWindowDesc& desc);
-        void DispatchEvent(const SEvent& event);
+        bool DispatchEvent(const SEvent& event);
     private:
         std::vector<IEventListener*> m_EventListeners;
-        CocoaView* m_pView;
-        CocoaWindow* m_pCocoaWindow;
+        CCocoaView* m_pView;
+        CCocoaWindow* m_pCocoaWindow;
         uint32 m_Width;
         uint32 m_Height;
         bool m_bIsMiniaturized;

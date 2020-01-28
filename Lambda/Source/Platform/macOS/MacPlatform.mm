@@ -3,6 +3,7 @@
 #ifdef LAMBDA_PLAT_MACOS
     #include "Platform/macOS/MacPlatform.h"
     #include "Platform/macOS/MacTime.h"
+    #include "Platform/macOS/MacWindow.h"
     #include "Platform/macOS/MacConsoleOutput.h"
     
     #include <Cocoa/Cocoa.h>
@@ -13,21 +14,14 @@ namespace Lambda
 {
     MacAppDelegate* CMacPlatform::s_pAppDelegate = nullptr;
 
-    void CMacPlatform::Init()
+    IConsoleOutput* CMacPlatform::CreateConsoleOutput()
     {
-        //Create static application instance
-        [NSApplication sharedApplication];
-        
-        //Set delegate
-        MacAppDelegate* pAppDelegate = [[MacAppDelegate alloc] init];
-        s_pAppDelegate = pAppDelegate;
-        [NSApp setDelegate:s_pAppDelegate];
-        
-        CreateMenuBar();
+        return DBG_NEW CMacConsoleOutput();
+    }
 
-        [NSApp run];
-        
-        CMacTime::Init();
+    IWindow* CMacPlatform::CreateWindow(const SWindowDesc& desc)
+    {
+        return DBG_NEW CMacWindow(desc);
     }
 
     void CMacPlatform::CreateMenuBar()
@@ -99,14 +93,26 @@ namespace Lambda
         [NSApp performSelector:setAppleMenuSelector withObject:pAppMenu];
     }
 
+    void CMacPlatform::Init()
+    {
+        //Create static application instance
+        [NSApplication sharedApplication];
+        
+        //Set delegate
+        MacAppDelegate* pAppDelegate = [[MacAppDelegate alloc] init];
+        s_pAppDelegate = pAppDelegate;
+        [NSApp setDelegate:s_pAppDelegate];
+        
+        CreateMenuBar();
+
+        [NSApp run];
+        
+        CMacTime::Init();
+    }
+
     void CMacPlatform::Release()
     {
         [s_pAppDelegate release];
-    }
-
-    IConsoleOutput* CMacPlatform::CreateConsoleOutput()
-    {
-        return DBG_NEW CMacConsoleOutput();
     }
 
     void CMacPlatform::PollEvents()
@@ -140,6 +146,18 @@ namespace Lambda
     void CMacPlatform::OutputDebugString(const char* pMessage)
     {
         NSLog(@"%s", pMessage);
+    }
+
+    EMouseButton CMacPlatform::ConvertMouseButton(uint32 button)
+    {
+        if (button == 0)
+            return EMouseButton::MOUSEBUTTON_LEFT;
+        else if (button == 1)
+            return EMouseButton::MOUSEBUTTON_RIGHT;
+        else if (button == 2)
+            return EMouseButton::MOUSEBUTTON_MIDDLE;
+        else
+            return EMouseButton::MOUSEBUTTON_UNKNOWN;
     }
 }
 #endif

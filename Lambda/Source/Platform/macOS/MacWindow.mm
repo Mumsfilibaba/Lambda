@@ -2,6 +2,8 @@
 
 #if defined(LAMBDA_PLAT_MACOS)
     #include "Core/Event/Event.h"
+    #include "Core/Event/IEventListener.h"
+
     #include "Core/Debug/IConsoleOutput.h"
 
     #include "Platform/macOS/MacWindow.h"
@@ -41,10 +43,10 @@ namespace Lambda
         //Create a native cocoa window
         NSRect contentRect = NSMakeRect(0, 0, desc.Width, desc.Height);
         NSUInteger styleMask = NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskResizable;
-        CocoaWindow* pCocoaWindow = [[CocoaWindow alloc] initWithContentRect:this :contentRect styleMask:styleMask backing:NSBackingStoreBuffered defer:NO];
+        CCocoaWindow* pCocoaWindow = [[CCocoaWindow alloc] initWithContentRect:this :contentRect styleMask:styleMask backing:NSBackingStoreBuffered defer:NO];
         m_pCocoaWindow = pCocoaWindow;
         
-        NSString* pNSTitle = [NSString stringWithUTF8String:pTitle];
+        NSString* pNSTitle = [NSString stringWithUTF8String:desc.pTitle];
         [m_pCocoaWindow setTitle:pNSTitle];
         
         const NSWindowCollectionBehavior behavior = NSWindowCollectionBehaviorFullScreenPrimary | NSWindowCollectionBehaviorManaged;
@@ -53,11 +55,22 @@ namespace Lambda
         [m_pCocoaWindow setAcceptsMouseMovedEvents:YES];
         [m_pCocoaWindow setRestorable:NO];
 
-        CocoaView* pView = [[CocoaView alloc] initWithWindow:this];
+        CCocoaView* pView = [[CCocoaView alloc] initWithWindow:this];
         m_pView = pView;
         
         [m_pCocoaWindow setContentView:m_pView];
         [m_pCocoaWindow makeFirstResponder:m_pView];
+    }
+    
+    bool CMacWindow::DispatchEvent(const SEvent& event)
+    {
+        for (IEventListener* pEventListener : m_EventListeners)
+        {
+            if (pEventListener->OnEvent(event))
+                return true;
+        }
+        
+        return false;
     }
     
     void CMacWindow::Show()

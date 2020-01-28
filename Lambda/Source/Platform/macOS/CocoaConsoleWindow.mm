@@ -1,7 +1,7 @@
 #include "LambdaPch.h"
 
 #ifdef LAMBDA_PLAT_MACOS
-    #include "Platform/macOS/CococaConsoleWindow.h"
+    #include "Platform/macOS/CocoaConsoleWindow.h"
 
 @implementation CocoaConsoleWindow
 @end

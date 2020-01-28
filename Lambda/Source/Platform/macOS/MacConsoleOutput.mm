@@ -1,7 +1,7 @@
 #include "LambdaPch.h"
 
 #ifdef LAMBDA_PLAT_MACOS
-    #include "Platform/macOS/CMacConsoleOutput.h"
+    #include "Platform/macOS/MacConsoleOutput.h"
 
     #include <stdarg.h>
     #include <Foundation/Foundation.h>

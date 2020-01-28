@@ -1,7 +1,7 @@
 #pragma once
 #include "LambdaCore.h"
 
-#include "Core/Event/EventHandler.h"
+#include "Core/Event/IEventListener.h"
 
 namespace Lambda
 {

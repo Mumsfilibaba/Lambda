@@ -2,7 +2,7 @@
 #include "Core/Debug/IConsoleOutput.h"
 
 #ifdef LAMBDA_PLAT_MACOS
-    #include "CococaConsoleWindow.h"
+    #include "CocoaConsoleWindow.h"
 
 namespace Lambda
 {

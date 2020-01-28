@@ -6,7 +6,7 @@
     #include "Platform/macOS/MacKeyboard.h"
     #include "Platform/macOS/MacPlatform.h"
 
-@implementation CocoaView
+@implementation CCocoaView
 
     - (id) initWithWindow:(Lambda::CMacWindow*) pWindow
     {
@@ -175,7 +175,7 @@
 @end
 
 
-@implementation CocoaWindow
+@implementation CCocoaWindow
 
     - (id) initWithContentRect:(Lambda::CMacWindow*) pWindow :(NSRect) contentRect styleMask:(NSWindowStyleMask) style backing:(NSBackingStoreType) backingStoreType defer:(BOOL) flag
     {

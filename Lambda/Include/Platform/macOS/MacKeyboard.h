@@ -9,7 +9,7 @@ namespace Lambda
     class CMacKeyboard
     {
     public:
-        LAMBDA_STATIC_CLASS(CMacKeyboard);
+        LAMBDA_DECL_STATIC_CLASS(CMacKeyboard);
 
         static void Init();
         

@@ -10,7 +10,7 @@
     #if defined(__OBJC__)
         #include <Cocoa/Cocoa.h>
 
-        @interface CocoaView : NSView<NSTextInputClient>
+        @interface CCocoaView : NSView<NSTextInputClient>
         {
             Lambda::CMacWindow* m_pWindow;
         }
@@ -18,7 +18,7 @@
         - (id) initWithWindow:(Lambda::CMacWindow*) pWindow;
         @end
 
-        @interface CocoaWindow : NSWindow<NSWindowDelegate>
+        @interface CCocoaWindow : NSWindow<NSWindowDelegate>
         {
             Lambda::CMacWindow* m_pWindow;
         }
@@ -26,7 +26,7 @@
         - (id) initWithContentRect:(Lambda::CMacWindow*) pWindow :(NSRect)contentRect styleMask:(NSWindowStyleMask)style backing:(NSBackingStoreType)backingStoreType defer:(BOOL)flag;
         @end
     #else
-        class CocoaView;
+        class CCocoaView;
         class CocoaWindow;
     #endif
 #endif
