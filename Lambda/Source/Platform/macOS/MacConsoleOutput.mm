@@ -1,14 +1,14 @@
 #include "LambdaPch.h"
 
 #ifdef LAMBDA_PLAT_MACOS
-    #include "Platform/macOS/MacConsoleOutput.h"
+    #include "Platform/macOS/CMacConsoleOutput.h"
 
     #include <stdarg.h>
     #include <Foundation/Foundation.h>
 
 namespace Lambda
 {
-    MacConsoleOutput::MacConsoleOutput()
+    CMacConsoleOutput::CMacConsoleOutput()
         : IConsoleOutput(),
         m_pTextView(nullptr),
         m_pScrollView(nullptr),
@@ -55,7 +55,7 @@ namespace Lambda
         SetTextColor(EConsoleColor::CONSOLE_COLOR_WHITE);
     }
 
-    MacConsoleOutput::~MacConsoleOutput()
+    CMacConsoleOutput::~CMacConsoleOutput()
     {
         [m_pTextViewTextColor release];
         [m_pScrollView release];
@@ -63,7 +63,7 @@ namespace Lambda
         [m_pConsoleWindow release];
     }
     
-    void MacConsoleOutput::Show()
+    void CMacConsoleOutput::Show()
     {
         if (m_pConsoleWindow)
         {
@@ -71,7 +71,7 @@ namespace Lambda
         }
     }
     
-    void MacConsoleOutput::Hide()
+    void CMacConsoleOutput::Hide()
     {
         if (m_pConsoleWindow)
         {            
@@ -79,13 +79,13 @@ namespace Lambda
         }
     }
 
-    void MacConsoleOutput::SetTitle(const char* pTitle)
+    void CMacConsoleOutput::SetTitle(const char* pTitle)
     {
         NSString* pNSTitle = [NSString stringWithUTF8String:pTitle];
         [m_pConsoleWindow setTitle:pNSTitle];
     }
 
-    void MacConsoleOutput::SetTextColor(EConsoleColor color)
+    void CMacConsoleOutput::SetTextColor(EConsoleColor color)
     {
         NSMutableArray* pColors        = [[NSMutableArray alloc] init];
         NSMutableArray* pAttributeKeys = [[NSMutableArray alloc] init];
@@ -118,15 +118,15 @@ namespace Lambda
         [pAttributeKeys release];
     }
 
-    void MacConsoleOutput::Write(const char* pFormat, ...)
+    void CMacConsoleOutput::Write(const char* pFormat, ...)
     {
         va_list args;
         va_start(args, pFormat);
-        MacConsoleOutput::WriteV(pFormat, args);
+        CMacConsoleOutput::WriteV(pFormat, args);
         va_end(args);
     }
 
-    void MacConsoleOutput::WriteV(const char* pFormat, va_list args)
+    void CMacConsoleOutput::WriteV(const char* pFormat, va_list args)
     {
         NSString* pNSFormat = [NSString stringWithUTF8String:pFormat];
         NSString* pNSString = [[NSString alloc] initWithFormat:pNSFormat arguments:args];
@@ -141,7 +141,7 @@ namespace Lambda
         [pNSString release];
     }
     
-    void MacConsoleOutput::Clear()
+    void CMacConsoleOutput::Clear()
     {
         [m_pTextView setString:@""];
     }

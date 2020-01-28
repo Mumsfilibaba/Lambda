@@ -6,11 +6,11 @@
 
 namespace Lambda
 {
-    class MacConsoleOutput final : public IConsoleOutput
+    class CMacConsoleOutput final : public IConsoleOutput
     {
     public:
-        MacConsoleOutput();
-        ~MacConsoleOutput();
+        CMacConsoleOutput();
+        ~CMacConsoleOutput();
         
         virtual void Show() override final;
         virtual void Hide() override final;

@@ -4,7 +4,7 @@
 
 namespace Lambda
 {
-	class CCommonWindow;
+	class IWindow;
 
 	enum class EResizeType : uint8
 	{

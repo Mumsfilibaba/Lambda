@@ -17,8 +17,8 @@ namespace Lambda
 {
     struct SWindowDesc;
 
+    class IWindow;
     class IConsoleOutput;
-    class CCommonWindow;
 
     enum EMessageBox
     {
@@ -32,8 +32,8 @@ namespace Lambda
 	public:
 		LAMBDA_DECL_STATIC_CLASS(CCommonPlatform);
 
-        static IConsoleOutput* CreateConsoleOutput()            { return nullptr; }
-        static CCommonWindow* CreateWindow(const SWindowDesc&) { return nullptr; }
+        static IConsoleOutput* CreateConsoleOutput()        { return nullptr; }
+        static IWindow* CreateWindow(const SWindowDesc&)    { return nullptr; }
 		
         static void Init() {}
         static void Release() {}

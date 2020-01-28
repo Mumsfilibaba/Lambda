@@ -8,6 +8,7 @@
 #include "Core/Log/EngineLog.h"
 
 #include "Platform/Platform.h"
+#include "Platform/Common/IWindow.h"
 
 namespace Lambda
 {

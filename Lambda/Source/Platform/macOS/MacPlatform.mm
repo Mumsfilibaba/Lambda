@@ -2,9 +2,9 @@
 
 #ifdef LAMBDA_PLAT_MACOS
     #include "Platform/macOS/MacPlatform.h"
+    #include "Platform/macOS/MacTime.h"
     #include "Platform/macOS/MacConsoleOutput.h"
     
-    #include <mach/mach_time.h>
     #include <Cocoa/Cocoa.h>
     #include <Foundation/Foundation.h>
     #include <CoreServices/CoreServices.h>
@@ -12,7 +12,6 @@
 namespace Lambda
 {
     MacAppDelegate* CMacPlatform::s_pAppDelegate = nullptr;
-    uint64 CMacPlatform::s_NanoSecTickFactor = 0;
 
     void CMacPlatform::Init()
     {
@@ -28,10 +27,7 @@ namespace Lambda
 
         [NSApp run];
         
-        //Init frequency
-        mach_timebase_info_data_t timeData = {};
-        mach_timebase_info(&timeData);
-        s_NanoSecTickFactor = (uint64)timeData.numer / (uint64)timeData.denom;
+        CMacTime::Init();
     }
 
     void CMacPlatform::CreateMenuBar()
@@ -110,7 +106,7 @@ namespace Lambda
 
     IConsoleOutput* CMacPlatform::CreateConsoleOutput()
     {
-        return DBG_NEW MacConsoleOutput();
+        return DBG_NEW CMacConsoleOutput();
     }
 
     void CMacPlatform::PollEvents()
@@ -144,23 +140,6 @@ namespace Lambda
     void CMacPlatform::OutputDebugString(const char* pMessage)
     {
         NSLog(@"%s", pMessage);
-    }
-
-    uint64 CMacPlatform::Nanoseconds()
-    {
-        return Ticks() * s_NanoSecTickFactor;
-    }
-
-    uint64 CMacPlatform::Ticks()
-    {
-        return (uint64)mach_absolute_time();
-    }
-
-    uint64 CMacPlatform::TicksPerSecond()
-    {
-        //Convert to seconds - In nanoseconds on macOS, since this is based on the
-        //windows version we need to convert to seconds since WinAPI returns in seconds
-        return (s_NanoSecTickFactor * 1000000000UL);
     }
 }
 #endif

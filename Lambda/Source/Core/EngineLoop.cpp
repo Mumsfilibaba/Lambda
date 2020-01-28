@@ -8,6 +8,7 @@
 #include "Core/Debug/IConsoleOutput.h"
 
 #include "Platform/Platform.h"
+#include "Platform/Common/IWindow.h"
 
 namespace Lambda
 {

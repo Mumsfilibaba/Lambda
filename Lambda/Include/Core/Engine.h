@@ -3,17 +3,16 @@
 
 #include "Core/Event/EventHandler.h"
 
-#include "Platform/Common/CommonWindow.h"
-
 namespace Lambda
 {
     class CGame;
     class CEngine;
+    class IWindow;
     class CTimestep;
 
     LAMBDA_API extern CEngine g_Engine;
 
-    class LAMBDA_API CEngine final : IEventHandler
+    class LAMBDA_API CEngine final : IEventListener
     {
     public:
         CEngine();
@@ -27,8 +26,11 @@ namespace Lambda
         void Render(const CTimestep& deltaTime);
         void Release();
 
-        CCommonWindow& GetWindow()             { return *m_pWindow; }
-        const CCommonWindow& GetWindow() const { return *m_pWindow; }
+        CGame& GetGame() { return *m_pGame; }
+        const CGame& GetGame() const { return *m_pGame; }
+        
+        IWindow& GetWindow()             { return *m_pWindow; }
+        const IWindow& GetWindow() const { return *m_pWindow; }
 
         static CEngine& Get() { return g_Engine; }
     public:
@@ -36,6 +38,6 @@ namespace Lambda
         virtual bool OnEvent(const SEvent& event) override final;
     private:
         CGame* m_pGame;
-        CCommonWindow* m_pWindow;
+        IWindow* m_pWindow;
     };
 }
