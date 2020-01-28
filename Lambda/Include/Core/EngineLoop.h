@@ -22,8 +22,8 @@ namespace Lambda
         void PostRelease();
         bool IsRunning() const { return m_bIsRunning; }
 	private:
-		bool m_bIsRunning;
-		CClock m_Frameclock;
+        CClock m_Frameclock;
+        bool m_bIsRunning;
 	};
 
     LAMBDA_API extern CEngineLoop g_EngineLoop;
