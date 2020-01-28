@@ -12,7 +12,7 @@
 
     - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication*)application
     {
-        return NO;
+        return YES;
     }
     @end
 #endif
