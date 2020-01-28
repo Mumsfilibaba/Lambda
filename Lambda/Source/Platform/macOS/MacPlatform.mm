@@ -83,12 +83,9 @@ namespace Lambda
         [pWindowMenu addItem:[NSMenuItem separatorItem]];
         [pWindowMenu addItemWithTitle:@"Bring All to Front" action:@selector(arrangeInFront:) keyEquivalent:@""];
         
-        // TODO: Make this appear at the bottom of the menu (for consistency)
         [pWindowMenu addItem:[NSMenuItem separatorItem]];
         [[pWindowMenu addItemWithTitle:@"Enter Full Screen" action:@selector(toggleFullScreen:) keyEquivalent:@"f"] setKeyEquivalentModifierMask:NSEventModifierFlagControl | NSEventModifierFlagCommand];
         
-        // Prior to Snow Leopard, we need to use this oddly-named semi-private API
-        // to get the application menu working properly.
         SEL setAppleMenuSelector = NSSelectorFromString(@"setAppleMenu:");
         [NSApp performSelector:setAppleMenuSelector withObject:pAppMenu];
     }

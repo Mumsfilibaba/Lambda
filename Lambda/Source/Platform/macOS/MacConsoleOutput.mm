@@ -20,7 +20,7 @@ namespace Lambda
         int32 consolePosX = 0;
         int32 consolePosY = 0;
         
-        CocoaConsoleWindow* pConsole = [[CocoaConsoleWindow alloc] initWithContentRect: NSMakeRect(consolePosX, consolePosY, consoleWidth, consoleHeight) styleMask: (NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable) backing: NSBackingStoreBuffered defer: NO];
+        CCocoaConsoleWindow* pConsole = [[CCocoaConsoleWindow alloc] initWithContentRect: NSMakeRect(consolePosX, consolePosY, consoleWidth, consoleHeight) styleMask: (NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable) backing: NSBackingStoreBuffered defer: NO];
         m_pConsoleWindow = pConsole;
         [m_pConsoleWindow setDelegate:m_pConsoleWindow];
         
@@ -66,17 +66,13 @@ namespace Lambda
     void CMacConsoleOutput::Show()
     {
         if (m_pConsoleWindow)
-        {
             [m_pConsoleWindow makeKeyAndOrderFront:nil];
-        }
     }
     
     void CMacConsoleOutput::Hide()
     {
         if (m_pConsoleWindow)
-        {            
             [m_pConsoleWindow orderOut:m_pConsoleWindow];
-        }
     }
 
     void CMacConsoleOutput::SetTitle(const char* pTitle)
@@ -107,9 +103,7 @@ namespace Lambda
         [pAttributeKeys addObject:NSBackgroundColorAttributeName];
 
         if (m_pTextViewTextColor)
-        {
             [m_pTextViewTextColor release];
-        }
         
         NSDictionary* pTextViewTextColor = [[NSDictionary alloc] initWithObjects:pColors forKeys:pAttributeKeys];
         m_pTextViewTextColor = pTextViewTextColor;
@@ -134,7 +128,7 @@ namespace Lambda
         NSAttributedString* pAttributedString = [[NSAttributedString alloc] initWithString:pNSString attributes:m_pTextViewTextColor];
         [[m_pTextView textStorage] appendAttributedString:pAttributedString];
         
-        [[m_pTextView textStorage] setFont:[NSFont fontWithName:@"Courier" size:16]];
+        [[m_pTextView textStorage] setFont:[NSFont fontWithName:@"Courier" size:12]];
         [m_pTextView scrollRangeToVisible:NSMakeRange([[m_pTextView string] length], 0)];
         
         [pAttributedString release];

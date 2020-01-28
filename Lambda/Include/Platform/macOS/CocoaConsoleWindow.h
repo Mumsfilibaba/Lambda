@@ -4,7 +4,7 @@
     #if defined(__OBJC__)
         #include <Cocoa/Cocoa.h>
 
-        @interface CocoaConsoleWindow : NSWindow<NSWindowDelegate>
+        @interface CCocoaConsoleWindow : NSWindow<NSWindowDelegate>
         {
         }
         @end

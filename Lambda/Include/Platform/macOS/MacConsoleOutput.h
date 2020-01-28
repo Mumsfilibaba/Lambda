@@ -26,7 +26,7 @@ namespace Lambda
         NSTextView* m_pTextView;
         NSScrollView* m_pScrollView;
         NSDictionary* m_pTextViewTextColor;
-        CocoaConsoleWindow* m_pConsoleWindow;
+        CCocoaConsoleWindow* m_pConsoleWindow;
     };
 }
 #endif

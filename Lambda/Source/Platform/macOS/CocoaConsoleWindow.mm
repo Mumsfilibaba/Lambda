@@ -3,7 +3,7 @@
 #ifdef LAMBDA_PLAT_MACOS
     #include "Platform/macOS/CocoaConsoleWindow.h"
 
-@implementation CocoaConsoleWindow
+@implementation CCocoaConsoleWindow
 @end
 
 #endif
