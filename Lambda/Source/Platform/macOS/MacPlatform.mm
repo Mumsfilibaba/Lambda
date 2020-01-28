@@ -98,12 +98,14 @@ namespace Lambda
         //Create static application instance
         [NSApplication sharedApplication];
         
-        //Set delegate
         MacAppDelegate* pAppDelegate = [[MacAppDelegate alloc] init];
-        s_pAppDelegate = pAppDelegate;
-        [NSApp setDelegate:s_pAppDelegate];
-        
-        CreateMenuBar();
+        if (pAppDelegate != nil)
+        {
+            s_pAppDelegate = pAppDelegate;
+            [NSApp setDelegate:s_pAppDelegate];
+            
+            CreateMenuBar();
+        }
 
         [NSApp run];
         

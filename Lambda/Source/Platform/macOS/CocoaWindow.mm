@@ -172,6 +172,11 @@
             }
         }
     }
+
+    - (void)viewDidChangeBackingProperties
+    {
+        self.layer.contentsScale = [[self window] backingScaleFactor];
+    }
 @end
 
 
