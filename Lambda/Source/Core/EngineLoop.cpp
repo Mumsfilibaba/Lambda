@@ -3,8 +3,8 @@
 #include "Core/Engine.h"
 #include "Core/EngineLoop.h"
 
+#include "Core/Input/Input.h"
 #include "Core/Log/EngineLog.h"
-
 #include "Core/Debug/IConsoleOutput.h"
 
 #include "Platform/Platform.h"
@@ -16,8 +16,8 @@ namespace Lambda
     LAMBDA_API IConsoleOutput* g_pConsoleOutput = nullptr;
 
 	CEngineLoop::CEngineLoop()
-		: m_bIsRunning(false),
-		m_Frameclock()
+		: m_Frameclock(),
+        m_bIsRunning(false)
 	{
 	}
 
@@ -45,6 +45,8 @@ namespace Lambda
 	{
         m_bIsRunning = false;
 
+        Input::Init();
+        
         g_Engine.Init();
         LOG_CORE_INFO("Finished Init");
 	}
@@ -68,6 +70,8 @@ namespace Lambda
 		Platform::PollEvents();
 		m_Frameclock.Tick();
 
+        Input::Update();
+        
         //Perform the fixed update
         CTimestep deltatime = m_Frameclock.GetDeltaTime();
         g_Engine.FixedUpdate(deltatime);
