@@ -19,6 +19,7 @@ namespace Lambda
 #ifdef LAMBDA_VISUAL_STUDIO
 	#define DebugBreak(...) __debugbreak()
 #else
+    #include <stdlib.h>
 	#define DebugBreak(...) abort()
 #endif
 
