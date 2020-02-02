@@ -57,8 +57,8 @@ namespace Lambda
         m_pGame = pfnCreateGameInstanceFunc();
         m_pGame->Init();
 
-        LOG_INFO("Created Game Instance");
-
+        LOG_CORE_INFO("Created Game Instance");
+        
         LOG_CORE_INFO("Finished Init");
     }
 
@@ -80,8 +80,6 @@ namespace Lambda
     {
         Platform::PollEvents();
         m_Frameclock.Tick();
-
-        //Input::Update();
 
         //Perform the fixed update
         CTimestep deltatime = m_Frameclock.GetDeltaTime();
