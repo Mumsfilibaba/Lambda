@@ -81,7 +81,7 @@ namespace Lambda
         Platform::PollEvents();
         m_Frameclock.Tick();
 
-        //Perform the fixed update
+        //TODO: Perform the fixed update
         CTimestep deltatime = m_Frameclock.GetDeltaTime();
         m_pGame->FixedUpdate(deltatime);
 
@@ -122,6 +122,10 @@ namespace Lambda
         {
             RequestExit();
             return true;
+        }
+        else if (event.EventType == EEventType::EVENT_TYPE_WINDOW_RESIZE)
+        {
+            D_LOG_CORE_INFO("Window Resize w=%d, h=%d", event.WindowResizeEvent.Width, event.WindowResizeEvent.Height);
         }
 
         return false;
