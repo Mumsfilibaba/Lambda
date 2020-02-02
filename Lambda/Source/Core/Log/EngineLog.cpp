@@ -1,5 +1,6 @@
 #include "LambdaPch.h"
 
+#include "Core/Log/Log.h"
 #include "Core/Log/EngineLog.h"
 
 namespace Lambda

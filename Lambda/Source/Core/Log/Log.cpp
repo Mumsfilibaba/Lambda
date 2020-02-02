@@ -1,5 +1,7 @@
 #include "LambdaPch.h"
 
+#include "Core/Engine.h"
+
 #include "Core/Log/Log.h"
 #include "Core/Debug/IConsoleOutput.h"
 
@@ -10,7 +12,7 @@
 namespace Lambda
 {
     CLog::CLog()
-        : m_bEnabled(false)
+        : m_bEnabled(true)
     {
     }
 
@@ -42,28 +44,29 @@ namespace Lambda
             memset(buffer, 0, sizeof(buffer));
             vsnprintf(buffer, MAX_MESSAGE_LENGTH, pFormat, args);
             
-            if (g_pConsoleOutput)
+            IConsoleOutput* pOutput = CEngine::Get().GetConsoleOutput();
+            if (pOutput)
             {
                 if (verbosity == ELogVerbosity::LOG_VERBOSITY_INFO)
                 {
-                    g_pConsoleOutput->SetTextColor(EConsoleColor::CONSOLE_COLOR_GREEN);
-                    g_pConsoleOutput->Write("[INFO] ");
+                    pOutput->SetTextColor(EConsoleColor::CONSOLE_COLOR_GREEN);
+                    pOutput->Write("[INFO] ");
                 }
                 else if (verbosity == ELogVerbosity::LOG_VERBOSITY_WARNING)
                 {
-                    g_pConsoleOutput->SetTextColor(EConsoleColor::CONSOLE_COLOR_YELLOW);
-                    g_pConsoleOutput->Write("[WARNING] ");
+                    pOutput->SetTextColor(EConsoleColor::CONSOLE_COLOR_YELLOW);
+                    pOutput->Write("[WARNING] ");
                 }
                 else if (verbosity == ELogVerbosity::LOG_VERBOSITY_ERROR)
                 {
-                    g_pConsoleOutput->SetTextColor(EConsoleColor::CONSOLE_COLOR_RED);
-                    g_pConsoleOutput->Write("[ERROR] ");
+                    pOutput->SetTextColor(EConsoleColor::CONSOLE_COLOR_RED);
+                    pOutput->Write("[ERROR] ");
                 }
 
-                g_pConsoleOutput->Write(buffer);
-                g_pConsoleOutput->Write("\n");
+                pOutput->Write(buffer);
+                pOutput->Write("\n");
                 
-                g_pConsoleOutput->SetTextColor(EConsoleColor::CONSOLE_COLOR_WHITE);
+                pOutput->SetTextColor(EConsoleColor::CONSOLE_COLOR_WHITE);
             }
             
             Platform::OutputDebugString(buffer);

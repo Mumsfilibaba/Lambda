@@ -1,5 +1,5 @@
 #pragma once
-#include "Platform/Common/CommonWindow.h"
+#include "Platform/Common/IWindow.h"
 
 #ifdef LAMBDA_PLAT_WINDOWS
 	#include <vector>
@@ -8,7 +8,7 @@ namespace Lambda
 {
 	struct SEvent;
 
-	class LAMBDA_API CWindowsWindow : public CCommonWindow
+	class LAMBDA_API CWindowsWindow : public IWindow
 	{
 	public:
 		CWindowsWindow(const SWindowDesc& desc);
@@ -16,12 +16,13 @@ namespace Lambda
 
 		virtual void Show() override;
 
-		virtual void AddEventListener(IEventHandler* pEventListener) override;
-		virtual void RemoveEventListener(IEventHandler* pEventListener) override;
+		virtual void AddEventListener(IEventListener* pEventListener) override;
+		virtual void RemoveEventListener(IEventListener* pEventListener) override;
 
-		virtual uint32 GetHeight() const override	{ return 0; }
-		virtual uint32 GetWidth() const override	{ return 0; }
-
+		virtual uint32 GetWidth() const override { return m_Width; }
+		virtual uint32 GetHeight() const override { return m_Height; }
+		virtual void* GetNativeHandle() const override { return (void*)m_hWindow; }
+	public:
 		LRESULT ProcessMessage(uint32 message, WPARAM wParam, LPARAM lParam);
 
 		static void RegisterWindowClass(HINSTANCE hInstance);
@@ -35,7 +36,7 @@ namespace Lambda
 		void Init(const SWindowDesc& desc);
 		void DispatchEvent(const SEvent& event);
 	private:
-		std::vector<IEventHandler*> m_EventListeners;
+		std::vector<IEventListener*> m_EventListeners;
 		HWND m_hWindow;
 		uint32 m_Width;
 		uint32 m_Height;

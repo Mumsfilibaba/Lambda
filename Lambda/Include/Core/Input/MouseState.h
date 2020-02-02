@@ -5,6 +5,6 @@ namespace Lambda
 {
     class CMouseState
     {
-        
+    public:
     };
 }

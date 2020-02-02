@@ -2,7 +2,7 @@
 #include "LambdaCore.h"
 
 #include "Core/Game.h"
-#include "Core/EngineLoop.h"
+#include "Core/Engine.h"
 
 #include "Platform/Platform.h"
 
@@ -26,25 +26,22 @@ int main(int, const char**)
 	Platform::Init();
 #endif
     
-    //Set CreateGameFunc - This is to make both static and dynamic linking work
-    _CreateGame = CreateGame;
-
     //Init systems that is needed during init
-    g_EngineLoop.PreInit();
+    g_Engine.PreInit();
     
     //Init engine systems
-	g_EngineLoop.Init();
+    g_Engine.Init(CreateGame);
 
     //Run engine
-	g_EngineLoop.Start();
-	while (g_EngineLoop.IsRunning())
-		g_EngineLoop.Tick();
+    g_Engine.Start();
+	while (g_Engine.IsRunning())
+        g_Engine.Tick();
 
     //Release systems initialized in init
-	g_EngineLoop.Release();
+    g_Engine.Release();
     
     //Release systems initialized during preint
-    g_EngineLoop.PostRelease();
+    g_Engine.PostRelease();
     
     Platform::Release();
 	return 0;

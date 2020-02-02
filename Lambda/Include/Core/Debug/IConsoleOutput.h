@@ -31,6 +31,4 @@ namespace Lambda
         
         virtual void Clear() = 0;
     };
-
-    LAMBDA_API extern IConsoleOutput* g_pConsoleOutput;
 }

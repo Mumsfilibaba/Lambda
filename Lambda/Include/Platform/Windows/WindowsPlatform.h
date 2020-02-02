@@ -19,7 +19,7 @@ namespace Lambda
 		LAMBDA_DECL_STATIC_CLASS(CWindowsPlatform);
 
 		static IConsoleOutput* CreateConsoleOutput();
-		static CCommonWindow* CreateWindow(const SWindowDesc& desc);
+		static IWindow* CreateWindow(const SWindowDesc& desc);
 
 		static void Init(HINSTANCE hInstance);
 		static void Release();

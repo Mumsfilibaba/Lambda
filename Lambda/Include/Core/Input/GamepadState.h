@@ -3,8 +3,8 @@
 
 namespace Lambda
 {
-    class GamepadState
+    class CGamepadState
     {
-        
+    public:
     };
 }

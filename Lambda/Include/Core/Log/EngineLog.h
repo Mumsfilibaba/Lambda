@@ -1,5 +1,5 @@
 #pragma once
-#include "Log.h"
+#include "ILog.h"
 
 namespace Lambda
 {

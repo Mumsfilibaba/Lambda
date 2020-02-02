@@ -5,5 +5,6 @@ namespace Lambda
 {
     class CKeyboardState
     {
+    public:
     };
 }

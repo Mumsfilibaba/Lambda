@@ -20,6 +20,5 @@ namespace Lambda
 		virtual void Release() {}
 	};
 
-	typedef CGame* (*CreateGameFunc)();
-	LAMBDA_API extern CreateGameFunc _CreateGame;
+	typedef CGame* (*CreateGameInstanceFunc)();
 }

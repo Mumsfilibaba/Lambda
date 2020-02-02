@@ -1,18 +1,20 @@
 #pragma once
 #include "LambdaCore.h"
+#include "Game.h"
 
-#include "Core/Event/IEventListener.h"
+#include "Time/Clock.h"
+#include "Event/IEventListener.h"
 
 namespace Lambda
 {
-    class CGame;
-    class CEngine;
     class IWindow;
+    class IConsoleOutput;
+    class CEngine;
     class CTimestep;
 
     LAMBDA_API extern CEngine g_Engine;
 
-    class LAMBDA_API CEngine final : IEventListener
+    class LAMBDA_API CEngine final : public IEventListener
     {
     public:
         CEngine();
@@ -20,24 +22,45 @@ namespace Lambda
         
         LAMBDA_DECL_NO_COPY(CEngine);
 
-        void Init();
-        void Update(const CTimestep& deltaTime);
-        void FixedUpdate(const CTimestep& deltaTime);
-        void Render(const CTimestep& deltaTime);
+        void PreInit();
+        void Init(CreateGameInstanceFunc pfnCreateGameInstanceFunc);
+        void Start();
+        void Tick();
+        void RequestExit();
         void Release();
+        void PostRelease();
 
-        CGame& GetGame() { return *m_pGame; }
-        const CGame& GetGame() const { return *m_pGame; }
-        
-        IWindow& GetWindow()             { return *m_pWindow; }
-        const IWindow& GetWindow() const { return *m_pWindow; }
+        _forceinline CGame& GetGame() const
+        { 
+            LAMBDA_ASSERT_PRINT(m_pWindow, "Game instance not created properly");
+            return *m_pGame; 
+        }
+
+        _forceinline IWindow& GetWindow() const 
+        { 
+            LAMBDA_ASSERT_PRINT(m_pWindow, "Window not initialized");
+            return *m_pWindow; 
+        }
+
+        _forceinline IConsoleOutput* GetConsoleOutput() const 
+        { 
+            return m_pConsoleOutput; 
+        }
+
+        _forceinline bool IsRunning() const 
+        { 
+            return m_bIsRunning; 
+        }
 
         static CEngine& Get() { return g_Engine; }
     public:
         /*IEventHandler*/
         virtual bool OnEvent(const SEvent& event) override final;
     private:
+        CClock m_Frameclock;
         CGame* m_pGame;
         IWindow* m_pWindow;
+        IConsoleOutput* m_pConsoleOutput;
+        bool m_bIsRunning;
     };
 }

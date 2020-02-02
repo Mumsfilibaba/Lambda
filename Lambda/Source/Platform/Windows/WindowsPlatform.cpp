@@ -15,7 +15,7 @@ namespace Lambda
 		return DBG_NEW CWindowsConsoleOutput();
 	}
 
-	CCommonWindow* CWindowsPlatform::CreateWindow(const SWindowDesc& desc)
+	IWindow* CWindowsPlatform::CreateWindow(const SWindowDesc& desc)
 	{
 		return DBG_NEW CWindowsWindow(desc);
 	}

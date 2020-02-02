@@ -2,7 +2,7 @@
 
 #ifdef LAMBDA_PLAT_WINDOWS
 	#include "Core/Event/Event.h"
-	#include "Core/Event/EventHandler.h"
+	#include "Core/Event/IEventListener.h"
 
 	#include "Core/Utilities/StringUtilities.h"
 
@@ -13,7 +13,7 @@
 namespace Lambda
 {
 	CWindowsWindow::CWindowsWindow(const SWindowDesc& desc)
-		: CCommonWindow(),
+		: IWindow(),
 		m_hWindow(0),
 		m_Height(0),
 		m_Width(0),
@@ -39,13 +39,13 @@ namespace Lambda
 			::ShowWindow(m_hWindow, SW_NORMAL);
 	}
 
-	void CWindowsWindow::AddEventListener(IEventHandler* pEventListener)
+	void CWindowsWindow::AddEventListener(IEventListener* pEventListener)
 	{
 		if (pEventListener)
 			m_EventListeners.emplace_back(pEventListener);
 	}
 
-	void CWindowsWindow::RemoveEventListener(IEventHandler* pEventListener)
+	void CWindowsWindow::RemoveEventListener(IEventListener* pEventListener)
 	{
 		if (pEventListener)
 		{
@@ -96,7 +96,7 @@ namespace Lambda
 
 	void CWindowsWindow::DispatchEvent(const SEvent& event)
 	{
-		for (IEventHandler* pEventListener : m_EventListeners)
+		for (IEventListener* pEventListener : m_EventListeners)
 			pEventListener->OnEvent(event);
 	}
 
