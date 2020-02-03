@@ -9,7 +9,7 @@
 namespace Lambda
 {
     //Needs to be implemented by client
-    extern CGame* CreateGame();
+    extern CGame* CreateGameInstance();
 }
 
 #ifdef LAMBDA_PLAT_WINDOWS
@@ -25,17 +25,17 @@ int main(int, const char**)
 #else
 	Platform::Init();
 #endif
+
+    _CreateGameInstance = CreateGameInstance;
     
     //Init systems that is needed during init
     g_Engine.PreInit();
     
     //Init engine systems
-    g_Engine.Init(CreateGame);
+    g_Engine.Init();
 
     //Run engine
-    g_Engine.Start();
-	while (g_Engine.IsRunning())
-        g_Engine.Tick();
+    g_Engine.Run();
 
     //Release systems initialized in init
     g_Engine.Release();

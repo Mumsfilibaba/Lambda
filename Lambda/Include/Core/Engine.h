@@ -23,26 +23,20 @@ namespace Lambda
         LAMBDA_DECL_NO_COPY(CEngine);
 
         void PreInit();
-        void Init(CreateGameInstanceFunc pfnCreateGameInstanceFunc);
-        void Start();
+        void Init();
+        void Run();
         void Tick();
         void RequestExit();
         void Release();
         void PostRelease();
 
-        _forceinline CGame& GetGame() const
-        { 
-            LAMBDA_ASSERT_PRINT(m_pWindow, "Game instance not created properly");
-            return *m_pGame; 
-        }
-
-        _forceinline IWindow& GetWindow() const 
+        _forceinline IWindow* GetWindow() const 
         { 
             LAMBDA_ASSERT_PRINT(m_pWindow, "Window not initialized");
-            return *m_pWindow; 
+            return m_pWindow; 
         }
 
-        _forceinline IConsoleOutput* GetConsoleOutput() const 
+        _forceinline IConsoleOutput* GetErrorOutput() const 
         { 
             return m_pConsoleOutput; 
         }
@@ -51,8 +45,6 @@ namespace Lambda
         { 
             return m_bIsRunning; 
         }
-
-        static CEngine& Get() { return g_Engine; }
     public:
         /*IEventHandler*/
         virtual bool OnEvent(const SEvent& event) override final;

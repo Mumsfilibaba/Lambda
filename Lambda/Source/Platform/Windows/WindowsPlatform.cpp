@@ -4,7 +4,7 @@
 	#include "Platform/Windows/WindowsPlatform.h"
 	#include "Platform/Windows/WindowsTime.h"
 	#include "Platform/Windows/WindowsInput.h"
-	#include "Platform/Windows/WindowsWindow.h""
+	#include "Platform/Windows/WindowsWindow.h"
 	#include "Platform/Windows/WindowsConsoleOutput.h"
 
 namespace Lambda

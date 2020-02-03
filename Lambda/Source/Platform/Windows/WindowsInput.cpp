@@ -54,7 +54,8 @@ namespace Lambda
 					//Get stick info
 					XINPUT_GAMEPAD& xiGamepad = state.Gamepad;
 
-					float magnitude = sqrtf((xiGamepad.sThumbLX * xiGamepad.sThumbLX) + (xiGamepad.sThumbLY * xiGamepad.sThumbLY));
+					float magnitude = float(xiGamepad.sThumbLX * xiGamepad.sThumbLX) + float(xiGamepad.sThumbLY * xiGamepad.sThumbLY);
+					magnitude = sqrtf(magnitude);
 					if (magnitude > LEFT_STICK_DEADZONE)
 					{
 						magnitude = std::min<float>(magnitude, float(STICK_MAX_VALUE));
@@ -68,7 +69,8 @@ namespace Lambda
 						gamepadState.LeftStick.y = 0.0f;
 					}
 
-					magnitude = sqrtf((xiGamepad.sThumbRX * xiGamepad.sThumbRX) + (xiGamepad.sThumbRY * xiGamepad.sThumbRY));
+					magnitude = float(xiGamepad.sThumbRX * xiGamepad.sThumbRX) + float(xiGamepad.sThumbRY * xiGamepad.sThumbRY);
+					magnitude = sqrtf(magnitude);
 					if (magnitude > RIGHT_STICK_DEADZONE)
 					{
 						magnitude = std::min<float>(magnitude, float(STICK_MAX_VALUE));

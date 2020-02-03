@@ -44,7 +44,7 @@ namespace Lambda
             memset(buffer, 0, sizeof(buffer));
             vsnprintf(buffer, MAX_MESSAGE_LENGTH, pFormat, args);
             
-            IConsoleOutput* pOutput = CEngine::Get().GetConsoleOutput();
+            IConsoleOutput* pOutput = g_Engine.GetErrorOutput();
             if (pOutput)
             {
                 if (verbosity == ELogVerbosity::LOG_VERBOSITY_INFO)

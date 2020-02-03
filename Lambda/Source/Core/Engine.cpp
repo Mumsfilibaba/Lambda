@@ -41,7 +41,7 @@ namespace Lambda
         LOG_CORE_INFO("Finished Pre-Init");
     }
 
-    void CEngine::Init(CreateGameInstanceFunc pfnCreateGameInstanceFunc)
+    void CEngine::Init()
     {
         //Create window
         SWindowDesc windowDesc = {};
@@ -59,17 +59,16 @@ namespace Lambda
         PlatformInput::Init();
 
         //Create game instance
-        LAMBDA_ASSERT_PRINT(pfnCreateGameInstanceFunc, "CreateGame must be set");
+        LAMBDA_ASSERT_PRINT(_CreateGameInstance, "CreateGame must be set");
         
-        m_pGame = pfnCreateGameInstanceFunc();
+        m_pGame = _CreateGameInstance();
+        LOG_CORE_INFO("Created Game Instance");
         m_pGame->Init();
 
-        LOG_CORE_INFO("Created Game Instance");
-        
         LOG_CORE_INFO("Finished Init");
     }
 
-    void CEngine::Start()
+    void CEngine::Run()
     {
         LOG_CORE_INFO("Starting Engine");
 
@@ -81,6 +80,14 @@ namespace Lambda
 
         //Show window when engine is completly initialized
         m_pWindow->Show();
+
+        //Run engine loop
+        while (IsRunning())
+        {
+            Tick();
+        }
+
+        LOG_CORE_INFO("Exiting Engine");
     }
 
     void CEngine::Tick()
@@ -102,7 +109,7 @@ namespace Lambda
 
     void CEngine::RequestExit()
     {
-        LOG_CORE_INFO("Terminating Engine");
+        LOG_CORE_INFO("RequestExit");
         m_bIsRunning = false;
     }
 

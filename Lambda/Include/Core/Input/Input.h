@@ -9,22 +9,25 @@ namespace Lambda
     struct SMouseState;
     struct SGamepadState;
     struct SKeyboardState;
-
-    namespace Input
-    {
-        LAMBDA_API bool IsKeyPressed(EKey key);
-        LAMBDA_API bool IsKeyReleased(EKey key);
-        LAMBDA_API bool IsModiferKeyActive(EKeyModifier modiferKey);
-        LAMBDA_API uint32 GetModiferKeys();
-        
-        LAMBDA_API bool IsMouseButtonPressed(EMouseButton button);
-        LAMBDA_API bool IsMouseButtonReleased(EMouseButton button);
     
-        LAMBDA_API void SetMousePosition(int32 x, int32 y);
-        LAMBDA_API void GetMousePosition(int32& x, int32& y);
+    class LAMBDA_API CInput final
+    {
+    public:
+        LAMBDA_DECL_STATIC_CLASS(CInput);
 
-        LAMBDA_API void GetMouseState(SMouseState& mouseState);
-        LAMBDA_API void GetGamepadState(SGamepadState& gamepadState, EGamepad gamepad);
-        LAMBDA_API void GetKeyboardState(SKeyboardState& keyboardState);
-    }
+        static bool IsKeyPressed(EKey key);
+        static bool IsKeyReleased(EKey key);
+        static bool IsModiferKeyActive(EKeyModifier modiferKey);
+        static uint32 GetModiferKeys();
+
+        static bool IsMouseButtonPressed(EMouseButton button);
+        static bool IsMouseButtonReleased(EMouseButton button);
+
+        static void SetMousePosition(int32 x, int32 y);
+        static void GetMousePosition(int32& x, int32& y);
+
+        static void GetMouseState(SMouseState& mouseState);
+        static void GetGamepadState(SGamepadState& gamepadState, EGamepad gamepad);
+        static void GetKeyboardState(SKeyboardState& keyboardState);
+    };
 }

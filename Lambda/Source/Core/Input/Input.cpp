@@ -7,74 +7,61 @@
 
 namespace Lambda
 {
-    namespace Input
+    bool CInput::IsKeyPressed(EKey key)
     {
-        void Init()
-        {
-            PlatformInput::Init();
-        }
+        return PlatformInput::IsKeyPressed(key);
+    }
+
+    bool CInput::IsKeyReleased(EKey key)
+    {
+        return PlatformInput::IsKeyReleased(key);
+    }
+
+    bool CInput::IsModiferKeyActive(EKeyModifier modiferKey)
+    {
+        uint32 modifers = GetModiferKeys();
+        return modifers & modiferKey;
+    }
+
+    uint32 CInput::GetModiferKeys()
+    {
+        return PlatformInput::GetModiferKeys();
+    }
         
-        void Update()
-        {
-            PlatformInput::Update();
-        }
+    bool CInput::IsMouseButtonPressed(EMouseButton button)
+    {
+        return PlatformInput::IsMouseButtonPressed(button);
+    }
 
-        bool IsKeyPressed(EKey key)
-        {
-            return PlatformInput::IsKeyPressed(key);
-        }
+    bool CInput::IsMouseButtonReleased(EMouseButton button)
+    {
+        return PlatformInput::IsMouseButtonReleased(button);
+    }
 
-        bool IsKeyReleased(EKey key)
-        {
-            return PlatformInput::IsKeyReleased(key);
-        }
+    void CInput::SetMousePosition(int32 x, int32 y)
+    {   
+        IWindow* pWindow = g_Engine.GetWindow();
+        PlatformInput::SetMousePosition(pWindow, x, y);
+    }
 
-        bool IsModiferKeyActive(EKeyModifier modiferKey)
-        {
-            uint32 modifers = GetModiferKeys();
-            return modifers & modiferKey;
-        }
-
-        uint32 GetModiferKeys()
-        {
-            return PlatformInput::GetModiferKeys();
-        }
+    void CInput::GetMousePosition(int32& x, int32& y)
+    {   
+        IWindow* pWindow = g_Engine.GetWindow();
+        PlatformInput::GetMousePosition(pWindow, x, y);
+    }
         
-        bool IsMouseButtonPressed(EMouseButton button)
-        {
-            return PlatformInput::IsMouseButtonPressed(button);
-        }
+    void CInput::GetMouseState(SMouseState& mouseState)
+    {
+        mouseState = PlatformInput::GetMouseState();
+    }
 
-        bool IsMouseButtonReleased(EMouseButton button)
-        {
-            return PlatformInput::IsMouseButtonReleased(button);
-        }
-
-        void SetMousePosition(int32 x, int32 y)
-        {   
-            IWindow& window = CEngine::Get().GetWindow();
-            PlatformInput::SetMousePosition(&window, x, y);
-        }
-
-        void GetMousePosition(int32& x, int32& y)
-        {   
-            IWindow& window = CEngine::Get().GetWindow();
-            PlatformInput::GetMousePosition(&window, x, y);
-        }
+    void CInput::GetGamepadState(SGamepadState& gamepadState, EGamepad gamepad)
+    {
+        gamepadState = PlatformInput::GetGamepadState(gamepad);
+    }
         
-        void GetMouseState(SMouseState& mouseState)
-        {
-            mouseState = PlatformInput::GetMouseState();
-        }
-
-        void GetGamepadState(SGamepadState& gamepadState, EGamepad gamepad)
-        {
-            gamepadState = PlatformInput::GetGamepadState(gamepad);
-        }
-        
-        void GetKeyboardState(SKeyboardState& keyboardState)
-        {
-            keyboardState = PlatformInput::GetKeyboardState();
-        }
+    void CInput::GetKeyboardState(SKeyboardState& keyboardState)
+    {
+        keyboardState = PlatformInput::GetKeyboardState();
     }
 }
