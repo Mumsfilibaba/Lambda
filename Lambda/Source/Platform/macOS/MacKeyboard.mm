@@ -288,6 +288,7 @@ namespace Lambda
             modifiers |= EKeyModifier::KEY_MODIFIER_SUPER;
         if (flags & NSEventModifierFlagCapsLock)
             modifiers |= EKeyModifier::KEY_MODIFIER_CAPS_LOCK;
+
         return modifiers;
     }
 }

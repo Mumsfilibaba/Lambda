@@ -1,44 +1,80 @@
 #include "LambdaPch.h"
 
+#include "Core/Engine.h"
 #include "Core/Input/Input.h"
+
+#include "Platform/PlatformInput.h"
 
 namespace Lambda
 {
     namespace Input
     {
-        bool IsKeyUp(EKey key)
+        void Init()
         {
-            return false;
+            PlatformInput::Init();
+        }
+        
+        void Update()
+        {
+            PlatformInput::Update();
         }
 
-        bool IsKeyDown(EKey key)
+        bool IsKeyPressed(EKey key)
         {
-            return false;
+            return PlatformInput::IsKeyPressed(key);
+        }
+
+        bool IsKeyReleased(EKey key)
+        {
+            return PlatformInput::IsKeyReleased(key);
+        }
+
+        bool IsModiferKeyActive(EKeyModifier modiferKey)
+        {
+            uint32 modifers = GetModiferKeys();
+            return modifers & modiferKey;
         }
 
         uint32 GetModiferKeys()
         {
-            return 0;
+            return PlatformInput::GetModiferKeys();
         }
         
-        bool IsMouseButtonUp(EMouseButton button)
+        bool IsMouseButtonPressed(EMouseButton button)
         {
-            return false;
+            return PlatformInput::IsMouseButtonPressed(button);
         }
 
-        bool IsMouseButtonDown(EMouseButton button)
+        bool IsMouseButtonReleased(EMouseButton button)
         {
-            return false;
-        }
-    
-        void SetMousePosition(uint32 x, uint32 y)
-        {
-            
+            return PlatformInput::IsMouseButtonReleased(button);
         }
 
-        void GetMousePosition(uint32& x, uint32& y)
+        void SetMousePosition(int32 x, int32 y)
+        {   
+            IWindow& window = CEngine::Get().GetWindow();
+            PlatformInput::SetMousePosition(&window, x, y);
+        }
+
+        void GetMousePosition(int32& x, int32& y)
+        {   
+            IWindow& window = CEngine::Get().GetWindow();
+            PlatformInput::GetMousePosition(&window, x, y);
+        }
+        
+        void GetMouseState(SMouseState& mouseState)
         {
-            
+            mouseState = PlatformInput::GetMouseState();
+        }
+
+        void GetGamepadState(SGamepadState& gamepadState, EGamepad gamepad)
+        {
+            gamepadState = PlatformInput::GetGamepadState(gamepad);
+        }
+        
+        void GetKeyboardState(SKeyboardState& keyboardState)
+        {
+            keyboardState = PlatformInput::GetKeyboardState();
         }
     }
 }

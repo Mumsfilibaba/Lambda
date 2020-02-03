@@ -6,17 +6,24 @@
 
 namespace Lambda
 {
+	//Not exported, meant to be an internal class
 	class CWindowsKeyboard
 	{
 	public:
 		LAMBDA_DECL_STATIC_CLASS(CWindowsKeyboard);
 
 		static void Init();
+		static uint32 GetActiveModifierKeys();
 
-		static uint32 ConvertVirtualKey(EKey keycode);
-		static EKey   ConvertVirtualKey(uint32 keycode);
+		_forceinline static uint32 ConvertVirtualKey(EKey keycode)
+		{
+			return s_KeyTable[keycode];
+		}
 
-		static uint32 GetModifierKeys();
+		_forceinline static EKey ConvertVirtualKey(uint32 keycode)
+		{
+			return s_WindowsKeyTable[keycode];
+		}
 	private:
 		static uint32 s_KeyTable[EKey::KEY_LAST + 1];
 		static EKey	  s_WindowsKeyTable[256];

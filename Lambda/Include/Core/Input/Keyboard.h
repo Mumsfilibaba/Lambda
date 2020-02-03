@@ -126,12 +126,13 @@ namespace Lambda
 		KEY_RIGHT_ALT		= 127,
 		KEY_RIGHT_SUPER		= 128,
 		KEY_MENU			= 129,
-		KEY_LAST = KEY_MENU
+		KEY_LAST	= KEY_MENU,
+		KEY_COUNT	= KEY_LAST+1
 	};
 
 	enum EKeyModifier : uint32
 	{
-		KEY_MODIFIER_UNKNOWN	= 0,
+		KEY_MODIFIER_NONE		= 0,
 		KEY_MODIFIER_SHIFT		= (1 << 0),
 		KEY_MODIFIER_ALT		= (1 << 1),
 		KEY_MODIFIER_CONTROL	= (1 << 2),

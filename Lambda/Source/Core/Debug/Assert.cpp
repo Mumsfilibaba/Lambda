@@ -1,6 +1,6 @@
 #include "LambdaPch.h"
 
-#include "Core/Assert.h"
+#include "Core/Debug/Assert.h"
 #include "Platform/Platform.h"
 
 #ifdef ERROR

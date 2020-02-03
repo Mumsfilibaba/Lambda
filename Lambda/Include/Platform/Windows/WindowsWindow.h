@@ -1,7 +1,9 @@
 #pragma once
-#include "Platform/Common/IWindow.h"
+#include "Core/IWindow.h"
 
 #ifdef LAMBDA_PLAT_WINDOWS
+	#include "Windows.h"
+	
 	#include <vector>
 
 namespace Lambda
@@ -23,6 +25,7 @@ namespace Lambda
 		virtual uint32 GetHeight() const override { return m_Height; }
 		virtual void* GetNativeHandle() const override { return (void*)m_hWindow; }
 	public:
+		HWND GetHandle() const { return m_hWindow; }
 		LRESULT ProcessMessage(uint32 message, WPARAM wParam, LPARAM lParam);
 
 		static void RegisterWindowClass(HINSTANCE hInstance);

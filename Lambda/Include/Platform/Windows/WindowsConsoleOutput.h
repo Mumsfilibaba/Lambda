@@ -4,10 +4,7 @@
 #ifdef LAMBDA_PLAT_WINDOWS
 	#define MAX_OUTPUT_CHARS 1024
 
-	#ifndef WIN32_LEAN_AND_MEAN 
-		#define WIN32_LEAN_AND_MEAN 1
-	#endif
-	#include <Windows.h>
+	#include "Windows.h"
 
 namespace Lambda
 {

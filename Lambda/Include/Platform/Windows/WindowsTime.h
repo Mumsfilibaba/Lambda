@@ -2,10 +2,7 @@
 #include "Platform/Common/CommonTime.h"
 
 #ifdef LAMBDA_PLAT_WINDOWS
-	#ifndef WIN32_LEAN_AND_MEAN 
-		#define WIN32_LEAN_AND_MEAN 1
-	#endif
-	#include <Windows.h>
+	#include "Windows.h"
 
 namespace Lambda
 {

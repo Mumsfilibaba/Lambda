@@ -10,6 +10,7 @@ namespace Lambda
 
 		static void Init();
 		static void Release();
+
         static ILog& GetCoreLog()   { return *s_pCoreLog; }
 		static ILog& GetLog()       { return *s_pLog; }
 	private:

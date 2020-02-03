@@ -4,11 +4,13 @@
 #include "Core/Input/Mouse.h"
 #include "Core/Input/Keyboard.h"
 #include "Core/Input/MouseState.h"
-#include "Core/Input/GamepadState.h
+#include "Core/Input/GamepadState.h"
 #include "Core/Input/KeyboardState.h"
 
 namespace Lambda
 {
+    class IWindow;
+
     class CCommonInput
     {
     public:
@@ -19,15 +21,15 @@ namespace Lambda
         
         static bool IsKeyPressed(EKey)  { return false; }
         static bool IsKeyReleased(EKey) { return false; }
-        static bool IsKeyModifierActive(EKeyModifier) { return false; }
+        static uint32 GetModiferKeys()  { return 0; }
         
         static bool IsMouseButtonPressed(EMouseButton)  { return false; }
         static bool IsMouseButtonReleased(EMouseButton) { return false; }
-        static void SetMousePosition(int32 x, int32 y) {}
-        static void GetMousePosition(int32& x, int32& y) {}
+        static void SetMousePosition(IWindow*, int32, int32) {}
+        static void GetMousePosition(IWindow*, int32&, int32&) {}
         
-        static CMouseState GetMouseState() { return CMouseState(); }
-        static CGamepadState GetGamepadState() { return CGamepadState(); }
-        static CKeyboardState GetKeyboardState() { return CKeyboardState(); }
+        static SMouseState GetMouseState() { return SMouseState(); }
+        static SGamepadState GetGamepadState(EGamepad) { return SGamepadState(); }
+        static SKeyboardState GetKeyboardState() { return SKeyboardState(); }
     };
 }

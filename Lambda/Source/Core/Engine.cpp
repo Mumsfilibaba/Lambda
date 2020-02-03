@@ -2,13 +2,14 @@
 
 #include "Core/Game.h"
 #include "Core/Engine.h"
+#include "Core/IWindow.h"
 
 #include "Core/Event/Event.h"
 #include "Core/Log/EngineLog.h"
 #include "Core/Debug/IConsoleOutput.h"
 
 #include "Platform/Platform.h"
-#include "Platform/Common/IWindow.h"
+#include "Platform/PlatformInput.h"
 
 namespace Lambda
 {
@@ -43,13 +44,19 @@ namespace Lambda
     void CEngine::Init(CreateGameInstanceFunc pfnCreateGameInstanceFunc)
     {
         //Create window
-        SWindowDesc desc = {};
-        desc.pTitle = "Lambda Engine";
-        desc.Width  = 1440;
-        desc.Height = 900;
+        SWindowDesc windowDesc = {};
+        windowDesc.pTitle = "Lambda Engine";
+        windowDesc.Width  = 1440;
+        windowDesc.Height = 900;
+        
+        m_pWindow = Platform::CreateWindow(windowDesc);
+        if (m_pWindow)
+        {
+            m_pWindow->AddEventListener(this);
+        }
 
-        m_pWindow = Platform::CreateWindow(desc);
-        m_pWindow->AddEventListener(this);
+        //Init input
+        PlatformInput::Init();
 
         //Create game instance
         LAMBDA_ASSERT_PRINT(pfnCreateGameInstanceFunc, "CreateGame must be set");
@@ -73,16 +80,19 @@ namespace Lambda
         m_Frameclock.Tick();
 
         //Show window when engine is completly initialized
-        g_Engine.GetWindow().Show();
+        m_pWindow->Show();
     }
 
     void CEngine::Tick()
     {
         Platform::PollEvents();
-        m_Frameclock.Tick();
+        PlatformInput::Update();
 
-        //TODO: Perform the fixed update
+        //Get deltatime
+        m_Frameclock.Tick();
         CTimestep deltatime = m_Frameclock.GetDeltaTime();
+        
+        //TODO: Perform the fixed update
         m_pGame->FixedUpdate(deltatime);
 
         //Perform the variable update

@@ -2,9 +2,10 @@
 
 #ifdef LAMBDA_PLAT_WINDOWS
 	#include "Platform/Windows/WindowsPlatform.h"
-	#include "Platform/Windows/WindowsWindow.h"
-	#include "Platform/Windows/WindowsConsoleOutput.h"
 	#include "Platform/Windows/WindowsTime.h"
+	#include "Platform/Windows/WindowsInput.h"
+	#include "Platform/Windows/WindowsWindow.h""
+	#include "Platform/Windows/WindowsConsoleOutput.h"
 
 namespace Lambda
 {
@@ -28,8 +29,13 @@ namespace Lambda
 		//Set global instance
 		s_hInstance = hInstance;
 
+		//Init time (Get frequency)
 		CWindowsTime::Init();
+		
+		//Init input (KeyTable etc.)
+		CWindowsInput::Init();
 
+		//Register Window class for creation of main window
 		CWindowsWindow::RegisterWindowClass(hInstance);
 	}
 
@@ -66,6 +72,32 @@ namespace Lambda
 
 	LRESULT CWindowsPlatform::WndProc(HWND hWnd, uint32 message, WPARAM wParam, LPARAM lParam)
 	{
+		//Dispatch input messages to input class
+		switch (message)
+		{
+			case WM_KEYUP:
+			case WM_KEYDOWN:
+			{
+				bool bKeyDown = (message == WM_KEYDOWN);
+				CWindowsInput::OnKeyboardMessage(uint32(wParam), bKeyDown);
+				break;
+			}
+
+			case WM_LBUTTONUP:
+			case WM_MBUTTONUP:
+			case WM_RBUTTONUP:
+			case WM_XBUTTONUP:
+			case WM_LBUTTONDOWN:
+			case WM_MBUTTONDOWN:
+			case WM_RBUTTONDOWN:
+			case WM_XBUTTONDOWN:
+			{
+				CWindowsInput::OnMouseButtonMessage(message, wParam);
+				break;
+			}
+		}
+
+		//Dispatch events to window
 		CWindowsWindow* pWindow = (CWindowsWindow*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 		if (pWindow)
 		{

@@ -200,6 +200,7 @@ workspace "Lambda"
 			{
 				"d3d12",
 				"dxgi",
+				"XInput",
 				"d3dcompiler",
 				"vulkan-1",
 				"ImGui",

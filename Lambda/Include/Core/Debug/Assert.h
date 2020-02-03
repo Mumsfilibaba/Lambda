@@ -1,5 +1,5 @@
 #pragma once
-#include "LambdaTypes.h"
+#include "Core/LambdaTypes.h"
 
 namespace Lambda
 {
