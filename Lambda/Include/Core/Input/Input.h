@@ -18,7 +18,7 @@ namespace Lambda
         static bool IsKeyPressed(EKey key);
         static bool IsKeyReleased(EKey key);
         static bool IsModiferKeyActive(EKeyModifier modiferKey);
-        static uint32 GetModiferKeys();
+        static uint32 GetModiferKeyMask();
 
         static bool IsMouseButtonPressed(EMouseButton button);
         static bool IsMouseButtonReleased(EMouseButton button);

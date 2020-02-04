@@ -19,11 +19,11 @@ namespace Lambda
 
     bool CInput::IsModiferKeyActive(EKeyModifier modiferKey)
     {
-        uint32 modifers = GetModiferKeys();
+        uint32 modifers = GetModiferKeyMask();
         return modifers & modiferKey;
     }
 
-    uint32 CInput::GetModiferKeys()
+    uint32 CInput::GetModiferKeyMask()
     {
         return PlatformInput::GetModiferKeys();
     }
