@@ -17,10 +17,13 @@ namespace Lambda
 
     CEngine::CEngine()
         : m_Frameclock(),
+        m_FrameAccumulator(0),
+        m_DesiredFrameTime(CTimestep::Seconds(1.0f/60.0f)),
         m_pGame(nullptr),
         m_pWindow(nullptr),
         m_bIsRunning(false)
     {
+
     }
 
     void CEngine::PreInit()
@@ -81,7 +84,6 @@ namespace Lambda
         //Show window when engine is completly initialized
         m_pWindow->Show();
 
-        //Run engine loop
         while (IsRunning())
         {
             Tick();
@@ -92,15 +94,27 @@ namespace Lambda
 
     void CEngine::Tick()
     {
-        Platform::PollEvents();
-        PlatformInput::Update();
-
         //Get deltatime
         m_Frameclock.Tick();
         CTimestep deltatime = m_Frameclock.GetDeltaTime();
+
+        //Poll platform events
+        Platform::PollEvents();
+        PlatformInput::Update();
         
-        //TODO: Perform the fixed update
-        m_pGame->FixedUpdate(deltatime);
+        //Fixed update
+        m_FrameAccumulator += deltatime;
+        while (m_FrameAccumulator >= m_DesiredFrameTime)
+        {
+            m_pGame->FixedUpdate(m_DesiredFrameTime);
+            if (deltatime > m_DesiredFrameTime)
+            {
+                m_pGame->Update(m_DesiredFrameTime);
+                deltatime -= m_DesiredFrameTime;
+            }
+
+            m_FrameAccumulator -= m_DesiredFrameTime;
+        }
 
         //Perform the variable update
         m_pGame->Update(deltatime);

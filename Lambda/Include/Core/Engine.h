@@ -50,6 +50,8 @@ namespace Lambda
         virtual bool OnEvent(const SEvent& event) override final;
     private:
         CClock m_Frameclock;
+        CTimestep m_FrameAccumulator;
+        CTimestep m_DesiredFrameTime;
         CGame* m_pGame;
         IWindow* m_pWindow;
         IConsoleOutput* m_pConsoleOutput;

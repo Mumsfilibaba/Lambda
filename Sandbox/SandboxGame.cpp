@@ -26,8 +26,6 @@ namespace Lambda
 
 	void CSandBoxGame::Update(const CTimestep&)
 	{
-		SGamepadState gamepadState = {};
-		CInput::GetGamepadState(gamepadState, EGamepad::GAMEPAD_PLAYER_1);
 	}
 
 	void CSandBoxGame::FixedUpdate(const CTimestep&)
