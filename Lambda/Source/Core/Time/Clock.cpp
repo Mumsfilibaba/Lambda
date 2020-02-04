@@ -57,12 +57,17 @@ namespace Lambda
 	void CClock::Tick()
 	{
 		//Get current time
-		uint64 ns = PlatformTime::Nanoseconds();
-		CTimestep now = CTimestep(ns);
+		uint64 ns = PlatformTime::NanoSeconds();
+		CTimestamp now = CTimestamp(ns);
 
 		//Update delta- and totaltime
 		m_DeltaTime = now - m_LastTime;
 		m_LastTime	= now;
 		m_TotalTime += m_DeltaTime;
+	}
+	
+	CTimestamp CClock::Now()
+	{
+		return CTimestamp(PlatformTime::NanoSeconds());
 	}
 }

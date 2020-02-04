@@ -1,7 +1,7 @@
 #pragma once
 #include "LambdaCore.h"
 
-#include "Time/Timestep.h"
+#include "Time/Timestamp.h"
 
 namespace Lambda
 {
@@ -14,9 +14,9 @@ namespace Lambda
 		LAMBDA_DECL_NO_COPY(CGame);
 
 		virtual void Init() {};
-		virtual void Update(const CTimestep&) {}
-		virtual void FixedUpdate(const CTimestep&) {}
-		virtual void Render(const CTimestep&) {}
+		virtual void Update(const CTimestamp&) {}
+		virtual void FixedUpdate(const CTimestamp&) {}
+		virtual void Render(const CTimestamp&) {}
 		virtual void Release() {}
 
 		_forceinline static CGame& Get() { return *s_pInstance; }

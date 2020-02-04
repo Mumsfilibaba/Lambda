@@ -11,21 +11,21 @@ namespace Lambda
 		static void Init();
 		static void Release();
 
-        static ILog& GetCoreLog()   { return *s_pCoreLog; }
-		static ILog& GetLog()       { return *s_pLog; }
+        static ILog* GetCoreLog()   { return s_pCoreLog; }
+		static ILog* GetLog()       { return s_pLog; }
 	private:
 		static ILog* s_pLog;
         static ILog* s_pCoreLog;
 	};
 }
 
-#define LOG(verbosity, ...) Lambda::CEngineLog::GetLog().Print(verbosity, __VA_ARGS__)
+#define LOG(verbosity, ...) Lambda::CEngineLog::GetLog()->Print(verbosity, __VA_ARGS__)
 #define LOG_INFO(...)       LOG(Lambda::ELogVerbosity::LOG_VERBOSITY_INFO, __VA_ARGS__)
 #define LOG_MESSAGE(...)    LOG(Lambda::ELogVerbosity::LOG_VERBOSITY_MESSAGE, __VA_ARGS__)
 #define LOG_WARNING(...)    LOG(Lambda::ELogVerbosity::LOG_VERBOSITY_WARNING, __VA_ARGS__)
 #define LOG_ERROR(...)      LOG(Lambda::ELogVerbosity::LOG_VERBOSITY_ERROR, __VA_ARGS__)
 
-#define LOG_CORE(verbosity, ...) Lambda::CEngineLog::GetCoreLog().Print(verbosity, __VA_ARGS__)
+#define LOG_CORE(verbosity, ...) Lambda::CEngineLog::GetCoreLog()->Print(verbosity, __VA_ARGS__)
 #define LOG_CORE_INFO(...)       LOG_CORE(Lambda::ELogVerbosity::LOG_VERBOSITY_INFO, __VA_ARGS__)
 #define LOG_CORE_MESSAGE(...)    LOG_CORE(Lambda::ELogVerbosity::LOG_VERBOSITY_MESSAGE, __VA_ARGS__)
 #define LOG_CORE_WARNING(...)    LOG_CORE(Lambda::ELogVerbosity::LOG_VERBOSITY_WARNING, __VA_ARGS__)

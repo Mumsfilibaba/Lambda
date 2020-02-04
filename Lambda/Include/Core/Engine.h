@@ -10,7 +10,7 @@ namespace Lambda
     class IWindow;
     class IConsoleOutput;
     class CEngine;
-    class CTimestep;
+    class CTimestamp;
 
     LAMBDA_API extern CEngine g_Engine;
 
@@ -32,7 +32,7 @@ namespace Lambda
 
         _forceinline IWindow* GetWindow() const 
         { 
-            LAMBDA_ASSERT_PRINT(m_pWindow, "Window not initialized");
+            LAMBDA_ASSERT_MSG(m_pWindow, "Window not initialized");
             return m_pWindow; 
         }
 
@@ -50,8 +50,8 @@ namespace Lambda
         virtual bool OnEvent(const SEvent& event) override final;
     private:
         CClock m_Frameclock;
-        CTimestep m_FrameAccumulator;
-        CTimestep m_DesiredFrameTime;
+        CTimestamp m_FrameAccumulator;
+        CTimestamp m_DesiredFrameTime;
         CGame* m_pGame;
         IWindow* m_pWindow;
         IConsoleOutput* m_pConsoleOutput;

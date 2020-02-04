@@ -6,6 +6,8 @@
 
 #include "Core/Event/Event.h"
 #include "Core/Log/EngineLog.h"
+
+#include "Core/Debug/Profiler.h"
 #include "Core/Debug/IConsoleOutput.h"
 
 #include "Platform/Platform.h"
@@ -18,7 +20,7 @@ namespace Lambda
     CEngine::CEngine()
         : m_Frameclock(),
         m_FrameAccumulator(0),
-        m_DesiredFrameTime(CTimestep::Seconds(1.0f/60.0f)),
+        m_DesiredFrameTime(CTimestamp::Seconds(1.0f / 60.0f)),
         m_pGame(nullptr),
         m_pWindow(nullptr),
         m_bIsRunning(false)
@@ -28,8 +30,6 @@ namespace Lambda
 
     void CEngine::PreInit()
     {
-        m_bIsRunning = false;
-
         //Init console
         m_pConsoleOutput = Platform::CreateConsoleOutput();
         if (m_pConsoleOutput)
@@ -41,94 +41,132 @@ namespace Lambda
         //Init log
         CEngineLog::Init();
 
+        //Start profiling of the engine startup
+        LAMBDA_PROFILER_BEGIN_SESSION("Lambda Init", "Lambda_Init.json");
+
+        m_bIsRunning = false;
+        
         LOG_CORE_INFO("Finished Pre-Init");
     }
 
     void CEngine::Init()
     {
-        //Create window
-        SWindowDesc windowDesc = {};
-        windowDesc.pTitle = "Lambda Engine";
-        windowDesc.Width  = 1440;
-        windowDesc.Height = 900;
-        
-        m_pWindow = Platform::CreateWindow(windowDesc);
-        if (m_pWindow)
         {
-            m_pWindow->AddEventListener(this);
+            LAMBDA_PROFILER_FUNCTION();
+
+            //Create window
+            SWindowDesc windowDesc = {};
+            windowDesc.pTitle = "Lambda Engine";
+            windowDesc.Width  = 1440;
+            windowDesc.Height = 900;
+        
+            m_pWindow = Platform::CreateWindow(windowDesc);
+            if (m_pWindow)
+            {
+                m_pWindow->AddEventListener(this);
+            }
+
+            //Init input
+            PlatformInput::Init();
+
+            //Create game instance
+            LAMBDA_ASSERT_MSG(_CreateGameInstance, "CreateGame must be set");
+        
+            m_pGame = _CreateGameInstance();
+            LOG_CORE_INFO("Created Game Instance");
+            m_pGame->Init();
+
+            LOG_CORE_INFO("Finished Init");
         }
 
-        //Init input
-        PlatformInput::Init();
-
-        //Create game instance
-        LAMBDA_ASSERT_PRINT(_CreateGameInstance, "CreateGame must be set");
-        
-        m_pGame = _CreateGameInstance();
-        LOG_CORE_INFO("Created Game Instance");
-        m_pGame->Init();
-
-        LOG_CORE_INFO("Finished Init");
+        LAMBDA_PROFILER_END_SESSION();
     }
 
     void CEngine::Run()
     {
-        LOG_CORE_INFO("Starting Engine");
+        LAMBDA_PROFILER_BEGIN_SESSION("Lambda Runtime", "Lambda_Runtime.json");
 
-        //Start engine
-        m_bIsRunning = true;
-
-        //Make first tick on frameclock - To prevent that the first frame gets huge values in dt
-        m_Frameclock.Tick();
-
-        //Show window when engine is completly initialized
-        m_pWindow->Show();
-
-        while (IsRunning())
         {
-            Tick();
+            LAMBDA_PROFILER_FUNCTION();
+            
+            LOG_CORE_INFO("Starting Engine");
+
+            //Start engine
+            m_bIsRunning = true;
+
+            //Make first tick on frameclock - To prevent that the first frame gets huge values in dt
+            m_Frameclock.Tick();
+
+            //Show window when engine is completly initialized
+            m_pWindow->Show();
+
+            while (IsRunning())
+            {
+                Tick();
+            }
+
+            LOG_CORE_INFO("Exiting Engine");
         }
 
-        LOG_CORE_INFO("Exiting Engine");
+        LAMBDA_PROFILER_END_SESSION();
     }
 
     void CEngine::Tick()
     {
+        LAMBDA_PROFILER_FUNCTION();
+
         //Get deltatime
         m_Frameclock.Tick();
-        CTimestep deltatime = m_Frameclock.GetDeltaTime();
+        CTimestamp deltatime = m_Frameclock.GetDeltaTime();
 
         //Poll platform events
         Platform::PollEvents();
         PlatformInput::Update();
         
         //Fixed update
-        m_FrameAccumulator += deltatime;
-        while (m_FrameAccumulator >= m_DesiredFrameTime)
         {
-            m_pGame->FixedUpdate(m_DesiredFrameTime);
-            if (deltatime > m_DesiredFrameTime)
-            {
-                m_pGame->Update(m_DesiredFrameTime);
-                deltatime -= m_DesiredFrameTime;
-            }
+            LAMBDA_PROFILER_SCOPE("Fixed update");
 
-            m_FrameAccumulator -= m_DesiredFrameTime;
+            m_FrameAccumulator += deltatime;
+            while (m_FrameAccumulator >= m_DesiredFrameTime)
+            {
+                m_pGame->FixedUpdate(m_DesiredFrameTime);
+                if (deltatime > m_DesiredFrameTime)
+                {
+                    m_pGame->Update(m_DesiredFrameTime);
+                    deltatime -= m_DesiredFrameTime;
+                }
+
+                m_FrameAccumulator -= m_DesiredFrameTime;
+            }
         }
 
         //Perform the variable update
-        m_pGame->Update(deltatime);
-        m_pGame->Render(deltatime);
+        {
+            LAMBDA_PROFILER_SCOPE("Variable update");
+            m_pGame->Update(deltatime);
+        }
+
+        {
+            LAMBDA_PROFILER_SCOPE("Render");
+            m_pGame->Render(deltatime);
+        }
     }
 
     void CEngine::RequestExit()
     {
+        LAMBDA_PROFILER_FUNCTION();
+
         LOG_CORE_INFO("RequestExit");
         m_bIsRunning = false;
     }
 
     void CEngine::Release()
     {
+        LAMBDA_PROFILER_BEGIN_SESSION("Lambda Release", "Lambda_Release.json");
+
+        LAMBDA_PROFILER_FUNCTION();
+
         LOG_CORE_INFO("Engine Release");
         
         m_pWindow->RemoveEventListener(this);
@@ -140,6 +178,8 @@ namespace Lambda
     void CEngine::PostRelease()
     {
         LOG_CORE_INFO("Engine Post-Release");
+
+        LAMBDA_PROFILER_END_SESSION();
 
         CEngineLog::Release();
 

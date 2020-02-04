@@ -24,15 +24,15 @@ namespace Lambda
 	{
 	}
 
-	void CSandBoxGame::Update(const CTimestep&)
+	void CSandBoxGame::Update(const CTimestamp&)
 	{
 	}
 
-	void CSandBoxGame::FixedUpdate(const CTimestep&)
+	void CSandBoxGame::FixedUpdate(const CTimestamp&)
 	{
 	}
 
-	void CSandBoxGame::Render(const CTimestep&)
+	void CSandBoxGame::Render(const CTimestamp&)
 	{
 	}
 

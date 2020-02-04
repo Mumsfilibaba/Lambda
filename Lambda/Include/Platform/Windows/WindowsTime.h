@@ -16,7 +16,7 @@ namespace Lambda
 			::QueryPerformanceFrequency(&s_Frequency);
 		}
 
-		_forceinline static uint64 Nanoseconds()
+		_forceinline static uint64 NanoSeconds()
 		{
 			LARGE_INTEGER counter = {};
 			::QueryPerformanceCounter(&counter);

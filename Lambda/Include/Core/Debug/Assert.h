@@ -32,15 +32,15 @@ namespace Lambda
 
 //Asserts
 #ifdef LAMBDA_ENABLE_ASSERTS
-	#define LAMBDA_ASSERT_PRINT(bCondition, ...) \
+	#define LAMBDA_ASSERT_MSG(bCondition, ...) \
 	if (!(bCondition)) \
 	{ \
 		Lambda::Assert::Assert(__LINE__, __FILE__, __VA_ARGS__); \
 		DebugBreak(); \
 	}
 
-	#define LAMBDA_ASSERT(bCondition) LAMBDA_ASSERT_PRINT(bCondition, "Assertion Failed")
+	#define LAMBDA_ASSERT(bCondition) LAMBDA_ASSERT_MSG(bCondition, "Assertion Failed")
 #else
-	#define LAMBDA_ASSERT_PRINT(bCondition, ...)
+	#define LAMBDA_ASSERT_MSG(bCondition, ...)
 	#define LAMBDA_ASSERT(bCondition)
 #endif

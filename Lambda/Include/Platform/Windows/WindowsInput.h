@@ -56,7 +56,7 @@ namespace Lambda
         _forceinline static SGamepadState GetGamepadState(EGamepad gamepad) 
         { 
             const uint32 index = gamepad - 1; 
-            LAMBDA_ASSERT_PRINT(index < EGamepad::GAMEPAD_COUNT, "Invalid Gamepad");
+            LAMBDA_ASSERT_MSG(index < EGamepad::GAMEPAD_COUNT, "Invalid Gamepad");
             return s_GamepadStates[index];
         }
 

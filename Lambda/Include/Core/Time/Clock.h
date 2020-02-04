@@ -1,5 +1,5 @@
 #pragma once
-#include "Timestep.h"
+#include "Timestamp.h"
 
 namespace Lambda
 {
@@ -18,22 +18,24 @@ namespace Lambda
 
 		_forceinline void Reset()
 		{
-			m_DeltaTime = CTimestep(0);
-			m_TotalTime = CTimestep(0);
+			m_DeltaTime = CTimestamp(0);
+			m_TotalTime = CTimestamp(0);
 		}
 
-		_forceinline const CTimestep& GetDeltaTime() const
+		_forceinline const CTimestamp& GetDeltaTime() const
 		{
 			return m_DeltaTime;
 		}
 
-		_forceinline const CTimestep& GetTotalTime() const
+		_forceinline const CTimestamp& GetTotalTime() const
 		{
 			return m_TotalTime;
 		}
+
+		static CTimestamp Now();
 	private:
-		CTimestep m_LastTime;
-		CTimestep m_TotalTime;
-		CTimestep m_DeltaTime;
+		CTimestamp m_LastTime;
+		CTimestamp m_TotalTime;
+		CTimestamp m_DeltaTime;
 	};
 }

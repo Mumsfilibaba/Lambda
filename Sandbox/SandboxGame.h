@@ -10,9 +10,9 @@ namespace Lambda
 		~CSandBoxGame() = default;
 
 		virtual void Init();
-		virtual void Update(const CTimestep& deltaTime);
-		virtual void FixedUpdate(const CTimestep& deltaTime);
-		virtual void Render(const CTimestep& deltaTime);
+		virtual void Update(const CTimestamp& deltaTime);
+		virtual void FixedUpdate(const CTimestamp& deltaTime);
+		virtual void Render(const CTimestamp& deltaTime);
 		virtual void Release();
 	};
 }
