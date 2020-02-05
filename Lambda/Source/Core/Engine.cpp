@@ -10,6 +10,8 @@
 #include "Core/Debug/Profiler.h"
 #include "Core/Debug/IConsoleOutput.h"
 
+#include "Core/Configuration/EngineConfig.h"
+
 #include "Platform/Platform.h"
 #include "Platform/PlatformInput.h"
 
@@ -44,9 +46,17 @@ namespace Lambda
         //Start profiling of the engine startup
         LAMBDA_PROFILER_BEGIN_SESSION("Lambda Init", "Lambda_Init.json");
 
-        m_bIsRunning = false;
+        {
+            LAMBDA_PROFILER_FUNCTION();
+
+            //Load configuration
+            CEngineConfig::Get().LoadConfigFile("config.txt");
+
+            //Init vars
+            m_bIsRunning = false;
         
-        LOG_CORE_INFO("Finished Pre-Init");
+            LOG_CORE_INFO("Finished Pre-Init");
+        }
     }
 
     void CEngine::Init()
@@ -57,9 +67,12 @@ namespace Lambda
             //Create window
             SWindowDesc windowDesc = {};
             windowDesc.pTitle = "Lambda Engine";
-            windowDesc.Width  = 1440;
-            windowDesc.Height = 900;
+            windowDesc.Width  = 1280;
+            windowDesc.Height = 720;
         
+            CEngineConfig::Get().GetVar("Width", windowDesc.Width);
+            CEngineConfig::Get().GetVar("Height", windowDesc.Height);
+
             m_pWindow = Platform::CreateWindow(windowDesc);
             if (m_pWindow)
             {
@@ -165,8 +178,6 @@ namespace Lambda
     {
         LAMBDA_PROFILER_BEGIN_SESSION("Lambda Release", "Lambda_Release.json");
 
-        LAMBDA_PROFILER_FUNCTION();
-
         LOG_CORE_INFO("Engine Release");
         
         m_pWindow->RemoveEventListener(this);
@@ -177,7 +188,13 @@ namespace Lambda
 
     void CEngine::PostRelease()
     {
-        LOG_CORE_INFO("Engine Post-Release");
+        {
+            LAMBDA_PROFILER_FUNCTION();
+
+            LOG_CORE_INFO("Engine Post-Release");
+
+            CEngineConfig::Get().WriteConfigFile();
+        }
 
         LAMBDA_PROFILER_END_SESSION();
 
@@ -189,6 +206,8 @@ namespace Lambda
 
     bool CEngine::OnEvent(const SEvent& event)
     {
+        LAMBDA_PROFILER_FUNCTION();
+
         if (event.EventType == EEventType::EVENT_TYPE_WINDOW_CLOSED)
         {
             RequestExit();

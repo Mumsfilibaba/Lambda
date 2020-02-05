@@ -9,19 +9,15 @@ namespace Lambda
 {
 	class LAMBDA_API CProfiler final
 	{
-	public:
+	private:
 		CProfiler();
 		~CProfiler() = default;
-
+	public:
 		void BeginSession(const char* pSessionName, const char* pFilename);
 		void WriteResult(const char* pResultName, const CTimestamp& start, const CTimestamp& time);
 		void EndSession();
 
-		_forceinline static CProfiler& Get() 
-		{
-			static CProfiler profiler;
-			return profiler;
-		}
+		static CProfiler& Get();
 	private:
 		FILE* m_pOutput;
 		const char* m_pSessionName;
@@ -59,12 +55,11 @@ namespace Lambda
 #define LAMBDA_PROFILER_ACTIVE 1
 #if LAMBDA_PROFILER_ACTIVE
 	//Needed for the __LINE__ concatenation to work
-	#define TOKEN_PASTE(x, y) x##y
-	#define CAT(x,y) TOKEN_PASTE(x,y)
+	#define SCOPED_PROFILER_NAME(x,y) STRING_CONCAT(x,y)
 
 	#define LAMBDA_PROFILER_BEGIN_SESSION(name, filepath)	Lambda::CProfiler::Get().BeginSession(name, filepath)
 	#define LAMBDA_PROFILER_END_SESSION()					Lambda::CProfiler::Get().EndSession()
-#define LAMBDA_PROFILER_SCOPE(name)							Lambda::CScopedProfiler CAT(profiler, __LINE__) = Lambda::CScopedProfiler(name)
+	#define LAMBDA_PROFILER_SCOPE(name)						Lambda::CScopedProfiler SCOPED_PROFILER_NAME(profiler, __LINE__) = Lambda::CScopedProfiler(name)
 	#define LAMBDA_PROFILER_FUNCTION()						LAMBDA_PROFILER_SCOPE(__FUNCSIG__)
 #else
 	#define LAMBDA_PROFILER_BEGIN_SESSION(name, filepath)

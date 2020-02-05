@@ -86,3 +86,6 @@
 	#pragma warning(disable : 4201)		//Anonomys unions and structs are allowed	- Disabled
 	#pragma warning(disable : 4307)		//Disable constant overflow warning			- Disabled
 #endif
+
+//Helper macros
+#define STRING_CONCAT(x, y) x##y

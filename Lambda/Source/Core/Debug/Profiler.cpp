@@ -33,6 +33,7 @@ namespace Lambda
 
 			m_pSessionName = pSessionName;
 			m_pOutput = pOutput;
+			m_bHasSession = true;
 
 			LOG_CORE_INFO("Started new profiling session '%s'", pSessionName);
 		}
@@ -44,26 +45,29 @@ namespace Lambda
 
 	void CProfiler::WriteResult(const char* pResultName, const CTimestamp& start, const CTimestamp& time)
 	{
-		std::stringstream ss;
-		ss << std::this_thread::get_id();
+		if (m_bHasSession)
+		{
+			std::stringstream ss;
+			ss << std::this_thread::get_id();
 
-		fprintf(m_pOutput, 
-			",{"
-			"\"cat\":\"function\","
-			"\"dur\":%llu,"
-			"\"name\":\"%s\","
-			"\"ph\":\"X\","
-			"\"pid\":0,"
-			"\"tid\":%s,"
-			"\"ts\":%llu"
-			"}",
-			time.AsMicroSeconds(),
-			pResultName,
-			ss.str().c_str(),
-			start.AsMicroSeconds()
-		);
+			fprintf(m_pOutput, 
+				",{"
+				"\"cat\":\"function\","
+				"\"dur\":%llu,"
+				"\"name\":\"%s\","
+				"\"ph\":\"X\","
+				"\"pid\":0,"
+				"\"tid\":%s,"
+				"\"ts\":%llu"
+				"}",
+				time.AsMicroSeconds(),
+				pResultName,
+				ss.str().c_str(),
+				start.AsMicroSeconds()
+			);
 
-		fflush(m_pOutput);
+			fflush(m_pOutput);
+		}
 	}
 
 	void CProfiler::EndSession()
@@ -79,10 +83,17 @@ namespace Lambda
 			
 			m_pOutput = nullptr;
 			m_pSessionName = nullptr;
+			m_bHasSession = false;
 		}
 		else
 		{
 			LOG_CORE_ERROR("No active session");
 		}
+	}
+	
+	CProfiler& CProfiler::Get()
+	{
+		static CProfiler instance;
+		return instance;
 	}
 }

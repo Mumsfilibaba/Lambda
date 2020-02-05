@@ -20,3 +20,4 @@ Dependencies/ImGui/bin-int/
 *.ini
 *.diagsession
 *.json
+Sandbox/config.txt
