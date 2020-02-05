@@ -3,7 +3,7 @@
 #if defined(LAMBDA_PLAT_MACOS)
     #include "Platform/macOS/MacAppDelegate.h"
 
-    @implementation MacAppDelegate
+    @implementation CMacAppDelegate
 
     - (void)applicationDidFinishLaunching:(NSNotification*)notification
     {

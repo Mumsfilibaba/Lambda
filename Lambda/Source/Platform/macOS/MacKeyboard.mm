@@ -7,10 +7,10 @@
 
 namespace Lambda
 {
-    EKey   CMacKeyboard::s_MacKeyTable[256];
-    uint32 CMacKeyboard::s_KeyTable[EKey::KEY_LAST + 1];
+    EKey   MacKeyboard::s_MacKeyTable[256];
+    uint32 MacKeyboard::s_KeyTable[EKey::KEY_LAST + 1];
     
-    void CMacKeyboard::Init()
+    void MacKeyboard::Init()
     {
         //Init to zero
         memset(s_MacKeyTable, 0, sizeof(s_MacKeyTable));
@@ -265,17 +265,7 @@ namespace Lambda
         s_KeyTable[EKey::KEY_WORLD_1] = 0x0A;
     }
     
-    EKey CMacKeyboard::ConvertVirtualKey(uint32 keycode)
-    {
-        return s_MacKeyTable[keycode];
-    }
-    
-    uint32 CMacKeyboard::ConvertVirtualKey(EKey keycode)
-    {
-        return s_KeyTable[keycode];
-    }
-    
-    uint32 CMacKeyboard::GetModifierKeys(uint32 flags)
+    uint32 MacKeyboard::GetModifierKeys(uint32 flags)
     {
         int32 modifiers = 0;
         if (flags & NSEventModifierFlagShift)

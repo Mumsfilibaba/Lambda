@@ -5,12 +5,12 @@
     #if defined(__OBJC__)
         #include <Cocoa/Cocoa.h>
 
-        @interface MacAppDelegate : NSObject<NSApplicationDelegate>
+        @interface CMacAppDelegate : NSObject<NSApplicationDelegate>
         {
         }
         @end
 
     #else
-        class MacAppDelegate;
+        class CMacAppDelegate;
     #endif
 #endif

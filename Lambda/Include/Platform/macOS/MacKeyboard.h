@@ -6,17 +6,24 @@
 
 namespace Lambda
 {
-    class CMacKeyboard
+    class MacKeyboard
     {
     public:
-        LAMBDA_DECL_STATIC_CLASS(CMacKeyboard);
+        LAMBDA_DECL_STATIC_CLASS(MacKeyboard);
 
         static void Init();
-        
-        static EKey ConvertVirtualKey(uint32 keycode);
-        static uint32 ConvertVirtualKey(EKey keycode);
-        
         static uint32 GetModifierKeys(uint32 flags);
+        
+        _forceinline EKey ConvertVirtualKey(uint32 keycode)
+        {
+            return s_MacKeyTable[keycode];
+        }
+        
+        _forceinline uint32 ConvertVirtualKey(EKey keycode)
+        {
+            return s_KeyTable[keycode];
+        }
+        
     private:
         static uint32 s_KeyTable[EKey::KEY_LAST + 1];
         static EKey s_MacKeyTable[256];

@@ -8,10 +8,10 @@
 
 namespace Lambda
 {
-    class LAMBDA_API CMacPlatform final : public CommonPlatform
+    class LAMBDA_API MacPlatform final : public CommonPlatform
     {
     public:
-        LAMBDA_DECL_STATIC_CLASS(CMacPlatform);
+        LAMBDA_DECL_STATIC_CLASS(MacPlatform);
 
         static IConsoleOutput* CreateConsoleOutput();
         static IWindow* CreateWindow(const SWindowDesc& desc);
@@ -27,9 +27,9 @@ namespace Lambda
         
         static EMouseButton ConvertMouseButton(uint32 button);
     private:
-        static MacAppDelegate* s_pAppDelegate;
+        static CMacAppDelegate* s_pAppDelegate;
     };
 
-    typedef CMacPlatform Platform;
+    typedef MacPlatform Platform;
 }
 #endif

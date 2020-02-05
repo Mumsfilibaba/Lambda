@@ -45,7 +45,7 @@
     {
         uint32 keycode   = [event keyCode];
         uint32 flags     = [event modifierFlags];
-        uint32 modifiers = Lambda::CMacKeyboard::GetModifierKeys(flags);
+        uint32 modifiers = Lambda::MacKeyboard::GetModifierKeys(flags);
         m_pWindow->OnKeydown(Lambda::CMacKeyboard::ConvertVirtualKey(keycode), modifiers);
         
         [self interpretKeyEvents:@[event]];
@@ -55,14 +55,14 @@
    {
        uint32 keycode   = [event keyCode];
        uint32 flags     = [event modifierFlags];
-       uint32 modifiers = Lambda::CMacKeyboard::GetModifierKeys(flags);
+       uint32 modifiers = Lambda::MacKeyboard::GetModifierKeys(flags);
        m_pWindow->OnKeyup(Lambda::CMacKeyboard::ConvertVirtualKey(keycode), modifiers);
    }
 
    - (void)mouseDown:(NSEvent*) event
    {
        uint32 flags     = [event modifierFlags];
-       uint32 modifiers = Lambda::CMacKeyboard::GetModifierKeys(flags);
+       uint32 modifiers = Lambda::MacKeyboard::GetModifierKeys(flags);
        m_pWindow->OnMouseButtonDown(Lambda::EMouseButton::MOUSEBUTTON_LEFT, modifiers);
    }
 
@@ -74,7 +74,7 @@
    - (void)mouseUp:(NSEvent*) event
    {
        uint32 flags     = [event modifierFlags];
-       uint32 modifiers = Lambda::CMacKeyboard::GetModifierKeys(flags);
+       uint32 modifiers = Lambda::MacKeyboard::GetModifierKeys(flags);
        m_pWindow->OnMouseButtonUp(Lambda::EMouseButton::MOUSEBUTTON_LEFT, modifiers);
    }
 
@@ -88,7 +88,7 @@
    - (void)rightMouseDown:(NSEvent*) event
    {
        uint32 flags     = [event modifierFlags];
-       uint32 modifiers = Lambda::CMacKeyboard::GetModifierKeys(flags);
+       uint32 modifiers = Lambda::MacKeyboard::GetModifierKeys(flags);
        m_pWindow->OnMouseButtonDown(Lambda::EMouseButton::MOUSEBUTTON_RIGHT, modifiers);
    }
 
@@ -100,17 +100,17 @@
    - (void)rightMouseUp:(NSEvent*) event
    {
        uint32 flags     = [event modifierFlags];
-       uint32 modifiers = Lambda::CMacKeyboard::GetModifierKeys(flags);
+       uint32 modifiers = Lambda::MacKeyboard::GetModifierKeys(flags);
        m_pWindow->OnMouseButtonUp(Lambda::EMouseButton::MOUSEBUTTON_RIGHT, modifiers);
    }
 
    - (void)otherMouseDown:(NSEvent*) event
    {
-       Lambda::EMouseButton eButton = Lambda::CMacPlatform::ConvertMouseButton((uint32)[event buttonNumber]);
+       Lambda::EMouseButton eButton = Lambda::MacPlatform::ConvertMouseButton((uint32)[event buttonNumber]);
        if (eButton != Lambda::EMouseButton::MOUSEBUTTON_UNKNOWN)
        {
            uint32 flags     = [event modifierFlags];
-           uint32 modifiers = Lambda::CMacKeyboard::GetModifierKeys(flags);
+           uint32 modifiers = Lambda::MacKeyboard::GetModifierKeys(flags);
            m_pWindow->OnMouseButtonDown(eButton, modifiers);
        }
    }
@@ -122,11 +122,11 @@
 
    - (void)otherMouseUp:(NSEvent*) event
    {
-       Lambda::EMouseButton eButton = Lambda::CMacPlatform::ConvertMouseButton((uint32)[event buttonNumber]);
+       Lambda::EMouseButton eButton = Lambda::MacPlatform::ConvertMouseButton((uint32)[event buttonNumber]);
        if (eButton != Lambda::EMouseButton::MOUSEBUTTON_UNKNOWN)
        {
            uint32 flags     = [event modifierFlags];
-           uint32 modifiers = Lambda::CMacKeyboard::GetModifierKeys(flags);
+           uint32 modifiers = Lambda::MacKeyboard::GetModifierKeys(flags);
            m_pWindow->OnMouseButtonDown(eButton, modifiers);
        }
    }

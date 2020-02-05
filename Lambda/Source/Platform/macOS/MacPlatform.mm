@@ -12,19 +12,19 @@
 
 namespace Lambda
 {
-    MacAppDelegate* CMacPlatform::s_pAppDelegate = nullptr;
+    CMacAppDelegate* MacPlatform::s_pAppDelegate = nullptr;
 
-    IConsoleOutput* CMacPlatform::CreateConsoleOutput()
+    IConsoleOutput* MacPlatform::CreateConsoleOutput()
     {
         return DBG_NEW CMacConsoleOutput();
     }
 
-    IWindow* CMacPlatform::CreateWindow(const SWindowDesc& desc)
+    IWindow* MacPlatform::CreateWindow(const SWindowDesc& desc)
     {
         return DBG_NEW CMacWindow(desc);
     }
 
-    void CMacPlatform::CreateMenuBar()
+    void MacPlatform::CreateMenuBar()
     {
         size_t i;
         NSString* pAppName = nil;
@@ -90,12 +90,12 @@ namespace Lambda
         [NSApp performSelector:setAppleMenuSelector withObject:pAppMenu];
     }
 
-    void CMacPlatform::Init()
+    void MacPlatform::Init()
     {
         //Create static application instance
         [NSApplication sharedApplication];
         
-        MacAppDelegate* pAppDelegate = [[MacAppDelegate alloc] init];
+        CMacAppDelegate* pAppDelegate = [[CMacAppDelegate alloc] init];
         if (pAppDelegate != nil)
         {
             s_pAppDelegate = pAppDelegate;
@@ -106,15 +106,15 @@ namespace Lambda
 
         [NSApp run];
         
-        CMacTime::Init();
+        MacTime::Init();
     }
 
-    void CMacPlatform::Release()
+    void MacPlatform::Release()
     {
         [s_pAppDelegate release];
     }
 
-    void CMacPlatform::PollEvents()
+    void MacPlatform::PollEvents()
     {
         while (true)
         {
@@ -126,7 +126,7 @@ namespace Lambda
         }
     }
 
-    void CMacPlatform::MessageBox(const char* pCaption, const char* pText, uint32 type)
+    void MacPlatform::MessageBox(const char* pCaption, const char* pText, uint32 type)
     {
         CFStringRef text    = CFStringCreateWithCString(0, pText, strlen(pText));
         CFStringRef caption = CFStringCreateWithCString(0, pCaption, strlen(pCaption));
@@ -142,12 +142,12 @@ namespace Lambda
         CFRelease(text);
     }
 
-    void CMacPlatform::OutputDebugString(const char* pMessage)
+    void MacPlatform::OutputDebugString(const char* pMessage)
     {
         NSLog(@"%s", pMessage);
     }
 
-    EMouseButton CMacPlatform::ConvertMouseButton(uint32 button)
+    EMouseButton MacPlatform::ConvertMouseButton(uint32 button)
     {
         if (button == 0)
             return EMouseButton::MOUSEBUTTON_LEFT;

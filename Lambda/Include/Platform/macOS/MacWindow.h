@@ -29,6 +29,7 @@ namespace Lambda
         virtual uint32 GetWidth() const override final { return m_Width; }
         virtual uint32 GetHeight() const override final { return m_Height; }
         virtual void*  GetNativeHandle() const override final { return m_pCocoaWindow; }
+        
     public:
         void OnMove(uint32 x, uint32 y);
         void OnFocusChanged(bool bHasFocus);
@@ -46,9 +47,11 @@ namespace Lambda
         void OnMouseScroll(float horizontalValue, float verticalValue);
         
         void OnClose();
+        
     private:
         void Init(const SWindowDesc& desc);
         bool DispatchEvent(const SEvent& event);
+        
     private:
         std::vector<IEventListener*> m_EventListeners;
         CCocoaView* m_pView;

@@ -7,10 +7,10 @@
 
 namespace Lambda
 {
-    class CMacTime final : public CommonTime
+    class MacTime final : public CommonTime
     {
     public:
-        LAMBDA_DECL_STATIC_CLASS(CMacTime);
+        LAMBDA_DECL_STATIC_CLASS(MacTime);
         
         _forceinline static void Init()
         {
@@ -37,9 +37,9 @@ namespace Lambda
             return (s_NanoSecTickFactor * 1000000000UL);
         }
     private:
-        inline static uint64 s_NanoSecTickFactor = 0;
+        inline static uint64 s_NanoSecTickFactor = { 0 };
     };
 
-    typedef CMacTime PlatformTime;
+    typedef MacTime PlatformTime;
 }
 #endif
