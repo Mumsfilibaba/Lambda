@@ -76,7 +76,7 @@ namespace Lambda
 		std::wstring convertedTitle = StringUtilities::ConvertFromString(pTitle);
 		uint32 width = rect.right - rect.left;
 		uint32 height = rect.bottom - rect.top;
-		HINSTANCE hInstance = CWindowsPlatform::GetApplicationInstance();
+		HINSTANCE hInstance = WindowsPlatform::GetApplicationInstance();
 
 		::SetLastError(0);
 		m_hWindow = ::CreateWindowEx(m_ExStyle, CWindowsWindow::GetWindowClass(), convertedTitle.c_str(), m_Style, 0, 0, width, height, 0, 0, hInstance, 0);
@@ -258,7 +258,7 @@ namespace Lambda
 		WNDCLASSEX wc = {};
 		wc.cbSize			= sizeof(WNDCLASSEX);
 		wc.style			= CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-		wc.lpfnWndProc		= CWindowsPlatform::WndProc;
+		wc.lpfnWndProc		= WindowsPlatform::WndProc;
 		wc.cbClsExtra		= 0;
 		wc.cbWndExtra		= 0;
 		wc.hInstance		= hInstance;

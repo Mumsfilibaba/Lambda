@@ -9,19 +9,19 @@
 
 namespace Lambda
 {
-	HINSTANCE CWindowsPlatform::s_hInstance = 0;
+	HINSTANCE WindowsPlatform::s_hInstance = 0;
 
-	IConsoleOutput* CWindowsPlatform::CreateConsoleOutput()
+	IConsoleOutput* WindowsPlatform::CreateConsoleOutput()
 	{
 		return DBG_NEW CWindowsConsoleOutput();
 	}
 
-	IWindow* CWindowsPlatform::CreateWindow(const SWindowDesc& desc)
+	IWindow* WindowsPlatform::CreateWindow(const SWindowDesc& desc)
 	{
 		return DBG_NEW CWindowsWindow(desc);
 	}
 
-	void CWindowsPlatform::Init(HINSTANCE hInstance)
+	void WindowsPlatform::Init(HINSTANCE hInstance)
 	{
 		//Activate debug memory check
 		_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -30,7 +30,7 @@ namespace Lambda
 		s_hInstance = hInstance;
 
 		//Init time (Get frequency)
-		CWindowsTime::Init();
+		WindowsTime::Init();
 		
 		//Init input (KeyTable etc.)
 		WindowsInput::Init();
@@ -39,12 +39,12 @@ namespace Lambda
 		CWindowsWindow::RegisterWindowClass(hInstance);
 	}
 
-	void CWindowsPlatform::Release()
+	void WindowsPlatform::Release()
 	{
 		CWindowsWindow::UnregisterWindowClass(s_hInstance);
 	}
 
-	void CWindowsPlatform::PollEvents()
+	void WindowsPlatform::PollEvents()
 	{
 		MSG message = {};
 		while (PeekMessage(&message, 0, 0, 0, PM_REMOVE))
@@ -54,7 +54,7 @@ namespace Lambda
 		}
 	}
 	
-	void CWindowsPlatform::MessageBox(const char* pCaption, const char* pText, uint32 type)
+	void WindowsPlatform::MessageBox(const char* pCaption, const char* pText, uint32 type)
 	{
 		uint32 uType = 0;
 		if (type & EMessageBox::MESSAGE_BOX_OK)
@@ -65,12 +65,12 @@ namespace Lambda
 		MessageBoxA(0, pText, pCaption, uType);
 	}
 
-	void CWindowsPlatform::DebuggerOutput(const char* pMessage)
+	void WindowsPlatform::DebuggerOutput(const char* pMessage)
 	{
 		OutputDebugStringA(pMessage);
 	}
 
-	LRESULT CWindowsPlatform::WndProc(HWND hWnd, uint32 message, WPARAM wParam, LPARAM lParam)
+	LRESULT WindowsPlatform::WndProc(HWND hWnd, uint32 message, WPARAM wParam, LPARAM lParam)
 	{
 		//Dispatch input messages to input class
 		switch (message)
