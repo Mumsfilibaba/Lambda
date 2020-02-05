@@ -22,7 +22,7 @@
 	#endif
 #endif
 
-//#include "Core/CLogManager.h"
+#include "Core/Log/EngineLog.h"
 
 #include <cassert>
 #include <cfloat>

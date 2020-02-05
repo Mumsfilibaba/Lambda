@@ -7,60 +7,60 @@
 
 namespace Lambda
 {
-    bool CInput::IsKeyPressed(EKey key)
+    bool Input::IsKeyPressed(EKey key)
     {
         return PlatformInput::IsKeyPressed(key);
     }
 
-    bool CInput::IsKeyReleased(EKey key)
+    bool Input::IsKeyReleased(EKey key)
     {
         return PlatformInput::IsKeyReleased(key);
     }
 
-    bool CInput::IsModiferKeyActive(EKeyModifier modiferKey)
+    bool Input::IsModiferKeyActive(EKeyModifier modiferKey)
     {
         uint32 modifers = GetModiferKeyMask();
         return modifers & modiferKey;
     }
 
-    uint32 CInput::GetModiferKeyMask()
+    uint32 Input::GetModiferKeyMask()
     {
         return PlatformInput::GetModiferKeys();
     }
         
-    bool CInput::IsMouseButtonPressed(EMouseButton button)
+    bool Input::IsMouseButtonPressed(EMouseButton button)
     {
         return PlatformInput::IsMouseButtonPressed(button);
     }
 
-    bool CInput::IsMouseButtonReleased(EMouseButton button)
+    bool Input::IsMouseButtonReleased(EMouseButton button)
     {
         return PlatformInput::IsMouseButtonReleased(button);
     }
 
-    void CInput::SetMousePosition(int32 x, int32 y)
+    void Input::SetMousePosition(int32 x, int32 y)
     {   
         IWindow* pWindow = g_Engine.GetWindow();
         PlatformInput::SetMousePosition(pWindow, x, y);
     }
 
-    void CInput::GetMousePosition(int32& x, int32& y)
+    void Input::GetMousePosition(int32& x, int32& y)
     {   
         IWindow* pWindow = g_Engine.GetWindow();
         PlatformInput::GetMousePosition(pWindow, x, y);
     }
         
-    void CInput::GetMouseState(SMouseState& mouseState)
+    void Input::GetMouseState(SMouseState& mouseState)
     {
         mouseState = PlatformInput::GetMouseState();
     }
 
-    void CInput::GetGamepadState(SGamepadState& gamepadState, EGamepad gamepad)
+    void Input::GetGamepadState(SGamepadState& gamepadState, EGamepad gamepad)
     {
         gamepadState = PlatformInput::GetGamepadState(gamepad);
     }
         
-    void CInput::GetKeyboardState(SKeyboardState& keyboardState)
+    void Input::GetKeyboardState(SKeyboardState& keyboardState)
     {
         keyboardState = PlatformInput::GetKeyboardState();
     }

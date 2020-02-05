@@ -33,6 +33,7 @@ namespace Lambda
 		}
 
 		static CTimestamp Now();
+
 	private:
 		CTimestamp m_LastTime;
 		CTimestamp m_TotalTime;

@@ -123,6 +123,7 @@ namespace Lambda
 		friend bool operator<(const CTimestamp& left, const CTimestamp& right);
 		friend bool operator>=(const CTimestamp& left, const CTimestamp& right);
 		friend bool operator<=(const CTimestamp& left, const CTimestamp& right);
+
 	private:
 		uint64 m_Ns;
 	};

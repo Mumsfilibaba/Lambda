@@ -5,10 +5,10 @@
 
 namespace Lambda
 {
-	uint32 CWindowsKeyboard::s_KeyTable[EKey::KEY_LAST + 1];
-	EKey   CWindowsKeyboard::s_WindowsKeyTable[256];
+	uint32 WindowsKeyboard::s_KeyTable[EKey::KEY_LAST + 1];
+	EKey   WindowsKeyboard::s_WindowsKeyTable[256];
 
-	uint32 CWindowsKeyboard::GetActiveModifierKeys()
+	uint32 WindowsKeyboard::GetActiveModifierKeys()
 	{
 		uint32 modifiers = 0;
 		if (GetKeyState(VK_SHIFT) & 0x8000)
@@ -27,7 +27,7 @@ namespace Lambda
 		return modifiers;
 	}
 
-	void CWindowsKeyboard::Init()
+	void WindowsKeyboard::Init()
 	{
 		//Set to zero
 		memset(s_KeyTable, 0, sizeof(s_KeyTable));

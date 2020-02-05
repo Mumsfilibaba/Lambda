@@ -33,7 +33,7 @@ namespace Lambda
 		CWindowsTime::Init();
 		
 		//Init input (KeyTable etc.)
-		CWindowsInput::Init();
+		WindowsInput::Init();
 
 		//Register Window class for creation of main window
 		CWindowsWindow::RegisterWindowClass(hInstance);
@@ -79,7 +79,7 @@ namespace Lambda
 			case WM_KEYDOWN:
 			{
 				bool bKeyDown = (message == WM_KEYDOWN);
-				CWindowsInput::OnKeyboardMessage(uint32(wParam), bKeyDown);
+				WindowsInput::OnKeyboardMessage(uint32(wParam), bKeyDown);
 				break;
 			}
 
@@ -92,7 +92,7 @@ namespace Lambda
 			case WM_RBUTTONDOWN:
 			case WM_XBUTTONDOWN:
 			{
-				CWindowsInput::OnMouseButtonMessage(message, wParam);
+				WindowsInput::OnMouseButtonMessage(message, wParam);
 				break;
 			}
 		}

@@ -7,7 +7,7 @@
 
 namespace Lambda
 {
-    class CMacTime final : public CCommonTime
+    class CMacTime final : public CommonTime
     {
     public:
         LAMBDA_DECL_STATIC_CLASS(CMacTime);

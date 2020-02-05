@@ -6,10 +6,10 @@
 
 namespace Lambda
 {
-	class LAMBDA_API CWindowsTime final : public CCommonTime
+	class LAMBDA_API WindowsTime final : public CommonTime
 	{
 	public:
-		LAMBDA_DECL_STATIC_CLASS(CWindowsTime);
+		LAMBDA_DECL_STATIC_CLASS(WindowsTime);
 
 		_forceinline static void Init()
 		{
@@ -40,6 +40,6 @@ namespace Lambda
 		inline static LARGE_INTEGER s_Frequency = { 0 };
 	};
 
-	typedef CWindowsTime PlatformTime;
+	typedef WindowsTime PlatformTime;
 }
 #endif

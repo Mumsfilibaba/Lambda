@@ -11,6 +11,7 @@ namespace Lambda
 			float x;
 			float y;
 		};
+
 	public:
 		_forceinline SGamepadState()
 		{
@@ -29,6 +30,7 @@ namespace Lambda
 		{
 			return bButtonStates[button] == false;
 		}
+
 	public:
 		EGamepad Player = EGamepad::GAMEPAD_PLAYER_UNKNOWN;
 		SGamepadStick LeftStick;

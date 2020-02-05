@@ -20,6 +20,7 @@ namespace Lambda
 		{
 			return bButtonStates[button] == false;
 		}
+
 	public:
 		struct
 		{

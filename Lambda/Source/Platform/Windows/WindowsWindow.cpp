@@ -154,8 +154,8 @@ namespace Lambda
 			case WM_KEYDOWN:
 			{
 				event.EventType = (message == WM_KEYUP) ? EEventType::EVENT_TYPE_KEY_RELEASED : EEventType::EVENT_TYPE_KEY_PRESSED;
-				event.KeyEvent.Key			= CWindowsKeyboard::ConvertVirtualKey(uint32(wParam));
-				event.KeyEvent.Modifiers	= CWindowsKeyboard::GetActiveModifierKeys();
+				event.KeyEvent.Key			= WindowsKeyboard::ConvertVirtualKey(uint32(wParam));
+				event.KeyEvent.Modifiers	= WindowsKeyboard::GetActiveModifierKeys();
 				event.KeyEvent.RepeatCount	= uint32(LOWORD(lParam));
 
 				DispatchEvent(event);
@@ -203,7 +203,7 @@ namespace Lambda
 					button = EMouseButton::MOUSE_BUTTON_FORWARD;
 
 				event.MouseButtonEvent.Button = button;
-				event.MouseButtonEvent.Modifiers = CWindowsKeyboard::GetActiveModifierKeys();
+				event.MouseButtonEvent.Modifiers = WindowsKeyboard::GetActiveModifierKeys();
 				if (message == WM_LBUTTONUP || message == WM_MBUTTONUP || message == WM_RBUTTONUP || message == WM_XBUTTONUP)
 				{
 					//When the mousebutton is released we also release the mousecapture

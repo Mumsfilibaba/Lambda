@@ -40,7 +40,7 @@ namespace Lambda
         }
 
         //Init log
-        CEngineLog::Init();
+        EngineLog::Init();
 
         //Start profiling of the engine startup
         LAMBDA_PROFILER_BEGIN_SESSION("Lambda Init", "Lambda_Init.json");
@@ -196,7 +196,7 @@ namespace Lambda
 
         LAMBDA_PROFILER_END_SESSION();
 
-        CEngineLog::Release();
+        EngineLog::Release();
 
         //Delete output after log is released since the log can still write to the console
         SafeDelete(m_pConsoleOutput);

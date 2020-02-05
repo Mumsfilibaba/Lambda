@@ -10,10 +10,10 @@ namespace Lambda
     struct SGamepadState;
     struct SKeyboardState;
     
-    class LAMBDA_API CInput final
+    class LAMBDA_API Input final
     {
     public:
-        LAMBDA_DECL_STATIC_CLASS(CInput);
+        LAMBDA_DECL_STATIC_CLASS(Input);
 
         static bool IsKeyPressed(EKey key);
         static bool IsKeyReleased(EKey key);

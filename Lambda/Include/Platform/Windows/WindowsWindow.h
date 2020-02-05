@@ -24,6 +24,7 @@ namespace Lambda
 		virtual uint32 GetWidth() const override { return m_Width; }
 		virtual uint32 GetHeight() const override { return m_Height; }
 		virtual void* GetNativeHandle() const override { return (void*)m_hWindow; }
+
 	public:
 		HWND GetHandle() const { return m_hWindow; }
 		LRESULT ProcessMessage(uint32 message, WPARAM wParam, LPARAM lParam);
@@ -35,9 +36,11 @@ namespace Lambda
 #else
 		static LPCSTR GetWindowClass() { return "AppWindow"; }
 #endif
+
 	private:
 		void Init(const SWindowDesc& desc);
 		void DispatchEvent(const SEvent& event);
+
 	private:
 		std::vector<IEventListener*> m_EventListeners;
 		HWND m_hWindow;

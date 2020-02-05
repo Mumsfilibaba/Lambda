@@ -11,10 +11,10 @@ namespace Lambda
 {
     class IWindow;
 
-    class CCommonInput
+    class CommonInput
     {
     public:
-        LAMBDA_DECL_STATIC_CLASS(CCommonInput);
+        LAMBDA_DECL_STATIC_CLASS(CommonInput);
         
         static void Init() {}
         static void Update() {}

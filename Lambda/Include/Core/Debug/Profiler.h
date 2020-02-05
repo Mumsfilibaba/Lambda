@@ -12,12 +12,14 @@ namespace Lambda
 	private:
 		CProfiler();
 		~CProfiler() = default;
+	
 	public:
 		void BeginSession(const char* pSessionName, const char* pFilename);
 		void WriteResult(const char* pResultName, const CTimestamp& start, const CTimestamp& time);
 		void EndSession();
 
 		static CProfiler& Get();
+	
 	private:
 		FILE* m_pOutput;
 		const char* m_pSessionName;
@@ -45,6 +47,7 @@ namespace Lambda
 		}
 
 		LAMBDA_DECL_NO_COPY(CScopedProfiler);
+
 	private:
 		const char* m_pName;
 		CClock m_Clock;

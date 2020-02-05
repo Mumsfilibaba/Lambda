@@ -10,10 +10,10 @@
 
 namespace Lambda
 {
-	class LAMBDA_API CWindowsPlatform final : public CCommonPlatform
+	class LAMBDA_API WindowsPlatform final : public CommonPlatform
 	{
 	public:
-		LAMBDA_DECL_STATIC_CLASS(CWindowsPlatform);
+		LAMBDA_DECL_STATIC_CLASS(WindowsPlatform);
 
 		static IConsoleOutput* CreateConsoleOutput();
 		static IWindow* CreateWindow(const SWindowDesc& desc);
@@ -28,10 +28,11 @@ namespace Lambda
 
 		static LRESULT CALLBACK WndProc(HWND hWnd, uint32 message, WPARAM wParam, LPARAM lParam);
 		static HINSTANCE GetApplicationInstance() { return s_hInstance; }
+
 	private:
 		static HINSTANCE s_hInstance;
 	};
 
-	typedef CWindowsPlatform Platform;
+	typedef WindowsPlatform Platform;
 }
 #endif

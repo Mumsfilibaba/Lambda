@@ -20,6 +20,7 @@ namespace Lambda
         {
             return bKeyStates[key] == true;
         }
+
     public:
         bool bKeyStates[EKey::KEY_COUNT];
     };

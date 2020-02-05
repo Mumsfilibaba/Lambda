@@ -9,10 +9,10 @@
 
 namespace Lambda
 {
-	class LAMBDA_API CWindowsInput : public CCommonInput
+	class LAMBDA_API WindowsInput : public CommonInput
 	{
 	public:
-		LAMBDA_DECL_STATIC_CLASS(CWindowsInput);
+		LAMBDA_DECL_STATIC_CLASS(WindowsInput);
 
         static void Init();
         static void Update();
@@ -22,6 +22,8 @@ namespace Lambda
 
         static void OnKeyboardMessage(uint32 virtualKey, bool bKeyDown);
         static void OnMouseButtonMessage(uint32 message, WPARAM wParam);
+
+        static SGamepadState GetGamepadState(EGamepad gamepad);
 
         _forceinline static bool IsKeyPressed(EKey key)
         { 
@@ -35,7 +37,7 @@ namespace Lambda
 
         _forceinline static uint32 GetModiferKeys() 
         { 
-            return CWindowsKeyboard::GetActiveModifierKeys();
+            return WindowsKeyboard::GetActiveModifierKeys();
         }
 
         _forceinline static bool IsMouseButtonPressed(EMouseButton button)
@@ -53,17 +55,11 @@ namespace Lambda
             return s_MouseState;
         }
 
-        _forceinline static SGamepadState GetGamepadState(EGamepad gamepad) 
-        { 
-            const uint32 index = gamepad - 1; 
-            LAMBDA_ASSERT_MSG(index < EGamepad::GAMEPAD_COUNT, "Invalid Gamepad");
-            return s_GamepadStates[index];
-        }
-
         _forceinline static SKeyboardState GetKeyboardState()
         {
             return s_KeyboardState;
         }
+
     private:
         static SMouseState s_MouseState;
         static SKeyboardState s_KeyboardState;
@@ -71,6 +67,6 @@ namespace Lambda
         static DWORD s_GamepadPacketIDs[EGamepad::GAMEPAD_COUNT];
 	};
 
-    typedef CWindowsInput PlatformInput;
+    typedef WindowsInput PlatformInput;
 }
 #endif

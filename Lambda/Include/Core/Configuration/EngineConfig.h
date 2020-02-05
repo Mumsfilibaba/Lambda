@@ -12,6 +12,7 @@ namespace Lambda
 	private:
 		CEngineConfig();
 		~CEngineConfig() = default;
+
 	public:
 		bool LoadConfigFile(const char* pFilename);
 		bool WriteConfigFile();
@@ -23,12 +24,14 @@ namespace Lambda
 		void SetVar(const char* pVarName, T value);
 		
 		static CEngineConfig& Get();
+
 	private:
 		template <typename T>
 		T ConvertValue(const std::string& value);
 
 		template <typename T>
 		std::string ConvertType(T type);
+
 	private:
 		std::string m_Filename;
 		std::unordered_map<std::string, std::string> m_VarTable;

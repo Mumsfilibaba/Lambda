@@ -27,10 +27,10 @@ namespace Lambda
         MESSAGE_BOX_ERRORICON   = (1 << 2),
     };
 
-	class LAMBDA_API CCommonPlatform
+	class LAMBDA_API CommonPlatform
 	{
 	public:
-		LAMBDA_DECL_STATIC_CLASS(CCommonPlatform);
+		LAMBDA_DECL_STATIC_CLASS(CommonPlatform);
 
         static IConsoleOutput* CreateConsoleOutput()        { return nullptr; }
         static IWindow* CreateWindow(const SWindowDesc&)    { return nullptr; }

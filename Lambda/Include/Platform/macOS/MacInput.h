@@ -5,7 +5,7 @@
 
 namespace Lambda
 {
-    class CMacInput final : public CCommonInput
+    class CMacInput final : public CommonInput
     {
     public:
         LAMBDA_DECL_STATIC_CLASS(CMacInput);

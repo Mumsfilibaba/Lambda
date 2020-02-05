@@ -16,22 +16,22 @@
 
 namespace Lambda
 {
-	SMouseState CWindowsInput::s_MouseState;
-	SKeyboardState CWindowsInput::s_KeyboardState;
-	SGamepadState CWindowsInput::s_GamepadStates[EGamepad::GAMEPAD_COUNT];
-	DWORD CWindowsInput::s_GamepadPacketIDs[EGamepad::GAMEPAD_COUNT];
+	SMouseState WindowsInput::s_MouseState;
+	SKeyboardState WindowsInput::s_KeyboardState;
+	SGamepadState WindowsInput::s_GamepadStates[EGamepad::GAMEPAD_COUNT];
+	DWORD WindowsInput::s_GamepadPacketIDs[EGamepad::GAMEPAD_COUNT];
 
-	void CWindowsInput::Init()
+	void WindowsInput::Init()
 	{
 		//Init keytable
-		CWindowsKeyboard::Init();
+		WindowsKeyboard::Init();
 
 		//Init gamepadstates
 		for (uint32 i = 0; i < EGamepad::GAMEPAD_COUNT; i++)
 			s_GamepadStates[i].Player = EGamepad(i + 1);
 	}
 	
-	void CWindowsInput::Update()
+	void WindowsInput::Update()
 	{
 		//This compile-time count takes the smaller count
 		constexpr uint32 gamepadCount = std::min<uint32>(XUSER_MAX_COUNT, EGamepad::GAMEPAD_COUNT);
@@ -154,7 +154,7 @@ namespace Lambda
 		}
 	}
 
-	void CWindowsInput::SetMousePosition(IWindow* pRelativeWindow, int32 x, int32 y)
+	void WindowsInput::SetMousePosition(IWindow* pRelativeWindow, int32 x, int32 y)
 	{
 		LAMBDA_ASSERT(pRelativeWindow != nullptr);
 
@@ -168,7 +168,7 @@ namespace Lambda
 		::SetCursorPos(point.x, point.y);
 	}
 
-	void CWindowsInput::GetMousePosition(IWindow* pRelativeWindow, int32& x, int32& y)
+	void WindowsInput::GetMousePosition(IWindow* pRelativeWindow, int32& x, int32& y)
 	{
 		LAMBDA_ASSERT(pRelativeWindow != nullptr);
 
@@ -182,13 +182,13 @@ namespace Lambda
 		y = point.y;
 	}
 	
-	void CWindowsInput::OnKeyboardMessage(uint32 virtualKey, bool bKeyDown)
+	void WindowsInput::OnKeyboardMessage(uint32 virtualKey, bool bKeyDown)
 	{
-		EKey key = CWindowsKeyboard::ConvertVirtualKey(virtualKey);
+		EKey key = WindowsKeyboard::ConvertVirtualKey(virtualKey);
 		s_KeyboardState.bKeyStates[key] = bKeyDown;
 	}
 	
-	void CWindowsInput::OnMouseButtonMessage(uint32 message, WPARAM wParam)
+	void WindowsInput::OnMouseButtonMessage(uint32 message, WPARAM wParam)
 	{
 		//Get button
 		EMouseButton button = EMouseButton::MOUSE_BUTTON_UNKNOWN;
@@ -208,6 +208,14 @@ namespace Lambda
 			s_MouseState.bButtonStates[button] = false;
 		else
 			s_MouseState.bButtonStates[button] = true;
+	}
+	
+	SGamepadState WindowsInput::GetGamepadState(EGamepad gamepad)
+	{
+		const uint32 index = gamepad - 1;
+
+		LAMBDA_ASSERT_MSG(index < EGamepad::GAMEPAD_COUNT, "Invalid Gamepad");
+		return s_GamepadStates[index];
 	}
 }
 #endif
