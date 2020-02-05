@@ -8,7 +8,9 @@
 namespace Lambda
 {
 	CEngineConfig::CEngineConfig()
-		: m_VarTable()
+		: m_Filename(),
+		m_VarTable(),
+		m_HasChanged(false)
 	{
 	}
 
@@ -16,11 +18,11 @@ namespace Lambda
 	{
 		m_Filename = std::string(pFilename);
 		
-		std::ifstream file(m_Filename);
-		if (file.is_open())
+		std::ifstream configFile(m_Filename);
+		if (configFile.is_open())
 		{
 			std::string line;
-			while (std::getline(file, line))
+			while (std::getline(configFile, line))
 			{
 				if (line.size() > 0 && line[0] != '#')
 				{
@@ -54,13 +56,33 @@ namespace Lambda
 		}
 		else
 		{
-			D_LOG_CORE_ERROR("Failed to open configuration file '%s'", pFilename);
+			D_LOG_CORE_ERROR("Failed to open configuration file '%s'", m_Filename.c_str());
 			return false;
 		}
 	}
 
 	bool CEngineConfig::WriteConfigFile()
 	{
+		if (m_HasChanged)
+		{
+			std::ofstream configFile(m_Filename);
+			if (configFile.is_open())
+			{
+				for (auto& keyValuePair : m_VarTable)
+				{
+					configFile << keyValuePair.first;
+					configFile << '=';
+					configFile << keyValuePair.second;
+					configFile << '\n';
+				}
+			}
+			else
+			{
+				D_LOG_CORE_ERROR("Failed to open configuration file '%s'", m_Filename.c_str());
+				return false;
+			}
+		}
+
 		return false;
 	}
 

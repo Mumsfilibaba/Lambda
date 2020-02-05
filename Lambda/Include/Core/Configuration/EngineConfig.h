@@ -20,7 +20,7 @@ namespace Lambda
 		bool GetVar(const char* pVarName, T& value);
 		
 		template<typename T>
-		void SetVar(const char* pVarName, T& value);
+		void SetVar(const char* pVarName, T value);
 		
 		static CEngineConfig& Get();
 	private:
@@ -28,15 +28,20 @@ namespace Lambda
 		T ConvertValue(const std::string& value);
 
 		template <typename T>
-		std::string ConvertType(const T& type);
+		std::string ConvertType(T type);
 	private:
 		std::string m_Filename;
 		std::unordered_map<std::string, std::string> m_VarTable;
+		bool m_HasChanged;
 	};
 
 	template<typename T>
-	inline void CEngineConfig::SetVar(const char* pVarName, T& value)
+	inline void CEngineConfig::SetVar(const char* pVarName, T value)
 	{
+		std::string varName = std::string(pVarName);
+		m_VarTable[varName] = ConvertType<T>(value);
+
+		m_HasChanged = true;
 	}
 
 	template<typename T>
@@ -63,9 +68,27 @@ namespace Lambda
 		return result;
 	}
 
+	template <>
+	inline std::string CEngineConfig::ConvertValue(const std::string& value)
+	{
+		return value;
+	}
+
 	template <typename T>
-	inline std::string CEngineConfig::ConvertType(const T& type)
+	inline std::string CEngineConfig::ConvertType(T type)
 	{
 		return std::to_string<T>(type);
+	}
+
+	template <>
+	inline std::string CEngineConfig::ConvertType<const char*>(const char* pType)
+	{
+		return std::string(pType);
+	}
+
+	template <>
+	inline std::string CEngineConfig::ConvertType<std::string>(std::string type)
+	{
+		return type;
 	}
 }

@@ -27,7 +27,6 @@ namespace Lambda
         m_pWindow(nullptr),
         m_bIsRunning(false)
     {
-
     }
 
     void CEngine::PreInit()
@@ -102,10 +101,9 @@ namespace Lambda
         {
             LAMBDA_PROFILER_FUNCTION();
             
-            LOG_CORE_INFO("Starting Engine");
-
             //Start engine
             m_bIsRunning = true;
+            LOG_CORE_INFO("Starting Engine");
 
             //Make first tick on frameclock - To prevent that the first frame gets huge values in dt
             m_Frameclock.Tick();
