@@ -3,10 +3,10 @@
 
 namespace Lambda
 {
-	class LAMBDA_API EngineLog final
+	class LAMBDA_API Log final
 	{
 	public:
-		LAMBDA_DECL_STATIC_CLASS(EngineLog);
+		LAMBDA_DECL_STATIC_CLASS(Log);
 
 		static void Init();
 		static void Release();
@@ -27,13 +27,13 @@ namespace Lambda
 	};
 }
 
-#define LOG(verbosity, ...) Lambda::EngineLog::GetLog()->Print(verbosity, __VA_ARGS__)
+#define LOG(verbosity, ...) Lambda::Log::GetLog()->Print(verbosity, __VA_ARGS__)
 #define LOG_INFO(...)       LOG(Lambda::ELogVerbosity::LOG_VERBOSITY_INFO, __VA_ARGS__)
 #define LOG_MESSAGE(...)    LOG(Lambda::ELogVerbosity::LOG_VERBOSITY_MESSAGE, __VA_ARGS__)
 #define LOG_WARNING(...)    LOG(Lambda::ELogVerbosity::LOG_VERBOSITY_WARNING, __VA_ARGS__)
 #define LOG_ERROR(...)      LOG(Lambda::ELogVerbosity::LOG_VERBOSITY_ERROR, __VA_ARGS__)
 
-#define LOG_CORE(verbosity, ...) Lambda::EngineLog::GetCoreLog()->Print(verbosity, __VA_ARGS__)
+#define LOG_CORE(verbosity, ...) Lambda::Log::GetCoreLog()->Print(verbosity, __VA_ARGS__)
 #define LOG_CORE_INFO(...)       LOG_CORE(Lambda::ELogVerbosity::LOG_VERBOSITY_INFO, __VA_ARGS__)
 #define LOG_CORE_MESSAGE(...)    LOG_CORE(Lambda::ELogVerbosity::LOG_VERBOSITY_MESSAGE, __VA_ARGS__)
 #define LOG_CORE_WARNING(...)    LOG_CORE(Lambda::ELogVerbosity::LOG_VERBOSITY_WARNING, __VA_ARGS__)

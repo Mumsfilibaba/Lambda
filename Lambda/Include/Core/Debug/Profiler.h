@@ -57,7 +57,6 @@ namespace Lambda
 
 #define LAMBDA_PROFILER_ACTIVE 1
 #if LAMBDA_PROFILER_ACTIVE
-	//Needed for the __LINE__ concatenation to work
 	#define SCOPED_PROFILER_NAME(x,y) STRING_CONCAT(x,y)
 
 	#define LAMBDA_PROFILER_BEGIN_SESSION(name, filepath)	Lambda::CProfiler::Get().BeginSession(name, filepath)

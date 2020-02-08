@@ -5,16 +5,16 @@
 
 namespace Lambda
 {
-	ILog* EngineLog::s_pLog = nullptr;
-    ILog* EngineLog::s_pCoreLog = nullptr;
+	ILog* Log::s_pLog = nullptr;
+    ILog* Log::s_pCoreLog = nullptr;
 
-	void EngineLog::Init()
+	void Log::Init()
 	{
 		s_pLog      = DBG_NEW CLog();
         s_pCoreLog  = DBG_NEW CLog();
 	}
 
-	void EngineLog::Release()
+	void Log::Release()
 	{
 		SafeDelete(s_pLog);
         SafeDelete(s_pCoreLog);

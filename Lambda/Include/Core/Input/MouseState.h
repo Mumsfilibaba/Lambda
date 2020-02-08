@@ -6,7 +6,7 @@ namespace Lambda
 	struct SMouseState
 	{
 	public:
-		_forceinline SMouseState() 
+		_forceinline SMouseState()
 		{
 			memset(this, 0, sizeof(SMouseState));
 		}

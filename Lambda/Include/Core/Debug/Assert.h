@@ -5,13 +5,13 @@ namespace Lambda
 {
 	namespace Assert
 	{
-		void LAMBDA_API Assert(uint32 line, const char* pFile, const char* pFormat, ...);
+		LAMBDA_API void Assert(uint32 line, const char* pFile, const char* pFormat, ...);
 	
-		void LAMBDA_API EnableDebuggerPrint(bool bEnable);
-		void LAMBDA_API EnableDialog(bool bEnable);
+		LAMBDA_API void EnableDebuggerPrint(bool bEnable);
+		LAMBDA_API void EnableDialog(bool bEnable);
 
-		bool LAMBDA_API IsDiablogEnabled();
-		bool LAMBDA_API IsDebuggerPrintEnabled();
+		LAMBDA_API bool IsDiablogEnabled();
+		LAMBDA_API bool IsDebuggerPrintEnabled();
 	}
 }
 

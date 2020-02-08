@@ -17,6 +17,7 @@ namespace Lambda
 
 		virtual void Print(ELogVerbosity verbosity, const char* pFormat, ...) override final;
 		virtual void PrintV(ELogVerbosity verbosity, const char* pFormat, va_list args) override final;
+
 	private:
 		bool m_bEnabled;
 	};
